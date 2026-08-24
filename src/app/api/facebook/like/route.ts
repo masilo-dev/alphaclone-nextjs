@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+<<<<<<< HEAD
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
+=======
+>>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
 
 type LikeRequestBody = {
     pageId: string;
@@ -49,10 +52,22 @@ export async function POST(req: NextRequest) {
         );
     }
 
+<<<<<<< HEAD
     const admin = createSupabaseAdminClient();
     const integration = await getFacebookIntegrationWithToken(admin, { userId: user.id, pageId });
 
     const token = integration?.pageAccessToken;
+=======
+    const { data: integration } = await supabase
+        .from('facebook_integrations')
+        .select('page_access_token')
+        .eq('user_id', user.id)
+        .eq('page_id', pageId)
+        .eq('is_active', true)
+        .single();
+
+    const token = integration?.page_access_token;
+>>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
     if (!token) {
         return NextResponse.json(
             {
@@ -64,7 +79,11 @@ export async function POST(req: NextRequest) {
         );
     }
 
+<<<<<<< HEAD
     const endpoint = `https://graph.facebook.com/v21.0/${targetId}/likes`;
+=======
+    const endpoint = `https://graph.facebook.com/v19.0/${targetId}/likes`;
+>>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
 
     const params = new URLSearchParams();
     params.set('access_token', token);

@@ -731,8 +731,146 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         finally { setPosting(false); }
     };
 
+<<<<<<< HEAD
     const handleAiGeneratePost = async () => {
         if (!aiTopic.trim()) return toast.error('Describe topic');
+=======
+    const handleUpdateStatus = async (leadId: string, status: string) => {
+        const { error } = await supabase
+            .from('facebook_leads')
+            .update({ status })
+            .eq('id', leadId);
+        if (!error) {
+            setLeads(prev => prev.map(l => l.id === leadId ? { ...l, status } : l));
+            toast.success('Status updated');
+        }
+    };
+
+    const handleFacebookComment = async (postId: string, parentCommentId?: string) => {
+        if (!selectedPageId) {
+            toast.error('Select a Facebook Page first');
+            return;
+        }
+        const key = parentCommentId ? `reply-${parentCommentId}` : `post-${postId}`;
+        const message = (parentCommentId ? replyByComment[parentCommentId] : commentByPost[postId])?.trim();
+        if (!message) {
+            toast.error(parentCommentId ? 'Write a reply first' : 'Write a comment first');
+            return;
+        }
+
+        setCommentActionLoading((prev) => ({ ...prev, [key]: true }));
+        try {
+            const res = await fetch('/api/facebook/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pageId: selectedPageId,
+                    postId: parentCommentId ? undefined : postId,
+                    parentCommentId: parentCommentId || undefined,
+                    message,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to publish comment');
+                return;
+            }
+
+            if (parentCommentId) {
+                setReplyByComment((prev) => ({ ...prev, [parentCommentId]: '' }));
+                toast.success('Reply posted');
+            } else {
+                setCommentByPost((prev) => ({ ...prev, [postId]: '' }));
+                toast.success('Comment posted');
+            }
+
+            await fetchPagePosts(selectedPageId);
+        } catch {
+            toast.error('Failed to publish comment');
+        } finally {
+            setCommentActionLoading((prev) => ({ ...prev, [key]: false }));
+        }
+    };
+
+    const handleLike = async (targetId: string) => {
+        if (!selectedPageId) {
+            toast.error('Select a Facebook Page first');
+            return;
+        }
+        
+        const key = `like-${targetId}`;
+        setCommentActionLoading((prev) => ({ ...prev, [key]: true }));
+        try {
+            const res = await fetch('/api/facebook/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pageId: selectedPageId,
+                    targetId,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to like');
+                return;
+            }
+            toast.success('Liked!');
+            // Refresh posts to see updated counts if available
+            await fetchPagePosts(selectedPageId);
+        } catch {
+            toast.error('Failed to like');
+        } finally {
+            setCommentActionLoading((prev) => ({ ...prev, [key]: false }));
+        }
+    };
+
+    const generateFacebookQuickReply = async (post: any, parentCommentId?: string, parentCommentText?: string) => {
+        const key = parentCommentId ? `reply-${parentCommentId}` : `post-${post.id}`;
+        setAiReplyLoading((prev) => ({ ...prev, [key]: true }));
+        try {
+            const postText = String(post?.message || post?.story || '').slice(0, 1200);
+            const parentContext = parentCommentText
+                ? `Comment to reply to:\n${String(parentCommentText).slice(0, 700)}\n\n`
+                : '';
+            const prompt = `Write one short Facebook comment reply. Tone: witty, friendly, light humor, professional-safe. Max 220 characters.
+
+Post context:
+${postText}
+
+${parentContext}Return only the reply text.`;
+
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    model: 'grok-2-latest',
+                    temperature: 0.95,
+                    maxTokens: 120,
+                    tenantId: tenant?.id || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.text) {
+                toast.error(data.error || 'Failed to generate AI reply');
+                return;
+            }
+            if (parentCommentId) {
+                setReplyByComment((prev) => ({ ...prev, [parentCommentId]: String(data.text).trim() }));
+            } else {
+                setCommentByPost((prev) => ({ ...prev, [post.id]: String(data.text).trim() }));
+            }
+            toast.success('AI quick reply ready');
+        } catch {
+            toast.error('Failed to generate AI reply');
+        } finally {
+            setAiReplyLoading((prev) => ({ ...prev, [key]: false }));
+        }
+    };
+
+    const generatePostWithAI = async () => {
+        if (!aiTopic.trim()) return toast.error('Describe your post topic first');
+>>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         setAiGenerating(true);
         try {
             const res = await fetch('/api/ai/generate', {
@@ -1260,6 +1398,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                             <div className="flex items-center justify-center py-16 text-gray-500">
                                                 <Loader2 className="animate-spin" size={20} />
                                             </div>
+<<<<<<< HEAD
                                         ) : (
                                             <div className="space-y-4">
                                                 {pagePosts.map((post: any) => (
@@ -1282,6 +1421,219 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
                                                         {post.full_picture && (
                                                             <img src={post.full_picture} alt="" className="mb-3 max-h-72 w-full rounded-2xl object-cover" />
+=======
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <h4 className="text-sm font-semibold text-white">Post History</h4>
+                                    <span className="text-xs text-slate-500">Tracks published, failed, and cancelled</span>
+                                </div>
+                                {queueLoading ? (
+                                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Loading history...
+                                    </div>
+                                ) : postHistory.length === 0 ? (
+                                    <p className="text-sm text-slate-500">No post history yet.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {postHistory.slice(0, 12).map((item) => (
+                                            <div key={`history-${item.id}`} className="rounded-xl border border-slate-800 p-3">
+                                                <div className="mb-1 flex items-center justify-between gap-2">
+                                                    <span className="text-xs uppercase tracking-wide text-slate-400">{item.status}</span>
+                                                    <span className="text-xs text-slate-500">
+                                                        {new Date(item.created_at).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <p className="line-clamp-2 text-sm text-slate-200">{item.caption}</p>
+                                                {item.error_message && (
+                                                    <p className="mt-1 text-xs text-red-400">{item.error_message}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* PAGES TAB */}
+                    {activeTab === 'pages' && (
+                        <div className="space-y-3">
+                            {pages.map(page => (
+                                <div key={page.id} className="flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800 rounded-xl">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
+                                            <Facebook className="w-4 h-4 text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-white text-sm">{page.page_name}</p>
+                                            <p className="text-xs text-slate-500">ID: {page.page_id} · Connected {new Date(page.connected_at).toLocaleDateString()}</p>
+                                            <p className="text-[11px] text-slate-400">
+                                                {page.metadata?.no_pages || !page.page_access_token
+                                                    ? 'Personal account connection (read-only tools)'
+                                                    : 'Facebook Page connection (publishing enabled)'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <a
+                                            href={`https://facebook.com/${page.page_id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                        </a>
+                                        <button
+                                            onClick={() => handleDisconnect(page.page_id)}
+                                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            <button
+                                onClick={handleConnect}
+                                className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-slate-700 rounded-xl text-slate-400 hover:text-white hover:border-blue-500 transition-colors text-sm w-full justify-center"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Connect another page
+                            </button>
+                        </div>
+                    )}
+
+                    {/* MESSENGER TAB */}
+                    {activeTab === 'messenger' && (
+                        <div className="h-[760px]">
+                            <MessengerInbox />
+                        </div>
+                    )}
+
+                    {/* PAGE POSTS TAB */}
+                    {activeTab === 'posts' && (
+                        <div className="space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Activity className="w-5 h-5 text-blue-400" />
+                                        Your Page Posts
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Live feed from your Facebook page — saved to your CRM</p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <select
+                                        value={selectedPageId}
+                                        onChange={e => { setSelectedPageId(e.target.value); fetchPagePosts(e.target.value); }}
+                                        className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+                                    >
+                                        {pages.map(p => (
+                                            <option key={p.page_id} value={p.page_id}>{p.page_name}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={() => fetchPagePosts(selectedPageId)}
+                                        disabled={postsLoading}
+                                        className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"
+                                    >
+                                        <RefreshCw className={`w-4 h-4 ${postsLoading ? 'animate-spin' : ''}`} />
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('post')}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        New Post
+                                    </button>
+                                </div>
+                            </div>
+
+                            {postsLoading ? (
+                                <div className="flex items-center justify-center py-20">
+                                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                </div>
+                            ) : pagePosts.length === 0 ? (
+                                <div className="text-center py-20 border border-dashed border-slate-700 rounded-2xl">
+                                    <Image className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                                    <p className="text-slate-400 font-semibold">No posts found on this page</p>
+                                    <p className="text-slate-600 text-sm mt-1">Create your first post using the Publish tab</p>
+                                    <button
+                                        onClick={() => setActiveTab('post')}
+                                        className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-semibold transition-colors"
+                                    >
+                                        Create a Post
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {pagePosts.map((post: any) => (
+                                        <div key={post.id} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-blue-500/30 transition-all group">
+                                            <div className="flex gap-4 p-4">
+                                                {post.full_picture && (
+                                                    <div className="w-28 h-28 rounded-xl overflow-hidden flex-shrink-0 border border-slate-800 bg-slate-950">
+                                                        <img
+                                                            src={post.full_picture}
+                                                            alt="Post"
+                                                            referrerPolicy="no-referrer"
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                            onError={(e) => {
+                                                                // Suppress broken Facebook CDN images that cause 403 console errors
+                                                                (e.target as HTMLImageElement).parentElement?.remove();
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                                                            post.type === 'photo' ? 'bg-blue-500/10 text-blue-400' :
+                                                            post.type === 'video' ? 'bg-violet-500/10 text-violet-400' :
+                                                            post.type === 'share' ? 'bg-amber-500/10 text-amber-400' :
+                                                            'bg-teal-500/10 text-teal-400'
+                                                        }`}>
+                                                            {post.type || 'Post'}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-500">
+                                                            {post.created_time ? new Date(post.created_time).toLocaleDateString() : ''}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-200 line-clamp-3 mb-3 leading-relaxed">
+                                                        {post.message || post.story || <span className="italic text-slate-500">No text content</span>}
+                                                    </p>
+                                                    <div className="flex items-center gap-4 flex-wrap">
+                                                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
+1529:                                                             <button 
+1530:                                                                 onClick={() => handleLike(post.id)}
+1531:                                                                 disabled={!!commentActionLoading[`like-${post.id}`]}
+1532:                                                                 className="hover:scale-110 active:scale-95 transition-transform"
+1533:                                                             >
+1534:                                                                 {commentActionLoading[`like-${post.id}`] ? '⏳' : '👍'}
+1535:                                                             </button>
+                                                             {post.likes?.summary?.total_count ?? 0}
+                                                         </div>
+                                                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                             <span>💬</span>
+                                                             {post.comments?.summary?.total_count ?? 0}
+                                                         </div>
+                                                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                             <span>🔁</span>
+                                                             {post.shares?.count ?? 0}
+                                                         </div>
+                                                        {post.permalink_url && (
+                                                            <a
+                                                                href={post.permalink_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="ml-auto text-xs text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1"
+                                                            >
+                                                                View on Facebook <ExternalLink className="w-3 h-3" />
+                                                            </a>
+>>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                                                         )}
 
                                                         <div className="flex flex-wrap gap-2">
@@ -1326,6 +1678,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                             </button>
                                                         </div>
 
+<<<<<<< HEAD
                                                         {commentsLoadingByPost[post.id] && (
                                                             <div className="mt-3 text-xs text-gray-500">Loading comments...</div>
                                                         )}
@@ -1338,6 +1691,57 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                     <div key={comment.id} className="rounded-xl border border-white/5 bg-white/[0.03] p-3 text-sm text-gray-300">
                                                                         <div className="mb-1 text-xs font-black uppercase tracking-widest text-gray-500">
                                                                             {comment.from?.name || 'Comment'}
+=======
+                                                        {(post.comments?.data || []).length > 0 ? (
+                                                            <div className="space-y-2">
+                                                                {(post.comments?.data || []).slice(0, 5).map((comment: any) => (
+                                                                    <div key={comment.id} className="rounded-lg border border-slate-800 bg-slate-900/70 p-2.5">
+                                                                        <p className="text-xs text-slate-200">
+                                                                            <span className="font-semibold text-slate-300">
+                                                                                {comment.from?.name || 'User'}:
+                                                                            </span>{' '}
+                                                                            {comment.message || ''}
+                                                                        </p>
+                                                                        <div className="mt-2 flex gap-2">
+                                                                            <input
+                                                                                value={replyByComment[comment.id] || ''}
+                                                                                onChange={(e) =>
+                                                                                    setReplyByComment((prev) => ({
+                                                                                        ...prev,
+                                                                                        [comment.id]: e.target.value,
+                                                                                    }))
+                                                                                }
+                                                                                placeholder="Reply to this comment..."
+                                                                                className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                                                                            />
+                                                                            <button
+                                                                                onClick={() => void handleFacebookComment(post.id, comment.id)}
+                                                                                disabled={!!commentActionLoading[`reply-${comment.id}`]}
+                                                                                className="rounded-lg bg-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                                                                            >
+                                                                                {commentActionLoading[`reply-${comment.id}`] ? 'Replying...' : 'Reply'}
+                                                                            </button>
+                                                                             <button
+                                                                                 onClick={() =>
+                                                                                     void generateFacebookQuickReply(
+                                                                                         post,
+                                                                                         comment.id,
+                                                                                         comment.message
+                                                                                     )
+                                                                                 }
+                                                                                 disabled={!!aiReplyLoading[`reply-${comment.id}`]}
+                                                                                 className="rounded-lg bg-violet-600/20 border border-violet-500/30 px-2.5 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                                             >
+                                                                                 {aiReplyLoading[`reply-${comment.id}`] ? 'Generating...' : 'AI Reply'}
+                                                                             </button>
+                                                                             <button
+                                                                                 onClick={() => handleLike(comment.id)}
+                                                                                 disabled={!!commentActionLoading[`like-${comment.id}`]}
+                                                                                 className="p-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 transition-colors"
+                                                                             >
+                                                                                 {commentActionLoading[`like-${comment.id}`] ? <Loader2 className="w-3 h-3 animate-spin" /> : '👍'}
+                                                                             </button>
+>>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                                                                         </div>
                                                                         {comment.message || 'No comment text returned.'}
                                                                     </div>

@@ -141,11 +141,26 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: Users,
     subItems: [
+<<<<<<< HEAD
       { label: 'Customer workspace', href: '/dashboard/crm/workspace', icon: Users },
       { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
       { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
       { label: 'Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
     ],
+=======
+      { label: 'AI Lead Finder', href: '/dashboard/sales-agent?tab=finder', icon: Search },
+      { label: 'Growth Agent Chat', href: '/dashboard/sales-agent?tab=chat', icon: Bot },
+      { label: 'Active Leads', href: '/dashboard/crm?stage=lead', icon: TrendingUp },
+      { label: 'Contacts', href: '/dashboard/crm?stage=customer', icon: Users },
+      { label: 'Gmail', href: '/dashboard/mail', icon: Mail },
+      { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
+      { label: 'Social Media Manager', href: '/dashboard/business/social', icon: Globe },
+      { label: 'Zoho Mail', href: '/dashboard/zoho/mail', icon: Mail },
+      { label: 'SMS Outreach', href: '/dashboard/business/sms', icon: Smartphone },
+      { label: 'LinkedIn Manager', href: '/dashboard/business/linkedin', icon: Linkedin },
+      { label: 'Social Command Center', href: '/dashboard/business/social-command', icon: Star },
+    ]
+>>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
   },
 
   {
