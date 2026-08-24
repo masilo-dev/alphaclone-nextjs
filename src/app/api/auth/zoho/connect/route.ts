@@ -6,7 +6,6 @@ import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
-<<<<<<< HEAD
 function getAppUrl(_req: NextRequest) {
     return PUBLIC_APP_ORIGIN;
 }
@@ -15,20 +14,6 @@ function getZohoRedirectUri(_req: NextRequest) {
     const configured = String(ENV.ZOHO_REDIRECT_URI || '').trim();
     if (configured) return configured.replace(/\/$/, '');
     return OAUTH_CALLBACKS.zoho;
-=======
-function getAppUrl(req: NextRequest) {
-    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-    const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '');
-    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    return host ? `${proto}://${host}` : 'https://alphaclonesystems.com';
-}
-
-function getZohoRedirectUri(req: NextRequest) {
-    const appUrl = getAppUrl(req).replace(/\/$/, '');
-    const configured = String(ENV.ZOHO_REDIRECT_URI || '').trim();
-    if (configured) return configured.replace(/\/$/, '');
-    return `${appUrl}/api/auth/zoho/callback`;
->>>>>>> origin/main
 }
 
 function resolveZohoCredentials(region: string): { clientId: string; clientSecret: string } {
@@ -44,7 +29,6 @@ export async function GET(req: NextRequest) {
     try {
     const { searchParams } = new URL(req.url);
     const requestedRegion = searchParams.get('region');
-<<<<<<< HEAD
     const tenantId = searchParams.get('tenantId') || searchParams.get('tenant_id') || '';
 
     const redirectUri = getZohoRedirectUri(req);
@@ -58,25 +42,6 @@ export async function GET(req: NextRequest) {
             { error: `Zoho OAuth credentials are missing for region ${region}` },
             { status: 500 }
         );
-=======
-    const state = searchParams.get('state') || ''; // user ID or secure nonce
-
-    const redirectUri = getZohoRedirectUri(req);
-
-    let identityState = state;
-    if (!identityState) {
-        const supabase = await createSupabaseServerClient();
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-        if (user?.id) {
-            identityState = user.id;
-        }
-    }
-
-    if (!identityState) {
-        return NextResponse.json({ error: 'Missing user identity state' }, { status: 400 });
->>>>>>> origin/main
     }
     const hosts = ZohoService.getHostsByRegion(region);
     const admin = createSupabaseAdminClient();
@@ -86,16 +51,6 @@ export async function GET(req: NextRequest) {
         metadata: { provider: 'zoho', region },
     }).select('id').single();
     if (stateError || !stateRow?.id) throw stateError || new Error('OAuth state could not be created');
-
-    const region = (requestedRegion || ENV.ZOHO_REGION || 'US').toUpperCase();
-    const { clientId, clientSecret } = resolveZohoCredentials(region);
-    if (!clientId || !clientSecret) {
-        return NextResponse.json(
-            { error: `Zoho OAuth credentials are missing for region ${region}` },
-            { status: 500 }
-        );
-    }
-    const hosts = ZohoService.getHostsByRegion(region);
 
     const scopes = [
         // Mail

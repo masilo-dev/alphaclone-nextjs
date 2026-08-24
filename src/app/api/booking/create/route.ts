@@ -2,11 +2,8 @@ import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createClient } from '@supabase/supabase-js';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
-<<<<<<< HEAD
 import { microsoftServerService } from '@/services/server/microsoftServerService';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
-=======
->>>>>>> origin/main
 
 // Initialize Clients
 // Initialize Clients inside handler to avoid build-time errors if env vars missing
@@ -381,7 +378,6 @@ export async function POST(req: Request) {
             if (!emailResult.success) {
                 console.error('Booking confirmation email failed:', emailResult.error);
             }
-<<<<<<< HEAD
 
             // Notify host + follow-up task so the owner sees the booking off-platform too
             try {
@@ -411,8 +407,6 @@ export async function POST(req: Request) {
             } catch (hostEmailErr) {
                 console.error('Host booking notification failed:', hostEmailErr);
             }
-=======
->>>>>>> origin/main
         }
 
         return NextResponse.json({ success: true, booking, roomUrl: maskedUrl });

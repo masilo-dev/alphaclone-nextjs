@@ -67,22 +67,6 @@ export const activityService = {
             ...metadata,
             ...(diff ? { _audit_diff: diff } : {})
         };
-<<<<<<< HEAD
-=======
-
-        const { error } = await supabase.from('activity_logs').insert({
-            user_id: userId,
-            action,
-            ip_address: locationData.ip,
-            country: locationData.country,
-            city: locationData.city,
-            device_type: deviceType,
-            browser,
-            user_agent: ua,
-            metadata: combinedMetadata,
-            tenant_id: tenantId,
-        });
->>>>>>> origin/main
 
         if (!tenantId) return { error: new Error('No active workspace selected') };
         const response = await fetch(`/api/tenant/${tenantId}/activity`, {

@@ -23,13 +23,8 @@ import {
     Receipt,
     RefreshCw,
     MessageCircle,
-<<<<<<< HEAD
     Plus,
     X,
-=======
-    X,
-    Minimize2,
->>>>>>> origin/main
 } from 'lucide-react';
 import IncomingCallModal from '../video/IncomingCallModal';
 import { DashboardAccountMenu } from '../DashboardAccountMenu';
@@ -41,13 +36,10 @@ import { resolveOnboardingGate } from '@/lib/onboarding/resolveOnboardingGate';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
-<<<<<<< HEAD
 import { usePrefetchDashboardStats } from '@/hooks/useDashboardStats';
 import { startClientVideoCall } from '@/services/instantMeetingService';
 import { WORKSPACE } from '@/constants/design';
 import SkipToMainContent from '@/components/accessibility/SkipToMainContent';
-=======
->>>>>>> origin/main
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -115,7 +107,6 @@ const XIntegrationTab = React.lazy(() => import('../social/XIntegrationTab'));
 const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
 const SocialCommandCenter = React.lazy(() => import('../social/SocialCommandCenter'));
 const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
-<<<<<<< HEAD
 const TeamsPage = React.lazy(() => import('./TeamsPage'));
 
 const CashFlowForecastTab = React.lazy(() => import('./CashFlowForecastTab'));
@@ -142,9 +133,6 @@ import { isHubRoute, wrapRouteInHub } from '@/lib/dashboard/hubRoutes';
 import { TrialBanner } from '../TrialBanner';
 import BonnieWidget from '../bonnie/BonnieWidget';
 import BonnieFullView from '../bonnie/BonnieFullView';
-=======
-import { TrialBanner } from '../TrialBanner';
->>>>>>> origin/main
 
 import Sidebar from '@/components/dashboard/Sidebar';
 import BottomNav from '../BottomNav';
@@ -177,10 +165,7 @@ const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/leads/campaigns',
     '/dashboard/zoho/mail',
     '/dashboard/business/messages',
-<<<<<<< HEAD
     '/dashboard/pwa-settings',
-=======
->>>>>>> origin/main
 ];
 
 interface BusinessDashboardProps {
@@ -200,7 +185,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     );
     const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats, refreshTenants, error: tenantError } = useTenant();
     const currentTenant = propTenant || contextTenant;
-<<<<<<< HEAD
     const [bootstrappingOrg, setBootstrappingOrg] = useState(false);
     usePrefetchDashboardStats(currentTenant?.id);
     const hasBootstrappedRef = useRef(Boolean(propTenant || contextTenant));
@@ -222,17 +206,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const {
         activeMeetingCallId,
         startMeeting,
-=======
-    const [activeSection, setActiveSection] = useState('profile');
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const {
-        activeMeetingCallId,
-        isMeetingMinimized,
-        startMeeting,
-        endMeeting,
-        setIsMeetingMinimized,
-        toggleMeetingMinimized,
->>>>>>> origin/main
     } = useMeetingSession(`${user.id}:${currentTenant?.id || 'no-tenant'}`);
 
     useEffect(() => {
@@ -354,10 +327,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Explicitly typed handlers
     const handleJoinCall = (callId: string) => {
         startMeeting(callId);
-<<<<<<< HEAD
         router.push(`/meet/${callId}`);
-=======
->>>>>>> origin/main
     };
     const handleInitiateCallToClient = async (clientId: string) => {
         const toastId = toast.loading('Initiating secure call...');
@@ -457,11 +427,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         };
 
         checkTasks();
-<<<<<<< HEAD
     }, [user?.id, currentTenant?.id]);
-=======
-    }, [user, currentTenant]);
->>>>>>> origin/main
 
     React.useEffect(() => {
         if (dashboardStatsError) {
@@ -562,10 +528,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <BusinessPerformanceDashboard />
                     </React.Suspense>
                 );
-<<<<<<< HEAD
             case '/dashboard/settings':
-=======
->>>>>>> origin/main
             case '/dashboard/business/settings':
                 return (
                     <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={2} /></div>}>
@@ -590,7 +553,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             // New Routes
             case '/dashboard/crm':
-<<<<<<< HEAD
                 return <CrmDashboard />;
             case '/dashboard/crm/workspace':
                 return <CRMTab user={user} />;
@@ -600,29 +562,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return <DealsTab user={user} />;
             case '/dashboard/business/referrals':
                 return <ReferralsPage user={user} tenant={currentTenant} />;
-=======
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <CRMTab user={user} />
-                    </React.Suspense>
-                );
-            case '/dashboard/deals':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <DealsTab user={user} />
-                    </React.Suspense>
-                );
-            case '/dashboard/business/referrals':
-                return (
-                    <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
-                        <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-6">
-                            <TrendingUp className="w-10 h-10 text-teal-400" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Referrals Coming Soon</h3>
-                        <p className="text-slate-400 max-w-md">The referral and affiliate tracking module is currently being provisioned.</p>
-                    </div>
-                );
->>>>>>> origin/main
             case '/dashboard/leads':
             case '/dashboard/contacts':
             case '/dashboard/business/clients':
@@ -702,15 +641,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
             case '/dashboard/tasks':
-<<<<<<< HEAD
                 return <TasksTab user={user} />;
-=======
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-                        <TasksTab user={user} />
-                    </React.Suspense>
-                );
->>>>>>> origin/main
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
             case '/dashboard/leads/campaigns':
@@ -728,15 +659,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return <ContractDashboard user={user} initialTab="details" />;
             // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence
             case '/dashboard/business/quotes':
-<<<<<<< HEAD
                 return <QuotesTab user={user} />;
-=======
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-                        <QuotesTab user={user} />
-                    </React.Suspense>
-                );
->>>>>>> origin/main
             case '/dashboard/business/tasks':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
@@ -850,13 +773,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/social-command':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
-<<<<<<< HEAD
                         <BonnieModulePageShell showBonnieDock={false}>
                             <SocialCommandCenter />
                         </BonnieModulePageShell>
-=======
-                        <SocialCommandCenter />
->>>>>>> origin/main
                     </React.Suspense>
                 );
 
@@ -892,7 +811,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             case '/dashboard/business/unified-inbox':
                 return (
-<<<<<<< HEAD
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
                         <div className="h-full p-3 md:p-5">
                             <UnifiedInbox defaultTab="channels" />
@@ -958,10 +876,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
                         <EnhancedBillingPage user={user} />
-=======
-                    <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
-                        <FinanceTab user={user} />
->>>>>>> origin/main
                     </React.Suspense>
                 );
 
@@ -1017,16 +931,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/calendar': return t('Calendar');
             case '/dashboard/billing':
             case '/dashboard/business/billing': return t('Billing');
-<<<<<<< HEAD
             case '/dashboard/business/reports':
             case '/dashboard/reporting':
                 return t('Analytics & Reports');
             case '/dashboard/performance': return t('Business OS Performance');
             case '/dashboard/settings':
-=======
-            case '/dashboard/business/reports': return t('Analytics & Reports');
-            case '/dashboard/performance': return t('Business OS Performance');
->>>>>>> origin/main
             case '/dashboard/business/settings': return t('Settings');
             case '/dashboard/pwa-settings': return t('Mobile app');
             case '/dashboard/contracts':
@@ -1047,7 +956,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/x': return t('X (Twitter) Manager');
             case '/dashboard/business/whatsapp': return t('WhatsApp Accounts');
 
-<<<<<<< HEAD
             case '/dashboard/business/unified-inbox': return t('Unified Inbox');
             case '/dashboard/business/cash-flow': return t('Cash Flow Forecast');
             case '/dashboard/business/onboarding': return t('Client Onboarding');
@@ -1058,11 +966,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/quotes': return t('Quotes & Proposals');
             case '/dashboard/business/booking': return t('Scheduling & Booking');
             case '/dashboard/business/teams': return t('MS Teams');
-=======
-            case '/dashboard/business/ingestion': return t('Lead Ingestion');
-            case '/dashboard/business/quotes': return t('Quotes & Proposals');
-            case '/dashboard/business/booking': return t('Scheduling & Booking');
->>>>>>> origin/main
             case '/dashboard/business/social-command': return t('Social Command Center');
             case '/dashboard/tasks': return t('Tasks');
             case '/dashboard/sales-agent': return t('AI Growth');
@@ -1155,13 +1058,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Use external nav items instead of local redundant array
 
     return (
-<<<<<<< HEAD
         <div className="flex min-w-0 ac-workspace-canvas text-[var(--ws-text-primary)] overflow-hidden font-sans selection:bg-[var(--brand-blue-500)]/30 w-full max-w-full ac-business-root [height:100dvh]">
             <SkipToMainContent />
             <div data-tour="navigation" className="flex-shrink-0">
-=======
-        <div className="flex min-w-0 bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full ac-business-root [height:100dvh]">
->>>>>>> origin/main
             <Sidebar
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
@@ -1176,11 +1075,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
-<<<<<<< HEAD
             <main id="main-content" className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main">
-=======
-            <main className="flex-1 flex flex-col min-w-0 min-h-0 bg-slate-950 ac-business-main">
->>>>>>> origin/main
 
                 <TrialBanner />
 
@@ -1223,13 +1118,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     <span className="text-teal-400 font-bold text-lg">{currentTenant?.name?.charAt(0) || 'A'}</span>
                                 )}
                             </div>
-<<<<<<< HEAD
                             {!isHubRoute(route) && (
                                 <h1 className="pwa-page-title text-white/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-none">{getPageTitle()}</h1>
                             )}
-=======
-                            <h1 className="pwa-page-title text-white/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-none">{getPageTitle()}</h1>
->>>>>>> origin/main
                         </div>
 
                         {/* Breadcrumb or Title for Desktop — hidden inside hubs (HubShell shows title) */}
@@ -1252,21 +1143,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         )}
                         {activeMeetingCallId && (
                             <button
-<<<<<<< HEAD
                                 onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
                                 className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-teal-500/20 transition-colors"
                                 title="Return to active meeting"
                             >
                                 <Video className="w-3.5 h-3.5" />
                                 <span className="hidden lg:inline">Live meeting</span>
-=======
-                                onClick={() => setIsMeetingMinimized(false)}
-                                className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
-                                title="Return to active meeting"
-                            >
-                                <Video className="w-3.5 h-3.5" />
-                                {isMeetingMinimized ? 'Return to Meeting' : 'Meeting Active'}
->>>>>>> origin/main
                             </button>
                         )}
 
@@ -1356,7 +1238,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 />
             )}
 
-<<<<<<< HEAD
 
             {/* Mobile Bottom Navigation */}
             <BottomNav
@@ -1397,36 +1278,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         localStorage.setItem(`business_tour_completed_${user.id}`, '1');
                     }
                 }}
-=======
-            {activeMeetingCallId && (
-                <React.Suspense fallback={null}>
-                    {!isMeetingMinimized && (
-                        <button
-                            onClick={() => setIsMeetingMinimized(true)}
-                            className="fixed top-20 right-4 z-[130] inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-white/15 text-xs font-semibold text-slate-100 hover:bg-slate-800 transition-colors"
-                            title="Run meeting in background"
-                        >
-                            <Minimize2 className="w-3.5 h-3.5" />
-                            Background mode
-                        </button>
-                    )}
-                    <CustomVideoRoom
-                        user={user}
-                        callId={activeMeetingCallId}
-                        onLeave={endMeeting}
-                        isMinimized={isMeetingMinimized}
-                        onToggleMinimize={toggleMeetingMinimized}
-                    />
-                </React.Suspense>
-            )}
-
-            {/* Mobile Bottom Navigation */}
-            <BottomNav
-                activeTab={activeTab}
-                onNavigate={(href) => setActiveTab(href)}
-                onToggleMenu={() => setSidebarOpen(true)}
-                unreadCount={0}
->>>>>>> origin/main
                 userRole="tenant_admin"
             />
 

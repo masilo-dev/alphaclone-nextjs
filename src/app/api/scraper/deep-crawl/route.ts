@@ -3,11 +3,8 @@ import * as cheerio from 'cheerio';
 import axios from 'axios';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { scraperDeepCrawlSchema } from '@/schemas/validation';
-<<<<<<< HEAD
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 import { assertSafeExternalHttpUrl } from '@/lib/security/externalUrl';
-=======
->>>>>>> origin/main
 
 // Regex for extracting emails
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
@@ -15,10 +12,7 @@ const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 export async function POST(request: Request) {
   let browserClose: (() => Promise<void>) | null = null;
   try {
-<<<<<<< HEAD
     await requireAuthenticatedUser(request);
-=======
->>>>>>> origin/main
     const payload = await request.json();
     const parsed = scraperDeepCrawlSchema.safeParse(payload);
     if (!parsed.success) {
@@ -59,7 +53,6 @@ export async function POST(request: Request) {
       try {
           const { page, close } = await BrowserManager.createPage();
           browserClose = close;
-<<<<<<< HEAD
           await page.route('**/*', async (route) => {
             if (!route.request().isNavigationRequest()) return route.continue();
             try {
@@ -69,8 +62,6 @@ export async function POST(request: Request) {
               await route.abort('blockedbyclient');
             }
           });
-=======
->>>>>>> origin/main
           await page.goto(cleanUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
           // Wait a bit for JS to render
           await page.waitForTimeout(2000); 
@@ -156,18 +147,7 @@ export async function POST(request: Request) {
       errorCode = 'ENGINE_UNAVAILABLE';
     }
 
-<<<<<<< HEAD
     return routeErrorResponse(error, errorMessage, request);
-=======
-    return NextResponse.json({ 
-      success: false, 
-      error: errorMessage, 
-      code: errorCode, 
-      emails: [], 
-      phone: '', 
-      social_links: {} 
-    }, { status: (errorCode === 'DEEP_CRAWL_FAILED' ? 500 : 503) });
->>>>>>> origin/main
   } finally {
     if (browserClose) {
       await browserClose().catch(() => {});

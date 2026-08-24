@@ -106,44 +106,7 @@ export async function POST(req: NextRequest) {
                     max_tokens: 200,
                 });
 
-<<<<<<< HEAD
                 const content = response.choices[0]?.message?.content?.trim() || '{}';
-=======
-            const content = response.choices[0]?.message?.content?.trim() || '{}';
-            // Clean markdown if present
-            const cleanJson = content.replace(/```json\n?|\n?```/g, '');
-            extractedData = JSON.parse(cleanJson);
-
-        } else if (ENV.ANTHROPIC_API_KEY) {
-            const anthropic = new Anthropic({ apiKey: ENV.ANTHROPIC_API_KEY });
-
-            const response = await anthropic.messages.create({
-                model: 'claude-3-5-sonnet-latest',
-                max_tokens: 200,
-                temperature: 0,
-                system: systemPrompt,
-                messages: [
-                    {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'image',
-                                source: {
-                                    type: 'base64',
-                                    media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-                                    data: base64Data,
-                                },
-                            },
-                            { type: 'text', text: 'Analyze this receipt and output the JSON.' }
-                        ],
-                    }
-                ],
-            });
-
-            const block = response.content[0];
-            if (block.type === 'text') {
-                const content = block.text.trim();
->>>>>>> origin/main
                 const cleanJson = content.replace(/```json\n?|\n?```/g, '');
                 extractedData = JSON.parse(cleanJson);
             } catch (err) {

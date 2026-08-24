@@ -166,7 +166,6 @@ export const MCP_TOOLS = [
       required: ['to', 'subject', 'body'],
     },
   },
-<<<<<<< HEAD
   {
     name: 'microsoft_get_emails',
     description: 'Fetch recent Outlook inbox messages for the connected Microsoft account.',
@@ -302,8 +301,6 @@ export const MCP_TOOLS = [
       required: ['team_id', 'channel_id'],
     },
   },
-=======
->>>>>>> origin/main
 
   // ── Leads Pipeline ─────────────────────────────────────────────────
   {
@@ -567,7 +564,6 @@ export const MCP_TOOLS = [
   },
   {
     name: 'create_deal',
-<<<<<<< HEAD
     description: 'Create a new deal in the CRM pipeline. Accepts name or title; value defaults to 0, stage defaults to lead. Workspace resolved from MCP session.',
     inputSchema: {
       type: 'object',
@@ -578,16 +574,6 @@ export const MCP_TOOLS = [
         stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: lead)' },
         contact_id: { type: 'string', description: 'Optional contact UUID' },
         client_id: { type: 'string', description: 'Optional CRM client UUID' },
-=======
-    description: 'Create a new deal in the CRM pipeline from a qualified lead.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        name: { type: 'string', description: 'Deal name/title' },
-        value: { type: 'number', description: 'Estimated deal value in USD' },
-        stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: qualified)' },
->>>>>>> origin/main
         description: { type: 'string' },
       },
       required: ['name'],
@@ -625,11 +611,8 @@ export const MCP_TOOLS = [
         tax: { type: 'number' },
         total: { type: 'number' },
         notes: { type: 'string' },
-<<<<<<< HEAD
         bank_details: { type: 'string', description: 'Optional bank transfer instructions shown on invoices.' },
         mobile_payment_details: { type: 'string', description: 'Optional mobile money / cash app instructions shown on invoices.' },
-=======
->>>>>>> origin/main
         line_items: { type: 'array', items: { type: 'object' } },
       },
       required: ['client_id', 'due_date', 'total'],
@@ -662,11 +645,8 @@ export const MCP_TOOLS = [
         tax: { type: 'number' },
         total: { type: 'number' },
         notes: { type: 'string' },
-<<<<<<< HEAD
         bank_details: { type: 'string', description: 'Optional bank transfer instructions.' },
         mobile_payment_details: { type: 'string', description: 'Optional mobile payment instructions.' },
-=======
->>>>>>> origin/main
         status: { type: 'string', description: 'draft | sent | paid | overdue | cancelled | void' },
         line_items: { type: 'array', items: { type: 'object' } },
       },
@@ -724,7 +704,6 @@ export const MCP_TOOLS = [
     },
   },
   {
-<<<<<<< HEAD
     name: 'get_business_ai_state',
     description: 'Read the current business AI connection state, model preference, audit posture, and recommended mode for this workspace.',
     inputSchema: {
@@ -905,8 +884,6 @@ export const MCP_TOOLS = [
     },
   },
   {
-=======
->>>>>>> origin/main
     name: 'generate_business_report',
     description: 'Executive Performance Reporting: Generate a comprehensive business performance report including revenue trends, conversion rates, automation throughput, and strategic insights.',
     inputSchema: {
@@ -1288,7 +1265,6 @@ export const MCP_TOOLS = [
     },
   },
   {
-<<<<<<< HEAD
     name: 'create_social_post_with_media',
     description:
       'One-step upload and post for Claude/Manus: attach image or video (base64) and publish or schedule a social post.',
@@ -1309,8 +1285,6 @@ export const MCP_TOOLS = [
     },
   },
   {
-=======
->>>>>>> origin/main
     name: 'upload_document',
     description: 'Upload a document or file (PDF, Docx, Text) into the native AlphaClone Document Hub. Includes automated cyber-security scanning. Does not return a public/external link unless create_public_link is explicitly true.',
     inputSchema: {
@@ -1471,20 +1445,12 @@ export const MCP_TOOLS = [
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         text: { type: 'string', description: 'Post text content' },
-<<<<<<< HEAD
         post_as: { type: 'string', description: 'personal | company | all_pages (default: personal). Passing linkedin_organization_id implies company.' },
-=======
-        post_as: { type: 'string', description: 'personal | company | all_pages (default: personal)' },
->>>>>>> origin/main
         media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs for scheduled publishing' },
         media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset references uploaded to the workspace library' },
         publish_now: { type: 'boolean' },
         scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
-<<<<<<< HEAD
         linkedin_organization_id: { type: 'string', description: 'LinkedIn organization ID to post as company page. When provided, the post is published as that page even without post_as=company.' },
-=======
-        linkedin_organization_id: { type: 'string', description: 'Optional LinkedIn organization ID to post as company page' },
->>>>>>> origin/main
         task_id: { type: 'string', description: 'Optional task reference to update with execution notes' },
         task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
         task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
@@ -1513,11 +1479,7 @@ export const MCP_TOOLS = [
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
-<<<<<<< HEAD
         linkedin_organization_id: { type: 'string', description: 'Optional organization ID for org analytics. Auto-resolved from the social_posts record when omitted.' },
-=======
-        linkedin_organization_id: { type: 'string', description: 'Optional organization ID for organization analytics lookup' },
->>>>>>> origin/main
       },
       required: ['post_urn'],
     },
@@ -1888,19 +1850,11 @@ export const MCP_TOOLS = [
   // ── Analytics & Momentum ───────────────────────────────────────────
   {
     name: 'get_momentum_score',
-<<<<<<< HEAD
     description: 'Get the gamification XP, level, and momentum score for the authenticated user (resolved from MCP session).',
     inputSchema: {
       type: 'object',
       properties: { user_id: { type: 'string', description: 'Optional — defaults to authenticated MCP user' } },
       required: [],
-=======
-    description: 'Get the gamification XP, level, and momentum score for a user.',
-    inputSchema: {
-      type: 'object',
-      properties: { user_id: { type: 'string' } },
-      required: ['user_id'],
->>>>>>> origin/main
     },
   },
   {
@@ -1988,7 +1942,6 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_transactional_email',
-<<<<<<< HEAD
     description: 'Send a transactional email using the caller user scoped provider configuration. Pass `to` OR lead_id/contact_id/client_id to resolve the recipient from CRM records. Attach files via base64 attachments[] (preferred) or document_file_ids (resolved to base64 attachments). Workspace/user are resolved from your MCP session — do not pass tenant_id.',
     inputSchema: {
       type: 'object',
@@ -1997,15 +1950,6 @@ export const MCP_TOOLS = [
         lead_id: { type: 'string', description: 'Resolve recipient email from a lead record' },
         contact_id: { type: 'string', description: 'Resolve recipient email from a contact record' },
         client_id: { type: 'string', description: 'Resolve recipient email from a business client record' },
-=======
-    description: 'Send a transactional email using the caller user scoped provider configuration. Supports base64 file attachments for sending PDFs and documents. For Claude, Manus, Grok, and other MCP clients: send documents as attachments/native email by default; do not create or include external document links unless the user explicitly asks. If no stored sender signature exists, ask the user for email_signature before sending.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        user_id: { type: 'string' },
-        to: { type: 'string' },
->>>>>>> origin/main
         subject: { type: 'string' },
         html: { type: 'string' },
         text: { type: 'string' },
@@ -2015,11 +1959,7 @@ export const MCP_TOOLS = [
         document_file_ids: {
           type: 'array',
           items: { type: 'string' },
-<<<<<<< HEAD
           description: 'Document Hub / workspace_files / file_uploads IDs — converted to base64 email attachments automatically.',
-=======
-          description: 'Optional AlphaClone Document Hub file_uploads IDs. By default these are attached directly to the email.',
->>>>>>> origin/main
         },
         include_public_document_links: {
           type: 'boolean',

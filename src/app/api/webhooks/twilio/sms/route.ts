@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import { isProduction } from '@/lib/security/productionGuard';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
-=======
-import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
->>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 
@@ -39,18 +35,14 @@ export async function POST(req: NextRequest) {
 
     const signature = req.headers.get('x-twilio-signature');
     const authToken = process.env.TWILIO_AUTH_TOKEN || '';
-<<<<<<< HEAD
     if (isProduction() && (!signature || !authToken)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-=======
->>>>>>> origin/main
     if (signature && authToken) {
       const ok = validateTwilioSignature(payload, getRawUrl(req), signature, authToken);
       if (!ok) return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
 
-<<<<<<< HEAD
     const fromRaw = String(payload.From || '').trim();
     const toRaw = String(payload.To || '').trim();
     const body = String(payload.Body || '').trim();
@@ -59,13 +51,6 @@ export async function POST(req: NextRequest) {
 
     const from = normalizePhoneNumber(fromRaw);
     const to = normalizePhoneNumber(toRaw);
-=======
-    const from = String(payload.From || '').trim();
-    const to = String(payload.To || '').trim();
-    const body = String(payload.Body || '').trim();
-    const sid = String(payload.MessageSid || payload.SmsMessageSid || '').trim();
-    if (!from || !to) return NextResponse.json({ error: 'Missing From/To' }, { status: 400 });
->>>>>>> origin/main
 
     const admin = createSupabaseAdminClient();
     const { data: integration } = await admin
@@ -79,7 +64,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, ignored: true });
     }
 
-<<<<<<< HEAD
     const keyword = body.trim().toUpperCase();
     const isStopKeyword = ['STOP', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT'].includes(keyword);
     if (isStopKeyword) {
@@ -91,8 +75,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-=======
->>>>>>> origin/main
     await admin.from('sms_messages').insert({
       tenant_id: integration.tenant_id,
       from_number: from,
@@ -120,16 +102,8 @@ export async function POST(req: NextRequest) {
       metadata: { twilio: true },
     });
 
-<<<<<<< HEAD
     return NextResponse.json({ success: true, optOut: isStopKeyword });
-=======
-    return NextResponse.json({ success: true });
->>>>>>> origin/main
   } catch {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main

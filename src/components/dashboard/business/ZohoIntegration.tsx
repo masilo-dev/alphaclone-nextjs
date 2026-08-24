@@ -24,10 +24,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
     const [connecting, setConnecting] = useState(false);
     const [selectedRegion, setSelectedRegion] = useState('US');
     const [configuredRegion, setConfiguredRegion] = useState<string | null>(null);
-<<<<<<< HEAD
     const [campaignsReady, setCampaignsReady] = useState(false);
-=======
->>>>>>> origin/main
     const [isTesting, setIsTesting] = useState(false);
     const [testRecipient, setTestRecipient] = useState('');
 
@@ -45,16 +42,10 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
         if (!tenantId) { setLoading(false); return; }
         setLoading(true);
         try {
-<<<<<<< HEAD
             const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
             const data = await res.json();
             setIsConnected(!!data.isConnected);
             setCampaignsReady(!!data.campaignsReady);
-=======
-            const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
-            const data = await res.json();
-            setIsConnected(!!data.isConnected);
->>>>>>> origin/main
             if (data.configuredRegion) {
                 setConfiguredRegion(data.configuredRegion);
             }
@@ -80,7 +71,6 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
         if (!user || !window.confirm('Are you sure you want to disconnect Zoho? This will remove access to Zoho Mail and CRM features.')) return;
 
         try {
-<<<<<<< HEAD
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) throw new Error('Select a workspace first');
             const res = await fetch('/api/auth/zoho/disconnect', {
@@ -89,9 +79,6 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tenantId }),
             });
-=======
-            const res = await fetch('/api/auth/zoho/disconnect', { method: 'POST', credentials: 'include' });
->>>>>>> origin/main
             if (res.ok) {
                 setIsConnected(false);
                 setConfiguredRegion(null);
@@ -188,12 +175,9 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                                 <div className="mt-2 text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                                     <Globe className="w-3.5 h-3.5 text-teal-400" />
                                     <span>Active Datacenter: <strong className="text-teal-400 uppercase">{configuredRegion}</strong></span>
-<<<<<<< HEAD
                                     {campaignsReady && (
                                         <span className="ml-2 px-2 py-0.5 rounded-lg bg-teal-500/10 text-teal-400 text-[10px] font-black uppercase">Campaigns</span>
                                     )}
-=======
->>>>>>> origin/main
                                 </div>
                             )}
                         </div>

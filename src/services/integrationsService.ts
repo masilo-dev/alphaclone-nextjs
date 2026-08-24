@@ -3,11 +3,7 @@ import { encryptIntegrationConfig } from '@/lib/integration/integrationTokenCryp
 
 export interface IntegrationConfig {
     id: string;
-<<<<<<< HEAD
     type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail' | 'facebook' | 'microsoft';
-=======
-    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail' | 'facebook';
->>>>>>> origin/main
     name: string;
     enabled: boolean;
     config: Record<string, any>;
@@ -305,10 +301,7 @@ export const integrationsService = {
             zoho: 'Zoho Mail',
             gmail: 'Gmail',
             facebook: 'Facebook',
-<<<<<<< HEAD
             microsoft: 'Microsoft 365',
-=======
->>>>>>> origin/main
         };
         return names[type] || type;
     },

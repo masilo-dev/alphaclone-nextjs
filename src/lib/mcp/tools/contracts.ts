@@ -2,10 +2,7 @@ import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
-<<<<<<< HEAD
 import { AppUrls } from '@/lib/urls';
-=======
->>>>>>> origin/main
 
 // 1. get_contracts
 registerTool('contracts', {
@@ -80,7 +77,6 @@ registerTool('contracts', {
       .single();
 
     if (error) throw error;
-<<<<<<< HEAD
 
     const { notifyContractCreated } = await import(
       '@/services/contractNotificationService'
@@ -89,8 +85,6 @@ registerTool('contracts', {
       console.error('[create_contract] notify failed:', err)
     );
 
-=======
->>>>>>> origin/main
     return data;
   },
 });
@@ -149,7 +143,6 @@ registerTool('contracts', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-<<<<<<< HEAD
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -190,28 +183,6 @@ registerTool('contracts', {
       signing_token: token,
       signing_link: AppUrls.signContract(token),
       expires_at: expiresAt,
-=======
-    const token = crypto.randomUUID();
-
-    const { data, error } = await supabase
-      .from('contracts')
-      .update({
-        signing_token: token,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', args.contract_id)
-      .eq('tenant_id', args.tenant_id)
-      .select('id, title, signing_token')
-      .single();
-
-    if (error) throw error;
-
-    return {
-      contract_id: data.id,
-      title: data.title,
-      signing_token: data.signing_token,
-      signing_link: `/sign-contract?token=${data.signing_token}`,
->>>>>>> origin/main
     };
   },
 });
@@ -252,21 +223,10 @@ registerTool('contracts', {
         .single();
       
       if (contract?.client_id) {
-<<<<<<< HEAD
         const { resolvePartyEmail } = await import(
           '@/lib/contracts/contractCoherenceServer'
         );
         toEmail = (await resolvePartyEmail(supabase, args.tenant_id, contract.client_id)) || undefined;
-=======
-        const { data: client } = await supabase
-          .from('clients')
-          .select('email')
-          .eq('id', contract.client_id)
-          .single();
-        if (client?.email) {
-          toEmail = client.email;
-        }
->>>>>>> origin/main
       }
     }
 
@@ -291,7 +251,6 @@ registerTool('contracts', {
       throw new Error(result.error || 'Failed to send contract');
     }
 
-<<<<<<< HEAD
     const { data: contractRow } = await supabase
       .from('contracts')
       .select('title')
@@ -319,12 +278,6 @@ registerTool('contracts', {
       message: 'Contract successfully sent to client',
       recipient: toEmail,
       signing_url: result.signingUrl,
-=======
-    return {
-      status: 'sent',
-      message: 'Contract successfully sent to client',
-      recipient: toEmail,
->>>>>>> origin/main
     };
   },
 });

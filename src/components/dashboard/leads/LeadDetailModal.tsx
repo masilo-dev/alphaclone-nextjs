@@ -21,7 +21,6 @@ import {
     ArrowRight,
     Target,
     MoreVertical,
-<<<<<<< HEAD
     Copy,
     PhoneCall,
     Search,
@@ -32,11 +31,6 @@ import { Modal, Button, Input, Card, Badge, Dropdown } from '../../ui/UIComponen
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { CRMActionChips } from '../crm/CRMActionChips';
-=======
-    History as HistoryIcon
-} from 'lucide-react';
-import { Modal, Button, Input, Card, Badge, Dropdown } from '../../ui/UIComponents';
->>>>>>> origin/main
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
 import { calendarService, CalendarEvent } from '../../../services/calendarService';
@@ -126,10 +120,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
     const [showEmailComposer, setShowEmailComposer] = useState(false);
     const [emailDraft, setEmailDraft] = useState<{ to: string; subject: string; body: string } | null>(null);
     const [showEditForm, setShowEditForm] = useState(false);
-<<<<<<< HEAD
     const [stageChangeReason, setStageChangeReason] = useState('');
-=======
->>>>>>> origin/main
     const [editForm, setEditForm] = useState({
         businessName: lead.businessName || '',
         email: lead.email || '',
@@ -150,10 +141,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             source: lead.source || 'Manual',
             stage: lead.stage || 'lead',
         });
-<<<<<<< HEAD
         setStageChangeReason('');
-=======
->>>>>>> origin/main
     }, [lead]);
 
     useEffect(() => {
@@ -699,10 +687,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
     const handleSaveLeadEdit = async () => {
         setIsLoading(true);
         try {
-<<<<<<< HEAD
             const stageChanged = editForm.stage !== (lead.stage || 'lead');
-=======
->>>>>>> origin/main
             const { error } = await leadService.updateLead(lead.id, {
                 businessName: editForm.businessName,
                 email: editForm.email,
@@ -711,10 +696,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 location: editForm.location,
                 source: editForm.source,
                 stage: editForm.stage,
-<<<<<<< HEAD
                 stageReason: stageChanged ? stageChangeReason : undefined,
-=======
->>>>>>> origin/main
             });
             if (error) throw new Error(error);
             const updatedLead: Lead = {
@@ -729,7 +711,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 status: editForm.stage === 'lead' ? 'New' : editForm.stage,
             };
             onLeadUpdate?.(updatedLead);
-<<<<<<< HEAD
             if (stageChanged && stageChangeReason.trim() && user?.id) {
                 await leadService.addLeadActivity(
                     lead.id,
@@ -746,10 +727,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             toast.success('Lead updated');
             setShowEditForm(false);
             setStageChangeReason('');
-=======
-            toast.success('Lead updated');
-            setShowEditForm(false);
->>>>>>> origin/main
         } catch (error: unknown) {
             toast.error('Failed to update lead: ' + getErrorMessage(error));
         } finally {
@@ -757,7 +734,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
         }
     };
 
-<<<<<<< HEAD
     const handleDeleteLead = async () => {
         if (!window.confirm(`Delete lead "${lead.businessName}"? This cannot be undone.`)) return;
         setIsLoading(true);
@@ -774,8 +750,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
         }
     };
 
-=======
->>>>>>> origin/main
     return (
         <DetailDrawer
             open={isOpen}
@@ -847,7 +821,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                 {/* Header actions */}
                 <div className="px-4 sm:px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start gap-4 bg-slate-900">
-<<<<<<< HEAD
                     <div className="flex-1 min-w-0 text-xs text-slate-500">
                         Quick actions for this lead
                     </div>
@@ -892,63 +865,11 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                         />
                         <div className="flex flex-wrap items-center justify-end gap-2">
                             <Button
-=======
-                    <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-3 mb-1">
-                            <h2 className="text-xl sm:text-2xl font-bold text-white truncate">{lead.businessName}</h2>
-                            <StatusBadge status={lead.status || 'New'} />
-                            {lead.isVerified && (
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    VERIFIED
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400">
-                            {lead.industry && (
-                                <span className="flex items-center gap-1 bg-slate-800/50 px-2 py-1 rounded-md border border-white/5">
-                                    <Bot className="w-3 h-3 text-teal-400" />
-                                    {lead.industry}
-                                </span>
-                            )}
-                            {lead.location && (
-                                <span className="flex items-center gap-1 max-w-[300px] truncate" title={lead.location}>
-                                    <MapPin className="w-3 h-3 text-amber-500" />
-                                    {lead.location}
-                                </span>
-                            )}
-                            {lead.website && (
-                                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-teal-400 transition-colors">
-                                    <Globe className="w-3 h-3" /> Website
-                                </a>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                        {lead.email && (
-                            <Button 
-                                variant="primary" 
-                                size="sm" 
-                                onClick={handleSendProviderEmail}
-                                className="bg-teal-600 hover:bg-teal-500 shadow-teal-500/10"
-                            >
-                                <Mail className="w-4 h-4 mr-2" />
-                                Email
-                            </Button>
-                        )}
-                        <Button
->>>>>>> origin/main
                             variant="outline"
                             size="sm"
                             onClick={handleEnrich}
                             isLoading={isEnriching}
-<<<<<<< HEAD
                             className="border-[var(--brand-blue-500)]/30 text-[var(--brand-blue-400)] hover:bg-[var(--brand-blue-500)]/10"
-=======
-                            className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
->>>>>>> origin/main
                         >
                             <Bot className="w-4 h-4 mr-2" />
                             Research
@@ -991,11 +912,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 },
                                 {
                                     label: 'Convert to Project',
-<<<<<<< HEAD
                                     icon: <Layout className="w-4 h-4 text-[var(--brand-blue-500)]" />,
-=======
-                                    icon: <Layout className="w-4 h-4 text-teal-500" />,
->>>>>>> origin/main
                                     onClick: handleCreateProject
                                 },
                                 {
@@ -1029,7 +946,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     icon: <Zap className="w-4 h-4 text-indigo-400" />,
                                     onClick: handleExecuteFullFlow,
                                     variant: 'default'
-<<<<<<< HEAD
                                 },
                                 ...(onLeadDelete
                                     ? [{
@@ -1042,11 +958,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             ]}
                         />
                         </div>
-=======
-                                }
-                            ]}
-                        />
->>>>>>> origin/main
                     </div>
                 </div>
 
@@ -1094,11 +1005,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950">
                     {showEditForm && (
-<<<<<<< HEAD
                         <Card className="p-4 mb-5 border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-900)]/10">
-=======
-                        <Card className="p-4 mb-5 border-teal-500/30 bg-teal-900/10">
->>>>>>> origin/main
                             <h3 className="text-sm font-semibold text-white mb-3">Edit lead details</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Input
@@ -1136,11 +1043,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     <select
                                         value={editForm.stage}
                                         onChange={(e) => setEditForm((f) => ({ ...f, stage: e.target.value }))}
-<<<<<<< HEAD
                                         className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
-=======
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
->>>>>>> origin/main
                                     >
                                         <option value="lead">Lead</option>
                                         <option value="qualified">Qualified</option>
@@ -1149,7 +1052,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         <option value="won">Won</option>
                                         <option value="lost">Lost</option>
                                     </select>
-<<<<<<< HEAD
                                     <label className="block text-sm font-medium text-slate-300 mt-3">Reason for change</label>
                                     <textarea
                                         value={stageChangeReason}
@@ -1157,8 +1059,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         placeholder="Optional, but helpful when moving the lead backward for re-qualification."
                                         className="w-full min-h-[92px] bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all resize-y"
                                     />
-=======
->>>>>>> origin/main
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
@@ -1360,11 +1260,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                                 <Card className="p-6">
                                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-<<<<<<< HEAD
                                         <Bot className="w-5 h-5 text-[var(--brand-blue-400)]" />
-=======
-                                        <Bot className="w-5 h-5 text-teal-400" />
->>>>>>> origin/main
                                         AI Deep Research
                                     </h3>
                                     <div className="p-4 bg-slate-900 border border-white/5 rounded-lg">
@@ -1627,11 +1523,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 </Button>
                             </div>
                             <textarea
-<<<<<<< HEAD
                                 className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-2xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-mono text-sm leading-relaxed"
-=======
-                                className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-2xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-mono text-sm leading-relaxed"
->>>>>>> origin/main
                                 placeholder="Record meeting outcomes, strategic observations, or lead requirements here..."
                                 value={leadNotes}
                                 onChange={(e) => setLeadNotes(e.target.value)}
@@ -1658,7 +1550,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                 <span className="text-xs text-slate-500">{formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}</span>
                                             </div>
                                             {activity.metadata?.old_stage && (
-<<<<<<< HEAD
                                                 <div className="space-y-2 mt-2 text-xs">
                                                     <div className="flex items-center gap-2">
                                                         <Badge variant="neutral" className="text-xs opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
@@ -1670,12 +1561,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                             Reason: {activity.metadata.reason}
                                                         </p>
                                                     )}
-=======
-                                                <div className="flex items-center gap-2 mt-2 text-xs">
-                                                    <Badge variant="neutral" className="text-xs opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
-                                                    <ArrowRight className="w-3 h-3 text-slate-600" />
-                                                    <Badge variant="blue" className="text-xs text-teal-400 border-teal-500/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
->>>>>>> origin/main
                                                 </div>
                                             )}
                                         </div>
@@ -1703,10 +1588,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                     initialBody={emailDraft.body}
                 />
             )}
-<<<<<<< HEAD
         </DetailDrawer>
-=======
-        </Modal>
->>>>>>> origin/main
     );
 }

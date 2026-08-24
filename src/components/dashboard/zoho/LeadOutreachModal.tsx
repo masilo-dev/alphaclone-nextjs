@@ -175,14 +175,11 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                             ))}
                         </div>
                     )}
-<<<<<<< HEAD
                     {availableProviders.length === 0 && (
                         <div className="text-xs text-gray-500 mb-2">
                             No email providers connected. Please connect Zoho, Outlook, or Gmail in Settings → Integrations.
                         </div>
                     )}
-=======
->>>>>>> origin/main
                     
                     <form onSubmit={handleSearch} className="relative group">
                         <div className="absolute inset-y-0 left-5 flex items-center text-gray-500 group-focus-within:text-teal-400 transition-colors pointer-events-none">

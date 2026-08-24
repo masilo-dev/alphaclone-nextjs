@@ -11,7 +11,6 @@ export function denyIfCronUnauthorized(req: NextRequest): NextResponse | null {
   const bearerOk = Boolean(secret && auth === `Bearer ${secret}`);
   const isProd = process.env.NODE_ENV === 'production';
 
-<<<<<<< HEAD
   if (isProd) {
     if (!secret) {
       return NextResponse.json(
@@ -24,25 +23,6 @@ export function denyIfCronUnauthorized(req: NextRequest): NextResponse | null {
     }
     if (!bearerOk) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-=======
-    const secret = process.env.CRON_SECRET || process.env.INTERNAL_API_KEY;
-    if (secret) {
-        const auth = req.headers.get('authorization');
-        if (auth === `Bearer ${secret}`) {
-            return null;
-        }
-        if (process.env.NODE_ENV === 'production') {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        return null;
-    }
-
-    if (process.env.NODE_ENV === 'production') {
-        return NextResponse.json(
-            { error: 'Cron misconfigured: set CRON_SECRET/INTERNAL_API_KEY or invoke from Vercel Cron' },
-            { status: 503 }
-        );
->>>>>>> origin/main
     }
     return null;
   }

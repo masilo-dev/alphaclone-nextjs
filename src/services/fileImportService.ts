@@ -95,18 +95,10 @@ export const fileImportService = {
 
             if (isCsv) {
                 const text = await file.text();
-<<<<<<< HEAD
                 const [headerCells = [], ...dataRows] = parseCsv(text.replace(/^\uFEFF/, ''));
                 const headers = headerCells.map((header) => normalizeKey(header));
                 const rows: Array<Record<string, any>> = [];
                 for (const cells of dataRows) {
-=======
-                const [headerLine, ...lines] = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-                const headers = (headerLine || '').split(',').map((h) => normalizeKey(h));
-                const rows: Array<Record<string, any>> = [];
-                for (const line of lines) {
-                    const cells = line.split(',');
->>>>>>> origin/main
                     const row: Record<string, any> = {};
                     headers.forEach((h, i) => {
                         if (!h) return;
@@ -117,7 +109,6 @@ export const fileImportService = {
                 return { contacts: toContacts(rows), error: null };
             }
 
-<<<<<<< HEAD
             const extension = file.name.toLowerCase().split('.').pop();
             if (!['xlsx', 'xlsm'].includes(extension || '')) {
                 return { contacts: [], error: 'Upload a CSV, XLSX, or XLSM workbook.' };
@@ -148,35 +139,6 @@ export const fileImportService = {
                 });
                 if (Object.values(record).some((value) => String(value || '').trim())) rows.push(record);
             });
-=======
-            const ExcelJS = (await import('exceljs')).default;
-            const workbook = new ExcelJS.Workbook();
-            const buffer = await file.arrayBuffer();
-            await workbook.xlsx.load(buffer as any);
-            const worksheet = workbook.worksheets[0];
-            if (!worksheet) {
-                return { contacts: [], error: 'Workbook has no sheets' };
-            }
-
-            const headerRow = worksheet.getRow(1);
-            const headers = (headerRow.values as any[]).slice(1).map((v) => normalizeKey(v));
-            const rows: Array<Record<string, any>> = [];
-            for (let r = 2; r <= worksheet.rowCount; r++) {
-                const row = worksheet.getRow(r);
-                const obj: Record<string, any> = {};
-                let hasAny = false;
-                for (let c = 0; c < headers.length; c++) {
-                    const key = headers[c] || `Column${c + 1}`;
-                    const cell = row.getCell(c + 1).value as any;
-                    const value =
-                        cell && typeof cell === 'object' && 'text' in cell ? String(cell.text || '') : cell ?? '';
-                    if (String(value).trim().length > 0) hasAny = true;
-                    obj[key] = value;
-                }
-                if (hasAny) rows.push(obj);
-            }
-
->>>>>>> origin/main
             return { contacts: toContacts(rows), error: null };
         } catch (err: any) {
             console.error('Error importing Excel:', err);

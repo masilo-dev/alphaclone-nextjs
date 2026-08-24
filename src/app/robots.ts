@@ -9,13 +9,8 @@ export default function robots(): MetadataRoute.Robots {
             // Standard search engines — full access to marketing pages
             {
                 userAgent: ['Googlebot', 'Googlebot-Image', 'Googlebot-Video', 'Bingbot'],
-<<<<<<< HEAD
                 allow: ['/'],
                 disallow: ['/dashboard', '/api/', '/api/mcp', '/api/mcp/', '/mcp', '/mcp/', '/auth/reset-password', '/private-docs/', '/admin/', '/invoice/', '/quote/', '/sign/', '/contract/', '/meet/', '/call/', '/share/', '/billing/', '/account/', '/form/', '/p/', '/bp/', '/portal/'],
-=======
-                allow: ['/api/mcp/', '/api/mcp', '/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/admin/'],
->>>>>>> origin/main
             },
 
             // AI Answer Engines — explicitly allowed for citation indexing
@@ -37,25 +32,15 @@ export default function robots(): MetadataRoute.Robots {
                     'cohere-ai',
                     'BytesSpider'
                 ],
-<<<<<<< HEAD
                 allow: ['/services', '/about', '/guide', '/search', '/onboarding/create-business', '/docs', '/faq', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
                 disallow: ['/dashboard', '/api/', '/api/mcp', '/api/mcp/', '/mcp', '/mcp/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/', '/quote/', '/sign/', '/contract/', '/share/', '/billing/', '/account/', '/form/', '/p/', '/bp/', '/portal/'],
-=======
-                allow: ['/api/mcp/', '/api/mcp', '/services', '/about', '/guide', '/docs', '/faq', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
->>>>>>> origin/main
             },
 
             // General fallback — all other bots get full marketing access, no sensitive routes
             {
                 userAgent: '*',
-<<<<<<< HEAD
                 allow: ['/auth/login', '/guide', '/search', '/onboarding/create-business', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
                 disallow: ['/dashboard', '/api/', '/api/mcp', '/api/mcp/', '/mcp', '/mcp/', '/auth/reset-password', '/private-docs/', '/admin/', '/invoice/', '/quote/', '/sign/', '/contract/', '/meet/', '/call/', '/share/', '/billing/', '/account/', '/form/', '/p/', '/bp/', '/portal/'],
-=======
-                allow: ['/api/mcp/', '/api/mcp', '/auth/login', '/legal', '/platform-status', '/security-policy', '/compliance', '/crm', '/lead-management', '/project-management', '/ai-agents', '/video-meetings', '/claude-manus-integrations', '/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/admin/'],
->>>>>>> origin/main
             },
         ],
         sitemap: `${baseUrl}/sitemap.xml`,

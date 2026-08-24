@@ -1,17 +1,8 @@
 'use client';
 
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Input } from '../../ui/UIComponents';
 import { Download, Plus, Trash2, User, Save } from 'lucide-react';
-=======
-import React, { useState, useEffect, useRef } from 'react';
-import { Button, Modal, Input, Card } from '../../ui/UIComponents';
-import { 
-    X, Download, Eye, FileText, Printer, Share2, Search, List, Plus, 
-    Sparkles, Trash2, Mail, User, CreditCard, Save, ChevronDown 
-} from 'lucide-react';
->>>>>>> origin/main
 import { useTenant } from '../../../contexts/TenantContext';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -47,20 +38,11 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         discountAmount: 0,
         taxRate: 0,
         notes: 'Thank you for your business.',
-<<<<<<< HEAD
         accentColor: '#34d399'
-=======
-        accentColor: '#14b8a6'
->>>>>>> origin/main
     });
 
     const [isSaving, setIsSaving] = useState(false);
     const [clients, setClients] = useState<BusinessClient[]>([]);
-<<<<<<< HEAD
-=======
-    const [showContactDropdown, setShowContactDropdown] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
->>>>>>> origin/main
 
     useEffect(() => {
         if (!isOpen) return;
@@ -86,7 +68,6 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
     const generatePDF = () => {
         const doc = new jsPDF();
-<<<<<<< HEAD
         doc.setFillColor(receiptData.accentColor);
         doc.rect(0, 0, 210, 38, 'F');
         doc.setTextColor('#ffffff');
@@ -144,12 +125,6 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         toast.success('Sales receipt finalized, posted to the ledger, and downloaded');
         onClose();
     };
-=======
-        doc.text('RECEIPT', 105, 20, { align: 'center' });
-        doc.text(`No: ${receiptData.receiptNumber}`, 20, 30);
-        doc.save(`Receipt_${receiptData.receiptNumber}.pdf`);
-    };
->>>>>>> origin/main
 
     if (!isOpen) return null;
 
@@ -163,7 +138,6 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-<<<<<<< HEAD
                         <User className="w-4 h-4 text-emerald-400" />
                         <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Client</h3>
                     </div>
@@ -175,80 +149,45 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                             }} />
                             <datalist id="receipt-client-options">{clients.map((client) => <option key={client.id} value={client.name}>{client.email || ''}</option>)}</datalist>
                         </div>
-=======
-                        <User className="w-4 h-4 text-teal-500" />
-                        <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Client</h3>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input label="Name" value={receiptData.clientName} onChange={e => setReceiptData({...receiptData, clientName: e.target.value})} />
->>>>>>> origin/main
                         <Input label="Email" value={receiptData.clientEmail} onChange={e => setReceiptData({...receiptData, clientEmail: e.target.value})} />
                     </div>
                 </div>
 
                 <div className="space-y-4">
                     <div className="flex justify-between items-center border-b border-white/5 pb-2">
-<<<<<<< HEAD
                         <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Items</h3>
                         <button onClick={handleAddItem} className="text-emerald-400 text-xs font-black uppercase flex items-center gap-1"><Plus size={14} /> Add</button>
                     </div>
                     <div className="space-y-3">
                         {receiptData.items.map((item, i) => (
                             <div key={i} className="dashboard-panel-soft p-4 space-y-3">
-=======
-                        <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">Items</h3>
-                        <button onClick={handleAddItem} className="text-teal-500 text-xs font-black uppercase flex items-center gap-1"><Plus size={14} /> Add</button>
-                    </div>
-                    <div className="space-y-3">
-                        {receiptData.items.map((item, i) => (
-                            <div key={i} className="bg-slate-900/40 p-4 rounded-2xl border border-white/5 space-y-3">
->>>>>>> origin/main
                                 <input placeholder="Description" value={item.description} onChange={e => handleItemChange(i, 'description', e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white" />
                                 <div className="flex gap-3">
                                     <input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(i, 'quantity', parseInt(e.target.value) || 1)} className="w-20 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-center text-white" />
                                     <input type="number" placeholder="Price" value={item.price} onChange={e => handleItemChange(i, 'price', parseFloat(e.target.value) || 0)} className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm text-white" />
-<<<<<<< HEAD
                                     {receiptData.items.length > 1 && <button onClick={() => handleRemoveItem(i)} className="p-3 text-rose-400"><Trash2 size={18} /></button>}
-=======
-                                    {receiptData.items.length > 1 && <button onClick={() => handleRemoveItem(i)} className="p-3 text-rose-500"><Trash2 size={18} /></button>}
->>>>>>> origin/main
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-<<<<<<< HEAD
                 <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl flex flex-col items-end gap-2">
                     <div className="flex justify-between w-full text-xs font-black text-slate-300 uppercase"><span>Subtotal</span><span>${calculateSubtotal().toLocaleString()}</span></div>
                     <div className="text-4xl font-black text-white tracking-tighter">${calculateTotal().toLocaleString()}</div>
                     <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">Amount Paid</p>
-=======
-                <div className="p-6 bg-teal-600/5 border border-teal-500/20 rounded-3xl flex flex-col items-end gap-2">
-                    <div className="flex justify-between w-full text-xs font-black text-gray-500 uppercase"><span>Subtotal</span><span>${calculateSubtotal().toLocaleString()}</span></div>
-                    <div className="text-4xl font-black text-white tracking-tighter">${calculateTotal().toLocaleString()}</div>
-                    <p className="text-xs font-black text-teal-500 uppercase tracking-widest">Amount Paid</p>
->>>>>>> origin/main
                 </div>
 
                 {/* Footer Actions */}
                 <div className={`flex flex-wrap gap-3 pt-6 border-t border-white/5 ${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-black/90 backdrop-blur-xl z-50 border-white/10' : ''}`}>
                     {isMobile ? (
-<<<<<<< HEAD
                         <button onClick={finalizeReceipt} disabled={isSaving} className="w-full h-14 bg-emerald-600 disabled:opacity-60 text-white rounded-2xl font-black uppercase text-sm shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"><Save size={20} /> {isSaving ? 'Finalizing…' : 'Finalize & Download'}</button>
-=======
-                        <button onClick={generatePDF} className="w-full h-14 bg-teal-600 text-white rounded-2xl font-black uppercase text-sm shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2"><Download size={20} /> Download Receipt</button>
->>>>>>> origin/main
                     ) : (
                         <>
                             <Button variant="ghost" onClick={onClose}>Cancel</Button>
                             <div className="flex-1" />
                             <Button variant="secondary" onClick={generatePDF} icon={<Download size={18} />}>Download</Button>
-<<<<<<< HEAD
                             <Button onClick={finalizeReceipt} isLoading={isSaving} disabled={isSaving} icon={<Save size={18} />}>Finalize</Button>
-=======
-                            <Button onClick={() => toast.success('Saved')} icon={<Save size={18} />}>Finalize</Button>
->>>>>>> origin/main
                         </>
                     )}
                 </div>
@@ -256,4 +195,3 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
         </Modal>
     );
 }
-

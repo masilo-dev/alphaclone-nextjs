@@ -4,7 +4,6 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 
 function normalizePostRow(row: Record<string, unknown>) {
-<<<<<<< HEAD
   const metadata =
     row.metadata && typeof row.metadata === 'object'
       ? (row.metadata as Record<string, unknown>)
@@ -23,21 +22,14 @@ function normalizePostRow(row: Record<string, unknown>) {
       ? analytics.linkedin_organization_id
       : null;
 
-=======
->>>>>>> origin/main
   return {
     ...row,
     linkedin_post_urn: row.linkedin_post_urn || null,
     linkedin_member_id: row.linkedin_member_id || null,
-<<<<<<< HEAD
     linkedin_organization_id: orgFromRow || orgFromMeta || orgFromAnalytics || null,
     external_id: row.external_id || null,
     analytics: row.analytics || null,
     metadata,
-=======
-    external_id: row.external_id || null,
-    analytics: row.analytics || null,
->>>>>>> origin/main
   };
 }
 
@@ -101,14 +93,9 @@ export async function GET(req: NextRequest) {
     }
 
     const selectVariants = [
-<<<<<<< HEAD
       'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,linkedin_organization_id,external_id,analytics,metadata,error_message,platforms',
       'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,linkedin_organization_id,external_id,analytics,error_message,platforms',
       'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,analytics,error_message,platforms',
-=======
-      'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,analytics,error_message,platforms',
-      'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,external_id,error_message,platforms',
->>>>>>> origin/main
       'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,analytics,error_message,platforms',
       'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,linkedin_member_id,error_message,platforms',
       'id,caption,status,scheduled_at,published_at,created_at,linkedin_post_urn,error_message,platforms',

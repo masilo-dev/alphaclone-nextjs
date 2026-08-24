@@ -251,16 +251,6 @@ export default function SendGridIntegration() {
                             className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/40"
                         />
                     </div>
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Sender Name</label>
-                        <input
-                            type="text"
-                            value={config.fromName}
-                            onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
-                            placeholder="Your Company Name"
-                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/40"
-                        />
-                    </div>
                 </div>
 
                 <div className="flex items-center gap-3 pt-4 border-t border-white/5">
@@ -286,11 +276,7 @@ export default function SendGridIntegration() {
                                 value={testRecipient}
                                 onChange={(e) => setTestRecipient(e.target.value)}
                                 placeholder="recipient@domain.com"
-<<<<<<< HEAD
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/40"
-=======
-                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-indigo-500/40"
->>>>>>> origin/main
                             />
                             <Button
                                 type="button"

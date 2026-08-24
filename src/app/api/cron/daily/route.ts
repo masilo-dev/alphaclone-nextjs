@@ -56,7 +56,6 @@ export async function GET(req: NextRequest) {
             }
         }
         console.log(`[Cron] Intelligence snapshot took ${Date.now() - intelligenceStart}ms`);
-<<<<<<< HEAD
 
         const deletionStart = Date.now();
         let accountDeletions: { processed: number; failed: string[] } | null = null;
@@ -74,8 +73,6 @@ export async function GET(req: NextRequest) {
             console.error('Scheduled account deletions:', deletionErr);
         }
         console.log(`[Cron] Account deletions took ${Date.now() - deletionStart}ms`);
-=======
->>>>>>> origin/main
 
         return NextResponse.json({
             success: true,
@@ -85,11 +82,8 @@ export async function GET(req: NextRequest) {
             digest,
             morning,
             intelligence,
-<<<<<<< HEAD
             accountDeletions,
             dataDeletionRequests,
-=======
->>>>>>> origin/main
         });
 
     } catch (error) {

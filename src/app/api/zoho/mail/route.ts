@@ -3,25 +3,10 @@ import { ZohoMailService } from '../../../../services/zoho/ZohoMailService';
 import { ZohoAuthExpiredError, ZohoAPIError } from '../../../../services/zoho/ZohoService';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
-<<<<<<< HEAD
 async function getContext(req: NextRequest) {
     const tenantId = req.nextUrl.searchParams.get('tenantId')?.trim() || '';
     const { user } = await requireTenantAccess(tenantId, req);
     return { userId: user.id, tenantId };
-=======
-async function getUserId(req: NextRequest): Promise<string | null> {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) return user.id;
-    } catch {}
-
-    const { searchParams } = new URL(req.url);
-    const userIdFromQuery = searchParams.get('userId');
-    if (userIdFromQuery) return userIdFromQuery;
-
-    return req.headers.get('x-user-id');
->>>>>>> origin/main
 }
 
 function handleZohoError(err: unknown): NextResponse {

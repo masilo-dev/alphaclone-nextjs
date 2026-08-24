@@ -71,12 +71,9 @@ function isXaiModelError(error: any): boolean {
 }
 
 function normalizeXaiModel(model?: string): string {
-<<<<<<< HEAD
   if (isDeepSeekModelName(model)) {
     return 'grok-4.3';
   }
-=======
->>>>>>> origin/main
   const candidate = String(model || 'grok-4.3').trim();
   if (!candidate) return 'grok-4.3';
   const aliases: Record<string, string> = {
@@ -246,7 +243,6 @@ export type AIStrengthTask = 'legal' | 'strategy' | 'social_article' | 'social_c
 
 /**
  * Route by strength mapping:
-<<<<<<< HEAD
  * - legal/strategy -> DeepSeek reasoning
  * - social_article/caption/inbox -> DeepSeek chat
  * - creative_media -> DeepSeek chat
@@ -258,19 +254,6 @@ const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'deepseek' | 'anthro
   'social_caption': { provider: 'deepseek', model: 'deepseek-chat' },
   'inbox_reply': { provider: 'deepseek', model: 'deepseek-chat' },
   'creative_media': { provider: 'deepseek', model: 'deepseek-chat' }
-=======
- * - legal/strategy -> Anthropic
- * - social_article/caption/inbox -> Grok
- * - creative_media -> OpenAI
- */
-const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'anthropic' | 'xai' | 'openai'; model: string }> = {
-  'legal': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
-  'strategy': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
-  'social_article': { provider: 'xai', model: 'grok-4.3' },
-  'social_caption': { provider: 'xai', model: 'grok-4.3' },
-  'inbox_reply': { provider: 'xai', model: 'grok-4.3' },
-  'creative_media': { provider: 'openai', model: 'gpt-4o' }
->>>>>>> origin/main
 };
 
 /**
@@ -309,12 +292,8 @@ export function cleanSocialContent(content: string): string {
 }
 
 /**
-<<<<<<< HEAD
  * Main AI routing function with automatic fallback.
  * Default: DeepSeek only. Set AI_ALLOW_MULTI_PROVIDER=true for legacy multi-provider chain.
-=======
- * Main AI routing function with automatic fallback
->>>>>>> origin/main
  */
 export async function routeAIRequest(options: AIRequestOptions): Promise<AIResponse> {
   if (isDeepSeekOnlyMode()) {
@@ -527,44 +506,6 @@ export async function routeAutonomousTask(task: AIStrengthTask, prompt: string, 
 }
 
 /**
- * Specialized routing for Autonomous Operator tasks.
- * Uses the best model for the task type and cleans output of emojis.
- */
-export async function routeAutonomousTask(task: AIStrengthTask, prompt: string, systemPrompt?: string): Promise<AIResponse> {
-  const strength = TASK_STRENGTH_MAP[task] || TASK_STRENGTH_MAP['strategy'];
-  
-  const options = {
-    prompt,
-    systemPrompt,
-    model: strength.model
-  };
-
-  let response: AIResponse;
-  
-  // Directly call the provider to avoid the general fallback chain if we know what we want
-  try {
-    if (strength.provider === 'anthropic' && anthropic) {
-      response = await completeWithAnthropic(options);
-    } else if (strength.provider === 'xai' && xai) {
-      response = await completeWithXAI(options);
-    } else if (strength.provider === 'openai' && openai) {
-      response = await completeWithOpenAI(options);
-    } else {
-      // Fallback
-      response = await routeAIRequest(options);
-    }
-  } catch (err) {
-    // If specific strength provider fails, use standard failover
-    response = await routeAIRequest({ ...options, model: undefined });
-  }
-
-  // ENFORCE PROFESSIONAL GUARDRAILS: No Emojis, Clean Chars
-  response.content = cleanProfessionalContent(response.content);
-  
-  return response;
-}
-
-/**
  * Streaming version of AI routing
  */
 export async function streamAIRequest(options: AIRequestOptions): Promise<AIStreamResponse> {
@@ -618,7 +559,6 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         stream: await streamWithXAI(options),
         provider: 'xai',
         model: options.model || 'grok-4.3'
-<<<<<<< HEAD
       };
     }
     if ((requestedModel.startsWith('gemini') || requestedModel.includes('gemini')) && geminiAI) {
@@ -633,8 +573,6 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         stream: await streamWithOpenRouter(options),
         provider: 'openrouter',
         model: options.model || DEFAULT_OPENROUTER_MODEL,
-=======
->>>>>>> origin/main
       };
     }
   }
@@ -1711,7 +1649,6 @@ async function streamWithXAI(options: AIRequestOptions): Promise<ReadableStream>
         messages: [
           { role: 'system' as const, content: mergeXaiSystemPrompt(options.systemPrompt) },
           { role: 'user' as const, content: userContent as any },
-<<<<<<< HEAD
         ],
         max_tokens: options.maxTokens || 4096,
         temperature: options.temperature || 0.7,
@@ -1775,8 +1712,6 @@ async function streamWithDeepSeek(options: AIRequestOptions): Promise<ReadableSt
         messages: [
           ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
           { role: 'user' as const, content: options.prompt },
-=======
->>>>>>> origin/main
         ],
         max_tokens: options.maxTokens || 4096,
         temperature: options.temperature || 0.7,

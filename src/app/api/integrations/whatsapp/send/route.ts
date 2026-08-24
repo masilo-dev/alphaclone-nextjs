@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-<<<<<<< HEAD
 import { sendWhatsAppMessage, type SendWhatsAppErrorCode } from '@/lib/whatsapp/sendWhatsApp';
 
 function statusForWhatsAppError(code?: SendWhatsAppErrorCode): number {
@@ -16,9 +15,6 @@ function statusForWhatsAppError(code?: SendWhatsAppErrorCode): number {
       return 502;
   }
 }
-=======
-import { sendWhatsAppMessage } from '@/lib/whatsapp/sendWhatsApp';
->>>>>>> origin/main
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,16 +27,12 @@ export async function POST(request: NextRequest) {
 
     await requireTenantAccess(tenantId);
     const result = await sendWhatsAppMessage({ tenantId, phone, message, integrationId });
-<<<<<<< HEAD
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error, code: result.code },
         { status: statusForWhatsAppError(result.code) },
       );
     }
-=======
-    if (!result.success) return NextResponse.json({ success: false, error: result.error }, { status: 502 });
->>>>>>> origin/main
     return NextResponse.json(result);
   } catch (error) {
     return routeErrorResponse(error, 'Failed to send WhatsApp message', request);

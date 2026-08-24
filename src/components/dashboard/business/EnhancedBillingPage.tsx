@@ -6,11 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
     AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
-<<<<<<< HEAD
     Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square
-=======
-    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical
->>>>>>> origin/main
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -19,7 +15,6 @@ import { businessClientService } from '../../../services/businessClientService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
-<<<<<<< HEAD
 import { Button, Card, Input, Modal } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
@@ -29,11 +24,6 @@ import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
-=======
-import { Button, Card } from '../../ui/UIComponents';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useBreakpoint } from '@/hooks/useBreakpoint';
->>>>>>> origin/main
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -44,10 +34,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
-<<<<<<< HEAD
     const { confirm: confirmDialog } = useConfirmDialog();
-=======
->>>>>>> origin/main
     
     const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
     const [loading, setLoading] = useState(true);
@@ -68,7 +55,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         sentCount: 0,
         paidCount: 0
     });
-<<<<<<< HEAD
     const [clientMap, setClientMap] = useState<Record<string, { name: string; email?: string }>>({});
     const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string; body?: string } | null>(null);
     const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
@@ -150,9 +136,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         setRecordPaymentError(null);
         setRecordPaymentSubmitting(false);
     };
-=======
-    const [clientMap, setClientMap] = useState<Record<string, string>>({});
->>>>>>> origin/main
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -161,7 +144,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         }
     }, [currentTenant?.id]);
 
-<<<<<<< HEAD
     useEffect(() => {
         if (!searchParams) return;
         if (searchParams.get('create') === 'true' || searchParams.get('new') === 'true') {
@@ -183,13 +165,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         },
     });
 
-=======
->>>>>>> origin/main
     const loadClients = async () => {
         if (!currentTenant?.id) return;
         const { clients } = await businessClientService.getClients(currentTenant.id);
         if (clients) {
-<<<<<<< HEAD
             const map: Record<string, { name: string; email?: string }> = {};
             clients.forEach((c) => {
                 map[c.id] = { name: c.name, email: c.email || undefined };
@@ -224,13 +203,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             body: `Hello ${recipient.name.split(' ')[0]},\n\nPlease find details for invoice ${inv.invoiceNumber} (total ${inv.total.toFixed(2)}, due ${inv.dueDate}).\n\nThank you for your business.`,
         });
     };
-=======
-            const map: Record<string, string> = {};
-            clients.forEach(c => { map[c.id] = c.name; });
-            setClientMap(map);
-        }
-    };
->>>>>>> origin/main
 
     const loadInvoices = async () => {
         if (!currentTenant?.id) return;
@@ -267,11 +239,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         setRevenueData(sorted.length ? sorted : [{ date: 'Today', revenue: 0 }]);
     };
 
-<<<<<<< HEAD
     const [activeTab, setActiveTab] = useState<'invoices' | 'recurring' | 'services'>('invoices');
-=======
-    const [activeTab, setActiveTab] = useState<'invoices' | 'services'>('invoices');
->>>>>>> origin/main
 
     const filteredInvoices = invoices.filter(inv => {
         const matchesFilter = filter === 'all' || inv.status === filter;
@@ -289,7 +257,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     };
 
     const handleViewPDF = (inv: BusinessInvoice) => {
-<<<<<<< HEAD
         if (!currentTenant?.id) return;
         setShowPDFPreview(
           `/api/invoices/${encodeURIComponent(inv.id)}/pdf?tenantId=${encodeURIComponent(currentTenant.id)}`
@@ -313,32 +280,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             </div>
         );
     }
-=======
-        const metadata = businessInvoiceService.parseMetadata(inv.notes);
-        const client = inv.clientId ? { name: clientMap[inv.clientId] || inv.clientId, email: '' } : { name: metadata?.clientName || 'Walk-in', email: '' };
-        const doc = businessInvoiceService.generatePDF(inv, currentTenant!, client);
-        const pdfUrl = URL.createObjectURL(doc.output('blob'));
-        setShowPDFPreview(pdfUrl);
-    };
-
-    if (loading) return <div className="p-8 text-slate-400">Loading Billing Data...</div>;
-
-    const ServicesCatalog = React.lazy(() => import('./ServicesCatalog').then(m => ({ default: m.ServicesCatalog })));
->>>>>>> origin/main
 
     const ServicesCatalog = React.lazy(() => import('./ServicesCatalog').then(m => ({ default: m.ServicesCatalog })));
 
     return (
-<<<<<<< HEAD
         <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
             <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
-=======
-        <div className={`space-y-6 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
->>>>>>> origin/main
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-<<<<<<< HEAD
                     <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight flex items-center gap-2.5">
                         <DollarSign className="w-5 h-5 text-[#149C86]" /> Invoicing
                     </h2>
@@ -362,25 +312,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Catalog
-=======
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                        <DollarSign className="text-teal-500" /> Billing Hub
-                    </h1>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoice Management & Collections</p>
-                </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <button 
-                    onClick={() => setActiveTab('invoices')}
-                    className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
-                  >
-                    Invoices
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('services')}
-                    className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
-                  >
-                    Services
->>>>>>> origin/main
                   </button>
                 </div>
             </div>
@@ -389,7 +320,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 <React.Suspense fallback={<div className="p-12 text-center text-slate-500">Loading Catalog...</div>}>
                     <ServicesCatalog />
                 </React.Suspense>
-<<<<<<< HEAD
             ) : activeTab === 'recurring' ? (
                 currentTenant?.id ? (
                     <RecurringInvoicesPanel
@@ -397,20 +327,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                         clients={Object.entries(clientMap).map(([id, c]) => ({ id, name: c.name, email: c.email }))}
                     />
                 ) : null
-=======
->>>>>>> origin/main
             ) : (
                 <>
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-<<<<<<< HEAD
                     { label: 'Collected', value: stats.totalRevenue, color: 'text-teal-400' },
                     { label: 'Awaiting Payment', value: stats.pendingAmount, color: 'text-teal-400' },
-=======
-                    { label: 'Revenue', value: stats.totalRevenue, color: 'text-teal-400' },
-                    { label: 'Pending', value: stats.pendingAmount, color: 'text-teal-400' },
->>>>>>> origin/main
                     { label: 'Overdue', value: stats.overdueAmount, color: 'text-rose-400' },
                     { label: 'Drafts', value: stats.draftCount, color: 'text-slate-400' }
                 ].map(s => (
@@ -460,7 +383,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
             {/* Invoices List */}
             <div className="space-y-4">
-<<<<<<< HEAD
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex gap-2 overflow-x-auto no-scrollbar rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                         {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
@@ -504,25 +426,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 <p className="text-xs text-slate-500 -mt-2">
                     Tip: select invoices to send one follow-up to many clients at once. Only drafts can be bulk deleted.
                 </p>
-=======
-                <div className="flex justify-between items-center gap-4">
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                        {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
-                            <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}>{s}</button>
-                        ))}
-                    </div>
-                    <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 h-10 px-6 bg-teal-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2 transition-all hover:bg-teal-500">
-                        <Plus size={16} /> New Invoice
-                    </button>
-                </div>
->>>>>>> origin/main
 
                 <div className="space-y-3">
                     {filteredInvoices.map(inv => (
                         <Card 
                             key={inv.id} 
                             onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }} 
-<<<<<<< HEAD
                             className={`p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer ${
                                 selectedInvoiceIds.has(inv.id) ? 'ring-1 ring-teal-500/40' : ''
                             }`}
@@ -561,26 +470,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     )}
                                 </div>
                                 <p className="text-[20px] font-black text-white font-mono tracking-tight leading-none">${inv.total.toLocaleString()}</p>
-=======
-                            className="p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer"
-                        >
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-lg bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={18} /></div>
-                                    <div>
-                                        <p className="text-sm font-black text-white">{inv.invoiceNumber}</p>
-                                        <p className="text-xs text-gray-500 font-bold uppercase">{inv.clientId && clientMap[inv.clientId] ? clientMap[inv.clientId] : 'Walk-in Client'}</p>
-                                    </div>
-                                </div>
-                                <span className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
-                            </div>
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Due Date</p>
-                                    <p className="text-xs font-bold text-gray-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
-                                </div>
-                                <p className="text-[24px] font-black text-white font-mono tracking-tight leading-none">${inv.total.toLocaleString()}</p>
->>>>>>> origin/main
                             </div>
                         </Card>
                     ))}
@@ -596,18 +485,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             animate={{ opacity: 0.7 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOptionsOpen(false)}
-<<<<<<< HEAD
                             className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm"
-=======
-                            className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-sm"
->>>>>>> origin/main
                         />
                         <motion.div
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-<<<<<<< HEAD
                             className="fixed inset-x-0 bottom-0 z-[1110] max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
                         >
                             <div className="flex justify-center py-2 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
@@ -629,29 +513,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     </div>
                                     <button onClick={() => setIsOptionsOpen(false)} className="h-8 w-8 p-0 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors flex items-center justify-center">
                                         <X className="w-3.5 h-3.5" />
-=======
-                            className="fixed inset-x-0 bottom-0 z-[150] max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
-                        >
-                            <div className="flex justify-center py-3 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
-                                <div className="w-12 h-1 bg-white/20 rounded-full" />
-                            </div>
-                            
-                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar pb-12 space-y-6">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono">
-                                            Invoice ID: #{selectedInvoiceForOptions.id.slice(0, 8).toUpperCase()}
-                                        </span>
-                                        <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">
-                                            {selectedInvoiceForOptions.invoiceNumber}
-                                        </h3>
-                                        <p className="text-xs text-slate-400 mt-1">
-                                            Client: {selectedInvoiceForOptions.clientId && clientMap[selectedInvoiceForOptions.clientId] ? clientMap[selectedInvoiceForOptions.clientId] : 'Walk-in Client'}
-                                        </p>
-                                    </div>
-                                    <button onClick={() => setIsOptionsOpen(false)} className="p-1 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
-                                        <X className="w-5 h-5" />
->>>>>>> origin/main
                                     </button>
                                 </div>
 
@@ -660,7 +521,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <p className="text-3xl font-black text-teal-400 tracking-tight font-mono">
                                         ${selectedInvoiceForOptions.total.toLocaleString()}
                                     </p>
-<<<<<<< HEAD
                                     {Number(selectedInvoiceForOptions.amountPaid || 0) > 0 && (
                                         <div className="mt-3 grid grid-cols-2 gap-3 text-left">
                                             <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 px-3 py-2">
@@ -673,26 +533,20 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             </div>
                                         </div>
                                     )}
-=======
->>>>>>> origin/main
                                     <div className="mt-3 flex justify-center">
                                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${getStatusStyles(selectedInvoiceForOptions.status)}`}>
                                             <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
                                             {selectedInvoiceForOptions.status}
                                         </span>
                                     </div>
-<<<<<<< HEAD
                                     <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                                         Auto follow-ups: {selectedInvoiceForOptions.autoFollowupEnabled === false ? 'Off' : 'On'}
                                     </p>
-=======
->>>>>>> origin/main
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-3">
                                     <button
                                         onClick={() => {
-<<<<<<< HEAD
                                             setEditingInvoice(selectedInvoiceForOptions);
                                             setIsOptionsOpen(false);
                                         }}
@@ -717,23 +571,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             <span>Preview PDF Invoice</span>
                                         </span>
                                         <span className="text-[10px] text-slate-500 font-mono">PDF PREVIEW</span>
-=======
-                                            handleViewPDF(selectedInvoiceForOptions);
-                                            setIsOptionsOpen(false);
-                                        }}
-                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
-                                    >
-                                        <span className="flex items-center gap-3">
-                                            <Eye className="w-5 h-5 text-teal-400" />
-                                            <span>Preview PDF Invoice</span>
-                                        </span>
-                                        <span className="text-xs text-slate-500 font-mono">PDF PREVIEW</span>
->>>>>>> origin/main
                                     </button>
 
                                     <button
                                         onClick={() => {
-<<<<<<< HEAD
                                             handleDownloadPDF(selectedInvoiceForOptions);
                                             setIsOptionsOpen(false);
                                         }}
@@ -917,43 +758,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             <span className="text-[10px] text-amber-500/80 font-mono">MANUAL UPDATE</span>
                                         </button>
                                     )}
-=======
-                                            const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
-                                            const client = selectedInvoiceForOptions.clientId ? { name: clientMap[selectedInvoiceForOptions.clientId] || selectedInvoiceForOptions.clientId, email: '' } : { name: metadata?.clientName || 'Walk-in', email: '' };
-                                            const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
-                                            doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
-                                            setIsOptionsOpen(false);
-                                        }}
-                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
-                                    >
-                                        <span className="flex items-center gap-3">
-                                            <Download className="w-5 h-5 text-indigo-400" />
-                                            <span>Download PDF File</span>
-                                        </span>
-                                        <span className="text-xs text-slate-500 font-mono">PDF DOWNLOAD</span>
-                                    </button>
-
-                                    <button
-                                        onClick={async () => {
-                                            setIsOptionsOpen(false);
-                                            const toastId = toast.loading('Sending invoice...');
-                                            try {
-                                                const { callMcpTool } = await import('@/services/mcp/toolCaller');
-                                                await callMcpTool('send_invoice', { invoice_id: selectedInvoiceForOptions.id });
-                                                toast.success('Invoice dispatched successfully!', { id: toastId });
-                                            } catch (err: any) {
-                                                toast.error(`Failed: ${err.message}`, { id: toastId });
-                                            }
-                                        }}
-                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
-                                    >
-                                        <span className="flex items-center gap-3">
-                                            <Send className="w-5 h-5 text-sky-400" />
-                                            <span>Email Invoice to Client</span>
-                                        </span>
-                                        <span className="text-xs text-slate-500 font-mono">EMAIL DISPATCH</span>
-                                    </button>
->>>>>>> origin/main
                                 </div>
                             </div>
                         </motion.div>
@@ -964,18 +768,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             {/* PDF Preview Modal */}
             <AnimatePresence>
                 {showPDFPreview && (
-<<<<<<< HEAD
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[1100] flex flex-col p-4">
-=======
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[200] flex flex-col p-4">
->>>>>>> origin/main
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-white font-black uppercase tracking-widest text-sm">Invoice Preview</h3>
                             <button onClick={() => setShowPDFPreview(null)} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white"><X size={20} /></button>
                         </div>
                         <iframe src={showPDFPreview} className="flex-1 w-full rounded-2xl border border-white/10" />
                         <div className="mt-4 flex gap-2">
-<<<<<<< HEAD
                             <button
                                 onClick={async () => {
                                     if (!selectedInvoiceForOptions) return;
@@ -1008,17 +807,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             >
                                 <Download size={20} />
                             </button>
-=======
-                            <button className="flex-1 h-12 bg-teal-600 text-white rounded-xl font-black uppercase text-xs">Send Invoice</button>
-                            <button className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-white"><Download size={20} /></button>
->>>>>>> origin/main
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
             <EnhancedInvoiceModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} mode="create" onSuccess={loadInvoices} />
-<<<<<<< HEAD
             <EnhancedInvoiceModal
                 isOpen={Boolean(editingInvoice)}
                 onClose={() => setEditingInvoice(null)}
@@ -1099,8 +893,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     </div>
                 </form>
             </Modal>
-=======
->>>>>>> origin/main
                 </>
             )}
         </div>

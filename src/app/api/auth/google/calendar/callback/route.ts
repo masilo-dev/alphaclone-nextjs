@@ -10,11 +10,7 @@ export async function GET(req: NextRequest) {
     const code = searchParams.get('code');
     const stateNonce = searchParams.get('state');
 
-<<<<<<< HEAD
     const appUrl = PUBLIC_APP_ORIGIN;
-=======
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
->>>>>>> origin/main
 
     if (!code || !stateNonce) {
         return NextResponse.redirect(`${appUrl}/dashboard/settings?calendar=error&reason=missing_params`);

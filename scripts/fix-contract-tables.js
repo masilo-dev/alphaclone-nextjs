@@ -3,7 +3,6 @@
  * Fix script: Add missing tenant_id to contract_versions + create contract_approvals table.
  * Run: node scripts/fix-contract-tables.js
  */
-<<<<<<< HEAD
 const { createClient } = require("@supabase/supabase-js");
 
 const SUPABASE_URL =
@@ -17,20 +16,6 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
-=======
-const { createClient } = require('@supabase/supabase-js');
-
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-    process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
->>>>>>> origin/main
 });
 
 const SQL = `
@@ -143,7 +128,6 @@ NOTIFY pgrst, 'reload schema';
 `;
 
 async function run() {
-<<<<<<< HEAD
   console.log("🔧 Applying contract table fixes...");
   const { error } = await supabase
     .rpc("exec_sql", { sql: SQL })
@@ -178,34 +162,3 @@ run().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-=======
-    console.log('🔧 Applying contract table fixes...');
-    const { error } = await supabase.rpc('exec_sql', { sql: SQL }).catch(() => ({ error: { message: 'rpc not available' } }));
-
-    if (error && error.message === 'rpc not available') {
-        // Fallback: split and run via REST
-        console.log('⚠️  exec_sql RPC not available, trying direct fetch...');
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_SERVICE_ROLE_KEY,
-                'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            },
-            body: JSON.stringify({ sql: SQL }),
-        });
-        if (!res.ok) {
-            const text = await res.text();
-            console.error('❌ Failed:', text);
-            process.exit(1);
-        }
-    } else if (error) {
-        console.error('❌ Error:', error);
-        process.exit(1);
-    }
-
-    console.log('✅ Migration applied successfully');
-}
-
-run().catch(err => { console.error(err); process.exit(1); });
->>>>>>> origin/main

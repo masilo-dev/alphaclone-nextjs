@@ -15,10 +15,7 @@ export interface SendEmailServerParams {
     templateName?: string;
     listUnsubscribeUrl?: string;
     preferredProvider?: OutboundEmailProvider;
-<<<<<<< HEAD
     skipFooter?: boolean;
-=======
->>>>>>> origin/main
 }
 
 export interface SendEmailServerResult {
@@ -47,10 +44,7 @@ export async function sendEmailServer(params: SendEmailServerParams): Promise<Se
         isPlatformNotification: params.isPlatformNotification,
         templateName: params.templateName,
         listUnsubscribeUrl: params.listUnsubscribeUrl,
-<<<<<<< HEAD
         skipFooter: params.skipFooter,
-=======
->>>>>>> origin/main
     }, params.preferredProvider);
 
     return {

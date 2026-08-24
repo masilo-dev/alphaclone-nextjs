@@ -6,10 +6,7 @@ type SenderProfile = {
     fromName: string;
     fromEmail: string;
     signature: string;
-<<<<<<< HEAD
     defaultProvider?: string;
-=======
->>>>>>> origin/main
 };
 
 const EMAIL_PROVIDER_TYPES = ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail'] as const;
@@ -31,11 +28,7 @@ export async function GET(request: NextRequest) {
         }
 
         const tenantCtx = await requireTenantAccess(tenantId);
-<<<<<<< HEAD
         const { admin } = tenantCtx;
-=======
-        const admin = createSupabaseAdminClient();
->>>>>>> origin/main
 
         const { data, error } = await admin
             .from('integrations')
@@ -50,7 +43,6 @@ export async function GET(request: NextRequest) {
             fromName: String(tenantCtx.user.user_metadata?.full_name || tenantCtx.user.email?.split('@')[0] || 'Team').trim(),
             fromEmail: String(tenantCtx.user.email || '').trim(),
             signature: '',
-<<<<<<< HEAD
             defaultProvider: undefined,
         };
 
@@ -62,11 +54,6 @@ export async function GET(request: NextRequest) {
                 break;
             }
         }
-=======
-        };
-
-        const rows = Array.isArray(data) ? data : [];
->>>>>>> origin/main
         for (const row of rows) {
             const cfg = (row?.config || {}) as Record<string, unknown>;
             const candidate = normalizeProfile({
@@ -107,11 +94,7 @@ export async function POST(request: NextRequest) {
         }
 
         const tenantCtx = await requireTenantAccess(tenantId);
-<<<<<<< HEAD
         const { admin } = tenantCtx;
-=======
-        const admin = createSupabaseAdminClient();
->>>>>>> origin/main
 
         const { data: existingIntegrations, error: listError } = await admin
             .from('integrations')

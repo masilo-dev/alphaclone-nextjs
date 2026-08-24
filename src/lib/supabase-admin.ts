@@ -4,15 +4,9 @@ import { createUnavailableSupabaseClient } from './supabase-shared';
 
 let devFallbackWarned = false;
 
-<<<<<<< HEAD
 function getSupabaseUrl(): string | undefined {
     return ENV.VITE_SUPABASE_URL || ENV.NEXT_PUBLIC_SUPABASE_URL;
 }
-=======
-    if (!supabaseUrl || !serviceRoleKey) {
-        return createUnavailableSupabaseClient('SupabaseAdmin');
-    }
->>>>>>> origin/main
 
 function createServiceRoleClient(supabaseUrl: string, serviceRoleKey: string): SupabaseClient {
     return createClient(supabaseUrl, serviceRoleKey, {

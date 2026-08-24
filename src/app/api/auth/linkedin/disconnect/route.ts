@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'You are not a member of this workspace.' }, { status: 403 });
     }
 
-<<<<<<< HEAD
     const removed = await deleteLinkedInIntegration({
       tenantId,
       userId: user.id,
@@ -46,18 +45,6 @@ export async function POST(req: NextRequest) {
     });
     if (!removed.success) {
       return NextResponse.json({ error: removed.error || 'Failed to disconnect' }, { status: 500 });
-=======
-    const admin = createSupabaseAdminClient();
-    const { error: removeError } = await admin
-      .from('linkedin_integrations')
-      .delete()
-      .eq('tenant_id', tenantId)
-      .eq('user_id', user.id)
-      .eq('linkedin_member_id', linkedinMemberId);
-
-    if (removeError) {
-      return NextResponse.json({ error: removeError.message }, { status: 500 });
->>>>>>> origin/main
     }
 
     const admin = createSupabaseAdminClient();
@@ -83,10 +70,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-<<<<<<< HEAD
-=======
-    // Remove stale queued sync jobs for tenant-level LinkedIn rows that no longer resolve.
->>>>>>> origin/main
     await admin
       .from('social_post_sync_queue')
       .delete()

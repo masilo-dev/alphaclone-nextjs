@@ -33,15 +33,9 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const sizes = {
-<<<<<<< HEAD
     sm: "h-8 px-3 text-xs min-h-11",
     md: "h-10 px-4 py-2 text-sm min-h-11",
     lg: "h-12 px-6 text-base min-h-11",
-=======
-    sm: "h-8 px-3 text-xs", // 32px - Ultra Compact
-    md: "h-10 px-4 py-2 text-sm", // 40px - Space Efficient
-    lg: "h-12 px-6 text-base", // 48px - Standard
->>>>>>> origin/main
   };
 
   return (
@@ -111,11 +105,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTe
 
 export const Input: React.FC<InputProps> = ({
   label,
-<<<<<<< HEAD
   error: errorProp,
-=======
-  error,
->>>>>>> origin/main
   hint,
   icon,
   className = '',
@@ -165,13 +155,9 @@ export const Input: React.FC<InputProps> = ({
 
   return (
     <div className="w-full">
-<<<<<<< HEAD
       {label && (
         <label htmlFor={fieldId} className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{label}</label>
       )}
-=======
-      {label && <label className="block text-xs font-semibold text-slate-400 mb-1">{label}</label>}
->>>>>>> origin/main
       <div className="relative group">
         {icon && (
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--interactive-secondary)] transition-colors" aria-hidden="true">
@@ -180,7 +166,6 @@ export const Input: React.FC<InputProps> = ({
         )}
         {textarea ? (
           <textarea
-<<<<<<< HEAD
             id={fieldId}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
@@ -204,21 +189,6 @@ export const Input: React.FC<InputProps> = ({
       {error && <p id={errorId} role="alert" className="mt-1 text-xs text-[var(--danger)]">{error}</p>}
       {!error && hint && (
         <p id={hintId} className="mt-1 text-xs text-[var(--text-muted)]">{hint}</p>
-=======
-            className={`w-full bg-slate-950 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-lg px-3 py-2 text-md text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[80px] resize-y ${icon ? 'pl-10' : ''} ${className}`}
-            {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
-          />
-        ) : (
-          <input
-            className={`w-full bg-slate-950 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-lg px-3 py-2 text-md text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-10' : ''} ${className}`}
-            {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
-          />
-        )}
-      </div>
-      {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
-      {!error && hint && (
-        <p className="mt-1 text-xs text-slate-500 italic">{hint}</p>
->>>>>>> origin/main
       )}
     </div>
   );
@@ -338,20 +308,12 @@ export const Avatar: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ classNa
 
 export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', src, alt, ...props }) => {
   const imageProps = props as Omit<React.ComponentProps<typeof Image>, 'src' | 'alt' | 'fill'>;
-<<<<<<< HEAD
   const imageSrc = typeof src === 'string' ? src : undefined;
 
   return imageSrc ? (
     <Image
       {...imageProps}
       src={imageSrc}
-=======
-
-  return src ? (
-    <Image
-      {...imageProps}
-      src={src}
->>>>>>> origin/main
       alt={alt || ''}
       fill
       className={`object-cover ${className}`}
@@ -451,4 +413,3 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
     </div>
   );
 };
-

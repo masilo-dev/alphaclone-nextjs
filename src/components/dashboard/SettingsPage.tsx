@@ -6,49 +6,32 @@ import {
     AlertCircle, ShieldCheck,
     User as UserIcon, Globe, Building,
     ChevronRight, DollarSign, Briefcase,
-<<<<<<< HEAD
     Eye, Copy, Upload, BookOpen, Archive,
-=======
-    Eye, Copy, Upload
->>>>>>> origin/main
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '@/contexts/TenantContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
-<<<<<<< HEAD
 import { useAuth } from '@/contexts/AuthContext';
-=======
->>>>>>> origin/main
 import { User as UserType } from '@/types';
 import { userService } from '@/services/userService';
 import { authService } from '@/services/authService';
 import { fileUploadService } from '@/services/fileUploadService';
 import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '@/services/universalServiceCatalog';
-<<<<<<< HEAD
 import { getTaxRateForCountry } from '@/lib/tax/taxRules';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-=======
-import { supabase } from '@/lib/supabase';
-import toast from 'react-hot-toast';
->>>>>>> origin/main
 
 // Integration subcomponents
 import CalendlySettings from './business/CalendlySettings';
 import HubspotIntegration from './business/HubspotIntegration';
 import StripeConnectSettings from './business/StripeConnectSettings';
 import ZohoIntegration from './business/ZohoIntegration';
-<<<<<<< HEAD
-=======
-import GmailIntegration from './business/GmailIntegration';
->>>>>>> origin/main
 import TwilioIntegration from './business/TwilioIntegration';
 import SendGridIntegration from './business/SendGridIntegration';
 import ResendIntegration from './business/ResendIntegration';
 import BrevoIntegration from './business/BrevoIntegration';
-<<<<<<< HEAD
 import Microsoft365Integration from './business/Microsoft365Integration';
 import MFAEnrollment from './business/MFAEnrollment';
 import DeletedRecordsSection from './settings/DeletedRecordsSection';
@@ -58,9 +41,6 @@ import {
     type SettingsCategory,
     type SettingsCategoryId,
 } from './settings/SettingsCategoryNav';
-=======
-import MFAEnrollment from './business/MFAEnrollment';
->>>>>>> origin/main
 
 interface SettingsPageProps {
     user: UserType;
@@ -73,28 +53,19 @@ const statusColors: Record<string, string> = {
 };
 
 export default function SettingsPage({ user }: SettingsPageProps) {
-<<<<<<< HEAD
     const { signOut } = useAuth();
     const { currentTenant } = useTenant();
     const { backgroundColor, setBackgroundColor, themeMode, setThemeMode } = useTheme();
-=======
-    const { currentTenant } = useTenant();
-    const { backgroundColor, setBackgroundColor } = useTheme();
->>>>>>> origin/main
     const { language, setLanguage, t: translate } = useLanguage();
 
     // Accordion visibility mapping
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-<<<<<<< HEAD
     const [activeCategory, setActiveCategory] = useState<SettingsCategoryId | null>(null);
-=======
->>>>>>> origin/main
 
     const toggleRow = (id: string) => {
         setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
     };
 
-<<<<<<< HEAD
     const handleSelectCategory = (category: SettingsCategory) => {
         setActiveCategory(category.id);
         setExpandedRows((prev) => {
@@ -128,15 +99,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     const [hasMcpApiKey, setHasMcpApiKey] = useState(false);
     const [isLoadingApiKey, setIsLoadingApiKey] = useState(true);
 
-=======
-    // States
-    const [isSaving, setIsSaving] = useState(false);
-    const [uploading, setUploading] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [showApiKey, setShowApiKey] = useState(false);
-
->>>>>>> origin/main
     // Profile & workspace details
     const [profileData, setProfileData] = useState({
         name: user.name || '',
@@ -161,22 +123,14 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
     const [businessSettings, setBusinessSettings] = useState({
         businessName: '',
-<<<<<<< HEAD
         tradingName: '',
         logoUrl: '',
         brandColor: '#356AF4',
-=======
-        logoUrl: '',
-        brandColor: '#2dd4bf',
->>>>>>> origin/main
         address: '',
         phone: '',
         email: '',
         taxRate: 0,
-<<<<<<< HEAD
         taxCountry: 'ZW',
-=======
->>>>>>> origin/main
         currency: 'USD',
         invoicePrefix: 'INV',
         bankDetails: '',
@@ -191,36 +145,22 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             if (!currentTenant?.id) return;
             try {
                 // Fetch profile updates from user service / db
-<<<<<<< HEAD
                 const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/business-settings`, { credentials: 'include' });
                 const payload = await response.json().catch(() => ({}));
                 const bData = payload.settings;
                 const error = response.ok ? null : new Error(payload.error || 'Business settings could not be loaded');
-=======
-                const { data: bData, error } = await supabase
-                    .from('business_settings')
-                    .select('*')
-                    .eq('tenant_id', currentTenant.id)
-                    .single();
->>>>>>> origin/main
 
                 if (!error && bData) {
                     setBusinessSettings({
                         businessName: bData.business_name || user?.name || '',
-<<<<<<< HEAD
                         tradingName: bData.trading_name || '',
-=======
->>>>>>> origin/main
                         logoUrl: bData.logo_url || '',
                         brandColor: bData.brand_color || '#2dd4bf',
                         address: bData.address || '',
                         phone: bData.phone || '',
                         email: bData.email || user?.email || '',
                         taxRate: bData.tax_rate || 0,
-<<<<<<< HEAD
                         taxCountry: bData.tax_country || 'ZW',
-=======
->>>>>>> origin/main
                         currency: bData.currency || 'USD',
                         invoicePrefix: bData.invoice_prefix || 'INV',
                         bankDetails: bData.bank_details || '',
@@ -235,7 +175,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         };
         loadInitialData();
     }, [currentTenant?.id]);
-<<<<<<< HEAD
 
     // Load MCP API key
     useEffect(() => {
@@ -275,8 +214,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             setIsSaving(false);
         }
     };
-=======
->>>>>>> origin/main
 
     const handleSaveProfile = async () => {
         if (!profileData.name.trim()) return toast.error('Name is required');
@@ -334,7 +271,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         if (!currentTenant) return;
         setIsSaving(true);
         try {
-<<<<<<< HEAD
             const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/business-settings`, {
                 method: 'PUT',
                 credentials: 'include',
@@ -343,31 +279,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error || 'Failed to save business settings');
-=======
-            const { error } = await supabase
-                .from('business_settings')
-                .upsert({
-                    tenant_id: currentTenant.id,
-                    business_name: businessSettings.businessName,
-                    logo_url: businessSettings.logoUrl,
-                    brand_color: businessSettings.brandColor,
-                    address: businessSettings.address,
-                    phone: businessSettings.phone,
-                    email: businessSettings.email,
-                    tax_rate: businessSettings.taxRate,
-                    currency: businessSettings.currency,
-                    invoice_prefix: businessSettings.invoicePrefix,
-                    bank_details: businessSettings.bankDetails,
-                    mobile_payment_details: businessSettings.mobilePaymentDetails,
-                    settings: {
-                        service_sectors: businessSettings.serviceSectors,
-                        my_services: businessSettings.myServices
-                    },
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'tenant_id' });
-
-            if (error) throw error;
->>>>>>> origin/main
             toast.success('Workspace business profile saved!');
         } catch (err: any) {
             toast.error(err.message || 'Failed to save business settings');
@@ -445,18 +356,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     const handleDeleteAccount = async () => {
         setIsDeleting(true);
         try {
-<<<<<<< HEAD
             const { error } = await authService.requestAccountDeletion({ immediate: true });
             if (error) throw new Error(error);
             toast.success('Account deleted. Signing out...');
             await signOut();
             window.location.href = '/auth/login?reason=account_deleted';
-=======
-            const { error } = await authService.requestAccountDeletion();
-            if (error) throw new Error(error);
-            toast.success('Account deletion scheduled. Logging out...');
-            setTimeout(() => { window.location.reload(); }, 1500);
->>>>>>> origin/main
         } catch (err: any) {
             toast.error(err.message || 'Deletion failed');
         } finally {
@@ -464,13 +368,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         }
     };
 
-    const handleCopyApiKey = () => {
-        navigator.clipboard.writeText('sk_live_alpha_7f8392bcdefa028457283bc891');
-        toast.success('API key copied');
-    };
-
     return (
-<<<<<<< HEAD
         <div className="max-w-5xl mx-auto space-y-8 pb-32 px-4 sm:px-6">
             <SettingsCategoryNav
                 activeId={activeCategory}
@@ -502,131 +400,10 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         <span className="px-2.5 py-0.5 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] text-[10px] font-bold uppercase rounded-lg">
                             WS: {currentTenant?.name}
                         </span>
-=======
-        <div className="max-w-4xl mx-auto space-y-10 pb-32 px-4 sm:px-6">
-            
-            {/* Header Profile Summary */}
-            <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-slate-900 border border-white/5 rounded-3xl relative overflow-hidden">
-                <div className="relative group cursor-pointer">
-                    <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-teal-500 overflow-hidden flex items-center justify-center">
-                        {businessSettings.logoUrl ? (
-                            <img src={businessSettings.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                        ) : (
-                            <span className="text-2xl font-black text-white">{user.name?.[0]?.toUpperCase()}</span>
-                        )}
-                    </div>
-                    <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-full flex items-center justify-center transition-all cursor-pointer">
-                        <Upload className="w-5 h-5 text-white" />
-                        <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                    </label>
-                </div>
-                <div className="text-center sm:text-left space-y-1 flex-1">
-                    <h2 className="text-lg font-black text-white">{user.name}</h2>
-                    <p className="text-xs text-slate-400 font-mono">{user.email}</p>
-                    <div className="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
-                        <span className="px-2.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 text-[10px] font-black uppercase rounded-lg">
-                            {currentTenant?.subscription_plan || 'free'} tier
-                        </span>
-                        <span className="px-2.5 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase rounded-lg">
-                            WS: {currentTenant?.name}
-                        </span>
                     </div>
                 </div>
             </div>
 
-            {/* 1. ACCOUNT GROUP */}
-            <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Account Preferences</span>
-                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
-                    
-                    {/* Row 1: Profile Details */}
-                    <div>
-                        <div 
-                            onClick={() => toggleRow('profile')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                                    <UserIcon className="w-4 h-4 text-blue-400" />
-                                </div>
-                                <span className="text-[13px] font-bold text-slate-200">Profile Details</span>
-                            </div>
-                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['profile'] ? 'rotate-90' : ''}`} />
-                        </div>
-                        <AnimatePresence>
-                            {expandedRows['profile'] && (
-                                <motion.div 
-                                    initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                                    className="overflow-hidden bg-slate-950/40"
-                                >
-                                    <div className="p-4 space-y-4 border-t border-white/5">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black">Full Name</label>
-                                                <input value={profileData.name} onChange={e => setProfileData({...profileData, name: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black">Phone Number</label>
-                                                <input value={profileData.phone} onChange={e => setProfileData({...profileData, phone: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" placeholder="+1 (555) 000-0000" />
-                                            </div>
-                                        </div>
-                                        <button onClick={handleSaveProfile} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save Profile</button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* Row 2: Security & password */}
-                    <div>
-                        <div 
-                            onClick={() => toggleRow('security')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                                    <Lock className="w-4 h-4 text-orange-400" />
-                                </div>
-                                <span className="text-[13px] font-bold text-slate-200">Security & Credentials</span>
-                            </div>
-                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['security'] ? 'rotate-90' : ''}`} />
-                        </div>
-                        <AnimatePresence>
-                            {expandedRows['security'] && (
-                                <motion.div 
-                                    initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                                    className="overflow-hidden bg-slate-950/40"
-                                >
-                                    <div className="p-4 space-y-4 border-t border-white/5">
-                                        <div className="space-y-3">
-                                            <input type="password" placeholder="Current Password" value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <input type="password" placeholder="New Password" value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <input type="password" placeholder="Confirm New Password" value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                        </div>
-                                        <button onClick={handleChangePassword} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Update Password</button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-
-                    {/* Row 3: MFA / 2FA toggle */}
-                    <div>
-                        <div className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                                </div>
-                                <span className="text-[13px] font-bold text-slate-200">Two-Factor Authentication (2FA)</span>
-                            </div>
-                            <button onClick={() => window.location.href = '/dashboard/security/2fa'} className="px-3 py-1 bg-slate-800 text-slate-300 rounded-lg text-[10px] font-black uppercase">Enable</button>
-                        </div>
->>>>>>> origin/main
-                    </div>
-                </div>
-            </div>
-
-<<<<<<< HEAD
             <Link
                 href="/dashboard/help"
                 className="flex items-center justify-between gap-4 p-4 rounded-[14px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] hover:border-[var(--brand-blue-500)] transition-colors group"
@@ -748,47 +525,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 >
                                     <div className="px-4 pb-4">
                                         <MFAEnrollment />
-=======
-            {/* 2. WORKSPACE & BUSINESS GROUP */}
-            <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Workspace Settings</span>
-                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
-                    
-                    {/* Row 1: Brand Info */}
-                    <div>
-                        <div 
-                            onClick={() => toggleRow('business_profile')}
-                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center">
-                                    <Building className="w-4 h-4 text-pink-400" />
-                                </div>
-                                <span className="text-[13px] font-bold text-slate-200">Business Profile & Invoices</span>
-                            </div>
-                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['business_profile'] ? 'rotate-90' : ''}`} />
-                        </div>
-                        <AnimatePresence>
-                            {expandedRows['business_profile'] && (
-                                <motion.div 
-                                    initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-                                    className="overflow-hidden bg-slate-950/40"
-                                >
-                                    <div className="p-4 space-y-4 border-t border-white/5">
-                                        <div className="space-y-3">
-                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder="Official Company Name" className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <input value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder="Business Email" className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
-                                            <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder="Business Address" rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
-                                            <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder="Bank transfer account details" rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
-                                        </div>
-                                        <button onClick={handleSaveBusiness} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save Details</button>
->>>>>>> origin/main
                                     </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </div>
-<<<<<<< HEAD
                 </div>
             </div>
 
@@ -833,9 +574,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         </AnimatePresence>
                     </div>
 
-=======
-
->>>>>>> origin/main
                     {/* Row 2: Regional format */}
                     <div>
                         <div 
@@ -846,11 +584,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
                                     <Globe className="w-4 h-4 text-violet-400" />
                                 </div>
-<<<<<<< HEAD
                                 <span className="text-[13px] font-bold text-slate-200">Regional Format</span>
-=======
-                                <span className="text-[13px] font-bold text-slate-200">Regional & Language</span>
->>>>>>> origin/main
                             </div>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['regional'] ? 'rotate-90' : ''}`} />
                         </div>
@@ -861,7 +595,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     className="overflow-hidden bg-slate-950/40"
                                 >
                                     <div className="p-4 space-y-4 border-t border-white/5">
-<<<<<<< HEAD
                                         <div className="space-y-1">
                                             <label className="text-[10px] text-slate-500 uppercase font-black">Tax country (VAT / GST)</label>
                                             <select
@@ -885,34 +618,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                 <option value="GB">United Kingdom (20% VAT)</option>
                                                 <option value="US">United States (manual)</option>
                                             </select>
-=======
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black">Currency</label>
-                                                <select 
-                                                    value={businessSettings.currency} 
-                                                    onChange={e => setBusinessSettings({...businessSettings, currency: e.target.value})}
-                                                    className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
-                                                >
-                                                    <option value="USD">USD ($)</option>
-                                                    <option value="EUR">EUR (€)</option>
-                                                    <option value="GBP">GBP (£)</option>
-                                                    <option value="KES">KES (Ksh)</option>
-                                                </select>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] text-slate-500 uppercase font-black">System Language</label>
-                                                <select 
-                                                    value={language} 
-                                                    onChange={e => setLanguage(e.target.value as any)}
-                                                    className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
-                                                >
-                                                    {LANGUAGES.map(lang => (
-                                                        <option key={lang.code} value={lang.code}>{lang.label}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
->>>>>>> origin/main
                                         </div>
                                         <div className="space-y-1">
                                             <label className="text-[10px] text-slate-500 uppercase font-black">Default tax rate (%)</label>
@@ -1009,7 +714,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">System Integrations</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
-<<<<<<< HEAD
                     {/* Email delivery provider (transactional) */}
                     <div>
                         <div
@@ -1026,8 +730,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         )}
                     </div>
 
-=======
->>>>>>> origin/main
                     {/* Zoho */}
                     <div>
                         <div 
@@ -1042,7 +744,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         )}
                     </div>
 
-<<<<<<< HEAD
                     {/* Microsoft 365 */}
                     <div>
                         <div 
@@ -1057,8 +758,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         )}
                     </div>
 
-=======
->>>>>>> origin/main
                     {/* Resend */}
                     <div>
                         <div 
@@ -1154,7 +853,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             </div>
 
             {/* 5. APPEARANCE GROUP */}
-<<<<<<< HEAD
             <div id="settings-appearance" className="space-y-3 scroll-mt-4">
                 <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">Appearance</span>
                 <div className="ac-workspace-panel p-4 space-y-4">
@@ -1182,33 +880,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     }`}
                                 >
                                     {theme.label}
-=======
-            <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Appearance Theme</span>
-                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden p-4 space-y-4">
-                    
-                    {/* Theme Mode Segment switcher */}
-                    <div className="space-y-1.5">
-                        <label className="text-[10px] text-slate-500 uppercase font-black">Interface Theme</label>
-                        <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
-                            {['dark', 'light', 'system'].map((theme) => (
-                                <button
-                                    key={theme}
-                                    onClick={() => {
-                                        toast.success(`Theme mode updated to ${theme}`);
-                                    }}
-                                    className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg uppercase transition-all ${
-                                        theme === 'dark' ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'
-                                    }`}
-                                >
-                                    {theme}
->>>>>>> origin/main
                                 </button>
                             ))}
                         </div>
                     </div>
 
-<<<<<<< HEAD
                     {/* Personal language — does not change workspace for other users */}
                     <div className="space-y-1.5">
                         <label className="text-[10px] text-slate-500 uppercase font-black">Your language</label>
@@ -1224,8 +900,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         <p className="text-[10px] text-slate-500">Personal preference only — other team members keep their own language.</p>
                     </div>
 
-=======
->>>>>>> origin/main
                     {/* Color palette dot pickers */}
                     <div className="space-y-2">
                         <label className="text-[10px] text-slate-500 uppercase font-black block">Accent Brand Theme</label>
@@ -1323,7 +997,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 </div>
             </div>
 
-<<<<<<< HEAD
             {/* 7. DATA MANAGEMENT */}
             <div className="space-y-3">
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Data Management</span>
@@ -1402,32 +1075,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             <p className="text-xs text-slate-500 mt-1">{hasMcpApiKey ? 'For security, the key is shown only when generated. Rotate it to receive a new value.' : 'Click "Generate Key" to create one'}</p>
                         </div>
                     )}
-=======
-            {/* 7. DEVELOPER MCP & API KEYS */}
-            <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Developer MCP & API</span>
-                <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
-                    <span className="text-[10px] text-slate-500 uppercase font-black block">Publish credential keys</span>
-                    <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
-                        <span className="font-mono text-xs text-slate-400 select-all">
-                            {showApiKey ? 'sk_live_alpha_7f8392bcdefa028457283bc891' : 'sk_live_alpha_••••••••••••••••••••••••'}
-                        </span>
-                        <div className="flex items-center gap-1.5 ml-2">
-                            <button 
-                                onClick={() => setShowApiKey(!showApiKey)}
-                                className="p-1.5 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400"
-                            >
-                                <Eye className="w-3.5 h-3.5" />
-                            </button>
-                            <button 
-                                onClick={handleCopyApiKey}
-                                className="p-1.5 bg-slate-900 hover:bg-slate-800 rounded-lg text-slate-400"
-                            >
-                                <Copy className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                    </div>
->>>>>>> origin/main
                 </div>
             </div>
 
@@ -1437,13 +1084,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 <div className="bg-slate-900/40 border border-rose-900/20 rounded-2xl divide-y divide-rose-900/10 overflow-hidden">
                     <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-<<<<<<< HEAD
                             <h4 className="text-[13px] font-bold text-rose-400">Delete Account Now</h4>
                             <p className="text-[10px] text-slate-500 mt-0.5">Permanently removes your account and signs you out immediately</p>
-=======
-                            <h4 className="text-[13px] font-bold text-rose-400">Request Account Deletion</h4>
-                            <p className="text-[10px] text-slate-500 mt-0.5">Schedules your user profile and all data for wipe in 30 days</p>
->>>>>>> origin/main
                         </div>
                         <button 
                             onClick={() => setDeleteModalOpen(true)}
@@ -1458,11 +1100,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             {/* Deletion Dialog Modal */}
             <AnimatePresence>
                 {deleteModalOpen && (
-<<<<<<< HEAD
                     <div className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-=======
-                    <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
->>>>>>> origin/main
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -1474,11 +1112,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <h3 className="text-sm font-black uppercase tracking-wider">Warning Action</h3>
                             </div>
                             <p className="text-xs text-slate-400 leading-relaxed">
-<<<<<<< HEAD
                                 This will permanently delete your profile and associated data. You will be signed out and will not be able to log back in.
-=======
-                                This will schedule your profile for deletion. All custom templates, contact lists, and scheduled posts will be wiped at the end of the 30-day grace window.
->>>>>>> origin/main
                             </p>
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 <button 

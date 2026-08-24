@@ -20,15 +20,9 @@ export const metadata: Metadata = {
         'Data Sovereignty',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/services' },
-<<<<<<< HEAD
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'Operating System | AlphaClone Unified AI Business OS',
         description: 'Run AI sales workflows, CRM, projects, invoicing, contracts, and meetings from one operating backbone.',
-=======
-    openGraph: {
-        title: 'Solutions | AlphaClone Unified AI Business OS',
-        description: 'Eliminate SaaS bloat with one unified architecture. Autonomous Growth, Unified CRM, Mission Control, Revenue Center — all in AlphaClone.',
->>>>>>> origin/main
         url: 'https://alphaclonesystems.com/services',
         type: 'website',
     },

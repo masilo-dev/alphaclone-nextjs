@@ -48,11 +48,7 @@ Return ONLY a valid JSON object matching this schema:
     };
 
     try {
-<<<<<<< HEAD
       const response = await generateText(prompt, 600, 'deepseek-chat', tenantId);
-=======
-      const response = await generateText(prompt, 600, 'claude-sonnet-4-6-20260217', tenantId);
->>>>>>> origin/main
       const text = response.text || '';
       const start = text.indexOf('{');
       const end = text.lastIndexOf('}') + 1;

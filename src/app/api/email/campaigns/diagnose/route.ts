@@ -16,12 +16,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'tenantId and campaignId are required' }, { status: 400 });
         }
 
-<<<<<<< HEAD
         const { admin } = await requireTenantAccess(tenantId);
-=======
-        await requireTenantAccess(tenantId);
-        const admin = createSupabaseAdminClient();
->>>>>>> origin/main
 
         const issues: string[] = [];
         const warnings: string[] = [];
@@ -41,7 +36,6 @@ export async function GET(req: NextRequest) {
 
         info.push(`Campaign status: "${campaign.status}"`);
 
-<<<<<<< HEAD
         const meta = (campaign.metadata || {}) as Record<string, unknown>;
         const deliverySettings = ((meta.deliverySettings || {}) as Record<string, unknown>);
         const abTest = (meta.abTest || {}) as Record<string, unknown>;
@@ -53,8 +47,6 @@ export async function GET(req: NextRequest) {
           }
         }
 
-=======
->>>>>>> origin/main
         if (campaign.status === 'sent' || campaign.status === 'completed') {
             info.push(`Campaign already completed. Sent: ${campaign.total_sent} emails.`);
             return NextResponse.json({ issues, warnings, info });
@@ -64,7 +56,6 @@ export async function GET(req: NextRequest) {
             issues.push('Campaign is still in DRAFT — it has not been sent yet. Click "Send" to launch it.');
         }
 
-<<<<<<< HEAD
         const selectedProviders = Array.isArray(deliverySettings.selectedProviders)
             ? deliverySettings.selectedProviders.map((value) => String(value || '').trim().toLowerCase()).filter(Boolean)
             : [];
@@ -80,8 +71,6 @@ export async function GET(req: NextRequest) {
             issues.push('Selected delivery provider(s) are not supported for direct campaigns. Use Zoho Mail, Brevo, SendGrid, or Resend.');
         }
 
-=======
->>>>>>> origin/main
         if (campaign.status === 'scheduled' && campaign.scheduled_at) {
             const scheduledAt = new Date(campaign.scheduled_at);
             if (scheduledAt > new Date()) {
@@ -95,7 +84,6 @@ export async function GET(req: NextRequest) {
             issues.push('CRITICAL: Campaign has no creator (created_by is null). Recreate the campaign while logged in.');
         }
 
-<<<<<<< HEAD
         // 3. Check email providers (tenant-wide first, then creator)
         const integrationQuery = admin
             .from('integrations')
@@ -157,36 +145,6 @@ export async function GET(req: NextRequest) {
             info.push(`Campaign sender identity: ${campaignFromName || 'No name set'} <${campaignFromEmail}>`);
         }
 
-=======
-        // 3. Check email providers
-        if (creatorId) {
-            const { data: integrations } = await admin
-                .from('integrations')
-                .select('type, enabled, config')
-                .eq('user_id', creatorId)
-                .eq('enabled', true)
-                .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']);
-
-            if (!integrations || integrations.length === 0) {
-                issues.push('No email provider connected. Go to Settings > Integrations and connect SendGrid, Resend, Brevo, Zoho Mail, or Gmail.');
-            } else {
-                const providerNames = integrations.map((i: any) => i.type).join(', ');
-                info.push(`Active email providers: ${providerNames}`);
-
-                // Check if API keys are present
-                for (const integ of integrations) {
-                    const cfg = integ.config || {};
-                    if (integ.type !== 'zoho' && integ.type !== 'gmail') {
-                        const hasKey = !!(cfg.apiKey || cfg.api_key);
-                        if (!hasKey) {
-                            issues.push(`Provider "${integ.type}" is connected but missing an API key. Edit the integration and add a valid key.`);
-                        }
-                    }
-                }
-            }
-        }
-
->>>>>>> origin/main
         // 4. Check recipients
         const { data: recipients } = await admin
             .from('campaign_recipients')

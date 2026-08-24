@@ -49,7 +49,6 @@ export async function upsertSuppression(args: {
         console.error('[email/suppression] upsert failed:', error);
     }
 }
-<<<<<<< HEAD
 
 export async function syncSuppressionCleanup(args: {
     tenantId: string;
@@ -99,5 +98,3 @@ export async function syncSuppressionCleanup(args: {
         console.error('[email/suppression] outreach cleanup failed:', outreachResult.error);
     }
 }
-=======
->>>>>>> origin/main

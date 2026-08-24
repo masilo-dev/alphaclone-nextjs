@@ -1,7 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 /**
-<<<<<<< HEAD
  * Invoice Created Workflow
  * Triggered when a new invoice is created or sent.
  */
@@ -32,8 +31,6 @@ async function notifyInvoiceCreatedStep(tenantId: string, payload: any) {
 }
 
 /**
-=======
->>>>>>> origin/main
  * Invoice Overdue Workflow
  * Triggered when an invoice passes its due date.
  */

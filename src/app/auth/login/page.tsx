@@ -5,33 +5,19 @@ export const dynamic = 'force-dynamic';
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import nextDynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
-<<<<<<< HEAD
 import { AlertCircle, LogIn, UserPlus, Shield, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan } from '@/services/tenancy/types';
-=======
-import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2, Shield, Eye, EyeOff } from 'lucide-react';
-import toast from 'react-hot-toast';
-import Link from 'next/link';
-import { usePWA } from '@/contexts/PWAContext';
-import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
->>>>>>> origin/main
 import Image from 'next/image';
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
 import DevSetupBanner from '@/components/auth/DevSetupBanner';
-
-const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
 
 export default function LoginPage() {
     return (
@@ -49,7 +35,6 @@ function LoginContent() {
     const typeParam = searchParams?.get('type');
     const planParam = searchParams?.get('plan') as SubscriptionPlan | null;
     const businessNameParam = searchParams?.get('businessName');
-<<<<<<< HEAD
     const referralCodeParam = searchParams?.get('ref')?.trim() || undefined;
     const nextParam = searchParams?.get('next') || searchParams?.get('returnTo') || null;
 
@@ -65,27 +50,13 @@ function LoginContent() {
           ) {
             return decoded;
           }
-=======
-    const nextParam = searchParams?.get('next') || searchParams?.get('returnTo') || null;
-
-    const postLoginRedirect = (() => {
-      if (nextParam) {
-        try {
-          const decoded = decodeURIComponent(nextParam);
-          if (decoded.startsWith('/oauth/') || decoded.startsWith('/authorize')) return decoded;
->>>>>>> origin/main
         } catch {
           // ignore malformed next param
         }
       }
-<<<<<<< HEAD
       return null;
     };
     const oauthReturnPath = resolveExplicitNextRedirect();
-=======
-      return '/dashboard/business';
-    })();
->>>>>>> origin/main
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
@@ -93,16 +64,11 @@ function LoginContent() {
     const [showPassword, setShowPassword] = useState(false);
     const [name, setName] = useState('');
     const [businessName, setBusinessName] = useState(businessNameParam || '');
-<<<<<<< HEAD
     const [selectedPlan] = useState<SubscriptionPlan>(
         (['free', 'starter', 'pro', 'enterprise'] as const).includes(planParam as never)
             ? (planParam as SubscriptionPlan)
             : 'starter'
     );
-=======
-    const [isBusiness] = useState(true);
-    const [selectedPlan] = useState<SubscriptionPlan>('starter');
->>>>>>> origin/main
     const [legalAccepted, setLegalAccepted] = useState(false);
     const [marketingOptIn, setMarketingOptIn] = useState(false);
     const [euConsent, setEuConsent] = useState(false);
@@ -112,13 +78,9 @@ function LoginContent() {
     const [isLoading, setIsLoading] = useState(false);
     const [showMfaChallenge, setShowMfaChallenge] = useState(false);
     const [mfaCode, setMfaCode] = useState('');
-<<<<<<< HEAD
     const [turnstileToken, setTurnstileToken] = useState('');
     const [turnstileNonce, setTurnstileNonce] = useState(0);
     const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-=======
-    const [humanVerified, setHumanVerified] = useState(false);
->>>>>>> origin/main
     const [registrationOpen, setRegistrationOpen] = useState(true);
     const [policyLoaded, setPolicyLoaded] = useState(false);
     const [passwordResetSentTo, setPasswordResetSentTo] = useState('');
@@ -145,7 +107,6 @@ function LoginContent() {
         loadPolicy();
     }, []);
 
-<<<<<<< HEAD
     useEffect(() => {
         if (!isRegistering) return;
         const loadRegistrationContext = async () => {
@@ -160,8 +121,6 @@ function LoginContent() {
         loadRegistrationContext();
     }, [isRegistering]);
 
-=======
->>>>>>> origin/main
 
 
     const triggerOnboardingWorkflow = async (tenantId: string) => {
@@ -191,7 +150,6 @@ function LoginContent() {
         setIsLoading(true);
 
         try {
-<<<<<<< HEAD
             if (turnstileEnabled) {
                 if (!turnstileToken) {
                     setError('Please complete the security check before continuing.');
@@ -213,8 +171,6 @@ function LoginContent() {
                 }
             }
 
-=======
->>>>>>> origin/main
             // 1. REGISTRATION FLOW
             if (isRegistering) {
                 if (!registrationOpen) {
@@ -240,14 +196,8 @@ function LoginContent() {
                     return;
                 }
 
-<<<<<<< HEAD
                 const toastId = toast.loading('Creating your account...', { id: 'registration' });
                 let newUser = null;
-=======
-                const { authService } = await import('@/services/authService');
-                const role = 'tenant_admin';
-                const { user: newUser, error: signUpError } = await authService.signUp(email, password, name, role);
->>>>>>> origin/main
 
                 try {
                     const { authService } = await import('@/services/authService');
@@ -330,7 +280,6 @@ function LoginContent() {
                 }
 
                 if (newUser) {
-<<<<<<< HEAD
                     toast.loading('Provisioning workspace...', { id: 'workspace' });
                     const trialEndDate = new Date();
                     trialEndDate.setDate(trialEndDate.getDate() + 14);
@@ -350,46 +299,6 @@ function LoginContent() {
                         });
                         if (result.error || !result.tenant) {
                             throw new Error(result.error || 'Failed to create workspace');
-=======
-                    // 2. TENANT CREATION (If Business selected)
-                    if (isBusiness && businessName) {
-                        try {
-                            const { tenantService } = await import('@/services/tenancy/TenantService');
-                            const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-
-                            // Create Tenant
-                            const newTenant = await tenantService.createTenant({
-                                name: businessName,
-                                slug: slug,
-                                adminUserId: newUser.id
-                            });
-
-                            // Set Trial and Plan
-                            const trialEndDate = new Date();
-                            trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 Days Trial
-
-                            await tenantService.updateTenant(newTenant.id, {
-                                trial_ends_at: trialEndDate,
-                                subscription_status: 'trial',
-                                subscription_plan: selectedPlan
-                            });
-
-                            // 3. Welcome Email
-                            fetch('/api/email/welcome', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    email: newUser.email,
-                                    name: name,
-                                    trial_ends_at: trialEndDate,
-                                    workspace_name: businessName
-                                })
-                            }).catch(err => console.warn('Welcome email trigger failed:', err));
-
-                            void triggerOnboardingWorkflow(newTenant.id);
-                        } catch (tenantErr) {
-                            console.error('Tenant creation failed:', tenantErr);
->>>>>>> origin/main
                         }
                         newTenant = result.tenant;
                         toast.success('Workspace provisioned!', { id: 'workspace' });
@@ -401,7 +310,6 @@ function LoginContent() {
                         setIsLoading(false);
                         return;
                     }
-<<<<<<< HEAD
 
                     try {
                         const { supabase } = await import('@/lib/supabase');
@@ -435,10 +343,6 @@ function LoginContent() {
 
                     toast.success('Welcome to AlphaClone! Redirecting...');
                     router.push(resolveExplicitNextRedirect() ?? getPostAuthDashboardPath('tenant_admin'));
-=======
-                    // Redirect to dashboard for all successful registrations
-                    router.push('/dashboard/business');
->>>>>>> origin/main
                     return;
                 }
                 setIsLoading(false);
@@ -472,11 +376,7 @@ function LoginContent() {
             }
 
             if (loggedInUser) {
-<<<<<<< HEAD
                 router.push(resolveExplicitNextRedirect() ?? getPostAuthDashboardPath(loggedInUser.role));
-=======
-                router.push(postLoginRedirect);
->>>>>>> origin/main
             }
             setIsLoading(false);
         } catch (err) {
@@ -513,13 +413,9 @@ function LoginContent() {
 
             if (verifyResponse.error) throw verifyResponse.error;
 
-<<<<<<< HEAD
             const { authService: postMfaAuth } = await import('@/services/authService');
             const { user: verifiedUser } = await postMfaAuth.getCurrentUser();
             router.push(resolveExplicitNextRedirect() ?? getPostAuthDashboardPath(verifiedUser?.role));
-=======
-            router.push(postLoginRedirect);
->>>>>>> origin/main
         } catch (err: any) {
             setError(err.message || 'Invalid verification code');
         } finally {
@@ -527,76 +423,9 @@ function LoginContent() {
         }
     };
 
-<<<<<<< HEAD
     if (showMfaChallenge) {
         return (
             <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-=======
-    if (showPayment && newTenantData) {
-        return (
-            <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="fixed inset-0 z-0 pointer-events-none">
-                    <HeroBackground />
-                </div>
-
-                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 my-auto animate-slide-up">
-                    <h2 className="text-2xl font-bold text-white mb-2 text-center">Your 14-Day Trial is Active</h2>
-                    <p className="text-slate-400 text-sm text-center mb-8">
-                        No charge now. Add a payment method after your trial to continue.
-                    </p>
-
-                    <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 space-y-4">
-                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
-                            <span className="text-slate-400">Plan Selected</span>
-                            <span className="text-white font-semibold">{selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
-                            <span className="text-slate-400">Billing Cycle</span>
-                            <span className="text-white font-semibold">Monthly</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
-                            <span className="text-slate-400">Trial Period</span>
-                            <span className="text-teal-400 font-semibold">14 days free</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-white font-bold">Due After Trial</span>
-                            <span className="text-2xl font-black text-teal-400">
-                                ${PLAN_PRICING[selectedPlan]?.monthly ?? '—'}/mo
-                            </span>
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-start gap-3 text-left mb-6">
-                            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                            <p className="text-sm text-rose-200">{error}</p>
-                        </div>
-                    )}
-
-                    <Button
-                        onClick={() => { window.location.href = '/dashboard/business'; }}
-                        className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 py-4 text-lg font-bold rounded-2xl shadow-lg shadow-teal-500/20"
-                    >
-                        Go to Dashboard
-                    </Button>
-
-                    <p className="text-xs text-slate-500 mt-4 flex items-center justify-center gap-2 text-center">
-                        <FileText className="w-3 h-3 flex-shrink-0" />
-                        You will be reminded before your trial ends to add a payment method.
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    if (showMfaChallenge) {
-        return (
-            <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="fixed inset-0 z-0 pointer-events-none">
-                    <HeroBackground />
-                </div>
-
->>>>>>> origin/main
                 <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
                     <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Shield className="w-10 h-10 text-teal-400" />
@@ -651,7 +480,6 @@ function LoginContent() {
     }
 
     return (
-<<<<<<< HEAD
         <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
             <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
                 <div className="mb-3 text-center">
@@ -662,49 +490,22 @@ function LoginContent() {
                                 alt="AlphaClone Logo"
                                 width={40}
                                 height={40}
-=======
-        <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-3 py-4 sm:py-6 relative overflow-x-hidden overflow-y-auto">
-            {/* Background Effects */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
-            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 max-w-md`}>
-                <div className="mb-4 text-center">
-                    {isPWA ? (
-                        <div className="mx-auto mb-3 flex justify-center inline-block">
-                            <Image
-                                src={LOGO_URL}
-                                alt="AlphaClone Logo"
-                                width={48}
-                                height={48}
->>>>>>> origin/main
                                 className="object-contain"
                                 priority
                             />
                         </div>
                     ) : (
-<<<<<<< HEAD
                         <Link href="/" className="mx-auto mb-2 flex justify-center inline-block">
                             <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
                                 width={40}
                                 height={40}
-=======
-                        <Link href="/" className="mx-auto mb-3 flex justify-center inline-block">
-                            <Image
-                                src={LOGO_URL}
-                                alt="AlphaClone Logo"
-                                width={48}
-                                height={48}
->>>>>>> origin/main
                                 className="object-contain hover:scale-105 transition-transform"
                                 priority
                             />
                         </Link>
                     )}
-<<<<<<< HEAD
                     <h1 className="text-base font-bold text-white mb-0.5">AlphaClone Systems</h1>
                     <p className="text-slate-400 text-[11px]">
                         {isRegistering
@@ -767,82 +568,6 @@ function LoginContent() {
                     <div>
                         <div className="mb-1 flex items-center justify-between gap-2">
                             <label className="text-xs font-medium text-slate-400">Password</label>
-=======
-                    <h1 className="text-lg font-bold text-white mb-1">AlphaClone Systems</h1>
-                    <p className="text-slate-400 text-xs">
-                        {isRegistering ? 'Create your Business OS workspace' : 'Sign in to your Business OS dashboard'}
-                    </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-3">
-                    {isRegistering && (
-                        <div className="animate-slide-up space-y-2">
-                            <div className="max-w-md mx-auto rounded-lg border border-teal-500/20 bg-teal-500/10 px-3 py-2 text-center">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">Business OS Access</p>
-                                <p className="mt-0.5 text-xs text-slate-300">Business workspace provisioning enabled.</p>
-                            </div>
-
-                            <div className="max-w-md mx-auto w-full">
-                                <Input
-                                    label="Full Name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="John Doe"
-                                    required={isRegistering}
-                                />
-                            </div>
-
-                            <div className="animate-slide-up space-y-4">
-                                <div className="max-w-md mx-auto w-full">
-                                    <Input
-                                        label="Business Name"
-                                        value={businessName}
-                                        onChange={(e) => setBusinessName(e.target.value)}
-                                        placeholder="AlphaCorp Industries"
-                                        required={isBusiness}
-                                    />
-                                </div>
-
-
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="max-w-md mx-auto w-full space-y-4">
-                        <Input
-                            label="Email Address"
-                            type="email"
-                            value={email}
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                                if (passwordResetSentTo) setPasswordResetSentTo('');
-                            }}
-                            placeholder="name@company.com"
-                            required
-                            autoComplete="email"
-                        />
-
-                        <div className="relative">
-                            <Input
-                                label="Password"
-                                type={showPassword ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                                className={!isRegistering ? 'pr-20' : 'pr-12'}
-                                autoComplete={isRegistering ? "new-password" : "current-password"}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword((prev) => !prev)}
-                                className={`absolute top-9 ${!isRegistering ? 'right-16' : 'right-3'} text-slate-400 hover:text-teal-400 transition-colors`}
-                                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                title={showPassword ? 'Hide password' : 'Show password'}
-                            >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
->>>>>>> origin/main
                             {!isRegistering && (
                                 <button
                                     type="button"
@@ -864,11 +589,7 @@ function LoginContent() {
                                         }
                                         setIsLoading(false);
                                     }}
-<<<<<<< HEAD
                                     className="text-[11px] font-semibold text-teal-400 hover:text-teal-300 transition-colors"
-=======
-                                    className="absolute right-0 top-0 text-xs text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wider"
->>>>>>> origin/main
                                 >
                                     Forgot password?
                                 </button>
@@ -896,7 +617,6 @@ function LoginContent() {
                         </div>
                     </div>
 
-<<<<<<< HEAD
                     {!isRegistering && passwordResetSentTo && (
                         <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-2 text-teal-300 text-xs">
                             Reset link sent to <span className="font-semibold">{passwordResetSentTo}</span>.
@@ -908,32 +628,6 @@ function LoginContent() {
                             <div className={`flex items-center gap-1 text-[10px] ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
                                 <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                 12+ chars
-=======
-                        {!isRegistering && passwordResetSentTo && (
-                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-3 text-teal-300 text-sm">
-                                Reset link sent to <span className="font-semibold">{passwordResetSentTo}</span>. Open the email, set a new password, then return here to sign in.
-                            </div>
-                        )}
-
-                        {isRegistering && (
-                            <div className="flex flex-wrap gap-x-3 gap-y-1 py-1">
-                                <div className={`flex items-center gap-1.5 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                    8+ Chars
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                    Upper
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[10px] ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                    Number
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[10px] ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                    Special
-                                </div>
->>>>>>> origin/main
                             </div>
                             <div className={`flex items-center gap-1 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
@@ -966,7 +660,6 @@ function LoginContent() {
                                     <Link href="/privacy-policy" target="_blank" className="text-teal-400 hover:text-teal-300 underline">Privacy Policy</Link>.
                                 </span>
                             </label>
-<<<<<<< HEAD
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -976,29 +669,6 @@ function LoginContent() {
                                 />
                                 <span>Send me product updates (optional).</span>
                             </label>
-=======
-                        )}
-
-                        {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm flex items-start gap-2 animate-fade-in">
-                                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        <Button
-                            type="submit"
-                            className="w-full h-10 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
-                            isLoading={isLoading}
-                        >
-                            {isRegistering ? 'Create Account' : 'Sign In'}
-                        </Button>
-                    </div>
-
-                    <div className="relative my-4">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-slate-800"></div>
->>>>>>> origin/main
                         </div>
                     )}
 
@@ -1016,7 +686,6 @@ function LoginContent() {
                         </div>
                     )}
 
-<<<<<<< HEAD
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-red-400 text-xs flex items-start gap-2 animate-fade-in">
                             <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
@@ -1047,96 +716,6 @@ function LoginContent() {
                 </form>
 
                 <div className="mt-3 pt-2 border-t border-slate-800 text-center space-y-1.5">
-=======
-                    <div className="flex items-center justify-center gap-3">
-                        <button
-                            type="button"
-                            aria-label="Sign in with Google"
-                            title="Sign in with Google"
-                            onClick={async () => {
-                                setIsLoading(true);
-                                setError('');
-                                try {
-                                    const { authService } = await import('@/services/authService');
-                                    const { error: googleError } = await authService.signInWithGoogle();
-                                    if (googleError) {
-                                        setError(googleError);
-                                        setIsLoading(false);
-                                    }
-                                } catch {
-                                    setError('Failed to initialize Google sign-in');
-                                    setIsLoading(false);
-                                }
-                            }}
-                            disabled={isLoading}
-                            className="w-9 h-9 flex items-center justify-center bg-white hover:bg-gray-50 rounded-full border border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                            </svg>
-                        </button>
-
-                        <button
-                            type="button"
-                            aria-label="Sign in with LinkedIn"
-                            title="Sign in with LinkedIn"
-                            onClick={async () => {
-                                setIsLoading(true);
-                                setError('');
-                                try {
-                                    const { authService } = await import('@/services/authService');
-                                    const { error: linkedInError } = await authService.signInWithLinkedIn();
-                                    if (linkedInError) {
-                                        setError(linkedInError);
-                                        setIsLoading(false);
-                                    }
-                                } catch {
-                                    setError('Failed to initialize LinkedIn sign-in');
-                                    setIsLoading(false);
-                                }
-                            }}
-                            disabled={isLoading}
-                            className="w-9 h-9 flex items-center justify-center bg-[#0A66C2] hover:bg-[#0958A8] text-white rounded-full border border-[#0A66C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.03-1.84-3.03-1.85 0-2.13 1.45-2.13 2.94v5.66H9.36V9h3.42v1.56h.05c.48-.9 1.64-1.84 3.37-1.84 3.6 0 4.26 2.37 4.26 5.46v6.27zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
-                            </svg>
-                        </button>
-
-                        <button
-                            type="button"
-                            aria-label="Sign in with Facebook"
-                            title="Sign in with Facebook"
-                            onClick={async () => {
-                                setIsLoading(true);
-                                setError('');
-                                try {
-                                    const { authService } = await import('@/services/authService');
-                                    const { error: facebookError } = await authService.signInWithFacebook();
-                                    if (facebookError) {
-                                        setError(facebookError);
-                                        setIsLoading(false);
-                                    }
-                                } catch {
-                                    setError('Failed to initialize Facebook sign-in');
-                                    setIsLoading(false);
-                                }
-                            }}
-                            disabled={isLoading}
-                            className="w-9 h-9 flex items-center justify-center bg-[#1877F2] hover:bg-[#166FE5] text-white rounded-full border border-[#1877F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.03 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.32l-.53 3.49h-2.79V24C19.61 23.09 24 18.1 24 12.07z" />
-                            </svg>
-                        </button>
-                    </div>
-                </form>
-
-                <div className="mt-4 pt-3 border-t border-slate-800 text-center space-y-2">
->>>>>>> origin/main
                     <button
                         onClick={() => {
                             if (!registrationOpen && !isRegistering) {
@@ -1169,4 +748,3 @@ function LoginContent() {
         </div>
     );
 }
-

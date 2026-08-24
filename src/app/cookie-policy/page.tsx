@@ -6,11 +6,7 @@ export const metadata: Metadata = {
     description: 'AlphaClone Cookie Policy. Full breakdown of all cookies used — authentication, analytics, functional, and marketing categories — with instructions to manage your preferences.',
     keywords: ['AlphaClone cookie policy', 'cookie preferences', 'GDPR cookies', 'analytics cookies', 'marketing cookies', 'how to disable cookies'],
     alternates: { canonical: 'https://alphaclonesystems.com/cookie-policy' },
-<<<<<<< HEAD
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-=======
-    openGraph: {
->>>>>>> origin/main
         title: 'Cookie Policy | AlphaClone Systems',
         description: 'Complete list of cookies used by AlphaClone, their purpose, and how to manage your preferences.',
         url: 'https://alphaclonesystems.com/cookie-policy',

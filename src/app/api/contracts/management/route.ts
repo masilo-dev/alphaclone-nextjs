@@ -6,15 +6,9 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess } from '@/lib/apiAuth';
-<<<<<<< HEAD
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
 import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
-=======
-import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
-import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
-import { resolveEmailProviderConfig } from '@/lib/email/providerIntegrationResolver';
->>>>>>> origin/main
 import { randomBytes } from 'crypto';
 import { AppUrls } from '@/lib/urls';
 import {
@@ -35,7 +29,6 @@ export async function POST(req: NextRequest) {
     if (!tenantId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
-<<<<<<< HEAD
     const { user, admin: supabase } = await requireTenantAccess(tenantId);
     try {
       const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
@@ -45,12 +38,6 @@ export async function POST(req: NextRequest) {
     } catch (contextError) {
       console.warn('[contracts/management] set_tenant_context unavailable:', contextError);
     }
-=======
-    const { user } = await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
->>>>>>> origin/main
 
     switch (action) {
       case 'create_contract':
@@ -324,15 +311,9 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
 
 export async function sendContract(tenantId: string, config: any, supabase: any, actorUserId: string) {
   try {
-<<<<<<< HEAD
     const { contractId, recipients, subject, message, format = 'pdf', provider, resendForSignature = false } = config;
     if (!contractId) {
       return { success: false, error: 'contractId is required' };
-=======
-    const { contractId, recipients, subject, message, format = 'pdf' } = config;
-    if (!contractId || !recipients) {
-      return { success: false, error: 'contractId and recipients are required' };
->>>>>>> origin/main
     }
 
     const { data: contract, error } = await supabase
@@ -346,7 +327,6 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       return { success: false, error: 'Contract not found' };
     }
 
-<<<<<<< HEAD
     const isResend = Boolean(resendForSignature);
     if (isResend && contract.status === 'fully_signed') {
       return { success: false, error: 'Contract is already fully signed' };
@@ -405,14 +385,6 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       Array.isArray(recipients) && recipients.length > 0 && explicitRecipient.includes('@')
         ? recipients
         : [recipientEmail];
-=======
-    const recipientEmail = Array.isArray(recipients)
-      ? String(recipients[0] || '').trim().toLowerCase()
-      : String(recipients || '').trim().toLowerCase();
-    if (!recipientEmail) {
-      return { success: false, error: 'At least one recipient email is required' };
-    }
->>>>>>> origin/main
 
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
@@ -443,24 +415,11 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       return { success: false, error: 'Failed to generate contract document' };
     }
 
-<<<<<<< HEAD
-=======
-    const resolvedProvider = await resolveEmailProviderConfig({
-      tenantId,
-      preferredUserId: actorUserId,
-      fallbackToEnv: true,
-    });
-    if (!resolvedProvider?.apiKey) {
-      return { success: false, error: 'Email service not configured for this account' };
-    }
-
->>>>>>> origin/main
     const { data: tenantData } = await supabase
       .from('tenants')
       .select('name')
       .eq('id', tenantId)
       .single();
-<<<<<<< HEAD
 
     const tenantName = tenantData?.name || 'AlphaClone Systems';
     const urgencySubject = `Action required: Sign contract — ${contract.title} (your process is on hold)`;
@@ -474,24 +433,10 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       html: contractEmailTemplates.signatureRequest({
         recipientEmail,
         tenantId,
-=======
-    const tenantName = tenantData?.name || resolvedProvider.fromName || 'AlphaClone Systems';
-
-    const emailResult = await sendWithProviderSdk(resolvedProvider.provider as EmailProvider, {
-      apiKey: resolvedProvider.apiKey,
-      fromEmail: resolvedProvider.fromEmail || process.env.SENDGRID_FROM_EMAIL || process.env.BREVO_FROM_EMAIL || 'onboarding@alphacone.io',
-      fromName: resolvedProvider.fromName || tenantName,
-      to: recipients,
-      subject: subject || `Contract: ${contract.title}`,
-      text: `${message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
-      html: contractEmailTemplates.signatureRequest({
-        recipientEmail,
->>>>>>> origin/main
         contractTitle: contract.title,
         contractType: contract.type || 'Service Agreement',
         signingUrl,
         workspaceName: tenantName,
-<<<<<<< HEAD
         customMessage: isResend ? urgencyMessage : message || undefined,
       }),
       tenantId,
@@ -499,10 +444,6 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       fromName: tenantName,
       preferredProvider: provider as any || undefined,
       skipFooter: true,
-=======
-        customMessage: message || undefined,
-      }),
->>>>>>> origin/main
       attachments: [{
         filename: generated.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.${format}`,
         content: generated.data.bufferBase64,
@@ -510,15 +451,9 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
           ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
           : 'application/pdf'),
       }],
-<<<<<<< HEAD
     } as any);
 
     if (!emailResult.success) {
-=======
-    });
-
-    if (!emailResult.ok) {
->>>>>>> origin/main
       return { success: false, error: emailResult.error || 'Failed to send contract email' };
     }
 
@@ -530,7 +465,6 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
 
     const { runId } = await start(contractLifecycleWorkflow, [{ contractId, tenantId }]);
 
-<<<<<<< HEAD
     const sentAt = new Date().toISOString();
     const { notifyContractSent } = await import('@/services/contractNotificationService');
     await notifyContractSent(tenantId, contractId, contract.title, recipientEmail, actorUserId).catch(
@@ -542,10 +476,6 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       sent: true,
       sent_to: recipientEmail,
       sent_at: sentAt,
-=======
-    return {
-      success: true,
->>>>>>> origin/main
       message: 'Contract sent successfully',
       signingUrl,
       runId

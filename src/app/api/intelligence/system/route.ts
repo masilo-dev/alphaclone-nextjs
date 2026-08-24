@@ -28,12 +28,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-<<<<<<< HEAD
     const { admin: supabase } = await requireTenantAccess(tenantId);
-=======
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
->>>>>>> origin/main
     const snapshot = await integratedIntelligenceService.generateSnapshot(supabase, tenantId, { persist });
     const data = moduleKey ? drilldownByModule(snapshot, moduleKey) : snapshot;
 
@@ -64,12 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-<<<<<<< HEAD
     const { admin: supabase } = await requireTenantAccess(tenantId);
-=======
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
->>>>>>> origin/main
     const snapshot = await integratedIntelligenceService.generateSnapshot(supabase, tenantId, {
       persist: body.persist !== false
     });

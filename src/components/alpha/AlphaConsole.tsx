@@ -144,14 +144,8 @@ export default function AlphaConsole() {
                 {view === 'terminal' ? (
                     <>
                         <div className="md:col-span-4 border-r border-[#00FFD1]/10 p-4 md:p-6 flex flex-col gap-6 bg-[#00080D] min-h-0">
-<<<<<<< HEAD
                             <div className="border border-[#00FFD1]/20 bg-[#00FFD1]/5 p-4 text-xs leading-relaxed text-[#00FFD1]/80">
                                 Alpha runs authorized tools inside the selected workspace. Mission state and completion logs are stored durably and remain available after restarts.
-=======
-                            <div className="border border-yellow-500/20 bg-yellow-500/10 p-4 text-xs leading-relaxed text-yellow-100">
-                                Alpha is usable for assisted task execution and tool-triggered actions, but autonomous mission persistence is still beta.
-                                Mission history is not durable enough yet to present this as a fully production-hardened agent console.
->>>>>>> origin/main
                             </div>
 
                             <div className="space-y-4">
@@ -256,4 +250,3 @@ export default function AlphaConsole() {
         </div>
     );
 }
-

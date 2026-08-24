@@ -2,12 +2,8 @@
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown, MailCheck, Sparkles } from 'lucide-react';
-<<<<<<< HEAD
 import { Button, Input } from '../../ui/UIComponents';
 import { CommunicationComposer } from '@/components/ui/os/CommunicationComposer';
-=======
-import { Button, Input, Modal } from '../../ui/UIComponents';
->>>>>>> origin/main
 import { BusinessClient, businessClientService } from '../../../services/businessClientService';
 import { toast } from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
@@ -30,7 +26,6 @@ interface CommunicationModalProps {
     onSent: () => void;
 }
 
-<<<<<<< HEAD
 export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     client,
     recipient,
@@ -42,12 +37,6 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     onClose,
     onSent,
 }) => {
-=======
-type EmailProvider = 'gmail' | 'zoho' | 'sendgrid' | 'resend' | 'brevo' | null;
-type ProviderStatusMap = Record<Exclude<EmailProvider, null>, boolean>;
- 
-export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, user, onClose, onSent }) => {
->>>>>>> origin/main
     const { currentTenant } = useTenant();
     const bonnieDrawer = useBonnieDrawerOptional();
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(client || null);
@@ -57,11 +46,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const [selectedProvider, setSelectedProvider] = useState<EmailProvider>(null);
     const [loadingProvider, setLoadingProvider] = useState(false);
     const [providerStatus, setProviderStatus] = useState<ProviderStatusMap>({
-<<<<<<< HEAD
         microsoft: false,
-=======
-        gmail: false,
->>>>>>> origin/main
         zoho: false,
         sendgrid: false,
         resend: false,
@@ -73,29 +58,16 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
     const [contactSearch, setContactSearch] = useState('');
     const [showPicker, setShowPicker] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
-<<<<<<< HEAD
     const pickerRef = useRef<HTMLDivElement>(null);
     
     // Define available email providers
     const availableProviders: EmailProvider[] = ['microsoft', 'zoho', 'brevo', 'resend', 'sendgrid'];
-=======
-
-    const [signature, setSignature] = useState('');
-    const pickerRef = useRef<HTMLDivElement>(null);
-    
-    // Define available email providers
-    const availableProviders: EmailProvider[] = ['zoho', 'brevo', 'resend', 'sendgrid', 'gmail'];
->>>>>>> origin/main
 
     const providerLabels: Record<Exclude<EmailProvider, null>, string> = {
         sendgrid: 'SendGrid',
         resend: 'Resend',
         brevo: 'Brevo',
-<<<<<<< HEAD
         microsoft: 'Microsoft 365',
-=======
-        gmail: 'Gmail',
->>>>>>> origin/main
         zoho: 'Zoho Mail',
     };
 
@@ -143,11 +115,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                 if (!response.ok) throw new Error(data.error || 'Failed to load provider status');
                 const integrations = Array.isArray(data.integrations) ? data.integrations : [];
                 const next: ProviderStatusMap = {
-<<<<<<< HEAD
                     microsoft: false,
-=======
-                    gmail: false,
->>>>>>> origin/main
                     zoho: false,
                     sendgrid: false,
                     resend: false,
@@ -161,21 +129,14 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                 });
                 setProviderStatus(next);
                 setSelectedProvider((prev) => {
-<<<<<<< HEAD
                     if (preferredProvider && next[preferredProvider]) return preferredProvider;
-=======
->>>>>>> origin/main
                     if (prev && next[prev as keyof ProviderStatusMap]) return prev;
                     const firstConnected = (availableProviders.find((provider) => provider && next[provider as keyof ProviderStatusMap]) || null) as EmailProvider;
                     return firstConnected;
                 });
             } catch {
                 setProviderStatus({
-<<<<<<< HEAD
                     microsoft: false,
-=======
-                    gmail: false,
->>>>>>> origin/main
                     zoho: false,
                     sendgrid: false,
                     resend: false,
@@ -188,11 +149,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
         };
 
         loadProviderStatus();
-<<<<<<< HEAD
     }, [currentTenant?.id, preferredProvider]);
-=======
-    }, [currentTenant?.id]);
->>>>>>> origin/main
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -238,11 +195,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
             const response = await fetch('/api/outreach/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-<<<<<<< HEAD
                     body: JSON.stringify({
-=======
-                body: JSON.stringify({
->>>>>>> origin/main
                     tenantId: currentTenant.id,
                     leadEmail: selectedClient.email,
                     leadName: selectedClient.name,
@@ -254,11 +207,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
                     autoSend: true,
                     consentGranted: true,
                     confidenceScore: 100,
-<<<<<<< HEAD
                     skipCrmGate: true,
                     directSend: true,
-=======
->>>>>>> origin/main
                     deliveryProviders: [selectedProvider],
                     preferredProvider: selectedProvider,
                     balanceByDailyLimit: false,
@@ -269,22 +219,12 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({ client, 
             if (!response.ok || !result.success) {
                 throw new Error(result.error || 'Failed to send email');
             }
-<<<<<<< HEAD
             if (result.status === 'queued') {
                 throw new Error('Email was queued for approval instead of sending. Check AI Agents or retry with auto-send enabled.');
             }
 
             const { activityService } = await import('../../../services/activityService');
             await activityService.logActivity(user.id, 'Email Sent', { type: 'EXECUTE', to: selectedClient.email, subject, provider: result.provider || selectedProvider }, currentTenant.id);
-=======
-
-            await supabase.from('activity_logs').insert({
-                user_id: user.id,
-                type: 'EXECUTE',
-                action: 'Email Sent',
-                details: { to: selectedClient.email, subject, provider: result.provider || selectedProvider }
-            });
->>>>>>> origin/main
 
             const sentVia = String(result.provider || selectedProvider).toUpperCase();
             toast.success(`Email sent successfully via ${sentVia}`);
@@ -315,22 +255,14 @@ Recipient industry: ${selectedClient.industry || 'Unknown'}
 Subject: ${subject}
 Context: ${selectedClient.description || 'No additional context'}
 Current draft: ${body || 'No current draft'}
-<<<<<<< HEAD
 Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject or current draft already uses them. Return valid JSON with keys "subject" and "body".`;
-=======
-Return valid JSON with keys "subject" and "body".`;
->>>>>>> origin/main
 
             const response = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     prompt,
-<<<<<<< HEAD
                     systemPrompt: 'You are a professional business email assistant. Return JSON only. Never auto-add greetings unless explicitly present in the request.',
-=======
-                    systemPrompt: 'You are a professional business email assistant. Return JSON only.',
->>>>>>> origin/main
                 }),
             });
 
@@ -355,15 +287,12 @@ Return valid JSON with keys "subject" and "body".`;
         }
     };
 
-<<<<<<< HEAD
     const relatedCustomer = selectedClient
         ? { type: 'Customer', id: selectedClient.id, label: selectedClient.name }
         : recipient
             ? { type: 'Recipient', label: recipient.name || recipient.email || 'Contact' }
             : undefined;
 
-=======
->>>>>>> origin/main
     return (
         <CommunicationComposer
             open
@@ -395,7 +324,6 @@ Return valid JSON with keys "subject" and "body".`;
                             return (
                             <button
                                 key={p}
-<<<<<<< HEAD
                                 type="button"
                                 onClick={() => {
                                     if (!connected) {
@@ -417,25 +345,6 @@ Return valid JSON with keys "subject" and "body".`;
                                 <MailCheck className="w-3.5 h-3.5" />
                                 {providerLabels[p]}
                                 {!connected ? ' · Connect' : selectedProvider === p ? ' · Active' : ''}
-=======
-                                onClick={() => {
-                                    if (!p || !providerStatus[p]) return;
-                                    setSelectedProvider(p);
-                                }}
-                                disabled={!p || !providerStatus[p]}
-                                title={!p || !providerStatus[p] ? 'Connect this provider in Settings' : `Send with ${providerLabels[p]}`}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
-                                    selectedProvider === p 
-                                    ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20' 
-                                    : !p || !providerStatus[p]
-                                        ? 'text-slate-600 bg-slate-900/30 cursor-not-allowed'
-                                        : 'text-slate-500 hover:text-slate-300'
-                                }`}
-                            >
-                                <MailCheck className="w-3.5 h-3.5" />
-                                {p ? providerLabels[p] : ''}
-                                {!p || !providerStatus[p] ? ' (Connect)' : ''}
->>>>>>> origin/main
                             </button>
                             );
                         })}
@@ -563,17 +472,10 @@ Return valid JSON with keys "subject" and "body".`;
                                 type="button"
                                 onClick={handleGenerateWithAI}
                                 disabled={aiGenerating || !selectedClient || loadingProvider}
-<<<<<<< HEAD
                                 className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-[8px] border border-[var(--ws-border)] text-[var(--brand-violet-500)] hover:bg-[var(--ws-hover)] transition-all disabled:opacity-50"
                             >
                                 {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                                 Bonnie draft
-=======
-                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-teal-500/30 text-teal-300 hover:bg-teal-500/10 transition-all disabled:opacity-50"
-                            >
-                                {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                AI Draft
->>>>>>> origin/main
                             </button>
                         </div>
                         <textarea
@@ -591,11 +493,7 @@ Return valid JSON with keys "subject" and "body".`;
                         {loadingProvider ? (
                             <><Loader2 className="w-3 h-3 animate-spin" /> Detecting provider...</>
                         ) : selectedProvider ? (
-<<<<<<< HEAD
                             <><CheckCircle2 className="w-3 h-3 text-[var(--success-500)]" /> Using {selectedProvider === 'microsoft' ? 'Microsoft 365' : selectedProvider === 'zoho' ? 'Zoho Mail' : selectedProvider === 'sendgrid' ? 'SendGrid' : selectedProvider === 'resend' ? 'Resend' : 'Brevo'} to send securely</>
-=======
-                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using {selectedProvider === 'zoho' ? 'Zoho Mail' : selectedProvider === 'sendgrid' ? 'SendGrid' : selectedProvider === 'resend' ? 'Resend' : selectedProvider === 'brevo' ? 'Brevo' : 'Gmail'} to send securely</>
->>>>>>> origin/main
                         ) : (
                             <><span className="text-[var(--warning-text)]">No provider connected. Emails cannot be sent.</span></>
                         )}
@@ -618,4 +516,3 @@ Return valid JSON with keys "subject" and "body".`;
         </CommunicationComposer>
     );
 };
-

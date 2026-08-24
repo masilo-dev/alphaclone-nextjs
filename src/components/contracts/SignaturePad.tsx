@@ -154,11 +154,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) =
             {/* Modal */}
             <AnimatePresence>
                 {isModalOpen && (
-<<<<<<< HEAD
                     <div className="fixed inset-0 z-[1100] flex flex-col bg-slate-950/95 backdrop-blur-md overflow-hidden">
-=======
-                    <div className="fixed inset-0 z-[200] flex flex-col bg-slate-950/95 backdrop-blur-md overflow-hidden">
->>>>>>> origin/main
                         {/* Header */}
                         <div className="px-6 py-4 bg-slate-900/50 border-b border-white/5 flex items-center justify-between">
                             <div>

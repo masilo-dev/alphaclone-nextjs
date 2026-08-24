@@ -1,11 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getPlaybookDefinition } from './playbookService';
 import { verifyInvoiceSent, verifyLeadCreated, verifyOutreachDelivery, verifySocialPostPublished } from './verificationService';
-<<<<<<< HEAD
 import { classifyActionRisk } from '@/lib/mcp/capabilityManifest';
 import { sanitizeForAudit } from '@/lib/mcp/actionReceipts';
-=======
->>>>>>> origin/main
 
 type RuntimeContext = {
   tenantId: string;
@@ -14,7 +11,6 @@ type RuntimeContext = {
   autoHighRisk: boolean;
 };
 
-<<<<<<< HEAD
 const WORKFLOW_STATES = new Set([
   'queued',
   'running',
@@ -77,10 +73,6 @@ async function createPortableApproval(params: {
 
   if (error) throw new Error(error.message);
   return data;
-=======
-function isHighRiskAction(action: string): boolean {
-  return action === 'send_outreach' || action === 'send_invoice_reminder' || action.startsWith('bulk_');
->>>>>>> origin/main
 }
 
 export async function startPlaybookRun(params: RuntimeContext & { playbookId: string }) {
@@ -104,7 +96,6 @@ export async function startPlaybookRun(params: RuntimeContext & { playbookId: st
       .order('started_at', { ascending: false })
       .limit(1)
       .maybeSingle();
-<<<<<<< HEAD
     if (existing) {
       return {
         success: true,
@@ -112,9 +103,6 @@ export async function startPlaybookRun(params: RuntimeContext & { playbookId: st
         run: { ...existing, status: normalizeStatus(String(existing.status)) },
       };
     }
-=======
-    if (existing) return { success: true, deduplicated: true, run: existing };
->>>>>>> origin/main
   }
 
   const { data: run, error: runError } = await supabase
@@ -123,11 +111,7 @@ export async function startPlaybookRun(params: RuntimeContext & { playbookId: st
       tenant_id: params.tenantId,
       user_id: params.userId,
       playbook_id: playbook.id,
-<<<<<<< HEAD
       status: 'queued',
-=======
-      status: 'running',
->>>>>>> origin/main
       inputs: params.inputs,
       policy: { auto_high_risk: params.autoHighRisk },
       idempotency_key: idempotencyKey,
@@ -140,22 +124,13 @@ export async function startPlaybookRun(params: RuntimeContext & { playbookId: st
     return { success: false, error: runError?.message || 'Failed to create automation run' };
   }
 
-<<<<<<< HEAD
   // Insert steps BEFORE executing so the runner never races an empty step list
-=======
-  // Trigger background execution
-  executeRun(run.id, params.tenantId, params.autoHighRisk).catch((err) => {
-    console.error(`[Automation] Background execution failed for run ${run.id}:`, err);
-  });
-
->>>>>>> origin/main
   for (const step of playbook.steps) {
     await supabase.from('automation_run_steps').insert({
       tenant_id: params.tenantId,
       run_id: run.id,
       step_id: step.id,
       action: step.action,
-<<<<<<< HEAD
       status: 'queued',
       attempt_count: 0,
       risk_level: step.risk,
@@ -174,26 +149,13 @@ export async function startPlaybookRun(params: RuntimeContext & { playbookId: st
   });
 
   return { success: true, run: { ...run, status: 'running' } };
-=======
-      status: 'pending',
-      attempt_count: 0,
-      risk_level: step.risk,
-    });
-  }
-
-  return { success: true, run };
->>>>>>> origin/main
 }
 
 export async function executeRun(runId: string, tenantId: string, autoHighRisk: boolean) {
   const supabase = createSupabaseAdminClient();
   const { data: run, error: runError } = await supabase
     .from('automation_runs')
-<<<<<<< HEAD
     .select('id, tenant_id, status, playbook_id, inputs, user_id')
-=======
-    .select('id, tenant_id, status, playbook_id, inputs')
->>>>>>> origin/main
     .eq('tenant_id', tenantId)
     .eq('id', runId)
     .maybeSingle();
@@ -202,20 +164,15 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
 
   const { data: steps, error: stepsError } = await supabase
     .from('automation_run_steps')
-<<<<<<< HEAD
     .select(
       'id, step_id, action, status, attempt_count, risk_level, approval_id, provider_reference, verification_evidence'
     )
-=======
-    .select('id, step_id, action, status, attempt_count, risk_level')
->>>>>>> origin/main
     .eq('tenant_id', tenantId)
     .eq('run_id', runId)
     .order('created_at', { ascending: true });
   if (stepsError) return { success: false, error: stepsError.message };
 
   const inputs = (run.inputs || {}) as Record<string, unknown>;
-<<<<<<< HEAD
   let completedCount = 0;
   let blockedForApproval = false;
 
@@ -260,24 +217,10 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
             risk_level: approval.risk_level,
             action_summary: approval.action_summary,
           },
-=======
-
-  for (const step of steps || []) {
-    if (String(step.status) === 'completed') continue;
-    const action = String(step.action || '');
-    const highRisk = isHighRiskAction(action) || String(step.risk_level) === 'high';
-    if (highRisk && !autoHighRisk) {
-      await supabase
-        .from('automation_run_steps')
-        .update({
-          status: 'approval_required',
-          error_message: 'High-risk action requires approval by policy.',
->>>>>>> origin/main
           updated_at: new Date().toISOString(),
         })
         .eq('tenant_id', tenantId)
         .eq('id', step.id);
-<<<<<<< HEAD
 
       await supabase
         .from('automation_runs')
@@ -303,14 +246,6 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
           reject_tool_name: approval.reject_tool,
         },
       };
-=======
-      await supabase
-        .from('automation_runs')
-        .update({ status: 'approval_required', updated_at: new Date().toISOString() })
-        .eq('tenant_id', tenantId)
-        .eq('id', runId);
-      return { success: true, status: 'approval_required', run_id: runId, step_id: step.step_id };
->>>>>>> origin/main
     }
 
     await supabase
@@ -326,64 +261,34 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
 
     try {
       let output: Record<string, unknown> = {};
-<<<<<<< HEAD
       let providerReference: string | null = null;
       let verificationEvidence: Record<string, unknown> = {};
-=======
->>>>>>> origin/main
 
       if (action === 'create_lead') {
         const businessName = String(inputs.business_name || inputs.lead_name || 'Inbound lead').trim();
         const email = inputs.lead_email ? String(inputs.lead_email).trim().toLowerCase() : null;
         const phone = inputs.lead_phone ? String(inputs.lead_phone).trim() : null;
 
-<<<<<<< HEAD
         let query = supabase.from('leads').select('id, business_name, source').eq('tenant_id', tenantId);
         const orConditions = [`business_name.ilike.${businessName.replace(/[%_]/g, '\\$&')}`];
         if (email) orConditions.push(`email.ilike.${email}`);
         if (phone) orConditions.push(`phone.eq.${phone}`);
-=======
-        // Check if lead exists by business name, email, or phone
-        let query = supabase
-          .from('leads')
-          .select('id, business_name, source')
-          .eq('tenant_id', tenantId);
-
-        const orConditions = [`business_name.ilike.${businessName.replace(/[%_]/g, '\\$&')}`];
-        if (email) {
-          orConditions.push(`email.ilike.${email}`);
-        }
-        if (phone) {
-          orConditions.push(`phone.eq.${phone}`);
-        }
-
->>>>>>> origin/main
         query = query.or(orConditions.join(','));
         const { data: existingLeads, error: searchError } = await query.limit(1);
 
         if (!searchError && existingLeads && existingLeads.length > 0) {
-<<<<<<< HEAD
           output = { lead_id: existingLeads[0].id, lead: existingLeads[0], duplicated: true };
           providerReference = String(existingLeads[0].id);
         } else {
           const payload: Record<string, unknown> = {
             tenant_id: tenantId,
             owner_id: inputs.user_id || run.user_id || null,
-=======
-          console.log(`[Automation] Lead already exists: ${existingLeads[0].business_name} (ID: ${existingLeads[0].id}). Skipping insertion.`);
-          output = { lead_id: existingLeads[0].id, lead: existingLeads[0], duplicated: true };
-        } else {
-          const payload = {
-            tenant_id: tenantId,
-            owner_id: inputs.user_id || null,
->>>>>>> origin/main
             business_name: businessName,
             email: email || null,
             phone: phone || null,
             source: String(inputs.source || 'automation_playbook'),
             stage: 'lead',
             status: 'new',
-<<<<<<< HEAD
             updated_at: new Date().toISOString(),
           };
           let { data, error } = await supabase.from('leads').insert(payload).select('id, business_name, source').single();
@@ -397,12 +302,6 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
           output = { lead_id: data.id, lead: data };
           providerReference = String(data.id);
           verificationEvidence = await verifyLeadCreated(tenantId, data.id);
-=======
-          };
-          const { data, error } = await supabase.from('leads').insert(payload).select('id, business_name, source').single();
-          if (error) throw new Error(error.message);
-          output = { lead_id: data.id, lead: data };
->>>>>>> origin/main
         }
       } else if (action === 'create_task') {
         const title = String(inputs.task_title || 'Follow up inbound lead');
@@ -415,26 +314,17 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
             description,
             status: 'todo',
             priority: 'medium',
-<<<<<<< HEAD
             assigned_to: inputs.user_id ? String(inputs.user_id) : run.user_id || null,
-=======
-            assigned_to: inputs.user_id ? String(inputs.user_id) : null,
->>>>>>> origin/main
           })
           .select('id, title, status')
           .single();
         if (error) throw new Error(error.message);
         output = { task_id: data.id, task: data };
-<<<<<<< HEAD
         providerReference = String(data.id);
       } else if (action === 'send_outreach') {
         const now = new Date().toISOString();
         const trackingId = String(inputs.tracking_id || crypto.randomUUID());
         const dryRun = process.env.TEST_MODE === 'true' || process.env.MCP_DRY_RUN === 'true';
-=======
-      } else if (action === 'send_outreach') {
-        const now = new Date().toISOString();
->>>>>>> origin/main
         const { data, error } = await supabase
           .from('lead_outreach_log')
           .insert({
@@ -443,7 +333,6 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
             lead_email: String(inputs.lead_email || ''),
             subject: String(inputs.subject || 'Follow-up from AlphaClone'),
             body_html: String(inputs.body_html || inputs.body || ''),
-<<<<<<< HEAD
             tracking_id: trackingId,
             pitch_angle: String(inputs.pitch_angle || 'automation_playbook'),
             industry: String(inputs.industry || ''),
@@ -471,20 +360,6 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
           tracking_id: data.tracking_id,
           status: data.status,
         };
-=======
-            tracking_id: String(inputs.tracking_id || crypto.randomUUID()),
-            pitch_angle: String(inputs.pitch_angle || 'automation_playbook'),
-            industry: String(inputs.industry || ''),
-            score: Number(inputs.score || 0),
-            status: 'queued',
-            provider: String(inputs.provider || ''),
-            sent_at: now,
-          })
-          .select('id, tracking_id, status')
-          .single();
-        if (error) throw new Error(error.message);
-        output = { outreach_log_id: data.id, tracking_id: data.tracking_id, status: data.status };
->>>>>>> origin/main
       } else if (action === 'verify_outreach_delivery') {
         const verification = await verifyOutreachDelivery(
           tenantId,
@@ -492,18 +367,14 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
           typeof inputs.outreach_log_id === 'string' ? inputs.outreach_log_id : undefined
         );
         output = { verification };
-<<<<<<< HEAD
         verificationEvidence = verification as unknown as Record<string, unknown>;
         if ((verification as any)?.status === 'failed' || (verification as any)?.ok === false) {
           throw new Error((verification as any)?.message || 'Outreach delivery verification failed');
         }
-=======
->>>>>>> origin/main
       } else if (action === 'send_invoice_reminder') {
         const invoiceId = String(inputs.invoice_id || '');
         if (!invoiceId) throw new Error('invoice_id is required for send_invoice_reminder.');
         const { error } = await supabase
-<<<<<<< HEAD
           .from('business_invoices')
           .update({ status: 'sent', updated_at: new Date().toISOString() })
           .eq('tenant_id', tenantId)
@@ -518,73 +389,44 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
         }
         output = { invoice_id: invoiceId, status: 'sent' };
         providerReference = invoiceId;
-=======
-          .from('invoices')
-          .update({ status: 'sent', sent_at: new Date().toISOString() })
-          .eq('tenant_id', tenantId)
-          .eq('id', invoiceId);
-        if (error) throw new Error(error.message);
-        output = { invoice_id: invoiceId, status: 'sent' };
->>>>>>> origin/main
       } else if (action === 'verify_invoice_sent') {
         const invoiceId = String(inputs.invoice_id || '');
         if (!invoiceId) throw new Error('invoice_id is required for verify_invoice_sent.');
         const verification = await verifyInvoiceSent(tenantId, invoiceId);
         output = { verification };
-<<<<<<< HEAD
         verificationEvidence = verification as unknown as Record<string, unknown>;
-=======
->>>>>>> origin/main
       } else {
         throw new Error(`Unsupported playbook action: ${action}`);
       }
 
-<<<<<<< HEAD
       const completedAt = new Date().toISOString();
-=======
->>>>>>> origin/main
       await supabase
         .from('automation_run_steps')
         .update({
           status: 'completed',
           output,
-<<<<<<< HEAD
           sanitized_output: sanitizeForAudit(output),
           provider_reference: providerReference,
           verification_evidence: verificationEvidence,
           finished_at: completedAt,
           completed_at: completedAt,
           updated_at: completedAt,
-=======
-          finished_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
->>>>>>> origin/main
           error_message: null,
         })
         .eq('tenant_id', tenantId)
         .eq('id', step.id);
-<<<<<<< HEAD
       completedCount += 1;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Step execution failed';
       const failedAt = new Date().toISOString();
-=======
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Step execution failed';
->>>>>>> origin/main
       await supabase
         .from('automation_run_steps')
         .update({
           status: 'failed',
           error_message: message,
-<<<<<<< HEAD
           finished_at: failedAt,
           completed_at: failedAt,
           updated_at: failedAt,
-=======
-          finished_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
->>>>>>> origin/main
         })
         .eq('tenant_id', tenantId)
         .eq('id', step.id);
@@ -593,7 +435,6 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
         .update({
           status: 'failed',
           last_error: message,
-<<<<<<< HEAD
           finished_at: failedAt,
           updated_at: failedAt,
         })
@@ -634,17 +475,6 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
     return { success: false, run_id: runId, status: finalStatus };
   }
 
-=======
-          finished_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('tenant_id', tenantId)
-        .eq('id', runId);
-      return { success: false, run_id: runId, error: message };
-    }
-  }
-
->>>>>>> origin/main
   await supabase
     .from('automation_runs')
     .update({ status: 'completed', finished_at: new Date().toISOString(), updated_at: new Date().toISOString() })
@@ -665,18 +495,13 @@ export async function getRunStatus(runId: string, tenantId: string) {
   if (runError || !run) return { success: false, error: runError?.message || 'Run not found' };
   const { data: steps, error: stepsError } = await supabase
     .from('automation_run_steps')
-<<<<<<< HEAD
     .select(
       'step_id, action, status, attempt_count, error_message, output, sanitized_output, input, started_at, finished_at, completed_at, approval_id, provider_reference, verification_evidence'
     )
-=======
-    .select('step_id, action, status, attempt_count, error_message, output, started_at, finished_at')
->>>>>>> origin/main
     .eq('tenant_id', tenantId)
     .eq('run_id', runId)
     .order('created_at', { ascending: true });
   if (stepsError) return { success: false, error: stepsError.message };
-<<<<<<< HEAD
 
   const normalizedSteps = (steps || []).map((s) => ({
     ...s,
@@ -689,9 +514,6 @@ export async function getRunStatus(runId: string, tenantId: string) {
     run: { ...run, status: normalizeStatus(String(run.status)) },
     steps: normalizedSteps,
   };
-=======
-  return { success: true, run, steps: steps || [] };
->>>>>>> origin/main
 }
 
 export async function cancelRun(runId: string, tenantId: string) {
@@ -707,7 +529,6 @@ export async function cancelRun(runId: string, tenantId: string) {
     .update({ status: 'cancelled', updated_at: new Date().toISOString() })
     .eq('tenant_id', tenantId)
     .eq('run_id', runId)
-<<<<<<< HEAD
     .in('status', ['pending', 'queued', 'running', 'awaiting_approval', 'approval_required']);
   return { success: true, run_id: runId, status: 'cancelled' };
 }
@@ -820,21 +641,11 @@ export async function resumeWorkflow(runId: string, tenantId: string, autoHighRi
   return executeRun(runId, tenantId, autoHighRisk);
 }
 
-=======
-    .in('status', ['pending', 'running', 'approval_required']);
-  return { success: true, run_id: runId, status: 'cancelled' };
-}
-
->>>>>>> origin/main
 export async function retryRunStep(runId: string, tenantId: string, stepId: string, autoHighRisk: boolean) {
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase
     .from('automation_run_steps')
-<<<<<<< HEAD
     .update({ status: 'queued', error_message: null, updated_at: new Date().toISOString() })
-=======
-    .update({ status: 'pending', error_message: null, updated_at: new Date().toISOString() })
->>>>>>> origin/main
     .eq('tenant_id', tenantId)
     .eq('run_id', runId)
     .eq('step_id', stepId);
@@ -871,7 +682,3 @@ export async function runVerification(action: string, tenantId: string, args: Re
     evidence: {},
   };
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main

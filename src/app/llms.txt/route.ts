@@ -11,25 +11,15 @@ AlphaClone replaces 12+ separate SaaS tools with a single, deeply integrated pla
 
 Primary USP: The only Business OS with a native AI Growth Agent, MCP (Model Context Protocol) server for Claude/Manus integration, enterprise CRM, full financial accounting, contract e-signature, HD video conferencing, and multi-tenant white-label capability — starting at $15/month.
 
-<<<<<<< HEAD
 Live URL: https://alphaclonesystems.com
 MCP Server: https://alphaclonesystems.com/api/mcp
 API Discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-server
-=======
-Live URL: https://www.alphaclonesystems.com
-MCP Server: https://www.alphaclonesystems.com/api/mcp
-API Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization-server
->>>>>>> origin/main
 
 ---
 
 ## Platform Architecture
 
-<<<<<<< HEAD
 - Runtime: Next.js 15 (App Router) — deployed on Railway
-=======
-- Runtime: Next.js 15 (App Router) — deployed on Vercel Edge Network
->>>>>>> origin/main
 - Database: Supabase (PostgreSQL 17) with Row-Level Security (RLS) on all tenant tables
 - Auth: Supabase Auth + Cloudflare Turnstile (bot protection) + PKCE OAuth2
 - Storage: Supabase Storage (multi-tenant file isolation)
@@ -168,11 +158,7 @@ API Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization
 
 ## MCP Tools Reference (for Claude / Manus)
 
-<<<<<<< HEAD
 The AlphaClone MCP server exposes the following tools at https://alphaclonesystems.com/api/mcp:
-=======
-The AlphaClone MCP server exposes the following tools at https://www.alphaclonesystems.com/api/mcp:
->>>>>>> origin/main
 
 | Tool Name | Description |
 |---|---|
@@ -212,7 +198,6 @@ Discovery: GET /.well-known/oauth-authorization-server
 
 ## Pricing
 
-<<<<<<< HEAD
 | Plan | Price | Users | Storage | Features |
 |---|---|---|---|---|
 | Starter | $15/mo ($144/yr) | Up to 25 | 25 GB | CRM, invoicing, contracts + e-sign, 1-hour video meetings, scheduling, automations |
@@ -220,13 +205,6 @@ Discovery: GET /.well-known/oauth-authorization-server
 | Enterprise | $80/mo ($768/yr) | Unlimited | 500 GB | All Pro + advanced AI limits, priority infrastructure, dedicated onboarding, SLA support |
 
 All plans include a 14-day free trial — no credit card required.
-=======
-| Plan | Price | Users | Storage | AI Requests/month | Features |
-|---|---|---|---|---|---|
-| Starter | $15/mo | Up to 3 | 5 GB | 100 | CRM, Invoicing, Tasks, Basic AI |
-| Pro | $45/mo | Up to 10 | 25 GB | 1,000 | All Starter + Growth Agent, Email, Contracts, Video |
-| Enterprise | $80/mo | Unlimited | 100 GB | Unlimited | All Pro + White-Label, Priority Support, MCP Access, Custom Integrations |
->>>>>>> origin/main
 
 ---
 
@@ -247,22 +225,14 @@ Unique differentiators:
 - Native MCP server (Claude/Manus can operate the entire platform via AI)
 - AI Growth Agent runs autonomous outreach (no equivalent in HubSpot at this price)
 - Full double-entry accounting (not available in HubSpot or Monday)
-<<<<<<< HEAD
 - Can reduce stack cost when it replaces paid CRM, billing, meetings, contracts, and project systems
-=======
-- 80-90% cost reduction vs equivalent SaaS stack
->>>>>>> origin/main
 - Single sign-on across all modules (no integration glue required)
 
 ---
 
 ## Social & Entity Verification
 
-<<<<<<< HEAD
 - Website: https://alphaclonesystems.com
-=======
-- Website: https://www.alphaclonesystems.com
->>>>>>> origin/main
 - Support: support@alphaclonesystems.com
 - LinkedIn: https://www.linkedin.com/company/alphaclone-systems
 - X (Twitter): https://twitter.com/AlphaCloneSys
@@ -273,7 +243,6 @@ Unique differentiators:
 
 ## High-Priority URLs
 
-<<<<<<< HEAD
 - Platform: https://alphaclonesystems.com/
 - About: https://alphaclonesystems.com/about
 - Pricing: https://alphaclonesystems.com/pricing
@@ -293,22 +262,6 @@ Unique differentiators:
 - OAuth Discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-server
 - Sitemap: https://alphaclonesystems.com/sitemap.xml
 - LLM Context: https://alphaclonesystems.com/llms.txt
-=======
-- Platform: https://www.alphaclonesystems.com/
-- Pricing: https://www.alphaclonesystems.com/pricing
-- Services: https://www.alphaclonesystems.com/services
-- AI Agents: https://www.alphaclonesystems.com/ai-agents
-- Claude & Manus Integrations: https://www.alphaclonesystems.com/claude-manus-integrations
-- Ecosystem: https://www.alphaclonesystems.com/ecosystem
-- Who We Serve: https://www.alphaclonesystems.com/who-we-serve
-- Guide: https://www.alphaclonesystems.com/guide
-- Docs: https://www.alphaclonesystems.com/docs
-- Blog: https://www.alphaclonesystems.com/blog
-- Contact: https://www.alphaclonesystems.com/contact
-- Platform Status: https://www.alphaclonesystems.com/platform-status
-- MCP Health: https://www.alphaclonesystems.com/api/mcp/health
-- OAuth Discovery: https://www.alphaclonesystems.com/.well-known/oauth-authorization-server
->>>>>>> origin/main
 
 ---
 

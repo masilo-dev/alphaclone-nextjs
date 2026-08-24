@@ -138,84 +138,9 @@ export const contractService = {
      */
     async createContract(contract: Partial<Contract>) {
         const tenantId = this.getTenantId();
-<<<<<<< HEAD
         const response = await fetch('/api/contracts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ...contract }) });
         const payload = await response.json().catch(() => ({}));
         return { contract: response.ok ? payload.data : null, error: response.ok ? null : { message: payload.error || 'Contract could not be created' } };
-=======
-        const { data: userData } = await supabase.auth.getUser();
-
-        const { data, error } = await supabase
-            .from('contracts')
-            .insert({
-                tenant_id: tenantId,
-                title: contract.title,
-                content: contract.content,
-                project_id: contract.project_id,
-                client_id: contract.client_id, // Link to Client profile
-                owner_id: userData.user?.id,   // Link to Admin user
-                status: contract.status || 'draft',
-                type: contract.type || 'Service',
-                signing_token: contract.signing_token || crypto.randomUUID(),
-                admin_signature: contract.admin_signature,
-                admin_signed_at: contract.admin_signed_at,
-                payment_due_date: contract.payment_due_date,
-                payment_amount: contract.payment_amount,
-                payment_status: contract.payment_status || 'pending'
-            })
-            .select()
-            .single();
-
-        return { contract: data, error };
-    },
-
-    /**
-     * Update contract content/status
-     * LEGAL COMPLIANCE: Signed contracts cannot be edited
-     */
-    async updateContract(id: string, updates: Partial<Contract>) {
-        const tenantId = this.getTenantId();
-
-        // CRITICAL: Check if contract is signed
-        const { data: existing, error: fetchError } = await supabase
-            .from('contracts')
-            .select('status')
-            .eq('id', id)
-            .eq('tenant_id', tenantId)
-            .single();
-
-        if (fetchError) {
-            return { contract: null, error: fetchError };
-        }
-
-        // LEGAL PROTECTION: Prevent editing signed contracts
-        if (existing?.status === 'fully_signed' || existing?.status === 'client_signed') {
-            // Only allow payment status updates on signed contracts
-            const allowedFields = ['payment_status', 'payment_due_date'];
-            const hasDisallowedUpdates = Object.keys(updates).some(
-                key => !allowedFields.includes(key)
-            );
-
-            if (hasDisallowedUpdates) {
-                return {
-                    contract: null,
-                    error: {
-                        message: 'Cannot modify signed contracts. Create a new version or amendment instead.',
-                        code: 'SIGNED_CONTRACT_IMMUTABLE'
-                    } as any
-                };
-            }
-        }
-
-        const { data, error } = await supabase
-            .from('contracts')
-            .update(updates)
-            .eq('id', id)
-            .eq('tenant_id', tenantId) // ← VERIFY OWNERSHIP
-            .select()
-            .single();
-        return { contract: data, error };
->>>>>>> origin/main
     },
 
     /**
@@ -633,7 +558,6 @@ export const contractService = {
         }
 
         const rawContent = typeof contract?.content === 'string' ? contract.content : '';
-<<<<<<< HEAD
         if (typeof window !== 'undefined' && rawContent.trim().startsWith('<')) {
             const printWindow = window.open('', '_blank', 'noopener,noreferrer');
             if (printWindow) {
@@ -650,8 +574,6 @@ export const contractService = {
                 return;
             }
         }
-=======
->>>>>>> origin/main
         if (typeof window !== 'undefined' && this.hasNonLatinText(rawContent)) {
             const html = this.buildUnicodeSafeContractHtml(contract, tenant);
             const printWindow = window.open('', '_blank', 'noopener,noreferrer');

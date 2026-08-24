@@ -15,11 +15,8 @@ export const EmailBody: React.FC<EmailBodyProps> = ({ content, className = '' })
   const [height, setHeight] = useState('400px');
 
   const htmlContent = useMemo(() => {
-<<<<<<< HEAD
     const isHtml = /<[a-z][\s\S]*>/i.test(content);
     const bodyContent = isHtml ? content : `<div style="white-space: pre-wrap;">${content}</div>`;
-=======
->>>>>>> origin/main
     // We use a white background by default for emails as most are designed for light mode
     return `
       <!DOCTYPE html>
@@ -42,11 +39,7 @@ export const EmailBody: React.FC<EmailBodyProps> = ({ content, className = '' })
           </style>
         </head>
         <body>
-<<<<<<< HEAD
           ${bodyContent}
-=======
-          ${content}
->>>>>>> origin/main
           <script>
             function updateHeight() {
               window.parent.postMessage({ 

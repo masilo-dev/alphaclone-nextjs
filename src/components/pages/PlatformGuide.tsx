@@ -300,13 +300,7 @@ The invited person receives an email with a secure invitation link. When they cl
 
     return (
         <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
-<<<<<<< HEAD
             <div>
-=======
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
-            <div className="pt-20">
->>>>>>> origin/main
                 {/* Hero — BLUF Answer Section */}
                 <section className="bg-gradient-to-b from-slate-900/70 to-slate-950/70 border-b border-slate-800/50 py-20">
                     <div className="max-w-4xl mx-auto px-4">

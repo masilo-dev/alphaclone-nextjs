@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
@@ -10,11 +9,6 @@ import {
     skipAiQuotaForAdminMode,
 } from '@/lib/quotas/resolveTenantForAiRequest';
 import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
-=======
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
->>>>>>> origin/main
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -31,7 +25,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
         }
 
-<<<<<<< HEAD
         // Enforce tenant AI-unit quota — video is the most expensive operation, so it must
         // not be callable without consuming the workspace's daily allowance.
         const skipQuota = skipAiQuotaForAdminMode(body.mode, await isPlatformSuperAdmin(supabase, user.id));
@@ -47,8 +40,6 @@ export async function POST(req: NextRequest) {
             if (blocked) return blocked;
         }
 
-=======
->>>>>>> origin/main
         const result = await xaiVideoGenerationService.generateVideo({
             prompt,
             imageUrl: body.imageUrl || body.image_url,

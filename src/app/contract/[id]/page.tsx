@@ -3,11 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { jsPDF } from 'jspdf';
-<<<<<<< HEAD
 import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2, CheckCircle2, XCircle } from 'lucide-react';
-=======
-import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2, CheckCircle2 } from 'lucide-react';
->>>>>>> origin/main
 import { googleDriveService } from '../../../services/googleDriveService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SignaturePad } from '../../../components/contracts/SignaturePad';
@@ -31,14 +27,11 @@ export default function PublicContractPage() {
     const [legalName, setLegalName] = useState<string>('');
     const [signerEmail, setSignerEmail] = useState<string>('');
     const [consentAccepted, setConsentAccepted] = useState(false);
-<<<<<<< HEAD
     const [declining, setDeclining] = useState(false);
     const [declined, setDeclined] = useState(false);
     const [declineNote, setDeclineNote] = useState('');
     const [showDeclineForm, setShowDeclineForm] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
-=======
->>>>>>> origin/main
 
     useEffect(() => {
         if (signingToken) {
@@ -56,10 +49,7 @@ export default function PublicContractPage() {
             if (!response.ok || !payload?.contract) {
                 throw new Error(payload?.error || 'Contract not found');
             }
-<<<<<<< HEAD
             setLoadError(null);
-=======
->>>>>>> origin/main
             setContract(payload.contract);
             setSignerEmail(payload?.signer?.email || '');
             if (payload.contract.status === 'fully_signed' || payload.contract.status === 'client_signed') {
@@ -308,7 +298,6 @@ export default function PublicContractPage() {
                 </div>
 
                 {/* Content */}
-<<<<<<< HEAD
                 <div className="p-6 bg-slate-950/40 border-y border-slate-800">
                     <AIOutputDisclaimer type="contract" />
                 </div>
@@ -321,12 +310,6 @@ export default function PublicContractPage() {
                             contract.tenant,
                             { name: contract.metadata?.client_name, email: signerEmail || contract.metadata?.client_email }
                         )}
-=======
-                <div className="p-8 bg-white border-y border-slate-800 print-content">
-                    <div
-                        className="font-serif text-slate-900 leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: contractToStyledHtml(contract.content || '') }}
->>>>>>> origin/main
                     />
                 </div>
 

@@ -308,14 +308,10 @@ export default function SocialMediaComposer() {
         const data = await res.json();
 
         if (data.success) {
-<<<<<<< HEAD
             toast.success(
                 data.publishBlocked ? 'Saved (publishing disabled)' : publishNow ? 'Post sent!' : 'Post scheduled!',
                 { id: toastId }
             );
-=======
-            toast.success(publishNow ? 'Post sent!' : 'Post scheduled!', { id: toastId });
->>>>>>> origin/main
             userLearningPreferencesService.recordSocialPost(finalCaption, aiTone);
             if (!publishNow) {
                 await launchFunnelService.completeStep('first_post_scheduled', user?.id, tenant?.id, {
@@ -1600,4 +1596,3 @@ Return only the comment text.`;
         </div>
     );
 }
-

@@ -1,29 +1,19 @@
 'use client';
 
-<<<<<<< HEAD
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-=======
-import React, { useState, useEffect, useRef } from 'react';
->>>>>>> origin/main
 import { 
     Bookmark, Link2, Plus, Trash2, ExternalLink, Facebook, Linkedin, Globe, 
     Search, Eye, Loader2, AlertCircle, CheckCircle2, RefreshCw, Video, Zap, 
     Copy, ChevronRight, Twitter, MessageSquare, Users, Activity as ActivityIcon, 
     Sparkles, Brain, Bot, Calendar, Camera, Image as ImageIcon, X, Sliders, 
-<<<<<<< HEAD
     BarChart2, Settings, HelpCircle, Clock, ArrowLeft, History, 
     ChevronDown, Repeat, Paperclip, AlertTriangle, Heart, Share2, MousePointerClick
-=======
-    BarChart2, Settings, HelpCircle, Clock, ArrowLeft, History, User, Building, 
-    ChevronDown, Repeat, Paperclip, AlertTriangle
->>>>>>> origin/main
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
-<<<<<<< HEAD
 import { LinkedInOrgPanel, normalizeLinkedInScopes } from './LinkedInOrgPanel';
 import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiVideoGenerationService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,10 +22,6 @@ import { SocialContentCalendar } from './SocialContentCalendar';
 import { SocialAnalyticsStory } from './SocialAnalyticsStory';
 import { WORKSPACE } from '@/constants/design';
 import { buildBusinessSocialPrompt } from '@/lib/ai/businessContext';
-=======
-import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiVideoGenerationService';
-import { motion, AnimatePresence } from 'framer-motion';
->>>>>>> origin/main
 
 interface SocialPost {
     id: string;
@@ -50,15 +36,11 @@ interface SocialPost {
     published_at: string | null;
     facebook_post_id: string | null;
     linkedin_post_urn: string | null;
-<<<<<<< HEAD
     linkedin_stats?: Record<string, any> | null;
-=======
->>>>>>> origin/main
     error_message: string | null;
     created_at: string;
 }
 
-<<<<<<< HEAD
 interface PostMetrics {
     impressions: number;
     reactions: number;
@@ -67,8 +49,6 @@ interface PostMetrics {
     shares: number;
 }
 
-=======
->>>>>>> origin/main
 interface BookmarkRow {
     id: string;
     title: string;
@@ -93,7 +73,6 @@ interface LinkedInIntegration {
     linkedin_person_urn: string;
     scopes: string[] | null;
     is_active: boolean;
-<<<<<<< HEAD
     metadata?: {
         company_pages?: Array<{
             id: string;
@@ -108,8 +87,6 @@ interface LinkedInIntegration {
             grantedScopes?: string[];
         } | null;
     } | null;
-=======
->>>>>>> origin/main
 }
 
 interface FacebookPage {
@@ -127,13 +104,9 @@ export default function SocialCommandCenter() {
     // Social Manager Platform Switcher
     const [activePlatform, setActivePlatform] = useState<'linkedin' | 'facebook' | 'x'>('linkedin');
     // Social Manager Subview Filter: 'queue' (scheduled), 'published', 'analytics'
-<<<<<<< HEAD
     const [activeSubView, setActiveSubView] = useState<'queue' | 'published' | 'publishing' | 'analytics'>('queue');
     const [queueDisplayMode, setQueueDisplayMode] = useState<'list' | 'week' | 'month'>('list');
     const [calendarAnchor, setCalendarAnchor] = useState(() => new Date());
-=======
-    const [activeSubView, setActiveSubView] = useState<'queue' | 'published' | 'analytics'>('queue');
->>>>>>> origin/main
     
     // State lists
     const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -143,10 +116,7 @@ export default function SocialCommandCenter() {
     const [fbPages, setFbPages] = useState<FacebookPage[]>([]);
     const [linkedinIntegrations, setLinkedinIntegrations] = useState<LinkedInIntegration[]>([]);
     const [recentInteractions, setRecentInteractions] = useState<any[]>([]);
-<<<<<<< HEAD
     const [postMetrics, setPostMetrics] = useState<Record<string, PostMetrics>>({});
-=======
->>>>>>> origin/main
     const [loading, setLoading] = useState(true);
 
     // Detail Bottom Sheet
@@ -157,18 +127,12 @@ export default function SocialCommandCenter() {
     const [composeCaption, setComposeCaption] = useState('');
     const [composePlatforms, setComposePlatforms] = useState<string[]>(['linkedin']);
     const [composeMedia, setComposeMedia] = useState<string[]>([]);
-<<<<<<< HEAD
     const [composeMediaUrl, setComposeMediaUrl] = useState('');
-=======
->>>>>>> origin/main
     const [composeScheduledAt, setComposeScheduledAt] = useState('');
     const [composeIsScheduled, setComposeIsScheduled] = useState(false);
     const [selectedLinkedInId, setSelectedLinkedInId] = useState('');
     const [selectedLinkedInIdentity, setSelectedLinkedInIdentity] = useState<'personal' | 'company'>('personal');
-<<<<<<< HEAD
     const [selectedLinkedInOrganizationId, setSelectedLinkedInOrganizationId] = useState('');
-=======
->>>>>>> origin/main
     const [selectedPageId, setSelectedPageId] = useState('');
     
     // X Twitter thread stacks
@@ -208,7 +172,6 @@ export default function SocialCommandCenter() {
     // Analytics state
     const [analyticsDateRange, setAnalyticsDateRange] = useState<'7D' | '30D' | '90D'>('7D');
 
-<<<<<<< HEAD
     const selectedLinkedInIntegration = useMemo(
         () => linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInId) || null,
         [linkedinIntegrations, selectedLinkedInId],
@@ -317,8 +280,6 @@ export default function SocialCommandCenter() {
         }
     };
 
-=======
->>>>>>> origin/main
     const loadData = async () => {
         if (!currentTenant?.id) return;
         setLoading(true);
@@ -333,7 +294,6 @@ export default function SocialCommandCenter() {
             setRecentInteractions(ccData.recentInteractions || []);
 
             // Query social posts, fb pages, and linkedin profiles from DB
-<<<<<<< HEAD
             const [postsRes, pagesRes, linkedinRes, analyticsRes] = await Promise.all([
                 supabase.from('social_posts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(60),
                 supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user?.id || '').eq('is_active', true),
@@ -357,15 +317,6 @@ export default function SocialCommandCenter() {
                 });
                 setPostMetrics(latestMetrics);
             }
-=======
-            const [postsRes, pagesRes, linkedinRes] = await Promise.all([
-                supabase.from('social_posts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(60),
-                supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user?.id || '').eq('is_active', true),
-                supabase.from('linkedin_integrations').select('linkedin_member_id,linkedin_person_urn,scopes,is_active').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false })
-            ]);
-
-            if (!postsRes.error) setPosts(postsRes.data || []);
->>>>>>> origin/main
             if (!pagesRes.error) {
                 setFbPages(pagesRes.data || []);
                 if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
@@ -377,17 +328,12 @@ export default function SocialCommandCenter() {
 
         } catch (error) {
             console.error('Failed to load social metrics:', error);
-<<<<<<< HEAD
             // Don't show error toast for solo owners, just show empty state
-=======
-            toast.error('Failed to load data');
->>>>>>> origin/main
         } finally {
             setLoading(false);
         }
     };
 
-<<<<<<< HEAD
     const compactNumber = (value: number | undefined | null) => {
         const number = Number(value || 0);
         return new Intl.NumberFormat(undefined, { notation: number >= 1000 ? 'compact' : 'standard', maximumFractionDigits: 1 }).format(number);
@@ -429,8 +375,6 @@ export default function SocialCommandCenter() {
         setComposeMediaUrl('');
     };
 
-=======
->>>>>>> origin/main
     useEffect(() => {
         loadData();
     }, [currentTenant?.id, user?.id]);
@@ -477,14 +421,9 @@ export default function SocialCommandCenter() {
     const handleDeletePost = async (id: string) => {
         const toastId = toast.loading('Deleting...');
         try {
-<<<<<<< HEAD
             if (!currentTenant?.id) throw new Error('Select a workspace first');
             const response = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(currentTenant.id)}&postId=${encodeURIComponent(id)}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Delete failed');
-=======
-            const { error } = await supabase.from('social_posts').delete().eq('id', id);
-            if (error) throw error;
->>>>>>> origin/main
             toast.success('Post deleted', { id: toastId });
             setPosts(prev => prev.filter(p => p.id !== id));
         } catch {
@@ -496,10 +435,7 @@ export default function SocialCommandCenter() {
         setComposeCaption(post.caption);
         setComposePlatforms(post.platforms);
         setComposeMedia(post.media_urls);
-<<<<<<< HEAD
         setComposeMediaUrl('');
-=======
->>>>>>> origin/main
         setComposeScheduledAt(post.scheduled_at ? new Date(post.scheduled_at).toISOString().slice(0, 16) : '');
         setComposeIsScheduled(!!post.scheduled_at);
         setIsComposeOpen(true);
@@ -517,7 +453,6 @@ export default function SocialCommandCenter() {
                 caption: composeCaption,
                 platforms: composePlatforms,
                 media_urls: composeMedia,
-<<<<<<< HEAD
                 media_types: composeMedia.map(detectMediaType),
                 scheduled_at: composeIsScheduled && composeScheduledAt ? new Date(composeScheduledAt).toISOString() : undefined,
                 facebook_page_id: composePlatforms.includes('facebook') ? selectedPageId : undefined,
@@ -528,12 +463,6 @@ export default function SocialCommandCenter() {
                     selectedLinkedInOrganizationId
                         ? selectedLinkedInOrganizationId
                         : undefined,
-=======
-                media_types: composeMedia.map(() => 'image'),
-                scheduled_at: composeIsScheduled && composeScheduledAt ? new Date(composeScheduledAt).toISOString() : undefined,
-                facebook_page_id: composePlatforms.includes('facebook') ? selectedPageId : undefined,
-                linkedin_member_id: composePlatforms.includes('linkedin') ? selectedLinkedInId : undefined,
->>>>>>> origin/main
             };
 
             const res = await fetch('/api/social/schedule', {
@@ -548,10 +477,7 @@ export default function SocialCommandCenter() {
             setIsComposeOpen(false);
             setComposeCaption('');
             setComposeMedia([]);
-<<<<<<< HEAD
             setComposeMediaUrl('');
-=======
->>>>>>> origin/main
             setXThreadPosts([]);
             loadData();
         } catch (err: any) {
@@ -568,7 +494,6 @@ export default function SocialCommandCenter() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-<<<<<<< HEAD
                     prompt: buildBusinessSocialPrompt({
                         brandName: currentTenant?.name || 'the business',
                         platform: activePlatform,
@@ -577,10 +502,6 @@ export default function SocialCommandCenter() {
                         tone: 'clear, confident, and human',
                     }),
                     systemPrompt: 'You are an expert social media manager. Return only the caption text and keep it aligned to the client brand.',
-=======
-                    prompt: `Write an engaging social media post caption about: "${aiPromptText}". Return only the plain caption text. Keep it under 250 characters.`,
-                    systemPrompt: 'You are an expert social media manager. Return ONLY the copy text.',
->>>>>>> origin/main
                 })
             });
             const data = await res.json();
@@ -677,11 +598,7 @@ export default function SocialCommandCenter() {
                 const res = await fetch('/api/ai/scrape-social', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-<<<<<<< HEAD
                     body: JSON.stringify({ tenantId: currentTenant?.id, itemId: item.id })
-=======
-                    body: JSON.stringify({ url: item.url, itemId: item.id })
->>>>>>> origin/main
                 });
                 if (!res.ok) throw new Error();
                 await loadData();
@@ -760,11 +677,8 @@ export default function SocialCommandCenter() {
             return post.status === 'scheduled';
         } else if (activeSubView === 'published') {
             return post.status === 'published';
-<<<<<<< HEAD
         } else if (activeSubView === 'publishing') {
             return post.status === 'publishing' || (post.status === 'failed' && Boolean(post.error_message));
-=======
->>>>>>> origin/main
         }
         return true;
     });
@@ -773,7 +687,6 @@ export default function SocialCommandCenter() {
     const maxChars = activePlatform === 'x' ? 280 : activePlatform === 'linkedin' ? 3000 : 63206;
     const charCount = composeCaption.length;
     const isOverLimit = charCount > maxChars;
-<<<<<<< HEAD
     const selectedMetrics = selectedPost ? getPostMetrics(selectedPost) : null;
     const selectedPrimaryMedia = selectedPost?.media_urls?.[0];
     const selectedPrimaryMediaType = selectedPrimaryMedia
@@ -789,29 +702,15 @@ export default function SocialCommandCenter() {
                 <div className="flex-1 flex items-center justify-center h-64">
                     <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
                 </div>
-=======
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
->>>>>>> origin/main
             </div>
         );
     }
 
     return (
-<<<<<<< HEAD
         <div className={`relative min-h-0 flex flex-col ac-scroll-full ac-safe-bottom ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             
             {/* Top Workspace Tab Mode Switcher */}
             <div className="flex gap-2 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-2">
-=======
-        <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
-            
-            {/* Top Workspace Tab Mode Switcher */}
-            <div className="flex border-b border-white/5 bg-slate-900/50 p-2 gap-2">
->>>>>>> origin/main
                 <button
                     onClick={() => setActiveMainTab('manager')}
                     className={`flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'manager' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
@@ -830,17 +729,10 @@ export default function SocialCommandCenter() {
                 /* ----------------------------------------------------
                    MODULE 1: Platform Manager (Native PWA Layout)
                    ---------------------------------------------------- */
-<<<<<<< HEAD
                 <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
                     
                     {/* Platform Switcher Tab Bar (LinkedIn | Facebook | X) */}
                     <div className="sticky top-0 z-20 flex h-11 select-none divide-x divide-[var(--ws-border)] border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]">
-=======
-                <div className="flex flex-col flex-1 pb-24">
-                    
-                    {/* Platform Switcher Tab Bar (LinkedIn | Facebook | X) */}
-                    <div className="sticky top-0 z-20 flex h-11 bg-slate-900 border-b border-white/5 select-none divide-x divide-white/5">
->>>>>>> origin/main
                         {[
                             { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-sky-400' },
                             { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-500' },
@@ -871,10 +763,7 @@ export default function SocialCommandCenter() {
                     <div className="flex p-3 gap-2 bg-slate-950 border-b border-white/5">
                         {[
                             { id: 'queue', label: 'Scheduled Queue', count: posts.filter(p => p.status === 'scheduled' && p.platforms.includes(activePlatform)).length },
-<<<<<<< HEAD
                             { id: 'publishing', label: 'Publishing / Recovery', count: posts.filter(p => (p.status === 'publishing' || p.status === 'failed') && p.platforms.includes(activePlatform)).length },
-=======
->>>>>>> origin/main
                             { id: 'published', label: 'Published Feed', count: posts.filter(p => p.status === 'published' && p.platforms.includes(activePlatform)).length },
                             { id: 'analytics', label: 'Analytics Insights', count: null }
                         ].map((sub) => {
@@ -896,7 +785,6 @@ export default function SocialCommandCenter() {
                         })}
                     </div>
 
-<<<<<<< HEAD
                     {activeSubView !== 'analytics' && (
                         <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-950/80 border-b border-white/5">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -986,93 +874,6 @@ export default function SocialCommandCenter() {
                                                 <div 
                                                     key={post.id} 
                                                     className={`relative select-none overflow-hidden border border-[var(--ws-border)] bg-slate-950 shadow-none touch-pan-y ${WORKSPACE.panel.radius}`}
-=======
-                    {/* Main Platform Content */}
-                    <div className="flex-1 p-4">
-                        {activeSubView === 'analytics' ? (
-                            /* Analytics Dashboard */
-                            <div className="space-y-6 animate-in fade-in duration-300">
-                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-2xl border border-white/5">
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Date Range</span>
-                                    <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
-                                        {['7D', '30D', '90D'].map((range) => (
-                                            <button
-                                                key={range}
-                                                onClick={() => setAnalyticsDateRange(range as any)}
-                                                className={`px-3 py-1 text-xs font-bold rounded-lg ${analyticsDateRange === range ? 'bg-teal-600 text-white' : 'text-slate-500'}`}
-                                            >
-                                                {range}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    {[
-                                        { label: 'Impressions', value: '14,204', change: '+12.4%', up: true },
-                                        { label: 'Likes & Reactions', value: '1,894', change: '+8.2%', up: true },
-                                        { label: 'Comments', value: '342', change: '-2.1%', up: false },
-                                        { label: 'Clicks', value: '620', change: '+24.5%', up: true }
-                                    ].map((stat, i) => (
-                                        <div key={i} className="p-4 bg-slate-900 rounded-2xl border border-white/5 space-y-1">
-                                            <span className="text-[11px] font-bold text-slate-500 uppercase">{stat.label}</span>
-                                            <div className="text-xl font-bold text-white">{stat.value}</div>
-                                            <span className={`text-[10px] font-bold ${stat.up ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                {stat.change} vs last period
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Custom Tooltip Engagement Chart Mock */}
-                                <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 space-y-4">
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <span className="text-xs font-bold text-slate-500 uppercase">Average Engagement Rate</span>
-                                            <div className="text-2xl font-black text-white">4.82%</div>
-                                        </div>
-                                        <div className="text-xs text-slate-400 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
-                                            <ActivityIcon className="w-3.5 h-3.5" /> High Performance
-                                        </div>
-                                    </div>
-                                    <div className="h-28 flex items-end justify-between pt-6 px-2">
-                                        {[40, 60, 45, 90, 75, 110, 85, 130, 95, 140, 115, 160].map((h, idx) => (
-                                            <div key={idx} className="group relative flex flex-col items-center w-full">
-                                                <div 
-                                                    className="w-2.5 bg-teal-500 hover:bg-teal-400 rounded-t transition-all cursor-pointer" 
-                                                    style={{ height: `${(h / 160) * 100}%` }}
-                                                />
-                                                <div className="absolute -top-7 scale-0 group-hover:scale-100 bg-teal-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded transition-all pointer-events-none shadow">
-                                                    {(h / 20).toFixed(1)}%
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="flex justify-between text-[9px] font-bold text-slate-600 uppercase tracking-wider pt-2 border-t border-white/5">
-                                        <span>Start</span>
-                                        <span>Mid Point</span>
-                                        <span>Today</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            /* Feed List / Queue with Swipe gestures */
-                            <div className="space-y-1">
-                                {filteredPosts.length === 0 ? (
-                                    <div className="py-16 text-center bg-slate-900/10 rounded-2xl border border-dashed border-white/5">
-                                        <ActivityIcon className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                                        <h3 className="text-sm font-bold text-slate-400">No posts in this queue</h3>
-                                        <p className="text-xs text-slate-600 max-w-xs mx-auto mt-1">Tap the plus button below to craft your first draft.</p>
-                                    </div>
-                                ) : (
-                                    <div className="divide-y divide-white/5 border border-white/5 rounded-2xl bg-slate-900/30 overflow-hidden">
-                                        {filteredPosts.map((post) => {
-                                            const offset = swipeState[post.id] || 0;
-                                            return (
-                                                <div 
-                                                    key={post.id} 
-                                                    className="relative select-none overflow-hidden bg-slate-950"
->>>>>>> origin/main
                                                     onTouchStart={(e) => handleTouchStart(e, post.id)}
                                                     onTouchMove={(e) => handleTouchMove(e, post.id)}
                                                     onTouchEnd={(e) => handleTouchEnd(e, post.id)}
@@ -1090,7 +891,6 @@ export default function SocialCommandCenter() {
                                                     {/* Main Post Row */}
                                                     <div 
                                                         onClick={() => setSelectedPost(post)}
-<<<<<<< HEAD
                                                         className="relative z-10 bg-slate-900/90 active:bg-slate-800 transition-transform duration-150 cursor-pointer"
                                                         style={{ 
                                                             transform: `translateX(${offset}px)`,
@@ -1197,72 +997,23 @@ export default function SocialCommandCenter() {
                                                                 </div>
                                                                 <ChevronRight className="w-4 h-4 text-slate-600" />
                                                             </div>
-=======
-                                                        className="relative z-10 flex items-center justify-between p-3.5 bg-slate-900/70 active:bg-slate-800 transition-transform duration-150 cursor-pointer"
-                                                        style={{ 
-                                                            transform: `translateX(${offset}px)`,
-                                                            minHeight: '52px'
-                                                        }}
-                                                    >
-                                                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                            {/* Platform Badge Icon Left */}
-                                                            <div className="p-2 rounded-xl bg-slate-950 border border-white/5 flex-shrink-0">
-                                                                {activePlatform === 'linkedin' && <Linkedin className="w-5 h-5 text-sky-400" />}
-                                                                {activePlatform === 'facebook' && <Facebook className="w-5 h-5 text-blue-500" />}
-                                                                {activePlatform === 'x' && <Twitter className="w-5 h-5 text-white" />}
-                                                            </div>
-
-                                                            {/* Snippet Detail Center */}
-                                                            <div className="flex-1 min-w-0 flex flex-col">
-                                                                <span className="text-[14px] text-white font-medium line-clamp-2 leading-snug">
-                                                                    {post.caption}
-                                                                </span>
-                                                                <span className="text-[11px] text-slate-500 font-bold uppercase mt-1 flex items-center gap-1">
-                                                                    <Clock className="w-3 h-3" />
-                                                                    {post.scheduled_at 
-                                                                        ? `Scheduled: ${new Date(post.scheduled_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}` 
-                                                                        : `Posted: ${new Date(post.created_at).toLocaleDateString()}`
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Status Badge & Chevron Right */}
-                                                        <div className="flex items-center gap-2.5 ml-3 flex-shrink-0">
-                                                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-lg border ${
-                                                                post.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                                post.status === 'scheduled' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                                post.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                                                                'bg-slate-800 text-slate-400 border-transparent'
-                                                            }`}>
-                                                                {post.status}
-                                                            </span>
-                                                            <ChevronRight className="w-4 h-4 text-slate-600" />
->>>>>>> origin/main
                                                         </div>
 
                                                         {/* Optional New/Unread Accent Dot */}
                                                         {post.status === 'failed' && (
                                                             <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                                                         )}
-<<<<<<< HEAD
                                                         {post.status === 'publishing' && (
                                                             <div className="mt-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-2 py-1 text-[10px] text-blue-200">
                                                                 Publishing in progress — platform recovery will retry if this stays stuck for 15+ minutes.
                                                             </div>
                                                         )}
-=======
->>>>>>> origin/main
                                                     </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
-<<<<<<< HEAD
                                 ) : null}
-=======
-                                )}
->>>>>>> origin/main
                             </div>
                         )}
                     </div>
@@ -1270,11 +1021,7 @@ export default function SocialCommandCenter() {
                     {/* Floating Compose Trigger FAB */}
                     <button
                         onClick={() => setIsComposeOpen(true)}
-<<<<<<< HEAD
                         className="ac-fab-above-nav w-14 h-14 bg-teal-600 hover:bg-teal-500 text-white rounded-full flex items-center justify-center shadow-xl shadow-teal-900/40 transition-transform active:scale-95"
-=======
-                        className="fixed bottom-[74px] right-6 w-14 h-14 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white rounded-full flex items-center justify-center shadow-xl shadow-teal-900/40 z-30 transition-transform active:scale-95"
->>>>>>> origin/main
                     >
                         <Plus className="w-6 h-6" />
                     </button>
@@ -1283,19 +1030,11 @@ export default function SocialCommandCenter() {
                 /* ----------------------------------------------------
                    MODULE 2: Tools & Intelligence (Existing features)
                    ---------------------------------------------------- */
-<<<<<<< HEAD
                 <div className="p-4 space-y-8 pb-24 ac-safe-bottom lg:pb-4 animate-in fade-in duration-300">
                     <ModuleIntelligenceCard moduleKey="socialMedia" title="Social Intelligence" />
 
                     {/* Watchlist discovey lead panel */}
                     <section className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                <div className="p-4 space-y-8 pb-20 animate-in fade-in duration-300">
-                    <ModuleIntelligenceCard moduleKey="socialMedia" title="Social Intelligence" />
-
-                    {/* Watchlist discovey lead panel */}
-                    <section className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4">
->>>>>>> origin/main
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-sm font-bold text-white">AlphaClone Lead Intelligence</h3>
@@ -1304,11 +1043,7 @@ export default function SocialCommandCenter() {
                             <button
                                 onClick={handleTriggerNexusIntelligence}
                                 disabled={isIntelligenceRunning}
-<<<<<<< HEAD
                                 className={`${WORKSPACE.action.primary} h-9 px-3.5 text-xs`}
-=======
-                                className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold rounded-xl transition-all"
->>>>>>> origin/main
                             >
                                 {isIntelligenceRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Run Nexus Sync'}
                             </button>
@@ -1330,21 +1065,13 @@ export default function SocialCommandCenter() {
                         </div>
 
                         {isAddingBookmark && (
-<<<<<<< HEAD
                             <form onSubmit={handleAddBookmark} className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                            <form onSubmit={handleAddBookmark} className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
->>>>>>> origin/main
                                 <input 
                                     required
                                     value={newBookmark.title}
                                     onChange={e => setNewBookmark({...newBookmark, title: e.target.value})}
                                     placeholder="Title"
-<<<<<<< HEAD
                                     className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none"
-=======
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
->>>>>>> origin/main
                                 />
                                 <input 
                                     required
@@ -1352,15 +1079,9 @@ export default function SocialCommandCenter() {
                                     value={newBookmark.url}
                                     onChange={e => setNewBookmark({...newBookmark, url: e.target.value})}
                                     placeholder="URL Link"
-<<<<<<< HEAD
                                     className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none"
                                 />
                                 <button type="submit" className={`${WORKSPACE.action.primary} h-10 w-full text-xs`}>
-=======
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
-                                />
-                                <button type="submit" className="w-full py-2 bg-teal-600 text-white rounded-xl text-xs font-bold">
->>>>>>> origin/main
                                     Save
                                 </button>
                             </form>
@@ -1368,11 +1089,7 @@ export default function SocialCommandCenter() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {bookmarks.map(bm => (
-<<<<<<< HEAD
                                 <div key={bm.id} className={`flex items-center justify-between p-3 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                <div key={bm.id} className="p-3 bg-slate-900 rounded-2xl border border-white/5 flex items-center justify-between">
->>>>>>> origin/main
                                     <div className="min-w-0 flex-1 pr-2">
                                         <h4 className="text-xs font-bold text-white truncate">{bm.title}</h4>
                                         <span className="text-[10px] text-slate-500 truncate block">{bm.url}</span>
@@ -1391,11 +1108,7 @@ export default function SocialCommandCenter() {
                     </section>
 
                     {/* Viral Script Generator */}
-<<<<<<< HEAD
                     <section className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                    <section className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4">
->>>>>>> origin/main
                         <h3 className="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                             <Video className="w-4 h-4 text-rose-500" /> Viral Hook Generator (Grok)
                         </h3>
@@ -1403,31 +1116,19 @@ export default function SocialCommandCenter() {
                             value={videoTopic}
                             onChange={e => setVideoTopic(e.target.value)}
                             placeholder="Video niche / topic details..."
-<<<<<<< HEAD
                             className="w-full h-20 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none resize-none"
-=======
-                            className="w-full h-20 p-3 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
->>>>>>> origin/main
                         />
                         <button
                             onClick={handleGenerateVideo}
                             disabled={isGeneratingVideo || !videoTopic}
-<<<<<<< HEAD
                             className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2"
-=======
-                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2"
->>>>>>> origin/main
                         >
                             {isGeneratingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                             Generate script
                         </button>
 
                         {videoResult && (
-<<<<<<< HEAD
                             <div className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                            <div className="p-4 bg-slate-950 border border-white/5 rounded-2xl space-y-3">
->>>>>>> origin/main
                                 <div>
                                     <span className="text-[10px] font-bold text-rose-400 uppercase block">Hook</span>
                                     <p className="text-xs text-white font-bold italic">"{videoResult.hook}"</p>
@@ -1452,11 +1153,7 @@ export default function SocialCommandCenter() {
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-<<<<<<< HEAD
                         className="fixed inset-0 bg-slate-950 z-[1100] flex flex-col pb-safe"
-=======
-                        className="fixed inset-0 bg-slate-950 z-[100] flex flex-col pb-safe"
->>>>>>> origin/main
                     >
                         {/* Header bar */}
                         <div className="h-14 border-b border-white/5 bg-slate-900 px-4 flex items-center justify-between">
@@ -1482,11 +1179,7 @@ export default function SocialCommandCenter() {
                             {/* Platform Selector Switches */}
                             <div className="space-y-1.5">
                                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest px-1">Publish platforms</label>
-<<<<<<< HEAD
                                 <div className={`grid grid-cols-3 gap-2 p-1.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                <div className="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-white/5">
->>>>>>> origin/main
                                     {[
                                         { id: 'linkedin', label: 'LinkedIn', icon: Linkedin },
                                         { id: 'facebook', label: 'Facebook', icon: Facebook },
@@ -1517,7 +1210,6 @@ export default function SocialCommandCenter() {
 
                             {/* Platform Specifics Configuration */}
                             {composePlatforms.includes('linkedin') && (
-<<<<<<< HEAD
                                 <LinkedInOrgPanel
                                     isConnected={!!selectedLinkedInIntegration?.is_active}
                                     companyPages={linkedInCompanyPages}
@@ -1543,45 +1235,6 @@ export default function SocialCommandCenter() {
 
                             {composePlatforms.includes('facebook') && (
                                 <div className={`space-y-3 p-4 animate-in slide-in-from-top-1 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                <div className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 space-y-3 animate-in slide-in-from-top-1">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-sky-400 flex items-center gap-1.5">
-                                            <Linkedin className="w-4 h-4" /> LinkedIn Configuration
-                                        </span>
-                                    </div>
-                                    
-                                    {/* Identity Selectors */}
-                                    <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedLinkedInIdentity('personal')}
-                                            className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${selectedLinkedInIdentity === 'personal' ? 'bg-slate-800 text-white' : 'text-slate-500'}`}
-                                        >
-                                            <User className="w-3.5 h-3.5" /> Personal Profile
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedLinkedInIdentity('company')}
-                                            className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${selectedLinkedInIdentity === 'company' ? 'bg-slate-800 text-white' : 'text-slate-500'}`}
-                                        >
-                                            <Building className="w-3.5 h-3.5" /> Company Page
-                                        </button>
-                                    </div>
-
-                                    {/* Warning banner */}
-                                    {linkedinIntegrations.length === 0 && (
-                                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl flex items-start gap-2.5 text-[11px]">
-                                            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                                            <span>Active connection scopes are required to publish. Please connect your profile in Settings.</span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {composePlatforms.includes('facebook') && (
-                                <div className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 space-y-3 animate-in slide-in-from-top-1">
->>>>>>> origin/main
                                     <span className="text-xs font-bold text-blue-500 flex items-center gap-1.5">
                                         <Facebook className="w-4 h-4" /> Facebook Configuration
                                     </span>
@@ -1590,11 +1243,7 @@ export default function SocialCommandCenter() {
                                         <select
                                             value={selectedPageId}
                                             onChange={e => setSelectedPageId(e.target.value)}
-<<<<<<< HEAD
                                             className="w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-3 text-xs text-white outline-none"
-=======
-                                            className="w-full h-10 bg-slate-950 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
->>>>>>> origin/main
                                         >
                                             {fbPages.length === 0 ? (
                                                 <option value="">No pages configured</option>
@@ -1606,34 +1255,17 @@ export default function SocialCommandCenter() {
                                         </select>
                                     </div>
 
-<<<<<<< HEAD
                                     {composeMediaUrl && (
                                         <div className="p-3 bg-slate-950 rounded-xl border border-white/5 space-y-1.5">
                                             <img src={composeMediaUrl} alt="Selected post media preview" className="w-full h-20 object-cover rounded-lg" />
                                             <span className="text-[10px] text-slate-500 font-bold block truncate">{composeMediaUrl}</span>
                                         </div>
                                     )}
-=======
-                                    {/* Link preview card mock */}
-                                    <div className="p-3 bg-slate-950 rounded-xl border border-white/5 space-y-1.5">
-                                        <div className="w-full h-20 bg-slate-900 rounded-lg flex items-center justify-center text-slate-600 text-xs">
-                                            Image preview
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] text-slate-500 font-bold block uppercase">alphaclonenexus.com</span>
-                                            <span className="text-[11px] text-white font-bold block">AlphaClone Business Operations Hub</span>
-                                        </div>
-                                    </div>
->>>>>>> origin/main
                                 </div>
                             )}
 
                             {composePlatforms.includes('x') && (
-<<<<<<< HEAD
                                 <div className={`space-y-4 p-4 animate-in slide-in-from-top-1 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                <div className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 space-y-4 animate-in slide-in-from-top-1">
->>>>>>> origin/main
                                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                                         <Twitter className="w-4 h-4" /> X Thread stacks
                                     </span>
@@ -1684,7 +1316,6 @@ export default function SocialCommandCenter() {
                                     value={composeCaption}
                                     onChange={e => setComposeCaption(e.target.value)}
                                     placeholder="What are we sharing today? (Use #hashtags inside caption or bottom bar)"
-<<<<<<< HEAD
                                     className="w-full min-h-[160px] p-4 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-base text-slate-200 outline-none focus:border-teal-500/50 transition-all resize-y placeholder-slate-600"
                                 />
                             </div>
@@ -1751,14 +1382,6 @@ export default function SocialCommandCenter() {
 
                             {/* Scheduled configuration picker */}
                             <div className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                    className="w-full min-h-[140px] p-4 bg-slate-900 border border-white/5 rounded-2xl text-[16px] text-slate-200 outline-none focus:border-teal-500/50 transition-all resize-none placeholder-slate-600"
-                                />
-                            </div>
-
-                            {/* Scheduled configuration picker */}
-                            <div className="bg-slate-900 p-4 rounded-2xl border border-white/5 space-y-3">
->>>>>>> origin/main
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-teal-400" />
@@ -1778,11 +1401,7 @@ export default function SocialCommandCenter() {
                                         type="datetime-local"
                                         value={composeScheduledAt}
                                         onChange={e => setComposeScheduledAt(e.target.value)}
-<<<<<<< HEAD
                                         className="w-full h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 text-xs text-white outline-none focus:border-teal-500/50"
-=======
-                                        className="w-full h-11 bg-slate-950 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
->>>>>>> origin/main
                                     />
                                 )}
                             </div>
@@ -1790,19 +1409,11 @@ export default function SocialCommandCenter() {
                         </div>
 
                         {/* Floating AI prompt trigger inside Compose Sheet */}
-<<<<<<< HEAD
                         <div className="flex items-center justify-between gap-3 border-t border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-4">
                             <button
                                 type="button"
                                 onClick={() => setAiPromptOpen(true)}
                             className="flex items-center gap-2 text-xs font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-4 py-2 rounded-lg border border-teal-500/20"
-=======
-                        <div className="p-4 bg-slate-900 border-t border-white/5 flex items-center justify-between gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setAiPromptOpen(true)}
-                                className="flex items-center gap-2 text-xs font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-4 py-2 rounded-xl border border-teal-500/20"
->>>>>>> origin/main
                             >
                                 <Sparkles className="w-4 h-4" /> Write Draft with AI
                             </button>
@@ -1819,11 +1430,7 @@ export default function SocialCommandCenter() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-<<<<<<< HEAD
                             className={`w-full max-w-sm space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}
-=======
-                            className="w-full max-w-sm bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4"
->>>>>>> origin/main
                         >
                             <div className="flex justify-between items-center">
                                 <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">AI Topic prompt</h3>
@@ -1833,20 +1440,12 @@ export default function SocialCommandCenter() {
                                 value={aiPromptText}
                                 onChange={e => setAiPromptText(e.target.value)}
                                 placeholder="e.g. A message welcoming new beta testers for our workspace automation application..."
-<<<<<<< HEAD
                                 className="w-full h-24 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white outline-none resize-none"
-=======
-                                className="w-full h-24 p-3 bg-slate-950 border border-white/5 rounded-xl text-xs text-white outline-none resize-none"
->>>>>>> origin/main
                             />
                             <button
                                 onClick={generateDraftWithAI}
                                 disabled={aiGenerating || !aiPromptText.trim()}
-<<<<<<< HEAD
                                 className="w-full py-2.5 bg-teal-600 disabled:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5"
-=======
-                                className="w-full py-2.5 bg-teal-600 disabled:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
->>>>>>> origin/main
                             >
                                 {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
                                 Generate Content Draft
@@ -1864,11 +1463,7 @@ export default function SocialCommandCenter() {
                     <>
                         {/* Overlay backdrop */}
                         <div 
-<<<<<<< HEAD
                             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1100]"
-=======
-                            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[90]"
->>>>>>> origin/main
                             onClick={() => setSelectedPost(null)}
                         />
                         {/* Bottom sheet */}
@@ -1877,11 +1472,7 @@ export default function SocialCommandCenter() {
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 24, stiffness: 220 }}
-<<<<<<< HEAD
                             className="fixed bottom-0 left-0 right-0 z-[1110] flex max-h-[90vh] flex-col border-t border-[var(--ws-border)] bg-slate-900 pb-safe rounded-t-[20px]"
-=======
-                            className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-slate-900 rounded-t-[32px] border-t border-white/10 z-[100] flex flex-col pb-safe"
->>>>>>> origin/main
                         >
                             {/* Drag handle */}
                             <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto my-3 flex-shrink-0" />
@@ -1903,16 +1494,11 @@ export default function SocialCommandCenter() {
                                 {/* Caption Preview */}
                                 <div className="space-y-1.5">
                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Content caption</span>
-<<<<<<< HEAD
                                     <div className={`text-sm leading-relaxed font-medium text-slate-200 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                    <div className="p-4 bg-slate-950 rounded-2xl border border-white/5 text-sm text-slate-200 leading-relaxed font-medium">
->>>>>>> origin/main
                                         {selectedPost.caption}
                                     </div>
                                 </div>
 
-<<<<<<< HEAD
                                 {selectedPrimaryMedia && (
                                     <div className="space-y-1.5">
                                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Rendered media</span>
@@ -1929,11 +1515,6 @@ export default function SocialCommandCenter() {
                                 {/* Platform and Date Info */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className={`flex flex-col justify-center p-3.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                {/* Platform and Date Info */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-3.5 bg-slate-950 rounded-2xl border border-white/5 flex flex-col justify-center">
->>>>>>> origin/main
                                         <span className="text-[9px] font-bold text-slate-500 uppercase">Platforms</span>
                                         <div className="flex gap-1.5 mt-1">
                                             {selectedPost.platforms.map((plat) => (
@@ -1943,11 +1524,7 @@ export default function SocialCommandCenter() {
                                             ))}
                                         </div>
                                     </div>
-<<<<<<< HEAD
                                     <div className={`flex flex-col justify-center p-3.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                    <div className="p-3.5 bg-slate-950 rounded-2xl border border-white/5 flex flex-col justify-center">
->>>>>>> origin/main
                                         <span className="text-[9px] font-bold text-slate-500 uppercase">Publish Status</span>
                                         <span className="text-xs text-white font-bold uppercase mt-1">
                                             {selectedPost.status}
@@ -1960,21 +1537,12 @@ export default function SocialCommandCenter() {
                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Performance metrics</span>
                                     <div className="grid grid-cols-4 gap-2">
                                         {[
-<<<<<<< HEAD
                                             { label: 'Views', val: compactNumber(selectedMetrics?.impressions) },
                                             { label: 'Likes', val: compactNumber(selectedMetrics?.reactions) },
                                             { label: 'Comments', val: compactNumber(selectedMetrics?.comments) },
                                             { label: 'Clicks', val: compactNumber(selectedMetrics?.clicks) }
                                         ].map((stat, i) => (
                                             <div key={i} className={`flex flex-col justify-center p-3 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-=======
-                                            { label: 'Impressions', val: '430' },
-                                            { label: 'Likes', val: '24' },
-                                            { label: 'Comments', val: '2' },
-                                            { label: 'Clicks', val: '8' }
-                                        ].map((stat, i) => (
-                                            <div key={i} className="p-3 bg-slate-950 rounded-2xl border border-white/5 text-center flex flex-col justify-center">
->>>>>>> origin/main
                                                 <span className="text-[17px] font-black text-white">{stat.val}</span>
                                                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-0.5">{stat.label}</span>
                                             </div>
@@ -1989,11 +1557,7 @@ export default function SocialCommandCenter() {
                                             handleDuplicatePost(selectedPost);
                                             setSelectedPost(null);
                                         }}
-<<<<<<< HEAD
                                         className={`${WORKSPACE.action.primary} py-3.5 text-xs uppercase tracking-wider flex items-center justify-center gap-1.5`}
-=======
-                                        className="py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-lg shadow-teal-900/30"
->>>>>>> origin/main
                                     >
                                         <Repeat className="w-4 h-4" /> Duplicate Post
                                     </button>
@@ -2004,11 +1568,7 @@ export default function SocialCommandCenter() {
                                                 setSelectedPost(null);
                                             }
                                         }}
-<<<<<<< HEAD
                                         className="py-3.5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 rounded-lg text-xs font-black uppercase tracking-wider border border-rose-500/20 flex items-center justify-center gap-1.5"
-=======
-                                        className="py-3.5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 rounded-2xl text-xs font-black uppercase tracking-wider border border-rose-500/20 flex items-center justify-center gap-1.5"
->>>>>>> origin/main
                                     >
                                         <Trash2 className="w-4 h-4" /> Delete post
                                     </button>

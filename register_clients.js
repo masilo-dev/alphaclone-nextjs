@@ -13,7 +13,6 @@ if (!url || !key) {
 
 const supabase = createClient(url, key);
 const clients = [
-<<<<<<< HEAD
     // Claude Desktop (numeric client_id is what Claude.ai actually sends)
     { 
         client_id: '1778309945386-41bab8272f61', 
@@ -82,11 +81,6 @@ const clients = [
         is_public: true,
         scopes: ['read', 'write', 'mcp:tools', 'mcp:resources']
     }
-=======
-    { client_id: 'CLAUDE', client_name: 'Claude AI', redirect_uris: ['https://claude.ai/api/mcp/auth_callback'], is_public: true },
-    { client_id: 'GROK', client_name: 'Grok AI', redirect_uris: ['https://grok.com/auth/callback', 'https://x.ai/auth/callback'], is_public: true },
-    { client_id: 'grok-connector', client_name: 'Grok Connector', redirect_uris: ['https://grok.com/auth/callback', 'https://x.ai/auth/callback'], is_public: true }
->>>>>>> origin/main
 ];
 
 supabase.from('mcp_oauth_clients').upsert(clients).then(r => {

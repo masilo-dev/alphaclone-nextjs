@@ -1,10 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-<<<<<<< HEAD
 export const runtime = 'nodejs';
-=======
-export const runtime = 'edge';
->>>>>>> origin/main
 
 export const size = {
   width: 1200,

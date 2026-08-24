@@ -4,18 +4,12 @@
  * When unset or placeholder, verification is skipped (local dev).
  */
 
-<<<<<<< HEAD
 function turnstileSecret(): string | undefined {
     const primary = process.env.TURNSTILE_SECRET?.trim();
     if (primary && primary !== 'placeholder') return primary;
     const legacy = process.env.TURNSTILE_SECRET_KEY?.trim();
     if (legacy && legacy !== 'placeholder') return legacy;
     return undefined;
-=======
-export function isTurnstileEnforced(): boolean {
-    // Cloudflare Turnstile is disabled system-wide as per user request.
-    return false;
->>>>>>> origin/main
 }
 
 export function isTurnstileEnforced(): boolean {

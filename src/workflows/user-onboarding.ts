@@ -19,35 +19,20 @@ export async function userOnboardingWorkflow({ userId, tenantId }: { userId: str
   "use workflow";
 
   await setupWorkspace(userId, tenantId);
-<<<<<<< HEAD
   await sendWelcome(userId, tenantId);
 
   await sleep('1d');
   await sendGuide(userId, tenantId);
-=======
-  await sendWelcome(userId);
-
-  await sleep('1d');
-  await sendGuide(userId);
->>>>>>> origin/main
 
   await sleep('3d');
   const usage = await checkUsage(tenantId);
 
   if (!usage.hasCoreActivation) {
-<<<<<<< HEAD
     await sendNudge(userId, tenantId, usage);
   }
 
   await sleep('7d');
   await weekOneCheckin(userId, tenantId, usage);
-=======
-    await sendNudge(userId, usage);
-  }
-
-  await sleep('7d');
-  await weekOneCheckin(userId, usage);
->>>>>>> origin/main
 }
 
 async function setupWorkspace(userId: string, tenantId: string) {
@@ -78,7 +63,6 @@ async function setupWorkspace(userId: string, tenantId: string) {
   }
 }
 
-<<<<<<< HEAD
 async function sendWelcome(userId: string, tenantId: string) {
   "use step";
   await sendLifecycleEmail(userId, tenantId, 'Welcome Email', {}, true);
@@ -87,16 +71,6 @@ async function sendWelcome(userId: string, tenantId: string) {
 async function sendGuide(userId: string, tenantId: string) {
   "use step";
   await sendLifecycleEmail(userId, tenantId, 'Morning Briefing', {
-=======
-async function sendWelcome(userId: string) {
-  "use step";
-  await sendLifecycleEmail(userId, 'Welcome Email', {}, true);
-}
-
-async function sendGuide(userId: string) {
-  "use step";
-  await sendLifecycleEmail(userId, 'Morning Briefing', {
->>>>>>> origin/main
     dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
     focusArea: 'Complete one activation step and one revenue step today.',
   });
@@ -131,10 +105,7 @@ async function checkUsage(tenantId: string) {
 
 async function sendNudge(
   userId: string,
-<<<<<<< HEAD
   tenantId: string,
-=======
->>>>>>> origin/main
   usage: { invoiceCount: number; leadCount: number; dealCount: number; socialCount: number }
 ) {
   "use step";
@@ -145,11 +116,7 @@ async function sendNudge(
     usage.socialCount === 0 ? 'scheduling your first post' :
     'sending your first invoice';
 
-<<<<<<< HEAD
   await sendLifecycleEmail(userId, tenantId, 'Stay In Touch', {
-=======
-  await sendLifecycleEmail(userId, 'Stay In Touch', {
->>>>>>> origin/main
     dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
     focusArea: `You are one action away from momentum. Start with ${lowestSignalArea}.`,
   });
@@ -157,19 +124,12 @@ async function sendNudge(
 
 async function weekOneCheckin(
   userId: string,
-<<<<<<< HEAD
   tenantId: string,
-=======
->>>>>>> origin/main
   usage: { invoiceCount: number; leadCount: number; dealCount: number; socialCount: number; hasCoreActivation: boolean }
 ) {
   "use step";
 
-<<<<<<< HEAD
   await sendLifecycleEmail(userId, tenantId, usage.hasCoreActivation ? 'AI and Leads Status' : 'Daily Motivation', {
-=======
-  await sendLifecycleEmail(userId, usage.hasCoreActivation ? 'AI and Leads Status' : 'Daily Motivation', {
->>>>>>> origin/main
     dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
     focusArea: usage.hasCoreActivation
       ? `Week-one snapshot: ${usage.leadCount} leads, ${usage.dealCount} deals, ${usage.invoiceCount} invoices, ${usage.socialCount} social posts.`
@@ -197,15 +157,11 @@ async function getUserContext(userId: string): Promise<UserContext | null> {
 
 async function sendLifecycleEmail(
   userId: string,
-<<<<<<< HEAD
   tenantId: string,
-=======
->>>>>>> origin/main
   templateName: string,
   variables: Record<string, string | number>,
   skipIfWelcomeAlreadySent = false
 ) {
-<<<<<<< HEAD
   const supabase = createSupabaseAdminClient();
   const membership = await supabase
     .from('tenant_users')
@@ -221,12 +177,6 @@ async function sendLifecycleEmail(
   const user = await getUserContext(userId);
   if (!user) return;
 
-=======
-  const user = await getUserContext(userId);
-  if (!user) return;
-
-  const supabase = createSupabaseAdminClient();
->>>>>>> origin/main
   const result = await sendPlatformTemplateEmail(supabase, {
     templateName,
     to: user.email,

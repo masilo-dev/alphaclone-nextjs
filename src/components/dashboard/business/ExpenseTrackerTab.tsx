@@ -2,21 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-<<<<<<< HEAD
     Receipt, Trash2, Edit2, CheckCircle2,
     Clock, DollarSign, Loader2,
     X, Camera, Sparkles
-=======
-    Receipt, Plus, Trash2, Edit2, Filter, Download, CheckCircle2,
-    Clock, XCircle, DollarSign, TrendingUp, TrendingDown, Loader2,
-    Tag, Calendar, ChevronDown, X, AlertCircle, FileText, Camera, Sparkles
->>>>>>> origin/main
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { chartOfAccountsService, ChartOfAccount } from '@/services/accounting/chartOfAccountsService';
 import toast from 'react-hot-toast';
-<<<<<<< HEAD
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import {
     MobileDataCard,
@@ -30,9 +23,6 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
 import { TabSkeleton } from '@/components/ui/TabSkeleton';
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
-=======
-import { Modal } from '../../ui/UIComponents';
->>>>>>> origin/main
 
 interface ExpenseCategory {
     id: string;
@@ -100,10 +90,7 @@ const EMPTY_FORM = {
     notes: '',
     category_id: '',
     asset_account_id: '',
-<<<<<<< HEAD
     receipt_url: '',
-=======
->>>>>>> origin/main
 };
 
 export default function ExpenseTrackerTab() {
@@ -125,21 +112,14 @@ export default function ExpenseTrackerTab() {
     const [scanning, setScanning] = useState(false);
     const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
-<<<<<<< HEAD
     const handleCameraScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !tenant?.id) return;
-=======
-    const handleCameraScan = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
->>>>>>> origin/main
 
         setScanning(true);
         const objectUrl = URL.createObjectURL(file);
         setReceiptPreview(objectUrl);
 
-<<<<<<< HEAD
         try {
             const request = new FormData();
             request.set('file', file);
@@ -170,42 +150,6 @@ export default function ExpenseTrackerTab() {
         } finally {
             setScanning(false);
         }
-=======
-        setTimeout(() => {
-            const vendors = ['Starbucks Coffee', 'Uber Ride', 'Amazon Web Services', 'GitHub Enterprise', 'Shell Station'];
-            const descriptions = ['Team coffee meeting', 'Client travel ride-share', 'Monthly infrastructure billing', 'Developer Copilot licensing', 'Fuel reimbursement'];
-            const randomIdx = Math.floor(Math.random() * vendors.length);
-            const amt = (Math.random() * 85 + 15).toFixed(2);
-            const tax = (parseFloat(amt) * 0.0825).toFixed(2);
-
-            let catId = '';
-            if (categories.length > 0) {
-                if (randomIdx === 0) catId = categories.find(c => c.name.toLowerCase().includes('meals'))?.id || categories[0].id;
-                else if (randomIdx === 1 || randomIdx === 4) catId = categories.find(c => c.name.toLowerCase().includes('travel'))?.id || categories[0].id;
-                else catId = categories.find(c => c.name.toLowerCase().includes('software'))?.id || categories[0].id;
-            }
-
-            setForm({
-                date: new Date().toISOString().split('T')[0],
-                amount: amt,
-                tax_amount: tax,
-                currency: 'USD',
-                description: descriptions[randomIdx],
-                vendor_name: vendors[randomIdx],
-                payment_method: 'card',
-                status: 'pending',
-                billable: Math.random() > 0.5,
-                notes: 'Receipt automatically parsed using built-in AI scanner.',
-                category_id: catId,
-                asset_account_id: assetAccounts[0]?.id || '',
-            });
-
-            setEditingId(null);
-            setShowForm(true);
-            setScanning(false);
-            toast.success('AI Scanner completed! Receipt data auto-filled.');
-        }, 2200);
->>>>>>> origin/main
     };
 
     const loadData = useCallback(async () => {
@@ -244,10 +188,7 @@ export default function ExpenseTrackerTab() {
 
         if (!expRes.error) setExpenses(expRes.data || []);
         if (!catRes.error) setCategories(catRes.data || []);
-<<<<<<< HEAD
         if (!clientRes.error) setClients(clientRes.data || []);
-=======
->>>>>>> origin/main
         if (!assetAccountsResult.error) {
             setAssetAccounts(assetAccountsResult.accounts);
         } else {
@@ -318,10 +259,7 @@ export default function ExpenseTrackerTab() {
             notes: form.notes || null,
             category_id: form.category_id || null,
             asset_account_id: form.asset_account_id || null,
-<<<<<<< HEAD
             receipt_url: form.receipt_url || null,
-=======
->>>>>>> origin/main
         };
 
         const response = await fetch('/api/finance/expenses', {
@@ -360,10 +298,7 @@ export default function ExpenseTrackerTab() {
             notes: expense.notes || '',
             category_id: expense.category_id || '',
             asset_account_id: (expense as any).asset_account_id || '',
-<<<<<<< HEAD
             receipt_url: expense.receipt_url || '',
-=======
->>>>>>> origin/main
         });
         setEditingId(expense.id);
         setShowForm(true);
@@ -428,7 +363,6 @@ export default function ExpenseTrackerTab() {
     }
 
     return (
-<<<<<<< HEAD
         <ModulePageLayout
             header={(
                 <PageHeader
@@ -562,153 +496,6 @@ export default function ExpenseTrackerTab() {
                 }}
                 title={editingId ? 'Edit Expense' : 'Add Expense'}
                 size="wide"
-=======
-        <div className="space-y-6">
-            {scanning && (
-                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[110] flex flex-col items-center justify-center gap-4">
-                    <div className="relative w-20 h-20">
-                        <div className="absolute inset-0 border-4 border-violet-500/30 rounded-full" />
-                        <div className="absolute inset-0 border-4 border-t-violet-500 rounded-full animate-spin" />
-                        <div className="absolute inset-4 bg-slate-900 rounded-full flex items-center justify-center">
-                            <Camera className="w-6 h-6 text-violet-400" />
-                        </div>
-                    </div>
-                    <div className="text-center space-y-1">
-                        <p className="text-white font-bold flex items-center gap-2 justify-center">
-                            <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
-                            AI Scanner Active
-                        </p>
-                        <p className="text-xs text-slate-400">Extracting receipt details with OCR...</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-bold text-white">Expense Tracker</h2>
-                    <p className="text-sm text-slate-400">Track, categorize, and manage business expenses</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/10 rounded-xl font-semibold text-sm transition-all cursor-pointer active:scale-95">
-                        <Camera className="w-4 h-4 text-violet-400" />
-                        <span>Receipt Scan</span>
-                        <input 
-                            type="file" 
-                            accept="image/*" 
-                            capture="environment" 
-                            className="hidden" 
-                            onChange={handleCameraScan} 
-                        />
-                    </label>
-                    <button
-                        onClick={() => { setShowForm(true); setEditingId(null); setForm({ ...EMPTY_FORM }); setReceiptPreview(null); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold text-sm transition-all active:scale-95"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Expense
-                    </button>
-                </div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* 28px Prominent Spend Card */}
-                <div className="col-span-1 bg-gradient-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/30 rounded-3xl p-6 relative overflow-hidden shadow-lg shadow-violet-500/5">
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-violet-500/10 rounded-full blur-xl pointer-events-none" />
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Spending</span>
-                        <DollarSign className="w-5 h-5 text-violet-400" />
-                    </div>
-                    <div className="text-[28px] font-black text-white font-mono tracking-tight leading-none mb-1">
-                        {fmt(totalAmount)}
-                    </div>
-                    <span className="text-xs text-slate-500">Filtered active expenses</span>
-                </div>
-
-                {/* Pending Card */}
-                <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending Approval</span>
-                        <Clock className="w-5 h-5 text-amber-400" />
-                    </div>
-                    <div>
-                        <div className="text-xl font-bold text-amber-400 font-mono tracking-tight leading-none mb-1">
-                            {fmt(pendingAmount)}
-                        </div>
-                        <span className="text-xs text-slate-500">{filtered.filter(e => e.status === 'pending').length} pending items</span>
-                    </div>
-                </div>
-
-                {/* Approved Card */}
-                <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Approved Spend</span>
-                        <CheckCircle2 className="w-5 h-5 text-teal-400" />
-                    </div>
-                    <div>
-                        <div className="text-xl font-bold text-teal-400 font-mono tracking-tight leading-none mb-1">
-                            {fmt(approvedAmount)}
-                        </div>
-                        <span className="text-xs text-slate-500">{filtered.filter(e => e.status === 'approved').length} approved items</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-center">
-                <select
-                    value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
-                >
-                    <option value="all">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="reimbursed">Reimbursed</option>
-                </select>
-                <select
-                    value={categoryFilter}
-                    onChange={e => setCategoryFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
-                >
-                    <option value="all">All Categories</option>
-                    {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                    ))}
-                </select>
-                <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={e => setDateFrom(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
-                    placeholder="From"
-                />
-                <input
-                    type="date"
-                    value={dateTo}
-                    onChange={e => setDateTo(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
-                />
-                {(statusFilter !== 'all' || categoryFilter !== 'all' || dateFrom || dateTo) && (
-                    <button
-                        onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); setDateFrom(''); setDateTo(''); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400 hover:bg-red-500/20 transition-colors"
-                    >
-                        <X className="w-3 h-3" /> Clear
-                    </button>
-                )}
-            </div>
-
-            {/* Add/Edit Form */}
-            {/* Add/Edit Form */}
-            <Modal
-                isOpen={showForm}
-                onClose={() => { setShowForm(false); setEditingId(null); }}
-                title={editingId ? 'Edit Expense' : 'Add Expense'}
-                maxWidth="max-w-2xl"
->>>>>>> origin/main
             >
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -792,7 +579,6 @@ export default function ExpenseTrackerTab() {
                                 className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0" />
                             <label htmlFor="billable" className="text-sm text-slate-300">Billable to client</label>
                         </div>
-<<<<<<< HEAD
                         {form.billable && (
                             <div className="sm:col-span-2">
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Bill to client</label>
@@ -808,18 +594,12 @@ export default function ExpenseTrackerTab() {
                                 </select>
                             </div>
                         )}
-=======
->>>>>>> origin/main
                         {receiptPreview && (
                             <div className="sm:col-span-2 lg:col-span-3">
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Scanned Receipt Attachment</label>
                                 <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-white/10 bg-slate-950 flex items-center justify-center group/receipt">
                                     <img src={receiptPreview} alt="Receipt Preview" className="w-full h-full object-cover" />
-<<<<<<< HEAD
                                     <button
-=======
-                                    <button 
->>>>>>> origin/main
                                         type="button"
                                         onClick={() => setReceiptPreview(null)}
                                         className="absolute top-2 right-2 p-1.5 bg-black/80 hover:bg-black text-white rounded-full transition-colors"
@@ -842,11 +622,7 @@ export default function ExpenseTrackerTab() {
                         </button>
                     </div>
                 </div>
-<<<<<<< HEAD
             </DetailDrawer>
-=======
-            </Modal>
->>>>>>> origin/main
 
             {filtered.length === 0 ? (
                 expenses.length === 0 ? (
@@ -1019,4 +795,3 @@ export default function ExpenseTrackerTab() {
         </ModulePageLayout>
     );
 }
-

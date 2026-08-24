@@ -18,10 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
 import { Button } from '@/components/ui/UIComponents';
 import toast from 'react-hot-toast';
-<<<<<<< HEAD
 import TurnstileWidget from '@/components/security/TurnstileWidget';
-=======
->>>>>>> origin/main
 
 const PAID_PLANS: SubscriptionPlan[] = ['starter', 'pro', 'enterprise'];
 
@@ -29,16 +26,11 @@ export default function UpgradePage() {
     const { currentTenant, isLoading: tenantLoading } = useTenant();
     const { user, loading: authLoading } = useAuth();
     const router = useRouter();
-<<<<<<< HEAD
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState('');
     const [turnstileNonce, setTurnstileNonce] = useState(0);
     const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-=======
-    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('pro');
-    const [isProcessing, setIsProcessing] = useState(false);
->>>>>>> origin/main
 
     if (tenantLoading || authLoading) {
         return (
@@ -55,14 +47,11 @@ export default function UpgradePage() {
             return;
         }
 
-<<<<<<< HEAD
         if (!selectedPlan) {
             toast.error('Choose a plan before opening checkout.');
             return;
         }
 
-=======
->>>>>>> origin/main
         setIsProcessing(true);
         try {
             const response = await fetch('/api/stripe/create-checkout', {
@@ -72,10 +61,7 @@ export default function UpgradePage() {
                     plan: selectedPlan,
                     tenantId: currentTenant.id,
                     userId: user.id,
-<<<<<<< HEAD
                     turnstileToken: turnstileToken || undefined,
-=======
->>>>>>> origin/main
                 }),
             });
             const data = await response.json();
@@ -87,12 +73,9 @@ export default function UpgradePage() {
         } catch (error) {
             console.error('Upgrade error:', error);
             toast.error('Failed to initiate checkout. Please try again.');
-<<<<<<< HEAD
         } finally {
             setTurnstileToken('');
             setTurnstileNonce((value) => value + 1);
-=======
->>>>>>> origin/main
             setIsProcessing(false);
         }
     };
@@ -108,22 +91,14 @@ export default function UpgradePage() {
         pro: {
             icon: Zap,
             color: 'indigo',
-<<<<<<< HEAD
             tagline: 'More capacity',
-=======
-            tagline: 'Most Popular',
->>>>>>> origin/main
             gradient: 'from-indigo-500/20 to-purple-500/20',
             borderColor: 'border-indigo-500/50'
         },
         enterprise: {
             icon: Crown,
             color: 'amber',
-<<<<<<< HEAD
             tagline: 'Full infrastructure',
-=======
-            tagline: 'Full Power',
->>>>>>> origin/main
             gradient: 'from-amber-500/20 to-orange-500/20',
             borderColor: 'border-amber-500/30'
         }
@@ -165,11 +140,7 @@ export default function UpgradePage() {
                         className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto"
                     >
                         You're currently on the <span className="text-teal-400 font-bold uppercase">{currentTenant?.subscription_plan}</span> plan. 
-<<<<<<< HEAD
                         Upgrade to raise your workspace limits and enable the listed automation features.
-=======
-                        Upgrade to remove limits and unlock elite automation.
->>>>>>> origin/main
                     </motion.p>
                 </div>
 
@@ -205,11 +176,7 @@ export default function UpgradePage() {
                                         </div>
                                         {planId === 'pro' && (
                                             <span className="px-3 py-1 rounded-full bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest">
-<<<<<<< HEAD
                                                 More Capacity
-=======
-                                                Best Value
->>>>>>> origin/main
                                             </span>
                                         )}
                                     </div>
@@ -266,11 +233,7 @@ export default function UpgradePage() {
                         <div className="text-center md:text-left">
                             <h4 className="text-xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-2">
                                 <CheckCircle2 className="w-5 h-5 text-teal-400" />
-<<<<<<< HEAD
                                 Selected: {selectedPlan ? selectedPlan.toUpperCase() : 'Choose a plan'}
-=======
-                                Selected: {selectedPlan.toUpperCase()}
->>>>>>> origin/main
                             </h4>
                             <p className="text-slate-400 text-sm">
                                 No long term contracts. Switch or cancel any time. 
@@ -283,11 +246,7 @@ export default function UpgradePage() {
                             isLoading={isProcessing}
                             className="w-full md:w-auto px-10 h-14 bg-teal-600 hover:bg-teal-500 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 group transition-all"
                         >
-<<<<<<< HEAD
                             {isProcessing ? 'Setting up secure checkout...' : 'Open checkout'}
-=======
-                            {isProcessing ? 'Setting up secure checkout...' : 'Upgrade Now'}
->>>>>>> origin/main
                             {!isProcessing && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
                         </Button>
                     </div>

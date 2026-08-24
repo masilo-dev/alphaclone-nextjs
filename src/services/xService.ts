@@ -1,11 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import {
   decryptIntegrationToken,
   encryptIntegrationToken,
 } from '@/lib/integration/integrationTokenCrypto';
-=======
->>>>>>> origin/main
 import crypto from 'crypto';
 
 export interface XIntegration {
@@ -28,7 +25,6 @@ export interface XTweet {
     reply_settings?: 'everyone' | 'following' | 'mentionedUsers';
 }
 
-<<<<<<< HEAD
 async function readXSecrets(admin: ReturnType<typeof createSupabaseAdminClient>, integrationId: string) {
   const { data } = await admin
     .from('x_integration_secrets')
@@ -86,11 +82,6 @@ async function hydrateXIntegration(row: Record<string, unknown>): Promise<XInteg
 // Supports both X_API_KEY and X_CONSUMER_KEY naming conventions (Vercel uses X_CONSUMER_KEY)
 const X_API_KEY    = process.env.X_API_KEY    || process.env.X_CONSUMER_KEY    || process.env.TWITTER_API_KEY    || '';
 const X_API_SECRET = process.env.X_API_SECRET || process.env.X_CONSUMER_SECRET || process.env.TWITTER_API_SECRET || '';
-=======
-// ── OAuth 1.0a helpers (required for v1.1 media upload) ──────────────────────
-const X_API_KEY    = process.env.X_API_KEY    || process.env.TWITTER_API_KEY    || '';
-const X_API_SECRET = process.env.X_API_SECRET || process.env.TWITTER_API_SECRET || '';
->>>>>>> origin/main
 
 function buildOAuth1Header(
     method: string,
@@ -132,7 +123,6 @@ function buildOAuth1Header(
     return headerValue;
 }
 
-<<<<<<< HEAD
 async function refreshXAccessToken(integration: XIntegration): Promise<XIntegration> {
     const clientId = process.env.X_CLIENT_ID;
     const clientSecret = process.env.X_CLIENT_SECRET;
@@ -191,9 +181,6 @@ export const xService = {
         return refreshXAccessToken(integration);
     },
 
-=======
-export const xService = {
->>>>>>> origin/main
     /**
      * Get X integration for a tenant
      */
@@ -202,11 +189,7 @@ export const xService = {
         
         const { data, error } = await supabase
             .from('x_integrations')
-<<<<<<< HEAD
             .select('id, tenant_id, user_id, x_user_id, x_username, expires_at, scopes, updated_at, access_token, refresh_token, oauth1_access_token, oauth1_token_secret')
-=======
-            .select('*')
->>>>>>> origin/main
             .eq('tenant_id', tenantId)
             .single();
         
@@ -214,13 +197,8 @@ export const xService = {
             console.error('Error fetching X integration:', error);
             return null;
         }
-<<<<<<< HEAD
         if (!data) return null;
         return hydrateXIntegration(data);
-=======
-        
-        return data as XIntegration | null;
->>>>>>> origin/main
     },
 
     /**
@@ -228,15 +206,11 @@ export const xService = {
      */
     async saveXIntegration(integration: Partial<XIntegration>) {
         const supabase = createSupabaseAdminClient();
-<<<<<<< HEAD
         const { access_token, refresh_token, oauth1_access_token, oauth1_token_secret, ...safeRow } = integration;
-=======
->>>>>>> origin/main
         
         const { data, error } = await supabase
             .from('x_integrations')
             .upsert({
-<<<<<<< HEAD
                 ...safeRow,
                 access_token: null,
                 refresh_token: null,
@@ -245,19 +219,12 @@ export const xService = {
                 updated_at: new Date().toISOString()
             })
             .select('id, tenant_id, user_id, x_user_id, x_username, expires_at, scopes')
-=======
-                ...integration,
-                updated_at: new Date().toISOString()
-            })
-            .select()
->>>>>>> origin/main
             .single();
         
         if (error) {
             console.error('Error saving X integration:', error);
             throw error;
         }
-<<<<<<< HEAD
 
         if (data?.id) {
           await writeXSecrets(supabase, String(data.id), {
@@ -269,10 +236,6 @@ export const xService = {
         }
         
         return hydrateXIntegration({ ...data, access_token, refresh_token, oauth1_access_token, oauth1_token_secret });
-=======
-        
-        return data;
->>>>>>> origin/main
     },
 
     /**
@@ -292,11 +255,7 @@ export const xService = {
             );
         }
 
-<<<<<<< HEAD
         const uploadUrl = 'https://upload.x.com/1.1/media/upload.json';
-=======
-        const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
->>>>>>> origin/main
         const authHeader = buildOAuth1Header('POST', uploadUrl, oauth1Token, oauth1Secret);
 
         const formData = new FormData();
@@ -336,12 +295,7 @@ export const xService = {
      * Post a tweet (v2) — now supports media_ids for image/video attachments.
      */
     async postTweet(tenantId: string, tweet: XTweet) {
-<<<<<<< HEAD
         const integration = await this.ensureValidAccessToken(tenantId);
-=======
-        const integration = await this.getXIntegration(tenantId);
-        if (!integration) throw new Error('X integration not found');
->>>>>>> origin/main
 
         const body: Record<string, unknown> = {
             text: tweet.text,
@@ -351,11 +305,7 @@ export const xService = {
             }),
         };
 
-<<<<<<< HEAD
         const response = await fetch('https://api.x.com/2/tweets', {
-=======
-        const response = await fetch('https://api.twitter.com/2/tweets', {
->>>>>>> origin/main
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`,
@@ -364,7 +314,6 @@ export const xService = {
             body: JSON.stringify(body)
         });
 
-<<<<<<< HEAD
     if (!response.ok) {
       const error = await response.json();
       const errBody = error as { title?: string; detail?: string; message?: string };
@@ -373,12 +322,6 @@ export const xService = {
       }
       throw new Error(`X API error: ${JSON.stringify(error)}`);
     }
-=======
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
->>>>>>> origin/main
 
         const data = await response.json();
 
@@ -396,7 +339,6 @@ export const xService = {
         return data;
     },
 
-<<<<<<< HEAD
     async getTweet(tenantId: string, tweetId: string) {
         const integration = await this.ensureValidAccessToken(tenantId);
         const response = await fetch(`https://api.x.com/2/tweets/${encodeURIComponent(tweetId)}`, {
@@ -408,8 +350,6 @@ export const xService = {
         return response.json();
     },
 
-=======
->>>>>>> origin/main
     /**
      * Send a Direct Message (v2)
      */
@@ -417,11 +357,7 @@ export const xService = {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-<<<<<<< HEAD
             const response = await fetch(`https://api.x.com/2/dm_conversations/with/${recipientId}/messages`, {
-=======
-        const response = await fetch(`https://api.twitter.com/2/dm_conversations/with/${recipientId}/messages`, {
->>>>>>> origin/main
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`,
@@ -434,7 +370,6 @@ export const xService = {
             })
         });
 
-<<<<<<< HEAD
     if (!response.ok) {
       const error = await response.json();
       const errBody = error as { title?: string; detail?: string; message?: string };
@@ -443,12 +378,6 @@ export const xService = {
       }
       throw new Error(`X API error: ${JSON.stringify(error)}`);
     }
-=======
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
->>>>>>> origin/main
 
         const data = await response.json();
 
@@ -471,23 +400,15 @@ export const xService = {
      * Read Tweets (v2) - User Timeline
      */
     async getUserTweets(tenantId: string) {
-<<<<<<< HEAD
         const integration = await this.ensureValidAccessToken(tenantId);
 
         const response = await fetch(`https://api.x.com/2/users/${integration.x_user_id}/tweets`, {
-=======
-        const integration = await this.getXIntegration(tenantId);
-        if (!integration) throw new Error('X integration not found');
-
-        const response = await fetch(`https://api.twitter.com/2/users/${integration.x_user_id}/tweets`, {
->>>>>>> origin/main
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`
             }
         });
 
-<<<<<<< HEAD
     if (!response.ok) {
       const error = await response.json();
       const errBody = error as { title?: string; detail?: string; message?: string };
@@ -496,12 +417,6 @@ export const xService = {
       }
       throw new Error(`X API error: ${JSON.stringify(error)}`);
     }
-=======
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
->>>>>>> origin/main
 
         return await response.json();
     },
@@ -513,11 +428,7 @@ export const xService = {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-<<<<<<< HEAD
         const response = await fetch('https://api.x.com/2/tweets', {
-=======
-        const response = await fetch('https://api.twitter.com/2/tweets', {
->>>>>>> origin/main
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`,
@@ -531,7 +442,6 @@ export const xService = {
             })
         });
 
-<<<<<<< HEAD
     if (!response.ok) {
       const error = await response.json();
       const errBody = error as { title?: string; detail?: string; message?: string };
@@ -540,12 +450,6 @@ export const xService = {
       }
       throw new Error(`X API error: ${JSON.stringify(error)}`);
     }
-=======
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
->>>>>>> origin/main
 
         const data = await response.json();
 
@@ -571,11 +475,7 @@ export const xService = {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-<<<<<<< HEAD
         const url = new URL('https://api.x.com/2/tweets/search/recent');
-=======
-        const url = new URL('https://api.twitter.com/2/tweets/search/recent');
->>>>>>> origin/main
         url.searchParams.append('query', query);
         url.searchParams.append('max_results', maxResults.toString());
         url.searchParams.append('tweet.fields', 'created_at,author_id,public_metrics,entities');
@@ -589,7 +489,6 @@ export const xService = {
             }
         });
 
-<<<<<<< HEAD
     if (!response.ok) {
       const error = await response.json();
       const errBody = error as { title?: string; detail?: string; message?: string };
@@ -598,12 +497,6 @@ export const xService = {
       }
       throw new Error(`X API error: ${JSON.stringify(error)}`);
     }
-=======
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
->>>>>>> origin/main
 
         const data = await response.json();
 
@@ -651,18 +544,13 @@ export const xService = {
         const integration = await this.getXIntegration(tenantId);
         if (!integration) throw new Error('X integration not found');
 
-<<<<<<< HEAD
         const response = await fetch(`https://api.x.com/2/users/${integration.x_user_id}/mentions`, {
-=======
-        const response = await fetch(`https://api.twitter.com/2/users/${integration.x_user_id}/mentions`, {
->>>>>>> origin/main
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${integration.access_token}`
             }
         });
 
-<<<<<<< HEAD
     if (!response.ok) {
       const error = await response.json();
       const errBody = error as { title?: string; detail?: string; message?: string };
@@ -671,12 +559,6 @@ export const xService = {
       }
       throw new Error(`X API error: ${JSON.stringify(error)}`);
     }
-=======
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
->>>>>>> origin/main
 
         return await response.json();
     },
@@ -690,13 +572,8 @@ export const xService = {
 
         const identifier = usernameOrId || integration.x_user_id;
         const url = usernameOrId && isNaN(Number(usernameOrId))
-<<<<<<< HEAD
             ? `https://api.x.com/2/users/by/username/${usernameOrId}`
             : `https://api.x.com/2/users/${identifier}`;
-=======
-            ? `https://api.twitter.com/2/users/by/username/${usernameOrId}`
-            : `https://api.twitter.com/2/users/${identifier}`;
->>>>>>> origin/main
 
         const response = await fetch(`${url}?user.fields=description,public_metrics,profile_image_url,location`, {
             method: 'GET',
@@ -705,7 +582,6 @@ export const xService = {
             }
         });
 
-<<<<<<< HEAD
     if (!response.ok) {
       const error = await response.json();
       const errBody = error as { title?: string; detail?: string; message?: string };
@@ -714,12 +590,6 @@ export const xService = {
       }
       throw new Error(`X API error: ${JSON.stringify(error)}`);
     }
-=======
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
->>>>>>> origin/main
 
         return await response.json();
     },
@@ -733,11 +603,7 @@ export const xService = {
 
         // Note: User search in v2 is currently limited to certain access levels or specific endpoints.
         // If not available, we can fallback to searching tweets and extracting users.
-<<<<<<< HEAD
         const url = new URL('https://api.x.com/2/users/search');
-=======
-        const url = new URL('https://api.twitter.com/2/users/search');
->>>>>>> origin/main
         url.searchParams.append('query', query);
         url.searchParams.append('max_results', maxResults.toString());
         url.searchParams.append('user.fields', 'username,name,description,profile_image_url,location,public_metrics');
@@ -749,7 +615,6 @@ export const xService = {
             }
         });
 
-<<<<<<< HEAD
     if (!response.ok) {
       const error = await response.json();
       const errBody = error as { title?: string; detail?: string; message?: string };
@@ -758,12 +623,6 @@ export const xService = {
       }
       throw new Error(`X API error: ${JSON.stringify(error)}`);
     }
-=======
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`X API error: ${JSON.stringify(error)}`);
-        }
->>>>>>> origin/main
 
         return await response.json();
     }

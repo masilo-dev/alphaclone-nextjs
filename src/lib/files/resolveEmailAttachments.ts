@@ -18,7 +18,6 @@ export async function resolveEmailAttachmentsFromFileIds(
 
   const supabase = createSupabaseAdminClient();
   let rows: Record<string, unknown>[] = [];
-<<<<<<< HEAD
 
   const workspaceFiles = await supabase
     .from('workspace_files')
@@ -64,26 +63,6 @@ export async function resolveEmailAttachmentsFromFileIds(
         rows = [...rows, ...((documents.data || []) as Record<string, unknown>[])];
       }
     }
-=======
-  const fileUploads = await supabase
-    .from('file_uploads')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .in('id', ids);
-
-  if (!fileUploads.error && fileUploads.data?.length) {
-    rows = fileUploads.data as Record<string, unknown>[];
-  } else {
-    const documents = await supabase
-      .from('documents')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .in('id', ids);
-    if (documents.error) {
-      throw new Error(fileUploads.error?.message || documents.error.message);
-    }
-    rows = (documents.data || []) as Record<string, unknown>[];
->>>>>>> origin/main
   }
 
   const attachments: EmailAttachment[] = [];

@@ -5,10 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Bot, Check, X, Loader2, Shield } from 'lucide-react';
 import Link from 'next/link';
-<<<<<<< HEAD
 import { supabase } from '@/lib/supabase';
-=======
->>>>>>> origin/main
 
 function AuthorizeContent() {
     const { user, loading } = useAuth();
@@ -27,11 +24,7 @@ function AuthorizeContent() {
     useEffect(() => {
         if (!loading && !user) {
             const currentUrl = window.location.pathname + window.location.search;
-<<<<<<< HEAD
             router.push(`/auth/login?returnTo=${encodeURIComponent(currentUrl)}`);
-=======
-            router.push(`/login?returnTo=${encodeURIComponent(currentUrl)}`);
->>>>>>> origin/main
         }
     }, [user, loading, router]);
 
@@ -45,7 +38,6 @@ function AuthorizeContent() {
         setError('');
 
         try {
-<<<<<<< HEAD
             const normalizedScope = (scope || 'read write')
                 .split(/[\s+]+/)
                 .map((s) => (s === 'wrie' ? 'write' : s))
@@ -73,19 +65,11 @@ function AuthorizeContent() {
                 credentials: 'include',
                 cache: 'no-store',
                 body: JSON.stringify({
-=======
-            const res = await fetch('/api/mcp/oauth/approve', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: user.id,
->>>>>>> origin/main
                     client_id: clientId,
                     redirect_uri: redirectUri,
                     state,
                     code_challenge: codeChallenge || undefined,
                     code_challenge_method: codeChallenge ? codeChallengeMethod : undefined,
-<<<<<<< HEAD
                     scope: normalizedScope,
                 })
             });
@@ -108,16 +92,6 @@ function AuthorizeContent() {
                 throw new Error(
                     data.error_description || data.error || 'Failed to approve authorization'
                 );
-=======
-                    scope,
-                })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Failed to approve authorization');
->>>>>>> origin/main
             }
 
             if (data.redirectUrl) {
@@ -150,14 +124,9 @@ function AuthorizeContent() {
 
     if (loading || !user) {
         return (
-<<<<<<< HEAD
             <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-3 text-slate-400">
                 <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                 <p className="text-sm">{loading ? 'Checking your session…' : 'Redirecting to sign in…'}</p>
-=======
-            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
->>>>>>> origin/main
             </div>
         );
     }
@@ -190,11 +159,7 @@ function AuthorizeContent() {
 
                 <h1 className="text-2xl font-bold mb-2">Authorize Connection</h1>
                 <p className="text-slate-400 mb-2">
-<<<<<<< HEAD
                     An AI assistant (ChatGPT, Claude, or another connector) is requesting access to your AlphaClone workspace.
-=======
-                    An AI Assistant (Claude) is requesting access to your AlphaClone workspace to perform automated tasks on your behalf.
->>>>>>> origin/main
                 </p>
 
                 {codeChallenge && (
@@ -205,11 +170,7 @@ function AuthorizeContent() {
                 )}
 
                 <div className="text-left bg-slate-800/40 rounded-xl p-4 mb-6 text-sm space-y-2">
-<<<<<<< HEAD
                     <p className="text-slate-300 font-medium">This will allow the connector to:</p>
-=======
-                    <p className="text-slate-300 font-medium">This will allow Claude to:</p>
->>>>>>> origin/main
                     <ul className="text-slate-400 space-y-1 list-disc list-inside">
                         <li>Read your CRM, deals, and contacts</li>
                         <li>Manage tasks and projects on your behalf</li>

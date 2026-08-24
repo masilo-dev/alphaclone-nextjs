@@ -36,7 +36,6 @@ ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE business_resources ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "Users can view team members of their tenant" ON team_members;
 CREATE POLICY "Users can view team members of their tenant" ON team_members
     FOR SELECT USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
@@ -50,17 +49,6 @@ CREATE POLICY "Users can view resources of their tenant" ON business_resources
     FOR SELECT USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
 DROP POLICY IF EXISTS "Users can manage resources of their tenant" ON business_resources;
-=======
-CREATE POLICY "Users can view team members of their tenant" ON team_members
-    FOR SELECT USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
-
-CREATE POLICY "Users can manage team members of their tenant" ON team_members
-    FOR ALL USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid() AND role IN ('admin', 'owner')));
-
-CREATE POLICY "Users can view resources of their tenant" ON business_resources
-    FOR SELECT USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
-
->>>>>>> origin/main
 CREATE POLICY "Users can manage resources of their tenant" ON business_resources
     FOR ALL USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid() AND role IN ('admin', 'owner')));
 

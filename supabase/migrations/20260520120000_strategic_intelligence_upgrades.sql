@@ -15,18 +15,12 @@ CREATE TABLE IF NOT EXISTS custom_playbooks (
 -- Enable RLS for custom_playbooks
 ALTER TABLE custom_playbooks ENABLE ROW LEVEL SECURITY;
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "Enable read access for custom_playbooks by tenant_id" ON custom_playbooks;
-=======
->>>>>>> origin/main
 CREATE POLICY "Enable read access for custom_playbooks by tenant_id"
   ON custom_playbooks FOR SELECT
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "Enable write access for custom_playbooks by tenant_id" ON custom_playbooks;
-=======
->>>>>>> origin/main
 CREATE POLICY "Enable write access for custom_playbooks by tenant_id"
   ON custom_playbooks FOR ALL
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
@@ -44,18 +38,12 @@ CREATE TABLE IF NOT EXISTS outreach_campaign_stats (
 -- Enable RLS for outreach_campaign_stats
 ALTER TABLE outreach_campaign_stats ENABLE ROW LEVEL SECURITY;
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "Enable read access for outreach_campaign_stats by tenant_id" ON outreach_campaign_stats;
-=======
->>>>>>> origin/main
 CREATE POLICY "Enable read access for outreach_campaign_stats by tenant_id"
   ON outreach_campaign_stats FOR SELECT
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "Enable write access for outreach_campaign_stats by tenant_id" ON outreach_campaign_stats;
-=======
->>>>>>> origin/main
 CREATE POLICY "Enable write access for outreach_campaign_stats by tenant_id"
   ON outreach_campaign_stats FOR ALL
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);

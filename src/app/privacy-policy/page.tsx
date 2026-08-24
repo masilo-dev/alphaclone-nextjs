@@ -6,11 +6,7 @@ export const metadata: Metadata = {
     description: 'AlphaClone Systems Privacy Policy. Explains how we collect, use, store, and protect your personal data. Covers Gmail API data use, GDPR rights, data retention, and third-party processors.',
     keywords: ['AlphaClone privacy policy', 'data protection', 'GDPR', 'Gmail API privacy', 'personal data', 'POPIA compliance'],
     alternates: { canonical: 'https://alphaclonesystems.com/privacy-policy' },
-<<<<<<< HEAD
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-=======
-    openGraph: {
->>>>>>> origin/main
         title: 'Privacy Policy | AlphaClone Systems',
         description: 'How AlphaClone collects, uses, and protects your data. Full GDPR and POPIA compliant privacy policy.',
         url: 'https://alphaclonesystems.com/privacy-policy',

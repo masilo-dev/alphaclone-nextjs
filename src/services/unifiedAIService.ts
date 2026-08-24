@@ -520,11 +520,7 @@ export const optimizeSalesMessage = async (originalMessage: string, context?: st
     - No markdown formatting within the message body itself (plain text).
     - No asterisks or special symbols.`;
 
-<<<<<<< HEAD
     const { text } = await generateText(prompt, 1200, 'deepseek-chat');
-=======
-    const { text } = await generateText(prompt, 1200);
->>>>>>> origin/main
     return text || "Optimization failed.";
 };
 

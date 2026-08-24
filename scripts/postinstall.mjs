@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 import fs from "node:fs";
 import path from "node:path";
-=======
-import fs from 'node:fs';
-import path from 'node:path';
->>>>>>> origin/main
 
 function copyDir(srcDir, destDir) {
   fs.mkdirSync(destDir, { recursive: true });
@@ -21,7 +16,6 @@ function copyDir(srcDir, destDir) {
 
 function copyPdfJsAssets() {
   const repoRoot = path.resolve(process.cwd());
-<<<<<<< HEAD
   const pdfjsRoot = path.join(repoRoot, "node_modules", "pdfjs-dist");
   const workerSrc = path.join(pdfjsRoot, "build", "pdf.worker.min.mjs");
   const cmapsSrc = path.join(pdfjsRoot, "cmaps");
@@ -29,15 +23,6 @@ function copyPdfJsAssets() {
   const outRoot = path.join(repoRoot, "public", "pdfjs");
   const outWorker = path.join(outRoot, "pdf.worker.min.mjs");
   const outCmaps = path.join(outRoot, "cmaps");
-=======
-  const pdfjsRoot = path.join(repoRoot, 'node_modules', 'pdfjs-dist');
-  const workerSrc = path.join(pdfjsRoot, 'build', 'pdf.worker.min.mjs');
-  const cmapsSrc = path.join(pdfjsRoot, 'cmaps');
-
-  const outRoot = path.join(repoRoot, 'public', 'pdfjs');
-  const outWorker = path.join(outRoot, 'pdf.worker.min.mjs');
-  const outCmaps = path.join(outRoot, 'cmaps');
->>>>>>> origin/main
 
   if (!fs.existsSync(workerSrc)) {
     throw new Error(`Missing PDF.js worker: ${workerSrc}`);
@@ -52,7 +37,6 @@ function copyPdfJsAssets() {
 
 try {
   copyPdfJsAssets();
-<<<<<<< HEAD
   process.stdout.write("[postinstall] pdfjs assets copied to public/pdfjs\n");
 } catch (err) {
   process.stderr.write(
@@ -60,11 +44,3 @@ try {
   );
   process.exitCode = 1;
 }
-=======
-  process.stdout.write('[postinstall] pdfjs assets copied to public/pdfjs\n');
-} catch (err) {
-  process.stderr.write(`[postinstall] failed: ${err instanceof Error ? err.message : String(err)}\n`);
-  process.exitCode = 1;
-}
-
->>>>>>> origin/main

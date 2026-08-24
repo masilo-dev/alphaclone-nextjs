@@ -3,11 +3,8 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import * as cheerio from 'cheerio';
 import { scraperEmailDiscoverySchema } from '@/schemas/validation';
-<<<<<<< HEAD
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 import { assertSafeExternalHttpUrl } from '@/lib/security/externalUrl';
-=======
->>>>>>> origin/main
 
 /**
  * CLIENT-SIDE EMAIL DISCOVERY ENGINE
@@ -208,7 +205,6 @@ async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]
   try {
     const { page, close } = await BrowserManager.createPage();
     closeSession = close;
-<<<<<<< HEAD
     await page.route('**/*', async (route) => {
       if (!route.request().isNavigationRequest()) return route.continue();
       try {
@@ -218,8 +214,6 @@ async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]
         await route.abort('blockedbyclient');
       }
     });
-=======
->>>>>>> origin/main
     
     for (const url of urlsToTry) {
       try {
@@ -407,13 +401,9 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
-<<<<<<< HEAD
     const { domain: domainInput, company_name, methods = ['all'], verify = false } = parsed.data;
     const domainUrl = await assertSafeExternalHttpUrl(`https://${domainInput}`);
     const domain = domainUrl.hostname.toLowerCase();
-=======
-    const { domain, company_name, methods = ['all'], verify = false } = parsed.data;
->>>>>>> origin/main
 
     const company = company_name || domain.replace(/\.\w+$/, '');
     const allResults: EmailResult[] = [];

@@ -1,8 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-<<<<<<< HEAD
 import { extractEmailAddress } from '@/lib/email/parseEmailHeader';
-=======
->>>>>>> origin/main
 import { resolveContactByEmailAdmin, syncExternalMessageAdmin, type AdminMessageSource, type AdminMessageChannel, type AdminMessageDirection } from '@/services/unified/unifiedMessageAdmin';
 
 function guessSentiment(text: string): 'positive' | 'neutral' | 'negative' {
@@ -44,15 +41,11 @@ export async function captureUnifiedMessageFromWebhook(params: {
   const sentiment = content ? guessSentiment(content) : 'neutral';
   const resolved =
     params.channel === 'email'
-<<<<<<< HEAD
       ? await resolveContactByEmailAdmin(
           params.supabase,
           params.tenantId,
           extractEmailAddress(params.direction === 'inbound' ? params.from : params.to)
         )
-=======
-      ? await resolveContactByEmailAdmin(params.supabase, params.tenantId, params.direction === 'inbound' ? params.from : params.to)
->>>>>>> origin/main
       : { contact_id: null, company_id: null };
 
   const message = await syncExternalMessageAdmin(params.supabase, {

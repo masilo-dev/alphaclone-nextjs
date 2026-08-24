@@ -13,29 +13,11 @@ export class MCPAuthService {
       return { token: null, error: 'User must be signed in to create an MCP connection key.' };
     }
     try {
-<<<<<<< HEAD
       const response = await fetch(`/api/mcp/keys?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
       const status = await response.json().catch(() => ({}));
       if (!response.ok) return { token: null, error: status.error || 'MCP key status could not be loaded.' };
       if (status.exists) {
         return { token: null, error: 'MCP key exists but cannot be retrieved. Rotate to generate a new key.' };
-=======
-      const { data, error } = await supabase
-        .from('mcp_api_keys')
-        .select('api_key, updated_at')
-        .eq('tenant_id', tenantId)
-        .eq('user_id', userId)
-        .order('updated_at', { ascending: false })
-        .limit(1);
-
-      if (error) {
-        return { token: null, error: error.message };
-      }
-
-      const existingToken = Array.isArray(data) && data[0]?.api_key ? data[0].api_key : null;
-      if (existingToken) {
-        return { token: existingToken };
->>>>>>> origin/main
       }
 
       return await this.rotateToken(tenantId, userId);

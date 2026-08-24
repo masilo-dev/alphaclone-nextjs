@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -12,21 +11,12 @@ import { supabase } from '../../../lib/supabase';
 import { createInstantMeeting } from '../../../services/instantMeetingService';
 import MeetingProviderBadge from '../common/MeetingProviderBadge';
 import toast from 'react-hot-toast';
-=======
-import React, { useState } from 'react';
-import { User } from '../../../types';
-import { useTenant } from '../../../contexts/TenantContext';
-import { Settings, Video, Link } from 'lucide-react';
-import { CalendlySettingsModal } from './CalendlySettingsModal';
-import { Button, Badge } from '@/components/ui/UIComponents';
->>>>>>> origin/main
 
 interface MeetingsPageProps {
     user: User;
     onJoinRoom?: (callId: string) => void;
 }
 
-<<<<<<< HEAD
 interface MeetingRow {
     id: string;
     title: string;
@@ -95,24 +85,6 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
         const calendlyUrl = (currentTenant?.settings as any)?.calendly?.eventUrl || PLATFORM_CALENDLY_URL;
         navigator.clipboard.writeText(calendlyUrl);
         toast.success('Booking link copied');
-=======
-const MeetingsPage: React.FC<MeetingsPageProps> = () => {
-    const { currentTenant } = useTenant();
-    const [showSettings, setShowSettings] = useState(false);
-
-    const copyBookingLink = () => {
-        const calendlyUrl = (currentTenant?.settings as any)?.calendly?.eventUrl;
-        if (calendlyUrl) {
-            navigator.clipboard.writeText(calendlyUrl);
-            import('react-hot-toast').then(({ toast }) => toast.success('Calendly link copied'));
-        } else if (currentTenant?.settings.booking?.slug) {
-            const url = `${window.location.origin}/book/${currentTenant.settings.booking.slug}`;
-            navigator.clipboard.writeText(url);
-            import('react-hot-toast').then(({ toast }) => toast.success('Booking link copied'));
-        } else {
-            import('react-hot-toast').then(({ toast }) => toast.error('No booking link is configured yet'));
-        }
->>>>>>> origin/main
     };
 
     const hasBooking = true;
@@ -130,7 +102,6 @@ const MeetingsPage: React.FC<MeetingsPageProps> = () => {
     }, [meetings, user.id]);
 
     return (
-<<<<<<< HEAD
         <div className="space-y-5 max-w-5xl mx-auto ac-scroll-full ac-enterprise-module">
             <div className="ac-workspace-panel rounded-lg p-4 md:p-5">
                 <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
@@ -138,13 +109,6 @@ const MeetingsPage: React.FC<MeetingsPageProps> = () => {
                     <div className="text-[11px] font-black uppercase tracking-widest text-teal-400">Meetings Workspace</div>
                     <h1 className="text-xl md:text-2xl font-bold text-white mt-1">Video rooms & booking links</h1>
                     <p className="text-slate-400 text-sm mt-1">Host secure AlphaClone rooms and manage the links you share with clients.</p>
-=======
-        <div className="space-y-8 max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Meetings</h1>
-                    <p className="text-slate-400">Booking and calendar management now. Native video rooms are coming soon.</p>
->>>>>>> origin/main
                 </div>
                 <div className="flex gap-2">
                     {hasBooking && (
@@ -167,7 +131,6 @@ const MeetingsPage: React.FC<MeetingsPageProps> = () => {
                     </Button>
                 </div>
             </div>
-<<<<<<< HEAD
             </div>
 
             {!loading && <ModuleStatCards stats={meetingStats} />}
@@ -228,40 +191,6 @@ const MeetingsPage: React.FC<MeetingsPageProps> = () => {
                     tenant={currentTenant}
                     onUpdate={() => toast.success('Booking page updated')}
                     onClose={() => setShowNativeBookingSettings(false)}
-=======
-
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8">
-                <div className="flex flex-col md:flex-row gap-5 items-start">
-                    <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-                        <Video className="w-7 h-7 text-teal-400" />
-                    </div>
-                    <div className="space-y-3">
-                        <Badge variant="warning">Coming Soon</Badge>
-                        <h2 className="text-xl font-bold text-white">Native AlphaClone Video Rooms</h2>
-                        <p className="text-slate-400 max-w-2xl">
-                            The in-app video room is intentionally disabled while the production meeting stack is finalized.
-                            Use Calendly or the booking link for scheduling; meeting links will remain AlphaClone-branded once native rooms are enabled.
-                        </p>
-                        <div className="flex flex-wrap gap-2 pt-2">
-                            {((currentTenant?.settings as any)?.calendly?.enabled || currentTenant?.settings.booking?.enabled) && (
-                                <Button variant="outline" onClick={copyBookingLink} className="gap-2 border-slate-700 hover:bg-slate-800">
-                                    <Link className="w-4 h-4" />
-                                    Copy Booking Link
-                                </Button>
-                            )}
-                            <Button onClick={() => setShowSettings(true)} variant="secondary" className="gap-2">
-                                <Settings className="w-4 h-4" />
-                                Booking Settings
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {showSettings && currentTenant && (
-                <CalendlySettingsModal
-                    onClose={() => setShowSettings(false)}
->>>>>>> origin/main
                 />
             )}
         </div>

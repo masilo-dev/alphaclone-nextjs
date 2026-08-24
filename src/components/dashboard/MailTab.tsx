@@ -1,16 +1,10 @@
 'use client';
 
-<<<<<<< HEAD
 import React, { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import UnifiedInbox from './business/UnifiedInbox';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { User } from '../../types';
-=======
-import React from 'react';
-import { Mail } from 'lucide-react';
-import ComingSoon from './ComingSoon';
->>>>>>> origin/main
 
 interface MailTabProps {
     user: User;
@@ -18,7 +12,6 @@ interface MailTabProps {
 
 const MailTab: React.FC<MailTabProps> = () => {
     return (
-<<<<<<< HEAD
         <Suspense
             fallback={
                 <div className="flex flex-col items-center justify-center p-12 gap-4 h-[50vh]">
@@ -31,13 +24,6 @@ const MailTab: React.FC<MailTabProps> = () => {
                 <UnifiedInbox />
             </ModulePageLayout>
         </Suspense>
-=======
-        <ComingSoon 
-            title="Gmail & SMTP Mail" 
-            subtitle="Secure Gmail inbox synchronization, smart thread routing, and AI email triage assistant are currently under development."
-            icon={Mail}
-        />
->>>>>>> origin/main
     );
 };
 

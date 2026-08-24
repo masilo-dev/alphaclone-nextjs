@@ -17,10 +17,6 @@
  * Source is NEVER included in the output — internal engine only.
  */
 
-<<<<<<< HEAD
-=======
-import * as cheerio from 'cheerio';
->>>>>>> origin/main
 import { BrowserManager } from '@/lib/scraper/browserManager';
 
 // ---------------------------------------------------------------------------
@@ -208,10 +204,7 @@ async function passCheerio(url: string): Promise<Partial<EnrichmentResult>> {
     });
 
     const html = res.body;
-<<<<<<< HEAD
     const cheerio = await import('cheerio');
-=======
->>>>>>> origin/main
     const $ = cheerio.load(html);
 
     const mailtoEmails: string[] = [];
@@ -283,11 +276,7 @@ async function passJSDOM(url: string): Promise<Partial<EnrichmentResult>> {
 // ---------------------------------------------------------------------------
 
 async function passPuppeteer(url: string): Promise<Partial<EnrichmentResult>> {
-<<<<<<< HEAD
   if (!BrowserManager.canLaunchBrowser()) return {};
-=======
-  if (!BrowserManager.hasRemoteConfigured()) return {};
->>>>>>> origin/main
   let closeSession: (() => Promise<void>) | null = null;
   try {
     const { page, close } = await BrowserManager.createPuppeteerPage();
@@ -314,11 +303,7 @@ async function passPuppeteer(url: string): Promise<Partial<EnrichmentResult>> {
 // ---------------------------------------------------------------------------
 
 async function passPlaywright(url: string): Promise<Partial<EnrichmentResult>> {
-<<<<<<< HEAD
   if (!BrowserManager.canLaunchBrowser()) return {};
-=======
-  if (!BrowserManager.hasRemoteConfigured()) return {};
->>>>>>> origin/main
   let closeSession: (() => Promise<void>) | null = null;
   try {
     const { page, close } = await BrowserManager.createPage();

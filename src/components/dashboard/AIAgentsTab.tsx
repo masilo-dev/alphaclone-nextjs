@@ -60,11 +60,8 @@ interface RunnerRules {
   high_risk_approval_required: boolean;
   stale_deal_days: number;
   social_inactivity_days: number;
-<<<<<<< HEAD
   lead_action_mode: 'draft_and_task' | 'task_only' | 'draft_only';
   email_provider: 'system_default' | 'zoho' | 'brevo' | 'sendgrid' | 'resend' | 'microsoft365';
-=======
->>>>>>> origin/main
 }
 
 const PLAYBOOKS: Playbook[] = [
@@ -102,11 +99,8 @@ const AIAgentsTab: React.FC = () => {
     high_risk_approval_required: true,
     stale_deal_days: 7,
     social_inactivity_days: 3,
-<<<<<<< HEAD
     lead_action_mode: 'draft_and_task',
     email_provider: 'system_default',
-=======
->>>>>>> origin/main
   });
   
   const [loading, setLoading] = useState(true);
@@ -127,11 +121,8 @@ const AIAgentsTab: React.FC = () => {
         const trigData = await trigRes.json();
         setRuns(trigData.runs || []);
         setApprovals(trigData.approvals || []);
-<<<<<<< HEAD
       } else {
         console.warn('Autonomous trigger API not available');
-=======
->>>>>>> origin/main
       }
       if (rulesRes.ok) {
         const rulesData = await rulesRes.json();
@@ -143,17 +134,12 @@ const AIAgentsTab: React.FC = () => {
             high_risk_approval_required: rulesData.rules.high_risk_approval_required,
             stale_deal_days: rulesData.rules.stale_deal_days,
             social_inactivity_days: rulesData.rules.social_inactivity_days,
-<<<<<<< HEAD
             lead_action_mode: rulesData.rules.lead_action_mode || 'draft_and_task',
             email_provider: rulesData.rules.email_provider || 'system_default',
           });
         }
       } else {
         console.warn('Autonomous rules API not available');
-=======
-          });
-        }
->>>>>>> origin/main
       }
     } catch (error) {
       console.error('Failed to load autonomous analytics:', error);
@@ -233,16 +219,12 @@ const AIAgentsTab: React.FC = () => {
       });
       const data = await res.json();
       if (data.success) {
-<<<<<<< HEAD
         const execMsg = data.execution?.success
           ? `Action approved and executed: ${data.execution?.result?.summary || 'done'}`
           : data.execution?.error
             ? `Approved but execution failed: ${data.execution.error}`
             : `Action successfully ${status}!`;
         toast.success(execMsg, { id: toastId });
-=======
-        toast.success(`Action successfully ${status}!`, { id: toastId });
->>>>>>> origin/main
         await loadData();
       } else {
         throw new Error(data.error);
@@ -268,13 +250,9 @@ const AIAgentsTab: React.FC = () => {
           autoSendConfidenceThreshold: updated.auto_send_confidence_threshold,
           highRiskApprovalRequired: updated.high_risk_approval_required,
           staleDealDays: updated.stale_deal_days,
-<<<<<<< HEAD
           socialInactivityDays: updated.social_inactivity_days,
           leadActionMode: updated.lead_action_mode,
           emailProvider: updated.email_provider,
-=======
-          socialInactivityDays: updated.social_inactivity_days
->>>>>>> origin/main
         })
       });
       if (!res.ok) throw new Error();
@@ -315,7 +293,6 @@ const AIAgentsTab: React.FC = () => {
     };
   });
 
-<<<<<<< HEAD
   // Extract all AI refusal/gate events from runs and approvals
   const refusalLogs: Array<{
     timestamp: string;
@@ -378,8 +355,6 @@ const AIAgentsTab: React.FC = () => {
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, 5);
 
-=======
->>>>>>> origin/main
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-3">
@@ -553,15 +528,12 @@ const AIAgentsTab: React.FC = () => {
                         <span className="text-[9px] font-black px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/25 rounded-md uppercase tracking-wider">
                           {app.action_key.replace(/_/g, ' ')}
                         </span>
-<<<<<<< HEAD
                         {(app.payload?.source || app.payload?.tool_name) && (
                           <span className="ml-2 text-[9px] font-black px-1.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/25 rounded-md uppercase tracking-wider">
                             {String(app.payload?.source || 'runner')}
                             {app.payload?.tool_name ? `: ${app.payload.tool_name}` : ''}
                           </span>
                         )}
-=======
->>>>>>> origin/main
                         <h4 className="text-xs font-bold text-white mt-1.5">{app.reason}</h4>
                       </div>
                       <div className="text-right">
@@ -743,7 +715,6 @@ const AIAgentsTab: React.FC = () => {
                 </button>
               </div>
 
-<<<<<<< HEAD
               {/* Behaviors Section */}
               <div className="space-y-4 pt-2 border-t border-white/5">
                 {/* Lead Action Mode select */}
@@ -784,8 +755,6 @@ const AIAgentsTab: React.FC = () => {
                 </div>
               </div>
 
-=======
->>>>>>> origin/main
               {/* Sliders */}
               <div className="space-y-4 pt-2 border-t border-white/5">
                 {/* Confidence Threshold */}
@@ -842,7 +811,6 @@ const AIAgentsTab: React.FC = () => {
                   <div className="text-[9px] text-slate-500">Auto-triggers draft composition for LinkedIn if no marketing runs detected within this timeframe.</div>
                 </div>
               </div>
-<<<<<<< HEAD
 
               {/* Real-time Diagnostics Terminal */}
               <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
@@ -886,8 +854,6 @@ const AIAgentsTab: React.FC = () => {
                   </div>
                 )}
               </div>
-=======
->>>>>>> origin/main
             </div>
           </div>
         )}

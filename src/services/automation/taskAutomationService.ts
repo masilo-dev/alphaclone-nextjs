@@ -1,9 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import { aiService } from '@/services/ai/aiService';
-=======
-import { cronService } from '../cronService';
->>>>>>> origin/main
 
 export interface ScheduledAiTask {
     id: string;
@@ -22,7 +18,6 @@ export interface ScheduledAiTask {
     updated_at: string;
 }
 
-<<<<<<< HEAD
 function cronFieldMatches(field: string, value: number): boolean {
     if (field === '*') return true;
     return field.split(',').some((part) => Number(part) === value);
@@ -43,8 +38,6 @@ export function getNextTaskRun(schedule: string, after = new Date()): Date {
     throw new Error('Schedule has no run time within the next year');
 }
 
-=======
->>>>>>> origin/main
 export const taskAutomationService = {
     /**
      * Create a new scheduled AI task
@@ -60,13 +53,7 @@ export const taskAutomationService = {
     }) {
         const supabase = createSupabaseAdminClient();
         
-<<<<<<< HEAD
         const nextRunAt = getNextTaskRun(params.schedule);
-=======
-        // Calculate initial next_run_at (Simplified for now, in prod we'd use cron-parser)
-        const nextRunAt = new Date();
-        nextRunAt.setHours(nextRunAt.getHours() + 24); // Default to tomorrow same time if not parsed
->>>>>>> origin/main
 
         const { data, error } = await supabase
             .from('scheduled_ai_tasks')
@@ -159,7 +146,6 @@ export const taskAutomationService = {
         const supabase = createSupabaseAdminClient();
         
         try {
-<<<<<<< HEAD
             const completion = await aiService.complete({
                 prompt: task.prompt,
                 systemPrompt: `Execute the scheduled workspace task named "${task.name}". Return a concise, actionable result.`,
@@ -168,13 +154,6 @@ export const taskAutomationService = {
             });
             const output = String(completion.content || '').trim();
             if (!output) throw new Error('AI provider returned an empty result');
-=======
-            // 1. Call AI to run the prompt
-            // In a real implementation, we'd use the aiRouter or a specific agent
-            console.log(`Executing AI Task: ${task.name} with prompt: ${task.prompt}`);
-            
-            const output = `AI Result for "${task.name}": This is a simulated result based on your prompt: ${task.prompt}`;
->>>>>>> origin/main
 
             // 2. Store Result
             await supabase.from('scheduled_ai_task_results').insert({
@@ -186,12 +165,7 @@ export const taskAutomationService = {
             });
 
             // 3. Update Task Last Run and Next Run
-<<<<<<< HEAD
             const nextRunAt = getNextTaskRun(task.schedule);
-=======
-            const nextRunAt = new Date();
-            nextRunAt.setHours(nextRunAt.getHours() + 24); // Simple +24h for now
->>>>>>> origin/main
 
             await supabase
                 .from('scheduled_ai_tasks')

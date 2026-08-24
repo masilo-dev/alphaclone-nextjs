@@ -4,13 +4,8 @@ import { isProduction } from '@/lib/security/productionGuard';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { Receiver } from '@upstash/qstash';
-<<<<<<< HEAD
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { extractEmailAddress } from '@/lib/email/parseEmailHeader';
-=======
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
->>>>>>> origin/main
 
 const receiver = new Receiver({
     currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY || '',
@@ -41,11 +36,7 @@ export async function POST(req: NextRequest) {
         data = await req.json();
     }
 
-<<<<<<< HEAD
     const { userId, tenantId, messageId, folderId, replyText, senderEmail, originalSubject, logId } = data;
-=======
-    const { userId, messageId, folderId, replyText, senderEmail, originalSubject, logId } = data;
->>>>>>> origin/main
 
     if (!userId || !tenantId || !messageId || !replyText) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -60,7 +51,6 @@ export async function POST(req: NextRequest) {
         if (!normalizedReply) {
             return NextResponse.json({ error: 'Reply text is empty' }, { status: 400 });
         }
-<<<<<<< HEAD
 
         const recipientEmail = extractEmailAddress(senderEmail || '');
         if (!recipientEmail.includes('@')) {
@@ -84,12 +74,6 @@ export async function POST(req: NextRequest) {
         // 2. Send the reply
         await zohoMail.sendEmail({
             toAddress: recipientEmail,
-=======
-        
-        // 2. Send the reply
-        await zohoMail.sendEmail({
-            toAddress: senderEmail,
->>>>>>> origin/main
             subject: normalizedSubject,
             content: normalizedReply,
         });
@@ -98,10 +82,7 @@ export async function POST(req: NextRequest) {
         const { data: zohoIntegration } = await admin
             .from('integrations')
             .select('tenant_id')
-<<<<<<< HEAD
             .eq('tenant_id', tenantId)
-=======
->>>>>>> origin/main
             .eq('user_id', userId)
             .eq('type', 'zoho')
             .eq('enabled', true)
@@ -119,11 +100,7 @@ export async function POST(req: NextRequest) {
                 externalId: messageId || null,
                 threadId: messageId || null,
                 from: `zoho:${userId}`,
-<<<<<<< HEAD
                 to: recipientEmail,
-=======
-                to: senderEmail || '',
->>>>>>> origin/main
                 subject: normalizedSubject,
                 text: normalizedReply,
                 html: null,

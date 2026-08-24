@@ -1,20 +1,13 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import { ensureFooter, normalizeEmailSubject, buildAttachmentNoticeHtml, insertBeforeEmailFooter } from '@/lib/email/emailComposition';
 import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
-=======
-import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
->>>>>>> origin/main
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { logEmailSend } from '@/lib/emailLogger';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 import sanitizeHtml from 'sanitize-html';
 import { v4 as uuidv4 } from 'uuid';
-<<<<<<< HEAD
 import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
-=======
->>>>>>> origin/main
 
 export type OutboundEmailProvider = 'zoho' | 'brevo' | 'sendgrid' | 'resend';
 
@@ -39,14 +32,11 @@ export interface EmailPayload {
   templateName?: string;
   listUnsubscribeUrl?: string;
   isPlatformNotification?: boolean;
-<<<<<<< HEAD
   skipFooter?: boolean;
   /** Skip CRM recipient membership check (inbox replies, document send) */
   skipRecipientGate?: boolean;
   /** Skip Bonnie v2.0 outbound language sanitization (platform/system mail) */
   skipBonnieQualityCheck?: boolean;
-=======
->>>>>>> origin/main
 }
 
 export interface SendEmailResult {
@@ -144,7 +134,6 @@ async function resolveProviderConfigs(params: {
     .eq('id', params.tenantId)
     .maybeSingle();
 
-<<<<<<< HEAD
   const { data: business } = await supabase
     .from('business_settings')
     .select('settings')
@@ -160,9 +149,6 @@ async function resolveProviderConfigs(params: {
   const defaultProvider = normalizeProvider(emailSettings.default_provider || emailSettings.defaultProvider);
 
   const order = getProviderOrder(mergedSettings, params.preferredProvider || defaultProvider || undefined);
-=======
-  const order = getProviderOrder((tenant?.settings || {}) as Record<string, any>, params.preferredProvider);
->>>>>>> origin/main
   let lookupUserId = params.preferredUserId || tenant?.created_by || null;
 
   if (!lookupUserId) {
@@ -198,14 +184,11 @@ async function resolveProviderConfigs(params: {
   integrationRows.push(...((tenantIntegrations || []) as typeof integrationRows));
 
   const resolved: ProviderConfig[] = [];
-<<<<<<< HEAD
   
   const hasConfiguredProvider = !!defaultProvider;
   const hasIntegrations = integrationRows.length > 0;
   const allowEnvFallback = params.forcePlatform || (params.fallbackToEnv !== false && !hasConfiguredProvider && !hasIntegrations);
 
-=======
->>>>>>> origin/main
   for (const provider of order) {
     const row = integrationRows.find((item) => item.type === provider);
     if (row) {
@@ -223,11 +206,7 @@ async function resolveProviderConfigs(params: {
       }
     }
 
-<<<<<<< HEAD
     if (allowEnvFallback) {
-=======
-    if (params.fallbackToEnv !== false) {
->>>>>>> origin/main
       const envConfig = envProviderConfig(provider);
       if (envConfig) resolved.push(envConfig);
     }
@@ -254,7 +233,6 @@ export async function sendEmail(
     }
 
     for (const recipient of recipients) {
-<<<<<<< HEAD
       if (!payload.isPlatformNotification && !payload.skipRecipientGate) {
         const { allowed, reason } = await validateRecipient(supabase, tenantId, recipient);
         if (!allowed) return { success: false, tried, error: reason, code: 'BLOCKED_RECIPIENT' };
@@ -263,16 +241,11 @@ export async function sendEmail(
         console.log(`[email] Skipping send — recipient unsubscribed: ${recipient} (tenant ${tenantId})`);
         return { success: false, tried, error: `Recipient unsubscribed: ${recipient}`, code: 'EMAIL_UNSUBSCRIBED' };
       }
-=======
-      const { allowed, reason } = await validateRecipient(supabase, tenantId, recipient);
-      if (!allowed) return { success: false, tried, error: reason, code: 'BLOCKED_RECIPIENT' };
->>>>>>> origin/main
       if (await isEmailSuppressed(tenantId, recipient)) {
         return { success: false, tried, error: `Recipient is suppressed: ${recipient}`, code: 'EMAIL_SUPPRESSED' };
       }
     }
 
-<<<<<<< HEAD
     // Build a per-recipient signed unsubscribe link (single-recipient sends, e.g. campaigns/outreach).
     // Falls back gracefully inside ensureFooter when unavailable.
     const singleRecipient = recipients.length === 1 ? String(recipients[0] || '').trim() : '';
@@ -324,16 +297,6 @@ export async function sendEmail(
       const attachmentLines = ['Attachments:', ...attachmentNames.map((name) => `- ${name}`)].join('\n');
       normalizedText = insertBeforeEmailFooter(normalizedText, attachmentLines);
     }
-=======
-    const normalizedSubject = normalizeEmailSubject(payload.subject);
-    const normalizedHtml = payload.html
-      ? ensureFooter(sanitizeHtml(String(payload.html), {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
-        allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
-      }))
-      : undefined;
-    const normalizedText = payload.text ? ensureFooter(payload.text) : undefined;
->>>>>>> origin/main
 
     const configs = await resolveProviderConfigs({
       tenantId,
@@ -358,11 +321,7 @@ export async function sendEmail(
         html: normalizedHtml,
         text: normalizedText,
         replyTo: payload.reply_to || payload.replyTo,
-<<<<<<< HEAD
         listUnsubscribeUrl: unsubscribeUrl || payload.listUnsubscribeUrl,
-=======
-        listUnsubscribeUrl: payload.listUnsubscribeUrl,
->>>>>>> origin/main
         attachments: payload.attachments?.map((attachment) => ({
           filename: attachment.filename,
           content: attachment.content,

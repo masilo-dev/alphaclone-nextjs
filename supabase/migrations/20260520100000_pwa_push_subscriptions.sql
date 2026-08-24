@@ -15,10 +15,7 @@ CREATE TABLE public.push_subscriptions (
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
 -- Add RLS policy: users can only read/write their own rows
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "Users can manage own subscriptions" ON public.push_subscriptions;
-=======
->>>>>>> origin/main
 CREATE POLICY "Users can manage own subscriptions"
   ON public.push_subscriptions FOR ALL
   TO authenticated

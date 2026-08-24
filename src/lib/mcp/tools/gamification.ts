@@ -36,13 +36,8 @@ registerTool('gamification', {
   name: 'get_user_points',
   description: 'Retrieve the gamification profile, XP level, and streak details for a user.',
   inputSchema: z.object({
-<<<<<<< HEAD
     tenant_id: z.string().uuid().optional(),
     user_id: z.string().uuid().optional(),
-=======
-    tenant_id: z.string().uuid(),
-    user_id: z.string().uuid(),
->>>>>>> origin/main
   }),
   jsonSchema: {
     type: 'object',
@@ -50,7 +45,6 @@ registerTool('gamification', {
       tenant_id: { type: 'string', format: 'uuid' },
       user_id: { type: 'string', format: 'uuid' },
     },
-<<<<<<< HEAD
     required: [],
   },
   handler: async (args, ctx) => {
@@ -58,13 +52,6 @@ registerTool('gamification', {
     const tenantId = args.tenant_id || ctx.tenantId;
     const userId = args.user_id || ctx.userId;
     const profile = await ensureGamificationProfile(supabase, tenantId, userId);
-=======
-    required: ['tenant_id', 'user_id'],
-  },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const profile = await ensureGamificationProfile(supabase, args.tenant_id, args.user_id);
->>>>>>> origin/main
     return profile;
   },
 });
@@ -89,27 +76,17 @@ registerTool('gamification', {
     },
     required: ['tenant_id', 'user_id', 'points', 'reason'],
   },
-<<<<<<< HEAD
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
     const tenantId = args.tenant_id || ctx.tenantId;
     const userId = args.user_id || ctx.userId;
-=======
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
->>>>>>> origin/main
 
     // 1. Log the points award
     const { error: logError } = await supabase
       .from('gamification_logs')
       .insert({
-<<<<<<< HEAD
         tenant_id: tenantId,
         user_id: userId,
-=======
-        tenant_id: args.tenant_id,
-        user_id: args.user_id,
->>>>>>> origin/main
         points: args.points,
         reason: args.reason,
       });
@@ -117,11 +94,7 @@ registerTool('gamification', {
     if (logError) throw logError;
 
     // 2. Ensure profile exists and increment XP
-<<<<<<< HEAD
     const currentProfile = await ensureGamificationProfile(supabase, tenantId, userId);
-=======
-    const currentProfile = await ensureGamificationProfile(supabase, args.tenant_id, args.user_id);
->>>>>>> origin/main
     const newXp = (currentProfile.xp || 0) + args.points;
 
     const { data: updatedProfile, error: updateError } = await supabase
@@ -130,13 +103,8 @@ registerTool('gamification', {
         xp: newXp,
         updated_at: new Date().toISOString(),
       })
-<<<<<<< HEAD
       .eq('user_id', userId)
       .eq('tenant_id', tenantId)
-=======
-      .eq('user_id', args.user_id)
-      .eq('tenant_id', args.tenant_id)
->>>>>>> origin/main
       .select()
       .single();
 

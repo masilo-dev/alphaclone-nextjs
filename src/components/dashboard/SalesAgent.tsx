@@ -23,11 +23,8 @@ import KanbanBoard from './crm/KanbanBoard';
 import AutomationBuilder from './workflows/AutomationBuilder';
 import { launchFunnelService } from '@/services/launchFunnelService';
 import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
-<<<<<<< HEAD
 import { BonnieModulePageShell } from './bonnie/BonnieModulePageShell';
 import { useTenant } from '@/contexts/TenantContext';
-=======
->>>>>>> origin/main
 
 interface ParsedContact {
     name?: string;
@@ -1286,4 +1283,3 @@ const SalesAgent: React.FC = () => {
 };
 
 export default SalesAgent;
-

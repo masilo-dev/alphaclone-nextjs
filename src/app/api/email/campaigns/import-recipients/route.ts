@@ -1,8 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
-=======
-import ExcelJS from 'exceljs';
->>>>>>> origin/main
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
@@ -18,7 +14,6 @@ function normalizeHeader(value: string): string {
 }
 
 function parseCsv(text: string): Array<Record<string, string>> {
-<<<<<<< HEAD
   const rows: string[][] = [];
   let currentRow: string[] = [];
   let currentCell = '';
@@ -83,13 +78,6 @@ function parseCsv(text: string): Array<Record<string, string>> {
   const headers = (rows[0] || []).map((h) => String(h || '').trim()).filter(Boolean);
   if (headers.length === 0) return [];
   return rows.slice(1).map((cells) => {
-=======
-  const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  if (lines.length === 0) return [];
-  const headers = (lines[0] || '').split(',').map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    const cells = line.split(',');
->>>>>>> origin/main
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
       row[header] = String(cells[index] || '').trim();
@@ -137,12 +125,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId and file are required', code: 'VALIDATION_ERROR' }, { status: 400 });
     }
 
-<<<<<<< HEAD
     const { admin } = await requireTenantAccess(tenantId);
-=======
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
->>>>>>> origin/main
 
     let rawRows: Array<Record<string, unknown>> = [];
     const isCsv = file.type.includes('csv') || file.name.toLowerCase().endsWith('.csv');
@@ -150,34 +133,10 @@ export async function POST(request: NextRequest) {
       const text = await file.text();
       rawRows = parseCsv(text);
     } else {
-<<<<<<< HEAD
       return NextResponse.json(
         { error: 'Only CSV imports are supported. Please export as CSV and re-upload.', code: 'VALIDATION_ERROR' },
         { status: 400 }
       );
-=======
-      const workbook = new ExcelJS.Workbook();
-      const buffer = new Uint8Array(await file.arrayBuffer());
-      await workbook.xlsx.load(buffer as any);
-      const worksheet = workbook.worksheets[0];
-      if (!worksheet) {
-        return NextResponse.json({ error: 'Workbook has no sheets', code: 'VALIDATION_ERROR' }, { status: 400 });
-      }
-      const headerRow = worksheet.getRow(1);
-      const headers = ((headerRow.values as unknown[]) || []).slice(1).map((v) => String(v || '').trim());
-      for (let r = 2; r <= worksheet.rowCount; r++) {
-        const row = worksheet.getRow(r);
-        const item: Record<string, unknown> = {};
-        let hasData = false;
-        headers.forEach((header, index) => {
-          const value = row.getCell(index + 1).value as any;
-          const normalizedValue = value && typeof value === 'object' && 'text' in value ? value.text : value;
-          if (String(normalizedValue || '').trim()) hasData = true;
-          item[header || `column${index + 1}`] = normalizedValue ?? '';
-        });
-        if (hasData) rawRows.push(item);
-      }
->>>>>>> origin/main
     }
 
     const recipients = mapRows(rawRows);

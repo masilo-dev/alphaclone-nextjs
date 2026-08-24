@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-<<<<<<< HEAD
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 import {
     CLAUDE_OAUTH_REDIRECT_URIS,
@@ -21,14 +20,11 @@ function isActiveStatus(status: unknown): boolean {
     const s = String(status || 'active').toLowerCase().trim();
     return !INACTIVE_STATUSES.has(s);
 }
-=======
->>>>>>> origin/main
 
 /**
  * MCP OAuth2 Approve Endpoint — UI-based authorization code issuance
  *
  * Called by the /authorize page after user clicks "Authorize Access".
-<<<<<<< HEAD
  * Requires an authenticated AlphaClone session — user_id is taken from the session,
  * never from the request body.
  */
@@ -39,33 +35,11 @@ export async function POST(req: Request) {
         const body = await req.json().catch(() => ({}));
         const {
             client_id: rawClientId,
-=======
- * Issues a real, single-use authorization code (not the API key) stored
- * in mcp_oauth_codes, and returns the redirect URL.
- *
- * Body: {
- *   user_id: string,
- *   client_id: string,
- *   redirect_uri: string,
- *   state?: string,
- *   code_challenge?: string,
- *   code_challenge_method?: string,
- *   scope?: string,
- * }
- */
-export async function POST(req: Request) {
-    try {
-        const body = await req.json();
-        const {
-            user_id,
-            client_id,
->>>>>>> origin/main
             redirect_uri,
             state,
             code_challenge,
             code_challenge_method,
             scope = 'read write',
-<<<<<<< HEAD
         } = body as Record<string, unknown>;
         const user_id = user.id;
         const client_id = normalizeMcpClientId(typeof rawClientId === 'string' ? rawClientId : null)
@@ -73,19 +47,12 @@ export async function POST(req: Request) {
 
         if (!redirect_uri || typeof redirect_uri !== 'string') {
             return NextResponse.json({ error: 'Missing required parameter: redirect_uri' }, { status: 400 });
-=======
-        } = body;
-
-        if (!user_id || !redirect_uri) {
-            return NextResponse.json({ error: 'Missing required parameters: user_id, redirect_uri' }, { status: 400 });
->>>>>>> origin/main
         }
 
         if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
             return NextResponse.json({ error: 'server_error' }, { status: 500 });
         }
 
-<<<<<<< HEAD
         const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
             auth: { persistSession: false, autoRefreshToken: false },
         });
@@ -243,37 +210,10 @@ export async function POST(req: Request) {
                     { status: 400 }
                 );
             }
-=======
-        const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-
-        // ── Resolve tenant ─────────────────────────────────────────────────
-        const { data: tenantUser } = await supabaseAdmin
-            .from('tenant_users')
-            .select('tenant_id')
-            .eq('user_id', user_id)
-            .single();
-
-        const tenant_id = tenantUser?.tenant_id;
-        if (!tenant_id) {
-            return NextResponse.json({ error: 'No workspace found for your account' }, { status: 403 });
-        }
-
-        // ── Ensure client exists (Auto-register dynamic AI agents) ──────────
-        if (client_id) {
-            await supabaseAdmin
-                .from('mcp_oauth_clients')
-                .upsert({
-                    client_id,
-                    client_name: client_id.startsWith('177') ? 'Claude Desktop' : client_id,
-                    client_secret: 'dynamic',
-                    redirect_uris: [redirect_uri],
-                }, { onConflict: 'client_id' });
->>>>>>> origin/main
         }
 
         // ── Generate real single-use authorization code ────────────────────
         const code = `ac_${crypto.randomUUID().replace(/-/g, '')}`;
-<<<<<<< HEAD
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
         const scopes =
@@ -308,31 +248,12 @@ export async function POST(req: Request) {
             const { resource: _r, ...legacy } = codeRow;
             ({ error: insertError } = await supabaseAdmin.from('mcp_oauth_codes').insert(legacy));
         }
-=======
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
-
-        const { error: insertError } = await supabaseAdmin
-            .from('mcp_oauth_codes')
-            .insert({
-                code,
-                client_id: client_id || null,
-                user_id,
-                tenant_id,
-                redirect_uri,
-                scopes: typeof scope === 'string' ? scope.split(' ').filter(Boolean) : scope,
-                expires_at: expiresAt,
-                code_challenge: code_challenge || null,
-                code_challenge_method: code_challenge ? (code_challenge_method || 'S256') : null,
-                used: false,
-            });
->>>>>>> origin/main
 
         if (insertError) {
             console.error('[OAuth Approve] Failed to store auth code:', insertError);
             return NextResponse.json({ error: 'Failed to generate authorization code' }, { status: 500 });
         }
 
-<<<<<<< HEAD
         console.log('[OAuth Approve] Auth code issued', {
             user_id,
             client_id,
@@ -348,18 +269,5 @@ export async function POST(req: Request) {
     } catch (err: unknown) {
         console.error('[OAuth Approve] Failed', { ms: Date.now() - started, err });
         return routeErrorResponse(err, 'OAuth approval failed', req);
-=======
-        console.log('[OAuth Approve] Auth code issued for user:', user_id, 'client:', client_id);
-
-        // ── Build redirect URL ─────────────────────────────────────────────
-        const url = new URL(redirect_uri);
-        url.searchParams.set('code', code);
-        if (state) url.searchParams.set('state', state);
-
-        return NextResponse.json({ redirectUrl: url.toString() });
-    } catch (err: any) {
-        console.error('[OAuth Approve] Error:', err);
-        return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
->>>>>>> origin/main
     }
 }

@@ -138,7 +138,6 @@ registerTool('messaging', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-<<<<<<< HEAD
     const row: Record<string, unknown> = {
       user_id: args.user_id,
       title: args.title,
@@ -162,21 +161,6 @@ registerTool('messaging', {
       if (args.link) fallbackRow.action_url = args.link;
       ({ data, error } = await supabase.from('notifications').insert(fallbackRow).select().single());
     }
-=======
-    const { data, error } = await supabase
-      .from('notifications')
-      .insert({
-        tenant_id: args.tenant_id,
-        user_id: args.user_id,
-        title: args.title,
-        message: args.message,
-        type: args.type,
-        link: args.link || null,
-        read: false,
-      })
-      .select()
-      .single();
->>>>>>> origin/main
 
     if (error) throw error;
     return data;

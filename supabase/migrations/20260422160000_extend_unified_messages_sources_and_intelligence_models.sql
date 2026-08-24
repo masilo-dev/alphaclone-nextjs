@@ -40,10 +40,7 @@ create index if not exists idx_deal_stakeholders_contact on public.deal_stakehol
 
 alter table public.deal_stakeholders enable row level security;
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_isolation_policy" ON public.deal_stakeholders;
-=======
->>>>>>> origin/main
 create policy "tenant_isolation_policy" on public.deal_stakeholders
 as permissive for all
 to public
@@ -73,10 +70,7 @@ create index if not exists idx_contact_psychology_tenant_updated on public.conta
 
 alter table public.contact_psychology_profiles enable row level security;
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_isolation_policy" ON public.contact_psychology_profiles;
-=======
->>>>>>> origin/main
 create policy "tenant_isolation_policy" on public.contact_psychology_profiles
 as permissive for all
 to public
@@ -104,10 +98,7 @@ create index if not exists idx_intel_corr_models_tenant_updated on public.intell
 
 alter table public.intelligence_correlation_models enable row level security;
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_isolation_policy" ON public.intelligence_correlation_models;
-=======
->>>>>>> origin/main
 create policy "tenant_isolation_policy" on public.intelligence_correlation_models
 as permissive for all
 to public

@@ -12,18 +12,11 @@ export async function POST(req: NextRequest) {
     if (!tenantId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
-<<<<<<< HEAD
     const { user, admin: supabase } = await requireTenantAccess(tenantId);
     const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
     if (tenantContextError) {
       console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
     }
-=======
-    const { user } = await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
->>>>>>> origin/main
 
     switch (action) {
       case 'create_invoice':
@@ -1050,7 +1043,3 @@ async function createDefaultChartOfAccounts(tenantId: string, supabase: any) {
     return operationFailed('accounting/management', error);
   }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main

@@ -12,7 +12,6 @@ const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/settings',
 ] as const;
 
-<<<<<<< HEAD
 /** Full set of authorized LinkedIn scopes for profiles, pages, ads, events, leads, and verification */
 const LINKEDIN_REQUESTED_SCOPES = [
   'openid',
@@ -31,37 +30,12 @@ const LINKEDIN_REQUESTED_SCOPES = [
   'r_events',
   'rw_events',
   'r_1st_connections_size',
-=======
-type LinkedInOAuthState = {
-  userId: string;
-  tenantId?: string | null;
-  returnTo?: string | null;
-  ts: number;
-};
-
-const LINKEDIN_REQUESTED_SCOPES = [
-  // Core posting scope.
-  'w_member_social',
-  // Organization/Company posting scopes.
-  'w_organization_social',
-  'r_organization_social',
-  // OpenID identity scopes used by /v2/userinfo.
-  'openid',
-  'profile',
-  'email',
-  // Additional approved member profile scopes.
-  'r_profile_basicinfo',
->>>>>>> origin/main
   'r_verify',
 ] as const;
 
 export async function GET(req: NextRequest) {
   try {
-<<<<<<< HEAD
     const appUrl = PUBLIC_APP_ORIGIN;
-=======
-    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
->>>>>>> origin/main
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },
@@ -125,8 +99,6 @@ export async function GET(req: NextRequest) {
 
     const forceReauth = req.nextUrl.searchParams.get('force_reauth') === '1';
 
-    const forceReauth = req.nextUrl.searchParams.get('force_reauth') === '1';
-
     const authUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
     authUrl.searchParams.set('response_type', 'code');
     authUrl.searchParams.set('client_id', clientId);
@@ -134,10 +106,6 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.set('scope', LINKEDIN_REQUESTED_SCOPES.join(' '));
     authUrl.searchParams.set('prompt', 'consent');
     if (forceReauth) {
-<<<<<<< HEAD
-=======
-      // Ask LinkedIn to avoid silent reuse where possible.
->>>>>>> origin/main
       authUrl.searchParams.set('force_login', 'true');
     }
     authUrl.searchParams.set('state', state);

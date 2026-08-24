@@ -2,12 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { ENV } from '@/config/env';
-<<<<<<< HEAD
 import { persistInboundWhatsAppMessage } from '@/lib/whatsapp/webhookProcessing';
 import { persistMessengerWebhookEntries } from '@/lib/messenger/webhookProcessing';
-=======
-import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
->>>>>>> origin/main
 
 const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
 const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
@@ -121,11 +117,7 @@ export async function POST(req: NextRequest) {
                 const wabaId = String(entry.id || '').trim();
                 const { data: waIntegration } = await supabaseAdmin
                     .from('whatsapp_integrations')
-<<<<<<< HEAD
                     .select('id, tenant_id')
-=======
-                    .select('tenant_id')
->>>>>>> origin/main
                     .eq('waba_id', wabaId)
                     .eq('is_active', true)
                     .maybeSingle();
@@ -144,7 +136,6 @@ export async function POST(req: NextRequest) {
 
                             if (!waIntegration?.tenant_id) continue;
 
-<<<<<<< HEAD
                             try {
                                 await persistInboundWhatsAppMessage({
                                     supabase: supabaseAdmin as any,
@@ -170,35 +161,6 @@ export async function POST(req: NextRequest) {
                             } catch (messageErr) {
                                 console.error('[Facebook/WhatsApp Webhook] Message processing error:', messageErr);
                             }
-=======
-                            if (waIntegration?.tenant_id) {
-                                await captureUnifiedMessageFromWebhook({
-                                    supabase: supabaseAdmin as any,
-                                    tenantId: waIntegration.tenant_id,
-                                    source: 'whatsapp',
-                                    channel: 'chat',
-                                    direction: 'inbound',
-                                    externalId: message.id || null,
-                                    threadId: phoneNumberId || wabaId || null,
-                                    from: String(message.from || ''),
-                                    to: phoneNumberId || wabaId || 'whatsapp',
-                                    subject: null,
-                                    text: message.text?.body || null,
-                                    html: null,
-                                    receivedAt: new Date().toISOString(),
-                                    metadata: {
-                                        wabaId,
-                                        phoneNumberId,
-                                        type: message.type,
-                                    },
-                                });
-                            }
-
-                            // TODO: Add your business logic here
-                            // - Auto-reply to messages
-                            // - Create leads from WhatsApp conversations
-                            // - Trigger workflows
->>>>>>> origin/main
                         }
                     }
 

@@ -368,20 +368,12 @@ function McpBusinessPromptPlaybook({
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 interface MCPSetupGuideProps {
-<<<<<<< HEAD
   initialType?: 'claude' | 'manus' | 'grok' | 'chatgpt';
-=======
-  initialType?: 'claude' | 'manus' | 'grok';
->>>>>>> origin/main
 }
 
 const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const currentTenant = useCurrentTenantSafe();
-<<<<<<< HEAD
   const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok' | 'chatgpt'>(initialType ?? 'claude');
-=======
-  const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok'>(initialType ?? 'claude');
->>>>>>> origin/main
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
@@ -404,11 +396,8 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         setSetupType('claude');
       } else if (mcpParam === 'grok') {
         setSetupType('grok');
-<<<<<<< HEAD
       } else if (mcpParam === 'chatgpt') {
         setSetupType('chatgpt');
-=======
->>>>>>> origin/main
       }
     }
   }, [initialType]);
@@ -420,7 +409,6 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const mcpOrigin = (typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com')
     .replace('//www.', '//');
 
-<<<<<<< HEAD
   const agentLabel =
     setupType === 'claude' ? 'Claude'
     : setupType === 'manus' ? 'Manus'
@@ -436,16 +424,6 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     const params = new URLSearchParams({
       api_key: token || 'YOUR_KEY_HERE',
     });
-=======
-  /** Single-query URL: tenant and user are resolved from the key server-side. */
-  const buildConnectionUrl = (token: string | null) => {
-    const params = new URLSearchParams({
-      api_key: token || 'YOUR_KEY_HERE',
-    });
-    // Claude web and Grok expect the modern single-endpoint pattern
-    // Manus still uses the classic SSE 2-endpoint pattern
-    const path = (setupType === 'claude' || setupType === 'grok') ? '/api/mcp' : '/api/mcp/sse';
->>>>>>> origin/main
     return `${mcpOrigin}${path}?${params.toString()}`;
   };
 
@@ -516,17 +494,12 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   };
 
   const connectionUrl = buildConnectionUrl(connectionToken);
-<<<<<<< HEAD
   const mcpKey = connectionToken || 'YOUR_KEY_HERE';
   // Claude Desktop's claude_desktop_config.json only accepts stdio (command/args).
   // A bare "url" entry is invalid there and is skipped/stripped. Bridge via mcp-remote.
   // Claude Code requires "type": "http" (or "sse"/"ws"); url-without-type is treated as stdio and fails.
   // See: https://code.claude.com/docs/en/mcp#option-1-add-a-remote-http-server
   const desktopConfigJson = `{
-=======
-
-  const configJson = `{
->>>>>>> origin/main
   "mcpServers": {
     "alphaclone": {
       "command": "npx",
@@ -593,11 +566,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-<<<<<<< HEAD
             <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : setupType === 'chatgpt' ? 'ChatGPT' : 'Grok'} AI to Your Account</h1>
-=======
-            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} AI to Your Account</h1>
->>>>>>> origin/main
             <p className="text-slate-400 text-sm mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
           </div>
         </div>
@@ -622,15 +591,12 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           >
             Grok AI
           </button>
-<<<<<<< HEAD
           <button
             onClick={() => setSetupType('chatgpt')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'chatgpt' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
           >
             ChatGPT
           </button>
-=======
->>>>>>> origin/main
         </div>
 
         <McpOAuthCredentialsPanel setupType={setupType} mcpOrigin={mcpOrigin} onCopy={copyText} />
@@ -661,11 +627,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         {/* What this does */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-indigo-500/20 mb-6">
           <p className="text-slate-200 text-sm leading-relaxed">
-<<<<<<< HEAD
             <span className="text-white font-semibold">What does this do?</span> When you connect {agentLabel} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
-=======
-            <span className="text-white font-semibold">What does this do?</span> When you connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
->>>>>>> origin/main
           </p>
         </div>
 
@@ -687,11 +649,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           <Shield className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
           <div>
             <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe</p>
-<<<<<<< HEAD
             <p className="text-slate-400 text-xs leading-relaxed">{agentLabel} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace. Workspace and user IDs are injected automatically — you never pass tenant_id or user_id manually.</p>
-=======
-            <p className="text-slate-400 text-xs leading-relaxed">{setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace.</p>
->>>>>>> origin/main
           </div>
         </div>
       </div>
@@ -709,7 +667,6 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             const isOpen = expandedStep === step.number;
 
             // Adjust title/body/action for Manus
-<<<<<<< HEAD
             const stepTitle = isWebAgent
               ? step.number === 1 ? `Open ${agentLabel}`
               : step.number === 2 ? (setupType === 'chatgpt' ? 'Copy your MCP Server URL' : 'Copy your Connection URL')
@@ -733,24 +690,6 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
               : setupType === 'grok' && step.number === 1 ? 'https://grok.com'
               : setupType === 'chatgpt' && step.number === 1 ? 'https://chatgpt.com'
               : step.action?.url;
-=======
-            const stepTitle = setupType === 'manus' || setupType === 'grok'
-              ? step.number === 1 ? `Open ${setupType === 'manus' ? 'Manus' : 'Grok'} AI`
-              : step.number === 2 ? 'Copy your Connection URL'
-              : step.number === 3 ? `Add AlphaClone to ${setupType === 'manus' ? 'Manus' : 'Grok'} MCP Settings`
-              : 'Test your connection'
-              : step.title;
-
-            const stepBody = setupType === 'manus' || setupType === 'grok'
-              ? step.number === 1 ? `${setupType === 'manus' ? 'Manus' : 'Grok'} AI is a powerful autonomous agent. Open the ${setupType === 'manus' ? 'Manus' : 'Grok'} dashboard to get started — you'll need to be logged in.`
-              : step.number === 2 ? `Copy your unique Connection URL below. This is what tells ${setupType === 'manus' ? 'Manus' : 'Grok'} which AlphaClone account to connect to. Keep it private.`
-              : step.number === 3 ? `In your ${setupType === 'manus' ? 'Manus' : 'Grok'} dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.`
-              : `In ${setupType === 'manus' ? 'Manus' : 'Grok'}, start a new conversation and try one of these prompts to verify everything is connected:`
-              : step.body;
-
-            const actionLabel = (setupType === 'manus' || setupType === 'grok') && step.number === 1 ? `Open ${setupType === 'manus' ? 'Manus' : 'Grok'} AI` : step.action?.label;
-            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im' : setupType === 'grok' && step.number === 1 ? 'https://grok.com' : step.action?.url;
->>>>>>> origin/main
 
             // For Manus: don't show the Claude config JSON or Mac/Windows file paths
             const showSubSteps = setupType === 'claude' && step.subSteps;
@@ -832,54 +771,12 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                               </button>
                             </div>
 
-<<<<<<< HEAD
                             <div className="mt-4 pt-4 border-t border-slate-700/50">
                               <p className="text-xs text-slate-400 mb-2">
                                 Need OAuth Client ID for a web connector? Copy from the <strong className="text-slate-300">OAuth credentials</strong> section at the top of this page.
                               </p>
                             </div>
 
-=======
-                            {setupType === 'grok' && (
-                              <div className="mt-6 space-y-4 pt-6 border-t border-slate-700/50">
-                                <p className="text-sm font-bold text-white flex items-center gap-2">
-                                  <Shield className="w-4 h-4 text-teal-400" />
-                                  Grok OAuth Credentials
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Client ID</p>
-                                    <div className="flex items-center gap-2">
-                                      <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">grok-connector</code>
-                                      <button onClick={() => copyText('grok-connector', 'Client ID')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Scopes</p>
-                                    <div className="flex items-center gap-2">
-                                      <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">read write mcp:tools</code>
-                                      <button onClick={() => copyText('read write mcp:tools', 'Scopes')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
-                                    </div>
-                                  </div>
-                                  <div className="md:col-span-2">
-                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Authorization Endpoint</p>
-                                    <div className="flex items-center gap-2">
-                                      <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">{`${mcpOrigin}/authorize`}</code>
-                                      <button onClick={() => copyText(`${mcpOrigin}/authorize`, 'Auth Endpoint')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
-                                    </div>
-                                  </div>
-                                  <div className="md:col-span-2">
-                                    <p className="text-xs text-slate-500 uppercase font-bold mb-1">Token Endpoint</p>
-                                    <div className="flex items-center gap-2">
-                                      <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded truncate border border-slate-700/50">{`${mcpOrigin}/api/mcp/token`}</code>
-                                      <button onClick={() => copyText(`${mcpOrigin}/api/mcp/token`, 'Token Endpoint')} className="p-1.5 hover:text-teal-400 transition-colors"><Copy className="w-3.5 h-3.5" /></button>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                            
->>>>>>> origin/main
                             <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between pt-4 border-t border-slate-700/50">
                               <p className="text-xs text-slate-500 leading-relaxed">
                                 <span className="text-amber-400 font-medium">Security warning:</span> This key grants AI agents read/write access to your CRM. Never share it publicly.
@@ -963,7 +860,6 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         )}
 
                         {/* Test prompts */}
-<<<<<<< HEAD
                         {(step.testPrompts || ((setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt') && step.number === 6)) && (
                           <div className="mb-4">
                             <p className="text-slate-400 text-xs font-medium mb-3">
@@ -988,24 +884,6 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                   >
                                     <Copy className="w-3.5 h-3.5" />
                                   </button>
-=======
-                        {(step.testPrompts || ((setupType === 'manus' || setupType === 'grok') && step.number === 6)) && (
-                          <div className="mb-4">
-                            <p className="text-slate-400 text-xs font-medium mb-3">
-                              Try saying these to {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'}:
-                            </p>
-                            <div className="space-y-2">
-                              {(setupType === 'manus' || setupType === 'grok' ? [
-                                '"Show me all my leads"',
-                                '"Add a new lead: Jane Smith, jane@acme.com, Acme Ltd"',
-                                '"What is my outstanding revenue?"',
-                                '"Draft an NDA for client Acme Ltd, 12-month term"',
-                                '"Log a $50 expense for software subscription"',
-                              ] : step.testPrompts ?? []).map((prompt: string) => (
-                                <div key={prompt} className={`flex items-center gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : setupType === 'grok' ? 'bg-fuchsia-500/10 border-fuchsia-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
-                                  <MessageSquare className={`w-4 h-4 flex-shrink-0 ${setupType === 'manus' ? 'text-teal-400' : setupType === 'grok' ? 'text-fuchsia-400' : 'text-indigo-400'}`} />
-                                  <span className={`text-sm font-medium ${setupType === 'manus' ? 'text-teal-300' : setupType === 'grok' ? 'text-fuchsia-300' : 'text-indigo-300'}`}>{prompt}</span>
->>>>>>> origin/main
                                 </div>
                               ))}
                             </div>
@@ -1046,11 +924,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           <div className="text-4xl mb-3">🎉</div>
           <h3 className="text-xl font-bold text-white mb-2">You're connected!</h3>
           <p className="text-slate-300 text-sm leading-relaxed max-w-md mx-auto">
-<<<<<<< HEAD
             {agentLabel} can now see and update your AlphaClone account. Just open the app and start talking. No more clicking through menus — just describe what you want!
-=======
-            {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : 'Grok'} can now see and update your AlphaClone account. Just open the app and start talking. No more clicking through menus — just describe what you want!
->>>>>>> origin/main
           </p>
         </motion.div>
       )}

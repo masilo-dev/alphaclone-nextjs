@@ -33,13 +33,8 @@ jobs:
       - name: Type check with TypeScript
         run: npx tsc --noEmit
 
-<<<<<<< HEAD
       - name: Check code formatting (scoped)
         run: npx prettier --check "tests/**/*.{mjs,js,ts}" "docs/**/*.md" ".github/**/*.yml" "scripts/**/*.{mjs,js}"
-=======
-      - name: Check code formatting
-        run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css}"
->>>>>>> origin/main
 
   # ============================================================================
   # Security Scanning
@@ -240,10 +235,7 @@ jobs:
           echo "Build:      ${{ needs.build.result }}"
           echo "Migrations: ${{ needs.migrations.result }}"
           echo "Tests:      ${{ needs.test.result }}"
-<<<<<<< HEAD
           echo "Pentest:    ${{ needs.pentest.result }}"
-=======
->>>>>>> origin/main
 
           failed=0
           if [[ "${{ needs.quality.result }}" == "failure" ]]; then
@@ -262,13 +254,10 @@ jobs:
             echo "FAILED: tests"
             failed=1
           fi
-<<<<<<< HEAD
           if [[ "${{ needs.pentest.result }}" == "failure" ]]; then
             echo "FAILED: pentest"
             failed=1
           fi
-=======
->>>>>>> origin/main
           if [[ "$failed" == "1" ]]; then
             exit 1
           fi

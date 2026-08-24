@@ -26,16 +26,6 @@ type LinkedInComment = {
   createdAt: number | null;
 };
 
-function isLikelyPermissionError(payload: Record<string, unknown>) {
-  const message = String(payload?.message || payload?.error_description || '');
-  return (
-    message.toLowerCase().includes('permission') ||
-    message.toLowerCase().includes('scope') ||
-    message.toLowerCase().includes('not enough permissions') ||
-    message.toLowerCase().includes('access denied')
-  );
-}
-
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createSupabaseServerClient();
@@ -75,7 +65,6 @@ export async function POST(req: NextRequest) {
     }
 
     const url = `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postUrn)}/comments?count=50`;
-<<<<<<< HEAD
     try {
       const res = await linkedInFetch(url, integration.accessToken, { method: 'GET' });
       const data = await res.json().catch(() => ({}));
@@ -109,27 +98,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: err.message }, { status: 502 });
       }
       throw err;
-=======
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${li.access_token}`,
-        'Content-Type': 'application/json',
-        'X-Restli-Protocol-Version': '2.0.0',
-      },
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403 || isLikelyPermissionError(data as Record<string, unknown>)) {
-        return NextResponse.json({
-          success: true,
-          comments: [],
-          warning: 'LinkedIn comment read permission is unavailable for this connection. Reconnect and approve all requested LinkedIn permissions.',
-        });
-      }
-      const errorText = typeof data?.message === 'string' ? data.message : `LinkedIn API error (${res.status})`;
-      return NextResponse.json({ error: errorText }, { status: 502 });
->>>>>>> origin/main
     }
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'linkedin/comments.POST' });

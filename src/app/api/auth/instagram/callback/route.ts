@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
 import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { upsertInstagramIntegration } from '@/services/instagram/instagramIntegrationService';
 import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
-=======
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
->>>>>>> origin/main
 
 type InstagramOAuthState = {
   userId: string;
@@ -16,21 +12,13 @@ type InstagramOAuthState = {
 };
 
 function redirectError(appUrl: string, igError: string): NextResponse {
-<<<<<<< HEAD
   const u = new URL('/dashboard/business/social', appUrl);
-=======
-  const u = new URL('/dashboard/social', appUrl);
->>>>>>> origin/main
   u.searchParams.set('ig_error', igError);
   return NextResponse.redirect(u.toString());
 }
 
 function redirectSuccess(appUrl: string): NextResponse {
-<<<<<<< HEAD
   const u = new URL('/dashboard/business/social', appUrl);
-=======
-  const u = new URL('/dashboard/social', appUrl);
->>>>>>> origin/main
   u.searchParams.set('ig_connected', 'true');
   return NextResponse.redirect(u.toString());
 }
@@ -41,20 +29,11 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get('state');
   const error = searchParams.get('error');
 
-<<<<<<< HEAD
   const appUrl = PUBLIC_APP_ORIGIN;
-=======
-  const appUrl = (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    req.headers.get('origin') ||
-    ''
-  ).replace(/\/$/, '');
->>>>>>> origin/main
 
   if (error) return redirectError(appUrl, error);
   if (!code || !state) return redirectError(appUrl, 'missing_params');
 
-<<<<<<< HEAD
   const stateData = parseOAuthState<InstagramOAuthState>(state);
   if (!stateData?.userId) {
     return redirectError(appUrl, 'invalid_state');
@@ -68,15 +47,6 @@ export async function GET(req: NextRequest) {
     return redirectError(appUrl, 'session_mismatch');
   }
 
-=======
-  let stateData: InstagramOAuthState;
-  try {
-    stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
-  } catch {
-    return redirectError(appUrl, 'invalid_state');
-  }
-
->>>>>>> origin/main
   const appId = process.env.FACEBOOK_APP_ID!;
   const appSecret = process.env.FACEBOOK_APP_SECRET!;
   const redirectUri = `${appUrl}/api/auth/instagram/callback`;
@@ -167,7 +137,6 @@ export async function GET(req: NextRequest) {
       continue;
     }
 
-<<<<<<< HEAD
     const igResult = await upsertInstagramIntegration({
       userId: stateData.userId,
       tenantId: resolvedTenantId,
@@ -187,40 +156,6 @@ export async function GET(req: NextRequest) {
 
     if (igResult.error) {
       console.error('[Instagram Callback] instagram_integrations upsert failed:', igResult.error);
-=======
-    const { error: upErr } = await supabase
-      .from('instagram_integrations')
-      .upsert(
-        {
-          user_id: stateData.userId,
-          tenant_id: resolvedTenantId,
-          instagram_account_id: String(igData.id),
-          username: igData.username || null,
-          account_name: igData.name || page.name || null,
-          profile_picture_url: igData.profile_picture_url || null,
-          facebook_page_id: String(page.id),
-          facebook_page_name: page.name || null,
-          page_access_token: page.access_token,
-          user_access_token: userToken,
-          app_scoped_user_id: fbUserId,
-          followers_count: igData.followers_count ?? null,
-          media_count: igData.media_count ?? null,
-          is_active: true,
-          connected_at: new Date().toISOString(),
-          expires_at: longLivedData.expires_in
-            ? new Date(Date.now() + longLivedData.expires_in * 1000).toISOString()
-            : null,
-          metadata: {
-            fb_name: profileData.name,
-            page_count: pages.length,
-          },
-        },
-        { onConflict: 'user_id,instagram_account_id' },
-      );
-
-    if (upErr) {
-      console.error('[Instagram Callback] instagram_integrations upsert failed:', upErr);
->>>>>>> origin/main
     } else {
       connectedCount++;
     }

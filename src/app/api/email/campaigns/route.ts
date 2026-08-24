@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-=======
-import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
->>>>>>> origin/main
 import { emailCampaignCreateSchema, emailCampaignDeleteSchema, emailCampaignUpdateSchema } from '@/schemas/validation';
 
 function isMissingRelationOrCache(error: unknown, relation: string): boolean {
@@ -19,25 +15,6 @@ function isMissingRelationOrCache(error: unknown, relation: string): boolean {
     );
 }
 
-<<<<<<< HEAD
-=======
-function campaignsUnavailableResponse() {
-    return NextResponse.json({
-        success: true,
-        campaigns: [],
-        warning: 'Email workspace setup is still in progress.',
-    });
-}
-
-function contactsUnavailableResponse() {
-    return NextResponse.json({
-        success: true,
-        contacts: [],
-        warning: 'Contacts are being prepared.',
-    });
-}
-
->>>>>>> origin/main
 type CampaignContactRow = {
     id: string;
     email: string | null;
@@ -71,30 +48,18 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'tenantId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
         }
 
-<<<<<<< HEAD
         const { admin } = await requireTenantAccess(tenantId, request);
-=======
-        await requireTenantAccess(tenantId);
-        const admin = createSupabaseAdminClient();
->>>>>>> origin/main
 
         if (mode === 'contacts') {
             const { data, error } = await admin
                 .from('contacts')
                 .select('id, full_name, email, company:companies(name, website)')
                 .eq('tenant_id', tenantId)
-<<<<<<< HEAD
                 .is('deleted_at', null)
                 .not('email', 'is', null)
                 .order('full_name', { ascending: true });
             if (isMissingRelationOrCache(error, 'contacts') || isWorkspaceSetupError(error)) {
                 return NextResponse.json({ error: 'Campaign contacts are unavailable', code: 'CAMPAIGN_CONTACTS_UNAVAILABLE' }, { status: 503 });
-=======
-                .not('email', 'is', null)
-                .order('full_name', { ascending: true });
-            if (isMissingRelationOrCache(error, 'contacts') || isWorkspaceSetupError(error)) {
-                return contactsUnavailableResponse();
->>>>>>> origin/main
             }
             if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_CONTACTS_FETCH_FAILED' }, { status: 500 });
             const contacts = ((data || []) as CampaignContactRow[]).map((row) => ({
@@ -102,7 +67,6 @@ export async function GET(request: NextRequest) {
                 name: String(row.full_name || row.email || '').trim(),
                 email: String(row.email || '').trim(),
                 website: row.company?.website || row.company?.name || null,
-<<<<<<< HEAD
                 industry: null as string | null,
             }));
 
@@ -147,9 +111,6 @@ export async function GET(request: NextRequest) {
                 });
             }
 
-=======
-            }));
->>>>>>> origin/main
             return NextResponse.json({ success: true, contacts });
         }
 
@@ -160,7 +121,6 @@ export async function GET(request: NextRequest) {
             .order('created_at', { ascending: false })
             .limit(100);
         if (isMissingRelationOrCache(error, 'email_campaigns') || isWorkspaceSetupError(error)) {
-<<<<<<< HEAD
             return NextResponse.json({ error: 'Campaign storage is unavailable', code: 'CAMPAIGNS_UNAVAILABLE' }, { status: 503 });
         }
         if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGNS_FETCH_FAILED' }, { status: 500 });
@@ -175,16 +135,6 @@ export async function GET(request: NextRequest) {
             { headers: { 'X-Deprecated-API': 'email-campaigns-legacy' } }
         );
     } catch (error) {
-=======
-            return campaignsUnavailableResponse();
-        }
-        if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGNS_FETCH_FAILED' }, { status: 500 });
-        return NextResponse.json({ success: true, campaigns: data || [] });
-    } catch (error) {
-        if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
-            return campaignsUnavailableResponse();
-        }
->>>>>>> origin/main
         return routeErrorResponse(error, 'Failed to load campaigns', request);
     }
 }
@@ -199,7 +149,6 @@ export async function POST(request: NextRequest) {
         const tenantId = parsed.data.tenantId;
         const mode = String(parsed.data.mode || 'create').trim();
 
-<<<<<<< HEAD
         const auth = await requireTenantAccess(tenantId, request);
         const { admin } = auth;
 
@@ -273,10 +222,6 @@ export async function POST(request: NextRequest) {
                 message: `Reset ${failedRows.length} failed recipient${failedRows.length === 1 ? '' : 's'} to pending.`,
             });
         }
-=======
-        const auth = await requireTenantAccess(tenantId);
-        const admin = createSupabaseAdminClient();
->>>>>>> origin/main
 
         if (mode === 'add_recipients') {
             const campaignId = String(parsed.data.campaignId || '').trim();
@@ -286,7 +231,6 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'campaignId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
             }
 
-<<<<<<< HEAD
             const contactUuids: string[] = [];
             const leadUuids: string[] = [];
             const clientUuids: string[] = [];
@@ -322,25 +266,10 @@ export async function POST(request: NextRequest) {
                 ...contactUuids.filter((id) => !foundContactIds.has(id)),
             ])];
             if (allClientIds.length > 0) {
-=======
-            const { data: contacts, error: contactsError } = await admin
-                .from('contacts')
-                .select('id, email')
-                .eq('tenant_id', tenantId)
-                .in('id', contactIds);
-            if (contactsError) return NextResponse.json({ error: contactsError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
-
-            let validContacts = (contacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0);
-            const unresolvedContactIds = contactIds.filter(
-                (id) => !validContacts.some((contact: any) => String(contact.id) === String(id))
-            );
-            if (unresolvedContactIds.length > 0) {
->>>>>>> origin/main
                 const { data: legacyClients, error: legacyError } = await admin
                     .from('business_clients')
                     .select('id, email')
                     .eq('tenant_id', tenantId)
-<<<<<<< HEAD
                     .in('id', allClientIds);
                 if (legacyError) return NextResponse.json({ error: legacyError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
 
@@ -348,18 +277,6 @@ export async function POST(request: NextRequest) {
                     .map((client: { email?: string | null }) => String(client.email || '').trim().toLowerCase())
                     .filter(Boolean);
                 const emailToContactId = new Map<string, string>();
-=======
-                    .in('id', unresolvedContactIds);
-                if (legacyError) return NextResponse.json({ error: legacyError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
-
-                const legacyEmails = Array.from(
-                    new Set(
-                        (legacyClients || [])
-                            .map((client: any) => String(client.email || '').trim().toLowerCase())
-                            .filter(Boolean)
-                    )
-                );
->>>>>>> origin/main
                 if (legacyEmails.length > 0) {
                     const { data: mappedContacts, error: mappedError } = await admin
                         .from('contacts')
@@ -367,7 +284,6 @@ export async function POST(request: NextRequest) {
                         .eq('tenant_id', tenantId)
                         .in('email', legacyEmails);
                     if (mappedError) return NextResponse.json({ error: mappedError.message, code: 'CONTACTS_FETCH_FAILED' }, { status: 500 });
-<<<<<<< HEAD
                     for (const row of mappedContacts || []) {
                         const email = String(row.email || '').trim().toLowerCase();
                         if (email) emailToContactId.set(email, String(row.id));
@@ -403,20 +319,6 @@ export async function POST(request: NextRequest) {
             }
 
             const normalizedContacts = Array.from(byEmail.values());
-=======
-                    validContacts = [...validContacts, ...((mappedContacts || []).filter((c: any) => c.email && String(c.email).trim().length > 0))];
-                }
-            }
-
-            const uniqueContactsById = new Map<string, { id: string; email: string }>();
-            for (const contact of validContacts) {
-                const id = String(contact.id || '').trim();
-                const email = String(contact.email || '').trim();
-                if (!id || !email) continue;
-                uniqueContactsById.set(id, { id, email });
-            }
-            const normalizedContacts = Array.from(uniqueContactsById.values());
->>>>>>> origin/main
             const emails = normalizedContacts.map((c) => c.email.toLowerCase());
 
             const { data: existingCampaignRows, error: existingError } = await admin
@@ -444,7 +346,6 @@ export async function POST(request: NextRequest) {
                     const normalizedEmail = String(c.email).trim().toLowerCase();
                     return !existingCampaignEmails.has(normalizedEmail) && !previouslyContactedEmails.has(normalizedEmail);
                 })
-<<<<<<< HEAD
                 .map((c) => ({
                     tenant_id: tenantId,
                     campaign_id: campaignId,
@@ -452,14 +353,6 @@ export async function POST(request: NextRequest) {
                     email: String(c.email).trim(),
                     status: 'pending',
                     metadata: c.metadata || {},
-=======
-                .map((c: any) => ({
-                    tenant_id: tenantId,
-                    campaign_id: campaignId,
-                    contact_id: c.id,
-                    email: String(c.email).trim(),
-                    status: 'pending',
->>>>>>> origin/main
                 }));
 
             if (rowsToInsert.length > 0) {
@@ -516,12 +409,7 @@ export async function PATCH(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const campaignId = parsed.data.campaignId;
-<<<<<<< HEAD
         const { admin } = await requireTenantAccess(tenantId, request);
-=======
-        await requireTenantAccess(tenantId);
-        const admin = createSupabaseAdminClient();
->>>>>>> origin/main
 
         const updateData: Record<string, unknown> = {};
         if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
@@ -553,7 +441,6 @@ export async function DELETE(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const campaignId = parsed.data.campaignId;
-<<<<<<< HEAD
         const { admin } = await requireTenantAccess(tenantId, request);
 
         const { data: campaign, error: fetchError } = await admin
@@ -595,18 +482,6 @@ export async function DELETE(request: NextRequest) {
         if (!count) {
             return NextResponse.json({ error: 'Campaign could not be deleted', code: 'CAMPAIGN_DELETE_FAILED' }, { status: 500 });
         }
-=======
-        await requireTenantAccess(tenantId);
-        const admin = createSupabaseAdminClient();
-
-        const { error } = await admin
-            .from('email_campaigns')
-            .delete()
-            .eq('id', campaignId)
-            .eq('tenant_id', tenantId)
-            .in('status', ['draft', 'cancelled']);
-        if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_DELETE_FAILED' }, { status: 500 });
->>>>>>> origin/main
         return NextResponse.json({ success: true });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to delete campaign', request);

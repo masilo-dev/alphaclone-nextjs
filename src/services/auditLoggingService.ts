@@ -40,7 +40,6 @@ class AuditLoggingService {
         (typeof oldValue === 'object' && oldValue && oldValue.user_id) ||
         null;
 
-<<<<<<< HEAD
       const written = await writeServerAuditLog({
         tenantId: typeof tenantId === 'string' ? tenantId : null,
         actorUserId: typeof actorUserId === 'string' ? actorUserId : null,
@@ -56,19 +55,6 @@ class AuditLoggingService {
         userAgent:
           typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Environment',
       });
-=======
-      const logEntry: Record<string, any> = {
-        user_id: user?.id,
-        action,
-        entity_type: entityType,
-        entity_id: entityId,
-        old_value: oldValue,
-        new_value: newValue,
-        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Environment',
-        ip_address: ipBox.ip,
-        // city/country omitted — columns not present in audit_logs table
-      };
->>>>>>> origin/main
 
       if (written.ok) return { success: true };
 

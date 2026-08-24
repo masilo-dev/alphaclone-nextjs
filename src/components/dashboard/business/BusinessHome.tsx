@@ -18,7 +18,6 @@ interface BusinessHomeProps {
   user: User;
 }
 
-<<<<<<< HEAD
 /**
  * Alphaclone OS home — KPIs, attention, overview charts, modules, Today, Bonnie.
  * Deeper platform context stays behind progressive disclosure.
@@ -79,14 +78,6 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
       ) : null}
     </div>
   );
-=======
-const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
-    return (
-        <div className="space-y-4">
-            <EngagingDashboard user={user} stats={stats} />
-        </div>
-    );
->>>>>>> origin/main
 };
 
 export default BusinessHome;

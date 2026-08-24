@@ -2,7 +2,6 @@ import {
   canUseBrowserScraper,
   fetchSerpLeadsViaBrowser,
 } from '@/lib/scraper/browserSerpLeads';
-<<<<<<< HEAD
 import { freePlacesService } from '@/services/freePlacesService';
 import { buildOverpassClauses, resolveOsmNiche } from '@/lib/scraper/osmNicheTags';
 import {
@@ -11,9 +10,6 @@ import {
   haversineKm,
   type GeoPoint,
 } from '@/lib/scraper/freeGeoSources';
-=======
-import { googlePlacesService } from '@/services/googlePlacesService';
->>>>>>> origin/main
 
 export interface LeadResult {
   business_name: string;
@@ -26,11 +22,7 @@ export interface LeadResult {
   address?: string;
   rating?: number;
   category?: string;
-<<<<<<< HEAD
   source: 'here' | 'osm' | 'browser' | 'google' | 'firecrawl' | 'wikidata';
-=======
-  source: 'here' | 'osm' | 'browser' | 'google' | 'firecrawl';
->>>>>>> origin/main
   lat?: number;
   lng?: number;
   hasContact: boolean;
@@ -60,15 +52,9 @@ class OverpassRequestError extends Error {
 export function hasPhoneOrEmailContact(r: Partial<LeadResult>): boolean {
   const phone = (r.phone || '').trim();
   const email = (r.email || '').trim();
-<<<<<<< HEAD
   const phoneOk = phone.replace(/\D/g, '').length >= 7;
   const emailOk = email.includes('@') && email.includes('.') && !email.includes('example.com');
   return phoneOk || emailOk;
-=======
-  const website = (r.website || '').trim();
-  const hasWebsite = website.length > 0 && /^https?:\/\//i.test(website);
-  return phone.length > 0 || email.length > 0 || hasWebsite;
->>>>>>> origin/main
 }
 
 function hasContactInfo(r: Partial<LeadResult>): boolean {
@@ -139,16 +125,12 @@ export function dedupeAndSort(results: LeadResult[], sortBy: string): LeadResult
   });
 }
 
-<<<<<<< HEAD
 async function fetchHERE(
   niche: string,
   location: string,
   limit = 50,
   radiusKm = 25
 ): Promise<LeadResult[]> {
-=======
-async function fetchHERE(niche: string, location: string, limit = 50, radiusKm = 25): Promise<LeadResult[]> {
->>>>>>> origin/main
   const apiKey = process.env.HERE_API_KEY;
   if (!apiKey || apiKey.startsWith('your_')) throw new Error('HERE API key not configured');
   const geoRes = await fetch(
@@ -160,10 +142,6 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
   const pos = geoData.items?.[0]?.position;
   if (!pos) throw new Error('HERE geocode failed');
 
-<<<<<<< HEAD
-=======
-  // Use circular bias for better local discovery
->>>>>>> origin/main
   const radiusM = Math.min(Math.max(radiusKm * 1000, 1000), 100000);
   const searchRes = await fetch(
     `https://discover.search.hereapi.com/v1/discover?q=${encodeURIComponent(niche)}&at=${pos.lat},${pos.lng}&in=circle:${pos.lat},${pos.lng};r=${radiusM}&limit=${Math.min(limit, 100)}&apiKey=${apiKey}`,
@@ -240,44 +218,6 @@ async function fetchFreePlaces(
   );
 }
 
-function resolveGooglePlacesApiKey(): string | null {
-  return (
-    process.env.GOOGLE_PLACES_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.GOOGLE_API_KEY ||
-    process.env.Google_Places_API ||
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-    null
-  );
-}
-
-async function fetchGooglePlaces(niche: string, location: string, limit = 20, radiusKm = 40): Promise<LeadResult[]> {
-  const apiKey = resolveGooglePlacesApiKey();
-  if (!apiKey) throw new Error('Google Places API key not configured');
-
-  const res = await googlePlacesService.searchPlacesForLeads(niche, location || 'United States', apiKey, {
-    radiusKm: Math.min(Math.max(radiusKm, 1), 100),
-    maxResults: Math.min(limit, 20),
-  });
-
-  if (res.error) throw new Error(res.error);
-
-  return res.places.map((p): LeadResult => ({
-    business_name: p.businessName,
-    website: p.website || '',
-    snippet: p.industry || 'Google Place',
-    phone: p.phone || '',
-    email: '',
-    address: p.formattedAddress || '',
-    rating: p.rating,
-    category: p.industry || '',
-    source: 'google',
-    lat: p.lat,
-    lng: p.lng,
-    hasContact: false,
-  }));
-}
-
 async function postOverpassQuery(queryBody: string): Promise<Response> {
   let lastError: Error | null = null;
   for (const endpoint of OVERPASS_ENDPOINTS) {
@@ -310,7 +250,6 @@ async function fetchOpenStreetMap(
   location: string,
   targetMin = LEADS_PER_SEARCH,
   radiusKm = 25
-<<<<<<< HEAD
 ): Promise<{ leads: LeadResult[]; center: GeoPoint | null }> {
   const isGlobal = !location || /global|world|anywhere/i.test(location);
   const geoQuery = isGlobal ? 'London, UK' : location;
@@ -330,58 +269,6 @@ async function fetchOpenStreetMap(
         Math.max(baseDelta * 2, 0.2),
         Math.max(baseDelta * 3.5, 0.45),
       ];
-=======
-): Promise<LeadResult[]> {
-  const isGlobal = !location || /global|world|anywhere/i.test(location);
-  const geoQuery = isGlobal ? 'London, UK' : location;
-  const nomUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(geoQuery)}&format=json&limit=1`;
-  let nomData: any[] = [];
-  try {
-    const nomRes = await fetch(nomUrl, { 
-      headers: { 'User-Agent': 'AlphaClone-LeadFinder/1.0 (support@alphaclonesystems.com)' },
-      signal: AbortSignal.timeout(7000) 
-    });
-    if (nomRes.ok) nomData = await nomRes.json();
-  } catch (e) {
-    console.warn('[OSM:Job] Nominatim geocode failed, trying fallbacks...');
-  }
-
-  let centerLat: number;
-  let centerLon: number;
-
-  if (nomData?.[0]) {
-    centerLat = parseFloat(nomData[0].lat);
-    centerLon = parseFloat(nomData[0].lon);
-  } else {
-    // Fallback: HERE Geocoding
-    try {
-      const hereKey = process.env.HERE_API_KEY;
-      if (hereKey && !hereKey.startsWith('your_')) {
-        const hRes = await fetch(
-          `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(geoQuery)}&apiKey=${hereKey}`,
-          { signal: AbortSignal.timeout(6000) }
-        );
-        if (hRes.ok) {
-          const hData = await hRes.json();
-          const pos = hData.items?.[0]?.position;
-          if (pos) {
-            centerLat = pos.lat;
-            centerLon = pos.lng;
-          } else throw new Error('no results');
-        } else throw new Error('here failed');
-      } else throw new Error('no key');
-    } catch (err) {
-      throw new Error(`Location geocoding failed for "${location}". Please try a more specific city.`);
-    }
-  }
-  const isBroad = isGlobal || /state|province|country|usa|uk|canada|europe/i.test(location);
-  const baseDelta = Math.min(Math.max(radiusKm / 111, 0.01), 1.2);
-  const deltas = isBroad
-    ? [Math.max(baseDelta, 1.0), Math.max(baseDelta * 2, 2.5), Math.max(baseDelta * 5, 6.0)]
-    : (location.includes(',')
-      ? [Math.max(baseDelta * 0.4, 0.01), Math.max(baseDelta, 0.05), Math.max(baseDelta * 2, 0.15), Math.max(baseDelta * 4, 0.5)]
-      : [Math.max(baseDelta, 0.15), Math.max(baseDelta * 2, 0.3), Math.max(baseDelta * 4, 0.6), Math.max(baseDelta * 8, 1.2)]);
->>>>>>> origin/main
 
   let verifiedElements: Array<{
     id?: number | string;
@@ -406,49 +293,18 @@ async function fetchOpenStreetMap(
     if (!clauses.trim()) continue;
 
     const q = `
-<<<<<<< HEAD
 [out:json][timeout:18];
 (
   ${clauses}
 );
-=======
-[out:json][timeout:15];
-(
-  node["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  node["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  node["shop"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  node["office"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  node["craft"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  node["leisure"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  node["tourism"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  node["healthcare"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  node["industrial"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  
-  way["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  way["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  way["shop"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  way["office"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  way["craft"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  way["leisure"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  
-  relation["name"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  relation["amenity"~"${nicheEscaped}",i](${south},${west},${north},${east});
-  relation["shop"~"${nicheEscaped}",i](${south},${west},${north},${east});
-)
-;
->>>>>>> origin/main
 out center ${fetchLimit};`.trim();
 
     try {
       const res = await postOverpassQuery(q);
       const data = await res.json();
-<<<<<<< HEAD
       const all = (data.elements || []).filter(
         (el: { tags?: { name?: string } }) => el.tags?.name
       );
-=======
-      const all = (data.elements || []).filter((el: any) => el.tags?.name);
->>>>>>> origin/main
       verifiedElements = all;
       if (verifiedElements.length >= targetMin) break;
     } catch (err) {
@@ -456,7 +312,6 @@ out center ${fetchLimit};`.trim();
     }
   }
 
-<<<<<<< HEAD
   const leads = verifiedElements.map((el): LeadResult => {
     const website = el.tags?.website || el.tags?.url || el.tags?.['contact:website'] || '';
     const phone =
@@ -607,26 +462,6 @@ async function fetchDuckDuckGoLeads(
     console.warn('[freeLeadSearch] DuckDuckGo scrape failed:', err);
     return [];
   }
-=======
-  return verifiedElements.map((el: any): LeadResult => ({
-    business_name: el.tags.name,
-    website: el.tags.website || el.tags.url || el.tags['contact:website'] || '',
-    snippet: el.tags.amenity || el.tags.shop || el.tags.office || 'Local business',
-    phone: el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '',
-    email: el.tags.email || el.tags['contact:email'] || '',
-    address: [el.tags['addr:housenumber'], el.tags['addr:street'], el.tags['addr:city'], el.tags['addr:country']].filter(Boolean).join(' '),
-    rating: undefined,
-    category: el.tags.amenity || el.tags.shop || el.tags.office || '',
-    source: 'osm',
-    lat: el.lat ?? el.center?.lat,
-    lng: el.lon ?? el.center?.lon,
-    hasContact: hasContactInfo({
-      phone: el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '',
-      email: el.tags.email || el.tags['contact:email'] || '',
-      website: el.tags.website || el.tags.url || el.tags['contact:website'] || '',
-    }),
-  }));
->>>>>>> origin/main
 }
 
 export async function runLeadStep(input: {
@@ -651,7 +486,6 @@ export async function runLeadStep(input: {
   searchCenter: GeoPoint | null;
   stepLabel: string;
 }> {
-<<<<<<< HEAD
   const sourceStats = {
     osm: 0,
     google: 0,
@@ -661,16 +495,12 @@ export async function runLeadStep(input: {
     wikidata: 0,
     ...input.sourceStats,
   };
-=======
-  const sourceStats = { osm: 0, google: 0, here: 0, browser: 0, firecrawl: 0, ...input.sourceStats };
->>>>>>> origin/main
   const sourceErrors = { ...input.sourceErrors };
   let partial = [...input.partialResults];
   let searchCenter = input.searchCenter ?? null;
 
   if (input.step === 'init') {
     try {
-<<<<<<< HEAD
       const [osmRes, wikiRes, ddgRes, firecrawlRes, browserRes] = await Promise.allSettled([
         fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
         fetchWikidataLeads(input.niche, input.location, 10),
@@ -722,35 +552,6 @@ export async function runLeadStep(input: {
       }
     } catch {
       console.warn('[Scraper:Job] Primary free sources failed');
-=======
-      const [osmRes, hereRes, firecrawlRes, browserRes] = await Promise.allSettled([
-        fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
-        fetchHERE(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
-        import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${input.niche} businesses in ${input.location} contact info`, LEADS_PER_SEARCH)),
-        input.usePlaywright && hasRemoteBrowserConfigured() 
-          ? fetchSerpLeadsViaBrowser(input.niche, input.location, LEADS_PER_SEARCH) 
-          : Promise.resolve([])
-      ]);
-
-      if (osmRes.status === 'fulfilled') {
-        partial.push(...enrichWithContactFlag(osmRes.value));
-        sourceStats.osm = osmRes.value.length;
-      }
-      if (hereRes.status === 'fulfilled') {
-        partial.push(...enrichWithContactFlag(hereRes.value));
-        sourceStats.here = hereRes.value.length;
-      }
-      if (firecrawlRes.status === 'fulfilled') {
-        partial.push(...enrichWithContactFlag(firecrawlRes.value));
-        sourceStats.firecrawl = firecrawlRes.value.length;
-      }
-      if (browserRes.status === 'fulfilled') {
-        partial.push(...enrichWithContactFlag(browserRes.value as any[]));
-        sourceStats.browser = browserRes.value.length;
-      }
-    } catch {
-      console.warn('[Scraper:Job] Primary sources failed');
->>>>>>> origin/main
     }
 
     partial = attachReach(
@@ -776,13 +577,8 @@ export async function runLeadStep(input: {
     }
     return {
       nextStep: 'fallbacks',
-<<<<<<< HEAD
       progress: 55,
       partialResults: partial,
-=======
-      progress: 60,
-      partialResults: dedupeAndSort(partial, input.sortBy),
->>>>>>> origin/main
       finalResults: [],
       sourceStats,
       sourceErrors,
@@ -793,7 +589,6 @@ export async function runLeadStep(input: {
   }
 
   if (input.step === 'fallbacks') {
-<<<<<<< HEAD
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 8;
     const tasks: Array<Promise<LeadResult[]>> = [
       fetchFreePlaces(input.niche, input.location, need, input.radiusKm),
@@ -812,24 +607,6 @@ export async function runLeadStep(input: {
       sourceStats.google = settled[0].value.length;
     } else if (settled[0]?.status === 'rejected') {
       sourceErrors.google = 'Free places (OSM/Foursquare) fallback unavailable';
-=======
-    const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
-    
-    const [googleRes] = await Promise.allSettled([
-      fetchGooglePlaces(input.niche, input.location, need, input.radiusKm)
-    ]);
-
-    if (googleRes.status === 'fulfilled') {
-      partial.push(...enrichWithContactFlag(googleRes.value));
-      sourceStats.google = googleRes.value.length;
-    } else {
-      const msg = googleRes.reason instanceof Error ? googleRes.reason.message : String(googleRes.reason);
-      if (msg.toLowerCase().includes('billing') || msg.toLowerCase().includes('credit') || msg.toLowerCase().includes('authorized')) {
-        sourceErrors.google = 'Google Maps Billing Error: Please verify your Google Cloud console billing.';
-      } else {
-        sourceErrors.google = 'Google Places unavailable';
-      }
->>>>>>> origin/main
     }
 
     if (settled[1]?.status === 'fulfilled') {
@@ -840,16 +617,11 @@ export async function runLeadStep(input: {
 
     return {
       nextStep: 'finalize',
-<<<<<<< HEAD
       progress: 88,
       partialResults: dedupeAndSort(
         attachReach(partial, searchCenter, input.radiusKm * 1.5),
         input.sortBy || 'reach_asc'
       ),
-=======
-      progress: 90,
-      partialResults: dedupeAndSort(partial, input.sortBy),
->>>>>>> origin/main
       finalResults: [],
       sourceStats,
       sourceErrors,

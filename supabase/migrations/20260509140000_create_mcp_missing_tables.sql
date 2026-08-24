@@ -125,10 +125,7 @@ ALTER TABLE mcp_oauth_tokens ENABLE ROW LEVEL SECURITY;
 -- Safe policy creation: ignore if already exists
 DO $$
 BEGIN
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_members_manage_api_keys" ON mcp_api_keys;
-=======
->>>>>>> origin/main
   CREATE POLICY "tenant_members_manage_api_keys" ON mcp_api_keys
     FOR ALL USING (
       EXISTS (
@@ -142,10 +139,7 @@ END $$;
 
 DO $$
 BEGIN
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_members_view_own_tokens" ON mcp_oauth_tokens;
-=======
->>>>>>> origin/main
   CREATE POLICY "tenant_members_view_own_tokens" ON mcp_oauth_tokens
     FOR SELECT USING (user_id = auth.uid());
 EXCEPTION WHEN duplicate_object THEN NULL;

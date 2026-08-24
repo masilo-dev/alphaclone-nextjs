@@ -2,10 +2,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import { getUnifiedMcpToolCount } from '@/lib/mcp/listAllTools';
-=======
->>>>>>> origin/main
 
 registerTool('api-health', {
   name: 'get_api_health',
@@ -23,51 +20,15 @@ registerTool('api-health', {
     required: ['tenant_id'],
   },
   handler: async (args) => {
-<<<<<<< HEAD
     const { buildApiHealthReport } = await import('@/lib/mcp/apiHealthReport');
     const report = await buildApiHealthReport(args.tenant_id, args.hours);
-=======
-    const supabase = createSupabaseAdminClient();
-    const since = new Date(Date.now() - args.hours * 60 * 60 * 1000).toISOString();
-
-    const { data: sessions, error } = await supabase
-      .from('mcp_sessions')
-      .select('tool_name, success, duration_ms')
-      .eq('tenant_id', args.tenant_id)
-      .gte('created_at', since);
-
-    if (error) throw new Error(`Failed to fetch health data: ${error.message}`);
-
-    const total = (sessions || []).length;
-    const successes = (sessions || []).filter(s => s.success).length;
-    const avgDuration = total > 0
-      ? Math.round((sessions || []).reduce((sum, s) => sum + (s.duration_ms || 0), 0) / total)
-      : 0;
-
-    const toolStats: Record<string, { calls: number; success: number }> = {};
-    for (const s of sessions || []) {
-      if (!toolStats[s.tool_name]) toolStats[s.tool_name] = { calls: 0, success: 0 };
-      toolStats[s.tool_name].calls++;
-      if (s.success) toolStats[s.tool_name].success++;
-    }
->>>>>>> origin/main
 
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-<<<<<<< HEAD
           ...report,
           unified_tool_catalog_count: await getUnifiedMcpToolCount(),
-=======
-          period_hours: args.hours,
-          total_calls: total,
-          successes,
-          failures: total - successes,
-          success_rate_percent: total > 0 ? Math.round((successes / total) * 100) : 100,
-          avg_duration_ms: avgDuration,
-          tool_breakdown: toolStats,
->>>>>>> origin/main
         }, null, 2),
       }],
     };

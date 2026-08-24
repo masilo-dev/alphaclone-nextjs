@@ -15,13 +15,9 @@ import BusinessSendGridIntegration from '../business/SendGridIntegration';
 import BusinessResendIntegration from '../business/ResendIntegration';
 import BusinessBrevoIntegration from '../business/BrevoIntegration';
 import CustomEmailIntegration from '../business/CustomEmailIntegration';
-<<<<<<< HEAD
 import Microsoft365Integration from '../business/Microsoft365Integration';
 import WhatsAppIntegration from '../business/WhatsAppIntegration';
 import ZernioIntegration from '../business/ZernioIntegration';
-=======
-import WhatsAppIntegration from '../business/WhatsAppIntegration';
->>>>>>> origin/main
 import { MessageCircle } from 'lucide-react';
 import { useIntegrations } from '../../../hooks/useIntegrations';
 import { useTenant } from '@/contexts/TenantContext';
@@ -137,7 +133,6 @@ export function IntegrationSettings() {
   const errorCount = errorLogs.length;
 
   return (
-<<<<<<< HEAD
     <div className="space-y-5 ac-scroll-full ac-enterprise-module">
       <div className="ac-workspace-panel rounded-lg p-4 md:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -172,19 +167,6 @@ export function IntegrationSettings() {
         onNavigate={setActiveTab}
       />
       <div className="hidden md:flex gap-1 ac-workspace-panel rounded-lg p-1 overflow-x-auto">
-=======
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white mb-1">Integrations</h1>
-        <p className="text-slate-400 text-sm">
-          Configure provider API keys and sender identities for this workspace.
-        </p>
-      </div>
-
-      {/* Tab bar */}
-      <div className="flex gap-1 bg-slate-800/50 p-1 rounded-lg overflow-x-auto">
->>>>>>> origin/main
         {tabs.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -214,24 +196,15 @@ export function IntegrationSettings() {
         {/* ── Providers ── */}
         {activeTab === 'providers' && (
           <div className="space-y-6">
-<<<<<<< HEAD
             <div className="ac-workspace-panel rounded-lg p-4">
               <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Email providers</div>
               <h2 className="text-lg font-semibold text-white mt-1">Provider credentials & sender identity</h2>
               <p className="text-sm text-slate-400 mt-1">
-=======
-            <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-4">
-              <h2 className="text-lg font-semibold text-white">Email Provider Credentials</h2>
-              <p className="text-xs text-slate-400 mt-1">
->>>>>>> origin/main
                 Use any verified sender email from your provider account. It does not need to match your login email.
               </p>
             </div>
 
-<<<<<<< HEAD
             <Microsoft365Integration />
-=======
->>>>>>> origin/main
             <CustomEmailIntegration />
             <BusinessSendGridIntegration />
             <BusinessResendIntegration />
@@ -243,10 +216,7 @@ export function IntegrationSettings() {
         {activeTab === 'whatsapp' && (
           <div className="space-y-6">
             <WhatsAppIntegration />
-<<<<<<< HEAD
             <ZernioIntegration />
-=======
->>>>>>> origin/main
           </div>
         )}
 
@@ -375,4 +345,3 @@ export function IntegrationSettings() {
     </div>
   );
 }
-

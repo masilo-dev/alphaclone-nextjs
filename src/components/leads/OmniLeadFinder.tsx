@@ -468,17 +468,10 @@ export default function OmniLeadFinder() {
       .map(([source]) => source.toUpperCase());
 
     if (failedSources.length === 0) {
-<<<<<<< HEAD
       return 'No matching leads for this search. Try a broader location or a different industry.';
     }
 
     return `No matching leads for this search. Some sources (HERE/OSM) reported errors: ${failedSources.join(', ')}. Check your API configurations.`;
-=======
-      return 'No leads found. Try a broader location or a different industry.';
-    }
-
-    return `No leads found. Some sources (HERE/OSM) reported errors: ${failedSources.join(', ')}. Please check your API configurations.`;
->>>>>>> origin/main
   };
 
   const persistSearchHistory = (searchLeads: ScrapedLead[]) => {
@@ -535,7 +528,6 @@ export default function OmniLeadFinder() {
     const timeout = setTimeout(async () => {
       try {
         setGeocodeLoading(true);
-<<<<<<< HEAD
         const response = await fetch('/api/location/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -543,27 +535,14 @@ export default function OmniLeadFinder() {
         });
         const payload = await response.json().catch(() => ({}));
         const first = Array.isArray(payload?.items) ? payload.items[0] : null;
-=======
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
-          { headers: { Accept: 'application/json' } }
-        );
-        const data = await response.json();
-        const first = Array.isArray(data) ? data[0] : null;
->>>>>>> origin/main
         if (!first) {
           setGeocodePreview(null);
           return;
         }
         setGeocodePreview({
           lat: Number(first.lat),
-<<<<<<< HEAD
           lng: Number(first.lng),
           displayName: String(first.displayName || query),
-=======
-          lng: Number(first.lon),
-          displayName: String(first.display_name || query),
->>>>>>> origin/main
           type: String(first.type || ''),
         });
       } catch {
@@ -583,7 +562,6 @@ export default function OmniLeadFinder() {
     const timeout = setTimeout(async () => {
       try {
         const q = `${specificCity.trim()}, ${location.trim()}`;
-<<<<<<< HEAD
         const response = await fetch('/api/location/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -592,15 +570,6 @@ export default function OmniLeadFinder() {
         const payload = await response.json().catch(() => ({}));
         const suggestions: string[] = (Array.isArray(payload?.items) ? payload.items : [])
           .map((item: any) => String(item.displayName || ''))
-=======
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(q)}&limit=5`,
-          { headers: { Accept: 'application/json' } }
-        );
-        const data = await response.json();
-        const suggestions = (Array.isArray(data) ? data : [])
-          .map((item: any) => String(item.display_name || ''))
->>>>>>> origin/main
           .filter(Boolean);
         setCitySuggestions(Array.from(new Set(suggestions)).slice(0, 5));
       } catch {

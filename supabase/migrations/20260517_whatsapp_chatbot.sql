@@ -41,10 +41,7 @@ END $$;
 ALTER TABLE public.whatsapp_chatbot_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.whatsapp_outreach_logs ENABLE ROW LEVEL SECURITY;
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_manage_chatbot_settings" ON public.whatsapp_chatbot_settings;
-=======
->>>>>>> origin/main
 CREATE POLICY "tenant_manage_chatbot_settings" ON public.whatsapp_chatbot_settings
 FOR ALL TO authenticated USING (
     tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())
@@ -52,10 +49,7 @@ FOR ALL TO authenticated USING (
     tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())
 );
 
-<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_manage_outreach_logs" ON public.whatsapp_outreach_logs;
-=======
->>>>>>> origin/main
 CREATE POLICY "tenant_manage_outreach_logs" ON public.whatsapp_outreach_logs
 FOR ALL TO authenticated USING (
     tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())

@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 
-import withPWAInit from "next-pwa";
+import withSerwistInit from "@serwist/next";
 import { withSentryConfig } from "@sentry/nextjs";
-<<<<<<< HEAD
 import { withWorkflow } from "workflow/next";
 
 const srcDir = path.resolve(process.cwd(), "src");
@@ -14,25 +13,11 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV !== "production",
   register: false,
 } as Parameters<typeof withSerwistInit>[0]);
-=======
-import { withBotId } from "botid/next/config";
-import { withWorkflow } from "workflow/next";
-
-const withPWA = withPWAInit({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
-  register: false,
-});
->>>>>>> origin/main
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-<<<<<<< HEAD
   serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', '@upstash/qstash', '@upstash/ratelimit', '@upstash/redis', 'nodemailer'],
-=======
-  serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', 'nodemailer'],
->>>>>>> origin/main
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -47,12 +32,7 @@ const nextConfig: NextConfig = {
   env: {
     VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
     VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
-<<<<<<< HEAD
     NEXT_PUBLIC_ENABLE_SERWIST: 'true',
-=======
-    NEXT_PUBLIC_ENABLE_SERWIST:
-      process.env.ENABLE_SERWIST === 'true' ? 'true' : 'false',
->>>>>>> origin/main
     NEXT_PUBLIC_ENABLE_PWA: 'true',
   },
   images: {
@@ -86,7 +66,6 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     scrollRestoration: true,
-<<<<<<< HEAD
     webpackMemoryOptimizations: true,
     webpackBuildWorker: true,
     optimizePackageImports: [
@@ -164,73 +143,23 @@ const nextConfig: NextConfig = {
 
     return config;
   },
-=======
-
-  },
-  turbopack: {},
-  async rewrites() {
-    return [
-      {
-        source: '/.well-known/mcp',
-        destination: '/api/mcp/well-known/oauth-protected-resource',
-      },
-      {
-        source: '/.well-known/oauth-protected-resource',
-        destination: '/api/mcp/well-known/oauth-protected-resource',
-      },
-      {
-        source: '/.well-known/oauth-authorization-server',
-        destination: '/api/mcp/well-known/oauth-authorization-server',
-      },
-    ];
-  },
-  webpack: (config) => {
-    // Critical: Increase timeout for long-running builds/bundling to prevent stalls
-    config.output.chunkLoadTimeout = 180000;
-    // Explicitly mark playwright-core and its sub-dependencies as external
-    const externalList = ['playwright-core', 'chromium-bidi'];
-    if (config.externals) {
-      if (Array.isArray(config.externals)) {
-        config.externals.push(...externalList, /^chromium-bidi\//);
-      } else {
-        config.externals = [config.externals, ...externalList, /^chromium-bidi\//];
-      }
-    } else {
-      config.externals = [...externalList, /^chromium-bidi\//];
-    }
-
-    return config;
-  },
->>>>>>> origin/main
 
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
     const cspHeader = `
       default-src 'self';
-<<<<<<< HEAD
       script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://www.googletagmanager.com https://www.google-analytics.com;
       script-src-elem 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://www.googletagmanager.com https://www.google-analytics.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com;
-=======
-      script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://*.claude.ai https://www.googletagmanager.com https://www.google-analytics.com;
-      script-src-elem 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://alphaclone.tech https://*.claude.ai https://www.googletagmanager.com https://www.google-analytics.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
->>>>>>> origin/main
       img-src 'self' blob: data: https: http:;
       media-src 'self' blob: data: https:;
       font-src 'self' data: https://fonts.gstatic.com;
       object-src 'none';
       base-uri 'self';
       form-action 'self';
-<<<<<<< HEAD
       frame-ancestors 'self' https://*.zoom.us https://zoom.us https://alphaclonesystems.com https://*.railway.app;
       frame-src 'self' blob: data: https://*.stripe.com https://js.stripe.com https://*.daily.co https://challenges.cloudflare.com https://www.loom.com https://*.loom.com https://*.claude.ai https://*.segment.com https://calendly.com https://*.calendly.com;
       connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://*.dicebear.com https://*.daily.co wss://*.daily.co https://*.livekit.cloud wss://*.livekit.cloud https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.hubspot.com https://images.unsplash.com https://api.anthropic.com https://api.openai.com https://openrouter.ai https://*.claude.ai https://nominatim.openstreetmap.org https://screendemos.com https://*.fbcdn.net https://*.xx.fbcdn.net https://*.facebook.com https://*.instagram.com https://*.basemaps.cartocdn.com https://raw.githubusercontent.com https://unpkg.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://graph.microsoft.com https://login.microsoftonline.com https://*.linkedin.com https://api.linkedin.com https://*.twitter.com https://api.twitter.com https://*.x.com https://api.x.com https://*.googleusercontent.com https://assets.mixkit.co https://files.manuscdn.com https://*.manuscdn.com https://*.zohostatic.eu https://*.zohostatic.com https://mailtrack.io https://*.mailtrack.io;
-=======
-      frame-ancestors 'self' https://*.zoom.us https://zoom.us https://vercel.com https://*.vercel.app;
-      frame-src 'self' blob: data: https://*.stripe.com https://js.stripe.com https://*.daily.co https://challenges.cloudflare.com https://www.loom.com https://*.loom.com https://*.claude.ai https://*.segment.com;
-      connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://*.dicebear.com https://*.daily.co wss://*.daily.co https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.hubspot.com https://images.unsplash.com https://alphaclone.tech wss://alphaclone.tech https://api.anthropic.com https://api.openai.com https://openrouter.ai https://*.claude.ai https://nominatim.openstreetmap.org https://*.facebook.com https://*.instagram.com https://*.basemaps.cartocdn.com https://raw.githubusercontent.com https://unpkg.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com;
->>>>>>> origin/main
       worker-src 'self' blob: https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
@@ -268,32 +197,7 @@ const nextConfig: NextConfig = {
 
     return [
       {
-<<<<<<< HEAD
         source: '/sw.js',
-=======
-        source: '/.well-known/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-          },
-          {
-            key: 'Pragma',
-            value: 'no-cache',
-          },
-          {
-            key: 'Expires',
-            value: '0',
-          },
-          {
-            key: 'Vary',
-            value: 'Origin, Access-Control-Request-Headers',
-          },
-        ],
-      },
-      {
-        source: '/_next/static/(.*)',
->>>>>>> origin/main
         headers: [
           {
             key: 'Cache-Control',
@@ -336,7 +240,6 @@ const nextConfig: NextConfig = {
 };
 
 // Apply plugins sequentially to resolve type mismatches between various HOC signatures
-<<<<<<< HEAD
 const baseConfig = withSerwist(nextConfig);
 const workflowConfig = withWorkflow(baseConfig as any, {
   workflows: {},
@@ -348,17 +251,6 @@ export default withSentryConfig(workflowConfig as any, {
   silent: !process.env.CI,
   // Full client upload balloons webpack memory during CI builds.
   widenClientFileUpload: false,
-=======
-const baseConfig = withPWA(nextConfig);
-const workflowConfig = withWorkflow(baseConfig as any);
-const botIdConfig = withBotId(workflowConfig as any);
-
-export default withSentryConfig(botIdConfig as any, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
->>>>>>> origin/main
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },

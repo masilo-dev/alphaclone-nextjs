@@ -13,7 +13,6 @@ async function sendNotificationEmail(params: {
     templateName: string;
     html: string;
 }) {
-<<<<<<< HEAD
     const emailPayload = {
         tenantId: params.tenantId,
         to: params.to,
@@ -28,12 +27,6 @@ async function sendNotificationEmail(params: {
         try {
             const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
             await sendEmailServer(emailPayload);
-=======
-    if (typeof window === 'undefined') {
-        try {
-            const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
-            await sendEmailServer(params);
->>>>>>> origin/main
         } catch (err) {
             console.error('Error sending email programmatically:', err);
         }
@@ -42,7 +35,6 @@ async function sendNotificationEmail(params: {
             await fetch('/api/email/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-<<<<<<< HEAD
                 body: JSON.stringify({
                     tenantId: params.tenantId,
                     to: params.to,
@@ -50,9 +42,6 @@ async function sendNotificationEmail(params: {
                     body_html: params.html,
                     isPlatformNotification: true,
                 }),
-=======
-                body: JSON.stringify(params)
->>>>>>> origin/main
             });
         } catch (err) {
             console.error('Error sending email via fetch:', err);
@@ -335,7 +324,6 @@ export const taskService = {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
             }
 
-<<<<<<< HEAD
             if (data.due_date) {
                 void import('@/lib/calendar/taskCalendarSync')
                     .then(({ syncTaskToAllCalendars }) =>
@@ -361,8 +349,6 @@ export const taskService = {
                     .catch((err) => console.error('[taskService] calendar sync failed:', err));
             }
 
-=======
->>>>>>> origin/main
             // Notify assigned user
             if (taskData.assignedTo && taskData.assignedTo !== userId) {
                 await notificationService.sendPlatformNotification({
@@ -515,7 +501,6 @@ export const taskService = {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
             }
 
-<<<<<<< HEAD
             if (updates.dueDate !== undefined || updates.status !== undefined) {
                 const { data: { user: syncUser } } = await supabase.auth.getUser();
                 if (syncUser?.id) {
@@ -544,8 +529,6 @@ export const taskService = {
                 }
             }
 
-=======
->>>>>>> origin/main
             // Notify assigned user of status change if someone else updated it
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             if (updates.status && data.assigned_to && currentUser && data.assigned_to !== currentUser.id) {

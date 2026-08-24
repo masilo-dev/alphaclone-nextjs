@@ -12,11 +12,7 @@ export const metadata: Metadata = {
         'financial accounting software guide', 'AlphaClone help',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/docs' },
-<<<<<<< HEAD
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-=======
-    openGraph: {
->>>>>>> origin/main
         title: 'Documentation | AlphaClone Business OS',
         description: 'Complete reference documentation for every AlphaClone feature — CRM, AI Growth Agent, invoicing, contracts, video meetings, and security.',
         url: 'https://alphaclonesystems.com/docs',

@@ -32,13 +32,9 @@ import {
     Zap,
     LayoutList,
     Download,
-<<<<<<< HEAD
     FileText,
     Share2,
     Loader2
-=======
-    FileText
->>>>>>> origin/main
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ProjectPortalShareDialog } from './ProjectPortalShareDialog';
@@ -339,7 +335,6 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 {viewingProject && (
                     <ProjectDetailsDrawer
                         project={viewingProject}
-<<<<<<< HEAD
                         tenantId={currentTenant?.id || ''}
                         currentUser={user}
                         onClose={() => setViewingProject(null)}
@@ -348,10 +343,6 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, progress } : p)));
                             setViewingProject((prev) => (prev?.id === projectId ? { ...prev, progress } : prev));
                         }}
-=======
-                        onClose={() => setViewingProject(null)}
-                        onEdit={setEditingProject}
->>>>>>> origin/main
                     />
                 )}
             </AnimatePresence>
@@ -375,11 +366,7 @@ const ProjectListRow = ({
     return (
         <div 
             onClick={() => onViewDetails(project)}
-<<<<<<< HEAD
             className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-lg transition-all duration-300 relative overflow-hidden cursor-pointer"
-=======
-            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-violet-500/30 rounded-2xl transition-all duration-300 relative overflow-hidden cursor-pointer"
->>>>>>> origin/main
         >
             {/* Status Indicator Line */}
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${project.health === 'At Risk' ? 'bg-red-500 animate-pulse' :
@@ -535,11 +522,7 @@ const ProjectListRow = ({
             <div className="hidden lg:flex col-span-1 lg:col-span-1 justify-end gap-1">
                 <button
                     onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-<<<<<<< HEAD
                     className="p-2 hover:bg-[var(--brand-blue-500)]/10 text-slate-500 hover:text-[var(--brand-blue-400)] rounded-lg transition-all"
-=======
-                    className="p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-lg transition-all"
->>>>>>> origin/main
                     title="Edit project"
                 >
                     <Activity className="w-4 h-4" />
@@ -815,11 +798,7 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                                     className="absolute h-6 rounded-lg group-hover:h-7 transition-all duration-300 flex items-center shadow-lg hover:shadow-[var(--brand-blue-900)]/20 overflow-hidden cursor-pointer bg-gradient-to-r from-[var(--brand-blue-500)]/20 to-cyan-500/20 border border-[var(--brand-blue-500)]/30"
                                     style={{ left: `${startPos}%`, width: `${width}%` }}
                                 >
-<<<<<<< HEAD
                                     <div className="absolute top-0 bottom-0 left-0 bg-[var(--brand-blue-500)]/20" style={{ width: `${proj.progress}%` }}></div>
-=======
-                                    <div className="absolute top-0 bottom-0 left-0 bg-violet-500/20" style={{ width: `${proj.progress}%` }}></div>
->>>>>>> origin/main
                                     <span className="relative px-3 text-xs text-white truncate drop-shadow-md">{proj.name}</span>
                                 </div>
                             </div>
@@ -834,7 +813,6 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
 
 interface ProjectDetailsDrawerProps {
     project: BusinessProject;
-<<<<<<< HEAD
     tenantId: string;
     currentUser: User;
     onClose: () => void;
@@ -980,52 +958,13 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
         const { progress: recalculated } = await projectService.recalculateProjectProgress(project.id);
         setProgress(recalculated);
         onProgressChange?.(project.id, recalculated);
-=======
-    onClose: () => void;
-    onEdit: (project: BusinessProject) => void;
-}
-
-const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, onClose, onEdit }) => {
-    const [milestones, setMilestones] = useState<{ id: string; label: string; checked: boolean }[]>([]);
-
-    useEffect(() => {
-        const key = `project_milestones_${project.id}`;
-        const saved = localStorage.getItem(key);
-        if (saved) {
-            setMilestones(JSON.parse(saved));
-        } else {
-            const defaults = [
-                { id: '1', label: 'Kickoff Meeting & Alignment', checked: false },
-                { id: '2', label: 'Project Scope & Requirements Sign-off', checked: false },
-                { id: '3', label: 'UI/UX Prototypes & Wireframes Approval', checked: false },
-                { id: '4', label: 'Core Infrastructure & Database Setup', checked: false },
-                { id: '5', label: 'First Functional Build Delivery', checked: false },
-                { id: '6', label: 'User Acceptance Testing (UAT)', checked: false },
-                { id: '7', label: 'Production Launch & Handover', checked: false }
-            ];
-            setMilestones(defaults);
-            localStorage.setItem(key, JSON.stringify(defaults));
-        }
-    }, [project.id]);
-
-    const toggleMilestone = (id: string) => {
-        const updated = milestones.map(m => m.id === id ? { ...m, checked: !m.checked } : m);
-        setMilestones(updated);
-        localStorage.setItem(`project_milestones_${project.id}`, JSON.stringify(updated));
->>>>>>> origin/main
     };
 
     const radius = 36;
     const circumference = 2 * Math.PI * radius;
-<<<<<<< HEAD
     const strokeDashoffset = circumference - ((progress || 0) / 100) * circumference;
 
     const teamList = project.team && project.team.length > 0 ? project.team : [];
-=======
-    const strokeDashoffset = circumference - ((project.progress || 0) / 100) * circumference;
-
-    const teamList = project.team && project.team.length > 0 ? project.team : ['Alex Rivera', 'Sarah Chen', 'Marcus Vance'];
->>>>>>> origin/main
 
     const getHealthColor = (health: string | undefined) => {
         if (health === 'At Risk') return 'bg-red-500';
@@ -1033,7 +972,6 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
         return 'bg-emerald-500';
     };
 
-<<<<<<< HEAD
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!tenantId) return;
@@ -1075,8 +1013,6 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
         }
     };
 
-=======
->>>>>>> origin/main
     return (
         <>
             {/* Backdrop */}
@@ -1085,11 +1021,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={onClose}
-<<<<<<< HEAD
                 className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100]"
-=======
-                className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[115]"
->>>>>>> origin/main
             />
 
             {/* Sheet */}
@@ -1098,11 +1030,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-<<<<<<< HEAD
                 className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92vh] md:h-auto md:max-h-[85vh] md:max-w-md rounded-t-lg md:rounded-lg bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[1110] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-=======
-                className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92vh] md:h-auto md:max-h-[85vh] md:max-w-md rounded-t-3xl md:rounded-2xl bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[120] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
->>>>>>> origin/main
             >
                 {/* Drag Handle Indicator */}
                 <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto my-3 md:hidden" />
@@ -1120,7 +1048,6 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-24">
-<<<<<<< HEAD
                     <RecordHeader
                         moduleId="projects"
                         title={project.name}
@@ -1159,21 +1086,6 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white font-mono">
                                 {progress || 0}%
-=======
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-2">{project.name}</h3>
-                        <p className="text-slate-400 text-sm leading-relaxed">{project.description || 'No description provided.'}</p>
-                    </div>
-
-                    <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-6">
-                        <div className="relative w-24 h-24 flex-shrink-0">
-                            <svg className="w-full h-full transform -rotate-90">
-                                <circle cx="48" cy="48" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
-                                <circle cx="48" cy="48" r={radius} className="stroke-violet-500 transition-all duration-500" strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white font-mono">
-                                {project.progress || 0}%
->>>>>>> origin/main
                             </div>
                         </div>
 
@@ -1182,11 +1094,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                             {project.budget && (
                                 <div>
                                     <div className="text-xs text-slate-500 uppercase tracking-wider">Budget</div>
-<<<<<<< HEAD
                                     <div className="text-lg font-bold text-[var(--brand-blue-400)]">${project.budget.toLocaleString()}</div>
-=======
-                                    <div className="text-lg font-bold text-teal-400">${project.budget.toLocaleString()}</div>
->>>>>>> origin/main
                                 </div>
                             )}
                             <div>
@@ -1201,28 +1109,18 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                     <div className="space-y-1.5">
                         <div className="flex justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
                             <span>Completeness</span>
-<<<<<<< HEAD
                             <span>{progress || 0}%</span>
                         </div>
                         <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
                             <div
                                 className="h-full bg-gradient-to-r from-[var(--brand-blue-500)] to-[var(--brand-blue-500)] rounded-full transition-all duration-1000"
                                 style={{ width: `${progress || 0}%` }}
-=======
-                            <span>{project.progress || 0}%</span>
-                        </div>
-                        <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
-                            <div
-                                className="h-full bg-gradient-to-r from-teal-500 to-indigo-500 rounded-full transition-all duration-1000"
-                                style={{ width: `${project.progress || 0}%` }}
->>>>>>> origin/main
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Project Team</span>
-<<<<<<< HEAD
                         {teamList.length > 0 ? (
                             <div className="flex items-center gap-3">
                                 <div className="flex -space-x-2 overflow-hidden">
@@ -1268,41 +1166,10 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                                     </div>
                                 ))
                             )}
-=======
-                        <div className="flex items-center gap-3">
-                            <div className="flex -space-x-2 overflow-hidden">
-                                {teamList.map((name, i) => (
-                                    <div key={i} className="inline-block rounded-full ring-2 ring-slate-950 bg-teal-600 text-[10px] font-bold flex items-center justify-center text-white select-none" style={{ width: '28px', height: '28px' }}>
-                                        {name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                    </div>
-                                ))}
-                            </div>
-                            <span className="text-xs text-slate-500">{teamList.length} members assigned</span>
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Milestones Checklist</span>
-                        <div className="space-y-2 bg-slate-950/20 rounded-2xl p-3 border border-white/5 max-h-48 overflow-y-auto custom-scrollbar">
-                            {milestones.map((m) => (
-                                <div key={m.id} className="flex items-start gap-3 py-1 cursor-pointer select-none" onClick={() => toggleMilestone(m.id)}>
-                                    <input
-                                        type="checkbox"
-                                        checked={m.checked}
-                                        onChange={() => {}}
-                                        className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0 shrink-0"
-                                    />
-                                    <span className={`text-sm ${m.checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
-                                        {m.label}
-                                    </span>
-                                </div>
-                            ))}
->>>>>>> origin/main
                         </div>
                     </div>
 
                     <div className="space-y-2">
-<<<<<<< HEAD
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Documents</span>
                         <a
                             href="/dashboard/business/documents"
@@ -1402,27 +1269,10 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                                 {postingComment ? 'Saving...' : 'Add Note'}
                             </button>
                         </form>
-=======
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Document Folders</span>
-                        <div className="grid grid-cols-2 gap-2">
-                            {[
-                                { name: 'Project Briefing & Scope.pdf', type: 'PDF' },
-                                { name: 'Service Agreement.docx', type: 'DOCX' },
-                                { name: 'UX Prototypes (Figma).fig', type: 'FIGMA' },
-                                { name: 'Budget Sheet.xlsx', type: 'XLSX' }
-                            ].map((doc, idx) => (
-                                <div key={idx} className="flex items-center gap-2 p-2.5 bg-slate-950/40 border border-white/5 rounded-xl hover:border-teal-500/30 transition-all cursor-pointer">
-                                    <FileText className="w-4 h-4 text-teal-400 flex-shrink-0" />
-                                    <span className="text-xs text-slate-300 truncate font-medium">{doc.name}</span>
-                                </div>
-                            ))}
-                        </div>
->>>>>>> origin/main
                     </div>
                 </div>
 
                 {/* Sticky Action Footer */}
-<<<<<<< HEAD
                 <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 px-6 py-4 border-t border-white/10 z-10 flex gap-3 items-center justify-end">
                     <button
                         onClick={handleShareWithClient}
@@ -1435,24 +1285,11 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                     <button
                         onClick={() => { onEdit(project); onClose(); }}
                         className="flex-1 px-4 py-2 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-xl font-bold text-xs transition-all text-center"
-=======
-                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md px-6 py-4 border-t border-white/10 z-[125] flex gap-3 items-center justify-end">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs transition-all text-center"
-                    >
-                        Close Details
-                    </button>
-                    <button
-                        onClick={() => { onEdit(project); onClose(); }}
-                        className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold text-xs transition-all text-center"
->>>>>>> origin/main
                     >
                         Edit Properties
                     </button>
                 </div>
             </motion.div>
-<<<<<<< HEAD
             <ProjectPortalShareDialog
                 isOpen={shareDialogOpen}
                 onClose={() => setShareDialogOpen(false)}
@@ -1460,11 +1297,8 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, on
                 tenantId={tenantId}
                 projectName={project.name}
             />
-=======
->>>>>>> origin/main
         </>
     );
 };
 
 export default ProjectsPage;
-

@@ -117,36 +117,25 @@ export default function CreateBusinessOnboarding() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Building2 className="w-12 h-12 text-teal-400" />
-<<<<<<< HEAD
             <h1 className="text-4xl font-bold text-white tracking-tighter">Set up your AlphaClone workspace</h1>
           </div>
           <p className="text-slate-400 text-lg">
             Add the basics, choose your plan, and start from the dashboard.
-=======
-            <h1 className="text-4xl font-bold text-white tracking-tighter">Your unfair advantage just loaded.</h1>
-          </div>
-          <p className="text-slate-400 text-lg">
-            Let\'s get you dangerous. Takes 60 seconds.
->>>>>>> origin/main
           </p>
         </div>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-4 mb-12">
-          <StepIndicator number={1} label="Your Hustle" active={step === 1} completed={step > 1} />
+          <StepIndicator number={1} label="Business Info" active={step === 1} completed={step > 1} />
           <div className="w-16 h-0.5 bg-slate-700" />
-          <StepIndicator number={2} label="Pick Your Fuel" active={step === 2} completed={step > 2} />
+          <StepIndicator number={2} label="Choose Plan" active={step === 2} completed={step > 2} />
         </div>
 
         {/* Content */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 backdrop-blur-sm">
           {step === 1 && (
             <div className="max-w-2xl mx-auto">
-<<<<<<< HEAD
               <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-tighter">Add your business details</h2>
-=======
-              <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-tighter">What\'s your hustle?</h2>
->>>>>>> origin/main
 
               {error && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
@@ -198,11 +187,7 @@ export default function CreateBusinessOnboarding() {
                   <select
                     className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 transition-colors"
                   >
-<<<<<<< HEAD
                     <option value="">Choose your sector</option>
-=======
-                    <option value="">What\'s your sector?</option>
->>>>>>> origin/main
                     <option value="agency">Agency / Creative Services</option>
                     <option value="consulting">Consulting / Professional Services</option>
                     <option value="restaurant">Restaurant / Food Service</option>
@@ -279,11 +264,7 @@ export default function CreateBusinessOnboarding() {
                       </p>
                       {PLAN_PRICING[plan.id]?.isDiscountable && (
                         <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-xs font-bold text-amber-400 uppercase tracking-tighter">
-<<<<<<< HEAD
                           Intro discount shown at checkout
-=======
-                          35% OFF FOR NEXT 3 MONTHS
->>>>>>> origin/main
                         </div>
                       )}
                     </div>
@@ -313,11 +294,7 @@ export default function CreateBusinessOnboarding() {
                     </>
                   ) : (
                     <>
-<<<<<<< HEAD
                       Create workspace
-=======
-                      Lock it in
->>>>>>> origin/main
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
@@ -361,4 +338,3 @@ function StepIndicator({ number, label, active, completed }: { number: number; l
     </div>
   );
 }
-

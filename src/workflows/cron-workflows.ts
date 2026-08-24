@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 import { processDueRecurringInvoices } from "@/services/finance/recurringInvoiceService";
-=======
-import { supabase } from "@/lib/supabase";
-import { createSupabaseAdminClient } from "@/lib/supabase-admin";
-import { cronService } from "@/services/cronService";
->>>>>>> origin/main
 
 /**
  * Recurring Invoices Workflow
@@ -13,7 +7,6 @@ import { cronService } from "@/services/cronService";
 export async function processRecurringInvoices() {
     "use workflow";
 
-<<<<<<< HEAD
     await processRecurringStep();
 }
 
@@ -25,32 +18,6 @@ async function processRecurringStep() {
         console.error('[recurring-invoices]', result.errors.join('; '));
     }
     return result;
-=======
-    const { recurringConfigs } = await fetchConfigs();
-    const today = new Date();
-
-    for (const config of recurringConfigs) {
-        await processSingleInvoice(config, today);
-    }
-}
-
-async function fetchConfigs() {
-    "use step";
-    const { data, error } = await supabase
-        .from('recurring_invoices')
-        .select('*')
-        .eq('active', true);
-    if (error) throw error;
-    return { recurringConfigs: data || [] };
-}
-
-async function processSingleInvoice(config: any, today: Date) {
-    "use step";
-    const shouldGenerate = cronService.shouldGenerateInvoice(config, today);
-    if (shouldGenerate) {
-        await cronService.generateInvoice(config);
-    }
->>>>>>> origin/main
 }
 
 /**
@@ -94,7 +61,6 @@ async function fetchReminderTasks() {
 
 async function sendTaskReminder(task: any, type: "dueSoon" | "overdue") {
     "use step";
-<<<<<<< HEAD
     if (!task?.assigned_to || !task?.tenant_id) return;
 
     const admin = createSupabaseAdminClient();
@@ -163,10 +129,6 @@ async function sendTaskReminder(task: any, type: "dueSoon" | "overdue") {
     }
 
     console.log(`[task-reminders] sent ${type} reminder for task ${task.id}`);
-=======
-    // Simplified notification logic
-    console.log(`Sending ${type} reminder for task ${task.id}`);
->>>>>>> origin/main
 }
 
 /**
@@ -276,19 +238,7 @@ export async function processScheduledAiTasks() {
 async function fetchDueAiTasks() {
     "use step";
     const admin = createSupabaseAdminClient();
-<<<<<<< HEAD
     const { data, error } = await admin.rpc('claim_due_scheduled_ai_tasks', { p_limit: 20 });
-=======
-    const nowIso = new Date().toISOString();
-
-    const { data, error } = await admin
-        .from('scheduled_ai_tasks')
-        .select('*')
-        .eq('status', 'active')
-        .lte('next_run_at', nowIso)
-        .order('next_run_at', { ascending: true })
-        .limit(20);
->>>>>>> origin/main
 
     if (error) throw error;
     return { tasks: data || [] };

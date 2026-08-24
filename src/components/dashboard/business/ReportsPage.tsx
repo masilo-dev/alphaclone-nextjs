@@ -21,11 +21,8 @@ import {
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 import { WrapChart } from '@/lib/chartWrapper';
-<<<<<<< HEAD
 import { StandardStatCard, StandardLineChart, StandardDonutChart, type CardTheme } from '@/components/ui/design-system';
 import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
-=======
->>>>>>> origin/main
 
 interface ReportsPageProps {
     user: User;
@@ -314,26 +311,15 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                         <h3 className="text-lg font-bold flex items-center gap-2">
-<<<<<<< HEAD
                             <BrainCircuit className="w-5 h-5 text-[#adebb3]" />
                             Intelligence Trajectory
                         </h3>
                         <p className="text-xs text-[#c0c0c0]">Module-level trend and drilldown actions for operators</p>
-=======
-                            <BrainCircuit className="w-5 h-5 text-teal-400" />
-                            Intelligence Trajectory
-                        </h3>
-                        <p className="text-xs text-slate-400">Module-level trend and drilldown actions for operators</p>
->>>>>>> origin/main
                     </div>
                     <select
                         value={intelligenceModule}
                         onChange={(e) => setIntelligenceModule(e.target.value)}
-<<<<<<< HEAD
                         className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-[#adebb3]"
-=======
-                        className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
->>>>>>> origin/main
                     >
                         <option value="overall">Overall system</option>
                         <option value="crm">CRM</option>
@@ -350,7 +336,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-<<<<<<< HEAD
                 <div className="lg:col-span-2 bg-white/5 border border-white/5 rounded-2xl p-5">
                         <h4 className="text-sm font-semibold text-[#e5e7eb] mb-3">Score Trend</h4>
                         <StandardLineChart
@@ -365,27 +350,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             color="#adebb3"
                             height={220}
                         />
-=======
-                    <div className="lg:col-span-2 bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
-                        <h4 className="text-sm font-semibold text-slate-200 mb-3">Score Trend</h4>
-                        <WrapChart height={220}>
-                            <LineChart
-                                data={intelligencePoints.map((point) => ({
-                                    ...point,
-                                    date: new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                                }))}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                <XAxis dataKey="date" stroke="#94a3b8" />
-                                <YAxis stroke="#94a3b8" domain={[0, 100]} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
-                                    labelStyle={{ color: '#94a3b8' }}
-                                />
-                                <Line type="monotone" dataKey="score" stroke="#2dd4bf" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                            </LineChart>
-                        </WrapChart>
->>>>>>> origin/main
                     </div>
                     <div className="space-y-3">
                         <ModuleIntelligenceCard
@@ -393,40 +357,23 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                             title="Module Snapshot"
                         />
                         {intelligenceSummary && (
-<<<<<<< HEAD
                             <div className="bg-white/5 border border-white/5 rounded-2xl p-3 space-y-3">
                                 <div>
                             <div className="text-xs text-[#adebb3] font-semibold mb-1">Top Actions</div>
                                     <ul className="space-y-1">
                                         {intelligenceSummary.topActions.slice(0, 2).map((item) => (
                                             <li key={item} className="text-xs text-[#e5e7eb] line-clamp-2">{item}</li>
-=======
-                            <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-3 space-y-3">
-                                <div>
-                                    <div className="text-xs text-teal-300 font-semibold mb-1">Top Actions</div>
-                                    <ul className="space-y-1">
-                                        {intelligenceSummary.topActions.slice(0, 2).map((item) => (
-                                            <li key={item} className="text-xs text-slate-200 line-clamp-2">{item}</li>
->>>>>>> origin/main
                                         ))}
                                     </ul>
                                 </div>
                                 <div>
-<<<<<<< HEAD
                             <div className="text-xs text-[#facc15] font-semibold mb-1 flex items-center gap-1">
-=======
-                                    <div className="text-xs text-amber-300 font-semibold mb-1 flex items-center gap-1">
->>>>>>> origin/main
                                         <AlertTriangle className="w-3 h-3" />
                                         Top Risks
                                     </div>
                                     <ul className="space-y-1">
                                         {intelligenceSummary.systemicRisks.slice(0, 2).map((item) => (
-<<<<<<< HEAD
                                             <li key={item} className="text-xs text-[#e5e7eb] line-clamp-2">{item}</li>
-=======
-                                            <li key={item} className="text-xs text-slate-200 line-clamp-2">{item}</li>
->>>>>>> origin/main
                                         ))}
                                     </ul>
                                 </div>
@@ -439,13 +386,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Revenue Chart */}
-<<<<<<< HEAD
                             <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold text-[#f5f5f5] mb-4">Revenue & Expenses</h3>
-=======
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-lg font-bold mb-4">Revenue & Expenses</h3>
->>>>>>> origin/main
                     <WrapChart height={300}>
                         <BarChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
@@ -464,7 +406,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
 
                 {/* Client Distribution */}
-<<<<<<< HEAD
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold text-[#f5f5f5] mb-4">Client Distribution</h3>
                     <StandardDonutChart
@@ -480,34 +421,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 {/* Project Status */}
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold text-[#f5f5f5] mb-4">Project Status</h3>
-=======
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-lg font-bold mb-4">Client Distribution</h3>
-                    <WrapChart height={300}>
-                        <PieChart>
-                            <Pie
-                                data={clientData}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                                outerRadius={100}
-                                fill="#8884d8"
-                                dataKey="value"
-                            >
-                                {clientData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }} />
-                        </PieChart>
-                    </WrapChart>
-                </div>
-
-                {/* Project Status */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-lg font-bold mb-4">Project Status</h3>
->>>>>>> origin/main
                     <WrapChart height={300}>
                         <BarChart data={projectData} layout="vertical">
                             <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
@@ -524,7 +437,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 </div>
 
                 {/* Revenue Trend */}
-<<<<<<< HEAD
                 <div className="bg-white/5 border border-white/5 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold text-[#f5f5f5] mb-4">Revenue Trend</h3>
                     <StandardLineChart
@@ -540,22 +452,6 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                         valuePrefix="$"
                         height={300}
                     />
-=======
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-lg font-bold mb-4">Revenue Trend</h3>
-                    <WrapChart height={300}>
-                        <LineChart data={revenueData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                            <XAxis dataKey="month" stroke="#94a3b8" />
-                            <YAxis stroke="#94a3b8" />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
-                                labelStyle={{ color: '#94a3b8' }}
-                            />
-                            <Line type="monotone" dataKey="revenue" stroke="#2dd4bf" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                        </LineChart>
-                    </WrapChart>
->>>>>>> origin/main
                 </div>
             </div>
         </div>

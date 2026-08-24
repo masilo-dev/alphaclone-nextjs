@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-<<<<<<< HEAD
 import { requireTenantRole } from '@/lib/apiAuth';
 import { stripe } from '@/lib/stripe';
 import { PLAN_PRICING, type SubscriptionPlan } from '@/services/tenancy/types';
 import { z } from 'zod';
-=======
-import { requireTenantAccess } from '@/lib/apiAuth';
-import { stripe } from '@/lib/stripe';
->>>>>>> origin/main
 
 export async function POST(req: Request) {
     try {
@@ -29,8 +24,6 @@ export async function POST(req: Request) {
             if (!value) return `${origin}${fallback}`;
             return new URL(value).origin === origin ? value : `${origin}${fallback}`;
         };
-
-        await requireTenantAccess(tenantId);
 
         // Apply discount for starter plan if applicable
         const discounts = [];

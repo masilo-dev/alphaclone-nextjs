@@ -64,11 +64,7 @@ registerTool('video', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-<<<<<<< HEAD
     const roomId = `room-${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
-=======
-    const roomId = 'room-' + Math.random().toString(36).substring(2, 15);
->>>>>>> origin/main
     const dailyRoomUrl = `https://alphaclone.daily.co/${roomId}`;
 
     const { data, error } = await supabase

@@ -4,10 +4,7 @@ import { runLeadStep, type LeadResult } from '@/lib/scraper/freeLeadSearch';
 import { hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadNurtureWorkflow } from './lead-nurture';
 import { enrichLeadData } from '@/services/unifiedAIService';
-<<<<<<< HEAD
 import { enrichLeadWebsite } from '@/lib/scraper/enrichmentPipeline';
-=======
->>>>>>> origin/main
 
 type WorkflowLead = {
   businessName: string;
@@ -109,7 +106,6 @@ async function discoverLeads(query: string, location: string): Promise<LeadResul
 }
 
 async function enrichLeads(rawLeads: LeadResult[], query: string, location: string): Promise<WorkflowLead[]> {
-<<<<<<< HEAD
   const mapLimit = async <T, R>(items: T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> => {
     const results = new Array<R>(items.length);
     let cursor = 0;
@@ -170,45 +166,6 @@ async function enrichLeads(rawLeads: LeadResult[], query: string, location: stri
       }),
     };
   });
-=======
-  return Promise.all(
-    rawLeads.slice(0, 20).map(async (lead) => {
-      const trustScore = scoreLead(lead);
-      const intelligence = await enrichLeadData({
-        businessName: lead.business_name,
-        industry: lead.category || query,
-        location: lead.address || location,
-        website: lead.website,
-        knownEmails: uniqueStrings([lead.email]),
-        socialLinks: {},
-        techStack: [],
-      }).catch(() => 'Intelligence gathering failed. Please try again later.');
-
-      return {
-        businessName: lead.business_name,
-        email: lead.email || undefined,
-        phone: lead.phone || undefined,
-        website: lead.website || undefined,
-        location: lead.address || location,
-        industry: lead.category || query,
-        category: lead.category,
-        source: lead.source,
-        lat: lead.lat,
-        lng: lead.lng,
-        rating: lead.rating,
-        trustScore,
-        score: trustScore,
-        notes: intelligence,
-        valueProposition: deriveValueProposition({
-          industry: lead.category || query,
-          website: lead.website,
-          category: lead.category,
-          rating: lead.rating,
-        }),
-      };
-    })
-  );
->>>>>>> origin/main
 }
 
 async function bulkAddCRM(scoredLeads: WorkflowLead[], tenantId: string) {

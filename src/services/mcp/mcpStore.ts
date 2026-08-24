@@ -1,13 +1,10 @@
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
-<<<<<<< HEAD
 import {
   DEFAULT_BUSINESS_AI_STATE,
   mergeBusinessAIState,
   normalizeBusinessAIState,
   type BusinessAIState,
 } from './businessAIState';
-=======
->>>>>>> origin/main
 
 /**
  * MCP Session State
@@ -19,11 +16,8 @@ export interface MCPSessionState {
   clientCapabilities?: any;
   clientInfo?: any;
   lastActive?: string;
-<<<<<<< HEAD
   business_ai_state?: BusinessAIState;
   business_ai_version?: number;
-=======
->>>>>>> origin/main
 }
 
 export const mcpStore = {
@@ -67,7 +61,6 @@ export const mcpStore = {
       .eq('id', sessionId);
   },
 
-<<<<<<< HEAD
   async getLatestBusinessSession(tenantId: string, userId?: string | null) {
     const supabase = createSupabaseAdminClient();
     let query = supabase
@@ -157,8 +150,6 @@ export const mcpStore = {
     return { success: true, state: nextState };
   },
 
-=======
->>>>>>> origin/main
   /**
    * Heartbeat to keep session alive
    */

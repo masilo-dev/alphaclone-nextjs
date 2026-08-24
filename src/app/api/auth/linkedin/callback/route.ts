@@ -16,78 +16,8 @@ const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/settings',
 ] as const;
 
-<<<<<<< HEAD
 const LINKEDIN_REQUIRED_SCOPES = ['w_member_social', 'w_organization_social'] as const;
 const LINKEDIN_WRITE_SCOPES = ['w_member_social', 'w_organization_social'] as const;
-=======
-type LinkedInOAuthState = {
-  userId: string;
-  tenantId?: string | null;
-  returnTo?: string | null;
-  ts: number;
-};
-
-const LINKEDIN_REQUIRED_SCOPES = [
-  // Keep activation tied to posting capability.
-  'w_member_social',
-  'w_organization_social',
-] as const;
-
-function normalizeScopes(raw: unknown): string[] {
-  if (Array.isArray(raw)) {
-    return raw
-      .flatMap((value) => String(value).split(/[,\s]+/))
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  if (typeof raw === 'string') {
-    return raw
-      .split(/[,\s]+/)
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  return [];
-}
->>>>>>> origin/main
-
-type LinkedInCompanyPage = {
-  id: string;
-  name: string | null;
-  vanityName: string | null;
-  logoUrl: string | null;
-};
-
-async function fetchLinkedInCompanyPages(accessToken: string): Promise<LinkedInCompanyPage[]> {
-  const url =
-    'https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED&projection=(elements*(organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))))';
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'X-Restli-Protocol-Version': '2.0.0',
-    },
-  });
-
-  if (!res.ok) {
-    return [];
-  }
-
-  const payload = await res.json().catch(() => ({}));
-  const elements = Array.isArray(payload?.elements) ? payload.elements : [];
-  return elements
-    .map((entry: any) => {
-      const target = entry?.['organizationalTarget~'];
-      const streams = target?.logoV2?.['original~']?.elements;
-      const firstStream = Array.isArray(streams) ? streams[0] : null;
-      const firstIdentifier = Array.isArray(firstStream?.identifiers) ? firstStream.identifiers[0] : null;
-      return {
-        id: target?.id ? String(target.id) : '',
-        name: target?.localizedName ? String(target.localizedName) : null,
-        vanityName: target?.vanityName ? String(target.vanityName) : null,
-        logoUrl: firstIdentifier?.identifier ? String(firstIdentifier.identifier) : null,
-      } as LinkedInCompanyPage;
-    })
-    .filter((page: LinkedInCompanyPage) => Boolean(page.id));
-}
 
 function buildRedirect(appUrl: string, stateData: LinkedInOAuthState | null, result: { ok: true } | { ok: false; errorCode: string }) {
   const path =
@@ -187,20 +117,12 @@ export async function GET(req: NextRequest) {
       tokenData.granted_scopes,
       tokenData.grantedScopes,
     ];
-<<<<<<< HEAD
     const scopes = Array.from(new Set(scopeCandidates.flatMap((raw) => normalizeLinkedInScopes(raw))));
     const hasMemberWriteScope = scopes.includes('w_member_social');
     const hasOrgWriteScope = scopes.includes('w_organization_social');
     const hasWriteScope = hasMemberWriteScope || hasOrgWriteScope;
     const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope));
     const hasAnyWriteScope = LINKEDIN_WRITE_SCOPES.some((scope) => scopes.includes(scope));
-=======
-    const scopes = Array.from(new Set(scopeCandidates.flatMap((raw) => normalizeScopes(raw))));
-    const hasMemberWriteScope = scopes.includes('w_member_social');
-    const hasOrgWriteScope = scopes.includes('w_organization_social');
-    const hasWriteScope = hasMemberWriteScope || hasOrgWriteScope;
-    const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope.toLowerCase()));
->>>>>>> origin/main
 
     const profileRes = await linkedInFetch(
       'https://api.linkedin.com/v2/userinfo',
@@ -219,7 +141,6 @@ export async function GET(req: NextRequest) {
     const tokenExpiresAt = tokenData.expires_in
       ? new Date(Date.now() + Number(tokenData.expires_in) * 1000).toISOString()
       : null;
-<<<<<<< HEAD
     let companyPages: Awaited<ReturnType<typeof fetchLinkedInCompanyPages>>['companyPages'] = [];
     let companyPagesDiagnostics: Awaited<ReturnType<typeof fetchLinkedInCompanyPages>>['diagnostics'] | null = null;
     try {
@@ -229,9 +150,6 @@ export async function GET(req: NextRequest) {
     } catch (err) {
       console.warn('[linkedin/callback] company page fetch failed:', err);
     }
-=======
-    const companyPages = await fetchLinkedInCompanyPages(accessToken);
->>>>>>> origin/main
 
     let resolvedTenantId: string | null = stateTenantId;
     if (resolvedTenantId) {
@@ -256,7 +174,6 @@ export async function GET(req: NextRequest) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'tenant_not_found' });
     }
 
-<<<<<<< HEAD
     const upsertResult = await upsertLinkedInIntegration({
       tenantId: resolvedTenantId,
       userId: resolvedUserId,
@@ -282,29 +199,6 @@ export async function GET(req: NextRequest) {
         company_pages_diagnostics: companyPagesDiagnostics,
         write_scope_granted: hasAnyWriteScope,
         missing_required_scopes: missingScopes,
-=======
-    const { error: upsertError } = await admin.from('linkedin_integrations').upsert(
-      {
-        tenant_id: resolvedTenantId,
-        user_id: stateData.userId,
-        linkedin_member_id: memberId,
-        linkedin_person_urn: personUrn,
-        access_token: accessToken,
-        token_expires_at: tokenExpiresAt,
-        scopes,
-        is_active: hasWriteScope,
-        metadata: {
-          provider: 'linkedin_oauth_connector',
-          name: profileData.name || null,
-          email: profileData.email || null,
-          picture: profileData.picture || null,
-          company_pages: companyPages,
-          company_pages_count: companyPages.length,
-          write_scope_granted: hasWriteScope,
-          missing_required_scopes: missingScopes,
-        },
-        updated_at: new Date().toISOString(),
->>>>>>> origin/main
       },
     });
     if (upsertResult.error || !upsertResult.integrationId) {
@@ -312,7 +206,6 @@ export async function GET(req: NextRequest) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'save_failed' });
     }
 
-<<<<<<< HEAD
     if (companyPages.length > 0) {
       const organizationRows = companyPages.map((page) => ({
         tenant_id: resolvedTenantId,
@@ -340,10 +233,6 @@ export async function GET(req: NextRequest) {
         console.error('[linkedin/callback] organization identity upsert failed:', orgUpsertError);
         return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'save_failed' });
       }
-=======
-    if (!hasMemberWriteScope && !hasOrgWriteScope) {
-      return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'missing_write_permissions' });
->>>>>>> origin/main
     }
 
     if (!hasMemberWriteScope && !hasOrgWriteScope) {

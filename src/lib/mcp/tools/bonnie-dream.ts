@@ -7,11 +7,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 registerTool('bonnie-dream', {
   name: 'trigger_bonnie_dream',
   description:
-<<<<<<< HEAD
     'Triggers a Bonnie Dreaming session: fetches the last 50 MCP session logs for the tenant, calls the DeepSeek-powered dreaming analysis to extract patterns, stores results in bonnie_dream_sessions, and optionally auto-applies memory updates.',
-=======
-    'Triggers a Bonnie Dreaming session: fetches the last 50 MCP session logs for the tenant, calls the Claude Managed Agents dreaming endpoint to extract patterns, stores results in bonnie_dream_sessions, and optionally auto-applies memory updates.',
->>>>>>> origin/main
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     auto_apply: z.boolean().optional().default(false),
@@ -37,23 +33,12 @@ registerTool('bonnie-dream', {
 
     if (sessErr) throw new Error(`Failed to fetch sessions: ${sessErr.message}`);
 
-<<<<<<< HEAD
     // 2. Call DeepSeek-powered dreaming analysis
     let patternsExtracted: any[] = [];
     let memoryUpdates: any[] = [];
 
     try {
       const dreamPrompt = `You are reviewing past AI agent session logs for a SaaS business platform.
-=======
-    // 2. Call Claude Managed Agents dreaming endpoint (with beta header)
-    const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-    let patternsExtracted: any[] = [];
-    let memoryUpdates: any[] = [];
-
-    if (ANTHROPIC_API_KEY) {
-      try {
-        const dreamPrompt = `You are reviewing past AI agent session logs for a SaaS business platform.
->>>>>>> origin/main
 Analyze the following session data and extract:
 1. Common failure patterns (tools that often fail, error themes)
 2. Performance insights (slow tools, high success rate tools)
@@ -70,7 +55,6 @@ Return a JSON object with:
 
 Respond ONLY with valid JSON.`;
 
-<<<<<<< HEAD
       const { routeAIRequest } = await import('@/services/aiRouter');
       const aiResponse = await routeAIRequest({
         prompt: dreamPrompt,
@@ -94,44 +78,6 @@ Respond ONLY with valid JSON.`;
         severity: 'medium',
       }));
       memoryUpdates = [{ category: 'reliability', insight: 'Some tools have recurring failures', action_recommendation: 'Review tool implementations' }];
-=======
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': ANTHROPIC_API_KEY,
-            'anthropic-version': '2023-06-01',
-            'anthropic-beta': 'managed-agents-2026-04-01',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 2048,
-            messages: [{ role: 'user', content: dreamPrompt }],
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const rawText = data.content?.[0]?.text || '{}';
-          const cleanText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-          const parsed = JSON.parse(cleanText);
-          patternsExtracted = parsed.patterns_extracted || [];
-          memoryUpdates = parsed.memory_updates || [];
-        }
-      } catch (e) {
-        console.warn('[bonnie-dream] Dreaming endpoint call failed, using mock patterns:', e);
-        // Fallback: synthesize basic patterns from session data
-        const failedTools = (sessions || []).filter(s => !s.success).map(s => s.tool_name);
-        const uniqueFailed = [...new Set(failedTools)];
-        patternsExtracted = uniqueFailed.map(tool => ({
-          type: 'failure_pattern',
-          description: `Tool "${tool}" has recurring failures`,
-          frequency: failedTools.filter(t => t === tool).length,
-          severity: 'medium',
-        }));
-        memoryUpdates = [{ category: 'reliability', insight: 'Some tools have recurring failures', action_recommendation: 'Review tool implementations' }];
-      }
->>>>>>> origin/main
     }
 
     // 3. Store dream session
@@ -217,14 +163,9 @@ registerTool('bonnie-dream', {
     },
     required: ['tenant_id', 'session_id'],
   },
-<<<<<<< HEAD
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
     const { mergeDreamSession } = await import('@/services/nexusMemoryService');
-=======
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
->>>>>>> origin/main
     const { data, error } = await supabase
       .from('bonnie_dream_sessions')
       .update({ status: 'applied', applied_at: new Date().toISOString() })
@@ -235,7 +176,6 @@ registerTool('bonnie-dream', {
 
     if (error) throw new Error(`Failed to approve dream session: ${error.message}`);
 
-<<<<<<< HEAD
     const mergeResult = await mergeDreamSession(args.tenant_id, args.session_id, ctx.userId);
 
     return {
@@ -248,10 +188,6 @@ registerTool('bonnie-dream', {
           memory_summary_updated: mergeResult.memorySummary.slice(0, 500),
         }, null, 2),
       }],
-=======
-    return {
-      content: [{ type: 'text', text: JSON.stringify({ success: true, session: data }, null, 2) }],
->>>>>>> origin/main
     };
   },
 });

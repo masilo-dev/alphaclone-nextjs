@@ -1,16 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-<<<<<<< HEAD
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Plus, FolderPlus, CheckSquare, Flag, Calendar,
   Users, DollarSign, ChevronRight, ChevronDown, Clock, Target, X
-=======
-import {
-  ArrowLeft, Plus, FolderPlus, CheckSquare, Flag, Calendar,
-  Users, DollarSign, ChevronRight, ChevronDown, Clock, Target
->>>>>>> origin/main
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
@@ -31,10 +25,7 @@ const STATUS_COLORS: Record<ProjectStatus, string> = {
 interface Project { id: string; name: string; status: ProjectStatus; progress: number; task_count: number; completed_tasks: number; due_date?: string; description?: string; budget?: number; tenant_id: string; created_at: string; }
 interface Milestone { id: string; project_id: string; name: string; due_date?: string; status: 'done' | 'in_progress' | 'pending'; }
 interface Task { id: string; project_id: string; title: string; status: string; priority: string; due_date?: string; }
-<<<<<<< HEAD
 interface TimelineEvent { id: string; type: 'milestone' | 'task' | 'comment'; date?: string; title: string; status?: string; priority?: string; author_name?: string; content?: string; }
-=======
->>>>>>> origin/main
 
 interface ProjectsTabProps { user: User; }
 
@@ -63,7 +54,6 @@ const MilestoneTimeline: React.FC<{ milestones: Milestone[] }> = ({ milestones }
 );
 
 // ── Project Detail ─────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 const ProjectDetail: React.FC<{ project: Project; onBack: () => void; onAddTask?: () => void }> = ({ project, onBack, onAddTask }) => {
   const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -120,16 +110,6 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void; onAddTask?
         ...commentRows,
       ].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime()));
     });
-=======
-const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ project, onBack }) => {
-  const [activeTab, setActiveTab] = useState<ProjectTab>('overview');
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-
-  useEffect(() => {
-    supabase.from('milestones').select('*').eq('project_id', project.id).order('due_date').then(({ data }: { data: any[] | null }) => setMilestones((data as Milestone[]) || []));
-    supabase.from('tasks').select('*').eq('project_id', project.id).order('created_at', { ascending: false }).then(({ data }: { data: any[] | null }) => setTasks((data as Task[]) || []));
->>>>>>> origin/main
   }, [project.id]);
 
   const TABS: ProjectTab[] = ['overview', 'tasks', 'milestones', 'timeline'];
@@ -220,7 +200,6 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ pro
 
         {activeTab === 'timeline' && (
           <div className="overflow-x-auto -mx-4 px-4">
-<<<<<<< HEAD
             {timelineEvents.map(event => (
               <div key={event.id} className="flex items-center gap-3 py-3 border-b border-white/5">
                 {event.date && (
@@ -232,34 +211,17 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ pro
               </div>
             ))}
             {timelineEvents.length === 0 && <div className="py-8 text-center text-[13px] text-slate-500">No timeline events yet.</div>}
-=======
-            {milestones.map(m => (
-              <div key={m.id} className="flex items-center gap-3 py-3 border-b border-white/5">
-                {m.due_date && (
-                  <span className="flex-shrink-0 px-2.5 py-1 bg-slate-800 rounded-full text-[11px] font-bold text-slate-400">
-                    {new Date(m.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
-                )}
-                <span className="text-[15px] text-white">{m.name}</span>
-              </div>
-            ))}
-            {milestones.length === 0 && <div className="py-8 text-center text-[13px] text-slate-500">No timeline events yet.</div>}
->>>>>>> origin/main
           </div>
         )}
       </div>
 
       {/* Context-aware FAB */}
-<<<<<<< HEAD
       <button
         type="button"
         onClick={onAddTask}
         className="fixed bottom-20 right-4 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30 z-30"
         aria-label="Add task to project"
       >
-=======
-      <button className="fixed bottom-20 right-4 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/30 z-30">
->>>>>>> origin/main
         <Plus className="w-6 h-6 text-white" />
       </button>
     </div>
@@ -268,16 +230,12 @@ const ProjectDetail: React.FC<{ project: Project; onBack: () => void }> = ({ pro
 
 // ── Main ProjectsTab ───────────────────────────────────────────────────────────
 const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
-<<<<<<< HEAD
   const router = useRouter();
   const searchParams = useSearchParams();
-=======
->>>>>>> origin/main
   const { currentTenant } = useTenant();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Project | null>(null);
-<<<<<<< HEAD
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -312,8 +270,6 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
       setCreating(false);
     }
   };
-=======
->>>>>>> origin/main
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -325,7 +281,6 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
 
   useEffect(() => { load(); }, [load]);
 
-<<<<<<< HEAD
   if (selected) {
     return (
       <ProjectDetail
@@ -339,13 +294,6 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
   return (
     <div className="relative flex flex-col h-full ac-scroll-full ac-enterprise-module" data-tour="my-projects">
       <div className="flex-1 pb-20">
-=======
-  if (selected) return <ProjectDetail project={selected} onBack={() => setSelected(null)} />;
-
-  return (
-    <div className="relative flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto pb-20">
->>>>>>> origin/main
         {loading ? (
           <div className="space-y-px">{[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-slate-900/40 animate-pulse mx-4 my-1 rounded-2xl" />)}</div>
         ) : projects.length === 0 ? (
@@ -375,7 +323,6 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
         )}
       </div>
 
-<<<<<<< HEAD
       <button
         type="button"
         onClick={() => setShowCreate(true)}
@@ -426,11 +373,6 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
           </form>
         </div>
       )}
-=======
-      <button className="fixed bottom-20 right-4 w-14 h-14 bg-violet-500 rounded-full flex items-center justify-center shadow-lg shadow-violet-500/30 z-30">
-        <FolderPlus className="w-6 h-6 text-white" />
-      </button>
->>>>>>> origin/main
     </div>
   );
 };

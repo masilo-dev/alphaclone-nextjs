@@ -1,16 +1,6 @@
-<<<<<<< HEAD
 import { getAutomationHealth } from './automation/observabilityService';
 import { tenantService } from './tenancy/TenantService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-=======
-import { supabase } from '../lib/supabase';
-import { reportingService } from './reportingService';
-import { dealService } from './dealService';
-import { leadService } from './leadService';
-import { getAutomationHealth } from './automation/observabilityService';
-import { tenantService } from './tenancy/TenantService';
-import { chartOfAccountsService } from './accounting/chartOfAccountsService';
->>>>>>> origin/main
 
 export const businessReportService = {
   /**
@@ -25,7 +15,6 @@ export const businessReportService = {
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(now.getMonth() - 6);
 
-<<<<<<< HEAD
     const admin = createSupabaseAdminClient();
     const [invoiceResult, leadResult, dealResult, accountResult, socialResult] = await Promise.all([
       admin.from('invoices').select('amount, total_amount, paid_at, created_at').eq('tenant_id', tid).ilike('status', 'paid').gte('created_at', sixMonthsAgo.toISOString()).lte('created_at', now.toISOString()),
@@ -50,36 +39,12 @@ export const businessReportService = {
     const totalLost = deals.filter((deal: any) => deal.stage === 'closed_lost').length;
     const decided = totalWon + totalLost;
     const winRate = decided > 0 ? totalWon / decided * 100 : 0;
-=======
-    // 1. Monthly Revenue Trend (Last 6 months)
-    const revenueTrendData = await reportingService.getRevenueOverTime({
-      name: 'Monthly Revenue Trend',
-      type: 'financial',
-      dateRange: { from: sixMonthsAgo, to: now },
-      filters: {},
-      groupBy: 'month',
-      metrics: ['revenue'],
-      format: 'json'
-    });
-
-    // 2. Lead-to-Deal Conversion & Sales Performance
-    const { winRate, totalWon, totalLost } = await dealService.getWinRate(
-      sixMonthsAgo.toISOString(), 
-      now.toISOString()
-    );
-    
-    const { leads } = await leadService.getLeads();
-    const totalLeads = leads.length;
-    const { deals } = await dealService.getDeals();
-    const totalDeals = deals.length;
->>>>>>> origin/main
     const leadToDealConversion = totalLeads > 0 ? ((totalDeals / totalLeads) * 100).toFixed(2) : "0.00";
 
     // 3. Automation Health Metrics
     const automationHealth = await getAutomationHealth(tid);
 
     // 4. Expense Breakdown by Category (from Chart of Accounts)
-<<<<<<< HEAD
     const expenseBreakdown = (accountResult.data || []).map((acc: any) => ({
       category: acc.account_name,
       amount: Math.abs(Number(acc.current_balance || 0)),
@@ -100,25 +65,6 @@ export const businessReportService = {
     }
     const pipelineStats = Array.from(stageMap.values());
     const weightedValue = deals.filter((deal: any) => !['closed_won', 'closed_lost'].includes(deal.stage)).reduce((sum: number, deal: any) => sum + Number(deal.value || 0) * Number(deal.probability || 0) / 100, 0);
-=======
-    const { accounts: expenseAccounts } = await chartOfAccountsService.getAccountsByType('expense');
-    const expenseBreakdown = (expenseAccounts || []).map(acc => ({
-      category: acc.accountName,
-      amount: Math.abs(acc.currentBalance),
-      code: acc.accountCode
-    })).filter(e => e.amount > 0);
-
-    // 5. Social Engagement Summary (Mocked performance data)
-    const topSocialPosts = [
-      { platform: 'LinkedIn', topic: 'Operational Efficiency', reach: 3120, engagement: 9.4, date: '2026-05-12' },
-      { platform: 'Facebook', topic: 'AlphaClone Success Story', reach: 1850, engagement: 12.1, date: '2026-05-14' },
-      { platform: 'LinkedIn', topic: 'Nexus Strategic Orchestrator', reach: 4500, engagement: 7.8, date: '2026-05-15' }
-    ];
-
-    // 6. Pipeline Health Snapshot
-    const { stats: pipelineStats } = await dealService.getPipelineStats();
-    const { value: weightedValue } = await dealService.getWeightedPipelineValue();
->>>>>>> origin/main
 
     return {
       executiveSummary: {
@@ -164,11 +110,7 @@ export const businessReportService = {
 - **Automation Success Rate:** ${data.executiveSummary.automationSuccessRate}
 
 ## 2. REVENUE MOMENTUM
-<<<<<<< HEAD
 Revenue trend below reflects paid invoice data recorded during the reporting period.
-=======
-Revenue trend reflects a stable growth pattern.
->>>>>>> origin/main
 ${(data.revenueTrend || []).map((r: any) => `- ${r.date}: $${(r.revenue || 0).toLocaleString()}`).join('\n')}
 
 ## 3. SALES PIPELINE & CONVERSION
@@ -180,11 +122,7 @@ ${(data.revenueTrend || []).map((r: any) => `- ${r.date}: $${(r.revenue || 0).to
 ## 4. AUTOMATION & OPERATIONAL HEALTH
 - **Total Autonomous Runs:** ${data.automationThroughput.totalRuns}
 - **Status Distribution:** ${Object.entries(data.automationThroughput.statusCounts).map(([k, v]) => `${k}: ${v}`).join(', ')}
-<<<<<<< HEAD
 - **Operational Insight:** Automation throughput is reported from recorded workflow runs only.
-=======
-- **Operational Insight:** Throughput remains high; automation layer is handling ~90% of lead qualification.
->>>>>>> origin/main
 
 ## 5. TOP PERFORMING SOCIAL ASSETS
 ${(data.topSocialPosts || []).map((p: any) => `- [${p.platform}] "${p.topic}" - Reach: ${p.reach.toLocaleString()}, Engagement: ${p.engagement}%`).join('\n')}
@@ -193,15 +131,9 @@ ${(data.topSocialPosts || []).map((p: any) => `- [${p.platform}] "${p.topic}" - 
 ${(data.expenseBreakdown || []).map((e: any) => `- ${e.category}: $${e.amount.toLocaleString()}`).join('\n')}
 
 ## 7. RECOMMENDED NEXT ACTIONS
-<<<<<<< HEAD
 1. Review the recorded revenue trend and investigate material month-over-month changes.
 2. Prioritize active opportunities using the weighted pipeline value and current stage distribution.
 3. Review the largest recorded expense categories for margin opportunities.
-=======
-1. **Revenue Activation:** Target stagnant leads (45+ days) for automated re-engagement.
-2. **Operational Scale:** Expand LinkedIn outreach automation to double ingestion rates.
-3. **Fiscal Optimization:** Review high-spend categories in Expense Breakdown for potential margin improvement.
->>>>>>> origin/main
 
 ---
 *Report generated autonomously by AlphaClone Nexus Strategic Orchestrator.*

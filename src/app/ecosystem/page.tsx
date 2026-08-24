@@ -16,15 +16,9 @@ export const metadata: Metadata = {
         'revenue operations platform',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/ecosystem' },
-<<<<<<< HEAD
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
         description: 'Integrated modules for CRM, operations, revenue workflows, agreements, meetings, and analytics in one AlphaClone workspace.',
-=======
-    openGraph: {
-        title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
-        description: 'Nine integrated modules. One unified Business OS. No SaaS bloat. Explore the full AlphaClone architecture.',
->>>>>>> origin/main
         url: 'https://alphaclonesystems.com/ecosystem',
         type: 'website',
     },

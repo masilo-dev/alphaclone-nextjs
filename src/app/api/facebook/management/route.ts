@@ -4,11 +4,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
-<<<<<<< HEAD
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
-=======
->>>>>>> origin/main
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();

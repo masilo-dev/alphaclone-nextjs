@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
 import {
   validateMCPAuthApp,
   MCP_CORS_HEADERS,
@@ -12,11 +11,6 @@ import { ENV } from '@/config/env';
 import { touchMcpApiKeyLastUsed } from '@/lib/security/mcpApiKeyLookup';
 import { getInitialBusinessAIStateForTenant } from '@/lib/mcp/getInitialBusinessAIStateForTenant';
 import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
-=======
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
-import { createClient } from '@supabase/supabase-js';
-import { ENV } from '@/config/env';
->>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -26,15 +20,8 @@ export const revalidate = 0;
 
 const MCP_PROTOCOL_VERSION = '2025-11-25';
 
-<<<<<<< HEAD
 function getBaseUrl(_req: NextRequest) {
   return PUBLIC_APP_ORIGIN;
-=======
-function getBaseUrl(req: NextRequest) {
-  const protocol = req.headers.get('x-forwarded-proto')?.split(',')[0] ?? 'https';
-  const host = req.headers.get('x-forwarded-host')?.split(',')[0] ?? req.headers.get('host') ?? '';
-  return `${protocol}://${host}`;
->>>>>>> origin/main
 }
 
 function buildForwardHeaders(req: NextRequest) {
@@ -67,30 +54,17 @@ export async function GET(req: NextRequest) {
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
       console.warn('[MCP SSE GET] Auth failed:', auth.error);
-<<<<<<< HEAD
       return createUnauthorizedResponse(req, 'invalid_token', auth.error);
-=======
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
->>>>>>> origin/main
     }
 
     const { tenant_id, user_id, apiKey, supabaseAdmin } = auth;
     console.log(`[MCP SSE GET] Connection attempt for tenant: ${tenant_id}`);
 
     // Update last used timestamp (fire and forget)
-<<<<<<< HEAD
     void touchMcpApiKeyLastUsed(supabaseAdmin, apiKey, tenant_id, user_id);
 
     // Create a session record
     const initialAiState = await getInitialBusinessAIStateForTenant(tenant_id);
-=======
-    void supabaseAdmin
-      .from('mcp_api_keys')
-      .update({ last_used_at: new Date().toISOString() })
-      .eq('api_key', apiKey);
-
-    // Create a session record
->>>>>>> origin/main
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hour session
     const { data: sessionData, error: sessionError } = await supabaseAdmin
       .from('mcp_sessions')
@@ -98,15 +72,11 @@ export async function GET(req: NextRequest) {
         tenant_id, 
         user_id, 
         expires_at: expiresAt,
-<<<<<<< HEAD
         metadata: {
           client_label: 'sse-handshake-app',
           business_ai_version: initialAiState.version,
           business_ai_state: initialAiState,
         } 
-=======
-        metadata: { client_label: 'sse-handshake-app' } 
->>>>>>> origin/main
       })
       .select('id')
       .single();
@@ -116,11 +86,7 @@ export async function GET(req: NextRequest) {
         // We continue anyway, as basic SSE might still work for some clients
     }
 
-<<<<<<< HEAD
     const endpointUrl = `${getBaseUrl(req)}/api/mcp/messages`;
-=======
-    const endpointUrl = `${getBaseUrl(req)}/api/mcp/messages?api_key=${encodeURIComponent(apiKey)}`;
->>>>>>> origin/main
 
     const stream = new ReadableStream({
       start(controller) {

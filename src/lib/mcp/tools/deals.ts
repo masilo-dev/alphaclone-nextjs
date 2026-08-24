@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import { emitBusinessEvent } from '@/lib/automation/emit-event';
 
 async function afterDealWrite(
@@ -33,28 +32,19 @@ async function afterDealWrite(
     }).catch((err) => console.warn('[MCP deals] event emit failed:', err));
   }
 }
-=======
->>>>>>> origin/main
 
 // 1. get_deals
 registerTool('deals', {
   name: 'get_deals',
-<<<<<<< HEAD
   description: 'Retrieve deals matching filters. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session; optional for session-auth clients
-=======
-  description: 'Retrieve deals matching filters.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid(),
->>>>>>> origin/main
     stage: z.string().optional(),
     owner_id: z.string().uuid().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-<<<<<<< HEAD
       stage: { type: 'string', description: 'Filter by deal stage' },
       owner_id: { type: 'string', format: 'uuid', description: 'Filter by owner user ID' },
     },
@@ -68,20 +58,6 @@ registerTool('deals', {
       .from('deals')
       .select('*')
       .eq('tenant_id', tenantId);
-=======
-      tenant_id: { type: 'string', format: 'uuid' },
-      stage: { type: 'string', description: 'Filter by deal stage' },
-      owner_id: { type: 'string', format: 'uuid', description: 'Filter by owner user ID' },
-    },
-    required: ['tenant_id'],
-  },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    let query = supabase
-      .from('deals')
-      .select('*')
-      .eq('tenant_id', args.tenant_id);
->>>>>>> origin/main
 
     if (args.stage) {
       query = query.eq('stage', args.stage);
@@ -99,7 +75,6 @@ registerTool('deals', {
 // 2. create_deal
 registerTool('deals', {
   name: 'create_deal',
-<<<<<<< HEAD
   description: 'Create a new deal in the pipeline. Accepts title or name; value defaults to 0 and stage defaults to lead. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
@@ -114,21 +89,10 @@ registerTool('deals', {
     description: z.string().optional(),
   }).refine((data) => Boolean(String(data.title || data.name || '').trim()), {
     message: 'title or name is required',
-=======
-  description: 'Create a new deal in the pipeline.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid(),
-    title: z.string(),
-    value: z.number().nonnegative(),
-    stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']),
-    contact_id: z.string().uuid().optional(),
-    expected_close_date: z.string().optional(),
->>>>>>> origin/main
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-<<<<<<< HEAD
       name: { type: 'string', description: 'Deal name/title (alias: title)' },
       title: { type: 'string', description: 'Deal name/title (alias: name)' },
       value: { type: 'number', description: 'Value of the deal (default 0)' },
@@ -162,40 +126,14 @@ registerTool('deals', {
         description: args.description || null,
         currency: 'USD',
         probability: 0,
-=======
-      tenant_id: { type: 'string', format: 'uuid' },
-      title: { type: 'string', description: 'Name/title of the deal' },
-      value: { type: 'number', description: 'Value of the deal' },
-      stage: { type: 'string', enum: ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] },
-      contact_id: { type: 'string', format: 'uuid' },
-      expected_close_date: { type: 'string', format: 'date-time' },
-    },
-    required: ['tenant_id', 'title', 'value', 'stage'],
-  },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from('deals')
-      .insert({
-        tenant_id: args.tenant_id,
-        name: args.title,
-        value: args.value,
-        stage: args.stage,
-        contact_id: args.contact_id || null,
-        expected_close_date: args.expected_close_date || null,
->>>>>>> origin/main
       })
       .select()
       .single();
 
-<<<<<<< HEAD
     if (error) {
       throw new Error(`create_deal failed: ${error.message}`);
     }
     await afterDealWrite(supabase, tenantId, data.id);
-=======
-    if (error) throw error;
->>>>>>> origin/main
     return data;
   },
 });
@@ -203,15 +141,9 @@ registerTool('deals', {
 // 3. update_deal
 registerTool('deals', {
   name: 'update_deal',
-<<<<<<< HEAD
   description: 'Update the fields of a deal. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
-=======
-  description: 'Update the fields of a deal.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid(),
->>>>>>> origin/main
     deal_id: z.string().uuid(),
     fields: z.object({
       name: z.string().optional(),
@@ -223,10 +155,6 @@ registerTool('deals', {
   jsonSchema: {
     type: 'object',
     properties: {
-<<<<<<< HEAD
-=======
-      tenant_id: { type: 'string', format: 'uuid' },
->>>>>>> origin/main
       deal_id: { type: 'string', format: 'uuid' },
       fields: {
         type: 'object',
@@ -238,7 +166,6 @@ registerTool('deals', {
         },
       },
     },
-<<<<<<< HEAD
     required: ['deal_id', 'fields'],
   },
   handler: async (args, ctx) => {
@@ -252,12 +179,6 @@ registerTool('deals', {
       .eq('tenant_id', tenantId)
       .maybeSingle();
 
-=======
-    required: ['tenant_id', 'deal_id', 'fields'],
-  },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
->>>>>>> origin/main
     const { data, error } = await supabase
       .from('deals')
       .update({
@@ -265,16 +186,11 @@ registerTool('deals', {
         updated_at: new Date().toISOString(),
       })
       .eq('id', args.deal_id)
-<<<<<<< HEAD
       .eq('tenant_id', tenantId)
-=======
-      .eq('tenant_id', args.tenant_id)
->>>>>>> origin/main
       .select()
       .single();
 
     if (error) throw error;
-<<<<<<< HEAD
 
     const stageChanged = Boolean(args.fields.stage && existing?.stage && existing.stage !== args.fields.stage);
     await afterDealWrite(supabase, tenantId, args.deal_id, {
@@ -283,8 +199,6 @@ registerTool('deals', {
       newStage: args.fields.stage,
       userId: ctx.userId || null,
     });
-=======
->>>>>>> origin/main
     return data;
   },
 });
@@ -292,22 +206,15 @@ registerTool('deals', {
 // 4. move_deal_stage
 registerTool('deals', {
   name: 'move_deal_stage',
-<<<<<<< HEAD
   description: 'Change the stage of a deal and log it to stage history. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
-=======
-  description: 'Change the stage of a deal and log it to stage history.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid(),
->>>>>>> origin/main
     deal_id: z.string().uuid(),
     new_stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-<<<<<<< HEAD
       deal_id: { type: 'string', format: 'uuid' },
       new_stage: { type: 'string', enum: ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] },
     },
@@ -317,26 +224,12 @@ registerTool('deals', {
     const supabase = createSupabaseAdminClient();
     const tenantId = args.tenant_id || ctx.tenantId;
     if (!tenantId) throw new Error('tenant_id is required');
-=======
-      tenant_id: { type: 'string', format: 'uuid' },
-      deal_id: { type: 'string', format: 'uuid' },
-      new_stage: { type: 'string', enum: ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] },
-    },
-    required: ['tenant_id', 'deal_id', 'new_stage'],
-  },
-  handler: async (args, ctx) => {
-    const supabase = createSupabaseAdminClient();
->>>>>>> origin/main
     // 1. Fetch current stage
     const { data: currentDeal, error: fetchError } = await supabase
       .from('deals')
       .select('stage')
       .eq('id', args.deal_id)
-<<<<<<< HEAD
       .eq('tenant_id', tenantId)
-=======
-      .eq('tenant_id', args.tenant_id)
->>>>>>> origin/main
       .single();
 
     if (fetchError) throw fetchError;
@@ -350,11 +243,7 @@ registerTool('deals', {
         updated_at: new Date().toISOString(),
       })
       .eq('id', args.deal_id)
-<<<<<<< HEAD
       .eq('tenant_id', tenantId)
-=======
-      .eq('tenant_id', args.tenant_id)
->>>>>>> origin/main
       .select()
       .single();
 
@@ -365,11 +254,7 @@ registerTool('deals', {
       .from('deal_stage_history')
       .insert({
         deal_id: args.deal_id,
-<<<<<<< HEAD
         tenant_id: tenantId,
-=======
-        tenant_id: args.tenant_id,
->>>>>>> origin/main
         from_stage: oldStage,
         to_stage: args.new_stage,
         changed_by: ctx.userId || null,
@@ -379,7 +264,6 @@ registerTool('deals', {
       console.error('Failed to log deal stage history:', historyError);
     }
 
-<<<<<<< HEAD
     await afterDealWrite(supabase, tenantId, args.deal_id, {
       stageChanged: true,
       oldStage,
@@ -387,8 +271,6 @@ registerTool('deals', {
       userId: ctx.userId || null,
     });
 
-=======
->>>>>>> origin/main
     return updatedDeal;
   },
 });
@@ -396,7 +278,6 @@ registerTool('deals', {
 // 5. get_pipeline_summary
 registerTool('deals', {
   name: 'get_pipeline_summary',
-<<<<<<< HEAD
   description: 'Get total count and value of deals grouped by pipeline stages. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
@@ -414,25 +295,6 @@ registerTool('deals', {
       .from('deals')
       .select('stage, value')
       .eq('tenant_id', tenantId);
-=======
-  description: 'Get total count and value of deals grouped by pipeline stages.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid(),
-  }),
-  jsonSchema: {
-    type: 'object',
-    properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
-    },
-    required: ['tenant_id'],
-  },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from('deals')
-      .select('stage, value')
-      .eq('tenant_id', args.tenant_id);
->>>>>>> origin/main
 
     if (error) throw error;
 

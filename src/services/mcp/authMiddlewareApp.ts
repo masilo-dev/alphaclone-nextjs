@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '../../config/env';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
@@ -225,15 +224,6 @@ export async function validateMCPAuthApp(
   let token = req.headers.get('x-api-key') || url.searchParams.get('api_key');
   const resourceMetadataUrl = buildMcpResourceMetadataUrl(req);
   const requestId = req.headers.get('x-request-id') || req.headers.get('x-correlation-id') || undefined;
-=======
-import { createClient } from '@supabase/supabase-js';
-import { ENV } from '../../config/env';
-
-export async function validateMCPAuthApp(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const url = new URL(req.url);
-  let token = req.headers.get('x-api-key') || url.searchParams.get('api_key');
->>>>>>> origin/main
 
   if (!token && authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.substring(7);
@@ -245,20 +235,16 @@ export async function validateMCPAuthApp(req: NextRequest) {
     return {
       error: 'Authentication required. Provide x-api-key or Authorization Bearer token header.',
       status: 401,
-<<<<<<< HEAD
       wwwAuthenticate: createWWWAuthenticateHeader(
         'invalid_token',
         'Missing access token',
         undefined,
         resourceMetadataUrl
       ),
-=======
->>>>>>> origin/main
     };
   }
 
   if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-<<<<<<< HEAD
     return {
       error: 'SERVER_CONFIGURATION_ERROR',
       status: 500,
@@ -269,32 +255,21 @@ export async function validateMCPAuthApp(req: NextRequest) {
         resourceMetadataUrl
       ),
     };
-=======
-    return { error: 'SERVER_CONFIGURATION_ERROR', status: 500 };
->>>>>>> origin/main
   }
 
   const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
     global: {
       headers: {
-<<<<<<< HEAD
         Accept: 'application/json',
         'X-Client-Info': 'mcp-auth-middleware-v3',
       },
     },
-=======
-        'Accept': 'application/json',
-        'X-Client-Info': 'mcp-auth-middleware-v2'
-      }
-    }
->>>>>>> origin/main
   });
 
   const isOAuthAccessToken = token.startsWith('mcp_at_');
   const isStaticApiKey = token.startsWith('ac_mcp_');
 
   if (!isOAuthAccessToken && !isStaticApiKey) {
-<<<<<<< HEAD
     return {
       error: 'Unauthorized',
       status: 401,
@@ -305,14 +280,10 @@ export async function validateMCPAuthApp(req: NextRequest) {
         resourceMetadataUrl
       ),
     };
-=======
-    return { error: 'Unauthorized', status: 401 };
->>>>>>> origin/main
   }
 
   // ── 1. Check for OAuth Access Token ──────────────────────────────────────
   if (isOAuthAccessToken) {
-<<<<<<< HEAD
     const { data: tokenData, error: tokenError } = await lookupOAuthToken(supabaseAdmin, token);
 
     if (tokenError || !tokenData) {
@@ -518,57 +489,10 @@ export async function validateMCPAuthApp(req: NextRequest) {
       scope: (tokenData.scopes as string[]) || ['read', 'write'],
       client_id: (tokenData.client_id as string) || undefined,
       token_id: (tokenData.id as string) || undefined,
-=======
-    const { data: tokenData, error: tokenError } = await supabaseAdmin
-      .from('mcp_oauth_tokens')
-      .select('tenant_id, user_id, expires_at, client_id, revoked')
-      .eq('access_token', token)
-      .eq('revoked', false)
-      .maybeSingle();
-
-    if (tokenError || !tokenData) {
-      console.warn('[MCP Auth] Token lookup failed or token not found:', {
-        error: tokenError?.message,
-        code: tokenError?.code,
-        hint: tokenError?.hint,
-        token_prefix: token.substring(0, 10)
-      });
-      return { error: 'Invalid or expired access token', status: 401 };
-    }
-
-    const expiryDate = new Date(tokenData.expires_at);
-    const now = new Date();
-    const gracePeriodMs = 120 * 60 * 1000; // 2 hour grace period for reconnecting desktop MCP clients
-
-    if (expiryDate.getTime() + gracePeriodMs < now.getTime()) {
-      const extendedExpiry = new Date(now.getTime() + 3600 * 1000).toISOString();
-      const { error: extendError } = await supabaseAdmin
-        .from('mcp_oauth_tokens')
-        .update({ expires_at: extendedExpiry })
-        .eq('access_token', token);
-
-      if (extendError) {
-        console.error('[MCP Auth] Failed to extend expired OAuth token:', extendError);
-        return { error: 'Access token has expired', status: 401 };
-      }
-
-      console.info('[MCP Auth] Extended expired OAuth token for MCP reconnect', {
-        client_id: tokenData.client_id,
-        user_id: tokenData.user_id,
-      });
-    }
-
-    return {
-      tenant_id: tokenData.tenant_id,
-      user_id: tokenData.user_id,
-      apiKey: token,
-      supabaseAdmin,
->>>>>>> origin/main
     };
   }
 
   // ── 2. Fallback to API Key ───────────────────────────────────────────────
-<<<<<<< HEAD
   const keyData = await lookupMcpApiKey(supabaseAdmin, token, { requireActive: true });
 
   if (!keyData) {
@@ -615,16 +539,6 @@ export async function validateMCPAuthApp(req: NextRequest) {
         resourceMetadataUrl
       ),
     };
-=======
-  const { data: keyData, error: keyError } = await supabaseAdmin
-    .from('mcp_api_keys')
-    .select('tenant_id, user_id')
-    .eq('api_key', token)
-    .maybeSingle();
-
-  if (keyError || !keyData) {
-    return { error: 'Unauthorized', status: 401 };
->>>>>>> origin/main
   }
 
   return {
@@ -632,7 +546,6 @@ export async function validateMCPAuthApp(req: NextRequest) {
     user_id: keyData.user_id,
     apiKey: token,
     supabaseAdmin,
-<<<<<<< HEAD
     resource: PUBLIC_MCP_RESOURCE,
     scope: keyData.scopes || ['read', 'write'],
   };
@@ -694,29 +607,10 @@ export const MCP_CORS_HEADERS = {
     'Content-Type, Authorization, x-api-key, Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, x-client-label',
   'Access-Control-Expose-Headers': 'Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, WWW-Authenticate',
   'Access-Control-Max-Age': '86400',
-=======
-  };
-}
-
-const ALLOWED_MCP_ORIGINS = [
-  'https://claude.ai',
-  'https://manus.ai',
-  'https://grok.x.ai',
-];
-
-export const MCP_CORS_HEADERS = {
-  'Access-Control-Allow-Origin': ALLOWED_MCP_ORIGINS[0],
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, x-client-label',
-  'Access-Control-Expose-Headers': 'Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version',
-  'Access-Control-Max-Age': '86400',
-  'Access-Control-Allow-Credentials': 'true',
->>>>>>> origin/main
 };
 
 export function getMcpCorsHeaders(req: NextRequest) {
   const origin = req.headers.get('origin');
-<<<<<<< HEAD
   if (origin && isAllowedMcpBrowserOrigin(origin)) {
     return {
       ...MCP_CORS_HEADERS,
@@ -729,13 +623,6 @@ export function getMcpCorsHeaders(req: NextRequest) {
   return {
     ...MCP_CORS_HEADERS,
     'Access-Control-Allow-Origin': '*',
-=======
-  const allowedOrigin = origin && ALLOWED_MCP_ORIGINS.includes(origin) ? origin : ALLOWED_MCP_ORIGINS[0];
-  
-  return {
-    ...MCP_CORS_HEADERS,
-    'Access-Control-Allow-Origin': allowedOrigin,
->>>>>>> origin/main
   };
 }
 
@@ -748,7 +635,6 @@ export function handleCorsApp(req: NextRequest) {
   }
   return null;
 }
-<<<<<<< HEAD
 
 /**
  * Creates a standardized Unauthorized / Forbidden response with WWW-Authenticate header
@@ -784,5 +670,3 @@ export function createUnauthorizedResponse(
     }
   );
 }
-=======
->>>>>>> origin/main

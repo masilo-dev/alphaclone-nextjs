@@ -181,17 +181,12 @@ export async function GET(req: NextRequest) {
                 upsertFailures += 1;
             }
 
-<<<<<<< HEAD
-=======
-            // --- INSTAGRAM INTEGRATION LOGIC ---
->>>>>>> origin/main
             if (page.instagram_business_account?.id) {
                 const igId = page.instagram_business_account.id;
                 const igRes = await fetch(
                     `https://graph.facebook.com/v19.0/${igId}?fields=username,name,profile_picture_url,followers_count,media_count&access_token=${page.access_token}`
                 );
                 const igData = await igRes.json();
-<<<<<<< HEAD
 
                 if (!igData.error && page.access_token) {
                     const igResult = await upsertInstagramIntegration({
@@ -213,35 +208,6 @@ export async function GET(req: NextRequest) {
                     }
                 }
             }
-=======
-                
-                if (!igData.error) {
-                    const { error: igErr } = await supabase.from('instagram_integrations').upsert({
-                        user_id: stateData.userId,
-                        tenant_id: resolvedTenantId,
-                        instagram_account_id: igId,
-                        username: igData.username || null,
-                        account_name: igData.name || null,
-                        profile_picture_url: igData.profile_picture_url || null,
-                        facebook_page_id: String(page.id),
-                        facebook_page_name: page.name,
-                        followers_count: igData.followers_count || 0,
-                        media_count: igData.media_count || 0,
-                        page_access_token: page.access_token, // Needed to act on behalf of IG account
-                        is_active: true,
-                        connected_at: new Date().toISOString(),
-                        expires_at: longLivedData.expires_in
-                            ? new Date(Date.now() + longLivedData.expires_in * 1000).toISOString()
-                            : null,
-                    }, { onConflict: 'user_id,instagram_account_id' });
-
-                    if (igErr) {
-                        console.error('[Facebook Callback] instagram_integrations upsert failed:', igErr);
-                    }
-                }
-            }
-            // --- END INSTAGRAM LOGIC ---
->>>>>>> origin/main
         }
     } else {
         console.warn('[Facebook Callback] No pages returned for user:', stateData.userId);

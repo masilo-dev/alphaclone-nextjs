@@ -131,16 +131,11 @@ registerTool('workspace', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
 
-<<<<<<< HEAD
     const [leadsCount, dealsCount, tasksCount, projectsCount, leadsRawCount] = await Promise.all([
-=======
-    const [leadsCount, dealsCount, tasksCount, projectsCount] = await Promise.all([
->>>>>>> origin/main
       supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id),
       supabase.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id),
       supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id).neq('status', 'completed'),
       supabase.from('projects').select('*', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id).eq('status', 'active'),
-<<<<<<< HEAD
       supabase
         .from('leads')
         .select('id', { count: 'exact', head: true })
@@ -161,15 +156,6 @@ registerTool('workspace', {
       pending_tasks: tasksCount.count || 0,
       active_projects: projectsCount.count || 0,
       ...(consistencyWarning ? { consistency_warning: consistencyWarning } : {}),
-=======
-    ]);
-
-    return {
-      active_leads: leadsCount.count || 0,
-      active_deals: dealsCount.count || 0,
-      pending_tasks: tasksCount.count || 0,
-      active_projects: projectsCount.count || 0,
->>>>>>> origin/main
     };
   },
 });

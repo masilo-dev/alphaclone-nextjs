@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMessageBatch, getBatchStatus, getBatchResults, cancelBatch } from '@/services/ai/messageBatchService';
-<<<<<<< HEAD
 import { requireAuthenticatedUser } from '@/lib/apiAuth';
-=======
->>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-<<<<<<< HEAD
 function errorStatus(err: any): number {
   return typeof err?.status === 'number' ? err.status : 500;
 }
@@ -17,11 +13,6 @@ function errorStatus(err: any): number {
 export async function POST(req: NextRequest) {
   try {
     await requireAuthenticatedUser();
-=======
-/** POST /api/ai/batches — Create a new message batch */
-export async function POST(req: NextRequest) {
-  try {
->>>>>>> origin/main
     const body = await req.json();
     const { requests, model, system_prompt } = body;
 
@@ -32,21 +23,14 @@ export async function POST(req: NextRequest) {
     const batchId = await createMessageBatch(requests, model, system_prompt);
     return NextResponse.json({ success: true, batch_id: batchId });
   } catch (err: any) {
-<<<<<<< HEAD
     return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
-=======
-    return NextResponse.json({ error: err.message }, { status: 500 });
->>>>>>> origin/main
   }
 }
 
 /** GET /api/ai/batches?batch_id=xxx — Check batch status; add &results=true for results */
 export async function GET(req: NextRequest) {
   try {
-<<<<<<< HEAD
     await requireAuthenticatedUser();
-=======
->>>>>>> origin/main
     const { searchParams } = new URL(req.url);
     const batchId = searchParams.get('batch_id');
     const fetchResults = searchParams.get('results') === 'true';
@@ -64,21 +48,14 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(status);
   } catch (err: any) {
-<<<<<<< HEAD
     return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
-=======
-    return NextResponse.json({ error: err.message }, { status: 500 });
->>>>>>> origin/main
   }
 }
 
 /** DELETE /api/ai/batches?batch_id=xxx — Cancel a batch */
 export async function DELETE(req: NextRequest) {
   try {
-<<<<<<< HEAD
     await requireAuthenticatedUser();
-=======
->>>>>>> origin/main
     const { searchParams } = new URL(req.url);
     const batchId = searchParams.get('batch_id');
 
@@ -89,10 +66,6 @@ export async function DELETE(req: NextRequest) {
     await cancelBatch(batchId);
     return NextResponse.json({ success: true, cancelled: batchId });
   } catch (err: any) {
-<<<<<<< HEAD
     return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
-=======
-    return NextResponse.json({ error: err.message }, { status: 500 });
->>>>>>> origin/main
   }
 }

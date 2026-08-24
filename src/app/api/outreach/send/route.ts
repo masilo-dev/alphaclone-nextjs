@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-<<<<<<< HEAD
 import { microsoftServerService } from '@/services/server/microsoftServerService';
-=======
-import { gmailServerService } from '@/services/server/gmailServerService';
->>>>>>> origin/main
 import { ZohoMailService } from '../../../../services/zoho/ZohoMailService';
 import {
   createAdminSupabaseClientOrThrow,
@@ -13,14 +9,10 @@ import {
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { outreachSendSchema } from '@/schemas/validation';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
-<<<<<<< HEAD
 import { normalizeEmailSubject } from '@/lib/email/emailComposition';
 import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
 import { buildEmail } from '@/lib/email/template';
 import { sendEmail } from '@/lib/email/sendEmail';
-=======
-import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
->>>>>>> origin/main
 import sanitizeHtml from 'sanitize-html';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 
@@ -28,11 +20,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL ||
 const BASE_URL = SITE_URL && !SITE_URL.includes('localhost') 
   ? SITE_URL 
   : 'https://alphaclonesystems.com';
-<<<<<<< HEAD
 type OutreachProvider = 'microsoft' | 'brevo' | 'resend' | 'sendgrid' | 'zoho';
-=======
-type OutreachProvider = 'brevo' | 'resend' | 'sendgrid' | 'zoho' | 'gmail';
->>>>>>> origin/main
 type ProviderConfig = {
   provider: OutreachProvider;
   apiKey: string;
@@ -40,31 +28,18 @@ type ProviderConfig = {
   fromName: string;
   dailyLimit: number;
 };
-<<<<<<< HEAD
 const PROVIDER_FAILOVER_ORDER: OutreachProvider[] = ['microsoft', 'brevo', 'resend', 'sendgrid', 'zoho'];
 const DEFAULT_PROVIDER_LIMITS: Record<OutreachProvider, number> = {
   microsoft: 300,
-=======
-const PROVIDER_FAILOVER_ORDER: OutreachProvider[] = ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail'];
-const DEFAULT_PROVIDER_LIMITS: Record<OutreachProvider, number> = {
->>>>>>> origin/main
   brevo: 300,
   resend: 300,
   sendgrid: 500,
   zoho: 200,
-<<<<<<< HEAD
-=======
-  gmail: 150,
->>>>>>> origin/main
 };
 
 function normalizeProvider(value: unknown): OutreachProvider | null {
   const provider = String(value || '').trim().toLowerCase();
-<<<<<<< HEAD
   if (provider === 'microsoft' || provider === 'brevo' || provider === 'resend' || provider === 'sendgrid' || provider === 'zoho') {
-=======
-  if (provider === 'brevo' || provider === 'resend' || provider === 'sendgrid' || provider === 'zoho' || provider === 'gmail') {
->>>>>>> origin/main
     return provider;
   }
   return null;
@@ -134,30 +109,6 @@ function classifyProviderFailure(failureMessage: string): 'auth' | 'rate_limit' 
   }
   return 'network_or_unknown';
 }
-<<<<<<< HEAD
-=======
-
-function encodeGmailRawMessage(params: {
-  to: string;
-  subject: string;
-  html: string;
-  fromEmail: string;
-  fromName: string;
-}) {
-  const utf8Subject = `=?utf-8?B?${Buffer.from(params.subject).toString('base64')}?=`;
-  const message = [
-    `From: ${params.fromName} <${params.fromEmail}>`,
-    `To: ${params.to}`,
-    `Subject: ${utf8Subject}`,
-    'MIME-Version: 1.0',
-    'Content-Type: text/html; charset="UTF-8"',
-    '',
-    params.html,
-  ].join('\n');
-
-  return Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
->>>>>>> origin/main
 
 /**
  * Inject open-tracking pixel into email body HTML.
@@ -218,16 +169,12 @@ export async function POST(request: Request) {
       balanceByDailyLimit = false,
       language,
       languageMode,
-<<<<<<< HEAD
       skipCrmGate = false,
       directSend = false,
       entityType,
       entityId,
     } = parsed.data;
     const isDirectSend = skipCrmGate || directSend;
-=======
-    } = parsed.data;
->>>>>>> origin/main
     const normalizedSubject = normalizeEmailSubject(subject);
     if (!normalizedSubject) {
       return NextResponse.json({ error: 'Subject is required.' }, { status: 400 });
@@ -236,7 +183,6 @@ export async function POST(request: Request) {
     const tenantCtx = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
 
-<<<<<<< HEAD
     // 0. Recipient Validation (skipped for direct inbox replies)
     if (!isDirectSend) {
       const { allowed, reason } = await validateRecipient(admin, tenantId, leadEmail);
@@ -257,31 +203,12 @@ export async function POST(request: Request) {
     const isHtml = /<[a-z][\s\S]*>/i.test(emailBody);
     const bodyToSanitize = isHtml ? emailBody : emailBody.replace(/\r?\n/g, '<br />');
     const sanitizedBody = sanitizeHtml(bodyToSanitize, {
-=======
-    // 0. Recipient Validation
-    const { allowed, reason } = await validateRecipient(admin, tenantId, leadEmail);
-    if (!allowed) {
-      await admin.from('email_audit_log').insert({
-        tenant_id: tenantId,
-        user_id: tenantCtx.user.id,
-        to_email: leadEmail,
-        subject: normalizedSubject,
-        allowed: false,
-        blocked_reason: reason,
-      });
-      return NextResponse.json({ error: reason }, { status: 403 });
-    }
-
-    // 0.1 HTML Sanitization
-    const sanitizedBody = sanitizeHtml(emailBody, {
->>>>>>> origin/main
       allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
       allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
         '*': ['style', 'class'],
       }
     });
-<<<<<<< HEAD
     const unsubscribeUrl = buildUnsubscribeUrl(leadEmail, tenantId);
 
     const { data: tenantRow } = await admin.from('tenants').select('name, settings').eq('id', tenantId).maybeSingle();
@@ -309,9 +236,6 @@ export async function POST(request: Request) {
       console.log(`[outreach/send] Skipping — recipient unsubscribed: ${leadEmail} (tenant ${tenantId})`);
       return NextResponse.json({ success: false, status: 'unsubscribed', error: 'Recipient has unsubscribed' }, { status: 409 });
     }
-=======
-    const bodyWithFooter = ensureFooter(sanitizedBody);
->>>>>>> origin/main
     if (await isEmailSuppressed(tenantId, leadEmail)) {
       return NextResponse.json({ success: false, status: 'suppressed', error: 'Recipient is suppressed' }, { status: 409 });
     }
@@ -320,30 +244,19 @@ export async function POST(request: Request) {
     // Default policy: manual approval required unless explicitly auto-send.
     // Auto-send is allowed only if consent is present and confidence passes threshold.
     const shouldAutoSend = autoSend === true;
-<<<<<<< HEAD
     if (!isDirectSend && consentGranted !== true) {
       return NextResponse.json({ error: 'Marketing consent is required to send outreach emails.' }, { status: 400 });
     }
     const policyQueueOnly =
       !shouldAutoSend ||
-=======
-    const policyQueueOnly =
-      !shouldAutoSend ||
-      consentGranted !== true ||
->>>>>>> origin/main
       Number(confidenceScore || 0) < autoSendThreshold;
 
     // 1. Generate tracking ID
     const trackingId = crypto.randomUUID();
 
-<<<<<<< HEAD
     // 2. Inject tracking pixel (footer already applied above via ensureFooter)
     const htmlBody = injectTrackingPixel(htmlWithTemplate, trackingId);
     const htmlWithComplianceFooter = htmlBody;
-=======
-    // 2. Inject tracking pixel
-    const htmlBody = injectTrackingPixel(bodyWithFooter, trackingId);
->>>>>>> origin/main
 
     // 3. Pre-insert log row as 'queued'
     const { data: logRow, error: logErr } = await admin
@@ -354,11 +267,7 @@ export async function POST(request: Request) {
         lead_name:    leadName,
         lead_email:   leadEmail,
         subject: normalizedSubject,
-<<<<<<< HEAD
         body_html:    htmlWithComplianceFooter,
-=======
-        body_html:    htmlBody,
->>>>>>> origin/main
         tracking_id:  trackingId,
         pitch_angle:  pitchAngle,
         industry,
@@ -409,11 +318,7 @@ export async function POST(request: Request) {
       .eq('tenant_id', tenantId)
       .eq('user_id', tenantCtx.user.id)
       .eq('enabled', true)
-<<<<<<< HEAD
       .in('type', ['brevo', 'resend', 'sendgrid', 'zoho']);
-=======
-      .in('type', ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail']);
->>>>>>> origin/main
     if (integrationsError) {
       return NextResponse.json({ success: false, status: 'failed', error: integrationsError.message }, { status: 500 });
     }
@@ -452,7 +357,6 @@ export async function POST(request: Request) {
         return acc;
       }, [] as ProviderConfig[]);
 
-<<<<<<< HEAD
     const microsoftConnection = await microsoftServerService.getConnection(tenantCtx.user.id).catch(() => null);
     if (microsoftConnection) {
       providerConfigs.unshift({
@@ -539,75 +443,6 @@ export async function POST(request: Request) {
     const invalidProviderConfigs = providerQueue
       .filter((provider) => {
         if (provider.provider === 'microsoft' || provider.provider === 'zoho') {
-=======
-    const activeProviders = providerConfigs.filter((p) =>
-      selectedProviders.length > 0 ? selectedProviders.includes(p.provider) : true
-    );
-    if (activeProviders.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          status: 'failed',
-          code: 'PROVIDER_NOT_CONFIGURED_FOR_USER',
-          error: 'No active email provider is connected for your account. Connect Brevo, Resend, SendGrid, Zoho, or Gmail in Settings.',
-        },
-        { status: 400 }
-      );
-    }
-
-    const available = activeProviders;
-    if (!available.length) {
-      return NextResponse.json(
-        { success: false, status: 'failed', error: 'Daily limits reached across selected providers' },
-        { status: 429 }
-      );
-    }
-
-    const providerCounts = new Map<OutreachProvider, number>();
-    for (const provider of PROVIDER_FAILOVER_ORDER) {
-      providerCounts.set(provider, 0);
-    }
-
-    const shouldUseLimitBalancing = balanceByDailyLimit !== false;
-    if (shouldUseLimitBalancing) {
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-      const { data: usageRows, error: usageError } = await admin
-        .from('lead_outreach_log')
-        .select('provider')
-        .eq('tenant_id', tenantId)
-        .gte('created_at', startOfDay.toISOString())
-        .in('status', ['sent', 'delivered', 'opened', 'clicked']);
-      if (!usageError) {
-        for (const row of usageRows || []) {
-          const p = normalizeProvider((row as { provider?: unknown }).provider);
-          if (!p) continue;
-          providerCounts.set(p, (providerCounts.get(p) || 0) + 1);
-        }
-      }
-    }
-
-    const failoverSequence = (() => {
-      const allowed = new Set(available.map((p) => p.provider));
-      let ordered = PROVIDER_FAILOVER_ORDER.filter((provider) => allowed.has(provider));
-      if (balanceByDailyLimit === true && preferred && ordered.includes(preferred)) {
-        ordered = [preferred, ...ordered.filter((provider) => provider !== preferred)];
-      }
-      return ordered;
-    })();
-
-    const providerQueue = failoverSequence
-      .map((providerId) => available.find((provider) => provider.provider === providerId))
-      .filter((provider): provider is { provider: OutreachProvider; apiKey: string; fromEmail: string; fromName: string; dailyLimit: number } => Boolean(provider))
-      .filter((provider) => {
-        if (!shouldUseLimitBalancing) return true;
-        return (providerCounts.get(provider.provider) || 0) < provider.dailyLimit;
-      });
-
-    const invalidProviderConfigs = providerQueue
-      .filter((provider) => {
-        if (provider.provider === 'gmail' || provider.provider === 'zoho') {
->>>>>>> origin/main
           return !provider.fromEmail;
         }
         return !provider.apiKey || !provider.fromEmail;
@@ -616,11 +451,7 @@ export async function POST(request: Request) {
         provider: provider.provider,
         missing: {
           apiKey:
-<<<<<<< HEAD
             provider.provider === 'microsoft' || provider.provider === 'zoho'
-=======
-            provider.provider === 'gmail' || provider.provider === 'zoho'
->>>>>>> origin/main
               ? false
               : !provider.apiKey,
           fromEmail: !provider.fromEmail,
@@ -652,7 +483,6 @@ export async function POST(request: Request) {
 
     for (const selectedProvider of providerQueue) {
       try {
-<<<<<<< HEAD
         if (selectedProvider.provider === 'microsoft') {
           await microsoftServerService.sendEmail(tenantCtx.user.id, {
             to: [leadEmail],
@@ -662,15 +492,10 @@ export async function POST(request: Request) {
           providerMessageId = null;
         } else if (selectedProvider.provider === 'zoho') {
           const zohoService = new ZohoMailService(tenantCtx.user.id, tenantId);
-=======
-        if (selectedProvider.provider === 'zoho') {
-          const zohoService = new ZohoMailService(tenantCtx.user.id);
->>>>>>> origin/main
           const sendResult = await zohoService.sendEmail({
             toAddress: leadEmail,
             fromAddress: selectedProvider.fromEmail || fromAddress,
             subject: normalizedSubject,
-<<<<<<< HEAD
             content: htmlWithComplianceFooter,
           });
           providerMessageId = sendResult?.data?.messageId || null;
@@ -696,92 +521,6 @@ export async function POST(request: Request) {
             throw new Error(result.error || `Failed to send via ${selectedProvider.provider}`);
           }
           providerMessageId = result.emailId || null;
-=======
-            content: htmlBody,
-          });
-          providerMessageId = sendResult?.data?.messageId || null;
-        } else if (selectedProvider.provider === 'gmail') {
-          const raw = encodeGmailRawMessage({
-            to: leadEmail,
-            subject: normalizedSubject,
-            html: htmlBody,
-            fromEmail: selectedProvider.fromEmail || fromAddress || tenantCtx.user.email || 'noreply@alphaclonesystems.com',
-            fromName: selectedProvider.fromName || 'AlphaClone Systems',
-          });
-          const sendResult = await gmailServerService.proxyRequest(tenantCtx.user.id, 'messages/send', {
-            method: 'POST',
-            body: JSON.stringify({ raw }),
-          }) as any;
-          providerMessageId = sendResult?.id || null;
-        } else if (selectedProvider.provider === 'brevo') {
-          if (!selectedProvider.fromEmail) throw new Error('Brevo sender email missing. Set a verified From Email in Brevo integration.');
-          const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'api-key': selectedProvider.apiKey,
-            },
-            body: JSON.stringify({
-              sender: { email: selectedProvider.fromEmail || fromAddress, name: selectedProvider.fromName || 'AlphaClone Systems' },
-              to: [{ email: leadEmail }],
-              subject: normalizedSubject,
-              htmlContent: htmlBody,
-            }),
-          });
-          if (!response.ok) {
-            const errorBody = await response.text().catch(() => '');
-            throw new Error(`Brevo send failed (${response.status}): ${errorBody.slice(0, 220)}`);
-          }
-          const responseJson = await response.json().catch(() => ({}));
-          providerMessageId = typeof responseJson?.messageId === 'string' ? responseJson.messageId : providerMessageId;
-        } else if (selectedProvider.provider === 'resend') {
-          if (!selectedProvider.fromEmail) throw new Error('Resend sender email missing. Set a verified From Email in Resend integration.');
-          const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${selectedProvider.apiKey}`,
-            },
-            body: JSON.stringify({
-              from: `${selectedProvider.fromName || 'AlphaClone Systems'} <${selectedProvider.fromEmail || fromAddress}>`,
-              to: leadEmail,
-              subject: normalizedSubject,
-              html: htmlBody,
-            }),
-          });
-          if (!response.ok) {
-            const errorBody = await response.text().catch(() => '');
-            throw new Error(`Resend send failed (${response.status}): ${errorBody.slice(0, 220)}`);
-          }
-          const responseJson = await response.json().catch(() => ({}));
-          providerMessageId =
-            (responseJson?.data && typeof responseJson.data.id === 'string' ? responseJson.data.id : null) ||
-            (typeof responseJson?.id === 'string' ? responseJson.id : providerMessageId);
-        } else if (selectedProvider.provider === 'sendgrid') {
-          if (!selectedProvider.fromEmail) throw new Error('SendGrid sender email missing. Set a verified From Email in SendGrid integration.');
-          const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${selectedProvider.apiKey}`,
-            },
-            body: JSON.stringify({
-              personalizations: [{ to: [{ email: leadEmail }] }],
-              from: {
-                email: selectedProvider.fromEmail || fromAddress,
-                name: selectedProvider.fromName || 'AlphaClone Systems',
-              },
-              subject: normalizedSubject,
-              content: [{ type: 'text/html', value: htmlBody }],
-            }),
-          });
-          if (!response.ok) {
-            const errorBody = await response.text().catch(() => '');
-            throw new Error(`SendGrid send failed (${response.status}): ${errorBody.slice(0, 220)}`);
-          }
-          const sendgridMessageId = response.headers.get('x-message-id');
-          if (sendgridMessageId) providerMessageId = sendgridMessageId;
->>>>>>> origin/main
         }
 
         sentProvider = selectedProvider.provider;

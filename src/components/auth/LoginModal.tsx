@@ -91,14 +91,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 
         const { authService } = await import('../../services/authService');
         const role = 'tenant_admin';
-<<<<<<< HEAD
         const { user, error: signUpError, needsEmailConfirmation } = await authService.signUp(email, password, name, role, {
           businessName,
           referralCode,
         });
-=======
-        const { user, error: signUpError } = await authService.signUp(email, password, name, role);
->>>>>>> origin/main
 
         if (signUpError) {
           console.error("LoginModal SignUp Error:", signUpError);
@@ -107,25 +103,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
           return;
         }
 
-<<<<<<< HEAD
         if (needsEmailConfirmation) {
           setError('');
           onClose();
           return;
         }
-=======
-        if (user) {
-          // 2. TENANT CREATION (If Business selected)
-          if (businessName) {
-            try {
-              const { tenantService } = await import('../../services/tenancy/TenantService');
-              const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-              await tenantService.createTenant({
-                name: businessName,
-                slug: slug,
-                adminUserId: user.id
-              });
->>>>>>> origin/main
 
         if (user) {
           try {
@@ -188,15 +170,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
             className="object-contain"
           />
         </div>
-<<<<<<< HEAD
         <h4 className="text-slate-200 font-medium text-base">AlphaClone Systems</h4>
         <p className="text-xs text-slate-500 mt-0.5">
           {isRegistering ? '14-day free trial · workspace auto-created' : 'Business OS secure access'}
-=======
-        <h4 className="text-slate-200 font-medium text-lg">AlphaClone Systems</h4>
-        <p className="text-sm text-slate-500 mt-1">
-          {isRegistering ? 'Create your Business OS workspace' : 'Business OS secure access'}
->>>>>>> origin/main
         </p>
       </div>
 
@@ -246,18 +222,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
           </div>
         ) : (
           <>
-<<<<<<< HEAD
             {!showMfaChallenge && (
               <div className="relative my-1">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-slate-800" />
-=======
-            {isRegistering && (
-              <div className="animate-slide-up space-y-4">
-                <div className="rounded-lg border border-teal-500/20 bg-teal-500/10 px-4 py-3 text-center">
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Business OS Access</p>
-                  <p className="mt-1 text-sm text-slate-300">New signups create a business workspace. Client account creation is disabled here.</p>
->>>>>>> origin/main
                 </div>
                 <div className="relative flex justify-center text-[10px] uppercase tracking-wide">
                   <span className="bg-slate-900 px-2 text-slate-500">Or use email</span>
@@ -274,25 +242,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
                   placeholder="John Doe"
                   required={isRegistering}
                 />
-<<<<<<< HEAD
                 <Input
                   label="Business Name"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   placeholder="Optional"
                 />
-=======
-
-                <div className="animate-slide-up">
-                  <Input
-                    label="Business Name"
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="AlphaCorp Industries"
-                    required={isRegistering}
-                  />
-                </div>
->>>>>>> origin/main
               </div>
             )}
 
@@ -363,4 +318,3 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 };
 
 export default LoginModal;
-

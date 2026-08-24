@@ -10,14 +10,10 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
-<<<<<<< HEAD
 import { LinkedInOrgPanel, normalizeLinkedInScopes } from './LinkedInOrgPanel';
 import { formatLinkedInCompanyPageLabel } from '@/services/linkedin/linkedinIntegrationService';
 import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
-=======
-import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
->>>>>>> origin/main
 
 type LinkedInStatusFilter = 'all' | 'published' | 'scheduled' | 'failed' | 'cancelled';
 
@@ -30,11 +26,8 @@ interface LinkedInPostRow {
   created_at: string;
   linkedin_post_urn: string | null;
   linkedin_member_id: string | null;
-<<<<<<< HEAD
   linkedin_organization_id?: string | null;
   metadata?: Record<string, unknown> | null;
-=======
->>>>>>> origin/main
   external_id?: string | null;
   analytics?: Record<string, unknown> | null;
   error_message: string | null;
@@ -45,28 +38,21 @@ interface LinkedInIntegrationRow {
   linkedin_person_urn: string;
   scopes: string[] | null;
   is_active: boolean;
-<<<<<<< HEAD
   token_expires_at?: string | null;
   metadata?: {
     name?: string | null;
-=======
-  metadata?: {
->>>>>>> origin/main
     company_pages?: Array<{
       id: string;
       name: string | null;
       vanityName: string | null;
       logoUrl: string | null;
     }>;
-<<<<<<< HEAD
     company_pages_diagnostics?: {
       hint?: string | null;
       apiForbidden?: boolean;
       missingOrgScopes?: boolean;
       grantedScopes?: string[];
     } | null;
-=======
->>>>>>> origin/main
   } | null;
 }
 
@@ -118,7 +104,6 @@ function isMissingRelationOrColumn(error: any, name: string) {
   );
 }
 
-<<<<<<< HEAD
 function getLinkedInPostOrganizationId(post: LinkedInPostRow): string | null {
   if (typeof post.linkedin_organization_id === 'string' && post.linkedin_organization_id.trim()) {
     return post.linkedin_organization_id.trim();
@@ -130,8 +115,6 @@ function getLinkedInPostOrganizationId(post: LinkedInPostRow): string | null {
   return null;
 }
 
-=======
->>>>>>> origin/main
 async function loadLinkedInPostsWithSchemaFallback(tenantId: string) {
   try {
     const res = await fetch(`/api/linkedin/posts?tenantId=${encodeURIComponent(tenantId)}`, {
@@ -214,7 +197,6 @@ export default function LinkedInManagementTab() {
   const [aiContentType, setAiContentType] = useState<'linkedin_post' | 'linkedin_article'>('linkedin_post');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [showComposeSheet, setShowComposeSheet] = useState(false);
-<<<<<<< HEAD
   const [capturingLead, setCapturingLead] = useState<Record<string, boolean>>({});
   const [orgIdentities, setOrgIdentities] = useState<Array<{
     linkedin_organization_id: string;
@@ -223,26 +205,16 @@ export default function LinkedInManagementTab() {
     logo_url: string | null;
   }>>([]);
   const [refreshingCompanyPages, setRefreshingCompanyPages] = useState(false);
-=======
->>>>>>> origin/main
 
   const loadData = useCallback(async () => {
     if (!currentTenant?.id || !user?.id) return;
     setLoading(true);
     setSchemaWarning(null);
-<<<<<<< HEAD
     const [postsRes, liRes, orgRes] = await Promise.all([
       loadLinkedInPostsWithSchemaFallback(currentTenant.id),
       supabase
         .from('linkedin_integrations')
         .select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata,token_expires_at')
-=======
-    const [postsRes, liRes] = await Promise.all([
-      loadLinkedInPostsWithSchemaFallback(currentTenant.id),
-      supabase
-        .from('linkedin_integrations')
-        .select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata')
->>>>>>> origin/main
         .eq('tenant_id', currentTenant.id)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
@@ -340,23 +312,6 @@ export default function LinkedInManagementTab() {
 
   const duplicateCount = useMemo(() => Object.values(duplicateGroups).length, [duplicateGroups]);
 
-  const duplicateGroups = useMemo(() => {
-    const groups: Record<string, string[]> = {};
-    posts.forEach((p) => {
-      const cap = (p.caption || '').trim().toLowerCase();
-      if (!cap || cap.length < 10) return;
-      if (!groups[cap]) groups[cap] = [];
-      groups[cap].push(p.id);
-    });
-    const filtered: Record<string, string[]> = {};
-    Object.entries(groups).forEach(([text, ids]) => {
-      if (ids.length > 1) filtered[text] = ids;
-    });
-    return filtered;
-  }, [posts]);
-
-  const duplicateCount = useMemo(() => Object.values(duplicateGroups).length, [duplicateGroups]);
-
   const hasWriteScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
     const normalized = normalizeScopes(scopes);
@@ -367,7 +322,6 @@ export default function LinkedInManagementTab() {
     [integrations, selectedLinkedInMemberId]
   );
   const canComposeLinkedIn = !!currentTenant?.id && !!selectedLinkedInMemberId && !!selectedIntegration?.is_active && hasWriteScope;
-<<<<<<< HEAD
   const companyPages = useMemo(() => {
     const fromMetadata = Array.isArray(selectedIntegration?.metadata?.company_pages)
       ? selectedIntegration?.metadata?.company_pages || []
@@ -423,18 +377,12 @@ export default function LinkedInManagementTab() {
   const grantedLinkedInScopes = useMemo(
     () => normalizeLinkedInScopes(selectedIntegration?.scopes),
     [selectedIntegration?.scopes],
-=======
-  const companyPages = useMemo(
-    () => (Array.isArray(selectedIntegration?.metadata?.company_pages) ? selectedIntegration?.metadata?.company_pages || [] : []),
-    [selectedIntegration]
->>>>>>> origin/main
   );
   const hasOrganizationWriteScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
     return normalizeScopes(scopes).includes('w_organization_social');
   }, [integrations, selectedLinkedInMemberId]);
   const canPostAsSelectedCompany = !selectedLinkedInOrganizationId || hasOrganizationWriteScope;
-<<<<<<< HEAD
   const hasLinkedInProfileConnection = Boolean(selectedLinkedInMemberId);
   const hasCompanyPageAccess = companyPages.length > 0;
   const linkedInOrgStatusMessage =
@@ -461,8 +409,6 @@ export default function LinkedInManagementTab() {
     if (daysLeft <= 7) return `LinkedIn token expires in ${daysLeft} day(s). Reconnect now to avoid interruption (LinkedIn may require 2FA on reconnect).`;
     return null;
   }, [selectedIntegration?.token_expires_at]);
-=======
->>>>>>> origin/main
 
   const handleConnectLinkedIn = async () => {
     try {
@@ -474,7 +420,6 @@ export default function LinkedInManagementTab() {
     }
   };
 
-<<<<<<< HEAD
   const handleRefreshCompanyPages = async () => {
     if (!currentTenant?.id || !selectedLinkedInMemberId) return;
     setRefreshingCompanyPages(true);
@@ -531,8 +476,6 @@ export default function LinkedInManagementTab() {
     }
   };
 
-=======
->>>>>>> origin/main
   const resolveLinkedInPostUrn = useCallback((post: LinkedInPostRow): string | null => {
     const directUrn = String(post.linkedin_post_urn || '').trim();
     if (directUrn) return directUrn;
@@ -729,27 +672,16 @@ ${parentContext}Return only the comment text.`;
     }
   };
 
-<<<<<<< HEAD
   const captureCommentLead = async (post: LinkedInPostRow, comment: LinkedInCommentRow) => {
     if (!currentTenant?.id) return;
     const key = comment.commentUrn;
     setCapturingLead((prev) => ({ ...prev, [key]: true }));
     try {
       const res = await fetch('/api/linkedin/capture-lead', {
-=======
-  const loadEngagement = async (post: LinkedInPostRow) => {
-    if (!currentTenant?.id) return;
-    const resolvedPostUrn = resolveLinkedInPostUrn(post);
-    if (!resolvedPostUrn) return;
-    setEngagementLoading((prev) => ({ ...prev, [post.id]: true }));
-    try {
-      const res = await fetch('/api/linkedin/engagement', {
->>>>>>> origin/main
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId: currentTenant.id,
-<<<<<<< HEAD
           actorUrn: comment.actor,
           commentText: comment.text,
           postCaption: post.caption,
@@ -776,8 +708,6 @@ ${parentContext}Return only the comment text.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tenantId: currentTenant.id,
-=======
->>>>>>> origin/main
           postUrn: resolvedPostUrn,
           linkedinMemberId: selectedLinkedInMemberId || undefined,
         }),
@@ -1018,13 +948,8 @@ ${parentContext}Return only the comment text.`;
           value={aiTopic}
           onChange={(e) => setAiTopic(e.target.value)}
           placeholder="What should this post be about? Describe it or let AI draft it..."
-<<<<<<< HEAD
           rows={4}
           className="w-full min-h-[96px] bg-slate-950 border border-slate-800 rounded-xl p-4 text-base text-white placeholder-slate-600 focus:border-teal-500/50 focus:outline-none transition-all resize-y group-hover:border-slate-700"
-=======
-          rows={3}
-          className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-white placeholder-slate-600 focus:border-teal-500/50 focus:outline-none transition-all resize-none group-hover:border-slate-700"
->>>>>>> origin/main
         />
       </div>
 
@@ -1034,7 +959,6 @@ ${parentContext}Return only the comment text.`;
             value={composeCaption}
             onChange={(e) => setComposeCaption(e.target.value)}
             placeholder="Post content will appear here..."
-<<<<<<< HEAD
             rows={8}
             className="w-full min-h-[180px] bg-transparent border-b border-slate-800 py-2 text-base text-slate-300 placeholder-slate-700 focus:border-teal-500 focus:outline-none transition-all resize-y"
           />
@@ -1069,13 +993,6 @@ ${parentContext}Return only the comment text.`;
           </div>
         )}
 
-=======
-            rows={6}
-            className="w-full bg-transparent border-b border-slate-800 py-2 text-sm text-slate-300 placeholder-slate-700 focus:border-teal-500 focus:outline-none transition-all resize-none"
-          />
-        </div>
-
->>>>>>> origin/main
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div className="relative">
             <input
@@ -1145,23 +1062,16 @@ ${parentContext}Return only the comment text.`;
 
   if (loading) {
     return (
-<<<<<<< HEAD
       <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom pb-24 lg:pb-6">
         <div className="flex-1 flex h-64 items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
           <p className="text-xs text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
         </div>
-=======
-      <div className="h-64 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
-        <p className="text-xs text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
->>>>>>> origin/main
       </div>
     );
   }
 
   return (
-<<<<<<< HEAD
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom pb-24 lg:pb-6">
       {/* Action-first strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1265,9 +1175,6 @@ ${parentContext}Return only the comment text.`;
         </div>
       )}
 
-=======
-    <div className="space-y-6 pb-20 lg:pb-0">
->>>>>>> origin/main
       {/* ── Topbar ────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -1278,17 +1185,11 @@ ${parentContext}Return only the comment text.`;
             <h2 className="text-lg font-bold text-white tracking-tight">LinkedIn manager</h2>
             <div className="flex items-center gap-2 mt-0.5">
               <div className={`w-2 h-2 rounded-full ${selectedIntegration?.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-<<<<<<< HEAD
               <p className="text-xs text-slate-400 font-medium truncate max-w-[220px] sm:max-w-none">
                 {selectedIntegration?.is_active
                   ? selectedLinkedInOrganizationId
                     ? `Company page · ${linkedInPostingAsLabel}`
                     : `${linkedInProfileLabel} · personal profile`
-=======
-              <p className="text-xs text-slate-400 font-medium truncate max-w-[150px] sm:max-w-none">
-                {selectedIntegration?.is_active 
-                  ? `${selectedLinkedInMemberId} — personal profile` 
->>>>>>> origin/main
                   : 'Disconnected — reconnect required'}
               </p>
             </div>
@@ -1296,7 +1197,6 @@ ${parentContext}Return only the comment text.`;
         </div>
 
         <div className="flex items-center gap-2">
-<<<<<<< HEAD
           {integrations.length > 0 && (
             <select
               value={selectedLinkedInMemberId}
@@ -1313,8 +1213,6 @@ ${parentContext}Return only the comment text.`;
               ))}
             </select>
           )}
-=======
->>>>>>> origin/main
           {!selectedIntegration?.is_active && (
             <button
               onClick={handleConnectLinkedIn}
@@ -1323,7 +1221,6 @@ ${parentContext}Return only the comment text.`;
               Connect
             </button>
           )}
-<<<<<<< HEAD
           {selectedIntegration?.is_active && (
             <button
               onClick={handleDisconnectLinkedIn}
@@ -1332,8 +1229,6 @@ ${parentContext}Return only the comment text.`;
               Disconnect
             </button>
           )}
-=======
->>>>>>> origin/main
           <button
             onClick={loadData}
             className="w-11 h-11 sm:w-auto sm:px-4 sm:py-2.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
@@ -1357,7 +1252,6 @@ ${parentContext}Return only the comment text.`;
         </div>
       </div>
 
-<<<<<<< HEAD
       <LinkedInOrgPanel
         isConnected={!!selectedIntegration?.is_active}
         companyPages={companyPages}
@@ -1373,8 +1267,6 @@ ${parentContext}Return only the comment text.`;
         onLinkCompanyPage={handleLinkCompanyPage}
       />
 
-=======
->>>>>>> origin/main
       {schemaWarning && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
@@ -1389,15 +1281,11 @@ ${parentContext}Return only the comment text.`;
         <div className="space-y-4">
           <div className="px-1">
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider opacity-60">Post queue</h3>
-<<<<<<< HEAD
             <p className="text-xs text-slate-500 mt-1">
               {selectedLinkedInOrganizationId
                 ? `Posts for ${linkedInPostingAsLabel}`
                 : `Posts for ${linkedInProfileLabel}`}
             </p>
-=======
-            <p className="text-xs text-slate-500 mt-1">Scheduled and published posts</p>
->>>>>>> origin/main
           </div>
 
           {duplicateCount > 0 && (
@@ -1453,7 +1341,6 @@ ${parentContext}Return only the comment text.`;
                             Duplicate
                           </span>
                         )}
-<<<<<<< HEAD
                         <StandardStatusBadge variant={resolveStatusVariant(post.status)}>
                           {post.status}
                         </StandardStatusBadge>
@@ -1461,15 +1348,6 @@ ${parentContext}Return only the comment text.`;
                       
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-medium leading-relaxed break-words whitespace-pre-line ${isDup ? 'text-slate-100' : 'text-slate-300'} mb-2`}>
-=======
-                        <span className={`text-xs font-bold px-3 py-1 rounded border uppercase tracking-tighter w-fit ${STATUS_BADGE[post.status] || STATUS_BADGE.draft}`}>
-                          {post.status}
-                        </span>
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium leading-relaxed ${isDup ? 'text-slate-100' : 'text-slate-300'} line-clamp-3 group-hover:line-clamp-none transition-all mb-2`}>
->>>>>>> origin/main
                           {post.caption}
                         </p>
                         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
@@ -1543,7 +1421,6 @@ ${parentContext}Return only the comment text.`;
                                 <span className="text-xs text-slate-600">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}</span>
                               </div>
                               <p className="text-sm text-slate-300 leading-relaxed">{c.text}</p>
-<<<<<<< HEAD
                               <div className="flex flex-wrap gap-2">
                                 <button
                                   type="button"
@@ -1554,18 +1431,12 @@ ${parentContext}Return only the comment text.`;
                                   {capturingLead[c.commentUrn] ? 'Adding…' : 'Add as Lead'}
                                 </button>
                               </div>
-=======
->>>>>>> origin/main
                               <div className="flex flex-col sm:flex-row gap-2">
                                 <input 
                                   value={replyByComment[c.commentUrn] || ''}
                                   onChange={(e) => setReplyByComment(prev => ({...prev, [c.commentUrn]: e.target.value}))}
                                   placeholder="Type reply..." 
-<<<<<<< HEAD
                                   className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-base text-white focus:border-teal-500 focus:outline-none"
-=======
-                                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-teal-500 focus:outline-none"
->>>>>>> origin/main
                                 />
                                 <button 
                                   onClick={() => handleComment(post, c.commentUrn)}
@@ -1611,11 +1482,7 @@ ${parentContext}Return only the comment text.`;
       {isMobile && (
         <button
           onClick={() => setShowComposeSheet(true)}
-<<<<<<< HEAD
           className="ac-fab-above-nav w-16 h-16 rounded-full bg-teal-600 text-white shadow-2xl flex items-center justify-center active:scale-90 transition-transform"
-=======
-          className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-teal-600 text-white shadow-2xl flex items-center justify-center z-40 active:scale-90 transition-transform"
->>>>>>> origin/main
         >
           <Plus className="w-8 h-8" />
         </button>
@@ -1630,22 +1497,14 @@ ${parentContext}Return only the comment text.`;
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowComposeSheet(false)}
-<<<<<<< HEAD
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100]"
-=======
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
->>>>>>> origin/main
             />
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-<<<<<<< HEAD
               className="fixed inset-x-0 bottom-0 bg-slate-900 rounded-t-[32px] z-[1110] max-h-[92vh] overflow-y-auto no-scrollbar border-t border-slate-800"
-=======
-              className="fixed inset-x-0 bottom-0 bg-slate-900 rounded-t-[32px] z-[70] max-h-[92vh] overflow-y-auto no-scrollbar border-t border-slate-800"
->>>>>>> origin/main
             >
               <div className="sticky top-0 bg-slate-900 pt-4 pb-2 px-6 flex items-center justify-between border-b border-slate-800/50 z-10">
                 <div className="w-12 h-1.5 bg-slate-800 rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2" />
@@ -1665,4 +1524,3 @@ ${parentContext}Return only the comment text.`;
     </div>
   );
 }
-

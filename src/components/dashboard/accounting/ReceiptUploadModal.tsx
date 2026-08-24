@@ -7,27 +7,18 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { chartOfAccountsService, ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
 import { receiptService } from '../../../services/accounting/receiptService';
 import toast from 'react-hot-toast';
-<<<<<<< HEAD
 import { DailyCall } from '@daily-co/daily-js';
 import { sendAuditToMeeting } from '../../../lib/meetingAudit';
-=======
->>>>>>> origin/main
 
 interface ReceiptUploadModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
     accounts: ChartOfAccount[];
-<<<<<<< HEAD
     callObject?: DailyCall | null;
 }
 
 export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, accounts, callObject }: ReceiptUploadModalProps) {
-=======
-}
-
-export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, accounts }: ReceiptUploadModalProps) {
->>>>>>> origin/main
     const { currentTenant } = useTenant();
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -105,15 +96,9 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                 amount: extractedData.amount,
                 category: extractedData.category,
                 accountId: selectedAccountId || undefined,
-<<<<<<< HEAD
                 status: 'pending',
                 assetAccountId: isPaid ? (selectedAssetAccountId || undefined) : undefined,
                 imageUrl: extractedData.receiptUrl || undefined,
-=======
-                status: isPaid ? 'paid' : 'pending',
-                assetAccountId: isPaid ? (selectedAssetAccountId || undefined) : undefined,
-                imageUrl: preview || undefined, // In production, this would be a permanent URL
->>>>>>> origin/main
                 rawAiData: extractedData
             });
 
@@ -127,7 +112,6 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                 toast.success('Receipt saved as pending expense');
             }
 
-<<<<<<< HEAD
             // Send audit to meeting
             if (callObject) {
                 sendAuditToMeeting(callObject, {
@@ -143,8 +127,6 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                 });
             }
 
-=======
->>>>>>> origin/main
             onSuccess();
             handleClose();
         } catch (err: any) {

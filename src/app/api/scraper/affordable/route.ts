@@ -2,10 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAuthenticatedUser, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { freePlacesService } from '@/services/freePlacesService';
-<<<<<<< HEAD
 import { apolloService } from '@/services/apolloService';
-=======
->>>>>>> origin/main
 import { scraperAffordableSchema } from '@/schemas/validation';
 
 // Affordable Scraping Tools Integration
@@ -41,7 +38,6 @@ interface GooglePlaceResult {
   reviews?: number;
   place_id: string;
   maps_url?: string;
-<<<<<<< HEAD
 }
 
 interface ApolloEnrichmentResult {
@@ -58,8 +54,6 @@ interface ApolloEnrichmentResult {
     organizationName?: string;
     domain?: string;
   } | null;
-=======
->>>>>>> origin/main
 }
 
 /**
@@ -226,7 +220,6 @@ export async function POST(request: Request) {
     const parsed = scraperAffordableSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
-<<<<<<< HEAD
     }
     const { action, domain, email, query, location, tenant_id, first_name, last_name, organization_name, linkedin_url } = parsed.data;
 
@@ -234,10 +227,7 @@ export async function POST(request: Request) {
       await requireTenantAccess(tenant_id);
     } else {
       await requireAuthenticatedUser();
-=======
->>>>>>> origin/main
     }
-    const { action, domain, email, query, location, tenant_id } = parsed.data;
 
     let results: any = {};
 

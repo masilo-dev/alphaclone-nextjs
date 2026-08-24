@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-<<<<<<< HEAD
-=======
-import ExcelJS from 'exceljs';
->>>>>>> origin/main
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable'; // Note: This might need a separate import if not bundled
 
@@ -80,27 +76,9 @@ export async function GET(req: NextRequest) {
         }
 
         // 2. Generate Export
-<<<<<<< HEAD
         if (type === 'csv' || type === 'xlsx') {
             const csv = toCsv(data);
             return new NextResponse(csv, {
-=======
-        if (type === 'xlsx') {
-            const workbook = new ExcelJS.Workbook();
-            const sheet = workbook.addWorksheet(category.charAt(0).toUpperCase() + category.slice(1));
-
-            const headers = Object.keys(data[0] || {});
-            sheet.columns = headers.map((key) => ({ header: key, key }));
-            for (const row of data) {
-                sheet.addRow(row);
-            }
-
-            sheet.getRow(1).font = { bold: true };
-
-            const buffer = await workbook.xlsx.writeBuffer();
-
-            return new NextResponse(Buffer.from(buffer), {
->>>>>>> origin/main
                 headers: {
                     'Content-Type': 'text/csv; charset=utf-8',
                     'Content-Disposition': `attachment; filename=${fileName}.csv`,

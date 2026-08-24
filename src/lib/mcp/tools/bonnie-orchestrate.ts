@@ -2,7 +2,6 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import { callDeepSeek } from '@/lib/ai/deepseek';
 import { executeSingleBonnieTool } from '@/lib/bonnie/executeSingleBonnieTool';
 import { recordDecision } from '@/services/nexusDecisionLogService';
@@ -76,14 +75,11 @@ function mergeSubagents(
   }
   return SPECIALIST_SUBAGENTS.map((s) => ({ ...s, tools: [...s.tools] }));
 }
-=======
->>>>>>> origin/main
 
 const SubagentSchema = z.object({
   name: z.string(),
   role: z.string(),
   instructions: z.string(),
-<<<<<<< HEAD
   tools: z.array(z.string()).optional(),
   write_allowed: z.boolean().optional().default(false),
 });
@@ -193,31 +189,14 @@ registerTool('bonnie-orchestrate', {
     subagents: z.array(SubagentSchema).max(5).optional(),
     use_specialist_subagents: z.boolean().optional().default(true),
     execute_actions: z.boolean().optional().default(true),
-=======
-});
-
-// ── orchestrate_task ──────────────────────────────────────────────────────────
-registerTool('bonnie-orchestrate', {
-  name: 'orchestrate_task',
-  description:
-    'Orchestrates a complex task by delegating sub-tasks to specialized Bonnie subagents. Uses the Claude Managed Agents multiagent session type to coordinate execution.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid(),
-    task: z.string().min(1),
-    subagents: z.array(SubagentSchema).min(1).max(5),
->>>>>>> origin/main
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', description: 'Tenant UUID' },
-<<<<<<< HEAD
       user_id: { type: 'string', description: 'User UUID' },
       task: { type: 'string', description: 'High-level task to orchestrate' },
       execute_actions: { type: 'boolean', description: 'Execute planned actions after gather phase', default: true },
-=======
-      task: { type: 'string', description: 'High-level task to orchestrate' },
->>>>>>> origin/main
       subagents: {
         type: 'array',
         description: 'List of subagents to delegate to (max 5)',
@@ -227,17 +206,13 @@ registerTool('bonnie-orchestrate', {
             name: { type: 'string' },
             role: { type: 'string' },
             instructions: { type: 'string' },
-<<<<<<< HEAD
             tools: { type: 'array', items: { type: 'string' } },
             write_allowed: { type: 'boolean' },
-=======
->>>>>>> origin/main
           },
           required: ['name', 'role', 'instructions'],
         },
       },
     },
-<<<<<<< HEAD
     required: ['tenant_id', 'task'],
   },
   handler: async (args, ctx) => {
@@ -325,77 +300,11 @@ registerTool('bonnie-orchestrate', {
         completed_at: new Date().toISOString(),
       })
       .eq('id', runId);
-=======
-    required: ['tenant_id', 'task', 'subagents'],
-  },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-
-    const subagentResults: Array<{ name: string; role: string; result: string; success: boolean }> = [];
-
-    // Execute each subagent task via Anthropic
-    for (const subagent of args.subagents) {
-      let result = '';
-      let success = false;
-
-      if (ANTHROPIC_API_KEY) {
-        try {
-          const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-api-key': ANTHROPIC_API_KEY,
-              'anthropic-version': '2023-06-01',
-              'anthropic-beta': 'managed-agents-2026-04-01',
-            },
-            body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
-              max_tokens: 1024,
-              system: `You are ${subagent.name}, a specialized subagent with the role: ${subagent.role}. You are part of a multiagent orchestration system for AlphaClone business platform. Be concise and return structured results.`,
-              messages: [
-                { role: 'user', content: `Main task: ${args.task}\n\nYour specific instructions: ${subagent.instructions}\n\nReturn a brief JSON summary of your results with keys: "outcome", "details", "next_steps".` },
-              ],
-              metadata: { session_type: 'multiagent', parent_task: args.task },
-            }),
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            result = data.content?.[0]?.text || 'No output';
-            success = true;
-          } else {
-            result = `API error: ${res.status}`;
-          }
-        } catch (e: any) {
-          result = `Subagent execution error: ${e.message}`;
-        }
-      } else {
-        // Mock when no API key
-        result = JSON.stringify({ outcome: 'simulated', details: `${subagent.name} processed task segment`, next_steps: [] });
-        success = true;
-      }
-
-      subagentResults.push({ name: subagent.name, role: subagent.role, result, success });
-    }
-
-    // Log to mcp_sessions
-    try {
-      await supabase.from('mcp_sessions').insert({
-        tenant_id: args.tenant_id,
-        tool_name: 'orchestrate_task',
-        success: subagentResults.every(r => r.success),
-        duration_ms: 0,
-        expires_at: new Date(Date.now() + 60000).toISOString(),
-      });
-    } catch (_) { /* non-critical */ }
->>>>>>> origin/main
 
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-<<<<<<< HEAD
           run_id: runId,
           task: args.task,
           total_subagents: subagents.length,
@@ -404,28 +313,15 @@ registerTool('bonnie-orchestrate', {
           execution_results: executionResults,
           orchestration_complete: true,
           status,
-=======
-          task: args.task,
-          total_subagents: args.subagents.length,
-          results: subagentResults,
-          orchestration_complete: true,
->>>>>>> origin/main
         }, null, 2),
       }],
     };
   },
 });
 
-<<<<<<< HEAD
 registerTool('bonnie-orchestrate', {
   name: 'get_orchestration_history',
   description: 'Returns orchestration run history for a tenant from nexus_orchestration_runs.',
-=======
-// ── get_orchestration_history ─────────────────────────────────────────────────
-registerTool('bonnie-orchestrate', {
-  name: 'get_orchestration_history',
-  description: 'Returns the history of orchestrated tasks for a tenant from the mcp_sessions log.',
->>>>>>> origin/main
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     limit: z.number().int().min(1).max(50).optional().default(20),
@@ -441,16 +337,9 @@ registerTool('bonnie-orchestrate', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
-<<<<<<< HEAD
       .from('nexus_orchestration_runs')
       .select('id, task, status, subagent_results, planned_actions, execution_results, created_at, completed_at')
       .eq('tenant_id', args.tenant_id)
-=======
-      .from('mcp_sessions')
-      .select('id, tool_name, success, duration_ms, created_at')
-      .eq('tenant_id', args.tenant_id)
-      .eq('tool_name', 'orchestrate_task')
->>>>>>> origin/main
       .order('created_at', { ascending: false })
       .limit(args.limit);
 
@@ -461,7 +350,6 @@ registerTool('bonnie-orchestrate', {
     };
   },
 });
-<<<<<<< HEAD
 
 registerTool('bonnie-orchestrate', {
   name: 'run_growth_lifecycle',
@@ -528,5 +416,3 @@ registerTool('bonnie-orchestrate', {
     });
   },
 });
-=======
->>>>>>> origin/main

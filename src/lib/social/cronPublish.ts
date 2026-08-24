@@ -1,18 +1,9 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-<<<<<<< HEAD
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 import { publishLinkedInPost } from '@/lib/linkedin/publishPost';
 import { getZernioClient, getTenantZernioSettings } from '@/lib/zernio/client';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 
-=======
-import {
-  enqueueSocialPostSync,
-  findRecentDuplicateLinkedInCaption,
-  parseLinkedInUgcPostUrn,
-  updateSocialPostLinkedInUrnWithRetry,
-} from '@/lib/social/linkedinPublishHelpers';
->>>>>>> origin/main
 
 type PublishResult = {
   ok: boolean;
@@ -20,27 +11,6 @@ type PublishResult = {
   reason?: string;
 };
 
-<<<<<<< HEAD
-=======
-function extractCompanyPagesFromMetadata(raw: unknown): Array<{ id: string; name: string | null }> {
-  if (!raw || typeof raw !== 'object') return [];
-  const maybePages = (raw as { company_pages?: unknown }).company_pages;
-  if (!Array.isArray(maybePages)) return [];
-  return maybePages
-    .map((page) => {
-      if (!page || typeof page !== 'object') return null;
-      const obj = page as Record<string, unknown>;
-      const id = typeof obj.id === 'string' ? obj.id : '';
-      if (!id) return null;
-      return {
-        id,
-        name: typeof obj.name === 'string' ? obj.name : null,
-      };
-    })
-    .filter((page): page is { id: string; name: string | null } => !!page);
-}
-
->>>>>>> origin/main
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 20000): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -71,25 +41,6 @@ function mapStatusForLegacyConstraint(status: string): string {
   return status;
 }
 
-<<<<<<< HEAD
-=======
-function normalizeScopes(raw: unknown): string[] {
-  if (Array.isArray(raw)) {
-    return raw
-      .flatMap((value) => String(value).split(/[,\s]+/))
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  if (typeof raw === 'string') {
-    return raw
-      .split(/[,\s]+/)
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  return [];
-}
-
->>>>>>> origin/main
 async function updateSocialPostStatusWithFallback(
   postId: string,
   payload: Record<string, unknown>
@@ -126,25 +77,12 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
       return { ok: false, platform: 'facebook', reason: 'missing_page_id' };
     }
 
-<<<<<<< HEAD
     const integration = await getFacebookIntegrationWithToken(adminClient, {
       tenantId: post.tenant_id,
       pageId: post.facebook_page_id,
     });
 
     if (!integration?.pageAccessToken) {
-=======
-    const { data: integration, error: intError } = await adminClient
-      .from('facebook_integrations')
-      .select('page_access_token')
-      .eq('tenant_id', post.tenant_id)
-      .eq('page_id', post.facebook_page_id)
-      .eq('is_active', true)
-      .limit(1)
-      .maybeSingle();
-
-    if (intError || !integration?.page_access_token) {
->>>>>>> origin/main
       return { ok: false, platform: 'facebook', reason: 'integration_missing' };
     }
 
@@ -153,11 +91,7 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
     const isVideo = mediaType === 'video' || (typeof mediaUrl === 'string' && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(mediaUrl));
     const fbBody: Record<string, string> = {
       message: post.caption,
-<<<<<<< HEAD
       access_token: integration.pageAccessToken,
-=======
-      access_token: integration.page_access_token,
->>>>>>> origin/main
     };
 
     if (post.link_url) fbBody.link = post.link_url;
@@ -201,7 +135,6 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
 }
 
 async function publishToLinkedIn(postId: string): Promise<PublishResult> {
-<<<<<<< HEAD
   const result = await publishLinkedInPost(postId);
   return { ok: result.ok, platform: 'linkedin', reason: result.reason };
 }
@@ -289,286 +222,11 @@ async function publishToZernio(
   } catch (err: any) {
     console.error(`[cron/social-publish] Zernio ${platform} publish error:`, err);
     return { ok: false, platform: platform as any, reason: err?.message || `Zernio publish failed` };
-=======
-  const adminClient = createSupabaseAdminClient();
-
-  try {
-    const postRes = await adminClient
-      .from('social_posts')
-      .select('id, tenant_id, user_id, caption, link_url, media_urls, linkedin_member_id, linkedin_organization_id, metadata')
-      .eq('id', postId)
-      .single();
-    let post = postRes.data as {
-      id: string;
-      tenant_id: string;
-      user_id: string;
-      caption: string;
-      link_url: string | null;
-      media_urls: string[] | null;
-      linkedin_member_id: string | null;
-      linkedin_organization_id: string | null;
-      metadata?: Record<string, unknown> | null;
-    } | null;
-    let postError = postRes.error;
-    if (isMissingColumn(postError, 'linkedin_member_id') || isMissingColumn(postError, 'linkedin_organization_id')) {
-      const fallbackPostRes = await adminClient
-        .from('social_posts')
-        .select('id, tenant_id, user_id, caption, link_url, media_urls, metadata')
-        .eq('id', postId)
-        .single();
-      post = fallbackPostRes.data
-        ? { ...fallbackPostRes.data, linkedin_member_id: null, linkedin_organization_id: null }
-        : null;
-      postError = fallbackPostRes.error;
-    }
-
-    if (postError || !post) return { ok: false, platform: 'linkedin', reason: 'post_not_found' };
-
-    let liQuery = adminClient
-      .from('linkedin_integrations')
-      .select('linkedin_member_id, linkedin_person_urn, access_token, scopes, metadata')
-      .eq('tenant_id', post.tenant_id)
-      .eq('user_id', post.user_id)
-      .eq('is_active', true)
-      .limit(1);
-    if (post.linkedin_member_id) {
-      liQuery = liQuery.eq('linkedin_member_id', post.linkedin_member_id);
-    }
-    const liRes = await liQuery.maybeSingle();
-    let li = liRes.data;
-    let liError = liRes.error;
-    if (isMissingColumn(liError, 'linkedin_member_id')) {
-      const fallbackLiRes = await adminClient
-        .from('linkedin_integrations')
-        .select('linkedin_person_urn, access_token, scopes, metadata')
-        .eq('tenant_id', post.tenant_id)
-        .eq('user_id', post.user_id)
-        .eq('is_active', true)
-        .limit(1)
-        .maybeSingle();
-      li = fallbackLiRes.data ? { ...fallbackLiRes.data, linkedin_member_id: null } : null;
-      liError = fallbackLiRes.error;
-    }
-
-    const integration = li?.access_token ? li : await (async () => {
-      const fallbackRes = await adminClient
-        .from('linkedin_integrations')
-        .select('linkedin_member_id, linkedin_person_urn, access_token, scopes, metadata')
-        .eq('tenant_id', post.tenant_id)
-        .eq('user_id', post.user_id)
-        .eq('is_active', true)
-        .limit(1)
-        .maybeSingle();
-      if (isMissingColumn(fallbackRes.error, 'linkedin_member_id')) {
-        const fallbackWithoutMember = await adminClient
-          .from('linkedin_integrations')
-          .select('linkedin_person_urn, access_token, scopes, metadata')
-          .eq('tenant_id', post.tenant_id)
-          .eq('user_id', post.user_id)
-          .eq('is_active', true)
-          .limit(1)
-          .maybeSingle();
-        return fallbackWithoutMember.data
-          ? { ...fallbackWithoutMember.data, linkedin_member_id: null }
-          : null;
-      }
-      return fallbackRes.data;
-    })();
-
-    if (liError || !integration?.access_token || !integration?.linkedin_person_urn) {
-      return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected' };
-    }
-    const activeIntegration = integration;
-
-    const scopes = normalizeScopes(activeIntegration.scopes);
-    if (!scopes.includes('w_member_social')) {
-      return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
-    }
-
-    const requestedOrganizationId =
-      typeof post.linkedin_organization_id === 'string' && post.linkedin_organization_id
-        ? post.linkedin_organization_id
-        : typeof post.metadata?.linkedin_organization_id === 'string'
-          ? String(post.metadata.linkedin_organization_id)
-          : null;
-    const companyPages = extractCompanyPagesFromMetadata((activeIntegration as any)?.metadata);
-    const selectedCompany = requestedOrganizationId
-      ? companyPages.find((page) => String(page.id) === requestedOrganizationId)
-      : null;
-    const canPostAsCompany = !!selectedCompany && scopes.includes('w_organization_social');
-    const authorUrn = canPostAsCompany
-      ? `urn:li:organization:${requestedOrganizationId}`
-      : activeIntegration.linkedin_person_urn;
-
-    async function registerAndUploadLinkedInMedia(author: string, mediaUrl: string, isVideo: boolean): Promise<string> {
-      const mediaFetch = await fetchWithTimeout(mediaUrl, { method: 'GET' }, isVideo ? 60000 : 25000);
-      if (!mediaFetch.ok) {
-        throw new Error(`Could not download media URL (${mediaFetch.status})`);
-      }
-      const contentType = mediaFetch.headers.get('content-type') || (isVideo ? 'video/mp4' : 'image/jpeg');
-      const mediaBuffer = await mediaFetch.arrayBuffer();
-
-      const registerRes = await fetchWithTimeout('https://api.linkedin.com/v2/assets?action=registerUpload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${activeIntegration.access_token}`,
-          'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
-        },
-        body: JSON.stringify({
-          registerUploadRequest: {
-            recipes: [isVideo ? 'urn:li:digitalmediaRecipe:feedshare-video' : 'urn:li:digitalmediaRecipe:feedshare-image'],
-            owner: author,
-            serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
-          },
-        }),
-      }, 25000);
-
-      const registerJson = await registerRes.json().catch(() => ({}));
-      if (!registerRes.ok) {
-        throw new Error(registerJson?.message || `LinkedIn upload register failed (${registerRes.status})`);
-      }
-
-      const value = registerJson?.value || {};
-      const assetUrn = typeof value?.asset === 'string' ? value.asset : '';
-      const uploadUrl =
-        value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl || '';
-
-      if (!assetUrn || !uploadUrl) {
-        throw new Error('LinkedIn upload response missing asset information');
-      }
-
-      const uploadRes = await fetchWithTimeout(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': contentType,
-        },
-        body: mediaBuffer,
-      }, isVideo ? 60000 : 30000);
-
-      if (!uploadRes.ok) {
-        throw new Error(`LinkedIn media upload failed (${uploadRes.status})`);
-      }
-
-      return assetUrn;
-    }
-
-    const hasLink = typeof post.link_url === 'string' && post.link_url.trim().length > 0;
-    const mediaUrls = Array.isArray(post.media_urls) ? post.media_urls.filter((url) => typeof url === 'string' && url.trim()) : [];
-    const hasMedia = mediaUrls.length > 0;
-
-    let shareMediaCategory: 'NONE' | 'ARTICLE' | 'IMAGE' | 'VIDEO' = 'NONE';
-    let media: Array<Record<string, unknown>> = [];
-
-    if (hasMedia) {
-      const firstMediaUrl = mediaUrls[0];
-      const isVideo = /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
-
-      if (isVideo) {
-        const assetUrn = await registerAndUploadLinkedInMedia(authorUrn, firstMediaUrl, true);
-        shareMediaCategory = 'VIDEO';
-        media = [{
-          status: 'READY',
-          media: assetUrn,
-          title: { text: 'AlphaClone Video' },
-        }];
-      } else {
-        shareMediaCategory = 'IMAGE';
-        for (let i = 0; i < mediaUrls.length; i++) {
-          const imageUrl = mediaUrls[i];
-          const assetUrn = await registerAndUploadLinkedInMedia(authorUrn, imageUrl, false);
-          media.push({
-            status: 'READY',
-            media: assetUrn,
-            title: { text: `AlphaClone Image ${i + 1}` },
-          });
-        }
-      }
-    } else if (hasLink) {
-      shareMediaCategory = 'ARTICLE';
-      media = [{ status: 'READY', originalUrl: post.link_url, title: { text: 'AlphaClone Link' } }];
-    }
-
-    const dup = await findRecentDuplicateLinkedInCaption(
-      adminClient,
-      post.tenant_id,
-      post.user_id,
-      post.caption,
-      7
-    );
-    if (dup) {
-      return {
-        ok: false,
-        platform: 'linkedin',
-        reason: 'Duplicate post detected in the last 7 days.',
-      };
-    }
-
-    const payload = {
-      author: authorUrn,
-      lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: { text: post.caption },
-          shareMediaCategory,
-          media,
-        },
-      },
-      visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
-    };
-
-    const res = await fetchWithTimeout('https://api.linkedin.com/v2/ugcPosts', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${activeIntegration.access_token}`,
-        'Content-Type': 'application/json',
-        'X-Restli-Protocol-Version': '2.0.0',
-      },
-      body: JSON.stringify(payload),
-    }, 25000);
-
-    const rawBody = await res.text();
-    if (!res.ok) {
-      return {
-        ok: false,
-        platform: 'linkedin',
-        reason: rawBody || `LinkedIn publish failed with status ${res.status}`,
-      };
-    }
-
-    const postUrn = parseLinkedInUgcPostUrn(res, rawBody);
-    const patch: Record<string, unknown> = {
-      linkedin_post_urn: postUrn,
-      linkedin_member_id: activeIntegration.linkedin_member_id || post.linkedin_member_id || null,
-      linkedin_organization_id: canPostAsCompany ? requestedOrganizationId : null,
-    };
-
-    const retry = await updateSocialPostLinkedInUrnWithRetry(adminClient, postId, patch);
-    if (!retry.ok) {
-      const fallbackPatch = { linkedin_post_urn: postUrn };
-      const retry2 = await updateSocialPostLinkedInUrnWithRetry(adminClient, postId, fallbackPatch);
-      if (!retry2.ok && postUrn) {
-        await enqueueSocialPostSync(adminClient, {
-          socialPostId: postId,
-          tenantId: post.tenant_id,
-          platform: 'linkedin',
-          externalId: postUrn,
-          lastError: retry.error || retry2.error,
-        });
-      }
-    }
-
-    return { ok: true, platform: 'linkedin' };
-  } catch (err) {
-    console.error('[cron/social-publish] LinkedIn publish error:', err);
-    return { ok: false, platform: 'linkedin', reason: 'LinkedIn publish failed' };
->>>>>>> origin/main
   }
 }
 
 export async function publishSocialPost(postId: string) {
   const adminClient = createSupabaseAdminClient();
-<<<<<<< HEAD
   const { data: currentPost } = await adminClient
     .from('social_posts')
     .select('id, status, linkedin_post_urn')
@@ -603,11 +261,6 @@ export async function publishSocialPost(postId: string) {
   const { data: post } = await adminClient
     .from('social_posts')
     .select('id, tenant_id, platforms, linkedin_organization_id, metadata')
-=======
-  const { data: post } = await adminClient
-    .from('social_posts')
-    .select('id, platforms')
->>>>>>> origin/main
     .eq('id', postId)
     .single();
 
@@ -616,7 +269,6 @@ export async function publishSocialPost(postId: string) {
   const platforms = Array.isArray(post.platforms) ? post.platforms : [];
   const jobs: Promise<PublishResult>[] = [];
 
-<<<<<<< HEAD
   // Fetch Zernio settings to determine LinkedIn Org page routing
   const zernioSettings = await getTenantZernioSettings(post.tenant_id);
 
@@ -640,10 +292,6 @@ export async function publishSocialPost(postId: string) {
   if (platforms.includes('instagram')) {
     jobs.push(publishToZernio(postId, 'instagram'));
   }
-=======
-  if (platforms.includes('facebook')) jobs.push(publishToFacebook(postId));
-  if (platforms.includes('linkedin')) jobs.push(publishToLinkedIn(postId));
->>>>>>> origin/main
 
   if (jobs.length === 0) {
     if (platforms.includes('platform')) {
@@ -661,13 +309,6 @@ export async function publishSocialPost(postId: string) {
     return;
   }
 
-<<<<<<< HEAD
-=======
-  await updateSocialPostStatusWithFallback(postId, {
-    status: 'publishing',
-    error_message: null,
-  });
->>>>>>> origin/main
   const results = await Promise.all(jobs);
   const failed = results.filter((r) => !r.ok);
   const succeeded = results.filter((r) => r.ok);
@@ -700,7 +341,6 @@ export async function publishSocialPost(postId: string) {
   });
 }
 
-<<<<<<< HEAD
 
 export async function publishDueSocialPosts(limit = 25) {
   if (!isSocialPublishEnabled()) return 0;
@@ -717,20 +357,14 @@ export async function publishDueSocialPosts(limit = 25) {
 export async function publishDueLinkedInPosts(limit = 25) {
   if (!isSocialPublishEnabled()) return 0;
 
-=======
-export async function publishDueSocialPosts(limit = 25) {
->>>>>>> origin/main
   const adminClient = createSupabaseAdminClient();
   const nowIso = new Date().toISOString();
   const { data, error } = await adminClient
     .from('social_posts')
     .select('id')
     .eq('status', 'scheduled')
-<<<<<<< HEAD
     .contains('platforms', ['linkedin'])
     .is('linkedin_post_urn', null)
-=======
->>>>>>> origin/main
     .not('scheduled_at', 'is', null)
     .lte('scheduled_at', nowIso)
     .order('scheduled_at', { ascending: true })
@@ -745,7 +379,6 @@ export async function publishDueSocialPosts(limit = 25) {
 
   return duePosts.length;
 }
-<<<<<<< HEAD
 
 export async function publishScheduledPosts(limit = 25) {
   if (!isSocialPublishEnabled()) return 0;
@@ -937,5 +570,3 @@ export async function publishScheduledPosts(limit = 25) {
 
   return duePosts.length;
 }
-=======
->>>>>>> origin/main

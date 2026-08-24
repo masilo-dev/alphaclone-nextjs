@@ -2,10 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Clock, User, Globe, Hash, CheckCircle, AlertTriangle, FileText, Download, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { format } from 'date-fns';
-<<<<<<< HEAD
-=======
-import { esignatureComplianceService } from '../../services/esignatureComplianceService';
->>>>>>> origin/main
 
 interface AuditLogProps {
     contractId: string;
@@ -233,7 +229,3 @@ export const ContractAuditLog: React.FC<AuditLogProps> = ({ contractId, contract
         </div>
     );
 };
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main

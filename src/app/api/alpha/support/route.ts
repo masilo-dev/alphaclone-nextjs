@@ -10,17 +10,10 @@ PLATFORM OVERVIEW
 AlphaClone is an AI-powered Business Operating System for founders, freelancers, and small service businesses. It replaces over 10 separate tools at $15 per month.
 
 PRICING
-<<<<<<< HEAD
 - Starter: $15/month — up to 25 team members, CRM, invoicing, contracts, email outreach, social media, video meetings
 - Pro: $45/month — Everything in Starter plus unlimited members, Bonnie AI sales assistant, API access, custom domain
 - Enterprise: $80/month — Everything in Pro plus 500GB storage, advanced AI limits, priority support
 - All plans include a 14-day free trial. No credit card required to start.
-=======
-- Starter: $15/month — CRM, invoicing, contracts, email outreach, social media, 1 user
-- Pro: $35/month — Everything in Starter plus Growth Agent, advanced AI, up to 5 users
-- Agency: $80/month — Everything in Pro plus unlimited client workspaces, white-labeling, priority support
-- All plans include a free trial. No credit card required to start.
->>>>>>> origin/main
 
 KEY MODULES AND HOW TO USE THEM
 CRM: Dashboard > CRM tab. Add contacts, track pipeline stages, log notes, set follow-up reminders. Say "Add contact [name]" to Alpha to do it by voice.
@@ -90,11 +83,7 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
         console.error('[alpha/support] error:', error);
         return NextResponse.json(
-<<<<<<< HEAD
             { error: 'Support is temporarily unavailable. Please email support@alphaclonesystems.com directly.' },
-=======
-            { error: 'Support is temporarily unavailable. Please email support@alphaclone.tech directly.' },
->>>>>>> origin/main
             { status: 500 }
         );
     }
