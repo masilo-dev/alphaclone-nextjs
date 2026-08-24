@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-08-24T10:52:49.759Z",
+  "weekStart": "2026-08-17T10:52:45.802Z",
+  "environmentId": "78325a44-cd94-4b10-aa41-c09ebd978c7f",
+  "serviceId": "a98fc4dc-4047-4647-a74a-985f6ff667ce",
+  "deployments": {
+    "totalThisWeek": 31,
+    "failedThisWeek": 14,
+    "lastFailed": "9394d013-9a66-4d0b-9b4b-2f970c344980",
+    "latest": "9394d013-9a66-4d0b-9b4b-2f970c344980"
+  },
+  "categories": {
+    "oom": 0,
+    "buildFail": 0,
+    "missingEnv": 0,
+    "dbSupabase": 0,
+    "rls": 0,
+    "ts": 0,
+    "mod": 0,
+    "net": 0,
+    "startup": 0,
+    "http5xx": 0,
+    "http4xx": 0,
+    "cron": 0,
+    "auth": 0,
+    "crypto": 0,
+    "quota": 0,
+    "other": 0,
+    "warn": 0,
+    "info": 0
+  },
+  "topPatterns": [],
+  "missingEnvVars": [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_URL",
+    "DATABASE_URL",
+    "SUPABASE_DB_URL",
+    "PORT",
+    "NEXT_PUBLIC_APP_URL",
+    "NODE_OPTIONS",
+    "NEXT_PUBLIC_SITE_URL",
+    "PUBLIC_APP_ORIGIN",
+    "ENCRYPTION_SECRET",
+    "CRON_SECRET",
+    "AUTH_SECRET",
+    "STRIPE_SECRET_KEY",
+    "RESEND_API_KEY"
+  ],
+  "rawLogs": []
+}

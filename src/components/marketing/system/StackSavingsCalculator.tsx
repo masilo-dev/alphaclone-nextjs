@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calculator, Check, ArrowRight, DollarSign, Clock, Sparkles } from 'lucide-react';
+import { Calculator, Check, DollarSign, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 interface ToolItem {
@@ -91,11 +91,11 @@ export default function StackSavingsCalculator() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm font-medium mb-4">
-            <Calculator className="w-4 h-4 text-amber-400" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-slate-900 border border-slate-700 text-slate-300 text-xs sm:text-sm font-medium mb-4">
+            <Calculator className="w-4 h-4 text-slate-400" />
             <span>Interactive ROI Calculator</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 font-marketing-heading">
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white mb-4 font-marketing-heading">
             Calculate How Much You Stop Wasting Each Month
           </h2>
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
@@ -104,7 +104,7 @@ export default function StackSavingsCalculator() {
         </div>
 
         {/* Calculator Main Box */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/90 shadow-xl p-6 sm:p-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Tool Selection List */}
             <div className="lg:col-span-7 space-y-4">
@@ -164,16 +164,16 @@ export default function StackSavingsCalculator() {
                 </div>
 
                 {/* Big Savings Highlight */}
-                <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-950/40 to-teal-950/40 border border-emerald-500/40">
-                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase mb-1">
-                    <Sparkles className="w-4 h-4" />
+                <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-700">
+                  <div className="flex items-center gap-2 text-slate-300 text-xs font-semibold uppercase mb-1">
+                    <DollarSign className="w-4 h-4" />
                     <span>Your Net Annual Savings:</span>
                   </div>
-                  <div className="text-3xl font-extrabold text-white font-mono tracking-tight">
+                  <div className="text-3xl font-bold text-white font-mono tracking-tight">
                     ${annualDollarSavings.toLocaleString()} <span className="text-sm font-normal text-emerald-300">/ yr saved</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-300 mt-2">
-                    <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                    <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>Plus <strong className="text-white">{currentHoursAnnual} hours / year</strong> saved on manual re-entry.</span>
                   </div>
                 </div>
@@ -183,10 +183,9 @@ export default function StackSavingsCalculator() {
               <div className="mt-6 pt-4 border-t border-slate-800">
                 <Link
                   href="/auth/login?register=true&plan=starter"
-                  className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-teal-950"
+                  className="w-full py-3 rounded-md bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs sm:text-sm transition-colors flex items-center justify-center"
                 >
                   <span>Start 14-Day Free Trial & Save</span>
-                  <ArrowRight className="w-4 h-4" />
                 </Link>
                 <p className="text-[11px] text-center text-slate-400 mt-2">No credit card required • Instant CSV data import</p>
               </div>

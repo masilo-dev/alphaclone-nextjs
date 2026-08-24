@@ -9,7 +9,7 @@ import { contactSchema } from '../../schemas/validation';
 import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
-import { useBookingModal } from '@/contexts/BookingModalContext';
+import { PUBLIC_DEMO_BOOKING_URL, isExternalHref, withPreservedQuery } from '@/lib/marketing/cta';
 
 type FormState = {
   name: string;
@@ -38,14 +38,6 @@ const ContactPage: React.FC = () => {
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-
-  let bookingModal: ReturnType<typeof useBookingModal> | null = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    bookingModal = useBookingModal();
-  } catch {
-    bookingModal = null;
-  }
 
   const handleChange =
     (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -116,14 +108,14 @@ const ContactPage: React.FC = () => {
     }
   };
 
-  const handleOpenBooking = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (bookingModal) {
-      bookingModal.openBookingModal('consultation');
-    } else {
-      window.location.href = '/book-demo';
+  const bookingDestination = (() => {
+    try {
+      return withPreservedQuery(PUBLIC_DEMO_BOOKING_URL, typeof window !== 'undefined' ? window.location.search : '');
+    } catch {
+      return PUBLIC_DEMO_BOOKING_URL;
     }
-  };
+  })();
+  const bookingIsExternal = isExternalHref(bookingDestination);
 
   const isSubmitting = status === 'sending';
   const submitDisabled = isSubmitting || (turnstileEnabled && !turnstileToken);
@@ -157,14 +149,16 @@ const ContactPage: React.FC = () => {
               Get in touch to discuss your project. For the fastest response, use WhatsApp or book a meeting directly.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <button
-                type="button"
-                onClick={handleOpenBooking}
-                className="mkt-btn mkt-btn-secondary w-full sm:w-auto font-marketing-heading uppercase tracking-tight"
+              <a
+                href={bookingDestination}
+                target={bookingIsExternal ? '_blank' : undefined}
+                rel={bookingIsExternal ? 'noopener noreferrer' : undefined}
+                aria-label="Book a consultation"
+                className="mkt-btn mkt-btn-secondary w-full sm:w-auto font-marketing-heading uppercase tracking-tight inline-flex items-center justify-center"
               >
                 <Calendar className="w-4 h-4 mr-2 inline" />
                 Book a Consultation
-              </button>
+              </a>
               <Button
                 variant="outline"
                 onClick={() => window.open('https://wa.me/48517809674', '_blank')}
@@ -239,14 +233,15 @@ const ContactPage: React.FC = () => {
                 <p className="text-sm text-slate-400 mb-3">
                   Skip the inbox and schedule a 30-minute call directly.
                 </p>
-                <button
-                  type="button"
-                  onClick={handleOpenBooking}
+                <a
+                  href={bookingDestination}
+                  target={bookingIsExternal ? '_blank' : undefined}
+                  rel={bookingIsExternal ? 'noopener noreferrer' : undefined}
                   className="inline-flex items-center gap-2 text-sm font-semibold text-teal-400 hover:text-teal-300 transition-colors"
                 >
                   <Calendar className="w-4 h-4" />
                   Book a free 30-min meeting
-                </button>
+                </a>
               </div>
             </div>
           </AnimateIn>

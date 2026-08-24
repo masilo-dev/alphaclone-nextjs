@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Bot, Cpu, Lock, CheckCircle2, Terminal, Database, Loader2, Play } from 'lucide-react';
+import { Bot, Database, Lock, CheckCircle2, Terminal, Loader2, Play } from 'lucide-react';
 
 interface AiExampleAction {
   id: string;
@@ -58,15 +58,12 @@ export default function BonnieAiSection() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header Banner */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-medium mb-4">
-            <Bot className="w-4 h-4 text-cyan-400" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-slate-900 border border-slate-700 text-slate-300 text-xs sm:text-sm font-medium mb-4">
+            <Bot className="w-4 h-4 text-slate-400" />
             <span>Workspace-Aware Intelligence</span>
           </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 font-marketing-heading">
-            Not Another Detached Chatbot.{' '}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-cyan-400 to-emerald-400">
-              An Extra Operator for Your Team.
-            </span>
+          <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white mb-4 font-marketing-heading">
+            Not Another Detached Chatbot. An Extra Operator for Your Team.
           </h2>
           <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
             Most SaaS AI is a generic chat box floating in a browser tab with zero knowledge of your actual business.
@@ -76,8 +73,8 @@ export default function BonnieAiSection() {
 
         {/* AI Capabilities Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl backdrop-blur-md">
-            <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 mb-4">
+          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/80 shadow-md">
+            <div className="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 mb-4">
               <Database className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">1. Grounded in Your Data</h3>
@@ -86,9 +83,9 @@ export default function BonnieAiSection() {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl backdrop-blur-md">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4">
-              <Cpu className="w-5 h-5" />
+          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/80 shadow-md">
+            <div className="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 mb-4">
+              <Terminal className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">2. Powered by MCP</h3>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -96,8 +93,8 @@ export default function BonnieAiSection() {
             </p>
           </div>
 
-          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl backdrop-blur-md">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
+          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/80 shadow-md">
+            <div className="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 mb-4">
               <Lock className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">3. Human-in-the-Loop</h3>
@@ -108,10 +105,10 @@ export default function BonnieAiSection() {
         </div>
 
         {/* Interactive Example Demo */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/90 shadow-xl p-6 sm:p-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-              <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider font-mono">Interactive Demonstration</span>
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-mono">Interactive Demonstration</span>
               <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">
                 See How Bonnie AI & MCP Execute Operational Prompts
               </h3>
@@ -121,9 +118,9 @@ export default function BonnieAiSection() {
                 <button
                   key={ex.id}
                   onClick={() => selectExample(idx)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                     activeExampleIndex === idx
-                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
+                      ? 'bg-slate-800 text-slate-100 border border-slate-700'
                       : 'bg-slate-950 text-slate-400 border border-slate-800 hover:text-white'
                   }`}
                 >
@@ -133,7 +130,7 @@ export default function BonnieAiSection() {
             </div>
           </div>
 
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] px-4 py-3">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-3">
             <p className="text-xs text-slate-300">
               Product walkthrough using sample workspace data. Sign in to run Bonnie against your real records.
             </p>
@@ -141,7 +138,7 @@ export default function BonnieAiSection() {
               type="button"
               onClick={() => setDemoStage(1)}
               disabled={demoStage > 0 && demoStage < 3}
-              className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-cyan-500 px-4 text-xs font-bold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-wait disabled:opacity-70"
+              className="inline-flex min-h-10 items-center gap-2 rounded-md bg-teal-600 px-4 text-xs font-semibold text-white transition hover:bg-teal-500 disabled:cursor-wait disabled:opacity-70"
             >
               {demoStage > 0 && demoStage < 3 ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {demoStage === 0 ? 'Run the flow' : demoStage === 3 ? 'Run again' : 'Bonnie is working'}
@@ -149,45 +146,45 @@ export default function BonnieAiSection() {
           </div>
 
           {/* Interactive Code/Prompt Console */}
-          <div className="rounded-xl border border-slate-800 bg-slate-950 p-5 font-mono space-y-4">
+          <div className="rounded-lg border border-slate-800 bg-slate-950 p-5 font-mono space-y-4">
             {/* User Input Prompt */}
             <div className={`space-y-1.5 transition-opacity ${demoStage >= 1 ? 'opacity-100' : 'opacity-45'}`}>
               <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="flex items-center gap-1.5 text-teal-400">
+                <span className="flex items-center gap-1.5 text-slate-300">
                   <Terminal className="w-3.5 h-3.5" />
                   <span>PLAIN-ENGLISH USER INSTRUCTION:</span>
                 </span>
                 <span className="text-[10px] text-slate-500">OPERATOR PROMPT</span>
               </div>
-              <p className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-100 leading-relaxed font-sans">
+              <p className="p-3 rounded-md bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-100 leading-relaxed font-sans">
                 "{activeEx.prompt}"
               </p>
             </div>
 
             {/* MCP Execution Signal */}
             <div className={`space-y-1.5 transition-opacity ${demoStage >= 2 ? 'opacity-100' : 'opacity-30'}`}>
-              <div className="flex items-center justify-between text-xs text-cyan-400">
-                <span className="flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5" />
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1.5 text-slate-300">
+                  <Terminal className="w-3.5 h-3.5" />
                   <span>MCP PROTOCOL TOOL INVOCATION:</span>
                 </span>
-                <span className="text-[10px] text-cyan-500">SECURE DISPATCH</span>
+                <span className="text-[10px] text-slate-500">SECURE DISPATCH</span>
               </div>
-              <p className="p-2.5 rounded-lg bg-slate-900 border border-cyan-900/40 text-[11px] sm:text-xs text-cyan-300 font-mono">
+              <p className="p-2.5 rounded-md bg-slate-900 border border-slate-800 text-[11px] sm:text-xs text-slate-300 font-mono">
                 → {activeEx.mcpToolCall}
               </p>
             </div>
 
             {/* Workspace Result */}
             <div className={`space-y-1.5 pt-1 transition-opacity ${demoStage >= 3 ? 'opacity-100' : 'opacity-30'}`}>
-              <div className="flex items-center justify-between text-xs text-emerald-400">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1.5 text-slate-300">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span>EXECUTED WORKSPACE OUTCOME:</span>
                 </span>
-                <span className="text-[10px] text-emerald-500">REAL-TIME UPDATED</span>
+                <span className="text-[10px] text-slate-500">REAL-TIME UPDATED</span>
               </div>
-              <p className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-800/40 text-xs sm:text-sm text-emerald-200 leading-relaxed font-sans">
+              <p className="p-3 rounded-md bg-emerald-950/20 border border-emerald-900/40 text-xs sm:text-sm text-emerald-200 leading-relaxed font-sans">
                 ✓ {activeEx.workspaceResult}
               </p>
             </div>

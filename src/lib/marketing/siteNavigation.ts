@@ -12,13 +12,13 @@ import {
   Megaphone,
   Newspaper,
   Receipt,
-  Sparkles,
-  Target,
   Users,
   Video,
   BookOpen,
   Shield,
   Workflow,
+  Plug,
+  Compass,
 } from 'lucide-react';
 import {
   BUSINESS_SIGNUP_HREF,
@@ -68,7 +68,7 @@ export const PRODUCT_NAV_GROUPS: MarketingNavGroup[] = [
         label: 'Lead management',
         path: '/lead-management',
         description: 'Capture and qualify inbound demand',
-        icon: Target,
+        icon: Compass,
       },
     ],
   },
@@ -148,7 +148,7 @@ export const PRODUCT_NAV_GROUPS: MarketingNavGroup[] = [
         label: 'Integrations',
         path: '/ecosystem',
         description: 'Connect tools you already use',
-        icon: Sparkles,
+        icon: Plug,
       },
       {
         label: 'Platform overview',
@@ -209,7 +209,7 @@ export const RESOURCES_NAV_GROUP: MarketingNavGroup = {
       label: 'Onboarding guide',
       path: '/guide',
       description: 'First setup walkthrough',
-      icon: Sparkles,
+      icon: BookOpen,
     },
     {
       label: 'FAQ',
