@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createSupabaseAdminClient } from './supabase-admin';
+import { createSupabaseAdminClient, hasSupabaseServiceRole } from './supabase-admin';
 import { clientErrorResponse } from './api/clientErrorResponse';
 import { RouteAuthError } from './api/routeAuthError';
 import { ENV } from '@/config/env';
@@ -41,10 +40,8 @@ export async function requireAuthenticatedUser(
         if (!ENV.VITE_SUPABASE_URL) {
             throw new RouteAuthError(500, 'Server configuration error', 'INTERNAL_ERROR');
         }
-        const admin = ENV.SUPABASE_SERVICE_ROLE_KEY
-            ? createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
-                auth: { persistSession: false, autoRefreshToken: false },
-            })
+        const admin = hasSupabaseServiceRole()
+            ? createSupabaseAdminClient()
             : createSupabaseAdminClient(bearer);
         const { data, error } = await admin.auth.getUser(bearer);
         if (error || !data?.user?.id) {
@@ -66,7 +63,7 @@ export async function requireAuthenticatedUser(
     // Prefer service-role admin. Without it, reuse the cookie-authenticated server
     // client so RLS still works even when getSession() has no access_token.
     const { data: { session } } = await supabase.auth.getSession();
-    const admin = ENV.SUPABASE_SERVICE_ROLE_KEY
+    const admin = hasSupabaseServiceRole()
         ? createSupabaseAdminClient()
         : session?.access_token
             ? createSupabaseAdminClient(session.access_token)

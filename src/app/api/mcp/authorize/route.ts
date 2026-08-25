@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { createSupabaseAdminClient, hasSupabaseServiceRole } from '@/lib/supabase-admin';
 import {
   buildAuthorizePageUrl,
   isRedirectUriAllowed,
@@ -295,11 +295,11 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
     return oauthError(redirectUri, 'invalid_request', 'client_id and redirect_uri are required', state);
   }
 
-  if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!ENV.VITE_SUPABASE_URL || !hasSupabaseServiceRole()) {
     return oauthError(redirectUri, 'server_error', 'Server configuration error', state);
   }
 
-  const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+  const supabase = createSupabaseAdminClient();
 
   let { data: client } = await supabase
     .from('mcp_oauth_clients')

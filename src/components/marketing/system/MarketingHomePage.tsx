@@ -10,6 +10,7 @@ import { DEMO_HREF, TRIAL_HREF } from "@/lib/marketing/cta";
 import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
 import { MarketingContainer, MarketingSection } from "./LayoutPrimitives";
 import MarketingShell from "./MarketingShell";
+import { CurvedDotField, HeroDataWaves, SectionAmbientLight } from "./atmosphere";
 import LookInsideAlphaClone from "./LookInsideAlphaClone";
 import AiInterfaceShowcase from "./AiInterfaceShowcase";
 import LifecycleFlowShowcase from "./LifecycleFlowShowcase";
@@ -68,6 +69,9 @@ export default function MarketingHomePage() {
   return <MarketingShell>
     {/* Approved hero — screenshots and approved copy preserved. */}
     <section className="mkt-hero mkt-hero--compact pt-24 sm:pt-28 lg:pt-32 pb-10 sm:pb-14">
+      <SectionAmbientLight variant="hero" />
+      <HeroDataWaves />
+      <CurvedDotField />
       <MarketingContainer>
         <div className="mkt-hero-copy mkt-reveal mx-auto max-w-4xl px-2 text-center">
           <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.08] tracking-normal text-white sm:text-5xl md:text-6xl">

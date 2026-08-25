@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createSupabaseAdminClient, hasSupabaseServiceRole } from '@/lib/supabase-admin';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 import { bootstrapTenantForUser } from '@/lib/tenant/bootstrapTenantServer';
-import { ENV } from '@/config/env';
 
 const bodySchema = z
   .object({
@@ -44,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Auth admin API requires the service role key; skip in local dev when it is not configured.
-    if (ENV.SUPABASE_SERVICE_ROLE_KEY) {
+    if (hasSupabaseServiceRole()) {
       const serviceAdmin = createSupabaseAdminClient();
       const { error: metadataError } = await serviceAdmin.auth.admin.updateUserById(user.id, {
         user_metadata: {

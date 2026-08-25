@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { resolveSupabaseServiceRoleKey } from '@/lib/supabase-service-role';
 
 /** Normalize the Railway scraper URL — accepts host-only values and rejects internal hostnames unless running in Railway. */
 function normalizeScraperServiceUrl(value: string | undefined): string | undefined {
@@ -307,8 +308,7 @@ function validateEnv() {
         WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
         WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
 
-        SUPABASE_SERVICE_ROLE_KEY:
-            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY,
+        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 
         ENCRYPTION_SECRET: process.env.ENCRYPTION_SECRET,
 
@@ -392,9 +392,11 @@ function validateEnv() {
                 process.env.SUPABASE_ANON_KEY ||
                 process.env.SUPABASE_PUBLISHABLE_KEY,
             SUPABASE_SERVICE_ROLE_KEY:
-                parsed.SUPABASE_SERVICE_ROLE_KEY ||
-                process.env.SUPABASE_SERVICE_ROLE_KEY ||
-                process.env.SUPABASE_KEY,
+                resolveSupabaseServiceRoleKey(
+                    process.env.SUPABASE_SERVICE_ROLE_KEY,
+                    parsed.SUPABASE_SERVICE_ROLE_KEY,
+                    process.env.SUPABASE_KEY
+                ),
         };
     } catch (error) {
         console.error('[env] Validation warnings — using raw env with Supabase fallbacks:', error);
@@ -409,10 +411,11 @@ function validateEnv() {
                 rawEnv.VITE_SUPABASE_ANON_KEY ||
                 process.env.SUPABASE_ANON_KEY ||
                 process.env.SUPABASE_PUBLISHABLE_KEY,
-            SUPABASE_SERVICE_ROLE_KEY:
-                rawEnv.SUPABASE_SERVICE_ROLE_KEY ||
-                process.env.SUPABASE_SERVICE_ROLE_KEY ||
-                process.env.SUPABASE_KEY,
+            SUPABASE_SERVICE_ROLE_KEY: resolveSupabaseServiceRoleKey(
+                rawEnv.SUPABASE_SERVICE_ROLE_KEY,
+                process.env.SUPABASE_SERVICE_ROLE_KEY,
+                process.env.SUPABASE_KEY
+            ),
         } as Environment & {
             VITE_SUPABASE_URL?: string;
             VITE_SUPABASE_ANON_KEY?: string;

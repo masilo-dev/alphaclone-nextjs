@@ -1,6 +1,9 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { createUnavailableSupabaseClient } from './supabase-shared';
+import { resolveSupabaseServiceRoleKey } from './supabase-service-role';
+
+export { isSupabaseServiceRoleKey, resolveSupabaseServiceRoleKey } from './supabase-service-role';
 
 let devFallbackWarned = false;
 
@@ -13,11 +16,15 @@ function getSupabaseUrl(): string | undefined {
 }
 
 function getServiceRoleKey(): string | undefined {
-    return (
-        ENV.SUPABASE_SERVICE_ROLE_KEY ||
-        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    return resolveSupabaseServiceRoleKey(
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        ENV.SUPABASE_SERVICE_ROLE_KEY,
         process.env.SUPABASE_KEY
     );
+}
+
+export function hasSupabaseServiceRole(): boolean {
+    return Boolean(getServiceRoleKey());
 }
 
 function createServiceRoleClient(supabaseUrl: string, serviceRoleKey: string): SupabaseClient {
