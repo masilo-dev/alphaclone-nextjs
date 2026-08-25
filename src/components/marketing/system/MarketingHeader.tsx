@@ -13,14 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/marketing/ui/sheet';
-import {
-  CTA_LABELS,
-  DEMO_HREF,
-  LOGIN_HREF,
-  TRIAL_HREF,
-  isExternalHref,
-} from '@/lib/marketing/cta';
-import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import { CTA_LABELS, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
 import { AlphaIcon, type AlphaIconName } from '@/components/marketing/icons';
 
 type DropdownKey = 'product' | 'solutions' | 'resources' | 'company';
@@ -236,9 +229,6 @@ export default function MarketingHeader() {
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-nav-login">
                 {CTA_LABELS.tertiaryLogin}
               </Link>
-              <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-btn-ghost">
-                {CTA_LABELS.secondary}
-              </SecondaryCTA>
               <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
                 {CTA_LABELS.primary}
               </Link>
@@ -282,16 +272,6 @@ export default function MarketingHeader() {
                         <Link href={LOGIN_HREF} onClick={() => setMobileOpen(false)} data-login-trigger className="mkt-btn mkt-btn-secondary w-full">
                           {CTA_LABELS.tertiaryLogin}
                         </Link>
-                        <a
-                          href={DEMO_HREF}
-                          target={isExternalHref(DEMO_HREF) ? '_blank' : undefined}
-                          rel={isExternalHref(DEMO_HREF) ? 'noopener noreferrer' : undefined}
-                          onClick={() => setMobileOpen(false)}
-                          className="mkt-btn mkt-btn-secondary w-full"
-                          aria-label={CTA_LABELS.secondary}
-                        >
-                          {CTA_LABELS.secondary}
-                        </a>
                         <Link href={TRIAL_HREF} onClick={() => setMobileOpen(false)} className="mkt-btn mkt-btn-primary w-full">
                           {CTA_LABELS.primary}
                         </Link>

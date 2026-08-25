@@ -5,17 +5,9 @@ import Link from 'next/link';
 import { Facebook, Linkedin, Twitter } from 'lucide-react';
 import { MarketingContainer } from './LayoutPrimitives';
 import { SOCIAL_PROFILES, formatCopyrightLine } from '@/lib/seo/siteEntity';
-import {
-  CTA_LABELS,
-  DEMO_HREF,
-  LOGIN_HREF,
-  PUBLIC_DEMO_BOOKING_URL,
-  TRIAL_HREF,
-  isExternalHref,
-} from '@/lib/marketing/cta';
+import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
 import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
-import { isValidBookingUrl } from '@/lib/marketing/booking';
 
 type FooterLink = {
   label: string;
@@ -27,11 +19,6 @@ type FooterColumn = {
   title: string;
   links: readonly FooterLink[];
 };
-
-const PUBLIC_DEMO_URL: string = (() => {
-  if (isValidBookingUrl(PUBLIC_DEMO_BOOKING_URL)) return PUBLIC_DEMO_BOOKING_URL;
-  return DEMO_HREF;
-})();
 
 const COLUMNS = [
   {
@@ -61,11 +48,7 @@ const COLUMNS = [
       { label: 'Getting started', path: '/guide' },
       { label: 'Blog', path: '/blog' },
       { label: 'Integrations', path: '/ecosystem' },
-      {
-        label: 'Book a demo',
-        path: PUBLIC_DEMO_URL,
-        external: isExternalHref(PUBLIC_DEMO_URL),
-      },
+      { label: 'Book a demo', path: '/book-demo' },
     ],
   },
   {
@@ -134,17 +117,14 @@ export default function MarketingFooter() {
               <div key={column.title}>
                 <p className="mkt-footer-col-title">{column.title}</p>
                 <ul className="mkt-footer-col-list">
-                  {column.links.map((item) => {
-                    const external = 'external' in item ? Boolean(item.external) : isExternalHref(item.path);
-                    return (
+                  {column.links.map((item) => (
                     <li key={`${column.title}-${item.path}`}>
-                      {external ? (
+                      {'external' in item && item.external ? (
                         <a
                           href={item.path}
                           target="_blank"
-                          rel="noopener noreferrer"
+                          rel="me noopener noreferrer"
                           className="mkt-footer-link"
-                          aria-label={item.label + ' — Opens in a new tab'}
                         >
                           {item.label}
                         </a>
@@ -154,8 +134,7 @@ export default function MarketingFooter() {
                         </Link>
                       )}
                     </li>
-                    );
-                  })}
+                  ))}
                 </ul>
               </div>
             ))}
@@ -187,4 +166,3 @@ export default function MarketingFooter() {
     </footer>
   );
 }
-

@@ -141,8 +141,7 @@ export default function PricingPage() {
               One system. Choose your execution power.
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg text-[var(--marketing-text-secondary)] leading-relaxed">
-              Every AlphaClone plan includes a <strong className="text-[var(--marketing-text-primary)]">14-day free trial</strong> with no credit card required.
-              Upgrade when your business needs more execution capacity.
+              Every AlphaClone plan gives you access to the platform and MCP. Upgrade when your business needs more execution capacity.
             </p>
             <div className="mt-8 flex justify-center">
               <MarketingPricingToggle value={billingPeriod} onChange={setBillingPeriod} />
@@ -197,8 +196,8 @@ export default function PricingPage() {
                         {plan.price === 0
                           ? 'No credit card required'
                           : billingPeriod === 'annual'
-                          ? `$${Math.round(plan.yearly / 12)}/mo billed annually · 14-day free trial`
-                          : '14-day free trial · no card required'}
+                          ? `$${Math.round(plan.yearly / 12)}/mo billed annually`
+                          : 'Billed monthly'}
                       </p>
                     </div>
 

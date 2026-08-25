@@ -11,9 +11,6 @@ const FEATURED_PARTNER_IDS = [
   'resend',
   'stripe',
   'microsoft',
-  'gmail',
-  'supabase',
-  'cloudflare',
 ] as const;
 
 function PartnerChip({ partner }: { partner: VerifiedPartner }) {
@@ -36,12 +33,13 @@ function PartnerChip({ partner }: { partner: VerifiedPartner }) {
           <Icon className="mkt-partner-brand-icon" />
         </span>
         <span className="mkt-partner-chip-name">{partner.name}</span>
+        <span className="mkt-partner-chip-burst" aria-hidden="true" />
       </a>
     </li>
   );
 }
 
-/** Featured verified integrations — branded icon + name. */
+/** Featured verified integrations — branded icon + name with CSS click motion. */
 export default function VerifiedIntegrationsStrip() {
   const partners = FEATURED_PARTNER_IDS.map((id) =>
     VERIFIED_PARTNERS.find((partner) => partner.id === id),

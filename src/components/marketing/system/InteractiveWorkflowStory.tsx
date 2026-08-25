@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AlphaIcon } from '@/components/marketing/icons';
 import type { AlphaIconName } from '@/components/marketing/icons';
-import { ArrowRight, CheckCircle2, ShieldCheck, Activity, Layers } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, Zap, Layers, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 interface WorkflowNode {
@@ -162,12 +162,15 @@ export default function InteractiveWorkflowStory() {
     <div className="w-full py-10">
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-12 px-4">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-md bg-slate-900 border border-slate-700 text-slate-300 text-xs sm:text-sm font-medium mb-4">
-          <Layers className="w-4 h-4 text-slate-400" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs sm:text-sm font-medium mb-4">
+          <Sparkles className="w-4 h-4 text-teal-400" />
           <span>The Connected Business Story</span>
         </div>
-        <h2 className="text-2xl sm:text-4xl font-bold tracking-tight text-white mb-4 font-marketing-heading">
-          From First Lead to Paid Invoice. One Continuous Flow.
+        <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 font-marketing-heading">
+          From First Lead to Paid Invoice.{' '}
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-400">
+            One Continuous Flow.
+          </span>
         </h2>
         <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
           Instead of running your business across 6 disconnected tools and copy-pasting data manually, AlphaClone executes your entire operational pipeline inside one connected backbone.
@@ -184,31 +187,31 @@ export default function InteractiveWorkflowStory() {
               <button
                 key={node.id}
                 onClick={() => setActiveStepIndex(index)}
-                className={`p-3 rounded-lg border text-left transition-all duration-200 relative ${
+                className={`p-3 rounded-xl border text-left transition-all duration-200 relative ${
                   isSelected
-                    ? 'bg-slate-900 border-slate-700 shadow-md'
+                    ? 'bg-slate-900 border-teal-500/80 shadow-lg shadow-teal-950/40 ring-1 ring-teal-500/40'
                     : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/40'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-slate-800 text-slate-200 border border-slate-700' : 'bg-slate-800 text-slate-400'}`}>
+                  <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-slate-800 text-slate-400'}`}>
                     STEP {node.number}
                   </span>
-                  {isSelected && <span className="w-2 h-2 rounded-full bg-teal-400"></span>}
+                  {isSelected && <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping"></span>}
                 </div>
-                <p className="text-xs font-semibold text-white truncate">{node.stage}</p>
+                <p className="text-xs font-bold text-white truncate">{node.stage}</p>
               </button>
             );
           })}
         </div>
 
         {/* Detailed Spotlight Card */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/90 shadow-xl p-6 sm:p-8">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-6 sm:p-8 backdrop-blur-md">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Narrative Description */}
             <div className="lg:col-span-6 space-y-5">
               <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-md text-xs font-mono font-semibold border border-slate-700 bg-slate-950 text-slate-200`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-mono font-bold border ${activeNode.accent}`}>
                   STEP {activeNode.number} OF 06
                 </span>
                 <span className="text-xs text-slate-400 font-medium">Automatic Hand-off</span>
@@ -225,19 +228,19 @@ export default function InteractiveWorkflowStory() {
 
               {/* Automation details */}
               <div className="space-y-3 pt-2">
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/80 border border-slate-800">
-                  <Activity className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800">
+                  <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-slate-200">System Trigger</p>
                     <p className="text-xs text-slate-400">{activeNode.trigger}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-950/80 border border-slate-800">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-teal-950/30 border border-teal-800/40">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-200">Automated Outcome</p>
-                    <p className="text-xs text-slate-300">{activeNode.automatedResult}</p>
+                    <p className="text-xs font-semibold text-teal-300">Automated Outcome</p>
+                    <p className="text-xs text-teal-200/80">{activeNode.automatedResult}</p>
                   </div>
                 </div>
               </div>
@@ -246,7 +249,7 @@ export default function InteractiveWorkflowStory() {
               <div className="flex items-center gap-4 pt-4">
                 <button
                   onClick={() => setActiveStepIndex((prev) => (prev + 1) % FLOW_NODES.length)}
-                  className="px-4 py-2 rounded-md bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center gap-2 border border-slate-700"
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors flex items-center gap-2 border border-slate-700"
                 >
                   <span>Next Flow Step</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -255,7 +258,7 @@ export default function InteractiveWorkflowStory() {
                   href="/auth/login?register=true&plan=starter"
                   className="text-xs text-teal-400 hover:text-teal-300 font-semibold flex items-center gap-1"
                 >
-                  Test this full flow live
+                  Test this full flow live →
                 </Link>
               </div>
             </div>
@@ -263,7 +266,7 @@ export default function InteractiveWorkflowStory() {
             {/* Right Live UI Preview Box */}
             <div className="lg:col-span-6">
               <div
-                className="rounded-lg border border-slate-700/80 bg-slate-950 p-5 shadow-md relative overflow-hidden select-none"
+                className="rounded-xl border border-slate-700/80 bg-slate-950 p-5 shadow-xl relative overflow-hidden select-none"
                 onContextMenu={(e) => e.preventDefault()}
                 onDragStart={(e) => e.preventDefault()}
               >
@@ -273,17 +276,17 @@ export default function InteractiveWorkflowStory() {
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
-                    <span className="ml-2 font-mono text-[11px] text-slate-400 font-semibold">
+                    <span className="ml-2 font-mono text-[11px] text-teal-400 font-semibold">
                       {activeNode.previewSnippet.badge}
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-mono border border-slate-700">
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-mono border border-emerald-500/20">
                     REAL-TIME SYNC
                   </span>
                 </div>
 
                 {/* Headline */}
-                <h4 className="text-base font-semibold text-white mb-3">
+                <h4 className="text-base font-bold text-white mb-3">
                   {activeNode.previewSnippet.headline}
                 </h4>
 
@@ -299,7 +302,7 @@ export default function InteractiveWorkflowStory() {
 
                 {/* Footnote */}
                 {activeNode.previewSnippet.codeOrNote && (
-                  <div className="p-2.5 rounded bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-300">
+                  <div className="p-2.5 rounded bg-slate-900 border border-teal-500/30 text-[11px] font-mono text-teal-300">
                     {activeNode.previewSnippet.codeOrNote}
                   </div>
                 )}
