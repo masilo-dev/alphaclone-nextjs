@@ -6,13 +6,18 @@ export const dynamic = 'force-dynamic';
 
 const ALLOWED_TYPES = new Set<EntityType>(['lead', 'client', 'contact', 'contract', 'invoice', 'project']);
 
+function parseEntityType(value: string): EntityType | null {
+  return ALLOWED_TYPES.has(value as EntityType) ? (value as EntityType) : null;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ tenantId: string; entityType: string; entityId: string }> },
 ) {
   try {
     const { tenantId, entityType, entityId } = await params;
-    if (!ALLOWED_TYPES.has(entityType)) {
+    const parsedEntityType = parseEntityType(entityType);
+    if (!parsedEntityType) {
       return NextResponse.json({ error: 'Unsupported entity type' }, { status: 400 });
     }
 
@@ -20,7 +25,7 @@ export async function GET(
     const context = await buildEntityContextSummary(
       admin,
       tenantId,
-      entityType as EntityType,
+      parsedEntityType,
       entityId,
     );
 

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { emitBusinessEvent } from '@/lib/automation/emit-event';
 
 async function afterDealWrite(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
@@ -25,6 +24,7 @@ async function afterDealWrite(
       userId: options.userId || undefined,
     }).catch((err) => console.warn('[MCP deals] stage activity failed:', err));
 
+    const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
     await emitBusinessEvent(tenantId, 'deal_stage_changed', {
       dealId,
       oldStage: options.oldStage,
