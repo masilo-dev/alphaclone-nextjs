@@ -90,7 +90,6 @@ async function fetchOutreachByEmail(
       source_label: formatAttributionLabel({
         ...attr,
         source_type: (meta.source_type as typeof attr.source_type) || 'campaign_worker',
-        source_agent: attr.source_agent !== 'Unknown' ? attr.source_agent : 'Outreach Campaign',
       }),
       metadata: { campaign_name: row.campaign_name, provider: row.provider, lead_id: row.lead_id },
     });
