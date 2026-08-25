@@ -113,6 +113,7 @@ const envSchema = z.object({
     CAL_BASE_URL: z.string().url().optional(),
     CAL_OAUTH_CLIENT_ID: z.string().optional(),
     CAL_OAUTH_CLIENT_SECRET: z.string().optional(),
+    CAL_OAUTH_REDIRECT_URI: z.string().url().optional(),
 
     // Google OAuth
     GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required').optional(),
@@ -243,6 +244,10 @@ function validateEnv() {
         CAL_BASE_URL: process.env.CAL_BASE_URL || process.env.NEXT_PUBLIC_CAL_BASE_URL,
         CAL_OAUTH_CLIENT_ID: process.env.CAL_OAUTH_CLIENT_ID || process.env.NEXT_PUBLIC_CAL_OAUTH_CLIENT_ID,
         CAL_OAUTH_CLIENT_SECRET: process.env.CAL_OAUTH_CLIENT_SECRET,
+        CAL_OAUTH_REDIRECT_URI:
+            process.env.CAL_OAUTH_REDIRECT_URI ||
+            process.env.NEXT_PUBLIC_CAL_OAUTH_REDIRECT_URI ||
+            `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/cal/callback`,
 
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
