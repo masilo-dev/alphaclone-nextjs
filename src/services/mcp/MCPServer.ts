@@ -8995,16 +8995,31 @@ Return ONLY a JSON array of 60 objects:
           const tenantForLog =
             this.ctx?.tenantId ||
             ((args as Record<string, any>)?.tenant_id ? String((args as Record<string, any>).tenant_id) : '');
+          const userForNotify =
+            this.ctx?.userId ||
+            ((args as Record<string, any>)?.user_id ? String((args as Record<string, any>).user_id) : '');
           if (tenantForLog) {
             const { logMcpToolExecution, normalizeToolName } = await import('@/lib/mcp/mcpToolTelemetry');
             await logMcpToolExecution({
               tenantId: tenantForLog,
-              userId: this.ctx?.userId || (args as Record<string, any>)?.user_id || null,
+              userId: userForNotify || null,
               toolName: normalizeToolName(name),
               durationMs: Date.now() - telemetryStart,
               success: telemetrySuccess,
               errorMessage: telemetryError || null,
             });
+          }
+          if (tenantForLog && userForNotify) {
+            const { notifyAfterMcpToolExecution } = await import('@/lib/notifications/mcpToolNotificationHook');
+            void notifyAfterMcpToolExecution({
+              tenantId: tenantForLog,
+              userId: userForNotify,
+              toolName: name,
+              args: (args || {}) as Record<string, unknown>,
+              success: telemetrySuccess,
+              resultContent: typeof result !== 'undefined' ? result?.content : undefined,
+              errorMessage: telemetryError || undefined,
+            }).catch(() => undefined);
           }
         }
       }

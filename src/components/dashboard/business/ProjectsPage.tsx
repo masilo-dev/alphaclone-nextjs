@@ -43,6 +43,7 @@ import { exportToCSV } from '../../../utils/exportUtils';
 import { TaskCountdown } from '../tasks/TaskCountdown';
 import { ProjectStage } from '../../../types';
 import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { BusinessContextPanel } from '@/components/dashboard/crm/BusinessContextPanel';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { PROJECT_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
@@ -1097,6 +1098,14 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                             />
                         }
                     />
+
+                    {tenantId ? (
+                        <BusinessContextPanel
+                            tenantId={tenantId}
+                            entityType="project"
+                            entityId={project.id}
+                        />
+                    ) : null}
 
                     <div className="bg-slate-900/40 border border-white/5 rounded-lg p-4 flex items-center justify-between gap-6">
                         <div className="relative w-24 h-24 flex-shrink-0">

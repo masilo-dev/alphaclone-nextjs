@@ -1,4 +1,6 @@
-import { createHash } from 'node:crypto';
+import 'server-only';
+
+import { createHash } from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import {
   classifyEventPriority,

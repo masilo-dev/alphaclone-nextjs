@@ -30,12 +30,23 @@ registerTool('gap-crm', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, client_id: { type: 'string' }, limit: { type: 'number' } }, required: ['client_id'] },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const [{ data: invoices }, { data: outreach }, { data: notes }] = await Promise.all([
+    const { data: client } = await supabase
+      .from('business_clients')
+      .select('email')
+      .eq('id', args.client_id)
+      .eq('tenant_id', args.tenant_id)
+      .maybeSingle();
+    const email = String(client?.email || '').trim();
+
+    const [{ data: invoices }, outreachResult, { data: notes }] = await Promise.all([
       supabase.from('business_invoices').select('id, total, status, created_at').eq('client_id', args.client_id).eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(10),
-      supabase.from('outreach_logs').select('id, channel, status, created_at, subject').eq('client_id', args.client_id).eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(10),
+      email
+        ? supabase.from('lead_outreach_log').select('id, status, subject, campaign_name, created_at, sent_at, lead_email').eq('tenant_id', args.tenant_id).ilike('lead_email', email).order('created_at', { ascending: false }).limit(10)
+        : Promise.resolve({ data: [] as Record<string, unknown>[] }),
       supabase.from('client_notes').select('id, content, created_at').eq('client_id', args.client_id).eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(10),
     ]);
-    return { content: [{ type: 'text', text: JSON.stringify({ client_id: args.client_id, invoices: invoices || [], outreach: outreach || [], notes: notes || [] }, null, 2) }] };
+    const outreach = outreachResult.data || [];
+    return { content: [{ type: 'text', text: JSON.stringify({ client_id: args.client_id, invoices: invoices || [], outreach, notes: notes || [] }, null, 2) }] };
   },
 });
 
@@ -47,7 +58,23 @@ registerTool('gap-crm', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, client_id: { type: 'string' }, limit: { type: 'number' } }, required: ['client_id'] },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase.from('outreach_logs').select('id, subject, channel, status, sent_at, created_at, body_preview').eq('client_id', args.client_id).eq('tenant_id', args.tenant_id).in('channel', ['email', 'gmail', 'sendgrid', 'resend', 'brevo']).order('created_at', { ascending: false }).limit(args.limit ?? 20);
+    const { data: client } = await supabase
+      .from('business_clients')
+      .select('email')
+      .eq('id', args.client_id)
+      .eq('tenant_id', args.tenant_id)
+      .maybeSingle();
+    const email = String(client?.email || '').trim();
+    if (!email) {
+      return { content: [{ type: 'text', text: JSON.stringify({ emails: [], client_id: args.client_id, note: 'Client has no email on file' }, null, 2) }] };
+    }
+    const { data, error } = await supabase
+      .from('lead_outreach_log')
+      .select('id, subject, status, sent_at, created_at, lead_email, campaign_name')
+      .eq('tenant_id', args.tenant_id)
+      .ilike('lead_email', email)
+      .order('created_at', { ascending: false })
+      .limit(args.limit ?? 20);
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
     return { content: [{ type: 'text', text: JSON.stringify({ emails: data || [], client_id: args.client_id }, null, 2) }] };
   },

@@ -68,6 +68,15 @@ export async function reconcileStaleCampaigns(tenantId?: string): Promise<{
         eventType: 'campaign.execution.completed',
         payload: { campaignId: campaign.id, totalSent: sentCount, totalFailed: failedCount, staleRecovery: true },
       });
+
+      const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
+      await emitBusinessEvent(campaign.tenant_id, 'campaign_completed', {
+        campaignId: campaign.id,
+        totalSent: sentCount,
+        totalFailed: failedCount,
+        staleRecovery: true,
+      }).catch(() => undefined);
+
       autoCompleted++;
     } else {
       await admin

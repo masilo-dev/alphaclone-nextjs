@@ -40,6 +40,7 @@ import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { BusinessContextPanel } from '@/components/dashboard/crm/BusinessContextPanel';
 import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
 import { useDropzone } from 'react-dropzone';
@@ -1114,6 +1115,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </Badge>
                                 </div>
 
+                                <div className="flex flex-1 min-h-0 gap-4">
                                 <div className="p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                                     <RecordHeader
                                         moduleId="crm"
@@ -1417,6 +1419,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             <Button variant="outline" size="sm" onClick={() => { setSelectedClientForCommunication(selectedClient); setShowCommunicationModal(true); }} icon={<Mail className="w-4 h-4" />}>Email</Button>
                                         </div>
                                     </div>
+                                </div>
+                                {currentTenant?.id ? (
+                                    <BusinessContextPanel
+                                        tenantId={currentTenant.id}
+                                        entityType="client"
+                                        entityId={selectedClient.id}
+                                        className="hidden xl:block w-72 shrink-0"
+                                    />
+                                ) : null}
                                 </div>
                             </div>
                         ) : (

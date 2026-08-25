@@ -39,6 +39,7 @@ import {
   FunnelVisualization,
 } from '@/components/ui/intelligence';
 import { UniversalModuleExecutionHeader } from '@/components/dashboard/common/UniversalModuleExecutionHeader';
+import { BusinessControlCenter } from '@/components/dashboard/business/BusinessControlCenter';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -421,6 +422,8 @@ export function OperatingSystemHome() {
           else window.location.href = '/dashboard/tasks';
         }}
       />
+
+      <BusinessControlCenter />
 
       <section
         className="grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4"

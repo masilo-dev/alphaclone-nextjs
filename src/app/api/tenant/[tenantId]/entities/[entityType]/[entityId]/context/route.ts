@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { buildEntityContextSummary } from '@/lib/audit/entityTimelineService';
+import { buildEntityContextSummary, type EntityType } from '@/lib/audit/entityTimelineService';
 
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_TYPES = new Set(['lead', 'client', 'contact']);
+const ALLOWED_TYPES = new Set<EntityType>(['lead', 'client', 'contact', 'contract', 'invoice', 'project']);
 
 export async function GET(
   req: NextRequest,
@@ -20,7 +20,7 @@ export async function GET(
     const context = await buildEntityContextSummary(
       admin,
       tenantId,
-      entityType as 'lead' | 'client' | 'contact',
+      entityType as EntityType,
       entityId,
     );
 

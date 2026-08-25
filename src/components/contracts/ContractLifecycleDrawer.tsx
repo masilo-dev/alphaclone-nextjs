@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
+import { AskBonnieButton } from "@/components/ui/os/AskBonnieButton";
+import { BusinessContextPanel } from "@/components/dashboard/crm/BusinessContextPanel";
 
 type Workspace = {
   contract: Record<string, any>;
@@ -320,7 +322,8 @@ export function ContractLifecycleDrawer({
           <Loader2 className="h-6 w-6 animate-spin text-teal-400" />
         </div>
       ) : workspace ? (
-        <div className="space-y-4 pt-2">
+        <div className="flex flex-col xl:flex-row gap-4 pt-2">
+          <div className="flex-1 min-w-0 space-y-4">
           <div className={card}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
@@ -330,6 +333,13 @@ export function ContractLifecycleDrawer({
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                <AskBonnieButton
+                  compact
+                  mode="summarise"
+                  contexts={[
+                    { type: 'Contract', id: contractId, label: workspace.contract.title || 'Contract' },
+                  ]}
+                />
                 {[
                   "signed",
                   "active",
@@ -750,6 +760,15 @@ export function ContractLifecycleDrawer({
                 </div>
               </div>
             </section>
+          ) : null}
+          </div>
+          {tenantId ? (
+            <BusinessContextPanel
+              tenantId={tenantId}
+              entityType="contract"
+              entityId={contractId}
+              className="hidden xl:block w-72 shrink-0 sticky top-0 self-start"
+            />
           ) : null}
         </div>
       ) : (

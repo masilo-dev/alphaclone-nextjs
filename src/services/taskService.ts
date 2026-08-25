@@ -309,9 +309,9 @@ export const taskService = {
                 taskTitle: taskData.title,
             }, tenantId);
 
-            // EMIT AUTOMATION EVENT
-            const { emitBusinessEvent } = await import('../lib/automation/emit-event');
-            await emitBusinessEvent(tenantId, 'task_created', {
+            // EMIT AUTOMATION EVENT (client-safe — server emit via API)
+            const { requestBusinessEvent } = await import('../lib/automation/request-event');
+            await requestBusinessEvent(tenantId, 'task_created', {
                 taskId: data.id,
                 title: data.title,
                 priority: data.priority,

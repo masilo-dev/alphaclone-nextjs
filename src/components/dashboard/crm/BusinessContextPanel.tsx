@@ -5,7 +5,7 @@ import type { EntityTimelineItem } from '@/lib/audit/entityTimelineService';
 
 type BusinessContextPanelProps = {
   tenantId: string;
-  entityType: 'lead' | 'client' | 'contact';
+  entityType: 'lead' | 'client' | 'contact' | 'contract' | 'invoice' | 'project';
   entityId: string;
   className?: string;
 };
@@ -53,14 +53,23 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
     );
   }
 
-  const name = String(data.identity.business_name || data.identity.contact_name || data.identity.name || 'Record');
+  const name = String(
+    data.identity.business_name ||
+    data.identity.contact_name ||
+    data.identity.title ||
+    data.identity.invoice_number ||
+    data.identity.name ||
+    'Record',
+  );
 
   return (
     <aside className={`rounded-xl border border-cyan-900/30 bg-[#0f172a] text-slate-200 ${className}`}>
       <div className="border-b border-slate-800 px-4 py-3">
         <p className="text-xs uppercase tracking-wide text-cyan-400">Business Context</p>
         <h3 className="text-lg font-semibold text-white truncate">{name}</h3>
-        <p className="text-xs text-slate-400 mt-1">Outreach: {data.outreach_status}</p>
+        {data.outreach_status !== 'N/A' ? (
+          <p className="text-xs text-slate-400 mt-1">Outreach: {data.outreach_status}</p>
+        ) : null}
       </div>
 
       {data.needs_attention.length > 0 && (
@@ -86,6 +95,23 @@ export function BusinessContextPanel({ tenantId, entityType, entityId, className
           {!data.timeline.length && <li className="text-xs text-slate-500">No activity yet</li>}
         </ul>
       </div>
+
+      {Object.keys(data.relationships).length > 0 && (
+        <div className="px-4 py-3 border-b border-slate-800">
+          <p className="text-xs font-semibold text-slate-400 uppercase mb-2">Relationships</p>
+          <ul className="text-xs space-y-1 text-slate-400">
+            {Object.entries(data.relationships).map(([key, value]) => {
+              const count = Array.isArray(value) ? value.length : value ? 1 : 0;
+              if (!count) return null;
+              return (
+                <li key={key}>
+                  {key}: {Array.isArray(value) ? count : String((value as Record<string, unknown>)?.name || 'linked')}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="px-4 py-3">
         <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Next Action</p>

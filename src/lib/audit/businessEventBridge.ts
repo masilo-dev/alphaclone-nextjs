@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { emitTenantBusinessEvent } from '@/lib/notifications/emitTenantBusinessEvent';
 import { recordBusinessActivity } from '@/lib/audit/businessAuditEngine';
 
@@ -25,6 +27,18 @@ const EVENT_MAP: Record<string, { eventType: string; title: (p: Record<string, u
     title: () => 'Deal stage updated',
     message: (p) => `Deal moved to ${p.stage || 'new stage'}.`,
     actionUrl: '/dashboard/crm',
+  },
+  invoice_paid: {
+    eventType: 'invoice.paid',
+    title: (p) => `Invoice paid${p.invoiceNumber ? ` #${p.invoiceNumber}` : ''}`,
+    message: (p) => `Payment received${p.clientName ? ` from ${p.clientName}` : ''}.`,
+    actionUrl: '/dashboard/business/invoices',
+  },
+  campaign_completed: {
+    eventType: 'campaign.completed',
+    title: (p) => `Campaign completed — ${p.campaignName || 'Outreach'}`,
+    message: (p) => `${p.totalSent ?? 0} emails sent${p.totalFailed ? ` (${p.totalFailed} failed)` : ''}.`,
+    actionUrl: '/dashboard/outreach',
   },
   form_submitted: {
     eventType: 'lead.created',
@@ -71,7 +85,7 @@ export async function bridgeAutomationEventToTenantNotification(
     actionUrl: mapping.actionUrl,
     clientName,
     entityType: mapping.eventType.split('.')[0],
-    entityId: (payload.contractId || payload.leadId || payload.invoiceId) as string | undefined,
+    entityId: (payload.contractId || payload.leadId || payload.invoiceId || payload.campaignId) as string | undefined,
     status: 'success',
     metadata: payload,
   }).catch((err) => {

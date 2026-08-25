@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { DetailDrawer } from "@/components/ui/DetailDrawer";
+import { AskBonnieButton } from "@/components/ui/os/AskBonnieButton";
+import { BusinessContextPanel } from "@/components/dashboard/crm/BusinessContextPanel";
 
 type Workspace = {
   invoice: Record<string, any>;
@@ -216,9 +218,21 @@ export function InvoiceLifecycleDrawer({
           <Loader2 className="h-6 w-6 animate-spin text-teal-400" />
         </div>
       ) : data ? (
-        <div className="space-y-4 pt-2">
+        <div className="flex flex-col xl:flex-row gap-4 pt-2">
+          <div className="flex-1 min-w-0 space-y-4">
           <section className={card}>
-            <p className="text-xs font-bold text-white">Lifecycle</p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-bold text-white">Lifecycle</p>
+              {invoiceId && tenantId ? (
+                <AskBonnieButton
+                  compact
+                  mode="summarise"
+                  contexts={[
+                    { type: 'Invoice', id: invoiceId, label: String(data.invoice.invoice_number || 'Invoice') },
+                  ]}
+                />
+              ) : null}
+            </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {[
                 "draft",
@@ -533,6 +547,15 @@ export function InvoiceLifecycleDrawer({
                 </div>
               </div>
             </section>
+          ) : null}
+          </div>
+          {invoiceId && tenantId ? (
+            <BusinessContextPanel
+              tenantId={tenantId}
+              entityType="invoice"
+              entityId={invoiceId}
+              className="hidden xl:block w-72 shrink-0 sticky top-0 self-start"
+            />
           ) : null}
         </div>
       ) : (

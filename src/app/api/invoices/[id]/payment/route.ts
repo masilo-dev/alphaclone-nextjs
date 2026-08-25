@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
+import { emitTenantBusinessEvent } from '@/lib/notifications/emitTenantBusinessEvent';
 
 const schema = z.object({
   tenantId: z.string().uuid(),
@@ -36,6 +37,23 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     await logInvoiceEvent({ invoiceId: id, tenantId, eventType: 'payment_received', eventData: { amount, amountPaid: invoice.amount_paid, status: invoice.status }, performedBy: user.id })
       .catch((auditError) => console.error('[invoice-payment] audit failed', auditError));
+
+    if (String(invoice.status).toLowerCase() === 'paid') {
+      await emitTenantBusinessEvent({
+        tenantId,
+        userId: user.id,
+        eventType: 'invoice.paid',
+        source: 'system',
+        title: `Invoice paid #${invoice.invoice_number || id.slice(0, 8)}`,
+        message: `Payment recorded — ${amount} applied.`,
+        actionUrl: '/dashboard/business/invoices',
+        entityType: 'invoice',
+        entityId: id,
+        status: 'success',
+        metadata: { amount, idempotencyKey },
+      }).catch(() => undefined);
+    }
+
     return NextResponse.json({ invoice });
   } catch (error) { return routeErrorResponse(error, 'Payment could not be recorded', req); }
 }

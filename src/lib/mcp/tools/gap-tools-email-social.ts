@@ -51,8 +51,11 @@ registerTool('gap-chatbot', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, recipient_phone: { type: 'string' }, message: { type: 'string' } }, required: ['recipient_phone', 'message'] },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase.from('outreach_logs').insert({
-      tenant_id: args.tenant_id, channel: 'whatsapp', status: 'sent', body_preview: args.message, created_at: new Date().toISOString()
+    const { data, error } = await supabase.from('whatsapp_outreach_logs').insert({
+      tenant_id: args.tenant_id,
+      phone_number: args.recipient_phone,
+      status: 'queued',
+      message_content: args.message,
     }).select().single();
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ status: 'requires_oauth', message: 'WhatsApp API credentials not configured.' }) }] };
     return { content: [{ type: 'text', text: JSON.stringify({ sent: true, message_id: data.id }, null, 2) }] };

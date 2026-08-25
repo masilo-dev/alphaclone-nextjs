@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { campaignHealth, classifyOutreachReply } from '@/lib/outreach/outreachIntelligence';
 import { normalizeOutreachRecipient } from '@/lib/revenue/connectedLifecycle';
+import { emitTenantBusinessEvent } from '@/lib/notifications/emitTenantBusinessEvent';
+import { recordBusinessActivity } from '@/lib/audit/businessAuditEngine';
 
 const eventSchema = z.object({
   tenantId: z.uuid(), campaignId: z.uuid().optional(), sequenceId: z.uuid().optional(), stepId: z.uuid().optional(),
@@ -124,6 +126,61 @@ export async function POST(request: NextRequest) {
         currency_code: input.revenue.currencyCode, evidence: { source_event: eventType },
       });
       if (attributionError) throw attributionError;
+    }
+
+    const isReplyEvent = ['replied', 'positive_reply', 'objection', 'not_now'].includes(eventType);
+    if (isReplyEvent && input.leadId) {
+      const { data: latestLog } = await admin
+        .from('lead_outreach_log')
+        .select('id')
+        .eq('tenant_id', input.tenantId)
+        .eq('lead_id', input.leadId)
+        .in('status', ['sent', 'delivered', 'opened', 'clicked'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestLog?.id) {
+        await admin
+          .from('lead_outreach_log')
+          .update({ status: 'replied', provider_event_status: 'replied' })
+          .eq('tenant_id', input.tenantId)
+          .eq('id', latestLog.id);
+      }
+
+      const { data: owner } = await admin
+        .from('tenant_users')
+        .select('user_id')
+        .eq('tenant_id', input.tenantId)
+        .in('role', ['owner', 'admin'])
+        .limit(1)
+        .maybeSingle();
+
+      await recordBusinessActivity({
+        tenantId: input.tenantId,
+        event: 'Lead replied to outreach',
+        actor: 'Prospect',
+        businessContext: input.replyText?.slice(0, 200) || 'Reply received via outreach channel',
+        relatedRecordType: 'lead',
+        relatedRecordId: input.leadId,
+        result: 'Reply logged — follow up required',
+        status: 'waiting',
+        technicalDetails: { source: 'outreach_events', event_id: event.id, campaign_id: input.campaignId },
+      }).catch(() => undefined);
+
+      await emitTenantBusinessEvent({
+        tenantId: input.tenantId,
+        userId: owner?.user_id,
+        eventType: 'lead.replied',
+        source: 'system',
+        title: `Prospect replied${input.recipient ? ` — ${input.recipient}` : ''}`,
+        message: input.replyText?.slice(0, 160) || 'A prospect replied to your outreach.',
+        actionUrl: '/dashboard/crm/leads',
+        entityType: 'lead',
+        entityId: input.leadId,
+        status: 'waiting',
+        metadata: { campaign_id: input.campaignId, reply_classification: replyClassification },
+      }).catch(() => undefined);
     }
 
     return NextResponse.json({ success: true, event, replyClassification, health, createdDeal }, { status: 201 });

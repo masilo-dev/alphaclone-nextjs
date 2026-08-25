@@ -929,6 +929,17 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
       })
       .eq("id", campaignId);
 
+    if (sentCount > 0) {
+      const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
+      await emitBusinessEvent(tenantId, 'campaign_completed', {
+        campaignId,
+        campaignName: String(c.name || campaign.name || 'Campaign'),
+        totalSent: sentCount,
+        totalFailed: failedCount,
+        actorUserId: campaignCreatorId,
+      }).catch((err) => console.warn('[campaign] completion event failed:', err));
+    }
+
     return { success: true, error: null };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";

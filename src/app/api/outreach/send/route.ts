@@ -273,6 +273,14 @@ export async function POST(request: Request) {
         industry,
         score,
         status:       'queued',
+        lead_id:      entityType === 'lead' && entityId ? entityId : undefined,
+        metadata: {
+          source_type: 'alphaclone_ui',
+          source_agent: 'User',
+          initiated_by_user_id: tenantCtx.user.id,
+          entity_type: entityType || null,
+          entity_id: entityId || null,
+        },
       })
       .select('id')
       .single();

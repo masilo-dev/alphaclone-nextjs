@@ -361,9 +361,9 @@ export const leadService = {
 
             const newLead: Lead = normalizeLeadRecord(data);
 
-            // EMIT AUTOMATION EVENT
-            const { emitBusinessEvent } = await import('../lib/automation/emit-event');
-            await emitBusinessEvent(tenantId, 'lead_created', {
+            // EMIT AUTOMATION EVENT (client-safe — server emit via API)
+            const { requestBusinessEvent } = await import('../lib/automation/request-event');
+            await requestBusinessEvent(tenantId, 'lead_created', {
                 leadId: newLead.id,
                 businessName: newLead.businessName,
                 source: newLead.source,

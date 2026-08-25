@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { emitTenantBusinessEvent } from '@/lib/notifications/emitTenantBusinessEvent';
 
 const ReconcileSchema = z.object({
   payment_ref: z.string().min(1, 'payment_ref is required'),
@@ -78,6 +79,25 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       old_values: invoice,
       created_at: new Date().toISOString()
     });
+
+    const { data: client } = invoice.client_id
+      ? await admin.from('business_clients').select('name').eq('tenant_id', tenantId).eq('id', invoice.client_id).maybeSingle()
+      : { data: null };
+
+    await emitTenantBusinessEvent({
+      tenantId,
+      userId: user.id,
+      eventType: 'invoice.paid',
+      source: 'system',
+      title: `Invoice paid #${invoice.invoice_number || id.slice(0, 8)}`,
+      message: `Payment of ${amount} received${client?.name ? ` from ${client.name}` : ''}.`,
+      actionUrl: '/dashboard/business/invoices',
+      entityType: 'invoice',
+      entityId: id,
+      clientName: client?.name,
+      status: 'success',
+      metadata: { payment_ref, provider, amount },
+    }).catch(() => undefined);
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {

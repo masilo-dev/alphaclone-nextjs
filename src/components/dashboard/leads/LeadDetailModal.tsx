@@ -54,6 +54,7 @@ import {
 import { googleMapsService } from '../../../services/googleMapsService';
 import { getPublicGoogleMapsApiKey } from '@/config/publicEnv';
 import dynamic from 'next/dynamic';
+import { BusinessContextPanel } from '@/components/dashboard/crm/BusinessContextPanel';
 
 const ComposeEmailModal = dynamic(
     () => import('@/components/dashboard/business/ComposeEmailModal'),
@@ -1003,7 +1004,8 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950 grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+                    <div className="min-w-0">
                     {showEditForm && (
                         <Card className="p-4 mb-5 border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-900)]/10">
                             <h3 className="text-sm font-semibold text-white mb-3">Edit lead details</h3>
@@ -1575,6 +1577,16 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             </div>
                         </div>
                     )}
+                    </div>
+
+                    {currentTenant?.id ? (
+                        <BusinessContextPanel
+                            tenantId={currentTenant.id}
+                            entityType="lead"
+                            entityId={lead.id}
+                            className="hidden xl:block sticky top-0 self-start"
+                        />
+                    ) : null}
                 </div>
             </div>
 
