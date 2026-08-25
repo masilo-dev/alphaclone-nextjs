@@ -23,7 +23,12 @@ export class PublicOriginConfigurationError extends Error {
   }
 }
 
+function isBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === 'phase-production-build';
+}
+
 function isProductionRuntime(): boolean {
+  if (isBuildPhase()) return false;
   return (
     process.env.NODE_ENV === 'production' ||
     process.env.RAILWAY_ENVIRONMENT === 'production'
@@ -117,7 +122,11 @@ function resolveRawOrigin(): string {
     const trimmed = candidate?.trim();
     if (!trimmed) continue;
     try {
-      return normalizeOrigin(trimmed);
+      const origin = normalizeOrigin(trimmed);
+      if (isBuildPhase() && containsBlockedHost(origin)) {
+        return DEFAULT_PRODUCTION_ORIGIN;
+      }
+      return origin;
     } catch {
       // try next
     }
