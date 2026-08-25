@@ -1,24 +1,14 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { microsoftServerService } from '@/services/server/microsoftServerService';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
-
-// Initialize Clients
-// Initialize Clients inside handler to avoid build-time errors if env vars missing
-// const supabase = createClient(...);
-
-import { ENV } from '@/config/env';
 import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: Request) {
     try {
-        // Initialize Supabase Client
-        const supabase = createClient(
-            ENV.VITE_SUPABASE_URL,
-            ENV.SUPABASE_SERVICE_ROLE_KEY
-        );
+        const supabase = createSupabaseAdminClient();
 
         const body = await req.json();
         const {

@@ -10,7 +10,6 @@ import { DEMO_HREF, TRIAL_HREF } from "@/lib/marketing/cta";
 import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
 import { MarketingContainer, MarketingSection } from "./LayoutPrimitives";
 import MarketingShell from "./MarketingShell";
-import { CurvedDotField, HeroDataWaves, SectionAmbientLight } from "./atmosphere";
 import LookInsideAlphaClone from "./LookInsideAlphaClone";
 import AiInterfaceShowcase from "./AiInterfaceShowcase";
 import LifecycleFlowShowcase from "./LifecycleFlowShowcase";
@@ -67,30 +66,34 @@ function Status({ tone, children }: { tone: "done" | "active" | "queued" | "appr
 
 export default function MarketingHomePage() {
   return <MarketingShell>
-    {/* Approved hero — markup intentionally preserved. */}
+    {/* Approved hero — screenshots and approved copy preserved. */}
     <section className="mkt-hero mkt-hero--compact pt-24 sm:pt-28 lg:pt-32 pb-10 sm:pb-14">
-      <SectionAmbientLight variant="hero" /><HeroDataWaves /><CurvedDotField />
       <MarketingContainer>
         <div className="mkt-hero-copy mkt-reveal mx-auto max-w-4xl px-2 text-center">
-          <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.08] tracking-normal text-white sm:text-5xl md:text-6xl"><span>Run your business from </span><span className="block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent">one AI workspace.</span></h1>
+          <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.08] tracking-normal text-white sm:text-5xl md:text-6xl">
+            Run your business from one connected workspace.
+          </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base md:text-lg">Find customers. Manage relationships. Deliver work. Send invoices. Let Bonnie handle the repetitive work between them.</p>
-          <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center"><PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">Start for $15/month</PrimaryCTA><SecondaryCTA href={DEMO_HREF} className="w-full sm:w-auto mkt-btn-large">Book a demo</SecondaryCTA></div>
+          <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
+            <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">Start for $15/month</PrimaryCTA>
+            <SecondaryCTA href={DEMO_HREF} className="w-full sm:w-auto mkt-btn-large">Book a demo</SecondaryCTA>
+          </div>
         </div>
         <div className="mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]">
-          <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#030a16]/90 p-2 sm:p-3 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl">
-            <div className="mb-2 flex items-center justify-between border-b border-white/10 px-3 pb-2 pt-1">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#030a16] p-2 sm:p-3 shadow-2xl shadow-slate-950/40">
+            <div className="mb-2 flex items-center justify-between border-b border-white/5 px-3 pb-2 pt-1">
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80"/>
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80"/>
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80"/>
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-500/70"/>
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-500/70"/>
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/70"/>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-3 py-0.5 text-[10px] font-medium text-slate-400">
-                <LockKeyhole className="h-2.5 w-2.5 text-emerald-400"/>
+              <div className="flex items-center gap-2 rounded-md border border-white/5 bg-slate-900/70 px-3 py-0.5 text-[10px] font-medium text-slate-400">
+                <LockKeyhole className="h-2.5 w-2.5 text-slate-400"/>
                 <span>alphaclone.app</span>
               </div>
               <div className="w-10"/>
             </div>
-            <div className="overflow-hidden rounded-xl border border-white/10 bg-slate-950 select-none">
+            <div className="overflow-hidden rounded-xl border border-white/5 bg-slate-950 select-none">
               <Image src="/images/alphaclone-all-in-one-mcp-platform.png" alt="AlphaClone all-in-one platform dashboard with connected tools and business workspace" width={1024} height={682} priority draggable={false} sizes="(max-width: 640px) 90vw, (max-width: 1024px) 672px, 880px" className="h-auto w-full max-w-full pointer-events-none select-none" />
             </div>
           </div>
