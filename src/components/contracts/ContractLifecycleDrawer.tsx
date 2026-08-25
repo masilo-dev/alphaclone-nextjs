@@ -337,7 +337,7 @@ export function ContractLifecycleDrawer({
                   compact
                   mode="summarise"
                   contexts={[
-                    { type: 'Contract', id: contractId, label: workspace.contract.title || 'Contract' },
+                    { type: 'Contract', id: contractId ?? undefined, label: workspace.contract.title || 'Contract' },
                   ]}
                 />
                 {[
@@ -762,7 +762,7 @@ export function ContractLifecycleDrawer({
             </section>
           ) : null}
           </div>
-          {tenantId ? (
+          {contractId && tenantId ? (
             <BusinessContextPanel
               tenantId={tenantId}
               entityType="contract"

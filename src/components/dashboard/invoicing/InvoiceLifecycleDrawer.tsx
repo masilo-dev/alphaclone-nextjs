@@ -228,7 +228,7 @@ export function InvoiceLifecycleDrawer({
                   compact
                   mode="summarise"
                   contexts={[
-                    { type: 'Invoice', id: invoiceId, label: String(data.invoice.invoice_number || 'Invoice') },
+                    { type: 'Invoice', id: invoiceId ?? undefined, label: String(data.invoice.invoice_number || 'Invoice') },
                   ]}
                 />
               ) : null}
