@@ -17,7 +17,16 @@ const bodySchema = z
 
 export async function POST(req: NextRequest) {
   try {
-    const { user, admin } = await requireAuthenticatedUser(req, { allowMissingProfile: true });
+    const { user } = await requireAuthenticatedUser(req, { allowMissingProfile: true });
+
+    if (!hasSupabaseServiceRole()) {
+      return NextResponse.json(
+        { error: 'Workspace creation is temporarily unavailable. Server admin credentials are misconfigured.' },
+        { status: 503 }
+      );
+    }
+
+    const admin = createSupabaseAdminClient();
     const body = bodySchema.parse(await req.json().catch(() => ({})));
     const idempotencyKey =
       req.headers.get('idempotency-key')?.trim() ||
