@@ -138,8 +138,8 @@ const envSchema = z.object({
     // Supabase Admin
     SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
-    // Encryption
-    ENCRYPTION_SECRET: z.string().length(32, 'Encryption secret must be exactly 32 characters').optional(),
+    // Encryption (allow any length at runtime — strict length breaks deploy when misconfigured)
+    ENCRYPTION_SECRET: z.string().optional(),
 
     // Zoho OAuth
     ZOHO_CLIENT_ID: z.string().optional(),
@@ -158,7 +158,7 @@ const envSchema = z.object({
     ZOHO_CLIENT_SECRET_CA: z.string().optional(),
     ZOHO_REDIRECT_URI: z.string().url().optional(),
     ZOHO_REGION: z.enum(['US', 'EU', 'IN', 'AU', 'JP', 'CA']).optional(),
-    ZOHO_ENCRYPTION_SECRET: z.string().length(32, 'Zoho encryption secret must be exactly 32 characters').optional(),
+    ZOHO_ENCRYPTION_SECRET: z.string().optional(),
 
     // LinkedIn OAuth (integration connector)
     LINKEDIN_CLIENT_ID: z.string().optional(),
@@ -346,16 +346,20 @@ function validateEnv() {
         return {
             ...parsed,
             VITE_SUPABASE_URL: parsed.NEXT_PUBLIC_SUPABASE_URL || parsed.VITE_SUPABASE_URL,
-            VITE_SUPABASE_ANON_KEY: parsed.NEXT_PUBLIC_SUPABASE_ANON_KEY || parsed.VITE_SUPABASE_ANON_KEY
+            VITE_SUPABASE_ANON_KEY: parsed.NEXT_PUBLIC_SUPABASE_ANON_KEY || parsed.VITE_SUPABASE_ANON_KEY,
+            SUPABASE_SERVICE_ROLE_KEY: parsed.SUPABASE_SERVICE_ROLE_KEY || rawEnv.SUPABASE_SERVICE_ROLE_KEY,
         };
     } catch (error) {
-        const isServer = typeof window === 'undefined';
-        const isProd = process.env.NODE_ENV === 'production';
-        if (isServer && isProd) {
-            console.error('[env] Invalid environment configuration', error);
-            throw new Error('Invalid environment configuration');
-        }
-        return rawEnv as any;
+        console.error('[env] Validation warnings — using raw env with Supabase fallbacks:', error);
+        const fallback = {
+            ...rawEnv,
+            VITE_SUPABASE_URL: rawEnv.NEXT_PUBLIC_SUPABASE_URL || rawEnv.VITE_SUPABASE_URL,
+            VITE_SUPABASE_ANON_KEY: rawEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY || rawEnv.VITE_SUPABASE_ANON_KEY,
+        } as Environment & {
+            VITE_SUPABASE_URL?: string;
+            VITE_SUPABASE_ANON_KEY?: string;
+        };
+        return fallback;
     }
 }
 

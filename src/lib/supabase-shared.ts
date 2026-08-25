@@ -3,8 +3,17 @@ import { ENV } from '@/config/env';
 const isPlaceholder = (val?: string) => !val || val === 'undefined' || val.includes('placeholder');
 
 /** True when both Supabase URL and anon key are present and non-placeholder. */
-export const isSupabaseConfigured = (): boolean =>
-    !isPlaceholder(ENV.VITE_SUPABASE_URL) && !isPlaceholder(ENV.VITE_SUPABASE_ANON_KEY);
+export const isSupabaseConfigured = (): boolean => {
+    const url =
+        ENV.VITE_SUPABASE_URL ||
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.SUPABASE_URL;
+    const key =
+        ENV.VITE_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    return !isPlaceholder(url) && !isPlaceholder(key);
+};
 
 export const SUPABASE_NOT_CONFIGURED_MESSAGE =
     'Supabase is not configured. Copy .env.example to .env.local and add your project URL, anon key, and service role key.';

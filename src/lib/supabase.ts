@@ -9,9 +9,16 @@ export const createClient = () => {
         return createUnavailableSupabaseClient('Supabase');
     }
 
-    const supabaseUrl = ENV.VITE_SUPABASE_URL!;
+    const supabaseUrl =
+        ENV.VITE_SUPABASE_URL ||
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.SUPABASE_URL!;
+    const supabaseAnonKey =
+        ENV.VITE_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
-    return createBrowserClient(supabaseUrl, ENV.VITE_SUPABASE_ANON_KEY!, {
+    return createBrowserClient(supabaseUrl, supabaseAnonKey, {
         auth: {
             persistSession: true,
             autoRefreshToken: true,
