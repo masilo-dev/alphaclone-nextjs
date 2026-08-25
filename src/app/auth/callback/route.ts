@@ -1,8 +1,8 @@
-import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
@@ -11,47 +11,9 @@ export async function GET(request: Request) {
 
     if (code) {
         try {
-            const cookieStore = await cookies()
+            await cookies()
 
-            // Use centralized ENV to handle variable resolution (VITE_ vs NEXT_PUBLIC_)
-            // and fallback logic
-            const { ENV } = await import('@/config/env')
-
-            const supabase = createServerClient(
-                ENV.VITE_SUPABASE_URL,
-                ENV.VITE_SUPABASE_ANON_KEY,
-                {
-                    cookies: {
-                        getAll() {
-                            return cookieStore.getAll()
-                        },
-                        setAll(cookiesToSet) {
-                            try {
-                                const allCookies = cookieStore.getAll();
-                                const sbCookieNames = allCookies
-                                    .map(c => c.name)
-                                    .filter(name => name.startsWith('sb-') && name.includes('-auth-token'));
-                                
-                                const newCookieNames = new Set(cookiesToSet.map(c => c.name));
-                                
-                                sbCookieNames.forEach(oldName => {
-                                    if (!newCookieNames.has(oldName)) {
-                                        cookieStore.set(oldName, '', { expires: new Date(0), path: '/' });
-                                    }
-                                });
-
-                                cookiesToSet.forEach(({ name, value, options }) =>
-                                    cookieStore.set(name, value, options)
-                                )
-                            } catch {
-                                // The `setAll` method was called from a Server Component.
-                                // This can be ignored if you have middleware refreshing
-                                // user sessions.
-                            }
-                        },
-                    },
-                }
-            )
+            const supabase = await createSupabaseServerClient()
             const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
             if (!error && session) {
                 const user = session.user
