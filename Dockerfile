@@ -70,7 +70,7 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=8080
 ENV HOSTNAME="0.0.0.0"
 ENV PATH="/app/node_modules/.bin:$PATH"
 ENV NODE_OPTIONS="--max-old-space-size=4096"
@@ -84,6 +84,6 @@ COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/chatgpt-app-submission.json ./chatgpt-app-submission.json
 
-EXPOSE 3000
+EXPOSE 8080
 
-CMD ["node_modules/.bin/next", "start", "-H", "0.0.0.0", "-p", "3000"]
+CMD ["npm", "start"]
