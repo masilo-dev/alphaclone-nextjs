@@ -1,5 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import { ENV } from '@/config/env';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import {
   getMicrosoftTokens,
   refreshMicrosoftAccessToken,
@@ -18,7 +17,7 @@ export interface MicrosoftServerConnection {
 }
 
 function createAdminClient() {
-  return createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+  return createSupabaseAdminClient();
 }
 
 async function refreshMicrosoftConnection(connection: MicrosoftServerConnection) {
