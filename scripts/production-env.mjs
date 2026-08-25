@@ -41,16 +41,21 @@ export function validateProductionEnv(env = process.env) {
   const requiredGroups = [
     {
       label: "Supabase URL",
-      names: ["NEXT_PUBLIC_SUPABASE_URL", "VITE_SUPABASE_URL"],
+      names: ["NEXT_PUBLIC_SUPABASE_URL", "VITE_SUPABASE_URL", "SUPABASE_URL"],
       validate: (value) => checkUrl(value, { https: true }),
     },
     {
       label: "Supabase anonymous key",
-      names: ["NEXT_PUBLIC_SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"],
+      names: [
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "VITE_SUPABASE_ANON_KEY",
+        "SUPABASE_ANON_KEY",
+        "SUPABASE_PUBLISHABLE_KEY",
+      ],
     },
     {
       label: "Supabase service-role key",
-      names: ["SUPABASE_SERVICE_ROLE_KEY"],
+      names: ["SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_KEY"],
     },
     {
       label: "cron authentication secret",
@@ -132,9 +137,12 @@ export function validateProductionEnv(env = process.env) {
     configured["MCP resource"] = "derived from public origin";
   }
 
-  const encryptionSecret = env.ENCRYPTION_SECRET?.trim();
+  const encryptionSecret =
+    env.ENCRYPTION_SECRET?.trim() || env.ZOHO_ENCRYPTION_SECRET?.trim();
   if (!encryptionSecret) {
-    errors.push("credential encryption secret is missing (ENCRYPTION_SECRET)");
+    errors.push(
+      "credential encryption secret is missing (ENCRYPTION_SECRET or ZOHO_ENCRYPTION_SECRET)",
+    );
   } else if (encryptionSecret.length !== 32) {
     errors.push(
       "credential encryption secret must be exactly 32 characters (ENCRYPTION_SECRET)",

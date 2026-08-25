@@ -5,7 +5,19 @@ import { createUnavailableSupabaseClient } from './supabase-shared';
 let devFallbackWarned = false;
 
 function getSupabaseUrl(): string | undefined {
-    return ENV.VITE_SUPABASE_URL || ENV.NEXT_PUBLIC_SUPABASE_URL;
+    return (
+        ENV.VITE_SUPABASE_URL ||
+        ENV.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.SUPABASE_URL
+    );
+}
+
+function getServiceRoleKey(): string | undefined {
+    return (
+        ENV.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.SUPABASE_KEY
+    );
 }
 
 function createServiceRoleClient(supabaseUrl: string, serviceRoleKey: string): SupabaseClient {
@@ -18,7 +30,11 @@ function createServiceRoleClient(supabaseUrl: string, serviceRoleKey: string): S
 }
 
 function createUserScopedClient(supabaseUrl: string, accessToken: string): SupabaseClient {
-    const anonKey = ENV.VITE_SUPABASE_ANON_KEY || ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const anonKey =
+        ENV.VITE_SUPABASE_ANON_KEY ||
+        ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.SUPABASE_ANON_KEY ||
+        process.env.SUPABASE_PUBLISHABLE_KEY;
     if (!anonKey) {
         return createUnavailableSupabaseClient('SupabaseAdmin');
     }
@@ -49,17 +65,13 @@ function createUserScopedClient(supabaseUrl: string, accessToken: string): Supab
  */
 export function createSupabaseAdminClient(accessToken?: string): SupabaseClient {
     const supabaseUrl = getSupabaseUrl();
-    const serviceRoleKey = ENV.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceRoleKey = getServiceRoleKey();
 
     if (supabaseUrl && serviceRoleKey) {
         return createServiceRoleClient(supabaseUrl, serviceRoleKey);
     }
 
-    if (
-        process.env.NODE_ENV === 'development' &&
-        supabaseUrl &&
-        accessToken
-    ) {
+    if (supabaseUrl && accessToken) {
         return createUserScopedClient(supabaseUrl, accessToken);
     }
 
@@ -71,13 +83,13 @@ export function createSupabaseAdminClient(accessToken?: string): SupabaseClient 
  */
 export async function resolveSupabaseAdminClient(): Promise<SupabaseClient> {
     const supabaseUrl = getSupabaseUrl();
-    const serviceRoleKey = ENV.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceRoleKey = getServiceRoleKey();
 
     if (supabaseUrl && serviceRoleKey) {
         return createServiceRoleClient(supabaseUrl, serviceRoleKey);
     }
 
-    if (process.env.NODE_ENV === 'development' && supabaseUrl) {
+    if (supabaseUrl) {
         try {
             const { createSupabaseServerClient } = await import('./supabase-server');
             const server = await createSupabaseServerClient();

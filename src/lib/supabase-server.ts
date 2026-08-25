@@ -11,8 +11,15 @@ const allowUnsafeMockClients = process.env.ALLOW_UNSAFE_INFRASTRUCTURE_MOCKS ===
  * This should be used in Server Components, API routes, and Server Actions.
  */
 export async function createSupabaseServerClient() {
-    const supabaseUrl = ENV.VITE_SUPABASE_URL || ENV.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = ENV.VITE_SUPABASE_ANON_KEY || ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseUrl =
+        ENV.VITE_SUPABASE_URL ||
+        ENV.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.SUPABASE_URL;
+    const anonKey =
+        ENV.VITE_SUPABASE_ANON_KEY ||
+        ENV.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.SUPABASE_ANON_KEY ||
+        process.env.SUPABASE_PUBLISHABLE_KEY;
 
     if (!supabaseUrl || !anonKey) {
         if (process.env.NODE_ENV === 'production' && !allowUnsafeMockClients) {

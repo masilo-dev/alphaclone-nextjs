@@ -12,13 +12,16 @@ export type LinkedInOAuthState = {
 };
 
 function getStateSecret(): string {
-  const secret =
-    process.env.LINKEDIN_STATE_SECRET ||
-    ENV.ENCRYPTION_SECRET ||
-    process.env.ZOHO_ENCRYPTION_SECRET ||
-    '';
-  if (secret.length !== 32) {
-    throw new Error('LinkedIn OAuth state requires a 32-character LINKEDIN_STATE_SECRET or ENCRYPTION_SECRET');
+  const candidates = [
+    process.env.LINKEDIN_STATE_SECRET,
+    ENV.ENCRYPTION_SECRET,
+    process.env.ZOHO_ENCRYPTION_SECRET,
+  ];
+  const secret = candidates.find((value) => typeof value === 'string' && value.trim().length === 32)?.trim();
+  if (!secret) {
+    throw new Error(
+      'LinkedIn OAuth state requires a 32-character LINKEDIN_STATE_SECRET, ENCRYPTION_SECRET, or ZOHO_ENCRYPTION_SECRET'
+    );
   }
   return secret;
 }
