@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Card, Button } from '@/components/ui/UIComponents';
@@ -8,7 +8,7 @@ import { FileText, CreditCard, Download, ShieldCheck, CheckCircle2, Building2 } 
 import InvoiceStatusPipeline, { InvoiceStatus } from '@/components/invoice/InvoiceStatusPipeline';
 import type { TenantBranding } from '@/lib/tenantBranding';
 
-export default function PublicInvoicePage() {
+function PublicInvoiceContent() {
     const params = useParams();
     const searchParams = useSearchParams();
     const invoiceId = params?.id as string;
@@ -414,5 +414,13 @@ export default function PublicInvoicePage() {
                 <p className="text-xs">&copy; {new Date().getFullYear()} {branding.name}</p>
             </div>
         </div>
+    );
+}
+
+export default function PublicInvoicePage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Loading invoice…</div>}>
+            <PublicInvoiceContent />
+        </Suspense>
     );
 }

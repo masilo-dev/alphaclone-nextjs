@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { EMAIL_PREFERENCE_CATEGORIES } from '@/lib/email/emailPurposeRegistry';
 
@@ -11,7 +11,7 @@ type PublicPreferences = {
   categories: Record<string, boolean>;
 };
 
-export default function EmailPreferencesPage() {
+function EmailPreferencesContent() {
   const params = useSearchParams();
   const tenant = params.get('tenant') || '';
   const email = params.get('email') || '';
@@ -152,5 +152,13 @@ export default function EmailPreferencesPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function EmailPreferencesPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-[#060d1a] text-white flex items-center justify-center">Loading…</main>}>
+      <EmailPreferencesContent />
+    </Suspense>
   );
 }
