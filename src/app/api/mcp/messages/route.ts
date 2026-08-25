@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
     const transport = new StatelessTransport();
     await mcpServer.server.connect(transport);
 
-    if (ENV.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
       console.log(`[MCP Messages] Passing method: ${requestBody.method} to SDK (Tenant: ${tenantId})`);
     }
 
