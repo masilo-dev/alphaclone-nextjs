@@ -26,4 +26,9 @@ export async function emitBusinessEvent(
   }
 
   console.log(`[Automation] Emitted event: ${eventType} (Tenant: ${tenantId})`);
+
+  const { bridgeAutomationEventToTenantNotification } = await import('@/lib/audit/businessEventBridge');
+  await bridgeAutomationEventToTenantNotification(tenantId, eventType, payload).catch((err) => {
+    console.warn('[Automation] Tenant notification bridge failed:', err?.message || err);
+  });
 }

@@ -36,9 +36,12 @@ This template covers the full Railway deployment for AlphaClone.
 | `DEEPSEEK_API_KEY`                   | DeepSeek API                          |
 | `OPENAI_API_KEY`                     | OpenAI                                |
 | `OPENROUTER_API_KEY`                 | OpenRouter                            |
-| `STRIPE_SECRET_KEY`                  | Stripe secret key                     |
-| `STRIPE_WEBHOOK_SECRET`              | Stripe webhook signing secret         |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key                |
+| `STRIPE_SECRET_KEY`                  | Stripe secret key (platform subscriptions)            |
+| `STRIPE_WEBHOOK_SECRET`              | Stripe webhook signing secret (subscription lifecycle)  |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (checkout)                     |
+| `STRIPE_STARTER_MONTHLY_PRICE_ID`    | Stripe Price ID for Starter plan                      |
+| `STRIPE_PRO_MONTHLY_PRICE_ID`        | Stripe Price ID for Pro plan                          |
+| `STRIPE_ENTERPRISE_MONTHLY_PRICE_ID` | Stripe Price ID for Enterprise plan                   |
 | `GOOGLE_CLIENT_ID`                   | Google OAuth                          |
 | `GOOGLE_CLIENT_SECRET`               | Google OAuth                          |
 | `AZURE_CLIENT_ID`                    | Microsoft OAuth                       |
@@ -49,7 +52,9 @@ This template covers the full Railway deployment for AlphaClone.
 | `ZOHO_CLIENT_SECRET`                 | Zoho OAuth                            |
 | `ZOHO_REDIRECT_URI`                  | Zoho callback URL                     |
 | `ZOHO_REGION`                        | `US`, `EU`, `IN`, `AU`, `JP`, or `CA` |
-| `ZOHO_ENCRYPTION_SECRET`             | Exactly 32 characters                 |
+| `CAL_OAUTH_CLIENT_ID`                | Cal.com OAuth (optional — self-serve connect disabled until `CALCOM_SELF_SERVE_ENABLED=true`) |
+| `CAL_OAUTH_CLIENT_SECRET`            | Cal.com OAuth secret                                                                        |
+| `CALCOM_SELF_SERVE_ENABLED`          | Set `true` only when Cal.com dashboard connect is launch-ready (default: off)               |
 
 ### Messaging and infra
 

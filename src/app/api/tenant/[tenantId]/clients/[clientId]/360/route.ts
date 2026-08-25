@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { customer360Service } from '@/services/intelligence/customer360Service';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -8,7 +10,7 @@ export async function GET(
 ) {
   try {
     const { tenantId, clientId } = await params;
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
 
     // Fetch client email or record
     const { data: client } = await admin
@@ -23,6 +25,6 @@ export async function GET(
     const profile = await customer360Service.buildProfile(admin, tenantId, targetEmail);
     return NextResponse.json({ success: true, profile });
   } catch (error) {
-    return NextResponse.json({ success: false, error: error instanceof Error ? error.message : 'Failed to fetch Client 360 profile' }, { status: 500 });
+    return routeErrorResponse(error, 'Failed to fetch Client 360 profile', req);
   }
 }

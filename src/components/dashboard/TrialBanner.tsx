@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { useTenant } from '@/contexts/TenantContext';
-import { CreditCard, AlertCircle, Clock } from 'lucide-react';
+import { CreditCard, AlertCircle, Clock, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { TRIAL_LIMITS } from '@/services/tenancy/types';
 
 export const TrialBanner: React.FC = () => {
     const { currentTenant, isLoading } = useTenant();
@@ -13,57 +14,66 @@ export const TrialBanner: React.FC = () => {
 
     const status = currentTenant.subscription_status;
     const trialEndsAt = currentTenant.trial_ends_at ? new Date(currentTenant.trial_ends_at) : null;
-    
+
     if (status !== 'trial' || !trialEndsAt) return null;
 
     const now = new Date();
     const diffTime = trialEndsAt.getTime() - now.getTime();
     const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const isExpired = diffTime <= 0;
-
-    // Only show banner if <= 7 days left or expired
-    if (daysLeft > 7 && !isExpired) return null;
+    const isEndingSoon = daysLeft <= 3;
 
     const getBannerStyles = () => {
         if (isExpired) return 'bg-red-600/10 border-red-500/30 text-red-100';
-        if (daysLeft <= 2) return 'bg-red-600/10 border-red-500/20 text-red-100';
-        if (daysLeft <= 5) return 'bg-amber-600/10 border-amber-500/20 text-amber-100';
-        return 'bg-slate-800/50 border-slate-700/50 text-slate-200';
+        if (isEndingSoon) return 'bg-red-600/10 border-red-500/20 text-red-100';
+        if (daysLeft <= 7) return 'bg-amber-600/10 border-amber-500/20 text-amber-100';
+        return 'bg-teal-600/10 border-teal-500/20 text-teal-100';
     };
 
     const getIconStyles = () => {
-        if (isExpired || daysLeft <= 2) return 'text-red-400';
-        if (daysLeft <= 5) return 'text-amber-400';
-        return 'text-slate-400';
+        if (isExpired || isEndingSoon) return 'text-red-400';
+        if (daysLeft <= 7) return 'text-amber-400';
+        return 'text-teal-400';
     };
 
     const getButtonStyles = () => {
-        if (isExpired || daysLeft <= 2) return 'bg-red-500 hover:bg-red-600';
-        if (daysLeft <= 5) return 'bg-amber-500 hover:bg-amber-600';
+        if (isExpired || isEndingSoon) return 'bg-red-500 hover:bg-red-600';
+        if (daysLeft <= 7) return 'bg-amber-500 hover:bg-amber-600';
         return 'bg-teal-600 hover:bg-teal-700';
     };
 
-    const message = isExpired 
-        ? 'Trial Expired — Add payment method to restore full access'
-        : daysLeft === 1 
-            ? 'Trial ends tomorrow — add a payment method to keep access'
-            : `Trial ends in ${daysLeft} days — no action needed yet`;
+    const formattedEndDate = trialEndsAt.toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+    });
+
+    const message = isExpired
+        ? 'Your 14-day free trial has ended — choose a plan to keep full access'
+        : isEndingSoon
+            ? `Trial ending ${daysLeft === 1 ? 'tomorrow' : `in ${daysLeft} days`} (${formattedEndDate}) — add billing when ready`
+            : daysLeft <= 7
+                ? `${daysLeft} days left in your free trial (ends ${formattedEndDate}) — no card required yet`
+                : `${TRIAL_LIMITS.TRIAL_DAYS}-day free trial active · ${daysLeft} days left · no card required`;
 
     return (
         <div className={`border-b px-4 py-2.5 flex items-center justify-between backdrop-blur-md sticky top-0 z-[40] transition-colors duration-500 ${getBannerStyles()}`}>
-            <div className="flex items-center gap-3 text-sm font-medium">
+            <div className="flex items-center gap-3 text-sm font-medium min-w-0">
                 {isExpired ? (
-                    <AlertCircle className={`w-4 h-4 ${getIconStyles()}`} />
+                    <AlertCircle className={`w-4 h-4 shrink-0 ${getIconStyles()}`} />
+                ) : daysLeft <= 7 ? (
+                    <Clock className={`w-4 h-4 shrink-0 ${getIconStyles()}`} />
                 ) : (
-                    <Clock className={`w-4 h-4 ${getIconStyles()}`} />
+                    <Sparkles className={`w-4 h-4 shrink-0 ${getIconStyles()}`} />
                 )}
-                <span>{message}</span>
+                <span className="truncate">{message}</span>
             </div>
             <button
-                className={`text-white text-xs px-4 py-1.5 rounded-lg transition-all font-bold shadow-lg active:scale-95 ${getButtonStyles()}`}
+                className={`shrink-0 text-white text-xs px-4 py-1.5 rounded-lg transition-all font-bold shadow-lg active:scale-95 flex items-center gap-1.5 ${getButtonStyles()}`}
                 onClick={() => router.push('/billing/upgrade')}
             >
-                {isExpired ? 'Upgrade Now' : 'Manage Billing'}
+                <CreditCard className="w-3.5 h-3.5" />
+                {isExpired ? 'Choose plan' : 'View pricing'}
             </button>
         </div>
     );

@@ -42,6 +42,7 @@ export default function BillingPage() {
           userId={user.id}
           currentPlan={currentTenant.subscription_plan || 'free'}
           subscriptionStatus={currentTenant.subscription_status || 'free'}
+          trialEndsAt={currentTenant.trial_ends_at}
           currentPeriodEnd={(currentTenant as any).current_period_end}
           cancelAtPeriodEnd={(currentTenant as any).cancel_at_period_end}
         />

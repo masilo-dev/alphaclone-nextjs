@@ -10,6 +10,7 @@ interface PlanAndUsageViewProps {
   userId: string;
   currentPlan?: string;
   subscriptionStatus?: string;
+  trialEndsAt?: string | Date | null;
   currentPeriodEnd?: string;
   cancelAtPeriodEnd?: boolean;
 }
@@ -32,6 +33,7 @@ export default function PlanAndUsageView({
   userId,
   currentPlan = 'free',
   subscriptionStatus = 'free',
+  trialEndsAt,
   currentPeriodEnd,
   cancelAtPeriodEnd = false,
 }: PlanAndUsageViewProps) {
@@ -102,9 +104,35 @@ export default function PlanAndUsageView({
 
   const formattedPlanName = currentPlan.toUpperCase();
   const isPaid = currentPlan !== 'free';
+  const isOnTrial = subscriptionStatus === 'trial' && trialEndsAt;
+  const trialEndDate = trialEndsAt ? new Date(trialEndsAt) : null;
+  const trialDaysLeft = trialEndDate
+    ? Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  const trialExpired = trialDaysLeft !== null && trialDaysLeft <= 0;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto p-4 sm:p-6">
+      {isOnTrial && trialEndDate && (
+        <div
+          className={`rounded-2xl border p-5 ${
+            trialExpired
+              ? 'border-red-500/30 bg-red-500/10'
+              : trialDaysLeft !== null && trialDaysLeft <= 3
+              ? 'border-amber-500/30 bg-amber-500/10'
+              : 'border-teal-500/30 bg-teal-500/10'
+          }`}
+        >
+          <h3 className="text-lg font-bold text-white">
+            {trialExpired ? 'Free trial ended' : '14-day free trial active'}
+          </h3>
+          <p className="mt-1 text-sm text-slate-300">
+            {trialExpired
+              ? 'Add a subscription to restore full workspace access. No charges were made during your trial.'
+              : `${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} remaining · ends ${trialEndDate.toLocaleDateString()} · no card required until you choose a paid plan`}
+          </p>
+        </div>
+      )}
       {/* 1. Subscription Header & Plan Summary */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl text-white">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
@@ -115,6 +143,8 @@ export default function PlanAndUsageView({
                 className={`px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wider ${
                   subscriptionStatus === 'active'
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    : subscriptionStatus === 'trial'
+                    ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
                     : subscriptionStatus === 'past_due'
                     ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                     : 'bg-slate-800 text-slate-400'

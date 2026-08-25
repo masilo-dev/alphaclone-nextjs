@@ -12,16 +12,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
-<<<<<<< HEAD
 import { useTenant } from '@/contexts/TenantContext';
-=======
-import { supabase } from '@/lib/supabase';
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
 import toast from 'react-hot-toast';
 
 export default function ResendIntegration() {
     const { user } = useAuth();
-<<<<<<< HEAD
     const { currentTenant } = useTenant();
     const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
     const [isSaving, setIsSaving] = useState(false);
@@ -61,42 +56,6 @@ export default function ResendIntegration() {
                     apiKey: '••••••••••••••••', // Masked for UI
                     fromEmail: storedFromEmail,
                     fromName: storedFromName,
-=======
-    const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
-    const [isSaving, setIsSaving] = useState(false);
-    const [isDisconnecting, setIsDisconnecting] = useState(false);
-    
-    const [config, setConfig] = useState({
-        apiKey: '',
-        fromEmail: ''
-    });
-
-    useEffect(() => {
-        if (user?.id) {
-            void checkIntegrationStatus();
-        }
-    }, [user?.id]);
-
-    const checkIntegrationStatus = async () => {
-        if (!user?.id) return;
-
-        setStatus('loading');
-        try {
-            const { data, error } = await supabase
-                .from('integrations')
-                .select('config, enabled')
-                .eq('user_id', user.id)
-                .eq('type', 'resend')
-                .maybeSingle();
-
-            if (error) throw error;
-
-            if (data?.enabled) {
-                setStatus('connected');
-                setConfig({
-                    apiKey: '••••••••••••••••', // Masked for UI
-                    fromEmail: data.config.fromEmail || ''
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                 });
             } else {
                 setStatus('idle');
@@ -109,7 +68,6 @@ export default function ResendIntegration() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-<<<<<<< HEAD
         if (!user?.id || !currentTenant?.id) return;
 
         setIsSaving(true);
@@ -137,32 +95,6 @@ export default function ResendIntegration() {
 
             toast.success('Resend account connected successfully');
             setSavedApiKey(payloadApiKey);
-=======
-        if (!user?.id) return;
-
-        setIsSaving(true);
-        try {
-            if (!config.apiKey || !config.fromEmail) {
-                throw new Error('All fields are required');
-            }
-
-            const { error } = await supabase
-                .from('integrations')
-                .upsert({
-                    user_id: user.id,
-                    type: 'resend',
-                    name: 'Resend',
-                    enabled: true,
-                    config: {
-                        apiKey: config.apiKey === '••••••••••••••••' ? undefined : config.apiKey,
-                        fromEmail: config.fromEmail
-                    }
-                }, { onConflict: 'user_id,type' });
-
-            if (error) throw error;
-
-            toast.success('Resend account connected successfully');
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
             setStatus('connected');
         } catch (err: any) {
             console.error('Error saving Resend integration:', err);
@@ -173,7 +105,6 @@ export default function ResendIntegration() {
     };
 
     const handleDisconnect = async () => {
-<<<<<<< HEAD
         if (!user?.id || !currentTenant?.id) return;
 
         setIsDisconnecting(true);
@@ -193,22 +124,6 @@ export default function ResendIntegration() {
 
             setStatus('idle');
             setConfig({ apiKey: '', fromEmail: '', fromName: 'AlphaClone Systems' });
-=======
-        if (!user?.id) return;
-
-        setIsDisconnecting(true);
-        try {
-            const { error } = await supabase
-                .from('integrations')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('type', 'resend');
-
-            if (error) throw error;
-
-            setStatus('idle');
-            setConfig({ apiKey: '', fromEmail: '' });
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
             toast.success('Resend disconnected');
         } catch (err: any) {
             console.error('Error disconnecting Resend:', err);
@@ -218,7 +133,6 @@ export default function ResendIntegration() {
         }
     };
 
-<<<<<<< HEAD
     const handleSendTest = async () => {
         if (!currentTenant?.id) {
             toast.error('Select a workspace first');
@@ -256,11 +170,6 @@ export default function ResendIntegration() {
     if (status === 'loading') {
         return (
             <div className="ac-workspace-panel rounded-lg p-8 text-center">
-=======
-    if (status === 'loading') {
-        return (
-            <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center">
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                 <Loader2 className="w-6 h-6 animate-spin text-zinc-400 mx-auto mb-3" />
                 <p className="text-sm text-slate-400">Verifying Resend connection...</p>
             </div>
@@ -271,7 +180,6 @@ export default function ResendIntegration() {
         <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-<<<<<<< HEAD
             className="ac-workspace-panel rounded-lg overflow-hidden"
         >
             <div className="p-6 border-b border-white/5 flex items-center justify-between">
@@ -281,16 +189,6 @@ export default function ResendIntegration() {
                     </div>
                     <div>
                         <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Email Provider</div>
-=======
-            className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden"
-        >
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-500/10 border border-zinc-500/20 flex items-center justify-center">
-                        <Send className="w-6 h-6 text-zinc-400" />
-                    </div>
-                    <div>
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-bold text-white">Resend Email</h2>
                             {status === 'connected' && (
@@ -326,11 +224,7 @@ export default function ResendIntegration() {
                                 value={config.apiKey}
                                 onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
                                 placeholder="re_xxxxxxxxxxxxxxxxxxx"
-<<<<<<< HEAD
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 text-sm text-white outline-none focus:border-zinc-500/40"
-=======
-                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 text-sm text-white outline-none focus:border-zinc-500/40"
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                             />
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                         </div>
@@ -342,7 +236,6 @@ export default function ResendIntegration() {
                             value={config.fromEmail}
                             onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
                             placeholder="hello@yourdomain.com"
-<<<<<<< HEAD
                             className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-zinc-500/40"
                         />
                     </div>
@@ -354,9 +247,6 @@ export default function ResendIntegration() {
                             onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
                             placeholder="Your Company Name"
                             className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-zinc-500/40"
-=======
-                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-zinc-500/40"
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                         />
                     </div>
                 </div>
@@ -370,16 +260,11 @@ export default function ResendIntegration() {
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         {status === 'connected' ? 'Update Settings' : 'Connect Resend'}
                     </Button>
-<<<<<<< HEAD
                     <p className="text-xs text-slate-500 flex items-center gap-1">
-=======
-                    <p className="text-[10px] text-slate-500 flex items-center gap-1">
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                         <Lock className="w-3 h-3" />
                         Encrypted storage ensures your API keys are private.
                     </p>
                 </div>
-<<<<<<< HEAD
                 {status === 'connected' && (
                     <div className="pt-2 border-t border-white/5">
                         <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Send Test Email</p>
@@ -403,13 +288,8 @@ export default function ResendIntegration() {
                         </div>
                     </div>
                 )}
-=======
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
             </form>
         </motion.div>
     );
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)

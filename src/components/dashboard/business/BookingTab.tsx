@@ -99,7 +99,7 @@ const BookingTab: React.FC = () => {
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-2">Booking Not Connected</h3>
                     <p className="text-slate-400 max-w-md mb-8">
-                        Connect native booking, Cal.com/Cal.diy, or Calendly in settings to enable public scheduling, webhook sync, and client follow-up.
+                        Connect Calendly or native booking in settings. Cal.com connection is coming soon.
                     </p>
                     <button
                         onClick={() => window.location.href = '/dashboard/business/settings'}

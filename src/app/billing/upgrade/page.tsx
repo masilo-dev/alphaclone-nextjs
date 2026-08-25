@@ -140,8 +140,11 @@ export default function UpgradePage() {
                         transition={{ delay: 0.2 }}
                         className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto"
                     >
-                        You're currently on the <span className="text-teal-400 font-bold uppercase">{currentTenant?.subscription_plan}</span> plan. 
-                        Upgrade to raise your workspace limits and enable the listed automation features.
+                        You're currently on the <span className="text-teal-400 font-bold uppercase">{currentTenant?.subscription_plan}</span> plan.
+                        {currentTenant?.subscription_status === 'trial' && currentTenant?.trial_ends_at && (
+                            <> Your 14-day free trial ends {new Date(currentTenant.trial_ends_at).toLocaleDateString()} — no card required until then.</>
+                        )}
+                        {' '}Upgrade to raise your workspace limits and enable the listed automation features.
                     </motion.p>
                 </div>
 

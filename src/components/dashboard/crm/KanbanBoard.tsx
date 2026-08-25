@@ -885,7 +885,7 @@ export default function KanbanBoard() {
         {/* FAB for Mobile */}
         <button
           onClick={() => {
-            router.push(window.location.pathname + '?add=true');
+            router.push('/dashboard/crm/workspace?quickAdd=true');
           }}
           className="fixed bottom-20 right-4 z-50 md:hidden w-14 h-14 rounded-full bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white flex items-center justify-center shadow-lg shadow-[var(--brand-blue-500)]/30 cursor-pointer active:scale-95 transition-transform"
           style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}

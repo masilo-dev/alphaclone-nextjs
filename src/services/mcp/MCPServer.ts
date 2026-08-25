@@ -33,7 +33,6 @@ import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import { sendScheduledCampaignServer } from '../../lib/server/sendScheduledCampaignServer';
 import Anthropic from '@anthropic-ai/sdk';
-<<<<<<< HEAD
 import { routeAutonomousTask, cleanProfessionalContent, type AIStrengthTask } from '../aiRouter';
 import { PROFESSIONAL_GUARDRAILS } from '../ai/autonomousGuardrails';
 import { strategyService } from '../ai/strategyService';
@@ -109,12 +108,6 @@ import {
   executeBulkUploadMedia,
 } from '../../lib/mcp/bulkOperations';
 
-=======
-import { routeAutonomousTask } from '../aiRouter';
-import { PROFESSIONAL_GUARDRAILS } from '../ai/autonomousGuardrails';
-import { strategyService } from '../ai/strategyService';
-import { aiGenerationService } from '../aiGenerationService';
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -943,510 +936,11 @@ class AlphaCloneMCPServer {
           mimeType: 'application/json'
         },
         {
-<<<<<<< HEAD
           uri: 'mcp://business/ai-state',
           name: 'Business AI State',
           description: 'The current AI operating state for this workspace: autonomy, risk, model preference, and audit posture.',
           mimeType: 'application/json'
         }
-=======
-          name: 'create_client',
-          description: 'Create a new CRM client/contact record.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              name: { type: 'string' },
-              email: { type: 'string' },
-              phone: { type: 'string' },
-              company: { type: 'string' },
-              location: { type: 'string', description: 'Physical address or location' },
-              status: { type: 'string', description: 'lead | prospect | active | churned' },
-              source: { type: 'string' },
-            },
-            required: ['tenant_id', 'name'],
-          },
-        },
-        // ── Leads Pipeline ─────────────────────────────────────────────────
-        {
-          name: 'get_leads',
-          description: 'Fetch leads from the sales pipeline. Use to review, qualify, or prioritize leads.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
-              stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
-              limit: { type: 'number', description: 'Max records (default 20, max 100)' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'create_lead',
-          description: 'Add a new lead into the CRM pipeline.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              business_name: { type: 'string' },
-              contact_name: { type: 'string', description: 'Full name of the contact' },
-              email: { type: 'string' },
-              phone: { type: 'string' },
-              industry: { type: 'string' },
-              location: { type: 'string', description: 'Physical address or location' },
-              source: { type: 'string', description: 'Where this lead came from (e.g. AI Agent, Referral, LinkedIn)' },
-              notes: { type: 'string', description: 'Qualifying notes about this lead' },
-            },
-            required: ['tenant_id', 'contact_name'],
-          },
-        },
-        {
-          name: 'update_lead_status',
-          description: 'Qualify, disqualify, or advance a lead through the pipeline. Use when a lead is ready to be moved to the next stage.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              lead_id: { type: 'string', description: 'UUID of the lead to update' },
-              status: { type: 'string', description: 'new | contacted | qualified | converted | disqualified' },
-              stage: { type: 'string', description: 'lead | prospect | opportunity | negotiation | closed_won | closed_lost' },
-              notes: { type: 'string', description: 'Reason for the status change or qualifying notes' },
-            },
-            required: ['tenant_id', 'lead_id'],
-          },
-        },
-        // ── Deals ──────────────────────────────────────────────────────────
-        {
-          name: 'get_deals',
-          description: 'Fetch deals/opportunities from the CRM pipeline.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost' },
-              limit: { type: 'number' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'create_deal',
-          description: 'Create a new deal in the CRM pipeline from a qualified lead.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              name: { type: 'string', description: 'Deal name/title' },
-              value: { type: 'number', description: 'Estimated deal value in USD' },
-              stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: qualified)' },
-              description: { type: 'string' },
-            },
-            required: ['tenant_id', 'name'],
-          },
-        },
-        {
-          name: 'create_invoice',
-          description: 'Create a draft invoice in accounting for a client in this workspace.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              client_id: { type: 'string', description: 'UUID from get_clients' },
-              issue_date: { type: 'string', description: 'YYYY-MM-DD (defaults to today)' },
-              due_date: { type: 'string', description: 'YYYY-MM-DD' },
-              subtotal: { type: 'number' },
-              tax: { type: 'number' },
-              total: { type: 'number' },
-              notes: { type: 'string' },
-              line_items: { type: 'array', items: { type: 'object' } },
-            },
-            required: ['tenant_id', 'client_id', 'due_date', 'total'],
-          },
-        },
-        {
-          name: 'create_bulk_email_campaign',
-          description: 'Draft and optionally send a personalized bulk email campaign using an external provider (Resend/Brevo/Sendgrid). Use this to send mass emails to lists.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              name: { type: 'string', description: 'Internal name of the campaign' },
-              subject: { type: 'string', description: 'Subject line of the email' },
-              body_html: { type: 'string', description: 'Full HTML body of the email. You may use {{firstName}}, {{lastName}}, {{company}} as variables.' },
-              target_audience: { type: 'string', description: 'Who to send this to. EXACTLY "all_leads" or "all_clients".' },
-              from_name: { type: 'string', description: 'The sender display name (e.g. your username).' },
-              from_email: { type: 'string', description: 'The verified sender email address.' },
-              publish_now: { type: 'boolean', description: 'If true, will SEND IMMEDIATELY. If false, will save as draft in the dashboard.' },
-            },
-            required: ['tenant_id', 'name', 'subject', 'body_html', 'target_audience', 'from_email', 'from_name'],
-          },
-        },
-        {
-          name: 'send_message',
-          description: 'Send a workspace message to a teammate or group thread.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              recipient_id: { type: 'string', description: 'Optional user UUID recipient' },
-              group_id: { type: 'string', description: 'Optional group/thread UUID' },
-              text: { type: 'string' },
-              priority: { type: 'string', description: 'low | normal | high | urgent' },
-              reply_to: { type: 'string', description: 'Optional parent message UUID' },
-            },
-            required: ['tenant_id', 'text'],
-          },
-        },
-        {
-          name: 'create_social_post',
-          description: 'Create and optionally publish a Facebook social post for a connected Page.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              page_id: { type: 'string', description: 'Connected Facebook Page ID' },
-              caption: { type: 'string' },
-              link_url: { type: 'string' },
-              hashtags: { type: 'array', items: { type: 'string' } },
-              publish_now: { type: 'boolean' },
-              scheduled_at: { type: 'string', description: 'ISO datetime for scheduled publish' },
-            },
-            required: ['tenant_id', 'page_id', 'caption'],
-          },
-        },
-        {
-          name: 'create_post',
-          description: 'Alias of create_social_post for agent compatibility.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              page_id: { type: 'string' },
-              caption: { type: 'string' },
-              link_url: { type: 'string' },
-              hashtags: { type: 'array', items: { type: 'string' } },
-              publish_now: { type: 'boolean' },
-              scheduled_at: { type: 'string' },
-            },
-            required: ['tenant_id', 'page_id', 'caption'],
-          },
-        },
-        {
-          name: 'create_linkedin_post',
-          description: 'Create and optionally publish a LinkedIn post using the connected LinkedIn account.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              text: { type: 'string', description: 'Post text content' },
-              publish_now: { type: 'boolean' },
-            },
-            required: ['tenant_id', 'text'],
-          },
-        },
-        {
-          name: 'get_linkedin_posts',
-          description: 'Get recent LinkedIn posts created from this workspace.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              limit: { type: 'number' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'create_linkedin_comment',
-          description: 'Create a comment on a LinkedIn post URN.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
-              text: { type: 'string' },
-            },
-            required: ['tenant_id', 'post_urn', 'text'],
-          },
-        },
-        {
-          name: 'create_linkedin_reaction',
-          description: 'React to a LinkedIn post URN with a supported reaction type.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
-              reaction_type: { type: 'string', description: 'LIKE | PRAISE | MAYBE | EMPATHY | INTEREST | APPRECIATION' },
-            },
-            required: ['tenant_id', 'post_urn'],
-          },
-        },
-        // ── Projects ───────────────────────────────────────────────────────
-        {
-          name: 'get_projects',
-          description:
-            'List business projects for the workspace. tenant_id must be the workspace UUID from your MCP URL (never a name or slug).',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string', description: 'Workspace UUID' },
-              status: { type: 'string' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'update_project_status',
-          description:
-            'Update a project status. project_id must be the UUID from get_projects, not the project name.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              project_id: { type: 'string', description: 'UUID from get_projects' },
-              status: { type: 'string' },
-              notes: { type: 'string' },
-            },
-            required: ['tenant_id', 'project_id', 'status'],
-          },
-        },
-        // ── Tasks & Scheduling ─────────────────────────────────────────────
-        {
-          name: 'get_tasks',
-          description: 'Retrieve tasks. Use to see what is pending, what is due, or what is assigned to a team member.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              project_id: {
-                type: 'string',
-                description: 'Optional. UUID of the linked business project (same as tasks.related_to_project).',
-              },
-              assigned_to: { type: 'string' },
-              completed: { type: 'boolean', description: 'If true, only completed tasks; if false, only open tasks.' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'create_task',
-          description: 'Create a task or schedule a follow-up. Use for reminders, action items, and scheduled calls.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              title: { type: 'string' },
-              description: { type: 'string' },
-              project_id: {
-                type: 'string',
-                description: 'Optional. UUID of business project to link (stored as related_to_project).',
-              },
-              assigned_to: { type: 'string' },
-              due_date: { type: 'string', description: 'ISO 8601 datetime (e.g. 2026-04-15T09:00:00Z)' },
-              priority: { type: 'string', description: 'low | medium | high | urgent' },
-            },
-            required: ['tenant_id', 'title'],
-          },
-        },
-        // ── Finance & Expenses ─────────────────────────────────────────────
-        {
-          name: 'get_expenses',
-          description: 'Read-only: Fetch expense records for a tenant. Use to review spending or find receipts.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              status: { type: 'string', description: 'pending | approved | rejected' },
-              from_date: { type: 'string', description: 'YYYY-MM-DD' },
-              to_date: { type: 'string', description: 'YYYY-MM-DD' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'create_expense',
-          description: 'Log a new business expense. Use when the user describes a purchase or receipt they want recorded.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              description: { type: 'string', description: 'What was purchased / vendor name' },
-              amount: { type: 'number', description: 'Amount in USD' },
-              category: { type: 'string', description: 'Office Supplies | Travel | Software | Marketing | Meals | Utilities | Other' },
-              date: { type: 'string', description: 'YYYY-MM-DD (defaults to today)' },
-            },
-            required: ['tenant_id', 'description', 'amount'],
-          },
-        },
-        {
-          name: 'get_revenue_summary',
-          description: 'Read-only: Total revenue, outstanding invoices, and paid amounts for the tenant.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              period: { type: 'string', description: 'monthly | quarterly | yearly' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        // ── Contracts ──────────────────────────────────────────────────────
-        {
-          name: 'generate_contract_draft',
-          description: 'Use AI to draft a professional contract (NDA, MSA, SOW, Service Agreement, etc.) and save it to the system for review.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              contract_type: { type: 'string', description: 'NDA | MSA | SOW | Service Agreement | Consulting Agreement | Freelance Contract' },
-              client_name: { type: 'string', description: 'Name of the client or counterparty' },
-              key_terms: { type: 'string', description: 'Describe the scope, payment terms, duration, deliverables, and any special conditions' },
-            },
-            required: ['tenant_id', 'contract_type', 'client_name'],
-          },
-        },
-        {
-          name: 'save_contract',
-          description: 'Save a fully generated, custom contract (Markdown or HTML) directly into the platform. Used after discussing requirements with the user. Never overwrite existing contracts unless requested, and never delete contracts.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              client_id: { type: 'string', description: 'Optional UUID of the client from get_clients' },
-              title: { type: 'string', description: 'Document Title' },
-              content: { type: 'string', description: 'The full Markdown or HTML content of the contract' },
-              type: { type: 'string', description: 'nda | msa | sow | service_agreement | freelance_contract' },
-            },
-            required: ['tenant_id', 'title', 'content'],
-          },
-        },
-        // ── Research & Web ─────────────────────────────────────────────────
-        {
-          name: 'read_url_content',
-          description: 'Extract text content from any public URL. Use this to read articles, LinkedIn pages, or Facebook posts before writing content about them.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              url: { type: 'string', description: 'The absolute URL to read' },
-            },
-            required: ['url'],
-          },
-        },
-        // ── Analytics & Momentum ───────────────────────────────────────────
-        {
-          name: 'get_momentum_score',
-          description: 'Get the gamification XP, level, and momentum score for a user.',
-          inputSchema: {
-            type: 'object',
-            properties: { user_id: { type: 'string' } },
-            required: ['user_id'],
-          },
-        },
-        {
-          name: 'get_recent_messages',
-          description: 'Read the most recent client or team messages.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              limit: { type: 'number' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'get_quotes',
-          description: 'Read-only: List quotes and proposals with their statuses.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              status: { type: 'string', description: 'draft | sent | accepted | declined' },
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'write_audit_log',
-          description:
-            'Insert a row into audit_logs (tenant-scoped). Use to persist agent notes, integration events, or any structured record the user asked to store.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              action: { type: 'string', description: 'Short action key, e.g. mcp_note | integration_sync | user_request' },
-              entity_type: { type: 'string', description: 'Category, e.g. mcp | lead | integration' },
-              entity_id: { type: 'string', description: 'Optional UUID of related entity' },
-              summary: { type: 'string', description: 'Human-readable one-line summary' },
-              payload: {
-                type: 'object',
-                description: 'Optional JSON object merged into new_values (along with summary and source)',
-              },
-            },
-            required: ['tenant_id', 'action', 'entity_type'],
-          },
-        },
-        {
-           Caesar: 'plan_social_calendar',
-          name: 'plan_social_calendar',
-          description: 'Autonomous Strategist: Plans and schedules a 30-day social media calendar (2 articles per day) based on a monthly goal. Uses Grok for high-quality, professional, emoji-free articles and Intelligent Timing for optimal reach.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              monthly_goal: { type: 'string', description: 'The strategic objective for this month (e.g. "Lead gen for SaaS product")' },
-              topics: { type: 'array', items: { type: 'string' }, description: 'Optional list of specific topics to cover. If omitted, the AI will decide based on the goal.' },
-              platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin (default: both)' }
-            },
-            required: ['tenant_id', 'monthly_goal'],
-          },
-        },
-        {
-          name: 'create_post_with_ai_image',
-          description: 'Autonomous Creator: Generates a professional AI image, saves it to permanent storage, writes a professional article using Grok, and schedules it. Supports OpenAI, Grok (xAI), or externally provided images (e.g. from Manus).',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              topic: { type: 'string' },
-              image_prompt: { type: 'string', description: 'Visual style for the AI image.' },
-              image_provider: { type: 'string', enum: ['openai', 'xai'], description: 'Default: openai' },
-              provided_image_url: { type: 'string', description: 'If an image has already been generated by another agent (like Manus), provide the URL here to bypass generation.' },
-              platforms: { type: 'array', items: { type: 'string' } },
-              scheduled_at: { type: 'string', description: 'Optional ISO datetime. If omitted, AI chooses the next best slot.' }
-            },
-            required: ['tenant_id', 'topic'],
-          },
-        },
-        {
-          name: 'sync_all_inboxes',
-          description: 'Autonomous Assistant: Fetches unread/recent communications from all connected channels (Email, Facebook, LinkedIn) for processing.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              limit: { type: 'number' }
-            },
-            required: ['tenant_id'],
-          },
-        },
-        {
-          name: 'autonomous_reply',
-          description: 'Autonomous Assistant: Drafts or sends a professional, emoji-free reply to a lead or client message using the best-suited AI model (Claude for strategy, Grok for speed).',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              tenant_id: { type: 'string' },
-              entity_id: { type: 'string', description: 'The UUID of the message or thread' },
-              platform: { type: 'string', description: 'email | facebook | linkedin' },
-              draft_only: { type: 'boolean', description: 'If true, saves as a draft for your review. If false, sends immediately.' }
-            },
-            required: ['tenant_id', 'entity_id', 'platform'],
-          },
-        },
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
       ],
     }));
 
@@ -2123,7 +1617,6 @@ class AlphaCloneMCPServer {
         case 'get_business_snapshot': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-<<<<<<< HEAD
           const { snapshot, error } = await strategicAuditService.getSnapshot(tenant_id, supabaseAdmin);
           if (error) throw new Error(error);
           result = { content: [{ type: 'text', text: safeJsonText(snapshot, {}) }] };
@@ -2187,15 +1680,6 @@ class AlphaCloneMCPServer {
             .order('created_at', { ascending: false })
             .limit(Math.min(Number(limit) || 100, 1000));
           if (error) throw supabaseErrorToMcpClientError('search_clients', error.message);
-=======
-          const { name, email, phone, company, location, status = 'lead', source = 'MCP Agent' } = a;
-          const { data, error } = await supabaseAdmin
-            .from('business_clients')
-            .insert({ tenant_id, name, email, phone, company, location: location || null, status, source })
-            .select('id, name, email')
-            .single();
-          if (error) throw supabaseErrorToMcpClientError('create_client', error.message);
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
           result = {
             content: [
               {
@@ -2310,7 +1794,6 @@ class AlphaCloneMCPServer {
         case 'backfill_contact_phone_country_codes': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-<<<<<<< HEAD
           const dryRun = a.dry_run !== false;
           const defaultCountryCode = typeof a.default_country_code === 'string' && a.default_country_code.trim()
             ? a.default_country_code.trim()
@@ -2367,28 +1850,6 @@ class AlphaCloneMCPServer {
             }
           }
 
-=======
-          const { business_name, contact_name, email, phone, industry, location, source = 'AI Agent', notes } = a;
-          const primaryName = (business_name || contact_name || '').trim();
-          if (!primaryName) throw new Error('create_lead requires contact_name or business_name');
-          const { data, error } = await supabaseAdmin
-            .from('leads')
-            .insert({
-              tenant_id,
-              business_name: primaryName,
-              email: email || null,
-              phone: phone || null,
-              industry: industry || '',
-              location: location || null,
-              status: 'new',
-              stage: 'lead',
-              source,
-              notes: notes || null,
-            })
-            .select('id, business_name, email, status')
-            .single();
-          if (error) throw supabaseErrorToMcpClientError('create_lead', error.message);
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
           result = {
             content: [
               {
@@ -3129,7 +2590,6 @@ class AlphaCloneMCPServer {
           break;
         }
 
-<<<<<<< HEAD
         case 'send_task_email': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -3283,42 +2743,24 @@ class AlphaCloneMCPServer {
             countryCode: a.country_code,
             company: campaignName,
           });
-=======
-        // ── create_bulk_email_campaign ─────────────────────────────────────
-        case 'create_bulk_email_campaign': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { name: campaignName, subject, body_html, target_audience, from_name, from_email, publish_now } = a;
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
 
           if (!campaignName || !subject || !body_html || !target_audience || !from_name || !from_email) {
             throw new Error('Missing required fields for bulk email campaign.');
           }
-<<<<<<< HEAD
           if (language.mustAsk) {
             throw new Error('language_mode is "ask". Ask the user which language to use, then call this tool again with language or language_mode set to that language code.');
           }
-=======
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
 
           let recipients: { id: string; email: string }[] = [];
           if (String(target_audience).toLowerCase() === 'all_leads') {
             const { data } = await supabaseAdmin.from('leads').select('id, email').eq('tenant_id', tenant_id);
             if (data) {
-<<<<<<< HEAD
                 recipients = data.filter((d: any) => d.email).map((d: any) => ({ id: d.id, email: d.email! }));
-=======
-                recipients = data.filter(d => d.email).map(d => ({ id: d.id, email: d.email! }));
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
             }
           } else if (String(target_audience).toLowerCase() === 'all_clients') {
             const { data } = await supabaseAdmin.from('business_clients').select('id, email').eq('tenant_id', tenant_id);
             if (data) {
-<<<<<<< HEAD
                 recipients = data.filter((d: any) => d.email).map((d: any) => ({ id: d.id, email: d.email! }));
-=======
-                recipients = data.filter(d => d.email).map(d => ({ id: d.id, email: d.email! }));
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
             }
           } else {
             throw new Error('target_audience must be exactly "all_leads" or "all_clients"');
@@ -3336,7 +2778,6 @@ class AlphaCloneMCPServer {
             from_name,
             from_email,
             status: publish_now ? 'sending' : 'draft',
-<<<<<<< HEAD
             created_by: createdByUserId,
             metadata: {
               bodyHtml: body_html,
@@ -3348,10 +2789,6 @@ class AlphaCloneMCPServer {
                 balanceByDailyLimit,
               },
             },
-=======
-            created_by: this.ctx.userId,
-            metadata: { bodyHtml: body_html },
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
             total_recipients: recipients.length
           }).select('id').single();
 
@@ -3371,7 +2808,6 @@ class AlphaCloneMCPServer {
           if (rErr) throw supabaseErrorToMcpClientError('create_bulk_email_campaign', rErr.message);
 
           let actionText = `Email campaign draft "${campaignName}" created successfully for ${recipients.length} recipients. You can view/send it from the dashboard.`;
-<<<<<<< HEAD
           const campaignQuality = campaignQualityCheck(String(body_html || ''));
           const languageWarnings = campaignQuality.warnings;
 
@@ -3667,20 +3103,6 @@ class AlphaCloneMCPServer {
         }
 
         // â”€â”€ create_invoice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-=======
-          
-          if (publish_now) {
-             actionText = `Campaign "${campaignName}" created and immediately queued to SEND to ${recipients.length} recipients.`;
-             // Trigger server-side background sender
-             sendScheduledCampaignServer(campaign.id).catch(err => console.error('Background send error:', err));
-          }
-
-          result = { content: [{ type: 'text', text: actionText }] };
-          break;
-        }
-
-        // ── create_invoice ─────────────────────────────────────────────────
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         case 'create_invoice': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -6320,70 +5742,7 @@ class AlphaCloneMCPServer {
           break;
         }
 
-<<<<<<< HEAD
         // â”€â”€ get_momentum_score â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-=======
-        // ── save_contract ──────────────────────────────────────────────────
-        case 'save_contract': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { client_id, title, content, type = 'service_agreement' } = a;
-
-          if (!title || !content) throw new Error('title and content are required');
-
-          const { data, error } = await supabase
-            .from('contracts')
-            .insert({
-              tenant_id,
-              client_id: client_id || null,
-              title,
-              content,
-              status: 'draft',
-              type,
-            })
-            .select('id, title, status')
-            .single();
-
-          if (error) {
-             throw new Error(`Could not save contract: ${error.message}`);
-          }
-          
-          result = {
-            content: [{
-              type: 'text',
-              text: `Contract successfully saved to the platform!\nID: ${data.id}\nTitle: ${data.title}\nStatus: draft — it is now ready for the user to review and sign in the Contracts section.`,
-            }],
-          };
-          break;
-        }
-
-        // ── read_url_content ───────────────────────────────────────────────
-        case 'read_url_content': {
-          const a = args as Record<string, any>;
-          const { url } = a;
-          if (!url) throw new Error('url is required');
-          
-          try {
-             const fetchRes = await fetch(url.trim());
-             if (!fetchRes.ok) throw new Error(`HTTP ${fetchRes.status}`);
-             const text = await fetchRes.text();
-             // Minimal clean up to strip large HTML blobs and focus on text
-             const cleanedText = text
-               .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-               .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-               .replace(/<[^>]+>/g, ' ')
-               .replace(/\s+/g, ' ')
-               .substring(0, 15000); // Prevent context window explosion
-               
-             result = { content: [{ type: 'text', text: `Content from ${url}:\n\n${cleanedText}` }] };
-          } catch (err: any) {
-             throw new Error(`Failed to fetch URL: ${err.message}`);
-          }
-          break;
-        }
-
-        // ── get_momentum_score ─────────────────────────────────────────────
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         case 'get_momentum_score': {
           const a = args as Record<string, any>;
           const user_id = this.requireProfileUser(a);
@@ -7585,7 +6944,6 @@ class AlphaCloneMCPServer {
           break;
         }
 
-<<<<<<< HEAD
         case 'create_quote': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -7636,171 +6994,6 @@ class AlphaCloneMCPServer {
           if (error) throw supabaseErrorToMcpClientError('create_quote', error.message);
           result = { content: [{ type: 'text', text: `Quote created: ${JSON.stringify(data)}` }] };
           break;
-=======
-        // ── plan_social_calendar ───────────────────────────────────────────
-        case 'plan_social_calendar': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const userId = this.requireProfileUser(a);
-          const { monthly_goal, topics = [], platforms = ['facebook', 'linkedin'] } = a;
-
-          // 1. Get/Upsert Monthly Strategy
-          const strategy = await strategyService.upsertStrategy(tenant_id, {
-            theme_title: monthly_goal,
-            focus_topics: topics,
-          });
-
-          // 2. Draft 30 days of titles/topics using Grok
-          const plannerPrompt = `
-Generate a 30-day social media content plan (2 posts per day = 60 posts total).
-STRATEGIC GOAL: ${monthly_goal}
-TOPICS: ${topics.join(', ')}
-
-Return ONLY a JSON array of 60 objects: [{ "day": 1, "post": 1, "topic": "..." }, ...].
-Each topic should be a specific, professional title for a long-form article.
-          `;
-          const planRes = await routeAutonomousTask('strategy', plannerPrompt);
-          let plan: any[] = [];
-          try {
-            const jsonMatch = planRes.content.match(/\[.*\]/s);
-            if (jsonMatch) plan = JSON.parse(jsonMatch[0]);
-          } catch (e) {
-            throw new Error('Failed to parse the autonomous plan. Please try again.');
-          }
-
-          // 3. Schedule the posts (Bulk insert for Vercel safety)
-          const now = new Date();
-          const postsToInsert = plan.map((item, i) => {
-            const publishDay = Math.floor(i / 2);
-            const hour = (i % 2 === 0) ? 9 : 15;
-            
-            const scheduledAt = new Date(now);
-            scheduledAt.setDate(now.getDate() + publishDay);
-            scheduledAt.setHours(hour, 0, 0, 0);
-
-            return {
-              tenant_id,
-              user_id: userId,
-              caption: `[DRAFT ARTICLE]: ${item.topic}\n\n(AI is generating the full article context for ${scheduledAt.toISOString()})`,
-              platforms: Array.isArray(platforms) ? platforms : ['facebook', 'linkedin'],
-              status: 'scheduled' as const,
-              scheduled_at: scheduledAt.toISOString(),
-              metadata: { autonomous: true, topic: item.topic, goal: monthly_goal }
-            };
-          });
-
-          const { data: insertedPosts, error: insertError } = await supabaseAdmin
-            .from('social_posts')
-            .insert(postsToInsert)
-            .select('id');
-            
-          if (insertError) throw supabaseErrorToMcpClientError('plan_social_calendar', insertError.message);
-
-          result = { content: [{ type: 'text', text: `Autonomous Strategist has successfully planned 30 days of content (${insertedPosts?.length || 0} posts). The first post is scheduled for ${now.toDateString()}. View the calendar in the dashboard to approve the full article drafts.` }] };
-          break;
-        }
-
-        // ── create_post_with_ai_image ──────────────────────────────────────
-        case 'create_post_with_ai_image': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const userId = this.requireProfileUser(a);
-          const { topic, image_prompt, image_provider = 'openai', provided_image_url, platforms = ['facebook', 'linkedin'], scheduled_at } = a;
-
-          let imageUrl = provided_image_url;
-
-          // 1. Generate Image if not provided (Permanent Storage)
-          if (!imageUrl) {
-            if (!image_prompt) throw new Error('image_prompt is required if provided_image_url is omitted');
-            const img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', image_provider as any);
-            if (!img.success || !img.url) throw new Error(`Image Gen Failed: ${img.error}`);
-            imageUrl = img.url;
-          }
-
-          // 2. Generate Professional Article (Grok)
-          const articleRes = await routeAutonomousTask('social_article', 
-            PROFESSIONAL_GUARDRAILS.SOCIAL_ARTICLE_PROMPT('Autonomous Growth', topic)
-          );
-
-          // 3. Schedule
-          const publishTime = scheduled_at || new Date().toISOString();
-          const { data, error } = await supabaseAdmin.from('social_posts').insert({
-            tenant_id,
-            user_id: userId,
-            caption: articleRes.content,
-            platforms: Array.isArray(platforms) ? platforms : ['facebook', 'linkedin'],
-            media_urls: [img.url],
-            status: 'scheduled',
-            scheduled_at: publishTime,
-            metadata: { autonomous: true, ai_image_prompt: image_prompt }
-          }).select('id').single();
-
-          if (error) throw supabaseErrorToMcpClientError('create_post_with_ai_image', error.message);
-          result = { content: [{ type: 'text', text: `Autonomous Creation complete! Post scheduled with AI-generated image: ${img.url}. Article length: ${articleRes.content.length} characters.` }] };
-          break;
-        }
-
-        // ── sync_all_inboxes ───────────────────────────────────────────────
-        case 'sync_all_inboxes': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { limit = 10 } = a;
-
-          // Fetch recent messages across channels
-          const { data: messages } = await supabaseAdmin
-            .from('messages')
-            .select('*')
-            .eq('tenant_id', tenant_id)
-            .order('created_at', { ascending: false })
-            .limit(limit);
-
-          const { data: leads } = await supabaseAdmin
-              .from('leads')
-              .select('id, business_name, notes, created_at')
-              .eq('tenant_id', tenant_id)
-              .eq('status', 'new')
-              .limit(5);
-
-          result = { content: [{ type: 'text', text: JSON.stringify({
-            messages: messages || [],
-            new_leads: leads || [],
-            summary: `Synced ${messages?.length || 0} messages and ${leads?.length || 0} hot leads for processing.`
-          }, null, 2) }] };
-          break;
-        }
-
-        // ── autonomous_reply ───────────────────────────────────────────────
-        case 'autonomous_reply': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { entity_id, platform, draft_only = true } = a;
-
-          // 1. Get original message
-          const { data: msg } = await supabaseAdmin.from('messages').select('text, sender_id').eq('id', entity_id).single();
-          if (!msg) throw new Error('Message not found.');
-
-          // 2. Draft reply with Claude (Strength-based)
-          const replyRes = await routeAutonomousTask('inbox_reply', 
-            PROFESSIONAL_GUARDRAILS.INBOX_REPLY_PROMPT(msg.text, 'Highly focused business context')
-          );
-
-          if (draft_only) {
-            // Save as a draft/internal note
-            await auditLoggingService.logAction('autonomous_reply_draft', 'mcp', tenant_id, { 
-                original: msg.text, 
-                draft: replyRes.content 
-            });
-            result = { content: [{ type: 'text', text: `Autonomous Reply drafted: "${replyRes.content}". Review it in the notification center.` }] };
-          } else {
-            // Actually send (Simplified for this demo, would call Resend/FB API here)
-             result = { content: [{ type: 'text', text: `Autonomous Reply sent via ${platform}: "${replyRes.content}"` }] };
-          }
-          break;
-        }
-
-        default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_leads, create_lead, update_lead_status, get_deals, create_deal, create_task, get_tasks, get_projects, update_project_status, create_social_post, create_linkedin_post, get_linkedin_posts, create_linkedin_comment, create_linkedin_reaction, create_invoice, send_message, and more.`);
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         }
 
         case 'send_quote': {

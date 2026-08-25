@@ -134,7 +134,12 @@ export default function UnifiedInboxTab({
   const [filterUnreadOnly, setFilterUnreadOnly] = useState(false);
 
   const loadMessages = useCallback(async () => {
-    if (!tenant?.id) return;
+    if (!tenant?.id) {
+      setLoading(false);
+      setMessages([]);
+      setSelectedMessage(null);
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -752,6 +757,18 @@ export default function UnifiedInboxTab({
       },
     ];
   }, [messages]);
+
+  if (!tenant?.id) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-3 px-6 text-center">
+        <Inbox className="w-10 h-10 text-slate-500" />
+        <p className="text-white font-semibold">Select a workspace</p>
+        <p className="text-slate-400 text-sm max-w-md">
+          Choose your business workspace to load email, social, and messaging conversations.
+        </p>
+      </div>
+    );
+  }
 
   if (loading && messages.length === 0) {
     return (

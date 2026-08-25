@@ -81,7 +81,7 @@ class Customer360Service {
     const identity = await this.resolveIdentity(supabase, tenantId, email, leadIds, contactIds, clientIds);
 
     // Fetch all related data in parallel
-    const [deals, invoices, messages, meetings, tasks, contracts, quotes, commitmentsData, decisionsData] = await Promise.all([
+    const [deals, invoices, messages, meetings, tasks, contracts, quotes, commitmentsData, decisionsData, outreachLog] = await Promise.all([
       this.fetchDeals(supabase, tenantId, allUserIds, email),
       this.fetchInvoices(supabase, tenantId, allUserIds, email),
       this.fetchMessages(supabase, tenantId, allUserIds),
@@ -90,7 +90,8 @@ class Customer360Service {
       this.fetchContracts(supabase, tenantId, allUserIds, email),
       this.fetchQuotes(supabase, tenantId, allUserIds, email),
       this.fetchCommitments(supabase, tenantId, clientIds),
-      this.fetchDecisions(supabase, tenantId, clientIds)
+      this.fetchDecisions(supabase, tenantId, clientIds),
+      this.fetchOutreachLog(supabase, tenantId, email, leadIds),
     ]);
 
     // Timeline events
@@ -149,6 +150,18 @@ class Customer360Service {
         description: dec.context || 'Decision recorded',
         status: dec.status,
         timestamp: dec.created_at
+      });
+    }
+
+    for (const outreach of outreachLog) {
+      timeline.push({
+        id: outreach.id,
+        type: 'email_campaign',
+        title: outreach.status === 'replied' ? 'Outreach reply received' : `Outreach — ${outreach.status || 'sent'}`,
+        description: outreach.subject || outreach.campaign_name || 'Email outreach',
+        status: outreach.status,
+        timestamp: outreach.sent_at || outreach.created_at,
+        metadata: { source: outreach.source_label, campaign: outreach.campaign_name },
       });
     }
 
@@ -304,6 +317,34 @@ class Customer360Service {
   private async fetchDecisions(supabase: SupabaseClient, tenantId: string, clientIds: string[]): Promise<any[]> {
     const { data } = await supabase.from('project_decisions').select('*').eq('tenant_id', tenantId).limit(20);
     return Array.isArray(data) ? data : [];
+  }
+
+  private async fetchOutreachLog(
+    supabase: SupabaseClient,
+    tenantId: string,
+    email: string,
+    leadIds: string[],
+  ): Promise<Array<{ id: string; status?: string; subject?: string; campaign_name?: string; sent_at?: string; created_at: string; source_label?: string }>> {
+    if (!email && !leadIds.length) return [];
+    const filters = leadIds.length
+      ? `lead_id.in.(${leadIds.join(',')})`
+      : `lead_email.ilike.${email}`;
+    const { data } = await supabase
+      .from('lead_outreach_log')
+      .select('id, status, subject, campaign_name, sent_at, created_at, metadata')
+      .eq('tenant_id', tenantId)
+      .or(filters)
+      .order('created_at', { ascending: false })
+      .limit(40);
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      status: row.status,
+      subject: row.subject,
+      campaign_name: row.campaign_name,
+      sent_at: row.sent_at,
+      created_at: row.created_at,
+      source_label: row.metadata?.source_agent || row.metadata?.source || 'Outreach',
+    }));
   }
 }
 

@@ -3,11 +3,7 @@ import { encryptIntegrationConfig } from '@/lib/integration/integrationTokenCryp
 
 export interface IntegrationConfig {
     id: string;
-<<<<<<< HEAD
     type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail' | 'facebook' | 'microsoft';
-=======
-    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo';
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
     name: string;
     enabled: boolean;
     config: Record<string, any>;
@@ -302,13 +298,10 @@ export const integrationsService = {
             sendgrid: 'SendGrid',
             resend: 'Resend',
             brevo: 'Brevo',
-<<<<<<< HEAD
             zoho: 'Zoho Mail',
             gmail: 'Gmail',
             facebook: 'Facebook',
             microsoft: 'Microsoft 365',
-=======
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         };
         return names[type] || type;
     },

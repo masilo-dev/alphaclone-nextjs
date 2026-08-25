@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         phone: phone || null,
         notes: message || 'Inbound Web Lead Form',
         source: 'embed_form',
-        stage: 'new',
+        stage: 'lead',
         status: 'new',
       })
       .select()

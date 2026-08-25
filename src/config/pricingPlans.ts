@@ -70,8 +70,8 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
     id: 'starter',
     name: 'Starter',
-    price: 29,
-    yearly: 278,
+    price: 15,
+    yearly: 144,
     tagline: 'For solo founders actively running their business through AlphaClone.',
     features: [
       '100 MCP lead creations / day',
@@ -102,8 +102,8 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 59,
-    yearly: 566,
+    price: 45,
+    yearly: 432,
     tagline: 'For founders who want AlphaClone to actively execute sales, marketing and business operations.',
     highlight: true,
     badge: 'MOST POPULAR',
@@ -137,8 +137,8 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 149,
-    yearly: 1430,
+    price: 80,
+    yearly: 768,
     tagline: 'For businesses that need maximum AlphaClone execution capacity.',
     features: [
       'Unlimited MCP lead creation*',
@@ -169,7 +169,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
 ];
 
 /** Lowest paid public monthly price */
-export const PRICING_FROM = 29;
+export const PRICING_FROM = 15;
 /** Highest public monthly price. */
-export const PRICING_TO = 149;
+export const PRICING_TO = 80;
 

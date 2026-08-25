@@ -134,9 +134,11 @@ export default function MarketingFooter() {
               <div key={column.title}>
                 <p className="mkt-footer-col-title">{column.title}</p>
                 <ul className="mkt-footer-col-list">
-                  {column.links.map((item) => (
+                  {column.links.map((item) => {
+                    const external = 'external' in item ? Boolean(item.external) : isExternalHref(item.path);
+                    return (
                     <li key={`${column.title}-${item.path}`}>
-                      {item.external ? (
+                      {external ? (
                         <a
                           href={item.path}
                           target="_blank"
@@ -152,7 +154,8 @@ export default function MarketingFooter() {
                         </Link>
                       )}
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </div>
             ))}

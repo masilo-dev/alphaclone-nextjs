@@ -274,7 +274,6 @@ export const leadService = {
                 .from('leads')
                 .select('*')
                 .eq('tenant_id', tenantId)
-                .eq('is_test_data', false)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;

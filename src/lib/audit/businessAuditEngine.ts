@@ -119,6 +119,37 @@ export function translateMcpToolToBusinessEvent(
 } {
   const normalizedTool = toolName.toLowerCase();
 
+  if (normalizedTool.includes('create_leads') || normalizedTool.includes('create_lead') || normalizedTool.includes('add_lead')) {
+    const count = Number(output.successful || output.count || output.created || 1);
+    const agent = input.source_agent || 'External MCP Client';
+    return {
+      event: count > 1 ? `${count} leads added` : 'Lead added to CRM',
+      businessContext: `${agent} via AlphaClone MCP added ${count > 1 ? `${count} leads` : `lead "${input.name || input.business_name || input.email || 'New lead'}"`}.`,
+      result: success
+        ? `${count} lead(s) now in your pipeline.`
+        : `Lead creation failed: ${output.error || 'Unknown error'}`,
+      nextAction: 'Review and assign follow-up tasks.',
+    };
+  }
+
+  if (normalizedTool.includes('send_email') || normalizedTool.includes('outreach') || normalizedTool.includes('bulk_email')) {
+    const recipient = input.to || input.recipient || input.email || 'prospect';
+    const agent = input.source_agent || 'External MCP Client';
+    const requested = Number(output.requested || 0);
+    const sent = Number(output.updated_or_sent || output.sent || 0);
+    const blocked = Number(output.skipped || 0);
+    return {
+      event: requested > 1 ? `Outreach batch processed (${sent}/${requested})` : 'Outreach email sent',
+      businessContext: `${agent} via AlphaClone MCP sent outreach to ${recipient}.`,
+      result: success
+        ? blocked > 0
+          ? `${sent} sent, ${blocked} blocked (unsubscribed/suppressed).`
+          : `Email sent regarding ${input.subject || 'follow-up'}.`
+        : `Failed to deliver: ${output.error || 'Provider issue'}`,
+      nextAction: 'Await prospect reply or review delivery report.',
+    };
+  }
+
   if (normalizedTool.includes('create_project')) {
     return {
       event: 'Project created',
@@ -127,17 +158,6 @@ export function translateMcpToolToBusinessEvent(
         ? `Project created for ${input.client_name || input.clientName || 'Client'}.`
         : `Project creation failed: ${output.error || 'Unknown error'}`,
       nextAction: 'Collect client assets and assign initial milestone tasks.',
-    };
-  }
-
-  if (normalizedTool.includes('send_email') || normalizedTool.includes('outreach')) {
-    return {
-      event: 'Sales outreach email sent',
-      businessContext: `Outreach email triggered to ${input.to || input.recipient || 'Prospect'}.`,
-      result: success
-        ? `Email sent regarding ${input.subject || 'Proposal/Follow-up'}.`
-        : `Failed to deliver email: ${output.error || 'Provider connection issue'}`,
-      nextAction: 'Await prospect reply / SLA monitoring.',
     };
   }
 

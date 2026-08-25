@@ -424,11 +424,7 @@ export const businessInvoiceService = {
         
         doc.setFontSize(10);
         doc.setTextColor(colors.dark);
-<<<<<<< HEAD
         drawWrappedText(doc, senderName, margin + 5, currentY + 16, colWidth - 10, { fontSize: 10, maxLines: 2 });
-=======
-        doc.text(senderName, margin + 5, currentY + 16);
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
@@ -463,11 +459,7 @@ export const businessInvoiceService = {
         doc.setFontSize(10);
         doc.setTextColor(colors.dark);
         const clientName = client?.name || invoice.client?.name || 'Valued Client';
-<<<<<<< HEAD
         drawWrappedText(doc, clientName, margin + colWidth + 10, currentY + 16, colWidth - 10, { fontSize: 10, maxLines: 2 });
-=======
-        doc.text(clientName, margin + colWidth + 10, currentY + 16);
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);

@@ -9,6 +9,12 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
+    if (process.env.CALCOM_SELF_SERVE_ENABLED !== 'true') {
+      return NextResponse.redirect(
+        publicAppUrl('/dashboard/settings?tab=booking&error=calcom_coming_soon')
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
 

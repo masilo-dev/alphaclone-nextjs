@@ -212,6 +212,133 @@ defineConnectorTool({
   },
 });
 
+const leadItemSchema = z.object({
+  business_name: z.string().optional(),
+  contact_name: z.string().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  industry: z.string().optional(),
+  location: z.string().optional(),
+  source: z.string().optional(),
+  notes: z.string().optional(),
+  linkedin_url: z.string().optional(),
+});
+
+defineConnectorTool({
+  module: 'crm-ops',
+  name: 'create_leads',
+  description:
+    'Create 1–500 CRM leads in one request. Supports skip_duplicates and continue_on_error. Prefer this over repeated create_lead calls when adding multiple leads.',
+  permission: 'crm:write',
+  rateLimitClass: 'heavy',
+  auditAction: 'mcp_create_leads',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    items: z.array(leadItemSchema).min(1).max(500),
+    options: z.object({
+      skip_duplicates: z.boolean().optional().default(true),
+      continue_on_error: z.boolean().optional().default(true),
+      idempotency_key: z.string().min(8).max(200).optional(),
+    }).optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      items: { type: 'array', minItems: 1, maxItems: 500, items: { type: 'object' } },
+      options: {
+        type: 'object',
+        properties: {
+          skip_duplicates: { type: 'boolean', default: true },
+          continue_on_error: { type: 'boolean', default: true },
+          idempotency_key: { type: 'string' },
+        },
+      },
+    },
+    required: ['tenant_id', 'items'],
+  },
+  handler: async (args, ctx) => {
+    const supabase = createSupabaseAdminClient();
+    const skipDuplicates = args.options?.skip_duplicates !== false;
+    const continueOnError = args.options?.continue_on_error !== false;
+    const now = new Date().toISOString();
+    const results: Array<Record<string, unknown>> = [];
+    let successful = 0;
+    let failed = 0;
+    let skipped = 0;
+
+    const existingEmails = new Set<string>();
+    if (skipDuplicates) {
+      const emails = args.items.map((i) => String(i.email || '').trim().toLowerCase()).filter(Boolean);
+      if (emails.length) {
+        const { data } = await supabase.from('leads').select('email').eq('tenant_id', args.tenant_id).in('email', emails);
+        for (const row of data || []) {
+          if (row.email) existingEmails.add(String(row.email).toLowerCase());
+        }
+      }
+    }
+
+    for (const item of args.items) {
+      const primaryName = (item.business_name || item.contact_name || '').trim();
+      if (!primaryName) {
+        failed += 1;
+        results.push({ status: 'failed', reason: 'business_name or contact_name is required' });
+        if (!continueOnError) break;
+        continue;
+      }
+      const email = String(item.email || '').trim().toLowerCase();
+      if (email && skipDuplicates && existingEmails.has(email)) {
+        skipped += 1;
+        results.push({ status: 'skipped', reason: 'duplicate', email });
+        continue;
+      }
+
+      const phone = normalizePhoneForStorage(item.phone);
+      const payload: Record<string, unknown> = {
+        tenant_id: args.tenant_id,
+        owner_id: ctx.userId,
+        business_name: primaryName,
+        contact_name: item.contact_name || null,
+        email: email || null,
+        phone: phone || null,
+        industry: item.industry || null,
+        location: item.location || null,
+        source: item.source || 'mcp_bulk',
+        notes: item.notes || null,
+        linkedin_url: item.linkedin_url || null,
+        status: 'new',
+        stage: 'new',
+        created_at: now,
+        updated_at: now,
+      };
+
+      const { data, error } = await supabase.from('leads').insert(payload).select('id, email, business_name').single();
+      if (error) {
+        failed += 1;
+        results.push({ status: 'failed', reason: error.message, email });
+        if (!continueOnError) break;
+        continue;
+      }
+      if (email) existingEmails.add(email);
+      successful += 1;
+      results.push({ status: 'created', id: data.id, email: data.email, business_name: data.business_name });
+      try {
+        await onLeadCreated({ tenantId: args.tenant_id, leadId: data.id, userId: ctx.userId });
+      } catch {
+        /* non-blocking */
+      }
+    }
+
+    return {
+      requested: args.items.length,
+      successful,
+      failed,
+      skipped,
+      results,
+    };
+  },
+});
+
 defineConnectorTool({
   module: 'crm-ops',
   name: 'update_lead',

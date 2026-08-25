@@ -210,16 +210,29 @@ export async function countActiveSuperAdmins(adminClient?: any): Promise<number>
 export async function getApiAuthUser(req?: Request) {
   try {
     const { user, supabase } = await requireAuthenticatedUser(req);
-    const tenantIdHeader = req?.headers.get('x-tenant-id');
-    let tenantId = tenantIdHeader || undefined;
-    if (!tenantId) {
+    const tenantIdHeader = req?.headers.get('x-tenant-id')?.trim();
+    if (tenantIdHeader) {
       const { data: member } = await supabase
         .from('tenant_users')
         .select('tenant_id')
+        .eq('tenant_id', tenantIdHeader)
         .eq('user_id', user.id)
-        .limit(1)
         .maybeSingle();
-      tenantId = member?.tenant_id;
+      if (!member?.tenant_id) {
+        return null;
+      }
+      return { user, tenantId: member.tenant_id };
+    }
+
+    const { data: member } = await supabase
+      .from('tenant_users')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle();
+    const tenantId = member?.tenant_id;
+    if (!tenantId) {
+      return null;
     }
     return { user, tenantId };
   } catch {

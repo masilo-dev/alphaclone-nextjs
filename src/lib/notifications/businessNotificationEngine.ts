@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { sendUniversalEmail, mapEventTypeToTemplateKey } from '@/lib/email/universalEmailEngine';
 import { buildValidatedPublicUrl } from '@/lib/urls';
 import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
 import { recordBusinessActivity, type BusinessActivityParams } from '@/lib/audit/businessAuditEngine';
@@ -191,6 +192,45 @@ export async function dispatchBusinessNotification(
   // 4. LEVEL 3: Email + Platform Notification to Responsible Person
   if (options.level === 'level3_urgent_email' && target.email) {
     const publicActionUrl = options.actionUrl ? buildValidatedPublicUrl(options.actionUrl) : undefined;
+    const templateKey = mapEventTypeToTemplateKey(options.type);
+    const universalVariables = {
+      first_name: target.email.split('@')[0],
+      client_name: options.clientName || '',
+      business_name: options.projectName || options.clientName || '',
+      cta_url: publicActionUrl || '',
+    };
+
+    if (templateKey) {
+      const universal = await sendUniversalEmail({
+        templateKey,
+        tenantId: options.tenantId,
+        recipientEmail: target.email,
+        userId: target.userId || undefined,
+        recipientType: 'user',
+        entityType: options.relatedRecordType,
+        entityId: options.relatedRecordId,
+        eventType: options.type,
+        variables: {
+          ...universalVariables,
+          lead_count: String(options.technicalDetails?.lead_count || ''),
+          reply_count: String(options.technicalDetails?.reply_count || ''),
+        },
+        ctaUrl: publicActionUrl,
+        stats: options.clientName
+          ? [{ label: 'Client', value: options.clientName }]
+          : undefined,
+      });
+
+      if (universal.success) {
+        result.emailSent = true;
+        return result;
+      }
+      if (universal.skipped) {
+        console.warn('[dispatchBusinessNotification] Universal email skipped:', universal.skipReason);
+        return result;
+      }
+    }
+
     const emailSubject = options.title.startsWith('AlphaClone') || options.title.startsWith('Client')
       ? options.title
       : `AlphaClone Action Required: ${options.title}`;

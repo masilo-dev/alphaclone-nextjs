@@ -243,7 +243,6 @@ export type AIStrengthTask = 'legal' | 'strategy' | 'social_article' | 'social_c
 
 /**
  * Route by strength mapping:
-<<<<<<< HEAD
  * - legal/strategy -> DeepSeek reasoning
  * - social_article/caption/inbox -> DeepSeek chat
  * - creative_media -> DeepSeek chat
@@ -259,29 +258,11 @@ const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'deepseek' | 'anthro
 
 /**
  * Cleans content of emojis and "messed up" characters for professional articles.
-=======
- * - legal/strategy -> Anthropic
- * - social_article/caption/inbox -> Grok
- * - creative_media -> OpenAI
- */
-const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'anthropic' | 'xai' | 'openai'; model: string }> = {
-  'legal': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
-  'strategy': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
-  'social_article': { provider: 'xai', model: 'grok-2-latest' },
-  'social_caption': { provider: 'xai', model: 'grok-2-latest' },
-  'inbox_reply': { provider: 'xai', model: 'grok-2-latest' },
-  'creative_media': { provider: 'openai', model: 'gpt-4o' }
-};
-
-/**
- * Cleans content of emojis and "messed up" characters for professional artículos.
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
  */
 export function cleanProfessionalContent(content: string): string {
     // 1. Remove Emojis and Symbols
     const noEmojis = content.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF])/g, '');
     
-<<<<<<< HEAD
     // 2. Remove decorative symbols and "messed up" characters (unusual unicode)
     // We strictly filter to standard alphanumeric, basic punctuation, and specific currencies if needed,
     // but we remove repetitive decorative characters like ££, **, etc.
@@ -298,17 +279,11 @@ export function cleanProfessionalContent(content: string): string {
 
     // 3. Final pass: strictly standard printable ASCII + basic Latin-1 professional subset
     const clean = noDecorative.replace(/[^\x20-\x7E\s\u00A0-\u00FF\u2010-\u2022\u20AC]/g, '');
-=======
-    // 2. Remove "messed up" characters (unusual unicode that often fails in social platforms)
-    // Keep standard professional characters, punctuation, and currencies.
-    const clean = noEmojis.replace(/[^\x20-\x7E\s\u00A0-\u00FF\u2010-\u2022\u20AC]/g, '');
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
     
     return clean.trim();
 }
 
 /**
-<<<<<<< HEAD
  * Relaxed cleaner for social media that ALLOWS emojis but still removes broken characters.
  */
 export function cleanSocialContent(content: string): string {
@@ -319,9 +294,6 @@ export function cleanSocialContent(content: string): string {
 /**
  * Main AI routing function with automatic fallback.
  * Default: DeepSeek only. Set AI_ALLOW_MULTI_PROVIDER=true for legacy multi-provider chain.
-=======
- * Main AI routing function with automatic fallback
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
  */
 export async function routeAIRequest(options: AIRequestOptions): Promise<AIResponse> {
   if (isDeepSeekOnlyMode()) {
@@ -500,44 +472,6 @@ export async function routeAutonomousTask(task: AIStrengthTask, prompt: string, 
     }
   }
 
-  const strength = TASK_STRENGTH_MAP[task] || TASK_STRENGTH_MAP['strategy'];
-  
-  const options = {
-    prompt,
-    systemPrompt,
-    model: strength.model
-  };
-
-  let response: AIResponse;
-  
-  // Directly call the provider to avoid the general fallback chain if we know what we want
-  try {
-    if (strength.provider === 'anthropic' && anthropic) {
-      response = await completeWithAnthropic(options);
-    } else if (strength.provider === 'xai' && xai) {
-      response = await completeWithXAI(options);
-    } else if (strength.provider === 'openai' && openai) {
-      response = await completeWithOpenAI(options);
-    } else {
-      // Fallback
-      response = await routeAIRequest(options);
-    }
-  } catch (err) {
-    // If specific strength provider fails, use standard failover
-    response = await routeAIRequest({ ...options, model: undefined });
-  }
-
-  // ENFORCE PROFESSIONAL GUARDRAILS: No Emojis, Clean Chars
-  response.content = cleanProfessionalContent(response.content);
-  
-  return response;
-}
-
-/**
- * Specialized routing for Autonomous Operator tasks.
- * Uses the best model for the task type and cleans output of emojis.
- */
-export async function routeAutonomousTask(task: AIStrengthTask, prompt: string, systemPrompt?: string): Promise<AIResponse> {
   const strength = TASK_STRENGTH_MAP[task] || TASK_STRENGTH_MAP['strategy'];
   
   const options = {

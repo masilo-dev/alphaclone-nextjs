@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-<<<<<<< HEAD
 import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
 import { processSequenceEnrollments } from '@/lib/outreach/processSequenceEnrollments';
-=======
-import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
 
 export const dynamic = 'force-dynamic';
 
@@ -25,34 +21,22 @@ export async function GET(req: NextRequest) {
     const now = new Date();
 
     try {
-<<<<<<< HEAD
         const lifecycleSequences = await processSequenceEnrollments(admin, 50);
-=======
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         // 1. Find campaign recipients in 'waiting' status whose delay is over
         // We assume campaign_recipients has a 'next_step_at' column for drips
         const { data: waiting, error } = await admin
             .from('campaign_recipients')
-<<<<<<< HEAD
             .select('id, campaign_id, contact_id, email, email_campaigns!inner(tenant_id)')
-=======
-            .select('id, campaign_id, contact_id, email')
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
             .eq('status', 'waiting')
             .lte('next_step_at', now.toISOString())
             .limit(50);
 
         if (error || !waiting?.length) {
-<<<<<<< HEAD
             return NextResponse.json({ success: true, processed: 0, lifecycleSequences });
-=======
-            return NextResponse.json({ success: true, processed: 0 });
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
         }
 
         let processed = 0;
         for (const record of waiting) {
-<<<<<<< HEAD
             const campaignJoin = (record as { email_campaigns?: { tenant_id?: string } }).email_campaigns;
             const guard = await guardCronTenantRow(
                 { id: record.id, tenant_id: campaignJoin?.tenant_id },
@@ -71,23 +55,13 @@ export async function GET(req: NextRequest) {
                     .eq('id', record.id);
 
                 await sendScheduledCampaignServer(record.campaign_id);
-=======
-            // Logic to trigger the next email step
-            // This pulls the next template from the sequence and sends via the campaign server
-            try {
-                await sendScheduledCampaignServer(record.campaign_id, record.contact_id);
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
                 processed++;
             } catch (e) {
                 console.error(`Drip failure for ${record.email}:`, e);
             }
         }
 
-<<<<<<< HEAD
         return NextResponse.json({ success: true, processed, lifecycleSequences });
-=======
-        return NextResponse.json({ success: true, processed });
->>>>>>> d657f822 (feat: implement Autonomous Business Operator suite with Grok, Claude, and OpenAI strengths-based routing)
     } catch (err: any) {
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
     }

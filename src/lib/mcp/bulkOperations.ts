@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { preflightOutreachRecipients } from '@/lib/email/preflightRecipients';
 import { ingestMediaInput } from '@/lib/media/ingestMedia';
 import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
@@ -331,6 +332,7 @@ type BulkEmailArgs = {
   dry_run?: boolean;
   confirm_send?: boolean;
   idempotency_key?: string;
+  require_marketing_consent?: boolean;
 };
 
 type Recipient = { entity_type: 'lead' | 'contact' | 'client'; entity_id: string; name: string; email: string };
@@ -401,13 +403,36 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
   }
 
   const { recipients, skipped } = await loadRecipients(args, ctx.tenantId);
+
+  const preflight = await preflightOutreachRecipients(
+    ctx.tenantId,
+    recipients.map((r) => ({
+      email: r.email,
+      id: r.entity_id,
+      entityType: r.entity_type,
+      skipConsentCheck: args.require_marketing_consent === false,
+    })),
+    { requireMarketingConsent: args.require_marketing_consent !== false },
+  );
+
+  const eligibleEmailSet = new Set(preflight.eligibleRecipients.map((r) => r.email));
+  const suppressionSkipped = recipients
+    .filter((r) => !eligibleEmailSet.has(r.email))
+    .map((r) => {
+      const match = preflight.excluded.find((e) => e.email === r.email);
+      return { entity_type: r.entity_type, entity_id: r.entity_id, reason: match?.reason || 'suppressed' };
+    });
+
+  const eligibleRecipients = recipients.filter((r) => eligibleEmailSet.has(r.email));
+  const allSkipped = [...skipped, ...suppressionSkipped];
+
   const actionId = crypto.randomUUID();
   const results: Array<Record<string, unknown>> = dryRun
-    ? recipients.map((recipient) => ({ ...recipient, status: 'dry_run' }))
+    ? eligibleRecipients.map((recipient) => ({ ...recipient, status: 'dry_run' }))
     : [];
 
   if (!dryRun) {
-    for (const recipient of recipients) {
+    for (const recipient of eligibleRecipients) {
       try {
         const sent = await sendEmailServer({
           tenantId: ctx.tenantId,
@@ -438,14 +463,21 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
   const output: Record<string, unknown> = {
     action_id: actionId,
     dry_run: dryRun,
-    requested: recipients.length + skipped.length,
-    eligible: recipients.length,
+    requested: preflight.requested + skipped.length,
+    eligible: eligibleRecipients.length,
     processed: dryRun ? 0 : results.length,
     updated_or_sent: sentCount,
-    skipped: skipped.length,
+    skipped: allSkipped.length,
     failed: failedCount,
+    preflight: {
+      previously_unsubscribed: preflight.previously_unsubscribed,
+      hard_suppressed: preflight.hard_suppressed + preflight.complaint_suppressed,
+      duplicates_removed: preflight.duplicates_removed,
+      invalid: preflight.invalid,
+      consent_blocked: preflight.consent_blocked,
+    },
     recipients: results,
-    skipped_recipients: skipped,
+    skipped_recipients: allSkipped,
   };
 
   if (!dryRun) {

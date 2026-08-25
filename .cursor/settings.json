@@ -17,6 +17,9 @@
     },
     "context7-plugin": {
       "enabled": true
+    },
+    "stripe": {
+      "enabled": true
     }
   },
   "css.lint.unknownAtRules": "ignore"

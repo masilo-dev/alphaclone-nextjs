@@ -185,6 +185,20 @@ export async function updateSession(request: NextRequest) {
                 return redirect;
             }
 
+            const provider = user.app_metadata?.provider;
+            const isEmailPasswordUser = !provider || provider === 'email';
+            if (
+                isEmailPasswordUser &&
+                !user.email_confirmed_at &&
+                !pathname.startsWith('/auth/verify')
+            ) {
+                const url = request.nextUrl.clone();
+                url.pathname = '/auth/login';
+                url.searchParams.set('reason', 'email_not_verified');
+                url.searchParams.set('email', user.email || '');
+                return withRequestIdHeader(NextResponse.redirect(url));
+            }
+
             // Tenant membership and subscription authorization are enforced by
             // tenant-scoped server routes. Never trust user_metadata.tenant_id here.
         }

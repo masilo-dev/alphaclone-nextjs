@@ -121,6 +121,7 @@ export async function executeTool(
   let success = false;
   let errorMessage: string | undefined;
   let resolvedToolName = requestedTool;
+  let executionResult: MCPToolExecutionResult | undefined;
 
   try {
     // 1. Enforce atomic MCP execution quota
@@ -188,6 +189,7 @@ export async function executeTool(
       if (result.isError) {
         errorMessage = result.content?.[0]?.text;
       }
+      executionResult = result;
       return result;
     }
 
@@ -216,6 +218,7 @@ export async function executeTool(
     if (result.isError) {
       errorMessage = result.content?.[0]?.text;
     }
+    executionResult = result;
     return result;
   } catch (err: any) {
     const rawMessage = err?.message || 'Unknown error';
@@ -248,6 +251,19 @@ export async function executeTool(
       errorMessage,
       metadata: requestedTool !== resolvedToolName ? { requested_tool: requestedTool } : {},
     });
+
+    if (userId) {
+      const { notifyAfterMcpToolExecution } = await import('@/lib/notifications/mcpToolNotificationHook');
+      void notifyAfterMcpToolExecution({
+        tenantId,
+        userId,
+        toolName: resolvedToolName,
+        args,
+        success,
+        resultContent: executionResult?.content,
+        errorMessage,
+      }).catch(() => undefined);
+    }
   }
 }
 

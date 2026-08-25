@@ -800,7 +800,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                             onClick={() => toggleRow('integ_stripe')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
                         >
-                            <span className="text-[13px] font-bold text-slate-200">Stripe Connect payouts</span>
+                            <span className="text-[13px] font-bold text-slate-200">Stripe Connect (invoice payouts)</span>
                             <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['integ_stripe'] ? 'rotate-90' : ''}`} />
                         </div>
                         {expandedRows['integ_stripe'] && (
@@ -946,6 +946,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         <div>
                             <span className="text-[9px] text-slate-500 font-bold uppercase">Current active tier</span>
                             <h4 className="text-sm font-black text-white capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
+                            {currentTenant?.subscription_status === 'trial' && currentTenant?.trial_ends_at && (
+                                <p className="text-[10px] text-teal-400 mt-1">
+                                    14-day trial · {Math.max(0, Math.ceil((new Date(currentTenant.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days left · ends {new Date(currentTenant.trial_ends_at).toLocaleDateString()} · no card required
+                                </p>
+                            )}
                         </div>
                         <span className={`text-[10px] font-black uppercase px-2 py-0.5 border rounded-lg ${statusColors[currentTenant?.subscription_status || ''] || 'bg-slate-800 text-slate-400 border-transparent'}`}>
                             {currentTenant?.subscription_status || 'active'}

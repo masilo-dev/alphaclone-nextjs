@@ -37,6 +37,7 @@
     "audit:mcp-exposure": "tsx scripts/audit-mcp-exposure.ts",
     "audit:mcp-inventory": "tsx scripts/generate-mcp-tool-inventory.ts",
     "audit:mcp-chatgpt": "tsx scripts/chatgpt-mcp-execution-audit.ts",
+    "sync:chatgpt-submission": "node --import tsx scripts/sync-chatgpt-app-submission.mjs",
     "audit:inventory": "node scripts/generate-repository-inventory.mjs && node scripts/generate-production-audit-artifacts.mjs",
     "audit:production": "node scripts/audit-production-readiness.mjs",
     "audit:data": "tsx scripts/audit-data-integrity.ts",

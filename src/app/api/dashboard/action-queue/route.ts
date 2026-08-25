@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  try {
   const tenantId = req.nextUrl.searchParams.get('tenantId');
   if (!tenantId) {
     return NextResponse.json({ items: [] });
   }
 
-  const admin = createSupabaseAdminClient();
+  const { admin } = await requireTenantAccess(tenantId, req);
   const items: Array<{
     id: string;
     type: string;
@@ -17,7 +20,7 @@ export async function GET(req: NextRequest) {
     impact: string;
   }> = [];
 
-  const [needsResponse, overdueInvoices, unsignedContracts] = await Promise.all([
+  const [needsResponse, overdueInvoices, unsignedContracts, unrepliedOutreach, staleLeads] = await Promise.all([
     admin
       .from('unified_messages')
       .select('id, from_name, subject')
@@ -36,6 +39,20 @@ export async function GET(req: NextRequest) {
       .select('id, title, client_name')
       .eq('tenant_id', tenantId)
       .in('status', ['sent', 'pending_signature'])
+      .limit(5),
+    admin
+      .from('lead_outreach_log')
+      .select('id, lead_email, campaign_name, status')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'replied')
+      .order('created_at', { ascending: false })
+      .limit(5),
+    admin
+      .from('leads')
+      .select('id, business_name, contact_name, stage, updated_at')
+      .eq('tenant_id', tenantId)
+      .in('stage', ['new', 'lead', 'qualified'])
+      .order('updated_at', { ascending: true })
       .limit(5),
   ]);
 
@@ -72,5 +89,30 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  for (const row of unrepliedOutreach.data || []) {
+    items.push({
+      id: `reply-${row.id}`,
+      type: 'outreach',
+      title: `Reply received — follow up`,
+      detail: row.lead_email || row.campaign_name || undefined,
+      href: '/dashboard/crm/leads',
+      impact: 'high',
+    });
+  }
+
+  for (const lead of staleLeads.data || []) {
+    items.push({
+      id: `lead-${lead.id}`,
+      type: 'lead',
+      title: `Lead needs contact — ${lead.business_name || lead.contact_name || 'Unnamed'}`,
+      detail: `Stage: ${lead.stage}`,
+      href: '/dashboard/crm/leads',
+      impact: 'medium',
+    });
+  }
+
   return NextResponse.json({ items });
+  } catch (error) {
+    return routeErrorResponse(error, 'Failed to load action queue', req);
+  }
 }
