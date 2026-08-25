@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createHash, timingSafeEqual } from 'crypto';
-import { ENV } from '@/config/env';
 import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl, PLATFORM_MCP_OAUTH_CLIENT_IDS } from '@/lib/mcp/oauthRedirect';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
@@ -12,6 +10,9 @@ import {
   logOAuthTokenIssuance,
 } from '@/lib/mcp/oauthTokenIsolation';
 import { encryptIntegrationToken } from '@/lib/integration/integrationTokenCrypto';
+import { validateCredentialEncryptionForOAuth } from '@/lib/integration/credentialEncryptionSecret';
+import { createSupabaseAdminClient, hasSupabaseServiceRole } from '@/lib/supabase-admin';
+import { createMcpOAuthRequestId, logMcpOAuthEvent } from '@/lib/mcp/oauthObservability';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -161,6 +162,9 @@ async function verifyPKCE(codeVerifier: string, codeChallenge: string): Promise<
 }
 
 export async function POST(req: NextRequest) {
+  const requestId = createMcpOAuthRequestId();
+  const startedAt = Date.now();
+
   try {
     const contentType = req.headers.get('content-type') || '';
     let body: Record<string, string> = {};
@@ -186,20 +190,40 @@ export async function POST(req: NextRequest) {
     } = body;
     const client_id = normalizeMcpClientId(rawClientId) ?? rawClientId;
 
-    console.log('[MCP Token] grant_type:', grant_type, 'client_id:', client_id);
+    logMcpOAuthEvent({
+      event: 'mcp.oauth.token.requested',
+      requestId,
+      grantType: grant_type || null,
+      clientId: client_id || null,
+      stage: 'start',
+    });
 
-    if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      return tokenError('server_error', 'Server configuration error', 500);
+    if (!hasSupabaseServiceRole()) {
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.token.failed',
+        requestId,
+        stage: 'config',
+        errorClass: 'missing_service_role',
+        grantType: grant_type || null,
+        durationMs: Date.now() - startedAt,
+      });
+      return tokenError('server_error', 'Server configuration error (database admin unavailable)', 503);
     }
 
-    const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
-      global: {
-        headers: {
-          'Accept': 'application/json',
-          'X-Client-Info': 'mcp-token-endpoint-v3'
-        }
-      }
-    });
+    const encryptionConfig = validateCredentialEncryptionForOAuth();
+    if (!encryptionConfig.ok) {
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.token.failed',
+        requestId,
+        stage: 'encryption_config',
+        errorClass: 'missing_encryption_secret',
+        grantType: grant_type || null,
+        durationMs: Date.now() - startedAt,
+      });
+      return tokenError('server_error', encryptionConfig.message, 503);
+    }
+
+    const supabase = createSupabaseAdminClient();
 
     // Expected resource identifier — configured public MCP URL (never container host)
     const expectedResource = PUBLIC_MCP_RESOURCE;
@@ -316,7 +340,7 @@ export async function POST(req: NextRequest) {
         if (authCode.code_challenge_method === 'S256') {
           const valid = await verifyPKCE(code_verifier, authCode.code_challenge);
           if (!valid) {
-            console.warn('[MCP Token] PKCE S256 verification failed');
+            console.warn('[MCP Token] PKCE S256 verification failed', { request_id: requestId });
             return tokenError(
               'invalid_grant',
               'code_verifier does not match code_challenge',
@@ -324,6 +348,14 @@ export async function POST(req: NextRequest) {
               'Bearer realm="alphaclone-mcp", error="invalid_grant"'
             );
           }
+          logMcpOAuthEvent({
+            event: 'mcp.oauth.pkce.validated',
+            requestId,
+            clientId: client_id || null,
+            userId: authCode.user_id || null,
+            tenantId: authCode.tenant_id || null,
+            grantType: 'authorization_code',
+          });
         } else if (authCode.code_challenge_method === 'plain') {
           return tokenError(
             'invalid_grant',
@@ -380,6 +412,15 @@ export async function POST(req: NextRequest) {
       }
       authCode = consumed.data;
 
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.code.consumed',
+        requestId,
+        clientId: storedClientId || client_id || null,
+        userId: authCode.user_id || null,
+        tenantId: authCode.tenant_id || null,
+        grantType: 'authorization_code',
+      });
+
       // Generate new access + refresh tokens (store hashes + plaintext for compatibility)
       const accessToken = `mcp_at_${crypto.randomUUID().replace(/-/g, '')}`;
       const refreshToken = `mcp_rt_${crypto.randomUUID().replace(/-/g, '')}`;
@@ -413,13 +454,37 @@ export async function POST(req: NextRequest) {
       }
       const tokenFamilyId = crypto.randomUUID();
 
+      let accessTokenEncrypted: string;
+      let refreshTokenEncrypted: string;
+      try {
+        accessTokenEncrypted = await encryptIntegrationToken(accessToken);
+        refreshTokenEncrypted = await encryptIntegrationToken(refreshToken);
+      } catch (encryptErr) {
+        logMcpOAuthEvent({
+          event: 'mcp.oauth.token.failed',
+          requestId,
+          stage: 'encrypt',
+          errorClass: 'encryption_failed',
+          clientId: issuedClientId,
+          userId: authCode.user_id || null,
+          tenantId: authCode.tenant_id || null,
+          grantType: 'authorization_code',
+          durationMs: Date.now() - startedAt,
+        });
+        console.error('[MCP Token] Token encryption failed', {
+          request_id: requestId,
+          code: encryptErr instanceof Error ? encryptErr.message : 'unknown',
+        });
+        return tokenError('server_error', 'Failed to secure issued tokens', 503);
+      }
+
       const tokenRow: Record<string, unknown> = {
         access_token: accessToken,
         refresh_token: refreshToken,
         access_token_hash: hashToken(accessToken),
         refresh_token_hash: hashToken(refreshToken),
-        access_token_encrypted: await encryptIntegrationToken(accessToken),
-        refresh_token_encrypted: await encryptIntegrationToken(refreshToken),
+        access_token_encrypted: accessTokenEncrypted,
+        refresh_token_encrypted: refreshTokenEncrypted,
         token_type: 'Bearer',
         client_id: issuedClientId,
         user_id: authCode.user_id,
@@ -448,8 +513,20 @@ export async function POST(req: NextRequest) {
       }
 
       if (tokenInsertError) {
+        logMcpOAuthEvent({
+          event: 'mcp.oauth.token.failed',
+          requestId,
+          stage: 'persist',
+          errorClass: 'database_insert',
+          errorCode: tokenInsertError.code,
+          clientId: issuedClientId,
+          userId: authCode.user_id || null,
+          tenantId: authCode.tenant_id || null,
+          grantType: 'authorization_code',
+          durationMs: Date.now() - startedAt,
+        });
         console.error('[MCP Token] Failed to store tokens in DB:', {
-          error: tokenInsertError.message,
+          request_id: requestId,
           code: tokenInsertError.code,
           userId: authCode.user_id,
           tenantId: authCode.tenant_id,
@@ -458,11 +535,32 @@ export async function POST(req: NextRequest) {
         return tokenError('server_error', 'Failed to issue tokens (database error)', 500);
       }
 
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.token.persisted',
+        requestId,
+        clientId: issuedClientId,
+        userId: authCode.user_id || null,
+        tenantId: authCode.tenant_id || null,
+        grantType: 'authorization_code',
+        encryptionSource: encryptionConfig.source,
+        durationMs: Date.now() - startedAt,
+      });
+
       logOAuthTokenIssuance({
         grantType: 'authorization_code',
         clientId: issuedClientId,
         userId: authCode.user_id,
         tenantId: authCode.tenant_id,
+      });
+
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.token.issued',
+        requestId,
+        clientId: issuedClientId,
+        userId: authCode.user_id || null,
+        tenantId: authCode.tenant_id || null,
+        grantType: 'authorization_code',
+        durationMs: Date.now() - startedAt,
       });
 
       return NextResponse.json({
@@ -592,13 +690,42 @@ export async function POST(req: NextRequest) {
         await supabase.from('mcp_oauth_tokens').delete().eq('refresh_token', refresh_token);
       }
 
+      let newAccessTokenEncrypted: string;
+      let newRefreshTokenEncrypted: string;
+      try {
+        newAccessTokenEncrypted = await encryptIntegrationToken(newAccessToken);
+        newRefreshTokenEncrypted = await encryptIntegrationToken(newRefreshToken);
+      } catch (encryptErr) {
+        if (session.id) {
+          await supabase.from('mcp_oauth_tokens').update({
+            revoked: false, revoked_at: null, revoke_reason: null,
+          }).eq('id', session.id).eq('revoke_reason', 'refresh_rotation');
+        }
+        logMcpOAuthEvent({
+          event: 'mcp.oauth.token.failed',
+          requestId,
+          stage: 'encrypt',
+          errorClass: 'encryption_failed',
+          clientId: sessionClientId,
+          userId: session.user_id || null,
+          tenantId: session.tenant_id || null,
+          grantType: 'refresh_token',
+          durationMs: Date.now() - startedAt,
+        });
+        console.error('[MCP Token] Refresh token encryption failed', {
+          request_id: requestId,
+          code: encryptErr instanceof Error ? encryptErr.message : 'unknown',
+        });
+        return tokenError('server_error', 'Failed to secure rotated tokens', 503);
+      }
+
       const rotateRow: Record<string, unknown> = {
         access_token: newAccessToken,
         refresh_token: newRefreshToken,
         access_token_hash: hashToken(newAccessToken),
         refresh_token_hash: hashToken(newRefreshToken),
-        access_token_encrypted: await encryptIntegrationToken(newAccessToken),
-        refresh_token_encrypted: await encryptIntegrationToken(newRefreshToken),
+        access_token_encrypted: newAccessTokenEncrypted,
+        refresh_token_encrypted: newRefreshTokenEncrypted,
         token_type: 'Bearer',
         client_id: sessionClientId,
         user_id: session.user_id,
@@ -713,7 +840,17 @@ export async function POST(req: NextRequest) {
 
     return tokenError('unsupported_grant_type', `grant_type '${grant_type}' is not supported`);
   } catch (err) {
-    console.error('[MCP Token] Unexpected error:', err);
+    logMcpOAuthEvent({
+      event: 'mcp.oauth.token.failed',
+      requestId,
+      stage: 'unexpected',
+      errorClass: err instanceof Error ? err.name : 'unknown',
+      durationMs: Date.now() - startedAt,
+    });
+    console.error('[MCP Token] Unexpected error:', {
+      request_id: requestId,
+      message: err instanceof Error ? err.message : String(err),
+    });
     return tokenError('server_error', 'An unexpected error occurred', 500);
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '../../config/env';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { normalizeMcpResourceUrl } from '@/lib/mcp/oauthRedirect';
@@ -12,6 +12,7 @@ import {
 import { hasRequiredScopes } from '@/lib/mcp/scopes';
 import { logOAuthTokenLookup } from '@/lib/mcp/oauthTokenIsolation';
 import { createHash } from 'crypto';
+import { createSupabaseAdminClient, hasSupabaseServiceRole } from '@/lib/supabase-admin';
 
 export interface AuthResult {
   tenant_id: string;
@@ -244,10 +245,10 @@ export async function validateMCPAuthApp(
     };
   }
 
-  if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!ENV.VITE_SUPABASE_URL || !hasSupabaseServiceRole()) {
     return {
       error: 'SERVER_CONFIGURATION_ERROR',
-      status: 500,
+      status: 503,
       wwwAuthenticate: createWWWAuthenticateHeader(
         'server_error',
         'Server configuration error',
@@ -257,14 +258,7 @@ export async function validateMCPAuthApp(
     };
   }
 
-  const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
-    global: {
-      headers: {
-        Accept: 'application/json',
-        'X-Client-Info': 'mcp-auth-middleware-v3',
-      },
-    },
-  });
+  const supabaseAdmin = createSupabaseAdminClient();
 
   const isOAuthAccessToken = token.startsWith('mcp_at_');
   const isStaticApiKey = token.startsWith('ac_mcp_');

@@ -46,7 +46,7 @@
     "validate:env": "node scripts/validate-production-env.mjs",
     "validate:production": "node scripts/validate-production-env.mjs",
     "test:mcp-compatibility": "node --import tsx --test tests/unit/mcp-universal-compat.test.mjs tests/unit/mcp-production-hardening.test.mjs",
-    "test:oauth-multiclient": "node --import tsx --test tests/unit/mcp-oauth-multiclient-isolation.test.mjs tests/unit/mcp-production-hardening.test.mjs",
+    "test:oauth-multiclient": "node --import tsx --test tests/unit/mcp-oauth-multiclient-isolation.test.mjs tests/unit/mcp-oauth-token-encryption.test.mjs tests/unit/mcp-production-hardening.test.mjs",
     "test:media-gateway": "node --import tsx --test tests/unit/mcp-connector-upgrade.test.mjs tests/unit/mcp-production-hardening.test.mjs",
     "test:tool-registry": "node --import tsx --test tests/unit/mcp-tool-registry-static-load.test.mjs tests/unit/mcp-tool-exposure-gate.test.mjs tests/unit/mcp-production-hardening.test.mjs",
     "chatgpt:annotate-connector": "node scripts/annotate-chatgpt-connector-tools.mjs"

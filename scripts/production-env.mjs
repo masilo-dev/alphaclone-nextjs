@@ -1,9 +1,78 @@
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1"]);
 
+const CREDENTIAL_ENCRYPTION_ENV_CANDIDATES = [
+  "INTEGRATION_TOKEN_ENCRYPTION_SECRET",
+  "ENCRYPTION_SECRET",
+  "ZOHO_ENCRYPTION_SECRET",
+  "TOKEN_ENCRYPTION_SECRET",
+  "MCP_ENCRYPTION_KEY",
+  "CREDENTIAL_ENCRYPTION_KEY",
+];
+
+const MIN_CREDENTIAL_ENCRYPTION_SECRET_LENGTH = 32;
+
+function resolveCredentialEncryptionFromEnv(env) {
+  for (const name of CREDENTIAL_ENCRYPTION_ENV_CANDIDATES) {
+    const raw = env[name]?.trim();
+    if (raw && raw.length >= MIN_CREDENTIAL_ENCRYPTION_SECRET_LENGTH) {
+      return { secret: raw, source: name };
+    }
+  }
+  return null;
+}
+
+function describeCredentialEncryptionEnv(env) {
+  const errors = [];
+  let hasValid = false;
+
+  for (const name of CREDENTIAL_ENCRYPTION_ENV_CANDIDATES) {
+    const raw = env[name]?.trim();
+    if (!raw) continue;
+    if (raw.length >= MIN_CREDENTIAL_ENCRYPTION_SECRET_LENGTH) {
+      hasValid = true;
+    } else {
+      errors.push(
+        `${name} is set but must be at least ${MIN_CREDENTIAL_ENCRYPTION_SECRET_LENGTH} characters for MCP credential encryption`,
+      );
+    }
+  }
+
+  if (!hasValid) {
+    errors.push(
+      `credential encryption secret is missing or invalid (${CREDENTIAL_ENCRYPTION_ENV_CANDIDATES.join(" or ")}, ${MIN_CREDENTIAL_ENCRYPTION_SECRET_LENGTH}+ chars)`,
+    );
+  }
+
+  return errors;
+}
+
 function firstPresent(env, names) {
   return names.find(
     (name) => typeof env[name] === "string" && env[name].trim().length > 0,
   );
+}
+
+function isSupabaseServiceRoleKey(key) {
+  const trimmed = key?.trim();
+  if (!trimmed) return false;
+  const parts = trimmed.split(".");
+  if (parts.length < 2) return false;
+  try {
+    const payload = JSON.parse(
+      Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"),
+    );
+    return payload.role === "service_role";
+  } catch {
+    return false;
+  }
+}
+
+function resolveSupabaseServiceRoleKey(env) {
+  for (const name of ["SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_KEY"]) {
+    const key = env[name]?.trim();
+    if (key && isSupabaseServiceRoleKey(key)) return { key, source: name };
+  }
+  return null;
 }
 
 function checkUrl(value, { https = false, publicProduction = false } = {}) {
@@ -89,6 +158,18 @@ export function validateProductionEnv(env = process.env) {
     configured[group.label] = selected;
   }
 
+  const serviceRole = resolveSupabaseServiceRoleKey(env);
+  if (!serviceRole) {
+    const rawKeyName = firstPresent(env, ["SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_KEY"]);
+    if (rawKeyName) {
+      errors.push(
+        `${rawKeyName} is set but is not a verified service_role JWT — use the Supabase service role key, not the anon/publishable key`,
+      );
+    }
+  } else {
+    configured["Supabase service-role key"] = serviceRole.source;
+  }
+
   const appUrl =
     env.PUBLIC_APP_ORIGIN?.trim() || env.NEXT_PUBLIC_APP_URL?.trim();
   if (!appUrl) {
@@ -137,18 +218,13 @@ export function validateProductionEnv(env = process.env) {
     configured["MCP resource"] = "derived from public origin";
   }
 
-  const encryptionSecret =
-    env.ENCRYPTION_SECRET?.trim() || env.ZOHO_ENCRYPTION_SECRET?.trim();
-  if (!encryptionSecret) {
-    errors.push(
-      "credential encryption secret is missing (ENCRYPTION_SECRET or ZOHO_ENCRYPTION_SECRET)",
-    );
-  } else if (encryptionSecret.length !== 32) {
-    errors.push(
-      "credential encryption secret must be exactly 32 characters (ENCRYPTION_SECRET)",
-    );
-  } else {
-    configured["credential encryption secret"] = "ENCRYPTION_SECRET";
+  const encryptionErrors = describeCredentialEncryptionEnv(env);
+  for (const error of encryptionErrors) {
+    errors.push(error);
+  }
+  const encryptionResolved = resolveCredentialEncryptionFromEnv(env);
+  if (encryptionResolved) {
+    configured["credential encryption secret"] = encryptionResolved.source;
   }
 
   const redisUrl = env.UPSTASH_REDIS_REST_URL?.trim();

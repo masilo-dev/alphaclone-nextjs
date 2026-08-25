@@ -39,18 +39,17 @@ export async function GET(request: NextRequest) {
     // loaded only for an explicitly requested deep diagnostic.
     const [
         { ENV },
-        { createAdminSupabaseClientOrThrow },
         { redis, redisEnabled },
         { isVapidConfigured },
     ] = await Promise.all([
         import('@/config/env'),
-        import('@/lib/apiAuth'),
         import('@/lib/cache/redis'),
         import('@/lib/push/vapidEnv'),
     ]);
 
     const checks: Record<string, any> = {};
-    const supabaseConfigured = !!ENV.VITE_SUPABASE_URL && !!ENV.SUPABASE_SERVICE_ROLE_KEY;
+    const { hasSupabaseServiceRole, createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+    const supabaseConfigured = !!ENV.VITE_SUPABASE_URL && hasSupabaseServiceRole();
     const stripeConfigured = !!ENV.STRIPE_SECRET_KEY;
     const dailyConfigured = !!ENV.DAILY_API_KEY;
     const resendConfigured = !!ENV.RESEND_API_KEY;
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
     // 1. Check database connection (2.5s timeout so degraded infra never
     //    503s for 60+ seconds and clogs Railway health checks)
     try {
-        const supabase = supabaseConfigured ? createAdminSupabaseClientOrThrow() : null;
+        const supabase = supabaseConfigured ? createSupabaseAdminClient() : null;
         const dbStart = Date.now();
         let dbError: string | null | undefined = null;
         if (supabase) {
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
                 .catch((e: Error) => ({ error: e.message || 'unavailable' }));
             dbError = error ? (typeof error === 'string' ? error : error.message || 'unavailable') : null;
         } else {
-            dbError = 'Supabase admin config missing (VITE_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)';
+            dbError = 'Supabase admin config missing (supabase URL + verified service_role JWT required)';
         }
         checks.database = {
             status: dbError ? 'degraded' : 'healthy',

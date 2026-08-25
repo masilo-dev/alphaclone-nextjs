@@ -1,26 +1,25 @@
-import { ENV } from '@/config/env';
 import { decrypt, encrypt } from '@/lib/encryption';
+import {
+  requireCredentialEncryptionSecret,
+  resolveCredentialEncryptionSecret,
+} from '@/lib/integration/credentialEncryptionSecret';
 import { isProduction } from '@/lib/security/productionGuard';
 
 export function getIntegrationEncryptionSecret(): string | null {
-  const secret =
-    process.env.INTEGRATION_TOKEN_ENCRYPTION_SECRET ||
-    ENV.ENCRYPTION_SECRET ||
-    ENV.ZOHO_ENCRYPTION_SECRET ||
-    process.env.TOKEN_ENCRYPTION_SECRET ||
-    null;
-  return secret && secret.length >= 32 ? secret : null;
+  return resolveCredentialEncryptionSecret()?.secret ?? null;
 }
 
 export function requireIntegrationEncryptionSecret(): string {
-  const secret = getIntegrationEncryptionSecret();
-  if (!secret) {
+  try {
+    return requireCredentialEncryptionSecret().secret;
+  } catch (err) {
     if (isProduction()) {
-      throw new Error('INTEGRATION_TOKEN_ENCRYPTION_SECRET (32+ chars) is required in production');
+      throw new Error(
+        err instanceof Error ? err.message : 'Credential encryption secret (32+ chars) is required in production',
+      );
     }
-    throw new Error('INTEGRATION_TOKEN_ENCRYPTION_SECRET is not configured');
+    throw err;
   }
-  return secret;
 }
 
 export function isEncryptedToken(value: string): boolean {

@@ -308,7 +308,10 @@ function validateEnv() {
         WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
         WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
 
-        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+        SUPABASE_SERVICE_ROLE_KEY: resolveSupabaseServiceRoleKey(
+            process.env.SUPABASE_SERVICE_ROLE_KEY,
+            process.env.SUPABASE_KEY,
+        ),
 
         ENCRYPTION_SECRET: process.env.ENCRYPTION_SECRET,
 
