@@ -1,4 +1,4 @@
-import { sendEmail } from '@/lib/email/sendEmail';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { sendWhatsAppMessage } from '@/lib/whatsapp/sendWhatsApp';
 import { createHash } from 'crypto';
 
@@ -311,11 +311,14 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
       if (step.channel === 'email') {
         if (!enrollment.email) throw new Error('Recipient has no email address');
         if (await isSuppressed(db, enrollment.tenant_id, 'email', enrollment.email)) throw new Error('Recipient is suppressed for email');
-        const sent = await sendEmail(enrollment.tenant_id, {
+        const sent = await sendEmailServer({
+          tenantId: enrollment.tenant_id,
           to: enrollment.email,
           subject: interpolate(String(template.subject || 'Following up'), enrollment),
-          html: interpolate(String(template.html || template.body || template.message || ''), enrollment),
+          message: interpolate(String(template.body || template.message || ''), enrollment),
           templateName: 'outreachSequence',
+          category: 'outreach',
+          initiationSource: 'automation.sequence',
         });
         if (!sent.success) throw new Error(sent.error || 'Email provider rejected the message');
         provider = sent.provider || 'email'; receipt = sent.emailId || '';

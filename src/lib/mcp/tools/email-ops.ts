@@ -236,7 +236,25 @@ defineConnectorTool({
     bcc: z.array(z.string().email()).optional(),
     subject: z.string().min(1),
     text: z.string().optional(),
-    html: z.string().optional(),
+    category: z
+      .enum([
+        'marketing',
+        'outreach',
+        'transactional',
+        'account_security',
+        'invoice_payment',
+        'contract_document',
+        'booking_calendar',
+        'internal_notification',
+      ])
+      .optional(),
+    headline: z.string().optional(),
+    cta_label: z.string().optional(),
+    cta_url: z.string().url().optional(),
+    related_record_type: z.string().optional(),
+    related_record_id: z.string().optional(),
+    campaign_id: z.string().optional(),
+    workflow_id: z.string().optional(),
     provider: z
       .enum(['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'])
       .optional(),
@@ -254,8 +272,14 @@ defineConnectorTool({
       cc: { type: 'array', items: { type: 'string' } },
       bcc: { type: 'array', items: { type: 'string' } },
       subject: { type: 'string' },
-      text: { type: 'string' },
-      html: { type: 'string' },
+      text: { type: 'string', description: 'Plain text message body (gateway renders branded HTML)' },
+      category: {
+        type: 'string',
+        enum: ['marketing', 'outreach', 'transactional', 'account_security', 'invoice_payment', 'contract_document', 'booking_calendar', 'internal_notification'],
+      },
+      headline: { type: 'string' },
+      cta_label: { type: 'string' },
+      cta_url: { type: 'string' },
       provider: {
         type: 'string',
         enum: ['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'],
@@ -297,7 +321,10 @@ defineConnectorTool({
     });
 
     if (!args.text && !args.html) {
-      throwConnectorError('INVALID_MEDIA', 'Email text or html body is required');
+      throwConnectorError('INVALID_MEDIA', 'Email message body is required (plain text). Raw HTML bypass is not permitted.');
+    }
+    if (args.html && !args.text) {
+      throwConnectorError('INVALID_MEDIA', 'Provide plain text message content. The email gateway renders branded HTML automatically.');
     }
 
     const attachments = await attachmentsFromMedia(tenantId, userId, args.attachments);
@@ -307,8 +334,22 @@ defineConnectorTool({
       userId,
       to: recipient.email,
       subject: args.subject,
-      text: args.text,
-      html: args.html,
+      message: args.text,
+      recipientName: args.recipient_name || recipient.matches?.[0]?.name,
+      headline: args.headline,
+      category: args.category || 'outreach',
+      cta:
+        args.cta_label && args.cta_url
+          ? { label: args.cta_label, url: args.cta_url }
+          : undefined,
+      relatedRecord:
+        args.related_record_type && args.related_record_id
+          ? { type: args.related_record_type, id: args.related_record_id }
+          : undefined,
+      campaignId: args.campaign_id,
+      workflowId: args.workflow_id,
+      initiationSource: 'mcp.send_email',
+      idempotencyKey: args.idempotency_key,
       attachments: attachments.length
         ? attachments.map((a) => ({
             filename: a.filename,

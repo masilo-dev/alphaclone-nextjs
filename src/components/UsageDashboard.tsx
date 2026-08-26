@@ -103,44 +103,58 @@ export function UsageDashboard({ tenantId, showAlerts = true }: UsageDashboardPr
             )}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {usage.map((metric) => (
+                {usage.map((metric) => {
+                    const isUnlimited = metric.limit_value < 0;
+                    return (
                     <div key={metric.metric_name} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
                         <div className="mb-2 flex items-center justify-between">
                             <h4 className="text-sm font-medium text-slate-200">{formatMetricName(metric.metric_name)}</h4>
-                            <span
-                                className={`h-2 w-2 rounded-full ${getStatusColor(metric.status)}`}
-                                title={getStatusText(metric.status)}
-                            ></span>
+                            {isUnlimited ? (
+                                <span className="text-xs font-semibold text-violet-300">Unlimited</span>
+                            ) : (
+                                <span
+                                    className={`h-2 w-2 rounded-full ${getStatusColor(metric.status)}`}
+                                    title={getStatusText(metric.status)}
+                                ></span>
+                            )}
                         </div>
 
-                        <div className="relative mb-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                            <div
-                                className={`absolute left-0 top-0 h-full transition-all ${getStatusColor(metric.status)}`}
-                                style={{ width: `${Math.min(metric.percentage_used, 100)}%` }}
-                            ></div>
-                        </div>
+                        {!isUnlimited && (
+                            <div className="relative mb-2 h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                                <div
+                                    className={`absolute left-0 top-0 h-full transition-all ${getStatusColor(metric.status)}`}
+                                    style={{ width: `${Math.min(metric.percentage_used, 100)}%` }}
+                                ></div>
+                            </div>
+                        )}
 
                         <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-400">
-                                {metric.current_value.toLocaleString()} /{' '}
-                                {metric.limit_value === 999999 ? 'Unlimited' : metric.limit_value.toLocaleString()}
+                                {isUnlimited
+                                    ? `${metric.current_value.toLocaleString()} used today (analytics only)`
+                                    : `${metric.current_value.toLocaleString()} / ${metric.limit_value.toLocaleString()}`}
                             </span>
-                            <span
-                                className={`font-medium ${
-                                    metric.status === 'exceeded'
-                                        ? 'text-red-400'
-                                        : metric.status === 'approaching'
-                                            ? 'text-amber-300'
-                                            : 'text-emerald-400'
-                                }`}
-                            >
-                                {metric.percentage_used.toFixed(1)}%
-                            </span>
+                            {!isUnlimited && (
+                                <span
+                                    className={`font-medium ${
+                                        metric.status === 'exceeded'
+                                            ? 'text-red-400'
+                                            : metric.status === 'approaching'
+                                                ? 'text-amber-300'
+                                                : 'text-emerald-400'
+                                    }`}
+                                >
+                                    {metric.percentage_used.toFixed(1)}%
+                                </span>
+                            )}
                         </div>
 
-                        <div className="mt-2 text-xs text-slate-500">{getStatusText(metric.status)}</div>
+                        {!isUnlimited && (
+                            <div className="mt-2 text-xs text-slate-500">{getStatusText(metric.status)}</div>
+                        )}
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             {usage.some((metric) => metric.status === 'exceeded') && (

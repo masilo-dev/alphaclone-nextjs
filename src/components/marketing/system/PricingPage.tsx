@@ -7,14 +7,19 @@ import { AlphaIcon } from '@/components/marketing/icons';
 import MarketingFaqAccordion from '@/components/marketing/MarketingFaqAccordion';
 import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketing/MarketingPricingToggle';
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
+import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from '@/lib/entitlements/planEntitlements';
 import { ConversionBanner } from './ConversionBanner';
 import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
+
+const DAILY = `${FREE_DAILY_LIMIT} / day`;
+const PRO_DAILY = `${PRO_DAILY_LIMIT} / day`;
+const UNLIMITED = 'Unlimited*';
 
 const pricingFaqs = [
   {
     question: 'How do daily action resets work?',
     answer:
-      'Daily execution counters (leads, outreach, social posts, email actions, MCP executions) automatically reset every day at 00:00 UTC.',
+      'Daily execution counters (leads, outreach, social posts, emails, MCP executions, documents) reset every day at 00:00 UTC. Read-only actions like viewing CRM records or checking status never consume quota.',
   },
   {
     question: 'Do I need a credit card to start on the Free plan?',
@@ -24,7 +29,7 @@ const pricingFaqs = [
   {
     question: 'What is included in every AlphaClone plan?',
     answer:
-      'Every plan gives you full access to the AlphaClone workspace platform and MCP tools — CRM, projects, contracts, documents, calendar, and AI agents. You simply pick the daily execution power your business requires.',
+      'Every plan gives you full access to the AlphaClone workspace platform and MCP tools — CRM, projects, contracts, documents, calendar, and AI agents. Plans differ only by daily execution capacity per action category.',
   },
   {
     question: 'Can I upgrade or downgrade anytime?',
@@ -32,9 +37,9 @@ const pricingFaqs = [
       'Yes. Upgrades apply immediately with prorated billing via Stripe. Downgrades take effect at the end of your current billing period.',
   },
   {
-    question: 'What does "Unlimited*" mean on Enterprise?',
+    question: 'What does Premium Unlimited mean?',
     answer:
-      'Enterprise provides unthrottled headroom for high-volume workflows. Actions remain subject to platform fair-use safeguards, provider API limits, and email deliverability safeguards.',
+      'Premium has no AlphaClone subscription usage ceiling. Usage is still tracked for analytics, but actions are never blocked by plan quota. External provider API limits, anti-spam safeguards, and platform safety rules still apply — and those are clearly distinguished from plan limits.',
   },
 ];
 
@@ -43,58 +48,44 @@ interface ComparisonCategory {
   rows: {
     feature: string;
     free: string | boolean;
-    starter: string | boolean;
     pro: string | boolean;
-    enterprise: string | boolean;
+    premium: string | boolean;
   }[];
 }
 
 const detailedComparison: ComparisonCategory[] = [
   {
-    category: 'Business Operations',
+    category: 'Daily Execution Limits (per action category)',
     rows: [
-      { feature: 'CRM & Lead Management', free: '500 contacts', starter: '5,000 contacts', pro: '25,000 contacts', enterprise: 'Unlimited' },
-      { feature: 'Contracts & E-Signatures', free: true, starter: true, pro: true, enterprise: true },
-      { feature: 'Invoices & Quotations', free: true, starter: true, pro: true, enterprise: true },
-      { feature: 'Projects & Delivery Tasks', free: true, starter: true, pro: true, enterprise: true },
-      { feature: 'Native Calendar & Booking', free: true, starter: true, pro: true, enterprise: true },
-      { feature: 'Reporting & Analytics', free: 'Basic', starter: 'Standard', pro: 'Advanced', enterprise: 'Advanced + SLA' },
+      { feature: 'Emails Sent', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Leads Added', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'CRM Create / Update Actions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Outreach Actions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Social Publishing Actions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Documents / Contracts / Proposals / Invoices', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Automation Executions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'MCP Write / Execution Actions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Bulk Lead Import Maximum', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
     ],
   },
   {
-    category: 'AI & MCP Execution Engine',
+    category: 'Platform Access',
     rows: [
-      { feature: 'Model Context Protocol (MCP) Access', free: true, starter: true, pro: true, enterprise: true },
-      { feature: 'Bonnie AI Assistant', free: true, starter: true, pro: true, enterprise: true },
-      { feature: 'Daily MCP / AI Executions', free: '50 / day', starter: '250 / day', pro: '1,500 / day', enterprise: 'Unlimited*' },
-      { feature: 'Lead Generation & Scraping', free: '50 / day', starter: '100 / day', pro: '500 / day', enterprise: 'Unlimited*' },
-      { feature: 'Automated Workflows & Automations', free: '3 active', starter: '15 active', pro: '50 active', enterprise: 'Unlimited' },
-      { feature: 'Autonomous Agent Execution', free: true, starter: true, pro: true, enterprise: true },
+      { feature: 'CRM & Lead Management', free: true, pro: true, premium: true },
+      { feature: 'Contracts & E-Signatures', free: true, pro: true, premium: true },
+      { feature: 'Invoices & Quotations', free: true, pro: true, premium: true },
+      { feature: 'Projects & Delivery Tasks', free: true, pro: true, premium: true },
+      { feature: 'Native Calendar & Booking', free: true, pro: true, premium: true },
+      { feature: 'Model Context Protocol (MCP) Access', free: true, pro: true, premium: true },
+      { feature: 'Bonnie AI Assistant', free: true, pro: true, premium: true },
+      { feature: 'Read-Only Views (CRM, reports, inbox)', free: 'Unlimited', pro: 'Unlimited', premium: 'Unlimited' },
     ],
   },
   {
-    category: 'Sales & Outreach Engine',
+    category: 'Support & Infrastructure',
     rows: [
-      { feature: 'Daily Lead Additions', free: '50 / day', starter: '100 / day', pro: '500 / day', enterprise: 'Unlimited*' },
-      { feature: 'Outreach Actions', free: '20 / day', starter: '100 / day', pro: '500 / day', enterprise: 'Unlimited*' },
-      { feature: 'Email Actions', free: '25 / day', starter: '150 / day', pro: '750 / day', enterprise: 'Unlimited*' },
-      { feature: 'Automated Multi-Step Follow-ups', free: true, starter: true, pro: true, enterprise: true },
-    ],
-  },
-  {
-    category: 'Social Publishing Engine',
-    rows: [
-      { feature: 'LinkedIn Posts', free: '1 / day', starter: '3 / day', pro: '10 / day', enterprise: 'Unlimited*' },
-      { feature: 'Facebook Posts', free: '1 / day', starter: '3 / day', pro: '10 / day', enterprise: 'Unlimited*' },
-      { feature: 'Instagram Posts', free: '1 / day', starter: '3 / day', pro: '10 / day', enterprise: 'Unlimited*' },
-    ],
-  },
-  {
-    category: 'Integrations & Infrastructure',
-    rows: [
-      { feature: 'Connected Integrations', free: '3 connected', starter: '10 connected', pro: '25 connected', enterprise: 'Unlimited' },
-      { feature: 'Email Accounts (SMTP/Gmail/Outlook)', free: '1 account', starter: '3 accounts', pro: '10 accounts', enterprise: 'Unlimited' },
-      { feature: 'Priority Infrastructure & Support', free: false, starter: false, pro: true, enterprise: 'Dedicated + SLA' },
+      { feature: 'Priority Processing & Support', free: false, pro: true, premium: 'Dedicated + SLA' },
+      { feature: 'Connected Integrations', free: true, pro: true, premium: true },
     ],
   },
 ];
@@ -131,7 +122,6 @@ export default function PricingPage() {
 
   return (
     <main className="bg-[var(--marketing-bg-primary)]">
-      {/* Hero Header */}
       <MarketingSection className="relative overflow-hidden pt-16 sm:pt-20">
         <div className="marketing-glow-hero" aria-hidden="true" />
         <MarketingContainer className="relative z-10">
@@ -141,7 +131,7 @@ export default function PricingPage() {
               One system. Choose your execution power.
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg text-[var(--marketing-text-secondary)] leading-relaxed">
-              Every AlphaClone plan gives you access to the platform and MCP. Upgrade when your business needs more execution capacity.
+              Free = {FREE_DAILY_LIMIT}/day · Pro = {PRO_DAILY_LIMIT}/day · Premium = truly unlimited per action category.
             </p>
             <div className="mt-8 flex justify-center">
               <MarketingPricingToggle value={billingPeriod} onChange={setBillingPeriod} />
@@ -150,10 +140,9 @@ export default function PricingPage() {
         </MarketingContainer>
       </MarketingSection>
 
-      {/* 4 Plan Cards */}
       <MarketingSection tone="muted" className="pt-2">
         <MarketingContainer>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
             {PUBLIC_PRICING_PLANS.map((plan) => {
               const displayPrice = billingPeriod === 'monthly' ? plan.price : plan.yearly;
               const priceSuffix = plan.price === 0 ? '' : billingPeriod === 'monthly' ? '/mo' : '/yr';
@@ -185,16 +174,24 @@ export default function PricingPage() {
 
                     <div className="mt-6 border-b border-[var(--marketing-border)] pb-6">
                       <div className="flex items-baseline">
-                        <span className="text-4xl font-extrabold text-[var(--marketing-text-primary)]">
-                          ${displayPrice}
-                        </span>
-                        <span className="ml-1 text-sm font-medium text-[var(--marketing-text-muted)]">
-                          {priceSuffix}
-                        </span>
+                        {plan.id === 'premium' ? (
+                          <span className="text-3xl font-extrabold text-[var(--marketing-text-primary)]">Unlimited</span>
+                        ) : (
+                          <>
+                            <span className="text-4xl font-extrabold text-[var(--marketing-text-primary)]">
+                              ${displayPrice}
+                            </span>
+                            <span className="ml-1 text-sm font-medium text-[var(--marketing-text-muted)]">
+                              {priceSuffix}
+                            </span>
+                          </>
+                        )}
                       </div>
                       <p className="mt-2 text-xs text-[var(--marketing-text-muted)]">
                         {plan.price === 0
                           ? 'No credit card required'
+                          : plan.id === 'premium'
+                          ? `$${displayPrice}${priceSuffix} · no AlphaClone usage ceiling`
                           : billingPeriod === 'annual'
                           ? `$${Math.round(plan.yearly / 12)}/mo billed annually`
                           : 'Billed monthly'}
@@ -230,35 +227,33 @@ export default function PricingPage() {
           </div>
 
           <p className="mt-6 text-center text-xs text-[var(--marketing-text-muted)] max-w-4xl mx-auto leading-relaxed">
-            *Unlimited plans remain subject to fair-use policies, provider API restrictions, infrastructure safeguards, anti-spam rules and third-party platform limits.
+            *Premium is unlimited on AlphaClone. External provider API restrictions, anti-spam rules, and platform safety safeguards still apply.
           </p>
         </MarketingContainer>
       </MarketingSection>
 
-      {/* Comparison Section */}
       <MarketingSection>
         <MarketingContainer>
           <SectionHeading
             eyebrow="Detailed Breakdown"
             title="Compare Execution Power Across Plans"
-            description="Same core platform. Select the capacity that matches your daily automation needs."
+            description="Same core platform. Free and Pro use fixed daily limits per category. Premium has no AlphaClone subscription ceiling."
           />
 
           <div className="mt-8 overflow-x-auto rounded-2xl border border-[var(--marketing-border)] shadow-sm">
-            <table className="w-full min-w-[800px] bg-[var(--marketing-surface)] text-sm">
+            <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] text-sm">
               <thead>
                 <tr className="border-b border-[var(--marketing-border)] bg-[var(--marketing-surface-elevated)]">
-                  <th className="p-4 text-left font-bold text-[var(--marketing-text-primary)] w-1/3">Execution Capability</th>
+                  <th className="p-4 text-left font-bold text-[var(--marketing-text-primary)] w-2/5">Execution Capability</th>
                   <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Free</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Starter ($29)</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-accent-hover)] bg-[var(--marketing-accent-soft)]">Pro ($59)</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Enterprise ($149)</th>
+                  <th className="p-4 text-center font-bold text-[var(--marketing-accent-hover)] bg-[var(--marketing-accent-soft)]">Pro ($45)</th>
+                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Premium ($80)</th>
                 </tr>
               </thead>
               <tbody>
                 {detailedComparison.map((cat) => (
                   <tr key={cat.category} className="border-b border-[var(--marketing-border)]">
-                    <td colSpan={5} className="p-0">
+                    <td colSpan={4} className="p-0">
                       <div className="bg-[var(--marketing-surface-muted)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--marketing-text-muted)] border-y border-[var(--marketing-border)]">
                         {cat.category}
                       </div>
@@ -266,11 +261,10 @@ export default function PricingPage() {
                         <tbody>
                           {cat.rows.map((row) => (
                             <tr key={row.feature} className="border-b border-[var(--marketing-border)] last:border-0 hover:bg-[var(--marketing-surface-hover)]">
-                              <td className="p-4 text-left font-medium text-[var(--marketing-text-secondary)] w-1/3">{row.feature}</td>
-                              <td className="p-4 text-center w-1/6"><RenderCell val={row.free} /></td>
-                              <td className="p-4 text-center w-1/6"><RenderCell val={row.starter} /></td>
-                              <td className="p-4 text-center w-1/6 bg-[rgba(20,184,166,0.03)]"><RenderCell val={row.pro} /></td>
-                              <td className="p-4 text-center w-1/6"><RenderCell val={row.enterprise} /></td>
+                              <td className="p-4 text-left font-medium text-[var(--marketing-text-secondary)] w-2/5">{row.feature}</td>
+                              <td className="p-4 text-center w-1/5"><RenderCell val={row.free} /></td>
+                              <td className="p-4 text-center w-1/5 bg-[rgba(20,184,166,0.03)]"><RenderCell val={row.pro} /></td>
+                              <td className="p-4 text-center w-1/5"><RenderCell val={row.premium} /></td>
                             </tr>
                           ))}
                         </tbody>
@@ -284,7 +278,6 @@ export default function PricingPage() {
         </MarketingContainer>
       </MarketingSection>
 
-      {/* FAQ Section */}
       <MarketingSection tone="muted">
         <MarketingContainer>
           <SectionHeading
@@ -298,12 +291,11 @@ export default function PricingPage() {
         </MarketingContainer>
       </MarketingSection>
 
-      {/* Final CTA Banner */}
       <MarketingSection tone="accent">
         <MarketingContainer>
           <ConversionBanner
             title="Find leads. Run outreach. Manage clients. Publish content. Execute work."
-            description="Start free in less than 60 seconds or upgrade to Pro for high-volume automated execution."
+            description="Start free with 50/day per category, scale to Pro at 300/day, or go Premium for truly unlimited execution."
           />
         </MarketingContainer>
       </MarketingSection>

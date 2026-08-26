@@ -192,14 +192,10 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         yearly: 0,
         description: 'Baseline access to AlphaClone platform and MCP daily capabilities.',
         featureList: [
-            '50 Lead creations/day',
-            '20 Outreach actions/day',
-            '1 Post per social network/day',
-            '25 Email actions/day',
-            '50 MCP/AI executions/day',
-            '3 Active Automations',
-            '3 Connected Integrations',
-            '500 CRM Contacts'
+            '50 emails / leads / CRM / outreach / social / documents / automations / MCP per day',
+            '50 bulk lead import max / day',
+            'Read-only CRM, reports & inbox — unlimited',
+            'Bonnie AI assistant & MCP access included',
         ],
         features: {
             maxUsers: 1,
@@ -226,15 +222,10 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         isDiscountable: true,
         stripePriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
         featureList: [
-            '100 Lead creations/day',
-            '100 Outreach actions/day',
-            '3 Social posts per network/day',
-            '150 Email actions/day',
-            '250 MCP/AI executions/day',
-            '15 Active Automations',
-            '10 Connected Integrations',
-            '5,000 CRM Contacts',
-            'Standard Reporting'
+            '300 emails / leads / CRM / outreach / social / documents / automations / MCP per day',
+            '300 bulk lead import max / day',
+            'Read-only actions unlimited',
+            'Legacy Starter tier — same execution limits as Pro',
         ],
         features: {
             maxUsers: 5,
@@ -260,16 +251,10 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         description: 'For founders who want AlphaClone to actively execute sales, marketing and business operations.',
         stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1T0PChCCIq5cPz4HiD85RMtD',
         featureList: [
-            '500 Lead creations/day',
-            '500 Outreach actions/day',
-            '10 Social posts per network/day',
-            '750 Email actions/day',
-            '1,500 MCP/AI executions/day',
-            '50 Active Automations',
-            '25 Connected Integrations',
-            '25,000 CRM Contacts',
-            'Advanced Reporting',
-            'Priority Processing & Support'
+            '300 emails / leads / CRM / outreach / social / documents / automations / MCP per day',
+            '300 bulk lead import max / day',
+            'Read-only actions unlimited',
+            'Priority processing & support',
         ],
         features: {
             maxUsers: -1,
@@ -295,15 +280,11 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         description: 'For businesses that need maximum AlphaClone execution capacity.',
         stripePriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
         featureList: [
-            'Unlimited Lead creations*',
-            'Unlimited Outreach actions*',
-            'Unlimited Social posts*',
-            'Unlimited Email actions*',
-            'Unlimited MCP/AI executions*',
-            'Unlimited Workflows & Automations',
-            'Unlimited Integrations',
-            'Unlimited CRM Contacts',
-            'Custom Integrations & SLA Support'
+            'Unlimited emails, leads, CRM, outreach, social & documents*',
+            'Unlimited automations, MCP executions & bulk operations*',
+            'Usage tracked for analytics — never capped by AlphaClone',
+            'Custom integrations & SLA support',
+            '* Subject to connected provider API limits and platform safeguards',
         ],
         features: {
             maxUsers: -1,

@@ -12,7 +12,8 @@ import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signal
 import { normalizeEmailSubject } from '@/lib/email/emailComposition';
 import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
 import { buildEmail } from '@/lib/email/template';
-import { sendEmail } from '@/lib/email/sendEmail';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
 import sanitizeHtml from 'sanitize-html';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 
@@ -526,19 +527,18 @@ export async function POST(request: Request) {
           selectedProvider.provider === 'resend' ||
           selectedProvider.provider === 'sendgrid'
         ) {
-          const result = await sendEmail(
+          const result = await sendEmailServer({
             tenantId,
-            {
-              to: leadEmail,
-              subject: normalizedSubject,
-              html: htmlWithComplianceFooter,
-              from_name: selectedProvider.fromName,
-              userId: tenantCtx.user.id,
-              listUnsubscribeUrl: unsubscribeUrl,
-              skipFooter: true,
-            },
-            selectedProvider.provider
-          );
+            to: leadEmail,
+            subject: normalizedSubject,
+            message: htmlWithComplianceFooter.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+            fromName: selectedProvider.fromName,
+            userId: tenantCtx.user.id,
+            listUnsubscribeUrl: unsubscribeUrl,
+            category: 'outreach',
+            initiationSource: 'api.outreach.send',
+            preferredProvider: selectedProvider.provider,
+          });
           if (!result.success) {
             throw new Error(result.error || `Failed to send via ${selectedProvider.provider}`);
           }
@@ -627,6 +627,33 @@ export async function POST(request: Request) {
       } catch (captureError) {
         console.error('[Outreach/Send] Failed to capture outbound message after provider send:', captureError);
         postSendWarnings.push('message_capture_failed');
+      }
+
+      if (providerMessageId || sentProvider === 'microsoft' || sentProvider === 'zoho') {
+        try {
+          await persistCanonicalOutboundEmail({
+            supabase: admin,
+            tenantId,
+            userId: tenantCtx.user.id,
+            provider: sentProvider === 'microsoft' ? 'microsoft_graph' : sentProvider,
+            providerMessageId: providerMessageId || trackingId || logId || crypto.randomUUID(),
+            fromEmail: sentFromEmail,
+            recipients: [leadEmail],
+            subject: normalizedSubject,
+            html: htmlBody,
+            text: (sanitizedBody || '').slice(0, 4000),
+            hasAttachments: false,
+            metadata: {
+              source: 'api.outreach.send',
+              outreach_log_id: logId,
+              tracking_id: trackingId,
+              provider: sentProvider,
+            },
+          });
+        } catch (canonicalErr) {
+          console.error('[Outreach/Send] Canonical email persistence failed:', canonicalErr);
+          postSendWarnings.push('canonical_persistence_failed');
+        }
       }
 
       // Log activity to the activities table if entityType is contact or entityId is provided

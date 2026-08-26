@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-08-20T12:53:20.492Z",
+  "generated_at": "2026-08-26T05:17:30.481Z",
   "source_of_truth": "runtime MCP registry + unified tools/list full catalog",
   "policy": "Existing clients retain the full executable catalog for compatibility. Stable-core and domain-pack discovery are available as the migration target; catalog-only entries are audit visibility only.",
   "totals": {
-    "full_catalog_tools": 504,
-    "registry_executable_tools": 504,
+    "full_catalog_tools": 519,
+    "registry_executable_tools": 519,
     "progressive_route_tools": 7,
     "catalog_only_tools": 0,
-    "write_tools": 314,
-    "write_tools_with_idempotency": 23,
+    "write_tools": 328,
+    "write_tools_with_idempotency": 29,
     "write_tools_with_receipt_signal": 20,
     "duplicate_names": []
   },
@@ -3556,9 +3556,9 @@
       ]
     },
     "contacts": {
-      "total": 22,
-      "executable": 22,
-      "write": 14,
+      "total": 23,
+      "executable": 23,
+      "write": 15,
       "tools": [
         {
           "canonical_tool_name": "add_note",
@@ -3661,6 +3661,79 @@
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "bulk_upsert_contacts",
+          "module": "contacts",
+          "description": "Bulk upsert up to 500 contacts with deduplication on email/phone, partial success reporting, and audit receipt.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "description": "AlphaClone Workspace ID"
+              },
+              "contacts": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "company": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "type": "string"
+                    },
+                    "metadata": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              },
+              "idempotency_key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "contacts"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": "email_provider",
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": true,
           "supports_action_receipt": false,
           "annotations": {
             "readOnlyHint": false,
@@ -4834,9 +4907,9 @@
       ]
     },
     "documents": {
-      "total": 55,
-      "executable": 55,
-      "write": 37,
+      "total": 57,
+      "executable": 57,
+      "write": 39,
       "tools": [
         {
           "canonical_tool_name": "accept_document",
@@ -6334,6 +6407,61 @@
           }
         },
         {
+          "canonical_tool_name": "ingest_document",
+          "module": "documents",
+          "description": "Atomically ingest a document file: uploads to storage, creates file & document records, queues text extraction and vector chunking.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string"
+              },
+              "filename": {
+                "type": "string"
+              },
+              "content_base64": {
+                "type": "string"
+              },
+              "mime_type": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "filename",
+              "content_base64"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
           "canonical_tool_name": "list_document_versions",
           "module": "documents",
           "description": "List immutable versions for a document.",
@@ -7506,6 +7634,55 @@
           }
         },
         {
+          "canonical_tool_name": "upload_file",
+          "module": "documents",
+          "description": "Upload a file asset into tenant object storage returning file_id and public/storage URL.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string"
+              },
+              "filename": {
+                "type": "string"
+              },
+              "content_base64": {
+                "type": "string"
+              },
+              "mime_type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "filename",
+              "content_base64"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
           "canonical_tool_name": "validate_document",
           "module": "documents",
           "description": "Run professional validation (data, financial, legal consistency, brand, layout, contacts, permissions).",
@@ -7612,9 +7789,9 @@
       ]
     },
     "email": {
-      "total": 17,
-      "executable": 17,
-      "write": 14,
+      "total": 20,
+      "executable": 20,
+      "write": 17,
       "tools": [
         {
           "canonical_tool_name": "autonomous_reply",
@@ -7965,6 +8142,85 @@
           }
         },
         {
+          "canonical_tool_name": "read_email_content",
+          "module": "email",
+          "description": "Read full body text, HTML, headers, and attachments of a specific email message by message_id.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "message_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "message_id"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": "email_provider",
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "read_emails",
+          "module": "email",
+          "description": "List received emails and recent email dispatches/threads for the authenticated workspace. Returns message IDs, senders, subjects, dates, and preview snippets.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "limit": {
+                "type": "number"
+              },
+              "folder": {
+                "type": "string"
+              }
+            },
+            "required": []
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": "email_provider",
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true,
+            "destructiveHint": false
+          }
+        },
+        {
           "canonical_tool_name": "reconcile_outreach_vs_logs",
           "module": "email",
           "description": "Check outreach logs for stale queued/failed patterns.",
@@ -8156,6 +8412,101 @@
           }
         },
         {
+          "canonical_tool_name": "send_bulk_email",
+          "module": "email",
+          "description": "Safely simulate or send one message to up to 100 unique lead, contact, or client email recipients. Dry run is the default; actual sending requires confirm_send and an idempotency key.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "lead_ids": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "contact_ids": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "client_ids": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "subject": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "html": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "zoho",
+                  "brevo",
+                  "gmail",
+                  "outlook",
+                  "resend",
+                  "sendgrid"
+                ]
+              },
+              "from_name": {
+                "type": "string"
+              },
+              "dry_run": {
+                "type": "boolean",
+                "default": true
+              },
+              "confirm_send": {
+                "type": "boolean",
+                "default": false
+              },
+              "idempotency_key": {
+                "type": "string",
+                "description": "Required when dry_run is false."
+              }
+            },
+            "required": [
+              "subject"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": "google",
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": true,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true,
+            "destructiveHint": false
+          }
+        },
+        {
           "canonical_tool_name": "send_email",
           "module": "email",
           "description": "Send an individual email via the tenant connected provider. Resolve CRM contacts by contact_id/lead_id or exact email. If a person name matches multiple contacts, returns RECIPIENT_AMBIGUOUS. Supports attachments via media asset_id/base64/url.",
@@ -8197,9 +8548,29 @@
                 "type": "string"
               },
               "text": {
+                "type": "string",
+                "description": "Plain text message body (gateway renders branded HTML)"
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "marketing",
+                  "outreach",
+                  "transactional",
+                  "account_security",
+                  "invoice_payment",
+                  "contract_document",
+                  "booking_calendar",
+                  "internal_notification"
+                ]
+              },
+              "headline": {
                 "type": "string"
               },
-              "html": {
+              "cta_label": {
+                "type": "string"
+              },
+              "cta_url": {
                 "type": "string"
               },
               "provider": {
@@ -10520,7 +10891,9 @@
             "type": "object",
             "properties": {
               "client_id": {
-                "type": "string"
+                "type": "string",
+                "format": "uuid",
+                "description": "Literal CRM client UUID. Do not pass SQL or a lookup expression."
               }
             },
             "required": [
@@ -12286,9 +12659,9 @@
       ]
     },
     "leads": {
-      "total": 20,
-      "executable": 20,
-      "write": 11,
+      "total": 24,
+      "executable": 24,
+      "write": 15,
       "tools": [
         {
           "canonical_tool_name": "auto_create_lead_from_message",
@@ -12335,6 +12708,186 @@
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "bulk_archive_leads",
+          "module": "leads",
+          "description": "Bulk archive up to 500 leads with reason tracking.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "description": "AlphaClone Workspace ID"
+              },
+              "lead_ids": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "lead_ids"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "bulk_create_leads",
+          "module": "leads",
+          "description": "Bulk create up to 500 leads with auto-enrichment scheduling and validation.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "description": "AlphaClone Workspace ID"
+              },
+              "leads": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "business_name": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "type": "string"
+                    },
+                    "website": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "business_name"
+                  ]
+                }
+              },
+              "idempotency_key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "leads"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": "email_provider",
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": true,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "bulk_update_leads",
+          "module": "leads",
+          "description": "Bulk update fields on up to 500 leads with filter/ID matching and partial status report.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "description": "AlphaClone Workspace ID"
+              },
+              "lead_ids": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "patch": {
+                "type": "object"
+              },
+              "idempotency_key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "lead_ids",
+              "patch"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": true,
           "supports_action_receipt": false,
           "annotations": {
             "readOnlyHint": false,
@@ -12457,6 +13010,71 @@
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "create_leads",
+          "module": "leads",
+          "description": "Create 1–500 CRM leads in one request. Supports skip_duplicates and continue_on_error. Prefer this over repeated create_lead calls when adding multiple leads.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 500,
+                "items": {
+                  "type": "object"
+                }
+              },
+              "options": {
+                "type": "object",
+                "properties": {
+                  "skip_duplicates": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "continue_on_error": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "idempotency_key": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "required": [
+              "tenant_id",
+              "items"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": true,
           "supports_action_receipt": false,
           "annotations": {
             "readOnlyHint": false,
@@ -13423,10 +14041,86 @@
       ]
     },
     "media": {
-      "total": 19,
-      "executable": 19,
-      "write": 16,
+      "total": 20,
+      "executable": 20,
+      "write": 17,
       "tools": [
+        {
+          "canonical_tool_name": "bulk_upload_media",
+          "module": "media",
+          "description": "Ingest up to 50 media files from HTTPS URLs, base64 values, or data URLs into tenant storage. Returns a per-file upload receipt and does not publish content.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "files": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 50,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "filename": {
+                      "type": "string"
+                    },
+                    "mime_type": {
+                      "type": "string"
+                    },
+                    "media_type": {
+                      "type": "string",
+                      "enum": [
+                        "image",
+                        "video",
+                        "document"
+                      ]
+                    },
+                    "purpose": {
+                      "type": "string"
+                    },
+                    "alt_text": {
+                      "type": "string"
+                    },
+                    "source_url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "content_base64": {
+                      "type": "string"
+                    },
+                    "data_url": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "files"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
         {
           "canonical_tool_name": "create_post_with_ai_image",
           "module": "media",
@@ -16918,8 +17612,8 @@
       ]
     },
     "search": {
-      "total": 21,
-      "executable": 21,
+      "total": 22,
+      "executable": 22,
       "write": 4,
       "tools": [
         {
@@ -17673,6 +18367,48 @@
           }
         },
         {
+          "canonical_tool_name": "search_emails",
+          "module": "search",
+          "description": "Search workspace emails by keyword query, recipient email, or project/client context.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "query"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON data or read-only result."
+          },
+          "read_write_classification": "read",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "read",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": "email_provider",
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true,
+            "destructiveHint": false
+          }
+        },
+        {
           "canonical_tool_name": "search_tools",
           "module": "search",
           "description": "Search the full AlphaClone canonical tool catalog by keyword, intent, or domain query. Use when looking for capabilities outside the stable core.",
@@ -17815,10 +18551,61 @@
       ]
     },
     "social": {
-      "total": 54,
-      "executable": 54,
-      "write": 38,
+      "total": 55,
+      "executable": 55,
+      "write": 39,
       "tools": [
+        {
+          "canonical_tool_name": "bulk_assign_campaign",
+          "module": "social",
+          "description": "Bulk assign up to 500 qualified leads/contacts to an email or outreach campaign.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "description": "AlphaClone Workspace ID"
+              },
+              "campaign_id": {
+                "type": "string"
+              },
+              "record_ids": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "campaign_id",
+              "record_ids"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
         {
           "canonical_tool_name": "campaign_brief",
           "module": "social",
@@ -23069,9 +23856,9 @@
       ]
     },
     "workspace": {
-      "total": 46,
-      "executable": 46,
-      "write": 28,
+      "total": 48,
+      "executable": 48,
+      "write": 30,
       "tools": [
         {
           "canonical_tool_name": "automate_expense_entry",
@@ -23167,6 +23954,141 @@
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "bulk_add_to_segment",
+          "module": "workspace",
+          "description": "Bulk assign up to 500 leads or contacts to a target tag or segment.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "description": "AlphaClone Workspace ID"
+              },
+              "record_ids": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "record_type": {
+                "type": "string",
+                "enum": [
+                  "lead",
+                  "contact"
+                ]
+              },
+              "segment_name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "record_ids",
+              "record_type",
+              "segment_name"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "bulk_update_records",
+          "module": "workspace",
+          "description": "Safely simulate or apply one common status/stage patch to up to 250 leads, clients, contacts, invoices, projects, or tasks. Dry run is the default; execution requires confirm_execute and an idempotency key.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "record_type": {
+                "type": "string",
+                "enum": [
+                  "lead",
+                  "client",
+                  "contact",
+                  "invoice",
+                  "project",
+                  "task"
+                ]
+              },
+              "record_ids": {
+                "type": "array",
+                "maxItems": 250,
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "patch": {
+                "type": "object",
+                "description": "One shared patch. Supported fields vary by record_type."
+              },
+              "dry_run": {
+                "type": "boolean",
+                "default": true
+              },
+              "confirm_execute": {
+                "type": "boolean",
+                "default": false
+              },
+              "idempotency_key": {
+                "type": "string",
+                "description": "Required when dry_run is false."
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "record_type",
+              "record_ids",
+              "patch"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "high",
+          "approval_requirement": true,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": true,
           "supports_action_receipt": false,
           "annotations": {
             "readOnlyHint": false,
@@ -28706,6 +29628,79 @@
       }
     },
     {
+      "canonical_tool_name": "bulk_upsert_contacts",
+      "module": "contacts",
+      "description": "Bulk upsert up to 500 contacts with deduplication on email/phone, partial success reporting, and audit receipt.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "description": "AlphaClone Workspace ID"
+          },
+          "contacts": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "phone": {
+                  "type": "string"
+                },
+                "company": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "metadata": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "email"
+              ]
+            }
+          },
+          "idempotency_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "contacts"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": "email_provider",
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": true,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "client_pulse",
       "module": "contacts",
       "description": "Identify clients or contacts that need attention based on unpaid invoices, open deals, recent intake, and stale activity.",
@@ -31357,6 +32352,61 @@
       }
     },
     {
+      "canonical_tool_name": "ingest_document",
+      "module": "documents",
+      "description": "Atomically ingest a document file: uploads to storage, creates file & document records, queues text extraction and vector chunking.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "content_base64": {
+            "type": "string"
+          },
+          "mime_type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename",
+          "content_base64"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "list_document_versions",
       "module": "documents",
       "description": "List immutable versions for a document.",
@@ -32529,6 +33579,55 @@
       }
     },
     {
+      "canonical_tool_name": "upload_file",
+      "module": "documents",
+      "description": "Upload a file asset into tenant object storage returning file_id and public/storage URL.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "content_base64": {
+            "type": "string"
+          },
+          "mime_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename",
+          "content_base64"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "validate_document",
       "module": "documents",
       "description": "Run professional validation (data, financial, legal consistency, brand, layout, contacts, permissions).",
@@ -32981,6 +34080,85 @@
       }
     },
     {
+      "canonical_tool_name": "read_email_content",
+      "module": "email",
+      "description": "Read full body text, HTML, headers, and attachments of a specific email message by message_id.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": "email_provider",
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "read_emails",
+      "module": "email",
+      "description": "List received emails and recent email dispatches/threads for the authenticated workspace. Returns message IDs, senders, subjects, dates, and preview snippets.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number"
+          },
+          "folder": {
+            "type": "string"
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": "email_provider",
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "reconcile_outreach_vs_logs",
       "module": "email",
       "description": "Check outreach logs for stale queued/failed patterns.",
@@ -33172,6 +34350,101 @@
       }
     },
     {
+      "canonical_tool_name": "send_bulk_email",
+      "module": "email",
+      "description": "Safely simulate or send one message to up to 100 unique lead, contact, or client email recipients. Dry run is the default; actual sending requires confirm_send and an idempotency key.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "lead_ids": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "contact_ids": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "client_ids": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "subject": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "html": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "zoho",
+              "brevo",
+              "gmail",
+              "outlook",
+              "resend",
+              "sendgrid"
+            ]
+          },
+          "from_name": {
+            "type": "string"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": true
+          },
+          "confirm_send": {
+            "type": "boolean",
+            "default": false
+          },
+          "idempotency_key": {
+            "type": "string",
+            "description": "Required when dry_run is false."
+          }
+        },
+        "required": [
+          "subject"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": "google",
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": true,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "send_email",
       "module": "email",
       "description": "Send an individual email via the tenant connected provider. Resolve CRM contacts by contact_id/lead_id or exact email. If a person name matches multiple contacts, returns RECIPIENT_AMBIGUOUS. Supports attachments via media asset_id/base64/url.",
@@ -33213,9 +34486,29 @@
             "type": "string"
           },
           "text": {
+            "type": "string",
+            "description": "Plain text message body (gateway renders branded HTML)"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "marketing",
+              "outreach",
+              "transactional",
+              "account_security",
+              "invoice_payment",
+              "contract_document",
+              "booking_calendar",
+              "internal_notification"
+            ]
+          },
+          "headline": {
             "type": "string"
           },
-          "html": {
+          "cta_label": {
+            "type": "string"
+          },
+          "cta_url": {
             "type": "string"
           },
           "provider": {
@@ -35515,7 +36808,9 @@
         "type": "object",
         "properties": {
           "client_id": {
-            "type": "string"
+            "type": "string",
+            "format": "uuid",
+            "description": "Literal CRM client UUID. Do not pass SQL or a lookup expression."
           }
         },
         "required": [
@@ -37324,6 +38619,186 @@
       }
     },
     {
+      "canonical_tool_name": "bulk_archive_leads",
+      "module": "leads",
+      "description": "Bulk archive up to 500 leads with reason tracking.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "description": "AlphaClone Workspace ID"
+          },
+          "lead_ids": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lead_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "bulk_create_leads",
+      "module": "leads",
+      "description": "Bulk create up to 500 leads with auto-enrichment scheduling and validation.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "description": "AlphaClone Workspace ID"
+          },
+          "leads": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "object",
+              "properties": {
+                "business_name": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "phone": {
+                  "type": "string"
+                },
+                "website": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "business_name"
+              ]
+            }
+          },
+          "idempotency_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "leads"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": "email_provider",
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": true,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "bulk_update_leads",
+      "module": "leads",
+      "description": "Bulk update fields on up to 500 leads with filter/ID matching and partial status report.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "description": "AlphaClone Workspace ID"
+          },
+          "lead_ids": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          },
+          "patch": {
+            "type": "object"
+          },
+          "idempotency_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lead_ids",
+          "patch"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": true,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "capture_linkedin_comment_leads",
       "module": "leads",
       "description": "Read comments from LinkedIn posts and auto-create CRM leads from new commenters.",
@@ -37438,6 +38913,71 @@
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "create_leads",
+      "module": "leads",
+      "description": "Create 1–500 CRM leads in one request. Supports skip_duplicates and continue_on_error. Prefer this over repeated create_lead calls when adding multiple leads.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "object"
+            }
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "skip_duplicates": {
+                "type": "boolean",
+                "default": true
+              },
+              "continue_on_error": {
+                "type": "boolean",
+                "default": true
+              },
+              "idempotency_key": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "tenant_id",
+          "items"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": true,
       "supports_action_receipt": false,
       "annotations": {
         "readOnlyHint": false,
@@ -38377,6 +39917,82 @@
       "read_write_classification": "write",
       "risk_level": "medium",
       "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "bulk_upload_media",
+      "module": "media",
+      "description": "Ingest up to 50 media files from HTTPS URLs, base64 values, or data URLs into tenant storage. Returns a per-file upload receipt and does not publish content.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "files": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "properties": {
+                "filename": {
+                  "type": "string"
+                },
+                "mime_type": {
+                  "type": "string"
+                },
+                "media_type": {
+                  "type": "string",
+                  "enum": [
+                    "image",
+                    "video",
+                    "document"
+                  ]
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "alt_text": {
+                  "type": "string"
+                },
+                "source_url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "content_base64": {
+                  "type": "string"
+                },
+                "data_url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "files"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
       "auth_scope": [
         "write",
         "mcp:tools"
@@ -42605,6 +44221,48 @@
       }
     },
     {
+      "canonical_tool_name": "search_emails",
+      "module": "search",
+      "description": "Search workspace emails by keyword query, recipient email, or project/client context.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON data or read-only result."
+      },
+      "read_write_classification": "read",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "read",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": "email_provider",
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "search_tools",
       "module": "search",
       "description": "Search the full AlphaClone canonical tool catalog by keyword, intent, or domain query. Use when looking for capabilities outside the stable core.",
@@ -42740,6 +44398,57 @@
       "supports_action_receipt": false,
       "annotations": {
         "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "bulk_assign_campaign",
+      "module": "social",
+      "description": "Bulk assign up to 500 qualified leads/contacts to an email or outreach campaign.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "description": "AlphaClone Workspace ID"
+          },
+          "campaign_id": {
+            "type": "string"
+          },
+          "record_ids": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "campaign_id",
+          "record_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
         "openWorldHint": false,
         "destructiveHint": false
       }
@@ -48064,6 +49773,141 @@
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "bulk_add_to_segment",
+      "module": "workspace",
+      "description": "Bulk assign up to 500 leads or contacts to a target tag or segment.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "description": "AlphaClone Workspace ID"
+          },
+          "record_ids": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            }
+          },
+          "record_type": {
+            "type": "string",
+            "enum": [
+              "lead",
+              "contact"
+            ]
+          },
+          "segment_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "record_ids",
+          "record_type",
+          "segment_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "bulk_update_records",
+      "module": "workspace",
+      "description": "Safely simulate or apply one common status/stage patch to up to 250 leads, clients, contacts, invoices, projects, or tasks. Dry run is the default; execution requires confirm_execute and an idempotency key.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "record_type": {
+            "type": "string",
+            "enum": [
+              "lead",
+              "client",
+              "contact",
+              "invoice",
+              "project",
+              "task"
+            ]
+          },
+          "record_ids": {
+            "type": "array",
+            "maxItems": 250,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "patch": {
+            "type": "object",
+            "description": "One shared patch. Supported fields vary by record_type."
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": true
+          },
+          "confirm_execute": {
+            "type": "boolean",
+            "default": false
+          },
+          "idempotency_key": {
+            "type": "string",
+            "description": "Required when dry_run is false."
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "record_type",
+          "record_ids",
+          "patch"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "high",
+      "approval_requirement": true,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": true,
       "supports_action_receipt": false,
       "annotations": {
         "readOnlyHint": false,

@@ -6809,6 +6809,11 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
+          const {
+            assertProviderCircuitClosed,
+            recordProviderSuccess,
+          } = await import('@/lib/email/providerCircuitBreaker');
+          assertProviderCircuitClosed(tenant_id, 'zoho', 'get_zoho_mail_messages');
           const folderId = typeof a.folder_id === 'string' ? a.folder_id.trim() : '';
           const searchQuery = typeof a.search_query === 'string' ? a.search_query.trim() : '';
           const limit = Math.min(Math.max(Number(a.limit) || 20, 1), 100);
@@ -6829,11 +6834,39 @@ class AlphaCloneMCPServer {
             payload = { mode: 'folders', folders };
           }
 
+          recordProviderSuccess(tenant_id, 'zoho', 'get_zoho_mail_messages');
           result = { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
           } catch (err: any) {
             if (err instanceof ZohoAuthExpiredError) {
               result = { content: [{ type: 'text', text: JSON.stringify({ zoho_auth_error: true, action: 'Reconnect Zoho in Settings', message: err.message }, null, 2) }] };
+            } else if (err?.name === 'ProviderCircuitOpenError') {
+              result = { content: [{ type: 'text', text: JSON.stringify({ error: 'CIRCUIT_OPEN', provider: 'zoho', message: err.message }, null, 2) }], isError: true };
             } else {
+              const tenant_id = (args as Record<string, any>).tenant_id || (args as Record<string, any>).tenantId;
+              if (tenant_id) {
+                const { recordProviderFailure } = await import('@/lib/email/providerCircuitBreaker');
+                const paused = recordProviderFailure({
+                  tenantId: String(tenant_id),
+                  provider: 'zoho',
+                  operation: 'get_zoho_mail_messages',
+                  fingerprint: err?.message || 'zoho_mail_read_failed',
+                });
+                if (paused.paused) {
+                  result = {
+                    content: [{
+                      type: 'text',
+                      text: JSON.stringify({
+                        error: 'CIRCUIT_OPEN',
+                        provider: 'zoho',
+                        message: 'Zoho mailbox reads paused after repeated failures. Reconnect Zoho in Settings.',
+                        consecutive_failures: paused.consecutiveFailures,
+                      }, null, 2),
+                    }],
+                    isError: true,
+                  };
+                  break;
+                }
+              }
               throw err;
             }
           }

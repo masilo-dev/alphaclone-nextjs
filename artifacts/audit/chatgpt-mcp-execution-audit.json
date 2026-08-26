@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T14:03:35.961Z",
+  "generated_at": "2026-08-26T04:08:09.590Z",
   "mode": {
     "transport": "local-dry-run",
     "execute_read_tools": false,
@@ -8,13 +8,13 @@
   },
   "policy": "Default mode proves ChatGPT full-catalog discoverability and route/registry executability without side effects. Live invocation requires --http and explicit execution flags.",
   "totals": {
-    "tools_audited": 504,
-    "registry_tools": 503,
-    "directly_visible_tools": 504,
-    "passed": 190,
-    "skipped_write": 238,
+    "tools_audited": 519,
+    "registry_tools": 519,
+    "directly_visible_tools": 519,
+    "passed": 191,
+    "skipped_write": 243,
     "skipped_destructive": 13,
-    "requires_approval": 63
+    "requires_approval": 72
   },
   "failures": [],
   "tools": [
@@ -845,6 +845,17 @@
     },
     {
       "module": "contacts",
+      "tool_name": "bulk_upsert_contacts",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "contacts",
       "tool_name": "client_pulse",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1417,6 +1428,17 @@
     },
     {
       "module": "documents",
+      "tool_name": "ingest_document",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
       "tool_name": "list_document_versions",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1670,6 +1692,17 @@
     },
     {
       "module": "documents",
+      "tool_name": "upload_file",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
       "tool_name": "validate_document",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1769,6 +1802,28 @@
     },
     {
       "module": "email",
+      "tool_name": "read_email_content",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
+      "tool_name": "read_emails",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
       "tool_name": "reconcile_outreach_vs_logs",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1792,6 +1847,17 @@
     {
       "module": "email",
       "tool_name": "send_batch_outreach",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
+      "tool_name": "send_bulk_email",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2770,6 +2836,39 @@
     },
     {
       "module": "leads",
+      "tool_name": "bulk_archive_leads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "bulk_create_leads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "bulk_update_leads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
       "tool_name": "capture_linkedin_comment_leads",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -2782,6 +2881,17 @@
     {
       "module": "leads",
       "tool_name": "create_lead",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "create_leads",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -3008,6 +3118,17 @@
       "read_write": "write",
       "risk_level": "medium",
       "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "media",
+      "tool_name": "bulk_upload_media",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
@@ -3884,7 +4005,7 @@
       "tool_name": "list_tools",
       "discoverable_after_load": true,
       "executable_registered": true,
-      "executable_via": "mcp-route",
+      "executable_via": "tool-registry",
       "read_write": "read",
       "risk_level": "low",
       "status": "passed",
@@ -3936,6 +4057,17 @@
     },
     {
       "module": "search",
+      "tool_name": "search_emails",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "medium",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "search",
       "tool_name": "search_tools",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -3966,6 +4098,17 @@
       "risk_level": "low",
       "status": "passed",
       "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "social",
+      "tool_name": "bulk_assign_campaign",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
       "module": "social",
@@ -5076,6 +5219,28 @@
       "read_write": "write",
       "risk_level": "medium",
       "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "bulk_add_to_segment",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "bulk_update_records",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {

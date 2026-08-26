@@ -96,18 +96,15 @@ async function executeChunkedOutreach(
 }
 
 import { quotaService, type QuotaResourceType } from '@/services/quotaService';
+import {
+  determinePreExecutionQuotaMetric,
+  shouldPreChargeMcpExecution,
+  isEmailReadTool,
+  isHealthCheckTool,
+} from '@/lib/mcp/toolQuotaPolicy';
 
 function determineSpecificMetric(toolName: string): QuotaResourceType | null {
-  const lower = toolName.toLowerCase();
-  if (lower.includes('lead')) return 'leads';
-  if (lower.includes('outreach')) return 'outreach_actions';
-  if (lower.includes('linkedin')) return 'linkedin_posts';
-  if (lower.includes('facebook')) return 'facebook_posts';
-  if (lower.includes('instagram')) return 'instagram_posts';
-  if (lower.includes('email') || lower.includes('mail')) return 'email_actions';
-  if (lower.includes('contract')) return 'contracts';
-  if (lower.includes('invoice')) return 'invoices';
-  return null;
+  return determinePreExecutionQuotaMetric(toolName);
 }
 
 export async function executeTool(
@@ -123,37 +120,43 @@ export async function executeTool(
   let resolvedToolName = requestedTool;
   let executionResult: MCPToolExecutionResult | undefined;
 
+  let mcpQuotaConsumed = false;
+  let specificQuotaConsumed: QuotaResourceType | null = null;
+
   try {
-    // 1. Enforce atomic MCP execution quota
-    const mcpQuota = await quotaService.consumeQuotaAtomically(tenantId, userId, 'mcp_executions');
-    if (!mcpQuota.allowed) {
-      errorMessage = mcpQuota.message;
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              error: 'QUOTA_EXCEEDED',
-              metric: 'mcp_executions',
-              message: mcpQuota.message,
-              limit: mcpQuota.limit,
-              currentUsage: mcpQuota.currentUsage,
-              plan: mcpQuota.plan,
-              upgradeUrl: '/pricing',
-            }, null, 2),
-          },
-        ],
-        isError: true,
-      };
+    if (shouldPreChargeMcpExecution(requestedTool)) {
+      const mcpQuota = await quotaService.consumeQuotaAtomically(tenantId, userId, 'mcp_executions');
+      if (!mcpQuota.allowed) {
+        errorMessage = mcpQuota.message;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: 'QUOTA_EXCEEDED',
+                metric: 'mcp_executions',
+                message: mcpQuota.message,
+                limit: mcpQuota.limit,
+                currentUsage: mcpQuota.currentUsage,
+                plan: mcpQuota.plan,
+                upgradeUrl: '/pricing',
+              }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+      }
+      mcpQuotaConsumed = true;
     }
 
-    // 2. Enforce specific resource quota if tool targets a limited resource
+    // Enforce specific resource quota if tool targets a limited resource (never email reads/sends here)
     const specificMetric = determineSpecificMetric(requestedTool);
     if (specificMetric) {
       const specificQuota = await quotaService.consumeQuotaAtomically(tenantId, userId, specificMetric);
       if (!specificQuota.allowed) {
-        // Release MCP execution count since action was rejected prior to execution
-        await quotaService.releaseQuotaAtomically(tenantId, userId, 'mcp_executions');
+        if (mcpQuotaConsumed) {
+          await quotaService.releaseQuotaAtomically(tenantId, userId, 'mcp_executions');
+        }
         errorMessage = specificQuota.message;
         return {
           content: [
@@ -173,6 +176,7 @@ export async function executeTool(
           isError: true,
         };
       }
+      specificQuotaConsumed = specificMetric;
     }
 
     const chunkConfig = shouldChunkOutreach(requestedTool);
@@ -241,6 +245,15 @@ export async function executeTool(
       isError: true,
     };
   } finally {
+    if (!success) {
+      if (mcpQuotaConsumed) {
+        await quotaService.releaseQuotaAtomically(tenantId, userId, 'mcp_executions');
+      }
+      if (specificQuotaConsumed) {
+        await quotaService.releaseQuotaAtomically(tenantId, userId, specificQuotaConsumed);
+      }
+    }
+
     const durationMs = Date.now() - startTime;
     await logMcpToolExecution({
       tenantId,

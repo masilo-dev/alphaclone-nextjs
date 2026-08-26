@@ -68,7 +68,7 @@ export const quotaEnforcementService = {
             const currentUsage = metricUsage?.current_value ?? 0;
             const limit = metricUsage?.limit_value ?? fallbackLimit;
 
-            if (limit === -1 || limit === 999999) {
+            if (limit < 0) {
                 return { allowed: true, currentUsage, limit };
             }
 
@@ -396,8 +396,8 @@ export const quotaEnforcementService = {
     formatUsage(usage: UsageSummary): string {
         const { current_value, limit_value, percentage_used } = usage;
 
-        if (limit_value === 999999) {
-            return `${current_value.toLocaleString()} (Unlimited)`;
+        if (limit_value < 0) {
+            return `${current_value.toLocaleString()} (Unlimited plan)`;
         }
 
         return `${current_value.toLocaleString()} / ${limit_value.toLocaleString()} (${percentage_used.toFixed(1)}%)`;

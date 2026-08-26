@@ -60,35 +60,36 @@ function toUtcIso(value: unknown): unknown {
 async function checkAndConsumeMcpQuota(
   admin: any,
   tenantId: string,
+  userId: string,
   toolName: string
 ): Promise<{ allowed: boolean; reason?: string }> {
-  let specificMetric: string | null = null;
-  const name = String(toolName || '').toLowerCase();
-  if (name.startsWith('lead_') || name.includes('lead')) specificMetric = 'leads';
-  else if (name.startsWith('email_') || name.includes('send_email')) specificMetric = 'email_actions';
-  else if (name.includes('linkedin')) specificMetric = 'linkedin_posts';
-  else if (name.includes('facebook')) specificMetric = 'facebook_posts';
-  else if (name.includes('instagram')) specificMetric = 'instagram_posts';
-  else if (name.includes('outreach') || name.startsWith('contact_')) specificMetric = 'outreach_actions';
+  const { determinePreExecutionQuotaMetric, shouldPreChargeMcpExecution } = await import('@/lib/mcp/toolQuotaPolicy');
+  if (!shouldPreChargeMcpExecution(toolName)) {
+    return { allowed: true };
+  }
+
+  const specificMetric = determinePreExecutionQuotaMetric(toolName);
 
   if (specificMetric) {
     const { data: specificRes, error: specErr } = await admin.rpc('consume_daily_resource_quota', {
       p_tenant_id: tenantId,
-      p_metric: specificMetric,
+      p_user_id: userId,
+      p_resource: specificMetric,
       p_amount: 1,
     });
 
     if (!specErr && specificRes && specificRes.allowed === false) {
       return {
         allowed: false,
-        reason: `Daily quota reached for '${specificMetric}' on your current plan (${specificRes.current_usage}/${specificRes.limit_value}). Please upgrade your plan for higher daily limits.`,
+        reason: `Daily quota reached for '${specificMetric}' on your current plan (${specificRes.currentUsage}/${specificRes.limit}). Please upgrade your plan for higher daily limits.`,
       };
     }
   }
 
   const { data: mcpRes, error: mcpErr } = await admin.rpc('consume_daily_resource_quota', {
     p_tenant_id: tenantId,
-    p_metric: 'mcp_executions',
+    p_user_id: userId,
+    p_resource: 'mcp_executions',
     p_amount: 1,
   });
 
@@ -96,13 +97,14 @@ async function checkAndConsumeMcpQuota(
     if (specificMetric) {
       await admin.rpc('release_daily_resource_quota', {
         p_tenant_id: tenantId,
-        p_metric: specificMetric,
+        p_user_id: userId,
+        p_resource: specificMetric,
         p_amount: 1,
       });
     }
     return {
       allowed: false,
-      reason: `Daily quota reached for 'mcp_executions' on your current plan (${mcpRes.current_usage}/${mcpRes.limit_value}). Please upgrade your plan for higher daily limits.`,
+      reason: `Daily quota reached for 'mcp_executions' on your current plan (${mcpRes.currentUsage}/${mcpRes.limit}). Please upgrade your plan for higher daily limits.`,
     };
   }
 
@@ -640,18 +642,27 @@ export async function POST(req: NextRequest) {
       // resolveAuth already enforced above for session path; continue
     }
 
-    // Enforce atomic daily resource quotas
-    const quotaCheck = await checkAndConsumeMcpQuota(createAdminSupabaseClientOrThrow(), tenantId, String(toolName || ''));
-    if (!quotaCheck.allowed) {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        id: requestBody.id,
-        error: {
-          code: -32600,
-          message: quotaCheck.reason || 'Daily resource quota exceeded.',
-          data: { quotaExceeded: true, upgradeUrl: 'https://alphaclonesystems.com/pricing' },
-        },
-      }, { status: 429, headers: mcpJsonHeaders(req) });
+    const { initializeRegistry, hasTool } = await import('@/lib/mcp/tool-registry');
+    initializeRegistry();
+
+    if (!hasTool(String(toolName || ''))) {
+      const quotaCheck = await checkAndConsumeMcpQuota(
+        createAdminSupabaseClientOrThrow(),
+        tenantId,
+        userId,
+        String(toolName || ''),
+      );
+      if (!quotaCheck.allowed) {
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          error: {
+            code: -32600,
+            message: quotaCheck.reason || 'Daily resource quota exceeded.',
+            data: { quotaExceeded: true, upgradeUrl: 'https://alphaclonesystems.com/pricing' },
+          },
+        }, { status: 429, headers: mcpJsonHeaders(req) });
+      }
     }
 
     if (toolName === 'create_ticket') {

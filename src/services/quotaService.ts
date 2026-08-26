@@ -1,93 +1,58 @@
 import { supabase } from '../lib/supabase';
 import { createSupabaseAdminClient } from '../lib/supabase-admin';
 import { tenantService } from './tenancy/TenantService';
+import {
+  evaluateEntitlement,
+  formatQuotaExceededMessage,
+  isUnlimitedPlan,
+  normalizePlanId,
+  resolveResourceLimits,
+  type NormalizedPlanId,
+  type QuotaResourceType,
+} from '@/lib/entitlements/planEntitlements';
+import { ACTION_CATEGORY_LABELS } from '@/lib/entitlements/actionCategoryLabels';
 
-export type QuotaResourceType =
-  | 'leads'
-  | 'outreach_actions'
-  | 'linkedin_posts'
-  | 'facebook_posts'
-  | 'instagram_posts'
-  | 'email_actions'
-  | 'mcp_executions'
-  | 'contracts'
-  | 'invoices'
-  | 'receipts';
+export type { QuotaResourceType } from '@/lib/entitlements/planEntitlements';
 
 export interface QuotaCheckResult {
   allowed: boolean;
   currentUsage: number;
-  limit: number; // -1 for unlimited
+  /** -1 = unlimited (Premium). Never a fake large number. */
+  limit: number;
   remaining: number;
+  unlimited?: boolean;
   plan?: string;
+  normalizedPlan?: NormalizedPlanId;
   message: string;
 }
 
 export interface DetailedUsageSummary {
   date: string;
   plan: string;
-  metrics: Record<QuotaResourceType, { current: number; limit: number; remaining: number }>;
+  normalizedPlan: NormalizedPlanId;
+  unlimited: boolean;
+  metrics: Record<QuotaResourceType, { current: number; limit: number; remaining: number; unlimited: boolean }>;
 }
 
-export const PLAN_RESOURCE_LIMITS: Record<string, Record<QuotaResourceType, number>> = {
-  free: {
-    leads: 50,
-    outreach_actions: 20,
-    linkedin_posts: 1,
-    facebook_posts: 1,
-    instagram_posts: 1,
-    email_actions: 25,
-    mcp_executions: 50,
-    contracts: 4,
-    invoices: 30,
-    receipts: 30,
-  },
-  starter: {
-    leads: 100,
-    outreach_actions: 100,
-    linkedin_posts: 3,
-    facebook_posts: 3,
-    instagram_posts: 3,
-    email_actions: 150,
-    mcp_executions: 250,
-    contracts: 15,
-    invoices: 100,
-    receipts: 100,
-  },
-  pro: {
-    leads: 500,
-    outreach_actions: 500,
-    linkedin_posts: 10,
-    facebook_posts: 10,
-    instagram_posts: 10,
-    email_actions: 750,
-    mcp_executions: 1500,
-    contracts: 50,
-    invoices: 500,
-    receipts: 500,
-  },
-  enterprise: {
-    leads: -1,
-    outreach_actions: -1,
-    linkedin_posts: -1,
-    facebook_posts: -1,
-    instagram_posts: -1,
-    email_actions: -1,
-    mcp_executions: -1,
-    contracts: -1,
-    invoices: -1,
-    receipts: -1,
-  },
+/** @deprecated Use resolveResourceLimits from planEntitlements */
+export const PLAN_RESOURCE_LIMITS = {
+  free: resolveResourceLimits('free'),
+  pro: resolveResourceLimits('pro'),
+  starter: resolveResourceLimits('pro'),
+  premium: resolveResourceLimits('premium'),
+  enterprise: resolveResourceLimits('premium'),
+  custom: resolveResourceLimits('premium'),
 };
+
+function resourceLabel(resource: QuotaResourceType): string {
+  return ACTION_CATEGORY_LABELS[resource]?.label || resource.replace(/_/g, ' ');
+}
 
 export const quotaService = {
   getTenantId(): string | null {
     return tenantService.getCurrentTenantId();
   },
 
-  /**
-   * Consume quota atomically using Postgres RPC function
-   */
   async consumeQuotaAtomically(
     tenantId: string,
     userId: string,
@@ -106,12 +71,12 @@ export const quotaService = {
 
       if (error) {
         console.error(`Atomic quota RPC error for ${resource}:`, error);
-        // Fallback gracefully to prevent hard crashes if RPC permission fails
         return {
           allowed: true,
           currentUsage: 0,
           limit: -1,
           remaining: -1,
+          unlimited: true,
           message: 'Quota check bypassed due to internal error',
         };
       }
@@ -120,17 +85,29 @@ export const quotaService = {
       const currentUsage = Number(data?.currentUsage || 0);
       const limit = Number(data?.limit ?? -1);
       const remaining = Number(data?.remaining ?? -1);
-      const plan = data?.plan || 'free';
+      const rawPlan = String(data?.plan || 'free');
+      const unlimited = limit < 0 || isUnlimitedPlan(rawPlan);
+      const normalizedPlan = normalizePlanId(rawPlan);
+      const label = resourceLabel(resource);
 
       return {
-        allowed,
+        allowed: unlimited ? true : allowed,
         currentUsage,
         limit,
         remaining,
-        plan,
-        message: allowed
-          ? `Quota approved (${resource}: ${currentUsage}/${limit < 0 ? 'unlimited' : limit})`
-          : `Daily limit reached for ${resource} on ${plan.toUpperCase()} plan (${currentUsage}/${limit}). Upgrade plan to execute more.`,
+        unlimited,
+        plan: rawPlan,
+        normalizedPlan,
+        message: unlimited
+          ? 'Unlimited plan — action permitted.'
+          : allowed
+            ? `Quota approved (${label}: ${currentUsage}/${limit})`
+            : formatQuotaExceededMessage({
+                plan: normalizedPlan,
+                resourceLabel: label,
+                currentUsage,
+                limit,
+              }),
       };
     } catch (err: any) {
       console.error(`Unexpected error in consumeQuotaAtomically:`, err);
@@ -144,9 +121,6 @@ export const quotaService = {
     }
   },
 
-  /**
-   * Release quota (revert consumption) if action failed
-   */
   async releaseQuotaAtomically(
     tenantId: string,
     userId: string,
@@ -167,9 +141,6 @@ export const quotaService = {
     }
   },
 
-  /**
-   * Get complete usage breakdown for the active tenant
-   */
   async getTenantUsageSummary(tenantId: string, userId: string): Promise<DetailedUsageSummary> {
     const admin = createSupabaseAdminClient();
     const today = new Date().toISOString().split('T')[0];
@@ -180,8 +151,10 @@ export const quotaService = {
       .eq('id', tenantId)
       .single();
 
-    const plan = (tenant?.subscription_plan || 'free').toLowerCase();
-    const defaults = PLAN_RESOURCE_LIMITS[plan] || PLAN_RESOURCE_LIMITS.free;
+    const rawPlan = (tenant?.subscription_plan || 'free').toLowerCase();
+    const normalizedPlan = normalizePlanId(rawPlan);
+    const unlimited = isUnlimitedPlan(rawPlan);
+    const defaults = resolveResourceLimits(rawPlan);
 
     const { data: usage } = await admin
       .from('quota_usage')
@@ -192,30 +165,24 @@ export const quotaService = {
       .maybeSingle();
 
     const metrics = {} as DetailedUsageSummary['metrics'];
-    const keys: QuotaResourceType[] = [
-      'leads',
-      'outreach_actions',
-      'linkedin_posts',
-      'facebook_posts',
-      'instagram_posts',
-      'email_actions',
-      'mcp_executions',
-      'contracts',
-      'invoices',
-      'receipts',
-    ];
+    const keys = Object.keys(defaults) as QuotaResourceType[];
 
     for (const key of keys) {
       const current = Number(usage?.[key] || 0);
       const limit = defaults[key] ?? -1;
-      const remaining = limit < 0 ? -1 : Math.max(0, limit - current);
-      metrics[key] = { current, limit, remaining };
+      const metricUnlimited = unlimited || limit < 0;
+      const remaining = metricUnlimited ? -1 : Math.max(0, limit - current);
+      metrics[key] = { current, limit, remaining, unlimited: metricUnlimited };
     }
 
     return {
       date: today,
-      plan,
+      plan: rawPlan,
+      normalizedPlan,
+      unlimited,
       metrics,
     };
   },
+
+  evaluateEntitlement,
 };

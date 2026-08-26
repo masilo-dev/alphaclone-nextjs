@@ -3,7 +3,7 @@ import { emailCampaignService } from "@/services/emailCampaignService";
 import { isEmailSuppressed } from "@/lib/email/suppression";
 import { hasRecipientMarketingConsent } from "@/lib/email/marketingConsent";
 import { captureUnifiedMessageFromWebhook } from "@/services/intelligence/signalCaptureAdminService";
-import { sendEmail } from "@/lib/email/sendEmail";
+import { sendEmailServer } from "@/lib/email/sendEmailServer";
 import {
   sendWhatsAppMessage,
   isWhatsAppConfigured,
@@ -807,19 +807,20 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         },
       );
       const preferredProvider = provider.id;
-      const sendResult = await sendEmail(
-        String(c.tenant_id || ""),
-        {
-          to: recipient.email,
-          subject: personalizedSubject,
-          html: personalizedHtml,
-          from_name: fromName,
-          reply_to: replyTo,
-          userId: campaignCreatorId,
-          templateName: "emailCampaign",
-        },
+      const sendResult = await sendEmailServer({
+        tenantId: String(c.tenant_id || ""),
+        to: recipient.email,
+        subject: personalizedSubject,
+        message: personalizedHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+        fromName,
+        replyTo,
+        userId: campaignCreatorId,
+        templateName: "emailCampaign",
+        category: 'marketing',
+        campaignId: String(c.id || ''),
+        initiationSource: 'campaign.scheduled',
         preferredProvider,
-      );
+      });
 
       if (sendResult.success) {
         sentCount++;

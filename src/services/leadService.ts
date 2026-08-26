@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { quotaService } from './quotaService';
+import { formatQuotaExceededMessage, isUnlimitedPlan } from '@/lib/entitlements/planEntitlements';
 import { businessClientService } from './businessClientService';
 import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
@@ -659,51 +661,46 @@ export const leadService = {
     },
 
     /**
-     * Check if the tenant has reached the lead generation limit
-     * Limit: 30 leads per 24-hour window for Free users
+     * Check if the tenant can add more leads today (centralized plan entitlements).
      */
     async checkLeadLimit(userRole?: string): Promise<{ allowed: boolean; error: string | null; remaining: number }> {
         try {
-            // Super Admin bypass
             if (userRole === 'admin') {
-                return { allowed: true, error: null, remaining: 9999 };
+                return { allowed: true, error: null, remaining: -1 };
             }
 
             const tenantId = this.getTenantId();
-            const { data: tenant, error: tenantError } = await supabase
-                .from('tenants')
-                .select('subscription_plan')
-                .eq('id', tenantId)
-                .single();
-
-            if (tenantError) throw tenantError;
-
-            if (tenant.subscription_plan === 'free') {
-                const MAX_LEADS_24H = 50;
-                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-                const { count, error } = await supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tenant_id', tenantId)
-                    .gte('created_at', twentyFourHoursAgo);
-
-                if (error) throw error;
-
-                const currentCount = count || 0;
-                const remaining = Math.max(0, MAX_LEADS_24H - currentCount);
-
-                if (currentCount >= MAX_LEADS_24H) {
-                    return {
-                        allowed: false,
-                        error: `Free plan limit reached: ${MAX_LEADS_24H} new leads per 24 hours (includes saved AI leads). Upgrade for higher limits.`,
-                        remaining: 0
-                    };
-                }
-                return { allowed: true, error: null, remaining };
+            if (!tenantId) {
+                return { allowed: false, error: 'No tenant context', remaining: 0 };
             }
 
-            return { allowed: true, error: null, remaining: 999 };
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user?.id) {
+                return { allowed: false, error: 'Authentication required', remaining: 0 };
+            }
+
+            const summary = await quotaService.getTenantUsageSummary(tenantId, user.id);
+            const leadsMetric = summary.metrics.leads;
+
+            if (summary.unlimited || isUnlimitedPlan(summary.plan) || leadsMetric.unlimited) {
+                return { allowed: true, error: null, remaining: -1 };
+            }
+
+            const remaining = leadsMetric.remaining;
+            if (remaining <= 0) {
+                return {
+                    allowed: false,
+                    error: formatQuotaExceededMessage({
+                        plan: summary.normalizedPlan,
+                        resourceLabel: 'leads added',
+                        currentUsage: leadsMetric.current,
+                        limit: leadsMetric.limit,
+                    }),
+                    remaining: 0,
+                };
+            }
+
+            return { allowed: true, error: null, remaining };
         } catch (error) {
             console.error('Error checking lead limit:', error);
             return { allowed: false, error: 'Failed to verify usage limits. Please try again.', remaining: 0 };
