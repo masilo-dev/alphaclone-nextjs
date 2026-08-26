@@ -642,7 +642,7 @@ export async function POST(req: NextRequest) {
       // resolveAuth already enforced above for session path; continue
     }
 
-    const { initializeRegistry, hasTool } = await import('@/lib/mcp/tool-registry');
+    const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
     initializeRegistry();
 
     if (!hasTool(String(toolName || ''))) {
@@ -895,8 +895,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Registry tools — bypass MCPServer (avoids nodemailer / heavy email import chain)
-    const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
-    initializeRegistry();
     if (hasTool(toolName)) {
       try {
         const rawResult = await executeTool(tenantId, userId, toolName, {
