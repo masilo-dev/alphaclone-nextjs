@@ -236,6 +236,7 @@ defineConnectorTool({
     bcc: z.array(z.string().email()).optional(),
     subject: z.string().min(1),
     text: z.string().optional(),
+    html: z.string().optional(),
     category: z
       .enum([
         'marketing',
@@ -273,6 +274,7 @@ defineConnectorTool({
       bcc: { type: 'array', items: { type: 'string' } },
       subject: { type: 'string' },
       text: { type: 'string', description: 'Plain text message body (gateway renders branded HTML)' },
+      html: { type: 'string', description: 'Rejected unless text is also provided — use text and let the gateway render HTML' },
       category: {
         type: 'string',
         enum: ['marketing', 'outreach', 'transactional', 'account_security', 'invoice_payment', 'contract_document', 'booking_calendar', 'internal_notification'],
