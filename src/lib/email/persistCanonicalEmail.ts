@@ -1,11 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { OutboundEmailProvider } from '@/lib/email/sendEmail';
+import type { UnifiedEmailProvider } from '@/lib/email/unifiedEmailDomain';
 
 type PersistCanonicalOutboundParams = {
   supabase: SupabaseClient;
   tenantId: string;
   userId?: string | null;
-  provider: OutboundEmailProvider;
+  provider: UnifiedEmailProvider;
   providerMessageId: string;
   fromEmail: string;
   recipients: string[];
