@@ -16,11 +16,16 @@ function digestWindowKey(date = new Date()): string {
 }
 
 function buildIdempotencyKey(input: TenantBusinessEventInput): string {
+  const executionId =
+    (typeof input.metadata?.execution_id === 'string' && input.metadata.execution_id) ||
+    (typeof input.metadata?.idempotency_key === 'string' && input.metadata.idempotency_key) ||
+    '';
   const raw = [
     input.tenantId,
     input.eventType,
     input.entityType || '',
     input.entityId || '',
+    executionId,
     digestWindowKey(),
     input.title,
   ].join('|');
@@ -97,7 +102,7 @@ export async function emitTenantBusinessEvent(input: TenantBusinessEventInput) {
     .eq('idempotency_key', idempotencyKey)
     .maybeSingle();
 
-  if (existing?.id && level === 'level1_record_only') {
+  if (existing?.id) {
     return { skipped: true, reason: 'duplicate', priority, level };
   }
 

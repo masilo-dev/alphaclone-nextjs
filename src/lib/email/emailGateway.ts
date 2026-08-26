@@ -15,6 +15,7 @@ import {
 } from '@/lib/compliance/communicationCompliance';
 import { buildUnsubscribeUrl } from '@/lib/email/unsubscribe';
 import { absoluteUrl } from '@/lib/siteUrl';
+import type { EmailAttachment } from '@/lib/email/emailAttachment';
 import { recordSuccessfulEmailSend } from '@/lib/email/usageMeteringService';
 
 export type EmailGatewayCategory =
@@ -55,7 +56,7 @@ export interface EmailGatewayRequest {
   isPlatformNotification?: boolean;
   isReply?: boolean;
   preferredProvider?: OutboundEmailProvider;
-  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  attachments?: EmailAttachment[];
   listUnsubscribeUrl?: string;
   idempotencyKey?: string;
   skipRecipientGate?: boolean;

@@ -224,7 +224,7 @@ registerTool('gap-crm', {
       }
     }
 
-    const { data, error } = await supabase.from('tasks').insert({ tenant_id: args.tenant_id, title: args.title, description: args.description || null, due_date: args.due_date || null, priority: args.priority || 'medium', assigned_to: args.assigned_to || ctx.userId, project_id: args.project_id || null, client_id: args.client_id || null, status: 'pending', created_by: ctx.userId, created_at: new Date().toISOString() }).select().single();
+    const { data, error } = await supabase.from('tasks').insert({ tenant_id: args.tenant_id, title: args.title, description: args.description || null, due_date: args.due_date || null, priority: args.priority || 'medium', assigned_to: args.assigned_to || ctx.userId, project_id: args.project_id || null, client_id: args.client_id || null, status: 'todo', created_by: ctx.userId, created_at: new Date().toISOString() }).select().single();
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
   },
@@ -282,7 +282,7 @@ registerTool('gap-crm', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, tasks: { type: 'array', items: { type: 'object' } } }, required: ['tasks'] },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
-    const rows = (args.tasks || []).map((t: any) => ({ tenant_id: args.tenant_id, title: t.title, description: t.description || null, due_date: t.due_date || null, priority: t.priority || 'medium', status: 'pending', created_by: ctx.userId, created_at: new Date().toISOString() }));
+    const rows = (args.tasks || []).map((t: any) => ({ tenant_id: args.tenant_id, title: t.title, description: t.description || null, due_date: t.due_date || null, priority: t.priority || 'medium', status: 'todo', created_by: ctx.userId, created_at: new Date().toISOString() }));
     const { data, error } = await supabase.from('tasks').insert(rows).select();
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
     return { content: [{ type: 'text', text: JSON.stringify({ created: (data || []).length, tasks: data }, null, 2) }] };
@@ -344,7 +344,7 @@ registerTool('gap-crm', {
     const supabase = createSupabaseAdminClient();
     await supabase.from('projects').update({ status: 'active', started_at: new Date().toISOString() }).eq('id', args.project_id).eq('tenant_id', args.tenant_id);
     if (args.kickoff_tasks?.length) {
-      const rows = args.kickoff_tasks.map((title: string) => ({ tenant_id: args.tenant_id, project_id: args.project_id, title, status: 'pending', priority: 'medium', created_by: ctx.userId, created_at: new Date().toISOString() }));
+      const rows = args.kickoff_tasks.map((title: string) => ({ tenant_id: args.tenant_id, project_id: args.project_id, title, status: 'todo', priority: 'medium', created_by: ctx.userId, created_at: new Date().toISOString() }));
       await supabase.from('tasks').insert(rows);
     }
     return { content: [{ type: 'text', text: JSON.stringify({ kicked_off: true, project_id: args.project_id, tasks_created: (args.kickoff_tasks || []).length }, null, 2) }] };

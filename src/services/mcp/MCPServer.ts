@@ -4751,7 +4751,7 @@ class AlphaCloneMCPServer {
             attachments: [{
               filename: `Invoice_${invoice.invoice_number}.pdf`,
               content: pdfBase64,
-              content_type: 'application/pdf',
+              contentType: 'application/pdf',
             }],
             templateName: 'mcpInvoiceSent',
             skipFooter: true,
@@ -7064,7 +7064,7 @@ class AlphaCloneMCPServer {
             attachments: [{
               filename: `Quote_${quote.quote_number || quote.id}.html`,
               content: attachmentContent,
-              content_type: 'text/html',
+              contentType: 'text/html',
             }],
             templateName: 'mcpQuoteEmail',
           });

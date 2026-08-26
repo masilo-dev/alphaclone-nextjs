@@ -9,15 +9,14 @@ import sanitizeHtml from 'sanitize-html';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
 import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
+import {
+  type EmailAttachment,
+  normalizeEmailAttachments,
+} from '@/lib/email/emailAttachment';
+
+export type { EmailAttachment } from '@/lib/email/emailAttachment';
 
 export type OutboundEmailProvider = 'zoho' | 'brevo' | 'sendgrid' | 'resend';
-
-export interface EmailAttachment {
-  filename: string;
-  content: string;
-  content_type?: string;
-  contentType?: string;
-}
 
 export interface EmailPayload {
   to: string | string[];
@@ -326,11 +325,7 @@ export async function sendEmail(
         text: normalizedText,
         replyTo: payload.reply_to || payload.replyTo,
         listUnsubscribeUrl: unsubscribeUrl || payload.listUnsubscribeUrl,
-        attachments: payload.attachments?.map((attachment) => ({
-          filename: attachment.filename,
-          content: attachment.content,
-          contentType: attachment.content_type || attachment.contentType || 'application/octet-stream',
-        })),
+        attachments: normalizeEmailAttachments(payload.attachments),
         userId: config.ownerUserId || payload.userId,
       });
 

@@ -121,7 +121,7 @@ async function sendInvoiceEmail(input: InvoiceLifecycleInput) {
     attachments: [{
       filename: `Invoice_${invoiceNumber}.pdf`,
       content: Buffer.from(await storedPdf.arrayBuffer()).toString('base64'),
-      content_type: 'application/pdf',
+      contentType: 'application/pdf',
     }],
     templateName: 'invoiceLifecycleSent',
     skipFooter: true,

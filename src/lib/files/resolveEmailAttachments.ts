@@ -75,7 +75,7 @@ export async function resolveEmailAttachmentsFromFileIds(
     if (!storagePath) {
       const base64Content = pickString(row, ['content_base64', 'base64']);
       if (base64Content) {
-        attachments.push({ filename, content: base64Content, content_type: contentType });
+        attachments.push({ filename, content: base64Content, contentType });
         continue;
       }
       throw new Error(`File ${filename} has no storage path or base64 content`);
@@ -88,7 +88,7 @@ export async function resolveEmailAttachmentsFromFileIds(
     attachments.push({
       filename,
       content: Buffer.from(await blob.arrayBuffer()).toString('base64'),
-      content_type: contentType,
+      contentType,
     });
   }
 

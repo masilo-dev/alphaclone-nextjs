@@ -4,6 +4,7 @@ import {
   type EmailGatewayRequest,
 } from '@/lib/email/emailGateway';
 import type { OutboundEmailProvider } from '@/lib/email/sendEmail';
+import type { EmailAttachment } from '@/lib/email/emailAttachment';
 import { checkEmailSendQuotaAvailable } from '@/lib/email/usageMeteringService';
 
 export interface SendEmailServerParams {
@@ -16,7 +17,7 @@ export interface SendEmailServerParams {
   tenantId: string;
   userId?: string;
   replyTo?: string;
-  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  attachments?: EmailAttachment[];
   isPlatformNotification?: boolean;
   templateName?: string;
   listUnsubscribeUrl?: string;

@@ -4,6 +4,7 @@ import { sendUniversalEmail, mapEventTypeToTemplateKey } from '@/lib/email/unive
 import { buildValidatedPublicUrl } from '@/lib/urls';
 import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
 import { recordBusinessActivity, type BusinessActivityParams } from '@/lib/audit/businessAuditEngine';
+import { mapEventTypeToNotificationType } from './notificationType';
 
 export type NotificationLevel = 'level1_record_only' | 'level2_digest' | 'level3_urgent_email';
 
@@ -165,16 +166,18 @@ export async function dispatchBusinessNotification(
 
   // 3. LEVEL 2 & LEVEL 3: In-Platform Notification
   if (target.userId) {
+    const notificationType = mapEventTypeToNotificationType(options.type);
     const { error: inAppError } = await admin.from('notifications').insert({
       user_id: target.userId,
       tenant_id: options.tenantId,
-      type: options.type,
+      type: notificationType,
       title: options.title,
       message: options.message,
       action_url: options.actionUrl || null,
       read: false,
       priority: options.level === 'level3_urgent_email' ? 'urgent' : 'medium',
       metadata: {
+        event_type: options.type,
         clientName: options.clientName,
         projectName: options.projectName,
         slaDeadline: options.slaDeadline,
