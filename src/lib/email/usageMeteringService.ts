@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { recordSuccessfulUsage } from '@/lib/entitlements/meteringService';
 import { quotaService, type QuotaResourceType } from '@/services/quotaService';
 import type { EmailGatewayCategory } from '@/lib/email/emailGateway';
 
@@ -86,9 +87,18 @@ export async function recordSuccessfulEmailSend(params: {
 
   const resource = quotaResourceForSend(params.category, Boolean(params.isReply));
   const userId = params.userId || params.tenantId;
-  let result = await quotaService.consumeQuotaAtomically(params.tenantId, userId, resource, 1);
-  // Do not fall back to legacy email_actions — reads/sync must stay free and sends use explicit metrics.
-  if (!result.allowed) {
+
+  const recorded = await recordSuccessfulUsage({
+    tenantId: params.tenantId,
+    userId,
+    resource,
+    amount: 1,
+    operationId: params.operationId || params.idempotencyKey,
+    initiationSource: params.initiationSource,
+    metadata: { provider: params.provider, category: params.category },
+  });
+
+  if (!recorded.allowed && !recorded.skipped) {
     await recordUsageEvent({
       tenantId: params.tenantId,
       userId: params.userId,
@@ -104,12 +114,12 @@ export async function recordSuccessfulEmailSend(params: {
       provider: params.provider,
       success: false,
       quotaCharged: false,
-      quotaReason: result.message,
+      quotaReason: recorded.reason || 'Quota limit reached',
     });
     return false;
   }
 
-  const quotaCharged = result.allowed;
+  const quotaCharged = recorded.charged || recorded.skipped;
   if (quotaCharged) chargedKeys.add(key);
 
   await recordUsageEvent({
@@ -126,13 +136,13 @@ export async function recordSuccessfulEmailSend(params: {
           : 'email_new_outbound',
     provider: params.provider,
     success: true,
-    quotaCharged,
-    quotaReason: quotaCharged
+    quotaCharged: Boolean(recorded.charged),
+    quotaReason: recorded.charged
       ? `Successful ${resource} after provider accepted delivery`
-      : result.message,
+      : recorded.reason || 'Quota not enforced',
   });
 
-  return quotaCharged;
+  return Boolean(recorded.charged);
 }
 
 export async function recordFailedEmailAttempt(params: {

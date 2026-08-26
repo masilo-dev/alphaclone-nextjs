@@ -6,6 +6,7 @@ import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
 import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { generateThemedInvoicePdfBuffer } from '@/lib/documents/themedDocumentPdf';
+import { recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 interface InvoiceLifecycleInput {
   invoiceId: string;
@@ -171,6 +172,16 @@ async function markInvoiceSent(input: InvoiceLifecycleInput) {
       throw new Error('Invoice could not transition to sent');
     }
     return;
+  }
+
+  if (input.actorUserId) {
+    await recordDailyResourceQuota(
+      input.tenantId,
+      input.actorUserId,
+      'invoices',
+      1,
+      `invoice-lifecycle:${input.invoiceId}`,
+    );
   }
 
   const [auditResult, eventResult, lifecycleResult] = await Promise.allSettled([

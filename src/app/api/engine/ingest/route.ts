@@ -6,7 +6,7 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { runInBackground } from '@/lib/server/backgroundTask';
 import { getPublicAppUrl } from '@/lib/server/appUrl';
 import { z } from 'zod';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const schema = z.object({ source: z.string().trim().min(1).max(100), raw_content: z.string().max(500_000).default(''), author_name: z.string().max(300).nullable().optional(), author_contact: z.string().max(500).nullable().optional(), url: z.string().url().max(5000).nullable().optional(), tenant_id: z.string().uuid(), metadata: z.record(z.string(), z.unknown()).default({}) });
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
         let lead_id: string | null = null;
         if (['high', 'urgent'].includes(processed.intent_label)) {
             if (!actorUserId) throw new Error('Workspace has no member available for automated lead ownership');
-            await consumeDailyResourceQuota(tenant_id, actorUserId, 'leads');
+            await validateDailyResourceQuota(tenant_id, actorUserId, 'leads');
             const { data: lead, error: leadError } = await supabase
                 .from('leads')
                 .insert({
@@ -87,13 +87,11 @@ export async function POST(req: NextRequest) {
                 .select('id')
                 .single();
 
-            if (leadError) {
-                await releaseDailyResourceQuota(tenant_id, actorUserId, 'leads');
-                throw leadError;
-            }
+            if (leadError) throw leadError;
 
             if (lead) {
                 lead_id = lead.id;
+                await recordDailyResourceQuota(tenant_id, actorUserId, 'leads', 1, `ingest-lead:${lead.id}`);
                 await supabase
                     .from('ingestion_events')
                     .update({ lead_id, workflow_triggered: false })

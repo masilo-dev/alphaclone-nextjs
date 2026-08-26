@@ -2,7 +2,7 @@ import { start } from 'workflow/api';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { invoiceLifecycleWorkflow } from './invoice-lifecycle';
 import crypto from 'crypto';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 import {
   closeDealFromContractSign,
   resolveBusinessClientIdForParty,
@@ -23,13 +23,8 @@ export async function contractSignedWorkflow({ tenantId, payload }: { tenantId: 
 
   const actorUserId = typeof payload.actorUserId === 'string' ? payload.actorUserId : undefined;
   if (invoice?.id && invoice.shouldSend && actorUserId) {
-    await consumeDailyResourceQuota(tenantId, actorUserId, 'invoices');
-    try {
-      await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice.id, tenantId, actorUserId }]);
-    } catch (error) {
-      await releaseDailyResourceQuota(tenantId, actorUserId, 'invoices');
-      throw error;
-    }
+    await validateDailyResourceQuota(tenantId, actorUserId, 'invoices');
+    await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice.id, tenantId, actorUserId }]);
   }
 
   const project = await kickoffProjectStep(contractId, tenantId);

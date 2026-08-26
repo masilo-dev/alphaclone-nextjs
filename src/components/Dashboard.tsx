@@ -255,6 +255,7 @@ const WhatsAppManagementPage = React.lazy(
 import { MomentumHUD } from "./dashboard/MomentumHUD";
 import { CelebrationOverlay } from "./ui/CelebrationOverlay";
 import { TrialBanner } from "./dashboard/TrialBanner";
+import { LegacyAccessBanner } from "./dashboard/LegacyAccessBanner";
 
 // Zoho Components
 const UnifiedInbox = React.lazy(
@@ -2468,6 +2469,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden ac-workspace-canvas ac-dashboard-shell-bg [height:100dvh]">
+        <LegacyAccessBanner />
         <TrialBanner />
         {/* Header - Visible in all dashboard views */}
         <header

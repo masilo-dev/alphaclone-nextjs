@@ -4,7 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '@/workflows/invoice-lifecycle';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const schema = z.object({
   tenantId: z.string().uuid(),
@@ -15,7 +15,6 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  let quotaReservation: { tenantId: string; userId: string } | null = null;
   try {
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
@@ -37,8 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Only draft or approved invoices can be sent. This invoice is ${invoice.lifecycle_status || invoice.status}.` }, { status: 409 });
     }
 
-    await consumeDailyResourceQuota(tenantId, user.id, 'invoices');
-    quotaReservation = { tenantId, userId: user.id };
+    await validateDailyResourceQuota(tenantId, user.id, 'invoices');
 
     const { runId } = await start(invoiceLifecycleWorkflow, [{
       invoiceId,
@@ -49,7 +47,6 @@ export async function POST(req: NextRequest) {
       message,
     }]);
 
-    quotaReservation = null;
     return NextResponse.json({
       success: true,
       status: 'queued',
@@ -57,9 +54,6 @@ export async function POST(req: NextRequest) {
       runId,
     }, { status: 202 });
   } catch (error) {
-    if (quotaReservation) {
-      await releaseDailyResourceQuota(quotaReservation.tenantId, quotaReservation.userId, 'invoices');
-    }
     return routeErrorResponse(error, 'Invoice delivery could not be queued', req);
   }
 }

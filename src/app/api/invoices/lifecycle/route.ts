@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '@/workflows/invoice-lifecycle';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 /**
  * Start invoice lifecycle without MCP/AI.
@@ -20,7 +20,6 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  let quotaReservation: { tenantId: string; userId: string } | null = null;
   try {
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
@@ -68,8 +67,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await consumeDailyResourceQuota(tenantId, user.id, 'invoices');
-    quotaReservation = { tenantId, userId: user.id };
+    await validateDailyResourceQuota(tenantId, user.id, 'invoices');
 
     const { runId } = await start(invoiceLifecycleWorkflow, [
       {
@@ -82,7 +80,6 @@ export async function POST(req: NextRequest) {
       },
     ]);
 
-    quotaReservation = null;
     return NextResponse.json(
       {
         success: true,
@@ -93,13 +90,6 @@ export async function POST(req: NextRequest) {
       { status: 202 }
     );
   } catch (error) {
-    if (quotaReservation) {
-      await releaseDailyResourceQuota(
-        quotaReservation.tenantId,
-        quotaReservation.userId,
-        'invoices'
-      );
-    }
     return routeErrorResponse(error, 'Invoice delivery could not be queued', req);
   }
 }

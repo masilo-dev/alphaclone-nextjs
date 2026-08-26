@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { assertContactSalesStageTransition } from '@/lib/stageProgression';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const baseFields = z.object({
   name: z.string().trim().min(1).max(300),
@@ -57,11 +57,12 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     });
     if (!accepted.length) return NextResponse.json({ error: 'Every supplied email already belongs to an active client in this workspace', code: 'DUPLICATE_EMAIL' }, { status: 409 });
     const leadCount = accepted.filter((item) => item.salesStage === 'lead').length;
-    if (leadCount) await consumeDailyResourceQuota(tenantId, user.id, 'leads', leadCount);
+    if (leadCount) await validateDailyResourceQuota(tenantId, user.id, 'leads', leadCount);
     const { data, error } = await admin.from('business_clients').insert(accepted.map((item) => ({ tenant_id: tenantId, ...row(item), is_active: true }))).select('*');
-    if (error) {
-      if (leadCount) await releaseDailyResourceQuota(tenantId, user.id, 'leads', leadCount);
-      throw error;
+    if (error) throw error;
+    const createdLeadCount = (data || []).filter((item: { sales_stage?: string }) => item.sales_stage === 'lead').length;
+    if (createdLeadCount) {
+      await recordDailyResourceQuota(tenantId, user.id, 'leads', createdLeadCount);
     }
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: bulk.success ? 'clients_imported' : 'client_created', payload: { clientIds: (data || []).map((item: any) => item.id), actorUserId: user.id, skippedDuplicates: values.length - accepted.length } });
     return NextResponse.json({ clients: data || [], client: bulk.success ? undefined : data?.[0], count: data?.length || 0, skipped: values.length - accepted.length }, { status: 201 });

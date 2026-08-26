@@ -4,7 +4,7 @@ import {
   type SendEmailServerResult,
 } from "@/lib/email/sendEmailServer";
 import { buildValidatedPublicUrl } from "@/lib/urls";
-import { escapeHtml } from "@/lib/email/sanitizeEmailHtml";
+import { escapeHtml } from '@/lib/email/escapeHtml';
 import webPush from "web-push";
 import {
   getVapidEmail,

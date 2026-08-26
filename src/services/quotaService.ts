@@ -72,12 +72,11 @@ export const quotaService = {
       if (error) {
         console.error(`Atomic quota RPC error for ${resource}:`, error);
         return {
-          allowed: true,
+          allowed: false,
           currentUsage: 0,
-          limit: -1,
-          remaining: -1,
-          unlimited: true,
-          message: 'Quota check bypassed due to internal error',
+          limit: 0,
+          remaining: 0,
+          message: 'Unable to verify usage allowance — action blocked for safety',
         };
       }
 

@@ -13,7 +13,9 @@ export interface Tenant {
     settings: TenantSettings;
     subscription_plan: SubscriptionPlan;
     subscription_status: SubscriptionStatus;
+    trial_started_at?: Date;
     trial_ends_at?: Date;
+    legacy_access_until?: Date;
     current_period_end?: Date;
     deletion_pending_at?: Date;
     stripe_customer_id?: string;

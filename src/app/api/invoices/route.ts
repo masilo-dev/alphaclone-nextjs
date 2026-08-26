@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const lineItemSchema = z.object({
   description: z.string().trim().min(1).max(2000),
@@ -71,7 +71,6 @@ async function assertReference(admin: ReturnType<typeof createSupabaseAdminClien
 }
 
 export async function POST(req: NextRequest) {
-  let quotaReservation: { tenantId: string; userId: string } | null = null;
   try {
     const parsed = schema.safeParse(normalizeInvoicePayload(await req.json().catch(() => ({}))));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid invoice details', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
@@ -79,8 +78,7 @@ export async function POST(req: NextRequest) {
     const { user, admin } = await requireTenantAccess(value.tenantId, req);
     await Promise.all([assertReference(admin, 'business_clients', value.clientId, value.tenantId), assertReference(admin, 'projects', value.projectId, value.tenantId)]);
     if (value.status !== 'draft') {
-      await consumeDailyResourceQuota(value.tenantId, user.id, 'invoices');
-      quotaReservation = { tenantId: value.tenantId, userId: user.id };
+      await validateDailyResourceQuota(value.tenantId, user.id, 'invoices');
     }
     const issueDate = (value.issueDate || new Date().toISOString()).slice(0, 10);
     const defaultDue = new Date(`${issueDate}T00:00:00.000Z`); defaultDue.setUTCDate(defaultDue.getUTCDate() + 14);
@@ -108,7 +106,9 @@ export async function POST(req: NextRequest) {
       if (error) { await admin.from('business_invoices').delete().eq('id', invoice.id).eq('tenant_id', value.tenantId); throw error; }
     }
     await logInvoiceEvent({ invoiceId: invoice.id, tenantId: value.tenantId, eventType: 'created', eventData: { status: invoice.status, total: invoice.total }, performedBy: user.id }).catch((error) => console.error('[invoices] create audit failed', error));
-    quotaReservation = null;
+    if (value.status !== 'draft') {
+      await recordDailyResourceQuota(value.tenantId, user.id, 'invoices', 1, `invoice:${invoice.id}`);
+    }
 
     // Auto-save invoice as a document record so it appears in the Documents hub
     void (async () => {
@@ -142,7 +142,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {
-    if (quotaReservation) await releaseDailyResourceQuota(quotaReservation.tenantId, quotaReservation.userId, 'invoices');
     return routeErrorResponse(error, 'Invoice could not be created', req);
   }
 }

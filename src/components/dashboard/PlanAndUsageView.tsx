@@ -110,12 +110,12 @@ export default function PlanAndUsageView({
           }`}
         >
           <h3 className="text-lg font-bold text-white">
-            {trialExpired ? 'Free trial ended' : '14-day free trial active'}
+            {trialExpired ? 'Free trial ended' : '14-day Premium trial active'}
           </h3>
           <p className="mt-1 text-sm text-slate-300">
             {trialExpired
               ? 'Add a subscription to restore full workspace access.'
-              : `${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} remaining · ends ${trialEndDate.toLocaleDateString()}`}
+              : `${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} remaining · full Premium access · no daily limits · ends ${trialEndDate.toLocaleDateString()}`}
           </p>
         </div>
       )}

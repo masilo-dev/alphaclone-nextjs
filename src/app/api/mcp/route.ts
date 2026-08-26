@@ -57,54 +57,46 @@ function toUtcIso(value: unknown): unknown {
   return value;
 }
 
-async function checkAndConsumeMcpQuota(
+async function validateMcpQuota(
   admin: any,
   tenantId: string,
   userId: string,
-  toolName: string
+  toolName: string,
+  toolArgs: Record<string, unknown> = {},
 ): Promise<{ allowed: boolean; reason?: string }> {
-  const { determinePreExecutionQuotaMetric, shouldPreChargeMcpExecution } = await import('@/lib/mcp/toolQuotaPolicy');
+  const {
+    determinePrimaryQuotaMetric,
+    getBulkProjectedAmount,
+    isBulkMeteredTool,
+    shouldPreChargeMcpExecution,
+  } = await import('@/lib/mcp/toolQuotaPolicy');
   if (!shouldPreChargeMcpExecution(toolName)) {
     return { allowed: true };
   }
 
-  const specificMetric = determinePreExecutionQuotaMetric(toolName);
+  const primaryMetric = determinePrimaryQuotaMetric(toolName);
+  if (!primaryMetric) return { allowed: true };
 
-  if (specificMetric) {
-    const { data: specificRes, error: specErr } = await admin.rpc('consume_daily_resource_quota', {
-      p_tenant_id: tenantId,
-      p_user_id: userId,
-      p_resource: specificMetric,
-      p_amount: 1,
-    });
+  const amount = isBulkMeteredTool(toolName)
+    ? Math.max(1, getBulkProjectedAmount(toolName, toolArgs))
+    : 1;
 
-    if (!specErr && specificRes && specificRes.allowed === false) {
-      return {
-        allowed: false,
-        reason: `Daily quota reached for '${specificMetric}' on your current plan (${specificRes.currentUsage}/${specificRes.limit}). Please upgrade your plan for higher daily limits.`,
-      };
-    }
-  }
-
-  const { data: mcpRes, error: mcpErr } = await admin.rpc('consume_daily_resource_quota', {
+  const { data, error } = await admin.rpc('check_daily_resource_quota', {
     p_tenant_id: tenantId,
     p_user_id: userId,
-    p_resource: 'mcp_executions',
-    p_amount: 1,
+    p_resource: primaryMetric,
+    p_amount: amount,
   });
 
-  if (!mcpErr && mcpRes && mcpRes.allowed === false) {
-    if (specificMetric) {
-      await admin.rpc('release_daily_resource_quota', {
-        p_tenant_id: tenantId,
-        p_user_id: userId,
-        p_resource: specificMetric,
-        p_amount: 1,
-      });
-    }
+  if (error) {
+    console.error('[MCP] quota validation RPC error:', error);
+    return { allowed: false, reason: 'Unable to verify usage allowance' };
+  }
+
+  if (data && data.allowed === false) {
     return {
       allowed: false,
-      reason: `Daily quota reached for 'mcp_executions' on your current plan (${mcpRes.currentUsage}/${mcpRes.limit}). Please upgrade your plan for higher daily limits.`,
+      reason: data.message || `Daily quota would be exceeded for '${primaryMetric}' (${data.currentUsage}/${data.limit}).`,
     };
   }
 
@@ -646,11 +638,12 @@ export async function POST(req: NextRequest) {
     initializeRegistry();
 
     if (!hasTool(String(toolName || ''))) {
-      const quotaCheck = await checkAndConsumeMcpQuota(
+      const quotaCheck = await validateMcpQuota(
         createAdminSupabaseClientOrThrow(),
         tenantId,
         userId,
         String(toolName || ''),
+        toolArgs as Record<string, unknown>,
       );
       if (!quotaCheck.allowed) {
         return NextResponse.json({

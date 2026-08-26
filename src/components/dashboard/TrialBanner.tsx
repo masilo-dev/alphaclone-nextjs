@@ -54,7 +54,7 @@ export const TrialBanner: React.FC = () => {
             ? `Trial ending ${daysLeft === 1 ? 'tomorrow' : `in ${daysLeft} days`} (${formattedEndDate}) — add billing when ready`
             : daysLeft <= 7
                 ? `${daysLeft} days left in your free trial (ends ${formattedEndDate}) — no card required yet`
-                : `${TRIAL_LIMITS.TRIAL_DAYS}-day free trial active · ${daysLeft} days left · no card required`;
+                : `${TRIAL_LIMITS.TRIAL_DAYS}-day Premium trial active · ${daysLeft} days left · full access · no daily limits`;
 
     return (
         <div className={`border-b px-4 py-2.5 flex items-center justify-between backdrop-blur-md sticky top-0 z-[40] transition-colors duration-500 ${getBannerStyles()}`}>

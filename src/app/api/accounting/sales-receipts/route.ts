@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const itemSchema = z.object({
   description: z.string().trim().min(1).max(1000),
@@ -26,7 +26,6 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  let reservation: { tenantId: string; userId: string } | null = null;
   try {
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
@@ -47,8 +46,7 @@ export async function POST(req: NextRequest) {
     const total = Math.round((taxable + tax) * 100) / 100;
     if (total <= 0) return NextResponse.json({ error: 'Receipt total must be greater than zero' }, { status: 400 });
 
-    await consumeDailyResourceQuota(value.tenantId, user.id, 'receipts');
-    reservation = { tenantId: value.tenantId, userId: user.id };
+    await validateDailyResourceQuota(value.tenantId, user.id, 'receipts');
     const admin = createSupabaseAdminClient();
     const { data: rows, error } = await admin.rpc('create_posted_sales_receipt', {
       p_tenant_id: value.tenantId,
@@ -70,18 +68,15 @@ export async function POST(req: NextRequest) {
     });
     if (error) {
       if (error.code === '23505') {
-        await releaseDailyResourceQuota(value.tenantId, user.id, 'receipts');
-        reservation = null;
         return NextResponse.json({ error: 'This receipt number already exists' }, { status: 409 });
       }
       throw error;
     }
     const receipt = Array.isArray(rows) ? rows[0] : rows;
     if (!receipt) throw new Error('Sales receipt was not created');
-    reservation = null;
+    await recordDailyResourceQuota(value.tenantId, user.id, 'receipts', 1, `sales-receipt:${receipt.id}`);
     return NextResponse.json({ receipt, items }, { status: 201 });
   } catch (error) {
-    if (reservation) await releaseDailyResourceQuota(reservation.tenantId, reservation.userId, 'receipts');
     return routeErrorResponse(error, 'Sales receipt could not be finalized', req);
   }
 }

@@ -55,7 +55,7 @@ import { sendEmailServer } from '../../lib/email/sendEmailServer';
 import { isEmailSuppressed } from '../../lib/email/suppression';
 import { insertBeforeEmailFooter } from '../../lib/email/emailComposition';
 import { parseFlexibleDueDate } from '../../lib/dates/parseFlexibleDueDate';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '../../lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota } from '../../lib/server/dailyResourceQuota';
 import {
   cancelRun,
   executeRun,
@@ -6395,8 +6395,36 @@ class AlphaCloneMCPServer {
         case 'bulk_create_leads': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = this.ctx?.userId || (a.user_id && typeof a.user_id === 'string' ? a.user_id.trim() : null);
+          if (!user_id) throw new Error('Authenticated user required');
           const leads = Array.isArray(a.leads) ? a.leads : [];
           if (leads.length === 0) throw new Error('leads array is required');
+
+          const idempotencyKey = String(a.idempotency_key || '').trim();
+          if (idempotencyKey) {
+            const { findReceiptByIdempotency } = await import('@/lib/mcp/actionReceipts');
+            const existing = await findReceiptByIdempotency({
+              tenantId: tenant_id,
+              tool: 'bulk_create_leads',
+              idempotencyKey,
+            });
+            if (existing?.sanitized_output) {
+              result = {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify(existing.sanitized_output, null, 2),
+                }],
+              };
+              break;
+            }
+          }
+
+          const { validateProjectedUsage, recordSuccessfulUsage } = await import('@/lib/entitlements/meteringService');
+          const projected = await validateProjectedUsage(tenant_id, user_id, 'leads', leads.length);
+          if (!projected.allowed) {
+            throw new Error(projected.reason || 'Daily lead limit would be exceeded');
+          }
+
           const succeeded: any[] = [];
           const failed: any[] = [];
           for (const l of leads) {
@@ -6423,17 +6451,52 @@ class AlphaCloneMCPServer {
               failed.push({ lead: l.business_name, error: err.message || 'Create failed' });
             }
           }
+
+          if (succeeded.length > 0) {
+            await recordSuccessfulUsage({
+              tenantId: tenant_id,
+              userId: user_id,
+              resource: 'leads',
+              amount: succeeded.length,
+              operationId: idempotencyKey ? `bulk_create_leads:${idempotencyKey}` : undefined,
+              initiationSource: 'mcp_bulk_create_leads',
+              metadata: { requested: leads.length, failed: failed.length },
+            });
+          }
+
+          const payload = {
+            tenant_id,
+            total: leads.length,
+            succeeded_count: succeeded.length,
+            failed_count: failed.length,
+            succeeded,
+            failed,
+          };
+
+          if (idempotencyKey) {
+            const { persistActionReceipt } = await import('@/lib/mcp/actionReceipts');
+            await persistActionReceipt({
+              tenantId: tenant_id,
+              userId: user_id,
+              tool: 'bulk_create_leads',
+              idempotencyKey,
+              receipt: {
+                action_id: idempotencyKey,
+                status: failed.length === 0 ? 'completed' : 'partial',
+                entity_type: 'lead',
+                entity_id: succeeded[0]?.id,
+                timestamp: new Date().toISOString(),
+              },
+              success: succeeded.length > 0,
+              sanitizedInput: { lead_count: leads.length },
+              sanitizedOutput: payload,
+            });
+          }
+
           result = {
             content: [{
               type: 'text',
-              text: JSON.stringify({
-                tenant_id,
-                total: leads.length,
-                succeeded_count: succeeded.length,
-                failed_count: failed.length,
-                succeeded,
-                failed,
-              }, null, 2),
+              text: JSON.stringify(payload, null, 2),
             }],
           };
           break;
@@ -7780,14 +7843,8 @@ Return ONLY a JSON array of 60 objects:
           if (invoiceError) throw invoiceError;
           if (!invoice) throw new Error('Invoice not found');
           if (invoice.status !== 'draft') throw new Error(`Only draft invoices can be sent. This invoice is ${invoice.status}.`);
-          await consumeDailyResourceQuota(tenant_id, user_id, 'invoices');
-          let runId: string;
-          try {
-            ({ runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id, actorUserId: user_id }]));
-          } catch (workflowError) {
-            await releaseDailyResourceQuota(tenant_id, user_id, 'invoices');
-            throw workflowError;
-          }
+          await validateDailyResourceQuota(tenant_id, user_id, 'invoices');
+          const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id, actorUserId: user_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
           break;
         }

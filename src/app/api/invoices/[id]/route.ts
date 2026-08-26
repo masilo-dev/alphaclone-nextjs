@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 
 const invoiceRouteSchema = z.object({
@@ -35,7 +35,6 @@ const UpdateInvoiceSchema = z.object({
 });
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-    let quotaReservation: { tenantId: string; userId: string } | null = null;
     try {
         const { id } = await context.params;
         const body = await req.json();
@@ -79,8 +78,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
             );
         }
         if (existing.status === 'draft' && updatePayload.status && updatePayload.status !== 'draft') {
-            await consumeDailyResourceQuota(tenantId, user.id, 'invoices');
-            quotaReservation = { tenantId, userId: user.id };
+            await validateDailyResourceQuota(tenantId, user.id, 'invoices');
         }
 
         // 3. Handle paid_at and delivery_status when status changes to 'paid'
@@ -110,7 +108,9 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
         if (updateError) throw updateError;
         const updated = Array.isArray(rows) ? rows[0] : rows;
-        quotaReservation = null;
+        if (existing.status === 'draft' && updatePayload.status && updatePayload.status !== 'draft') {
+            await recordDailyResourceQuota(tenantId, user.id, 'invoices', 1, `invoice-send:${id}`);
+        }
 
         // Audit log — invoice_audit_log for invoice-specific events
         if (updatePayload.status && existing.status !== updatePayload.status) {
@@ -133,7 +133,6 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 
         return NextResponse.json({ success: true, data: updated });
     } catch (error) {
-        if (quotaReservation) await releaseDailyResourceQuota(quotaReservation.tenantId, quotaReservation.userId, 'invoices');
         return routeErrorResponse(error, 'Failed to update invoice', req);
     }
 }

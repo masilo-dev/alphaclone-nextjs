@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const schema = z.object({
   tenantId: z.string().uuid(), receiptDate: z.string().date(), description: z.string().trim().min(1).max(10_000),
@@ -29,14 +29,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  let reservation: { tenantId: string; userId: string } | null = null;
   try {
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid receipt details', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const value = parsed.data;
     const { user } = await requireTenantAccess(value.tenantId, req);
-    await consumeDailyResourceQuota(value.tenantId, user.id, 'receipts');
-    reservation = { tenantId: value.tenantId, userId: user.id };
+    await validateDailyResourceQuota(value.tenantId, user.id, 'receipts');
     const admin = createSupabaseAdminClient();
     const { data, error } = await admin.from('business_receipts').insert({
       tenant_id: value.tenantId, receipt_date: value.receiptDate, description: value.description, amount: value.amount,
@@ -45,12 +43,11 @@ export async function POST(req: NextRequest) {
       raw_ai_data: { ...value.rawAiData, createdBy: user.id }, paid_at: null,
     }).select('*').single();
     if (error) throw error;
-    reservation = null;
+    await recordDailyResourceQuota(value.tenantId, user.id, 'receipts', 1, `receipt:${data.id}`);
     const { error: eventError } = await admin.from('business_automation_events').insert({ tenant_id: value.tenantId, event_type: 'receipt_created', payload: { receiptId: data.id, amount: data.amount, actorUserId: user.id } });
     if (eventError) console.error('[receipts] event failed', eventError);
     return NextResponse.json({ receipt: data }, { status: 201 });
   } catch (error) {
-    if (reservation) await releaseDailyResourceQuota(reservation.tenantId, reservation.userId, 'receipts');
     return routeErrorResponse(error, 'Receipt could not be created', req);
   }
 }

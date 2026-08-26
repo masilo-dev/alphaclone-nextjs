@@ -33,6 +33,13 @@ const HEALTH_TOOLS = new Set([
   'get_system_health',
 ]);
 
+const BULK_METERED_TOOLS = new Set([
+  'bulk_create_leads',
+  'bulk_update_leads',
+  'bulk_import_contacts',
+  'bulk_send_outreach',
+]);
+
 export function normalizeToolNameForQuota(toolName: string): string {
   return String(toolName || '')
     .trim()
@@ -78,12 +85,35 @@ export function isReadOnlyMcpTool(toolName: string): boolean {
   return false;
 }
 
+export function isBulkMeteredTool(toolName: string): boolean {
+  const normalized = normalizeToolNameForQuota(toolName);
+  return BULK_METERED_TOOLS.has(normalized) || normalized.startsWith('bulk_');
+}
+
+export function getBulkProjectedAmount(toolName: string, args: Record<string, unknown>): number {
+  const normalized = normalizeToolNameForQuota(toolName);
+  if (normalized === 'bulk_create_leads') {
+    return Array.isArray(args.leads) ? args.leads.length : 0;
+  }
+  if (normalized === 'bulk_update_leads') {
+    return Array.isArray(args.lead_ids) ? args.lead_ids.length : 0;
+  }
+  if (normalized === 'bulk_import_contacts') {
+    return Array.isArray(args.contacts) ? args.contacts.length : 0;
+  }
+  if (normalized === 'bulk_send_outreach') {
+    return Array.isArray(args.recipient_ids) ? args.recipient_ids.length : 0;
+  }
+  return 0;
+}
+
 export function shouldPreChargeMcpExecution(toolName: string): boolean {
   if (isReadOnlyMcpTool(toolName)) return false;
   return true;
 }
 
-export function determinePreExecutionQuotaMetric(toolName: string): QuotaResourceType | null {
+/** Primary billable resource for a tool — avoids double-charging mcp_executions + category. */
+export function determinePrimaryQuotaMetric(toolName: string): QuotaResourceType | null {
   const normalized = normalizeToolNameForQuota(toolName);
   if (isReadOnlyMcpTool(normalized) || isEmailSendTool(normalized)) return null;
   if (/^create_leads?$|^import_leads|^bulk.*lead/.test(normalized)) return 'leads';
@@ -94,17 +124,37 @@ export function determinePreExecutionQuotaMetric(toolName: string): QuotaResourc
   if (normalized.includes('contract') || normalized.includes('proposal')) return 'contracts';
   if (normalized.includes('invoice') || normalized.includes('quote')) return 'invoices';
   if (normalized.includes('receipt')) return 'receipts';
-  if (/^create_contact|^update_contact|^update_lead|^create_client|^update_client|^create_deal|^update_deal/.test(normalized)) {
-    return 'mcp_executions';
-  }
   if (normalized.includes('outreach') || normalized.startsWith('contact_')) return 'outreach_actions';
-  if (/^run_|^execute_|^trigger_|workflow|automation|orchestrat/.test(normalized)) return 'mcp_executions';
-  if (/^create_|^update_|^delete_|^send_|^publish_|^schedule_|^import_|^generate_/.test(normalized)) {
+  if (/^create_|^update_|^delete_|^send_|^publish_|^schedule_|^import_|^generate_|^run_|^execute_|^trigger_/.test(normalized)) {
     return 'mcp_executions';
   }
   return null;
 }
 
+/** @deprecated Use determinePrimaryQuotaMetric — kept for compatibility. */
+export function determinePreExecutionQuotaMetric(toolName: string): QuotaResourceType | null {
+  return determinePrimaryQuotaMetric(toolName);
+}
+
+export function shouldChargeMcpExecution(toolName: string): boolean {
+  return determinePrimaryQuotaMetric(toolName) === 'mcp_executions';
+}
+
 export function shouldChargeEmailOnSuccessOnly(toolName: string): boolean {
   return isEmailSendTool(toolName);
+}
+
+export function parseBulkSucceededCount(toolName: string, resultText?: string): number {
+  if (!resultText) return 0;
+  try {
+    const parsed = JSON.parse(resultText) as Record<string, unknown>;
+    if (typeof parsed.succeeded_count === 'number') return Math.max(0, parsed.succeeded_count);
+    if (typeof parsed.created === 'number') return Math.max(0, parsed.created);
+    if (typeof parsed.updated_count === 'number') return Math.max(0, parsed.updated_count);
+    if (typeof parsed.sent === 'number') return Math.max(0, parsed.sent);
+    if (Array.isArray(parsed.succeeded)) return parsed.succeeded.length;
+  } catch {
+    return 0;
+  }
+  return 0;
 }

@@ -95,17 +95,18 @@ async function executeChunkedOutreach(
   };
 }
 
-import { quotaService, type QuotaResourceType } from '@/services/quotaService';
+import type { QuotaResourceType } from '@/services/quotaService';
 import {
-  determinePreExecutionQuotaMetric,
+  determinePrimaryQuotaMetric,
+  getBulkProjectedAmount,
+  isBulkMeteredTool,
+  parseBulkSucceededCount,
   shouldPreChargeMcpExecution,
-  isEmailReadTool,
-  isHealthCheckTool,
 } from '@/lib/mcp/toolQuotaPolicy';
-
-function determineSpecificMetric(toolName: string): QuotaResourceType | null {
-  return determinePreExecutionQuotaMetric(toolName);
-}
+import {
+  recordSuccessfulUsage,
+  validateProjectedUsage,
+} from '@/lib/entitlements/meteringService';
 
 export async function executeTool(
   tenantId: string,
@@ -120,25 +121,34 @@ export async function executeTool(
   let resolvedToolName = requestedTool;
   let executionResult: MCPToolExecutionResult | undefined;
 
-  let mcpQuotaConsumed = false;
-  let specificQuotaConsumed: QuotaResourceType | null = null;
+  const primaryMetric = determinePrimaryQuotaMetric(requestedTool);
+  const bulkProjected = isBulkMeteredTool(requestedTool)
+    ? getBulkProjectedAmount(requestedTool, args)
+    : 0;
+  const validateAmount = bulkProjected > 0 ? bulkProjected : 1;
+  const idempotencyKey =
+    typeof args.idempotency_key === 'string' ? args.idempotency_key.trim() : undefined;
 
   try {
-    if (shouldPreChargeMcpExecution(requestedTool)) {
-      const mcpQuota = await quotaService.consumeQuotaAtomically(tenantId, userId, 'mcp_executions');
-      if (!mcpQuota.allowed) {
-        errorMessage = mcpQuota.message;
+    if (shouldPreChargeMcpExecution(requestedTool) && primaryMetric) {
+      const projected = await validateProjectedUsage(
+        tenantId,
+        userId,
+        primaryMetric,
+        isBulkMeteredTool(requestedTool) ? validateAmount : 1,
+      );
+      if (!projected.allowed) {
+        errorMessage = projected.reason || 'Daily quota would be exceeded';
         return {
           content: [
             {
               type: 'text',
               text: JSON.stringify({
                 error: 'QUOTA_EXCEEDED',
-                metric: 'mcp_executions',
-                message: mcpQuota.message,
-                limit: mcpQuota.limit,
-                currentUsage: mcpQuota.currentUsage,
-                plan: mcpQuota.plan,
+                metric: primaryMetric,
+                message: errorMessage,
+                limit: projected.limit,
+                currentUsage: projected.currentUsage,
                 upgradeUrl: '/pricing',
               }, null, 2),
             },
@@ -146,37 +156,6 @@ export async function executeTool(
           isError: true,
         };
       }
-      mcpQuotaConsumed = true;
-    }
-
-    // Enforce specific resource quota if tool targets a limited resource (never email reads/sends here)
-    const specificMetric = determineSpecificMetric(requestedTool);
-    if (specificMetric) {
-      const specificQuota = await quotaService.consumeQuotaAtomically(tenantId, userId, specificMetric);
-      if (!specificQuota.allowed) {
-        if (mcpQuotaConsumed) {
-          await quotaService.releaseQuotaAtomically(tenantId, userId, 'mcp_executions');
-        }
-        errorMessage = specificQuota.message;
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                error: 'QUOTA_EXCEEDED',
-                metric: specificMetric,
-                message: specificQuota.message,
-                limit: specificQuota.limit,
-                currentUsage: specificQuota.currentUsage,
-                plan: specificQuota.plan,
-                upgradeUrl: '/pricing',
-              }, null, 2),
-            },
-          ],
-          isError: true,
-        };
-      }
-      specificQuotaConsumed = specificMetric;
     }
 
     const chunkConfig = shouldChunkOutreach(requestedTool);
@@ -221,6 +200,24 @@ export async function executeTool(
     success = !result.isError;
     if (result.isError) {
       errorMessage = result.content?.[0]?.text;
+    } else if (primaryMetric && shouldPreChargeMcpExecution(requestedTool)) {
+      const resultText = result.content?.[0]?.text;
+      const succeededCount = isBulkMeteredTool(requestedTool)
+        ? parseBulkSucceededCount(requestedTool, resultText)
+        : 1;
+      if (succeededCount > 0) {
+        await recordSuccessfulUsage({
+          tenantId,
+          userId,
+          resource: primaryMetric,
+          amount: succeededCount,
+          operationId: idempotencyKey
+            ? `${requestedTool}:${idempotencyKey}`
+            : undefined,
+          initiationSource: 'mcp_registry',
+          metadata: { tool: requestedTool, succeededCount },
+        });
+      }
     }
     executionResult = result;
     return result;
@@ -245,15 +242,6 @@ export async function executeTool(
       isError: true,
     };
   } finally {
-    if (!success) {
-      if (mcpQuotaConsumed) {
-        await quotaService.releaseQuotaAtomically(tenantId, userId, 'mcp_executions');
-      }
-      if (specificQuotaConsumed) {
-        await quotaService.releaseQuotaAtomically(tenantId, userId, specificQuotaConsumed);
-      }
-    }
-
     const durationMs = Date.now() - startTime;
     await logMcpToolExecution({
       tenantId,

@@ -1,19 +1,13 @@
 'use client';
 
 import DOMPurify from 'dompurify';
+import { escapeHtml } from '@/lib/email/escapeHtml';
 import { rewriteExternalEmailImageSources } from '@/lib/email/proxyImageUrl';
+
+export { escapeHtml } from '@/lib/email/escapeHtml';
 
 const CID_IMAGE_PLACEHOLDER =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-
-export function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 function normalizeTextHtml(value: string) {
   return escapeHtml(value).replace(/\r?\n/g, '<br />');

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const CreateContractSchema = z.object({
   title: z.string().trim().min(1).max(300),
@@ -20,7 +20,6 @@ const CreateContractSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  let quotaReservation: { tenantId: string; userId: string } | null = null;
   try {
     const body = await req.json();
     const parsed = CreateContractSchema.safeParse(body);
@@ -56,8 +55,7 @@ export async function POST(req: NextRequest) {
       if (projectError) throw projectError;
       if (!project) return NextResponse.json({ error: 'Invalid project_id for this tenant' }, { status: 422 });
     }
-    await consumeDailyResourceQuota(tenantId, user.id, 'contracts');
-    quotaReservation = { tenantId, userId: user.id };
+    await validateDailyResourceQuota(tenantId, user.id, 'contracts');
 
     // 2. Create the canonical shared document first. Contract Manager owns
     // lifecycle metadata; Documents owns the content/version surface.
@@ -143,7 +141,7 @@ export async function POST(req: NextRequest) {
       await admin.from('contracts').delete().eq('id', contract.id).eq('tenant_id', tenantId);
       throw approvalError;
     }
-    quotaReservation = null;
+    await recordDailyResourceQuota(tenantId, user.id, 'contracts', 1, `contract:${contract.id}`);
 
     // 5. Audit Log
     const { error: auditError } = await admin.from('audit_logs').insert({
@@ -159,7 +157,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data: contract }, { status: 201 });
   } catch (error) {
-    if (quotaReservation) await releaseDailyResourceQuota(quotaReservation.tenantId, quotaReservation.userId, 'contracts');
     return routeErrorResponse(error, 'Failed to create contract', req);
   }
 }

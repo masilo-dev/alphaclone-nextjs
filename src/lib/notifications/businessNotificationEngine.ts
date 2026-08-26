@@ -2,7 +2,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { sendUniversalEmail, mapEventTypeToTemplateKey } from '@/lib/email/universalEmailEngine';
 import { buildValidatedPublicUrl } from '@/lib/urls';
-import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
+import { escapeHtml } from '@/lib/email/escapeHtml';
 import { recordBusinessActivity, type BusinessActivityParams } from '@/lib/audit/businessAuditEngine';
 import { mapEventTypeToNotificationType } from './notificationType';
 
