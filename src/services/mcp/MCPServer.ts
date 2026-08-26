@@ -5811,7 +5811,7 @@ class AlphaCloneMCPServer {
               attachments.push({
                 filename: att.filename,
                 content: att.content,
-                contentType: String(att.content_type || att.contentType || 'application/octet-stream'),
+                contentType: String(att.contentType || 'application/octet-stream'),
               });
             }
           }
