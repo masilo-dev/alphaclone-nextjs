@@ -900,7 +900,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
               provider: provider.id,
               provider_from: fromEmail,
               language: campaignLanguage,
-              tried: sendResult.tried,
+              tried: sendResult.errorDetails,
             },
           })
           .eq("id", recipient.id);
