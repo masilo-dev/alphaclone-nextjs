@@ -53,7 +53,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     id: 'appearance',
     label: 'Appearance',
     description: 'Light, dark, and interface density',
-    sectionIds: ['appearance'],
+    sectionIds: ['appearance', 'mobile_app'],
     icon: Palette,
   },
   {
@@ -74,7 +74,7 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
     id: 'communications',
     label: 'Communications',
     description: 'Email accounts, templates, notifications',
-    sectionIds: ['email_provider'],
+    sectionIds: ['email_provider', 'notifications'],
     icon: Mail,
   },
   {

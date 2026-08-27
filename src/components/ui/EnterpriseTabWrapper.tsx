@@ -37,6 +37,8 @@ export function EnterpriseTabWrapper({
 export const ENTERPRISE_FULL_BLEED_TABS = new Set([
   '/dashboard/mail',
   '/dashboard/business/projects',
+  '/dashboard/business/projects/manage',
+  '/dashboard/projects/manage',
   '/dashboard/tasks',
   '/dashboard/sales-agent',
   '/dashboard/leads/campaigns',

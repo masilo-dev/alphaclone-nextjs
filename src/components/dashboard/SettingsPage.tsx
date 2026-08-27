@@ -7,6 +7,7 @@ import {
     User as UserIcon, Globe, Building,
     ChevronRight, DollarSign, Briefcase,
     Eye, Copy, Upload, BookOpen, Archive,
+    Users, LayoutGrid, Bot, Smartphone, Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '@/contexts/TenantContext';
@@ -472,7 +473,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
 
                     {/* Row 2: Security & password */}
-                    <div>
+                    <div id="settings-section-security">
                         <div 
                             onClick={() => toggleRow('security')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
@@ -505,7 +506,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
 
                     {/* Row 3: MFA / 2FA toggle */}
-                    <div>
+                    <div id="settings-section-mfa">
                         <div
                             onClick={() => toggleRow('mfa')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
@@ -547,7 +548,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Row 1: Brand Info */}
-                    <div>
+                    <div id="settings-section-business_profile">
                         <div 
                             onClick={() => toggleRow('business_profile')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
@@ -717,13 +718,90 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 </div>
             </div>
 
+            {/* 2b. TEAM, MODULES & AI */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">People, modules & AI</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                    <div id="settings-section-team">
+                        <Link
+                            href="/dashboard/business/team"
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all group"
+                        >
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                                    <Users className="w-4 h-4 text-violet-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <span className="text-[13px] font-bold text-slate-200 block">Team and access</span>
+                                    <span className="text-[10px] text-slate-500">Invite members, assign roles, and manage workspace ownership</span>
+                                </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
+                        </Link>
+                    </div>
+
+                    <div id="settings-section-modules">
+                        <Link
+                            href="/dashboard/marketplace"
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all group"
+                        >
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                                    <LayoutGrid className="w-4 h-4 text-blue-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <span className="text-[13px] font-bold text-slate-200 block">Modules and integrations</span>
+                                    <span className="text-[10px] text-slate-500">Enable connectors, automations, and workspace modules from the marketplace</span>
+                                </div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
+                        </Link>
+                    </div>
+
+                    <div id="settings-section-bonnie">
+                        <div className="divide-y divide-white/5">
+                            <Link
+                                href="/dashboard/business/bonnie"
+                                className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all group"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center shrink-0">
+                                        <Bot className="w-4 h-4 text-teal-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <span className="text-[13px] font-bold text-slate-200 block">Bonnie AI workspace</span>
+                                        <span className="text-[10px] text-slate-500">Open Bonnie to review approvals, drafts, and assistant permissions</span>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
+                            </Link>
+                            <Link
+                                href="/dashboard/business/quotas"
+                                className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all group"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                                        <Sparkles className="w-4 h-4 text-amber-400" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <span className="text-[13px] font-bold text-slate-200 block">AI usage and quotas</span>
+                                        <span className="text-[10px] text-slate-500">Live usage limits, plan headroom, and daily AI budget</span>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-teal-400 transition-colors shrink-0" />
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* 3. INTEGRATIONS GROUP */}
             <div className="space-y-3">
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">System Integrations</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Email delivery provider (transactional) */}
-                    <div>
+                    <div id="settings-section-email_provider">
                         <div
                             onClick={() => toggleRow('email_provider')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
@@ -739,7 +817,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
 
                     {/* Zoho */}
-                    <div>
+                    <div id="settings-section-integ_zoho">
                         <div 
                             onClick={() => toggleRow('integ_zoho')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
@@ -826,7 +904,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             </div>
 
             {/* 4. NOTIFICATIONS GROUP */}
-            <div className="space-y-3">
+            <div id="settings-section-notifications" className="space-y-3 scroll-mt-4">
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Notification alerts</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     {[
@@ -933,11 +1011,29 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         </div>
                     </div>
 
+                    <div id="settings-section-mobile_app" className="pt-4 border-t border-[var(--ws-border)]">
+                        <Link
+                            href="/dashboard/pwa-settings"
+                            className="flex items-center justify-between gap-4 p-3 rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] hover:border-[var(--brand-blue-500)] transition-colors group"
+                        >
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-[12px] bg-teal-500/10 flex items-center justify-center shrink-0">
+                                    <Smartphone className="w-5 h-5 text-teal-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-[var(--ws-text-primary)]">Mobile app &amp; PWA</p>
+                                    <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">Push alerts, bottom navigation, and install preferences for phone/tablet.</p>
+                                </div>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-[var(--brand-blue-500)] group-hover:translate-x-0.5 transition-transform shrink-0" />
+                        </Link>
+                    </div>
+
                 </div>
             </div>
 
             {/* 6. BILLING GROUP */}
-            <div className="space-y-3">
+            <div id="settings-section-billing" className="space-y-3 scroll-mt-4">
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Plans & billing</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     

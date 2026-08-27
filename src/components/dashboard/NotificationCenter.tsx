@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Bell, X, Check, Trash2, ExternalLink,
     MessageCircle, FolderOpen, CreditCard, Settings, AlertTriangle, BellOff, Smartphone
@@ -169,25 +170,24 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                 </AnimatePresence>
             </button>
 
-            {/* Backdrop */}
+            {/* Backdrop + panel portaled so dashboard overflow-hidden does not clip the dropdown */}
             <AnimatePresence>
-                {isOpen && (
+                {isOpen && typeof document !== 'undefined' && createPortal(
                     <>
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-[1px]"
+                            className="fixed inset-0 z-[1190] bg-slate-950/30 backdrop-blur-[2px]"
                             onClick={() => setIsOpen(false)}
                         />
 
-                        {/* Panel */}
                         <motion.div
                             initial={{ opacity: 0, y: -8, scale: 0.97 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                            className="absolute right-0 mt-2 w-[22rem] sm:w-96 max-h-[75vh] sm:max-h-[600px] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-50 flex flex-col overflow-hidden"
+                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-[1200] flex flex-col overflow-hidden"
                         >
                             {/* Header */}
                             <div className="p-4 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-950">
@@ -356,7 +356,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                 </div>
                             )}
                         </motion.div>
-                    </>
+                    </>,
+                    document.body,
                 )}
             </AnimatePresence>
         </div>

@@ -566,6 +566,13 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     });
   };
 
+  const openSingleSelectedDeal = useCallback(() => {
+    const [id] = [...selectedDealIds];
+    if (!id) return;
+    const deal = deals.find((d) => d.id === id);
+    if (deal) setSelectedDeal(deal);
+  }, [deals, selectedDealIds]);
+
   const handleBulkDeleteDeals = async () => {
     const ids = [...selectedDealIds];
     if (!ids.length) return;
@@ -877,6 +884,15 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       e.dataTransfer.setData('text/plain', deal.id);
                     }}
                     onClick={() => setSelectedDeal(deal)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedDeal(deal);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open deal: ${deal.name}`}
                     className={`bg-slate-950 border hover:border-slate-800 border-l-4 ${probabilityAccent(deal.probability)} p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98] ${
                       selectedDealIds.has(deal.id) ? 'border-[var(--brand-blue-500)]/40' : 'border-white/5'
                     }`}
@@ -888,7 +904,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                         toggleDealSelection(deal.id);
                       }}
                       className="absolute top-3 right-3 z-10 text-slate-500 hover:text-[var(--brand-blue-400)]"
-                      aria-label={`Select ${deal.name}`}
+                      aria-label={`Select ${deal.name} for bulk actions`}
+                      title="Select for bulk actions"
                     >
                       {selectedDealIds.has(deal.id)
                         ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" />
@@ -1052,6 +1069,15 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   <tr
                     key={deal.id}
                     onClick={() => setSelectedDeal(deal)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedDeal(deal);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Open deal: ${deal.name}`}
                     className={`hover:bg-white/5 transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-[var(--brand-blue-500)]/5' : ''}`}
                   >
                     <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
@@ -1059,7 +1085,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                         type="button"
                         onClick={() => toggleDealSelection(deal.id)}
                         className="text-slate-500 hover:text-[var(--brand-blue-400)] transition-colors"
-                        aria-label={`Select ${deal.name}`}
+                        aria-label={`Select ${deal.name} for bulk actions`}
+                        title="Select for bulk actions"
                       >
                         {selectedDealIds.has(deal.id)
                           ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
@@ -1197,7 +1224,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               <> • Avg progress <span className="text-[var(--brand-blue-500)] font-semibold tabular-nums">{pipelineHealth}%</span></>
             )}
           </p>
-          <p className="text-[11px] text-[var(--ws-text-disabled)] mt-1 max-w-md leading-relaxed">{PIPELINE_FORWARD_ONLY_HINT}</p>
+          <p className="text-[11px] text-[var(--ws-text-disabled)] mt-1 max-w-md leading-relaxed">
+            {PIPELINE_FORWARD_ONLY_HINT} Click any deal card to open full details.
+          </p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
@@ -1210,6 +1239,15 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               >
                 Clear
               </button>
+              {selectedDealIds.size === 1 && (
+                <button
+                  type="button"
+                  onClick={openSingleSelectedDeal}
+                  className="h-7 px-3 rounded-full text-[11px] font-bold text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 transition-colors hover:text-[var(--brand-blue-200)]"
+                >
+                  Open deal
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleBulkEmailDeals}

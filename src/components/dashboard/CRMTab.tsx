@@ -15,7 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { dailyService } from '../../services/dailyService';
 import { churnPropensityService, ChurnRiskReport } from '@/services/intelligence/churnPropensityService';
 import { customer360Service, Customer360Profile } from '@/services/intelligence/customer360Service';
@@ -1466,6 +1466,7 @@ const LeadKanban: React.FC<{
 const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
 
@@ -1533,6 +1534,20 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLeadImportOpen, setIsLeadImportOpen] = useState(false);
   const [isSyncingContacts, setIsSyncingContacts] = useState(false);
+
+  const stripQuickAddParam = useCallback(() => {
+    if (searchParams?.get('quickAdd') !== 'true') return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete('quickAdd');
+    const qs = next.toString();
+    const base = pathname || '/dashboard/crm/workspace';
+    router.replace(qs ? `${base}?${qs}` : base, { scroll: false });
+  }, [pathname, router, searchParams]);
+
+  const closeCreateDrawer = useCallback(() => {
+    setIsCreateOpen(false);
+    stripQuickAddParam();
+  }, [stripQuickAddParam]);
 
   useEffect(() => {
     const checkTeamsConnection = async () => {
@@ -2025,6 +2040,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     }
 
     setIsCreateOpen(false);
+    stripQuickAddParam();
     const saveToast = toast.loading('Saving record...');
     try {
       if (entity.type === 'lead') {
@@ -2583,7 +2599,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       {/* Create entity drawer */}
       <CreateDrawer
         isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={closeCreateDrawer}
         onSave={handleCreateEntity}
       />
 

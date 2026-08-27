@@ -344,6 +344,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 <ProjectModal
                     clients={clients}
                     initialData={editingProject}
+                    tenantId={currentTenant?.id}
                     onClose={() => {
                         setShowAddModal(false);
                         setEditingProject(null);
@@ -648,7 +649,14 @@ const HealthStatCard = ({ label, value, icon: Icon, color, bg, warning }: any) =
     </div>
 );
 
-const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
+const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
+  clients: any[];
+  onClose: () => void;
+  onSave: (data: any) => void;
+  initialData?: BusinessProject | null;
+  tenantId?: string;
+}) => {
+    const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: '', description: '', status: 'backlog', category: 'General',
         startDate: new Date().toISOString().split('T')[0], dueDate: '',
@@ -753,12 +761,40 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                         />
                     </div>
 
+                    {initialData?.id && tenantId ? (
+                        <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
+                            <div>
+                                <p className="text-sm font-semibold text-white">Client portal</p>
+                                <p className="text-xs text-slate-400 mt-1">
+                                    Generate a password-protected link so clients can track milestones and delivery.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShareDialogOpen(true)}
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-200 border border-violet-500/30 text-sm font-semibold transition-all"
+                            >
+                                <Share2 className="w-4 h-4" />
+                                Copy client portal link
+                            </button>
+                        </div>
+                    ) : null}
+
                     <div className="flex gap-4 pt-6">
                         <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold text-sm text-slate-300 transition-all">Cancel</button>
                         <button type="submit" className="flex-1 px-6 py-4 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-[var(--brand-blue-900)]/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
                     </div>
                 </form>
             </div>
+            {initialData?.id && tenantId ? (
+                <ProjectPortalShareDialog
+                    isOpen={shareDialogOpen}
+                    onClose={() => setShareDialogOpen(false)}
+                    projectId={initialData.id}
+                    tenantId={tenantId}
+                    projectName={initialData.name}
+                />
+            ) : null}
         </div>
     );
 };

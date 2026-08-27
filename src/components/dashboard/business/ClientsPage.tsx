@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import Link from 'next/link';
+import { offlineService } from '@/services/offlineService';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService, BusinessClient } from '../../../services/businessClientService';
@@ -106,6 +107,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [hasMore, setHasMore] = useState(true);
     const [directoryView, setDirectoryView] = useState<ContactDirectoryView>('sales');
 
+    const openContactDetail = useCallback((client: BusinessClient) => {
+        setSelectedClient(client);
+        setViewMode('list');
+    }, []);
+
     const searchParams = useSearchParams();
     const stageParam = searchParams?.get('stage');
     const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
@@ -139,10 +145,46 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
         setNoteSubmitting(true);
         try {
+            const title = newNoteTitle.trim();
+            const description = newNoteDescription.trim();
+
+            if (!offlineService.isOnline() && currentTenant?.id) {
+                await offlineService.init();
+                await offlineService.enqueueMutation(
+                    { tenantId: currentTenant.id, userId: user.id },
+                    'note.create',
+                    {
+                        clientId: selectedClient.id,
+                        title,
+                        description,
+                        createdBy: user.id,
+                    },
+                );
+                setClientTimeline((current: { activities?: Array<Record<string, unknown>> } | null) => ({
+                    ...(current || { activities: [] }),
+                    activities: [
+                        {
+                            id: `offline-${Date.now()}`,
+                            activity_type: 'note',
+                            title,
+                            description,
+                            created_at: new Date().toISOString(),
+                            created_by: user.id,
+                            metadata: { offlineQueued: true },
+                        },
+                        ...(current?.activities || []),
+                    ],
+                }));
+                toast.success('Note saved offline — it will sync when you reconnect.');
+                setNewNoteTitle('');
+                setNewNoteDescription('');
+                return;
+            }
+
             const { activity, error } = await clientActivityService.addClientNote(
                 selectedClient.id,
-                newNoteTitle.trim(),
-                newNoteDescription.trim(),
+                title,
+                description,
                 user.id
             );
 
@@ -888,7 +930,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => { setSelectedClient(client); setViewMode('list'); }}
+                                        onClick={() => openContactDetail(client)}
                                     title={`${client.name}\n${client.industry || ''}\n${client.salesStage}`}
                                     className="flex flex-col items-center gap-1.5 w-full hover:-translate-y-0.5 transition-transform cursor-pointer"
                                 >
@@ -966,6 +1008,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <ClientCard
                                         key={client.id}
                                         client={client}
+                                        onOpen={openContactDetail}
                                         onEdit={(c) => { setEditingClient(c); setShowEditModal(true); }}
                                         onDelete={handleArchiveClient}
                                         onCall={handleCallClient}
@@ -986,7 +1029,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
                 </div>
             ) : (
-                <div className="flex flex-col lg:flex-row gap-4 min-h-0 max-h-[min(92dvh,880px)] lg:max-h-none lg:h-[min(88dvh,900px)] overflow-hidden">
+                <div className="flex flex-col lg:flex-row gap-4 min-h-[min(72dvh,680px)] lg:min-h-0 max-h-[min(92dvh,880px)] lg:max-h-none lg:h-[min(88dvh,900px)] overflow-hidden">
                     {/* Left Pane: Search + List */}
                     <div className={`flex flex-col gap-3 sm:gap-4 min-h-0 h-full ${selectedClient ? 'hidden lg:flex w-full lg:w-1/3 lg:max-w-[350px]' : 'w-full'} overflow-hidden`}>
                         <div className="flex flex-col gap-4 shrink-0">
@@ -1050,7 +1093,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 <div
                                     key={client.id}
                                     className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-[var(--brand-blue-500)]/10 border-[var(--brand-blue-500)] shadow-sm shadow-[var(--brand-blue-500)]/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
-                                    onClick={() => setSelectedClient(client)}
+                                    onClick={() => openContactDetail(client)}
                                 >
                                     {/* ... checkbox and avatar ... */}
                                     <div className="flex items-center gap-2">
@@ -1103,10 +1146,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
 
                     {/* Right Pane: Details */}
-                    <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col ac-workspace-panel rounded-lg overflow-hidden`}>
+                    <div className={`flex-1 min-h-[min(68dvh,640px)] lg:min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col ac-workspace-panel rounded-lg overflow-hidden`}>
                         {selectedClient ? (
-                            <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden animate-in fade-in duration-300">
-                                <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+                            <div className="flex flex-col flex-1 min-h-0 overflow-hidden animate-in fade-in duration-300">
+                                <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
                                     <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[var(--brand-blue-400)] text-sm font-medium">
                                         <ChevronLeft className="w-5 h-5" /> Back
                                     </button>
@@ -1553,8 +1596,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 };
 
-const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail, showArchived, isSelected, onToggleSelect }: {
+const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail, showArchived, isSelected, onToggleSelect }: {
     client: BusinessClient;
+    onOpen?: (c: BusinessClient) => void;
     onEdit: (c: BusinessClient) => void;
     onDelete: (id: string) => void;
     onCall: (c: BusinessClient) => void;
@@ -1618,15 +1662,30 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
     ];
 
     return (
-        <Card hoverEffect className={`flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all ${isSelected ? 'ring-1 ring-[var(--brand-blue-500)]/50' : ''}`}>
+        <Card
+            hoverEffect
+            className={`flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all ${isSelected ? 'ring-1 ring-[var(--brand-blue-500)]/50' : ''}`}
+            onClick={onOpen ? () => onOpen(client) : undefined}
+            role={onOpen ? 'button' : undefined}
+            tabIndex={onOpen ? 0 : undefined}
+            onKeyDown={onOpen ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onOpen(client);
+                }
+            } : undefined}
+        >
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
                     {onToggleSelect && (
                         <button
                             type="button"
-                            onClick={() => onToggleSelect(client.id)}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                onToggleSelect(client.id);
+                            }}
                             className="flex-shrink-0 text-slate-500 hover:text-[var(--brand-blue-400)]"
-                            aria-label={isSelected ? 'Deselect contact' : 'Select contact'}
+                            aria-label={isSelected ? 'Deselect contact' : 'Select contact for bulk outreach'}
                         >
                             {isSelected ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" /> : <Square className="w-4 h-4" />}
                         </button>
@@ -1644,21 +1703,26 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                     <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => onCall(client)}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onCall(client);
+                        }}
                         className="!p-2 hover:bg-[var(--brand-blue-500)]/10 hover:text-[var(--brand-blue-400)]"
                         icon={<Phone className="w-4 h-4" />}
                     />
-                    <Dropdown
-                        trigger={
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                className="!p-2 hover:bg-slate-700"
-                                icon={<MoreVertical className="w-4 h-4" />}
-                            />
-                        }
-                        items={dropdownItems}
-                    />
+                    <div onClick={(event) => event.stopPropagation()}>
+                        <Dropdown
+                            trigger={
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="!p-2 hover:bg-slate-700"
+                                    icon={<MoreVertical className="w-4 h-4" />}
+                                />
+                            }
+                            items={dropdownItems}
+                        />
+                    </div>
                 </div>
             </div>
 

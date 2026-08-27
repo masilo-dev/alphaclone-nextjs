@@ -146,6 +146,7 @@ import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 import { EnterpriseTabWrapper, isEnterpriseFullBleedTab } from '@/components/ui/EnterpriseTabWrapper';
 import NotificationCenter from '../NotificationCenter';
+import { OfflineQueueIndicator } from '@/components/common/OfflineQueueIndicator';
 import CommandPalette from '../CommandPalette';
 import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
 import ProductTour from '../../onboarding/ProductTour';
@@ -163,8 +164,10 @@ import { DashboardRouteTransition } from '../DashboardRouteTransition';
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/mail',
     '/dashboard/comms',
-    '/dashboard/business/projects',
-    '/dashboard/tasks',
+  '/dashboard/business/projects',
+  '/dashboard/business/projects/manage',
+  '/dashboard/projects/manage',
+  '/dashboard/tasks',
     '/dashboard/sales-agent',
     '/dashboard/leads/campaigns',
     '/dashboard/zoho/mail',
@@ -1184,6 +1187,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 <span>{activeBgTasksCount}</span>
                             </div>
                         )}
+                        <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
                         {activeMeetingCallId && (
                             <button
                                 onClick={() => router.push(`/meet/${activeMeetingCallId}`)}

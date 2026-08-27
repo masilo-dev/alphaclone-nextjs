@@ -184,6 +184,24 @@ class OfflineService {
     return (await this.listMutations(partition)).filter((item) => item.state !== 'failed').length;
   }
 
+  async updateMutation(id: string, patch: Partial<Pick<OfflineMutation, 'state' | 'attempts' | 'lastError' | 'updatedAt'>>): Promise<void> {
+    const db = await this.database();
+    const store = db.transaction(MUTATIONS, 'readwrite').objectStore(MUTATIONS);
+    const existing = await requestResult(store.get(id)) as OfflineMutation | undefined;
+    if (!existing) return;
+    const updated: OfflineMutation = {
+      ...existing,
+      ...patch,
+      updatedAt: patch.updatedAt || new Date().toISOString(),
+    };
+    await requestResult(store.put(updated));
+  }
+
+  async removeMutation(id: string): Promise<void> {
+    const db = await this.database();
+    await requestResult(db.transaction(MUTATIONS, 'readwrite').objectStore(MUTATIONS).delete(id));
+  }
+
   async getQueuedMessagesCount(): Promise<number> {
     // Sending messages while offline is intentionally blocked.
     return 0;

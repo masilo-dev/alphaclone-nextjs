@@ -381,6 +381,7 @@ export function ProjectsDashboard() {
         chartColor={CHART_COLORS.projectHealth.onTrack}
         chartTitle="Tasks completed"
         chartSubtitle="Weekly"
+        valuePrefix=""
       />
     </ModuleOverviewChrome>
   );

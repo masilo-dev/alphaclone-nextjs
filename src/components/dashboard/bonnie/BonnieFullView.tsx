@@ -40,6 +40,7 @@ import BonnieWorkspaceViews, {
   type BonnieWorkspaceView,
 } from './workspace/BonnieWorkspaceViews';
 import { BC } from './bonnieChakra';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 type BonnieFullViewProps = {
   variant?: 'default' | 'popout';
@@ -80,9 +81,10 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [contextOpen, setContextOpen] = useState(true);
+  const isDesktopContext = useMediaQuery('(min-width: 1024px)');
+  const [contextOpen, setContextOpen] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [externalPrompt, setExternalPrompt] = useState<string | null>(null);
   const [goalsChasing, setGoalsChasing] = useState(false);
   const [workspaceView, setWorkspaceView] = useState<BonnieWorkspaceView>('chat');
@@ -312,7 +314,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
       const created = await createConversation('New conversation', activeModule);
       setActiveConversationId(created.id);
       replaceConversationParam(created.id);
-      setShowWelcome(true);
+      setShowWelcome(false);
       setExternalPrompt(null);
     } catch (err: any) {
       toast.error(err?.message || 'Could not start a new chat');
@@ -325,6 +327,26 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
       .catch((err: any) => toast.error(err?.message || 'Goal chase failed'))
       .finally(() => setGoalsChasing(false));
   }, [chaseGoals]);
+
+  const handleSelectGoal = useCallback(
+    (id: string) => {
+      setContextItems((prev) => {
+        if (prev.some((item) => item.id === `goal-${id}`)) return prev;
+        const goal = goals.find((g) => g.id === id);
+        if (!goal) return prev;
+        return [
+          {
+            id: `goal-${id}`,
+            kind: 'goal',
+            label: goal.title,
+            detail: `${goal.status} · ${Math.round(Number(goal.progress_pct) || 0)}%`,
+          },
+          ...prev,
+        ];
+      });
+    },
+    [goals],
+  );
 
   const bonnieDashboardRoute = resolveBonnieDashboardRoute(pathname, user?.role);
 
@@ -384,7 +406,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             if (activeConversationId === id) {
               setActiveConversationId(null);
               replaceConversationParam(null);
-              setShowWelcome(true);
+              setShowWelcome(false);
             }
           })
         }
@@ -555,17 +577,20 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             selectedRunId={selectedRunId}
             onSelectRun={setSelectedRunId}
             chatSlot={
-              showWelcome && !activeConversationId ? (
-                <BonnieWelcome
-                  workspaceName={currentTenant?.name}
-                  suggestions={suggestions}
-                  onSelect={(prompt) => {
-                    setShowWelcome(false);
-                    setExternalPrompt(prompt);
-                  }}
-                />
-              ) : (
-                <Box position="absolute" inset={0} p={{ base: 2, sm: 3 }}>
+              <Box position="absolute" inset={0} p={{ base: 2, sm: 3 }} display="flex" flexDirection="column" minH={0}>
+                {showWelcome && !activeConversationId ? (
+                  <Box flexShrink={0} maxH={{ base: '40%', sm: '45%' }} overflowY="auto" mb={2}>
+                    <BonnieWelcome
+                      workspaceName={currentTenant?.name}
+                      suggestions={suggestions}
+                      onSelect={(prompt) => {
+                        setShowWelcome(false);
+                        setExternalPrompt(prompt);
+                      }}
+                    />
+                  </Box>
+                ) : null}
+                <Box flex={1} minH={0}>
                   <BonnieChatPanel
                     workspaceMode
                     streaming
@@ -583,77 +608,65 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                     userRole={user?.role}
                   />
                 </Box>
-              )
+              </Box>
             }
           />
         </Box>
       </Flex>
 
-      <Flex display={{ base: 'none', lg: contextOpen ? 'flex' : 'none' }} h="full">
-        <BonnieContextPanel
-          open={contextOpen}
-          onClose={() => setContextOpen(false)}
-          items={contextItems}
-          onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
-          pendingApprovals={pendingCount}
-          connectionStatus="connected"
-          goals={goals}
-          goalsLoading={goalsLoading}
-          goalsChasing={goalsChasing}
-          onChaseGoals={runChase}
-          onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
-          onResumeGoal={(id) => void patchGoal(id, { resume: true })}
-          tenantId={tenantId}
-          onSelectGoal={(id) => {
-            setContextItems((prev) => {
-              if (prev.some((item) => item.id === `goal-${id}`)) return prev;
-              const goal = goals.find((g) => g.id === id);
-              if (!goal) return prev;
-              return [
-                {
-                  id: `goal-${id}`,
-                  kind: 'goal',
-                  label: goal.title,
-                  detail: `${goal.status} · ${Math.round(Number(goal.progress_pct) || 0)}%`,
-                },
-                ...prev,
-              ];
-            });
-          }}
-        />
-      </Flex>
-
-      {contextOpen && (
-        <Box
-          display={{ base: 'block', lg: 'none' }}
-          position="fixed"
-          insetX={0}
-          bottom={0}
-          zIndex={30}
-          maxH="55vh"
-          overflow="hidden"
-          borderTopRadius="lg"
-          borderWidth="1px"
-          borderColor="whiteAlpha.200"
-          bg="gray.950"
-          boxShadow="md"
-        >
-          <BonnieContextPanel
-            open
-            onClose={() => setContextOpen(false)}
-            items={contextItems}
-            onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
-            pendingApprovals={pendingCount}
-            goals={goals}
-            goalsLoading={goalsLoading}
-            goalsChasing={goalsChasing}
-            onChaseGoals={runChase}
-            onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
-            onResumeGoal={(id) => void patchGoal(id, { resume: true })}
-            tenantId={tenantId}
-          />
-        </Box>
-      )}
+      {contextOpen ? (
+        isDesktopContext ? (
+          <Flex h="full" flexShrink={0}>
+            <BonnieContextPanel
+              open={contextOpen}
+              onClose={() => setContextOpen(false)}
+              items={contextItems}
+              onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
+              pendingApprovals={pendingCount}
+              connectionStatus="connected"
+              goals={goals}
+              goalsLoading={goalsLoading}
+              goalsChasing={goalsChasing}
+              onChaseGoals={runChase}
+              onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
+              onResumeGoal={(id) => void patchGoal(id, { resume: true })}
+              tenantId={tenantId}
+              onSelectGoal={handleSelectGoal}
+            />
+          </Flex>
+        ) : (
+          <Box
+            position="fixed"
+            insetX={0}
+            bottom={0}
+            zIndex={30}
+            maxH="55vh"
+            overflow="hidden"
+            borderTopRadius="lg"
+            borderWidth="1px"
+            borderColor="whiteAlpha.200"
+            bg="gray.950"
+            boxShadow="md"
+          >
+            <BonnieContextPanel
+              open
+              onClose={() => setContextOpen(false)}
+              items={contextItems}
+              onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
+              pendingApprovals={pendingCount}
+              connectionStatus="connected"
+              goals={goals}
+              goalsLoading={goalsLoading}
+              goalsChasing={goalsChasing}
+              onChaseGoals={runChase}
+              onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
+              onResumeGoal={(id) => void patchGoal(id, { resume: true })}
+              tenantId={tenantId}
+              onSelectGoal={handleSelectGoal}
+            />
+          </Box>
+        )
+      ) : null}
     </Flex>
   );
 }

@@ -11,7 +11,7 @@ export const BatchOutreachFAB: React.FC<BatchOutreachFABProps> = ({ selectedCoun
     if (selectedCount === 0) return null;
 
     return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="flex items-center gap-2 p-2 bg-slate-900/90 backdrop-blur-xl border border-teal-500/30 rounded-2xl shadow-2xl shadow-teal-500/20">
                 <button
                     onClick={onOpen}
