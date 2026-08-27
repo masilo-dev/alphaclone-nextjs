@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
         source: 'system',
         title: `Prospect replied${input.recipient ? ` — ${input.recipient}` : ''}`,
         message: input.replyText?.slice(0, 160) || 'A prospect replied to your outreach.',
-        actionUrl: '/dashboard/crm/leads',
+        actionUrl: '/dashboard/leads',
         entityType: 'lead',
         entityId: input.leadId,
         status: 'waiting',

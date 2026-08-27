@@ -19,7 +19,7 @@ import { EnterprisePageHeader } from '@/components/dashboard/responsive/Enterpri
 
 interface ActionQueueItem {
   id: string;
-  type: 'approval' | 'message' | 'invoice' | 'contract' | 'social';
+  type: 'approval' | 'message' | 'invoice' | 'contract' | 'social' | 'outreach' | 'lead';
   title: string;
   detail?: string;
   href: string;
@@ -55,11 +55,6 @@ export function UnifiedActionCenter() {
       impact: (a.riskLevel === 'high' || a.riskLevel === 'critical' ? 'high' : 'medium') as 'high' | 'medium',
     }));
 
-  const allItems = [...approvalItems, ...extraItems].sort((a, b) => {
-    const order = { high: 0, medium: 1, low: 2 };
-    return order[a.impact] - order[b.impact];
-  });
-
   const iconFor = (type: ActionQueueItem['type']) => {
     switch (type) {
       case 'approval':
@@ -71,44 +66,68 @@ export function UnifiedActionCenter() {
       case 'contract':
         return FileText;
       case 'social':
+      case 'outreach':
         return Send;
       default:
         return AlertCircle;
     }
   };
 
+  const renderQueueSection = (
+    title: string,
+    items: ActionQueueItem[],
+    emptyHint?: string,
+  ) => {
+    if (items.length === 0) {
+      return emptyHint ? (
+        <p className="text-[12px] text-[var(--ws-text-tertiary)] px-1">{emptyHint}</p>
+      ) : null;
+    }
+
+    return (
+      <section className="ac-workspace-panel p-4">
+        <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3">
+          {title} ({items.length})
+        </h2>
+        <ul className="space-y-2">
+          {items.slice(0, 8).map((item) => {
+            const Icon = iconFor(item.type);
+            return (
+              <li key={item.id}>
+                <Link
+                  href={item.href}
+                  className="flex items-center gap-3 p-2.5 rounded-lg border border-white/5 hover:border-teal-500/30 transition-colors"
+                >
+                  <Icon className="w-4 h-4 text-teal-400 shrink-0" aria-hidden="true" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-medium text-[var(--ws-text-primary)] truncate">{item.title}</p>
+                    {item.detail ? (
+                      <p className="text-[11px] text-[var(--ws-text-tertiary)] truncate">{item.detail}</p>
+                    ) : null}
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[var(--ws-text-tertiary)]" aria-hidden="true" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    );
+  };
+
   return (
     <div className="space-y-6 ac-scroll-full ac-enterprise-module">
       <EnterprisePageHeader moduleKey="approvals" />
-      {allItems.length > 0 ? (
-        <section className="ac-workspace-panel p-4">
-          <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3">
-            {HUMAN_LABELS.pendingApprovals} ({allItems.length})
-          </h2>
-          <ul className="space-y-2">
-            {allItems.slice(0, 8).map((item) => {
-              const Icon = iconFor(item.type);
-              return (
-                <li key={item.id}>
-                  <Link
-                    href={item.href}
-                    className="flex items-center gap-3 p-2.5 rounded-lg border border-white/5 hover:border-teal-500/30 transition-colors"
-                  >
-                    <Icon className="w-4 h-4 text-teal-400 shrink-0" aria-hidden="true" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[var(--ws-text-primary)] truncate">{item.title}</p>
-                      {item.detail ? (
-                        <p className="text-[11px] text-[var(--ws-text-tertiary)] truncate">{item.detail}</p>
-                      ) : null}
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-[var(--ws-text-tertiary)]" aria-hidden="true" />
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ) : null}
+      {renderQueueSection(
+        HUMAN_LABELS.actionQueue,
+        extraItems,
+        'No urgent customer, billing, or follow-up items right now.',
+      )}
+      {renderQueueSection(
+        HUMAN_LABELS.pendingApprovals,
+        approvalItems,
+        pendingCount === 0 ? 'Bonnie has no high-risk actions waiting for sign-off.' : undefined,
+      )}
       <ApprovalCenter />
     </div>
   );

@@ -1,5 +1,7 @@
 /** Normalize dashboard paths so module routing works with query strings and role aliases. */
 
+import { resolveCanonicalPath } from '@/lib/dashboard/canonicalRoutes';
+
 export function stripRouteQueryAndHash(path: string): string {
     if (!path) return '/dashboard';
     const withoutQuery = path.split('?')[0]?.split('#')[0] || path;
@@ -12,7 +14,9 @@ export function stripRouteQueryAndHash(path: string): string {
 /** Map legacy/shared paths to tenant-admin business routes when needed. */
 export function normalizeBusinessRoute(path: string, role?: string): string {
     const base = stripRouteQueryAndHash(path);
-    if (role !== 'tenant_admin' && role !== 'business_dashboard') return base;
+    if (role !== 'tenant_admin' && role !== 'business_dashboard') {
+        return resolveCanonicalPath(base);
+    }
 
     const tenantAliases: Record<string, string> = {
         // bare /dashboard/business resolves to home
@@ -32,7 +36,12 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         '/dashboard/leads/campaigns': '/dashboard/leads/finder',
         '/dashboard/crm/activities': '/dashboard/crm/follow-ups',
         '/dashboard/crm/activity': '/dashboard/crm/follow-ups',
+        '/dashboard/crm/leads': '/dashboard/leads',
+        '/dashboard/clients': '/dashboard/contacts',
+        '/dashboard/invoices': '/dashboard/business/invoices',
+        '/dashboard/operations-command': '/dashboard/operations',
     };
 
-    return tenantAliases[base] ?? base;
+    const aliased = tenantAliases[base] ?? base;
+    return resolveCanonicalPath(aliased);
 }

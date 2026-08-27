@@ -313,7 +313,7 @@ export function BonnieBrief({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <p className={cn('text-[11px] font-bold uppercase tracking-wider', aiSem.text)}>Bonnie brief</p>
-            <span className="text-[10.5px] text-[var(--ws-text-muted)]">
+            <span className="text-[10.5px] text-[var(--ws-text-muted)] whitespace-nowrap">
               {whatChanged.length + whyItMatters.length + whatToDo.length} point{whatChanged.length + whyItMatters.length + whatToDo.length !== 1 ? 's' : ''}
             </span>
           </div>

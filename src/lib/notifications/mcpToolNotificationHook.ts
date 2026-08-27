@@ -29,7 +29,7 @@ function eventTypeForTool(toolName: string, success: boolean): string {
 
 function actionUrlForTool(toolName: string): string | undefined {
   const n = toolName.toLowerCase();
-  if (n.includes('lead')) return '/dashboard/crm/leads';
+  if (n.includes('lead')) return '/dashboard/leads';
   if (n.includes('invoice')) return '/dashboard/business/invoices';
   if (n.includes('contract')) return '/dashboard/business/contracts';
   if (n.includes('social') || n.includes('publish')) return '/dashboard/social';

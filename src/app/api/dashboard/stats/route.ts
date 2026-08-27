@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
@@ -65,6 +66,8 @@ async function getStatsFallback(supabase: any, tenantId: string, userId: string)
     activity24h,
     newLeads24h,
     recentActivityRows,
+    staleLeadsCount,
+    qualifiedLeadsCount,
   ] = await Promise.all([
     safeCount('leads', { tenant_id: tenantId }),
     safeCount('business_clients', { tenant_id: tenantId, is_active: true }),
@@ -209,6 +212,51 @@ async function getStatsFallback(supabase: any, tenantId: string, userId: string)
       } catch { return 0; }
     })(),
     safeRows('audit_logs', 'action,metadata,created_at'),
+    (async () => {
+      try {
+        const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { count } = await supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .lt('created_at', cutoff)
+          .not('status', 'in', '("closed_won","closed_lost","won","lost")');
+        return typeof count === 'number' ? count : 0;
+      } catch {
+        try {
+          const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          const { count } = await supabase
+            .from('leads')
+            .select('id', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+            .lt('created_at', cutoff);
+          return typeof count === 'number' ? count : 0;
+        } catch {
+          return 0;
+        }
+      }
+    })(),
+    (async () => {
+      try {
+        const { count } = await supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .in('stage', ['qualified', 'proposal', 'negotiation', 'discovery', 'contacted', 'engaged']);
+        return typeof count === 'number' ? count : 0;
+      } catch {
+        try {
+          const { count } = await supabase
+            .from('leads')
+            .select('id', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+            .eq('status', 'qualified');
+          return typeof count === 'number' ? count : 0;
+        } catch {
+          return 0;
+        }
+      }
+    })(),
   ]);
 
   const recentActivity = recentActivityRows.map((r: any) => ({
@@ -236,7 +284,8 @@ async function getStatsFallback(supabase: any, tenantId: string, userId: string)
     loginStreak: 1,
     activity24h,
     newLeads24h,
-    staleLeads: 0,
+    staleLeads: staleLeadsCount,
+    qualifiedLeads: qualifiedLeadsCount,
     activeCampaigns,
     upcomingMeetings,
     unreadMessages,
@@ -306,7 +355,7 @@ export async function GET(req: NextRequest) {
       stats = await getStatsFallback(supabase, tenantId, user.id);
     }
 
-    return NextResponse.json({ stats });
+    return NextResponse.json({ stats: normalizeDashboardStats(stats) });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'dashboard/stats.GET' });
   }

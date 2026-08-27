@@ -30,7 +30,8 @@ export const HUMAN_LABELS = {
   // Operations
   pipelineIntegrityScore: 'Overall business flow health',
   taskBacklog: 'Tasks you should finish today',
-  pendingApprovals: 'Items waiting for your OK',
+  pendingApprovals: 'Bonnie actions waiting for your OK',
+  actionQueue: 'Needs your attention today',
 
   // Hub names
   salesHub: 'Sales',

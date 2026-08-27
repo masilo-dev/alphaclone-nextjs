@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,8 @@ export function AttentionPanel({
   className,
   emptyMessage = 'Nothing needs attention right now.',
 }: AttentionPanelProps) {
+  const router = useRouter();
+
   return (
     <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5', className)}>
       <h2 className={WORKSPACE.typography.sectionTitle}>Needs attention</h2>
@@ -42,6 +45,10 @@ export function AttentionPanel({
             <li key={item.id}>
               <Link
                 href={item.href}
+                onClick={(event) => {
+                  event.preventDefault();
+                  router.push(item.href);
+                }}
                 className={cn(
                   'flex items-start gap-3 rounded-[12px] border px-3 py-3 transition-colors duration-150',
                   item.severity === 'high'

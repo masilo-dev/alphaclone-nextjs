@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
       type: 'outreach',
       title: `Reply received — follow up`,
       detail: row.lead_email || row.campaign_name || undefined,
-      href: '/dashboard/crm/leads',
+      href: '/dashboard/leads',
       impact: 'high',
     });
   }
@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
       type: 'lead',
       title: `Lead needs contact — ${lead.business_name || lead.contact_name || 'Unnamed'}`,
       detail: `Stage: ${lead.stage}`,
-      href: '/dashboard/crm/leads',
+      href: '/dashboard/leads?filter=stale',
       impact: 'medium',
     });
   }

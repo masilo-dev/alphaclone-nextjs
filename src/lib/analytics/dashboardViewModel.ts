@@ -4,6 +4,7 @@ import {
   buildFullKpiViewModel,
   type FullKpiViewModel,
 } from '@/lib/analytics/kpiMath';
+import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
 import {
   analyzeFunnel,
   prioritizeMaterialChanges,
@@ -57,7 +58,7 @@ export function buildDashboardDecisionViewModel(
   periodStart?: Date,
   periodEnd?: Date,
 ): DashboardDecisionViewModel {
-  const s = rawStats ?? {};
+  const s = normalizeDashboardStats(rawStats);
   const safeN = (k: string, fallback = 0) => {
     const v = s[k];
     return typeof v === 'number' ? v : fallback;
@@ -71,11 +72,11 @@ export function buildDashboardDecisionViewModel(
   const revenuePrev = safeN('revenuePrev', safeN('previousRevenue'));
   const pipeline = safeN('pipelineValue', safeN('weightedPipeline'));
   const pipelinePrev = safeN('pipelineValuePrev', safeN('previousPipelineValue'));
-  const newLeads = safeN('newLeads', safeN('leads', safeN('leadsCount')));
+  const newLeads = safeN('newLeads', safeN('totalLeads', safeN('leads', safeN('leadsCount'))));
   const leadsPrev = safeN('leadsPrev', safeN('previousLeads'));
   const qualified = safeN('qualifiedLeads', safeN('qualified'));
   const qualifiedPrev = safeN('qualifiedLeadsPrev', safeN('qualifiedPrev'));
-  const outstanding = safeN('outstanding', safeN('outstandingInvoices'));
+  const outstanding = safeN('outstanding', safeN('pendingRevenue', safeN('outstandingInvoices')));
   const outstandingPrev = safeN('outstandingPrev');
   const dealsWon = safeN('dealsWon', safeN('closedWon', safeN('wonDeals')));
   const dealsPrev = safeN('dealsWonPrev', safeN('previousDealsWon'));
@@ -298,7 +299,7 @@ export function buildDashboardDecisionViewModel(
       detail: `${staleLeads} lead${staleLeads !== 1 ? 's' : ''} with no outreach in 5+ days`,
       count: staleLeads,
       severity: staleLeads >= 10 ? 'high' : 'medium',
-      href: '/dashboard/leads',
+      href: '/dashboard/leads?filter=stale',
     });
   }
   if (agingDeals > 0) {

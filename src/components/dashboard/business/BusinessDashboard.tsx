@@ -268,7 +268,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return;
             }
 
-            if (!gate.tourCompleted && route === '/dashboard') {
+            if (!gate.tourCompleted && !gate.establishedWorkspace && route === '/dashboard') {
                 const timer = window.setTimeout(() => setShowProductTour(true), 2000);
                 return () => window.clearTimeout(timer);
             }
@@ -481,6 +481,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
         switch (tab) {
             case '/dashboard/operations':
+            case '/dashboard/operations-command':
             case '/dashboard/business/operations':
             case '/dashboard/admin/operations':
                 return (
@@ -585,6 +586,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return <ReferralsPage user={user} tenant={currentTenant} />;
             case '/dashboard/leads':
             case '/dashboard/contacts':
+            case '/dashboard/clients':
             case '/dashboard/business/clients':
                 return <ClientsPage user={user} />;
             case '/dashboard/crm/unified-contacts':

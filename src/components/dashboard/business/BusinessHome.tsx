@@ -43,7 +43,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   }, [currentTenant?.id, user.id, getDashboardStats]);
 
   const showSetup =
-    !dismissed && !statsError && (isNewWorkspaceStats(stats) || stats === null);
+    !dismissed && !statsError && stats !== null && isNewWorkspaceStats(stats);
 
   return (
     <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">

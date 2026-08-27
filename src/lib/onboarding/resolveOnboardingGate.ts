@@ -69,12 +69,19 @@ export async function resolveOnboardingGate(
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId);
 
-    establishedWorkspace = (clientCount ?? 0) > 0 || (invoiceCount ?? 0) > 0;
+    const { count: leadCount } = await supabase
+      .from('leads')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId);
+
+    establishedWorkspace =
+      (clientCount ?? 0) > 0 || (invoiceCount ?? 0) > 0 || (leadCount ?? 0) > 0;
   }
 
   if (establishedWorkspace) {
     markWelcomeSeen(userId);
     localStorage.setItem(onboardingKey(userId), 'true');
+    localStorage.setItem(tourKey(userId), '1');
   }
 
   return {

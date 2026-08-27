@@ -79,10 +79,14 @@ export default function ScraperCampaignsPage() {
   useEffect(() => { void loadSearches(); }, [loadSearches]);
   useEffect(() => { void loadResults(); }, [loadResults]);
   useEffect(() => {
-    if (!searches.some(s => ['queued', 'running'].includes(s.status))) return;
-    const timer = window.setInterval(() => void loadSearches(), 4000);
+    const activeSearch = searches.some(s => ['queued', 'running'].includes(s.status));
+    if (!activeSearch && !selectedSearch?.discovered_count) return;
+    const timer = window.setInterval(() => {
+      void loadSearches();
+      void loadResults();
+    }, 4000);
     return () => window.clearInterval(timer);
-  }, [searches, loadSearches]);
+  }, [searches, selectedSearch?.discovered_count, loadSearches, loadResults]);
 
   const createSearch = async (event: FormEvent) => {
     event.preventDefault();
@@ -273,6 +277,14 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
     </div>
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">{label}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
     {selected && ['queued','running'].includes(selected.status) && <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3" role="status"><div className="mb-2 flex justify-between text-xs"><span>Discovery continues in the background</span><span>{selected.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/20"><div className="h-full bg-teal-400 transition-all" style={{width:`${selected.progress}%`}}/></div></div>}
+    {!candidates.length && selected && (selected.discovered_count ?? 0) > 0 ? (
+      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center" role="status">
+        <h2 className="font-semibold text-amber-100">Saving {selected.discovered_count} discovered businesses…</h2>
+        <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">
+          Results appear here once the search finishes writing candidates. This page refreshes automatically.
+        </p>
+      </div>
+    ) : null}
     {candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
       <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b border-[var(--ws-border)] text-xs uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Source','Quality','Fit','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="text-xs font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3">{c.source_type}</td><td className="px-4 py-3">{c.quality_score}</td><td className="px-4 py-3">{c.fit_score}</td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 text-xs font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
       <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="text-sm text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="text-sm font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 text-sm">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>

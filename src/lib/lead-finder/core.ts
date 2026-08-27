@@ -68,6 +68,24 @@ export function normalizeCompany(value: string) {
     .replace(/\b(incorporated|inc|limited|ltd|llc|gmbh|plc|pty)\.?$/i, '').trim().toLowerCase();
 }
 
+/** Stable dedupe key for lead_candidates upsert (must match DB unique constraint). */
+export function buildLeadCandidateDedupeKey(input: {
+  source_type: string;
+  source_external_id?: string | null;
+  website?: string | null;
+  business_name: string;
+  city?: string | null;
+}): string {
+  if (input.source_external_id) {
+    return `${input.source_type}:${input.source_external_id}`;
+  }
+  const domain = normalizeDomain(input.website);
+  if (domain) return `${input.source_type}:domain:${domain}`;
+  const name = normalizeCompany(input.business_name).slice(0, 80);
+  const city = (input.city || '').trim().toLowerCase().slice(0, 40);
+  return `${input.source_type}:name:${name}:${city}`;
+}
+
 export type ScoreCandidate = {
   website?: string | null; public_email?: string | null; public_phone?: string | null;
   address_line_1?: string | null; facebook_url?: string | null; linkedin_url?: string | null;

@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate } from '@/lib/lead-finder/core';
+import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate, buildLeadCandidateDedupeKey } from '@/lib/lead-finder/core';
 import { runLeadStep, type LeadResult, type LeadStep } from '@/lib/scraper/freeLeadSearch';
 import type { GeoPoint } from '@/lib/scraper/freeGeoSources';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -137,7 +137,7 @@ function autoAcceptAndSyncHighQuality(
     });
     const { error: updateErr } = await supabase
       .from('lead_candidates')
-      .upsert(acceptedRows, { onConflict: 'workspace_id,source_type,source_external_id', ignoreDuplicates: false, defaultToNull: false });
+      .upsert(acceptedRows, { onConflict: 'workspace_id,dedupe_key', ignoreDuplicates: false, defaultToNull: false });
     if (updateErr) throw updateErr;
     return { accepted: acceptedRows.length, synced: leads?.length || 0 };
   })().catch(err => {
@@ -201,13 +201,29 @@ async function execute(job: Job) {
       confidence_score: lead.hasContact ? 75 : 45, quality_score: score.qualityScore,
       fit_score: score.fitScore, score_explanation: score.explanation,
       verification_status: candidate.public_email ? 'format_valid' : 'unverified',
+      dedupe_key: buildLeadCandidateDedupeKey({
+        source_type: lead.source,
+        source_external_id: lead.source_id,
+        website: candidate.website,
+        business_name: lead.business_name,
+        city: candidate.city,
+      }),
     };
   });
 
   if (rows.length) {
-    const { error: insertError } = await supabase.from('lead_candidates').upsert(rows, { onConflict: 'workspace_id,source_type,source_external_id', ignoreDuplicates: true });
+    const { error: insertError } = await supabase.from('lead_candidates').upsert(rows, {
+      onConflict: 'workspace_id,dedupe_key',
+      ignoreDuplicates: true,
+    });
     if (insertError) {
       console.warn('[lead-discovery-worker] lead_candidates upsert warning:', insertError.message);
+      for (const row of rows) {
+        const { error: singleError } = await supabase.from('lead_candidates').insert(row);
+        if (singleError && !/duplicate|unique|23505/i.test(singleError.message)) {
+          console.warn('[lead-discovery-worker] lead_candidates insert warning:', singleError.message);
+        }
+      }
     }
   }
 

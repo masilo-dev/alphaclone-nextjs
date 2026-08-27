@@ -14,7 +14,7 @@ const EVENT_MAP: Record<string, { eventType: string; title: (p: Record<string, u
     eventType: 'lead.created',
     title: () => 'New lead added',
     message: (p) => `Lead ${p.email || p.name || ''} was added to your CRM.`,
-    actionUrl: '/dashboard/crm/leads',
+    actionUrl: '/dashboard/leads',
   },
   invoice_created: {
     eventType: 'invoice.created',
@@ -44,7 +44,7 @@ const EVENT_MAP: Record<string, { eventType: string; title: (p: Record<string, u
     eventType: 'lead.created',
     title: () => 'Form submission received',
     message: (p) => `New inquiry from ${p.email || 'prospect'}.`,
-    actionUrl: '/dashboard/crm/leads',
+    actionUrl: '/dashboard/leads',
   },
 };
 

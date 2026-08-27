@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import { BacklitSurface } from '@/components/ui/os/BacklitSurface';
 import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
 import { buildDashboardDecisionViewModel } from '@/lib/analytics/dashboardViewModel';
+import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
 import {
   IntelligentKpiCard,
   MaterialChangesStrip,
@@ -117,48 +118,25 @@ export function OperatingSystemHome() {
   const greeting = greetingForHour(new Date().getHours());
   const todayLabel = format(new Date(), 'EEEE, d MMMM yyyy');
 
+  const normalizedStats = useMemo(() => normalizeDashboardStats(stats), [stats]);
+
   const decisionVm = useMemo(
-    () => buildDashboardDecisionViewModel(stats),
-    [stats],
+    () => buildDashboardDecisionViewModel(normalizedStats),
+    [normalizedStats],
   );
 
-  const revenue = Number(stats?.revenue ?? stats?.totalRevenue ?? 0);
-  const revenuePrev = Number(stats?.revenuePrev ?? stats?.previousRevenue ?? 0);
-  const leads = Number(
-    stats?.newLeads ??
-      stats?.leads ??
-      stats?.leadsCount ??
-      stats?.newLeads24h ??
-      stats?.totalLeads ??
-      0
-  );
-  const leadsPrev = Number(stats?.leadsPrev ?? stats?.previousLeads ?? 0);
-  const dealsWon = Number(
-    stats?.dealsWon ??
-      stats?.closedWon ??
-      stats?.dealsClosed ??
-      stats?.dealsWonCount ??
-      stats?.wonDeals ??
-      0
-  );
-  const dealsWonPrev = Number(stats?.dealsWonPrev ?? stats?.previousDealsWon ?? 0);
-  const outstanding = Number(
-    stats?.outstanding ??
-      stats?.outstandingInvoices ??
-      stats?.outstandingAmount ??
-      stats?.pendingRevenue ??
-      stats?.pendingAmount ??
-      0
-  );
-  const outstandingPrev = Number(stats?.outstandingPrev ?? 0);
-  const tasksCompleted = Number(stats?.tasksCompleted ?? stats?.completedTasks ?? 0);
-  const tasksCompletedPrev = Number(stats?.tasksCompletedPrev ?? 0);
-  const openTasks = Number(
-    stats?.openTasks ??
-      stats?.open_tasks ??
-      Math.max(0, Number(stats?.totalTasks ?? 0) - Number(stats?.completedTasks ?? stats?.tasksCompleted ?? 0))
-  );
-  const overdueInvoices = Number(stats?.overdueInvoices ?? stats?.overdue_invoices ?? 0);
+  const revenue = Number(normalizedStats.revenue ?? 0);
+  const revenuePrev = Number(normalizedStats.revenuePrev ?? normalizedStats.previousRevenue ?? 0);
+  const leads = Number(normalizedStats.newLeads ?? normalizedStats.totalLeads ?? 0);
+  const leadsPrev = Number(normalizedStats.leadsPrev ?? normalizedStats.previousLeads ?? 0);
+  const dealsWon = Number(normalizedStats.dealsWon ?? normalizedStats.closedWon ?? normalizedStats.wonDeals ?? 0);
+  const dealsWonPrev = Number(normalizedStats.dealsWonPrev ?? normalizedStats.previousDealsWon ?? 0);
+  const outstanding = Number(normalizedStats.outstanding ?? normalizedStats.pendingRevenue ?? 0);
+  const outstandingPrev = Number(normalizedStats.outstandingPrev ?? 0);
+  const tasksCompleted = Number(normalizedStats.tasksCompleted ?? normalizedStats.completedTasks ?? 0);
+  const tasksCompletedPrev = Number(normalizedStats.tasksCompletedPrev ?? 0);
+  const openTasks = Number(normalizedStats.openTasks ?? normalizedStats.open_tasks ?? 0);
+  const overdueInvoices = Number(normalizedStats.overdueInvoices ?? normalizedStats.overdue_invoices ?? 0);
 
   const attentionItems: AttentionItem[] = useMemo(() => {
     const items: AttentionItem[] = [];
@@ -248,7 +226,7 @@ export function OperatingSystemHome() {
           m.id === 'crm'
             ? `${decisionVm.kpis.activeCustomers.valueFormatted} active`
             : m.id === 'leads'
-              ? `${decisionVm.kpis.newLeads.current.toLocaleString()} new · ${decisionVm.kpis.qualifiedLeads.current.toLocaleString()} qualified`
+              ? `${leads.toLocaleString()} in pipeline · ${decisionVm.kpis.qualifiedLeads.current.toLocaleString()} qualified`
               : m.id === 'pipeline'
                 ? `${dealsWon} won · ${formatMoney0(decisionVm.pipelineSummary.weightedValue)} EV`
                 : m.id === 'invoicing'
