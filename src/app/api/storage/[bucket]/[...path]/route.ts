@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { hasStoragePathTraversal } from '@/lib/security/safeRedirect';
 import { NextResponse } from 'next/server';
 
 /**
@@ -14,6 +15,10 @@ export async function GET(
     const filePath = path.join('/');
 
     try {
+        if (hasStoragePathTraversal(path)) {
+            return new NextResponse('Not found', { status: 404 });
+        }
+
         if (!bucket || !filePath) {
             console.error('Storage Proxy: Missing bucket or path', { bucket, filePath });
             return new NextResponse('Missing bucket or path', { status: 400 });

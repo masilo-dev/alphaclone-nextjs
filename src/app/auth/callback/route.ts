@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect'
+import { sanitizeInternalRedirect } from '@/lib/security/safeRedirect'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export async function GET(request: Request) {
@@ -229,20 +230,8 @@ export async function GET(request: Request) {
                     }
                 }
 
-                let next = requestedNext ?? '/dashboard'
-                if (requestedNext) {
-                    // Only allow same-origin relative redirects (OAuth return, dashboard).
-                    const safe =
-                        requestedNext.startsWith('/authorize') ||
-                        requestedNext.startsWith('/oauth/') ||
-                        requestedNext.startsWith('/dashboard') ||
-                        requestedNext.startsWith('/auth/')
-                    if (!safe || requestedNext.startsWith('//') || requestedNext.includes('://')) {
-                        next = '/dashboard'
-                    } else {
-                        next = requestedNext
-                    }
-                } else {
+                let next = sanitizeInternalRedirect(requestedNext) ?? '/dashboard'
+                if (!requestedNext) {
                     try {
                         const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
                         const admin = createSupabaseAdminClient()

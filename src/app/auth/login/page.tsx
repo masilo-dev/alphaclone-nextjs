@@ -14,6 +14,7 @@ import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan } from '@/services/tenancy/types';
 import Image from 'next/image';
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
+import { sanitizeInternalRedirect } from '@/lib/security/safeRedirect';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
@@ -37,26 +38,14 @@ function LoginContent() {
     const planParam = searchParams?.get('plan') as SubscriptionPlan | null;
     const businessNameParam = searchParams?.get('businessName');
     const referralCodeParam = searchParams?.get('ref')?.trim() || undefined;
-    const nextParam = searchParams?.get('next') || searchParams?.get('returnTo') || null;
+    const nextParam =
+      searchParams?.get('next') ||
+      searchParams?.get('returnTo') ||
+      searchParams?.get('redirect') ||
+      null;
 
-    const resolveExplicitNextRedirect = (): string | null => {
-      if (nextParam) {
-        try {
-          const decoded = decodeURIComponent(nextParam);
-          if (
-            decoded.startsWith('/oauth/') ||
-            decoded.startsWith('/authorize') ||
-            decoded.startsWith('/dashboard') ||
-            decoded.startsWith('/api/mcp/authorize')
-          ) {
-            return decoded;
-          }
-        } catch {
-          // ignore malformed next param
-        }
-      }
-      return null;
-    };
+    const resolveExplicitNextRedirect = (): string | null =>
+      sanitizeInternalRedirect(nextParam);
     const oauthReturnPath = resolveExplicitNextRedirect();
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);

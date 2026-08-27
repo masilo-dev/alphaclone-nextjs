@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/middleware";
 import { rateLimit, rateLimitConfigs } from "@/lib/rateLimit";
+import { sanitizeInternalRedirect } from "@/lib/security/safeRedirect";
 
 type PlatformPolicy = {
   maintenanceMode: boolean;
@@ -217,6 +218,26 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard/business/clients";
     return applyRequiredOwaspHeaders(NextResponse.redirect(url));
+  }
+
+  if (pathname === "/login" || pathname === "/auth/login") {
+    const url = request.nextUrl.clone();
+    let sanitized = false;
+    for (const key of ["redirect", "next", "returnTo"]) {
+      const raw = url.searchParams.get(key);
+      if (!raw) continue;
+      const safe = sanitizeInternalRedirect(raw);
+      if (safe && safe !== raw) {
+        url.searchParams.set(key, safe);
+        sanitized = true;
+      } else if (!safe) {
+        url.searchParams.delete(key);
+        sanitized = true;
+      }
+    }
+    if (sanitized) {
+      return applyRequiredOwaspHeaders(NextResponse.redirect(url));
+    }
   }
 
   const maintenanceAllowedPaths = [
