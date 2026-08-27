@@ -172,10 +172,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
             </button>
 
             {/* Backdrop + panel portaled so dashboard overflow-hidden does not clip the dropdown */}
-            <AnimatePresence>
-                {isOpen && typeof document !== 'undefined' && createPortal(
+            {typeof document !== 'undefined' && createPortal(
+                <AnimatePresence>
+                    {isOpen ? (
                     <>
                         <motion.div
+                            key="notif-backdrop"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -184,17 +186,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                         />
 
                         <motion.div
+                            key="notif-panel"
                             initial={{ opacity: 0, y: -8, scale: 0.97 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-[1200] flex flex-col overflow-hidden"
+                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-[var(--surface-elevated)] dark:bg-slate-950 border border-[var(--border-default)] dark:border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-[1200] flex flex-col overflow-hidden"
                         >
                             {/* Header */}
-                            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-950">
+                            <div className="p-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--surface-secondary)] dark:bg-gradient-to-r dark:from-slate-900 dark:to-slate-950">
                                 <div>
-                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Notifications</h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
+                                    <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Notifications</h3>
+                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
                                         {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
                                     </p>
                                 </div>
@@ -363,10 +366,11 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                 </div>
                             )}
                         </motion.div>
-                    </>,
-                    document.body,
-                )}
-            </AnimatePresence>
+                    </>
+                    ) : null}
+                </AnimatePresence>,
+                document.body,
+            )}
         </div>
     );
 };
