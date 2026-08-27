@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { offlineService } from '@/services/offlineService';
 import { chartOfAccountsService, ChartOfAccount } from '@/services/accounting/chartOfAccountsService';
 import toast from 'react-hot-toast';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
@@ -19,10 +21,11 @@ import {
 } from '../../ui/ResponsiveTable';
 import { PageHeader } from '@/components/dashboard/responsive/PageHeader';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyState, EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
 import { TabSkeleton } from '@/components/ui/TabSkeleton';
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { usePullToRefreshListener } from '@/components/common/DashboardScrollRegion';
 
 interface ExpenseCategory {
     id: string;
@@ -95,6 +98,7 @@ const EMPTY_FORM = {
 
 export default function ExpenseTrackerTab() {
     const { currentTenant: tenant } = useTenant();
+    const { user } = useAuth();
     const { confirm: confirmDialog } = useConfirmDialog();
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
@@ -198,6 +202,7 @@ export default function ExpenseTrackerTab() {
     }, [tenant]);
 
     useEffect(() => { loadData(); }, [loadData]);
+    usePullToRefreshListener(loadData);
 
     useEffect(() => {
         if (!form.asset_account_id && assetAccounts.length > 0) {
@@ -245,7 +250,6 @@ export default function ExpenseTrackerTab() {
 
         setSaving(true);
         const payload = {
-            tenant_id: tenant.id,
             date: form.date,
             amount: parseFloat(form.amount),
             tax_amount: parseFloat(form.tax_amount) || 0,
@@ -253,7 +257,6 @@ export default function ExpenseTrackerTab() {
             description: form.description,
             vendor_name: form.vendor_name,
             payment_method: form.payment_method,
-            status: form.status,
             billable: form.billable,
             client_id: form.billable && form.client_id ? form.client_id : null,
             notes: form.notes || null,
@@ -262,11 +265,54 @@ export default function ExpenseTrackerTab() {
             receipt_url: form.receipt_url || null,
         };
 
+        if (!editingId && !offlineService.isOnline() && user?.id) {
+            try {
+                await offlineService.init();
+                const record = await offlineService.enqueueMutation(
+                    { tenantId: tenant.id, userId: user.id },
+                    'expense.draft',
+                    payload,
+                );
+                setExpenses((prev) => [
+                    {
+                        id: `offline-${record.id}`,
+                        expense_number: 'OFFLINE',
+                        date: payload.date,
+                        amount: payload.amount,
+                        tax_amount: payload.tax_amount,
+                        total: payload.amount + payload.tax_amount,
+                        currency: payload.currency,
+                        description: payload.description || '',
+                        vendor_name: payload.vendor_name || '',
+                        payment_method: payload.payment_method,
+                        status: 'pending',
+                        billable: payload.billable,
+                        receipt_url: payload.receipt_url,
+                        notes: payload.notes,
+                        category_id: payload.category_id,
+                        client_id: payload.client_id,
+                        created_at: new Date().toISOString(),
+                    },
+                    ...prev,
+                ]);
+                toast.success('Expense saved offline — it will sync when you reconnect.');
+                setShowForm(false);
+                setEditingId(null);
+                setForm({ ...EMPTY_FORM });
+                setSaving(false);
+                return;
+            } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Could not queue offline expense');
+                setSaving(false);
+                return;
+            }
+        }
+
         const response = await fetch('/api/finance/expenses', {
             method: editingId ? 'PATCH' : 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(editingId
-                ? { tenantId: tenant.id, expenseId: editingId, ...payload }
+                ? { tenantId: tenant.id, expenseId: editingId, ...payload, status: form.status }
                 : { action: 'create', tenantId: tenant.id, ...payload }),
         });
         const result = await response.json().catch(() => ({}));
@@ -626,13 +672,7 @@ export default function ExpenseTrackerTab() {
 
             {filtered.length === 0 ? (
                 expenses.length === 0 ? (
-                    <EmptyState
-                        icon={Receipt}
-                        title="No expenses yet"
-                        description="Add your first expense or scan a receipt to start tracking spend."
-                        actionLabel="Add Expense"
-                        onAction={openAddExpense}
-                    />
+                    <EmptyStateFromPreset moduleId="accounting" onAction={openAddExpense} />
                 ) : (
                     <StatePanel
                         kind="empty"

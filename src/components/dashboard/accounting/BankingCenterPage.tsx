@@ -8,7 +8,7 @@ import {
   type BankAccount,
   type ReconciliationSession,
 } from '@/services/accounting/accountingManagementClient';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { EnterpriseDataTable, type EnterpriseColumn } from '@/components/ui/EnterpriseDataTable';
@@ -233,13 +233,7 @@ export default function BankingCenterPage() {
             <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
           </div>
         ) : accounts.length === 0 ? (
-          <EmptyState
-            icon={Landmark}
-            title="No bank accounts"
-            description="Add your operating accounts to reconcile transactions and match payments against invoices."
-            actionLabel="Add Bank Account"
-            onAction={() => setShowAddDrawer(true)}
-          />
+          <EmptyStateFromPreset moduleId="accounting" onAction={() => setShowAddDrawer(true)} />
         ) : (
           <div className="px-2 pb-6 space-y-6">
             <EnterpriseDataTable

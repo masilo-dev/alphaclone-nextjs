@@ -27,6 +27,7 @@ import {
 } from '@/lib/documents/documentBuilders';
 import type { DocumentThemeId } from '@/lib/documents/renderDocument';
 import { ContractLifecycleDrawer } from '@/components/contracts/ContractLifecycleDrawer';
+import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { ContractTemplateLibrary, ContractTemplate } from './ContractTemplateLibrary';
 import { ContractRenewalAlertsPanel } from './ContractRenewalAlertsPanel';
 import { ClientSignatureModal } from './ClientSignatureModal';
@@ -1036,9 +1037,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     {loadingContracts ? (
                         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-teal-400 animate-spin" /></div>
                     ) : savedContracts.length === 0 ? (
-                        <div className="text-center py-14 sm:py-16 text-slate-500 text-xs px-4">
-                            <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 opacity-30" />
-                            <p>No saved contracts yet. Generate your first one.</p>
+                        <div className="px-4 py-6">
+                            <EmptyStateFromPreset
+                                moduleId="contracts"
+                                onAction={() => setActiveView('new')}
+                            />
                         </div>
                     ) : listContracts.length === 0 ? (
                         <div className="text-center py-14 sm:py-16 text-slate-500 text-xs px-4">

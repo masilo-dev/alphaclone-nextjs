@@ -27,6 +27,7 @@ import OnlineStatusBadge from './OnlineStatusBadge';
 import { CommunicationModal } from './crm/CommunicationModal';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
+import { resolveCrmCommandActions } from '@/lib/behavioral/crmPrimaryAction';
 import { ClientPulsePanel } from './platform-advantage/PlatformAdvantageHome';
 import { PipelineForecastPanel } from './crm/PipelineForecastPanel';
 import { OutreachSequencePanel } from './crm/OutreachSequencePanel';
@@ -2173,8 +2174,32 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
 
   // Calculate summaries for stats indicators
   const totalLeadsCount = (leads || []).length;
+  const qualifiedLeadsCount = (leads || []).filter((l) => l.status === 'qualified').length;
   const activeClientsCount = (clients || []).filter(c => c.sales_stage === 'customer').length;
   const totalClientValue = (clients || []).filter(c => c.sales_stage === 'customer').reduce((sum, c) => sum + (c.value || 0), 0);
+
+  const crmCommandActions = React.useMemo(
+    () => resolveCrmCommandActions({
+      totalLeads: totalLeadsCount,
+      activeClients: activeClientsCount,
+      qualifiedLeads: qualifiedLeadsCount,
+    }),
+    [totalLeadsCount, activeClientsCount, qualifiedLeadsCount],
+  );
+
+  const handleCrmCommandAction = useCallback((action: typeof crmCommandActions.primary) => {
+    if (action.href) {
+      router.push(action.href);
+      return;
+    }
+    if (action.action === 'quickAdd') {
+      setIsCreateOpen(true);
+      return;
+    }
+    if (action.action === 'compose') {
+      router.push('/dashboard/mail');
+    }
+  }, [router]);
 
   const crmStats = React.useMemo<ModuleStat[]>(() => [
     { label: t('Leads Pool'), value: totalLeadsCount.toLocaleString(), sub: t('In the funnel'), Icon: Target, accent: 'purple' },
@@ -2199,30 +2224,23 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => router.push('/dashboard/mail')}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1.5 text-[11px] font-bold text-indigo-200 transition-colors hover:bg-indigo-500/15"
-                >
-                  <Mail className="h-3 w-3" />
-                  Compose Email
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-blue-500)]/20 bg-[var(--brand-blue-500)]/10 px-2.5 py-1.5 text-[11px] font-bold text-[var(--brand-blue-200)] transition-colors hover:bg-[var(--brand-blue-600)]/15"
-                >
-                  <UserPlus className="h-3 w-3" />
-                  Quick Add
-                </button>
-                <button
-                  type="button"
-                  onClick={() => router.push('/dashboard/leads')}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[11px] font-bold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
-                >
-                  <TrendingUp className="h-3 w-3" />
-                  Lead Board
-                </button>
+                {[crmCommandActions.primary, ...crmCommandActions.secondary].map((action) => {
+                  const isPrimary = action.variant === 'primary';
+                  return (
+                    <button
+                      key={action.id}
+                      type="button"
+                      onClick={() => handleCrmCommandAction(action)}
+                      className={
+                        isPrimary
+                          ? 'inline-flex items-center gap-1.5 rounded-full border border-teal-500/40 bg-teal-500/20 px-3 py-1.5 text-[11px] font-bold text-teal-100 transition-colors hover:bg-teal-500/30'
+                          : 'inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[11px] font-bold text-slate-300 transition-colors hover:border-slate-500 hover:text-white'
+                      }
+                    >
+                      {action.label}
+                    </button>
+                  );
+                })}
                 <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
               </div>
               <div className="mt-2">

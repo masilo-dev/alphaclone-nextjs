@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import toast from 'react-hot-toast';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 
@@ -251,12 +252,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             {/* List */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
                                 {filteredNotifications.length === 0 ? (
+                                    filter === 'all' ? (
+                                        <div className="p-6">
+                                            <EmptyStateFromPreset moduleId="notifications" />
+                                        </div>
+                                    ) : (
                                     <div className="py-16 flex flex-col items-center justify-center text-slate-600">
                                         <BellOff className="w-10 h-10 mb-3 opacity-40" />
                                         <p className="text-xs font-bold uppercase tracking-widest">
                                             {filter === 'unread' ? 'All caught up!' : 'No notifications'}
                                         </p>
                                     </div>
+                                    )
                                 ) : (
                                     dateOrder.map(dateGroup => {
                                         const typeGroups = groups[dateGroup];

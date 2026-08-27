@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { expenseService } from '../../../../services/finance/ExpenseService';
 import { requireTenantAccess, requireTenantRole } from '@/lib/apiAuth';
+import { findIdempotentPayload, recordIdempotentPayload } from '@/lib/api/offlineIdempotency';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { enforceQuota } from '@/lib/quotaMiddleware';
 import { quotaEnforcementService } from '@/services/quotaEnforcementService';
 import { z } from 'zod';
@@ -99,7 +101,20 @@ export async function POST(req: NextRequest) {
             case 'create': {
                 const parsed = expenseInputSchema.safeParse(payload);
                 if (!parsed.success) return NextResponse.json({ error: 'Invalid expense details', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+                const idempotencyKey = typeof payload.idempotencyKey === 'string' ? payload.idempotencyKey : undefined;
+                if (idempotencyKey && z.string().uuid().safeParse(idempotencyKey).success) {
+                    const admin = createSupabaseAdminClient();
+                    const existing = await findIdempotentPayload(admin, tenantId, idempotencyKey, 'offline_expense_create');
+                    if (existing?.expenseId) {
+                        const expense = await expenseService.getExpense(tenantId, String(existing.expenseId));
+                        if (expense) return NextResponse.json(expense);
+                    }
+                }
                 const expense = await expenseService.createExpense(tenantId, user.id, parsed.data);
+                if (idempotencyKey && z.string().uuid().safeParse(idempotencyKey).success) {
+                    const admin = createSupabaseAdminClient();
+                    await recordIdempotentPayload(admin, tenantId, idempotencyKey, 'offline_expense_create', { expenseId: expense.id }, user.id);
+                }
                 await quotaEnforcementService.trackAPICall(tenantId, '/api/finance/expenses?action=create', user.id).catch(console.error);
                 return NextResponse.json(expense, { status: 201 });
             }

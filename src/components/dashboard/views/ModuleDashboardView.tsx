@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { WorkspaceInvestmentSummary } from '@/components/dashboard/WorkspaceInvestmentSummary';
 import { MetricCard, MetricCardSkeleton } from '../MetricCard';
 import { DashboardLineChart } from '../DashboardLineChart';
 import { DashboardBarChart } from '../DashboardBarChart';
@@ -51,10 +52,18 @@ function DashboardContent({
   chartTitle,
   chartSubtitle,
 }: ModuleDashboardViewProps) {
-  const { currentTenant } = useTenant();
+  const { currentTenant, getDashboardStats } = useTenant();
   const { user } = useAuth();
   const router = useRouter();
   const { data, loading, isValidating, error } = useDashboardStats(currentTenant?.id, endpoint);
+  const [workspaceStats, setWorkspaceStats] = useState<Record<string, unknown> | null>(null);
+
+  useEffect(() => {
+    if (!currentTenant?.id || !user?.id) return;
+    void getDashboardStats(currentTenant.id, user.id)
+      .then((r) => setWorkspaceStats((r.stats ?? null) as Record<string, unknown> | null))
+      .catch(() => {});
+  }, [currentTenant?.id, user?.id, getDashboardStats]);
 
   if (loading && !data) {
     return (
@@ -117,12 +126,13 @@ function DashboardContent({
     moduleId === 'overview'
       ? [
           {
-            label: 'What to do next',
+            label: 'Recommended',
             title: 'Run your first useful workflow',
             description: 'Start with CRM, billing, or messages so the workspace has enough activity to generate better advice.',
             href: workspaceAction?.resolvedHref || '/dashboard/crm',
             Icon: Users,
             cta: workspaceAction?.label || 'Open workspace',
+            featured: true,
           },
           {
             label: 'Bonnie help',
@@ -131,14 +141,16 @@ function DashboardContent({
             href: '/dashboard/bonnie',
             Icon: Bot,
             cta: 'Open Bonnie',
+            featured: false,
           },
           {
-            label: 'Gamification',
+            label: 'Progress',
             title: 'Track streaks and progress',
             description: 'See momentum, activity goals, and streaks so the workspace feels alive instead of empty.',
             href: '/dashboard/gamification',
             Icon: Trophy,
             cta: 'View progress',
+            featured: false,
           },
         ]
       : null;
@@ -152,28 +164,45 @@ function DashboardContent({
       ) : null}
       {overviewNextSteps ? (
         <div className="grid gap-3 lg:grid-cols-3">
-          {overviewNextSteps.map(({ label, title, description, href, Icon, cta }) => (
+          {overviewNextSteps.map(({ label, title, description, href, Icon, cta, featured }) => (
             <button
               key={`${label}-${href}`}
               type="button"
               onClick={() => router.push(href)}
-              className="ac-workspace-panel rounded-lg p-4 text-left transition-all hover:border-[var(--brand-blue-500)]/20 hover:bg-slate-900/70"
+              className={cn(
+                'ac-workspace-panel rounded-lg p-4 text-left transition-all',
+                featured
+                  ? 'border-teal-500/30 bg-teal-500/5 hover:border-teal-500/40'
+                  : 'hover:border-[var(--brand-blue-500)]/20 hover:bg-slate-900/70'
+              )}
             >
               <div className="mb-3 flex items-center gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)]">
+                <span className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-lg',
+                  featured ? 'bg-teal-500/15 text-teal-300' : 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)]'
+                )}>
                   <Icon className="h-4 w-4" />
                 </span>
-                <span className="text-[11px] font-black uppercase tracking-widest text-[var(--brand-blue-400)]">{label}</span>
+                <span className={cn(
+                  'text-[11px] font-black uppercase tracking-widest',
+                  featured ? 'text-teal-300' : 'text-[var(--brand-blue-400)]'
+                )}>{label}</span>
               </div>
               <h3 className="text-sm font-semibold text-white">{title}</h3>
               <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{description}</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-[12px] font-bold text-[var(--brand-blue-400)]">
+              <span className={cn(
+                'mt-4 inline-flex items-center gap-1 text-[12px] font-bold',
+                featured ? 'text-teal-300' : 'text-[var(--brand-blue-400)]'
+              )}>
                 {cta}
                 <ChevronRight className="h-3.5 w-3.5" aria-hidden />
               </span>
             </button>
           ))}
         </div>
+      ) : null}
+      {moduleId === 'overview' || moduleId === 'crm' ? (
+        <WorkspaceInvestmentSummary stats={workspaceStats} loading={!workspaceStats} />
       ) : null}
       {executionSteps.length ? (
         <ExecutionDecisionGuide

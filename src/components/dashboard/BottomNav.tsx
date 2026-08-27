@@ -1,12 +1,20 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { UserRole } from '../../types';
+import { Layers } from 'lucide-react';
+import {
+  isPwaNavActive,
+  resolveBottomNavItems,
+  type PwaNavItem,
+} from '@/config/pwaMobileNav';
 import {
   MOBILE_BOTTOM_DESTINATIONS,
   isMobileBottomActive,
 } from '@/config/responsive/mobileNav';
+import { readPwaPreferences, subscribePwaPreferences } from '@/lib/pwa/pwaPreferences';
+import { usePWA } from '@/contexts/PWAContext';
 import MobileMoreSheet from './responsive/MobileMoreSheet';
 
 interface BottomNavProps {
@@ -17,10 +25,19 @@ interface BottomNavProps {
   userRole?: UserRole;
 }
 
+const MORE_ITEM: PwaNavItem = {
+  moduleId: 'more',
+  label: 'More',
+  href: '#more',
+  icon: Layers,
+  matchPrefixes: [],
+  tileBg: 'bg-slate-500',
+  tileBgMuted: 'bg-slate-500/20',
+  labelActive: 'text-slate-300',
+};
+
 /**
- * Phone bottom navigation — max five destinations:
- * Home · CRM · Work · Bonnie · More
- * "More" opens the job-grouped module catalogue (not a second sidebar clone).
+ * Phone bottom navigation — user-configurable slots in PWA, fixed defaults in browser.
  */
 const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
@@ -30,12 +47,32 @@ const BottomNav: React.FC<BottomNavProps> = ({
   userRole = 'client',
 }) => {
   const router = useRouter();
+  const { isPWA } = usePWA();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [navPrefs, setNavPrefs] = useState(() => readPwaPreferences());
 
-  const destinations = useMemo(
-    () => MOBILE_BOTTOM_DESTINATIONS.filter((d) => d.id !== 'more' || true),
-    [],
-  );
+  useEffect(() => {
+    return subscribePwaPreferences(() => setNavPrefs(readPwaPreferences()));
+  }, []);
+
+  const destinations = useMemo(() => {
+    if (isPWA) {
+      const items = resolveBottomNavItems(userRole, navPrefs.bottomNavModuleIds, { isPwa: true });
+      const slots = items.slice(0, 4);
+      return [...slots, MORE_ITEM];
+    }
+    return MOBILE_BOTTOM_DESTINATIONS.map((item) => ({
+      moduleId: item.id,
+      label: item.label,
+      href: item.hrefForRole(userRole),
+      icon: item.icon,
+      matchPrefixes: item.matchPrefixesForRole(userRole),
+      tileBg: 'bg-slate-500',
+      tileBgMuted: 'bg-slate-500/20',
+      labelActive: 'text-teal-300',
+      isLegacyMore: item.id === 'more',
+    }));
+  }, [isPWA, navPrefs.bottomNavModuleIds, userRole]);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -46,13 +83,21 @@ const BottomNav: React.FC<BottomNavProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [moreOpen]);
 
-  const handleNavClick = (href: string, id: string) => {
-    if (id === 'more') {
+  const handleNavClick = (href: string, moduleId: string) => {
+    if (moduleId === 'more') {
       setMoreOpen(true);
       return;
     }
     onNavigate(href);
     router.push(href);
+  };
+
+  const isItemActive = (item: (typeof destinations)[number]) => {
+    if (item.moduleId === 'more') return moreOpen;
+    if (isPWA) return isPwaNavActive(activeTab, item as PwaNavItem);
+    const legacy = MOBILE_BOTTOM_DESTINATIONS.find((d) => d.id === item.moduleId);
+    if (legacy) return isMobileBottomActive(activeTab, legacy, userRole);
+    return activeTab === item.href;
   };
 
   return (
@@ -64,18 +109,16 @@ const BottomNav: React.FC<BottomNavProps> = ({
       >
         <div className="flex justify-around items-center h-[52px] px-1">
           {destinations.map((item) => {
-            const isMore = item.id === 'more';
-            const isActive = isMore
-              ? moreOpen
-              : isMobileBottomActive(activeTab, item, userRole);
-            const showBadge = unreadCount > 0 && item.id === 'more';
+            const isMore = item.moduleId === 'more';
+            const isActive = isItemActive(item);
+            const showBadge = unreadCount > 0 && isMore;
             const Icon = item.icon;
 
             return (
               <button
-                key={item.id}
+                key={item.moduleId}
                 type="button"
-                onClick={() => handleNavClick(item.hrefForRole(userRole), item.id)}
+                onClick={() => handleNavClick(item.href, item.moduleId)}
                 aria-label={item.label}
                 aria-current={!isMore && isActive ? 'page' : undefined}
                 aria-expanded={isMore ? moreOpen : undefined}

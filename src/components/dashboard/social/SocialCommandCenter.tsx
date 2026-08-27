@@ -13,6 +13,11 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { formatFailureToastMessage } from '@/lib/copy/formatFailureForUser';
+
+function socialActionError(action: string, err: unknown, saved?: string) {
+  toast.error(formatFailureToastMessage({ action, rawError: err, saved }));
+}
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 import { LinkedInOrgPanel, normalizeLinkedInScopes } from './LinkedInOrgPanel';
 import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiVideoGenerationService';
@@ -226,7 +231,10 @@ export default function SocialCommandCenter() {
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data?.success) {
-                toast.error(data?.error || data?.hint || 'Could not refresh LinkedIn company pages');
+            toast.error(data?.error || data?.hint || formatFailureToastMessage({
+                action: 'refresh LinkedIn company pages',
+                rawError: data?.error,
+            }));
                 await loadData();
                 return;
             }
@@ -236,8 +244,8 @@ export default function SocialCommandCenter() {
                     : data.hint || 'No pages returned — try linking manually',
             );
             await loadData();
-        } catch {
-            toast.error('Failed to refresh company pages');
+        } catch (error) {
+            socialActionError('refresh LinkedIn company pages', error);
         }
     };
 
@@ -426,8 +434,11 @@ export default function SocialCommandCenter() {
             if (!response.ok) throw new Error('Delete failed');
             toast.success('Post deleted', { id: toastId });
             setPosts(prev => prev.filter(p => p.id !== id));
-        } catch {
-            toast.error('Failed to delete post', { id: toastId });
+        } catch (err) {
+            toast.error(formatFailureToastMessage({
+                action: 'delete social post',
+                rawError: err instanceof Error ? err.message : err,
+            }), { id: toastId });
         }
     };
 
@@ -481,7 +492,11 @@ export default function SocialCommandCenter() {
             setXThreadPosts([]);
             loadData();
         } catch (err: any) {
-            toast.error(err.message || 'Failed to save post', { id: toastId });
+            toast.error(err.message || formatFailureToastMessage({
+                action: 'save social post',
+                rawError: err.message,
+                saved: 'Your draft is saved.',
+            }), { id: toastId });
         }
     };
 

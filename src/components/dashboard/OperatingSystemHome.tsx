@@ -41,6 +41,9 @@ import {
 } from '@/components/ui/intelligence';
 import { UniversalModuleExecutionHeader } from '@/components/dashboard/common/UniversalModuleExecutionHeader';
 import { BusinessControlCenter } from '@/components/dashboard/business/BusinessControlCenter';
+import { DashboardHomeLayoutToggle } from '@/components/dashboard/DashboardHomeLayoutToggle';
+import { WorkspaceInvestmentSummary } from '@/components/dashboard/WorkspaceInvestmentSummary';
+import { BonnieRankedActions } from '@/components/dashboard/bonnie/BonnieRankedActions';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -332,6 +335,7 @@ export function OperatingSystemHome() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <DashboardHomeLayoutToggle />
           <span className="inline-flex min-h-9 items-center rounded-[8px] border border-[var(--ws-border)] px-3 text-xs font-medium text-[var(--ws-text-secondary)]">
             Last 30 days
           </span>
@@ -341,8 +345,11 @@ export function OperatingSystemHome() {
           >
             Customise
           </a>
-          <a href="/dashboard/crm" className={WORKSPACE.action.primary}>
-            Create
+          <a
+            href="/dashboard/crm?quickAdd=true"
+            className={WORKSPACE.action.secondary}
+          >
+            Add contact
           </a>
         </div>
       </header>
@@ -540,6 +547,14 @@ export function OperatingSystemHome() {
         </div>
         <div className="space-y-4 md:space-y-5">
           <TodayPanel items={todayItems} className="xl:sticky xl:top-4 h-fit" />
+          {!loading ? (
+            <BonnieRankedActions
+              stats={stats}
+              pendingApprovals={pendingCount}
+              className="xl:sticky xl:top-4 h-fit"
+            />
+          ) : null}
+          <WorkspaceInvestmentSummary stats={stats} loading={loading} className="xl:sticky xl:top-4 h-fit" />
           {!loading ? (
             <div className={cn(WORKSPACE.panel.base, 'p-4 md:p-5 h-fit')}>
               <p className="text-[11px] font-black uppercase tracking-wider text-[var(--ws-text-muted)] mb-2">Pipeline summary</p>

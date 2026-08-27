@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import type { User } from '@/types';
 import { useTenant } from '@/contexts/TenantContext';
 import { OperatingSystemHome } from '../OperatingSystemHome';
+import { AttentionFirstDashboard } from '../AttentionFirstDashboard';
+import { useWorkspacePreferences } from '@/hooks/useWorkspacePreferences';
 import { OverviewDashboard } from '../views/ModuleDashboardView';
 import { PlatformAdvantageHome } from '../platform-advantage/PlatformAdvantageHome';
 import { IntegratedIntelligencePanel } from '../IntegratedIntelligencePanel';
@@ -28,6 +30,9 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   const [statsError, setStatsError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(() => isSetupChecklistDismissed(user.id));
   const [showMoreContext, setShowMoreContext] = useState(false);
+  const { dashboardHomeLayout, loading: prefsLoading } = useWorkspacePreferences();
+
+  const homeLayout = prefsLoading ? 'operating_system' : dashboardHomeLayout;
 
   useEffect(() => {
     if (!currentTenant?.id || !user.id) return;
@@ -57,7 +62,11 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
         />
       ) : null}
 
-      <OperatingSystemHome />
+      {homeLayout === 'attention_first' ? (
+        <AttentionFirstDashboard />
+      ) : (
+        <OperatingSystemHome />
+      )}
 
       <div className="flex justify-center pt-1">
         <button

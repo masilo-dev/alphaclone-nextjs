@@ -27,6 +27,7 @@ import { supabase } from "@/lib/supabase";
 import { useTenant } from "@/contexts/TenantContext";
 import { extractEmailAddress } from "@/lib/email/composeNavigation";
 import toast from "react-hot-toast";
+import { EmptyStateFromPreset } from "@/components/ui/EmptyState";
 import EmailLeadInsightPanel from "../inbox/EmailLeadInsightPanel";
 import EmailProviderSelector from "@/components/shared/EmailProviderSelector";
 import {
@@ -1049,25 +1050,12 @@ export default function UnifiedInboxTab({
           {/* Scrollable Message List */}
           <div className="flex-1 overflow-y-auto divide-y divide-slate-900">
             {filteredMessages.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 space-y-3">
-                <Inbox className="w-10 h-10 mx-auto opacity-30 text-slate-400" />
+              <div className="p-4">
                 {messages.length === 0 ? (
-                  <>
-                    <p className="text-sm font-semibold text-white">
-                      No messages yet
-                    </p>
-                    <p className="text-xs opacity-60 max-w-[180px] mx-auto">
-                      Connect Zoho, WhatsApp or Facebook to start seeing
-                      conversations here.
-                    </p>
-                    <div className="pt-2">
-                      <span className="inline-flex items-center gap-1 text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-3 py-1.5 rounded-full font-semibold">
-                        Go to Integrations to connect
-                      </span>
-                    </div>
-                  </>
+                  <EmptyStateFromPreset moduleId="messages" />
                 ) : (
-                  <>
+                  <div className="p-4 text-center text-slate-500 space-y-3">
+                    <Inbox className="w-10 h-10 mx-auto opacity-30 text-slate-400" />
                     <p className="text-sm font-medium">No matches</p>
                     <p className="text-xs opacity-60">
                       Try a different filter or clear your search.
@@ -1085,7 +1073,7 @@ export default function UnifiedInboxTab({
                     >
                       Clear all filters
                     </button>
-                  </>
+                  </div>
                 )}
               </div>
             ) : (

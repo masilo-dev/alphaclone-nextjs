@@ -27,14 +27,6 @@ export function buildCrmOverviewNextSteps(deals: Deal[]): CrmNextStepItem[] {
             actionLabel: 'Open Contacts',
             href: '/dashboard/contacts',
         });
-        items.push({
-            id: 'start-deals',
-            tone: 'normal',
-            title: 'Create or import opportunities',
-            detail: 'Define deal value, probability, and expected close so you know what to work this week.',
-            actionLabel: 'Deals workspace',
-            href: '/dashboard/deals',
-        });
         return items;
     }
 

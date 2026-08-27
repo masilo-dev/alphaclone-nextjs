@@ -19,6 +19,7 @@ import { ModulePageLayout } from '../ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
 import { StatusBadge, quoteStatusVariant } from '../ui/StatusBadge';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
+import { EmptyStateFromPreset } from '../ui/EmptyState';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { EmailRecipient } from './crm/emailRecipient';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
@@ -910,13 +911,17 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       <div ref={listRef} className="flex-1 ac-scroll-full pb-20 px-2">
         {loading ? (
           <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+        ) : quotes.length === 0 && filter === 'all' ? (
+          <div className="p-6">
+            <EmptyStateFromPreset moduleId="quotes" onAction={() => setShowCreate(true)} />
+          </div>
         ) : (
           <EnterpriseDataTable
             columns={quoteColumns}
             data={visibleQuotes}
             getRowId={(q) => q.id}
             onRowClick={setSelected}
-            emptyMessage="No quotes in this workspace yet."
+            emptyMessage="No quotes match this filter."
           />
         )}
       </div>

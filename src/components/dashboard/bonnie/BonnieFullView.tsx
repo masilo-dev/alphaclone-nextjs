@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { openBonniePopoutWindow, resolveBonnieDashboardRoute } from '@/lib/bonnie/bonnieWorkspace';
+import { BonnieRankedActions } from '@/components/dashboard/bonnie/BonnieRankedActions';
 import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath, type BonnieModuleId } from '@/lib/bonnie/bonnieToolCatalog';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,7 +48,7 @@ type BonnieFullViewProps = {
 };
 
 export default function BonnieFullView({ variant = 'default' }: BonnieFullViewProps) {
-  const { currentTenant } = useTenant();
+  const { currentTenant, getDashboardStats } = useTenant();
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -88,6 +89,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const [externalPrompt, setExternalPrompt] = useState<string | null>(null);
   const [goalsChasing, setGoalsChasing] = useState(false);
   const [workspaceView, setWorkspaceView] = useState<BonnieWorkspaceView>('chat');
+  const [workspaceStats, setWorkspaceStats] = useState<Record<string, unknown> | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   /** Module-tag: user can pin any conversation to a BonnieModuleId (CRM/Leads/Finance/etc.) */
   const [conversationModuleTag, setConversationModuleTag] = useState<BonnieModuleId | 'general' | null>(null);
@@ -108,6 +110,13 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     }
   }, []);
   useEffect(() => () => stopKeepAlive(), [stopKeepAlive]);
+
+  useEffect(() => {
+    if (!tenantId || !user?.id) return;
+    void getDashboardStats(tenantId, user.id)
+      .then((r) => setWorkspaceStats((r.stats ?? null) as Record<string, unknown> | null))
+      .catch(() => {});
+  }, [tenantId, user?.id, getDashboardStats]);
 
   const [contextItems, setContextItems] = useState<BonnieContextItem[]>([
     {
@@ -587,6 +596,16 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                         setShowWelcome(false);
                         setExternalPrompt(prompt);
                       }}
+                    />
+                  </Box>
+                ) : null}
+                {workspaceStats ? (
+                  <Box flexShrink={0} mb={2}>
+                    <BonnieRankedActions
+                      stats={workspaceStats}
+                      pendingApprovals={pendingCount}
+                      module={effectiveModule === 'general' ? undefined : effectiveModule}
+                      maxItems={2}
                     />
                   </Box>
                 ) : null}

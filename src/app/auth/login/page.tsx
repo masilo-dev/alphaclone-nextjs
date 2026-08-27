@@ -444,12 +444,12 @@ function LoginContent() {
     if (showMfaChallenge) {
         return (
             <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
+                <div className="max-w-md w-full bg-white/95 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
                     <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Shield className="w-10 h-10 text-teal-400" />
+                        <Shield className="w-10 h-10 text-teal-600 dark:text-teal-400" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">Two-Factor Authentication</h2>
-                    <p className="text-slate-400 mb-8 text-sm">
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Two-Factor Authentication</h2>
+                    <p className="text-slate-600 dark:text-slate-400 mb-8 text-sm">
                         Enter the 6-digit verification code from your authenticator app to continue.
                     </p>
 
@@ -488,7 +488,7 @@ function LoginContent() {
                             setMfaCode('');
                             setError('');
                         }}
-                        className="mt-6 text-sm text-slate-500 hover:text-slate-300 transition-colors"
+                        className="mt-6 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                     >
                         Back to Login
                     </button>
@@ -499,7 +499,7 @@ function LoginContent() {
 
     return (
         <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
-            <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
+            <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-white/95 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
                 <div className="mb-3 text-center">
                     {isPWA ? (
                         <div className="mx-auto mb-2 flex justify-center inline-block">
@@ -524,8 +524,8 @@ function LoginContent() {
                             />
                         </Link>
                     )}
-                    <h1 className="text-base font-bold text-white mb-0.5">AlphaClone Systems</h1>
-                    <p className="text-slate-400 text-[11px] mb-2">
+                    <h1 className="text-base font-bold text-slate-900 dark:text-white mb-0.5">AlphaClone Systems</h1>
+                    <p className="text-slate-600 dark:text-slate-400 text-[11px] mb-2">
                         {isRegistering
                             ? '14-day free trial · workspace ready in seconds'
                             : 'Sign in to your business workspace'}
@@ -547,10 +547,10 @@ function LoginContent() {
 
                 <div className="relative my-3">
                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-800" />
+                        <div className="w-full border-t border-slate-200 dark:border-slate-800" />
                     </div>
                     <div className="relative flex justify-center text-[10px] uppercase tracking-wide">
-                        <span className="bg-slate-900/80 px-2 text-slate-500">Or use email</span>
+                        <span className="bg-white dark:bg-slate-900/80 px-2 text-slate-500">Or use email</span>
                     </div>
                 </div>
 
@@ -588,7 +588,7 @@ function LoginContent() {
 
                     <div>
                         <div className="mb-1 flex items-center justify-between gap-2">
-                            <label className="text-xs font-medium text-slate-400">Password</label>
+                            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Password</label>
                             {!isRegistering && (
                                 <button
                                     type="button"
@@ -666,7 +666,7 @@ function LoginContent() {
                     )}
 
                     {isRegistering && (
-                        <div className="space-y-1.5 text-[11px] text-slate-400">
+                        <div className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -694,8 +694,8 @@ function LoginContent() {
                     )}
 
                     {isRegistering && isEuLikeRegistration && (
-                        <div className="space-y-1.5 rounded-lg border border-slate-800 bg-slate-900/60 p-2 text-[11px] text-slate-400">
-                            <p className="font-semibold text-teal-300 uppercase tracking-wide text-[10px]">EU / UK consent</p>
+                        <div className="space-y-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-2 text-[11px] text-slate-600 dark:text-slate-400">
+                            <p className="font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wide text-[10px]">EU / UK consent</p>
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input type="checkbox" checked={euConsent} onChange={(e) => setEuConsent(e.target.checked)} className="mt-0.5 accent-teal-500" />
                                 <span>I consent to data processing per the Privacy Policy.</span>
@@ -775,7 +775,7 @@ function LoginContent() {
                     {!registrationOpen && policyLoaded && (
                         <p className="text-[11px] text-amber-400">Account registration is temporarily closed.</p>
                     )}
-                    <p className="text-xs text-slate-600 uppercase tracking-wider">
+                    <p className="text-xs text-slate-500 dark:text-slate-600 uppercase tracking-wider">
                         Secured by AlphaClone 256-bit Encryption
                     </p>
                 </div>

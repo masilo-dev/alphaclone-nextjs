@@ -663,6 +663,17 @@ html.light .ac-business-scroll .text-slate-300,
   color: #ccfbf1;
 }
 
+html.light .next-step-highlight {
+  background: linear-gradient(180deg, rgba(20, 184, 166, 0.14) 0%, rgba(20, 184, 166, 0.06) 100%);
+  border: 1px solid rgba(20, 184, 166, 0.35);
+  color: #0f766e;
+}
+
+/* Auth / marketing pages in light mode — avoid dark-only network bg + card */
+html.light .page-network-bg.marketing-theme {
+  background: linear-gradient(135deg, #f6f7f9 0%, #eef1f4 50%, #f6f7f9 100%);
+}
+
 .marketing-theme button,
 .marketing-theme .cta {
   font-family: "Inter", "Roboto", "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;

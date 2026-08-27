@@ -169,7 +169,8 @@ import { WidgetErrorBoundary } from "./dashboard/WidgetErrorBoundary";
 import { useOverdueTaskNotifier } from "../hooks/useOverdueTaskNotifier";
 import { useMeetingSession } from "../hooks/useMeetingSession";
 import { DeletionOverlay } from "./dashboard/DeletionOverlay";
-import PullToRefresh from "./common/PullToRefresh";
+import { DashboardScrollRegion, dispatchPullRefresh } from "./common/DashboardScrollRegion";
+import { OfflineQueueIndicator } from "./common/OfflineQueueIndicator";
 import SkipToMainContent from "./accessibility/SkipToMainContent";
 
 const ConferenceTab = React.lazy(() => import("./dashboard/ConferenceTab"));
@@ -205,6 +206,9 @@ const ImprovementsPage = React.lazy(
 );
 const PlatformOwnerHome = React.lazy(
   () => import("./dashboard/admin/PlatformOwnerHome"),
+);
+const BusinessHome = React.lazy(
+  () => import("./dashboard/business/BusinessHome"),
 );
 const OperatingSystemHome = React.lazy(
   () => import("./dashboard/OperatingSystemHome"),
@@ -923,6 +927,33 @@ const Dashboard: React.FC<DashboardProps> = ({
       console.error("[Dashboard] Stats refresh error:", err);
     }
   }, [currentTenant?.id, user.id, getDashboardStats]);
+
+  const handlePullRefresh = useCallback(async () => {
+    const isAdmin =
+      isPlatformAdminRole(user.role) || user.role === "tenant_admin";
+    await Promise.all([
+      refreshStats(),
+      refreshProjects(),
+      refreshInvoices(),
+      messageService.getMessages(user.id, isAdmin, 10).then(({ messages: fetchedMessages, error }) => {
+        if (!error && fetchedMessages) {
+          setMessages(fetchedMessages);
+          localStorage.setItem(
+            `dashboard_messages_${user.id}`,
+            JSON.stringify(fetchedMessages),
+          );
+        }
+      }),
+    ]);
+    dispatchPullRefresh(activeTab);
+  }, [
+    activeTab,
+    user.id,
+    user.role,
+    refreshStats,
+    refreshProjects,
+    refreshInvoices,
+  ]);
 
   // Load dashboard stats separately — re-runs only when tenant ID changes
   useEffect(() => {
@@ -2162,7 +2193,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           return (
             <div data-tour="dashboard-overview">
               <React.Suspense fallback={<TabSkeleton />}>
-                <OperatingSystemHome />
+                <BusinessHome user={user} />
               </React.Suspense>
             </div>
           );
@@ -2527,6 +2558,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
                 )}
                 <EnhancedGlobalSearch user={user} onNavigate={router.push} />
+                <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
                 <ThemeToggle userId={user.id} />
                 <MissedCallsNotification
                   userId={user.id}
@@ -2554,20 +2586,23 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* Main Content Area */}
         <main
           id="main-content"
-          className={`flex-1 min-h-0 ac-workspace-canvas ac-dashboard-main ${
-            [
-              "/dashboard/mail",
-              "/dashboard/comms",
-              "/dashboard/messages",
-              "/dashboard/business/messages",
-              "/dashboard/business/unified-inbox",
-              "/dashboard/zoho/mail",
-            ].includes(activeTab)
-              ? "overflow-hidden"
-              : "overflow-y-auto overflow-x-hidden"
-          } w-full scroll-smooth relative pb-safe md:pb-0`}
+          className="flex-1 min-h-0 overflow-hidden ac-workspace-canvas ac-dashboard-main w-full relative pb-safe md:pb-0"
           role="main"
         >
+          <DashboardScrollRegion
+            scrollable={
+              ![
+                "/dashboard/mail",
+                "/dashboard/comms",
+                "/dashboard/messages",
+                "/dashboard/business/messages",
+                "/dashboard/business/unified-inbox",
+                "/dashboard/zoho/mail",
+              ].includes(activeTab)
+            }
+            onRefresh={handlePullRefresh}
+            className="w-full"
+          >
           {/* Content Wrapper for Max Width & Padding */}
           <div
             className={`${WORKSPACE.canvas.maxWidth} mx-auto ${WORKSPACE.canvas.padding} dashboard-content-padding pb-24 md:pb-6 ${
@@ -2593,6 +2628,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </WidgetErrorBoundary>
             </div>
           </div>
+          </DashboardScrollRegion>
         </main>
       </div>
 

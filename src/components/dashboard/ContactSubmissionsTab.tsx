@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Mail, Clock, CheckCircle, MessageSquare, Inbox, Reply } from 'lucide-react';
 import { inboxService, type InboxSubmission, type InboxStatus } from '../../services/inboxService';
 import { CardSkeleton } from '../ui/Skeleton';
-import { EmptyState } from '../ui/EmptyState';
+import { EmptyState, EmptyStateFromPreset } from '../ui/EmptyState';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
 import { DetailDrawer } from '../ui/DetailDrawer';
@@ -120,11 +120,15 @@ const ContactSubmissionsTab: React.FC = () => {
             {submissions.length > 0 && <ModuleStatCards stats={submissionStats} />}
 
             {filteredSubmissions.length === 0 ? (
+                submissions.length === 0 && filter === 'all' ? (
+                    <EmptyStateFromPreset moduleId="forms" />
+                ) : (
                 <EmptyState
                     icon={Mail}
                     title="No contact submissions"
                     description={filter === 'all' ? 'No one has submitted a form yet' : `No ${filter.toLowerCase()} submissions`}
                 />
+                )
             ) : (
                 <EnterpriseDataTable
                     columns={columns}

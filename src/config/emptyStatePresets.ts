@@ -13,6 +13,7 @@ import {
   Bell,
   Target,
   Headphones,
+  Search,
 } from 'lucide-react';
 
 export interface EmptyStateQuickAction {
@@ -49,7 +50,8 @@ export type EmptyStateModuleId =
   | 'clients'
   | 'forms'
   | 'documents'
-  | 'tickets';
+  | 'tickets'
+  | 'leads';
 
 export const EMPTY_STATE_PRESETS: Record<EmptyStateModuleId, EmptyStatePreset> = {
   crm: {
@@ -188,6 +190,19 @@ export const EMPTY_STATE_PRESETS: Record<EmptyStateModuleId, EmptyStatePreset> =
       { label: 'Channels inbox', href: '/dashboard/business/channels' },
       { label: 'Messenger', href: '/dashboard/business/messages' },
     ],
+  },
+  leads: {
+    icon: Search,
+    title: 'Your pipeline starts with leads',
+    description:
+      'Import existing contacts, add one manually, or discover prospects with Lead Finder. Qualified leads flow into CRM and outreach.',
+    actionLabel: 'Find leads',
+    bonnieSuggestion: 'Bonnie can help qualify leads once they are in CRM.',
+    quickActions: [
+      { label: 'Add manually', href: '/dashboard/crm' },
+      { label: 'Import CSV', href: '/dashboard/crm' },
+    ],
+    importOptions: [{ label: 'CSV import', description: 'Upload a spreadsheet of contacts' }],
   },
 };
 

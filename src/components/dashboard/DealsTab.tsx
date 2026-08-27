@@ -26,6 +26,7 @@ import { Input } from '../ui/UIComponents';
 import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { resolveDealStagePrimaryAction } from '@/lib/behavioral/dealStagePrimaryAction';
 import {
   getDealStageProgress,
   getForwardStageTarget,
@@ -177,6 +178,17 @@ const DealDetail: React.FC<{
   const col = STAGE_COLORS[deal.stage];
   const progress = getDealStageProgress(deal.stage);
   const nextStage = getForwardStageTarget(deal.stage);
+  const stagePrimary = resolveDealStagePrimaryAction(deal.stage);
+
+  const handleStagePrimary = () => {
+    if (stagePrimary.href) {
+      navigate(stagePrimary.href);
+      return;
+    }
+    if (stagePrimary.advanceStage && nextStage) {
+      onStageChange(deal.id, nextStage);
+    }
+  };
 
   const [products, setProducts] = useState<DealProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -338,14 +350,22 @@ const DealDetail: React.FC<{
               <div className="h-full bg-[#E69222] rounded-full transition-all" style={{ width: `${progress.percent}%` }} />
             </div>
           </div>
-          {nextStage && (
+          <button
+            type="button"
+            onClick={handleStagePrimary}
+            className="px-5 py-2 rounded-full text-[13px] font-bold bg-teal-500/20 border border-teal-500/40 text-teal-100 hover:bg-teal-500/30 transition-colors"
+          >
+            {stagePrimary.label}
+          </button>
+          {nextStage && stagePrimary.advanceStage ? (
             <button
+              type="button"
               onClick={() => onStageChange(deal.id, nextStage)}
-              className={`px-4 py-1.5 rounded-full text-[13px] font-bold border capitalize ${col.bg} ${col.text} ${col.border}`}
+              className={`px-3 py-1 rounded-full text-[11px] font-semibold border capitalize ${col.bg} ${col.text} ${col.border} opacity-80`}
             >
-              Move to {nextStage.replace('_', ' ')}
+              Or move to {nextStage.replace('_', ' ')}
             </button>
-          )}
+          ) : null}
           {deal.stage !== 'closed_won' && deal.stage !== 'closed_lost' && (
             <button
               onClick={() => onStageChange(deal.id, 'closed_lost')}

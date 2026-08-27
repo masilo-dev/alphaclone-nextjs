@@ -23,6 +23,7 @@ import { User } from '../../types';
 import toast from 'react-hot-toast';
 import { validateEmailField } from '@/lib/email/isValidEmail';
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { EnterpriseModuleChrome } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 import { PageHeader } from '@/components/dashboard/responsive/PageHeader';
 import { BulkActions, SelectableItem } from '@/components/BulkActions';
@@ -1428,48 +1429,23 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     {isLoading ? (
                         <ListItemSkeleton count={6} />
                     ) : sortedFiles.length === 0 ? (
+                        !viewTrash && !searchQuery ? (
+                            <div className="p-6">
+                                <EmptyStateFromPreset
+                                    moduleId="documents"
+                                    onAction={() => fileInputRef.current?.click()}
+                                />
+                            </div>
+                        ) : (
                         <div className="ac-workspace-panel p-10 text-center">
                             <FolderOpen className="w-14 h-14 text-[var(--ws-text-muted)] mx-auto mb-4" aria-hidden="true" />
                             <p className="text-sm font-medium text-[var(--ws-text-secondary)]">
                                 {viewTrash
                                     ? 'Trash is empty.'
-                                    : searchQuery
-                                        ? 'No documents match your search.'
-                                        : 'No documents yet.'}
+                                    : 'No documents match your search.'}
                             </p>
-                            {!viewTrash && !searchQuery ? (
-                                <p className="text-xs text-[var(--ws-text-muted)] mt-1">
-                                    Upload a PDF, Word doc, or image to get started.
-                                </p>
-                            ) : null}
-                            {!viewTrash && !searchQuery ? (
-                                <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
-                                    <Button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        icon={<Upload className="w-4 h-4" aria-hidden="true" />}
-                                    >
-                                        Upload
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => scanInputRef.current?.click()}
-                                        icon={<ScanLine className="w-4 h-4" aria-hidden="true" />}
-                                    >
-                                        Scan
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={handleCreateDocument}
-                                        icon={<Type className="w-4 h-4" aria-hidden="true" />}
-                                    >
-                                        Write doc
-                                    </Button>
-                                </div>
-                            ) : null}
                         </div>
+                        )
                     ) : (
                         <div className="grid grid-cols-1 gap-3">
                             {pagination.pagedFiles.map((file) => {

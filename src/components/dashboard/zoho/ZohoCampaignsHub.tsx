@@ -18,6 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
@@ -349,7 +350,9 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
       ) : tab === 'campaigns' ? (
         <div className="space-y-3">
           {campaigns.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-12">No campaigns yet. Create one in the New Campaign tab.</p>
+            <div className="py-6">
+              <EmptyStateFromPreset moduleId="campaigns" onAction={() => setTab('compose')} />
+            </div>
           ) : (
             campaigns.map((c) => {
               const report = c.campaignKey ? reports[c.campaignKey] : undefined;

@@ -80,7 +80,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
     yearly: 432,
     tagline: 'Serious daily operating capacity for solo founders and small teams running real workflows.',
     highlight: true,
-    badge: 'MOST POPULAR',
+    badge: 'Recommended for active founders',
     features: [
       `${PRO_DAILY_LIMIT} emails sent / day`,
       `${PRO_DAILY_LIMIT} leads added / day`,

@@ -9,6 +9,8 @@ import {
   Sparkles, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { propagation } from '@/lib/behavioral/propagationBridge';
 
 type SearchRecord = {
   id: string; name: string; query?: string; location?: string; industry?: string;
@@ -76,6 +78,7 @@ const buttonClass = 'inline-flex min-h-11 items-center justify-center gap-2 roun
 
 export default function ScraperCampaignsPage() {
   const tenant = useCurrentTenantSafe();
+  const router = useRouter();
   const [active, setActive] = useState<(typeof nav)[number]>('Discover');
   const [advanced, setAdvanced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -222,7 +225,11 @@ export default function ScraperCampaignsPage() {
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || 'Candidate review could not be saved');
       setCandidates((current) => current.map((item) => item.id === candidate.id ? { ...item, review_status: decision } : item));
-      toast.success(decision === 'accepted' ? 'Candidate saved to CRM. No outreach was sent.' : 'Candidate rejected.');
+      if (decision === 'accepted') {
+        propagation.leadAccepted(tenant.id, candidate.id, (path) => router.push(path));
+      } else {
+        toast.success('Candidate rejected.');
+      }
       await loadSearches();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Candidate review could not be saved');

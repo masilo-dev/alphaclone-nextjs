@@ -11,6 +11,8 @@ type NextPack = {
     headline: string;
     detail: string;
     links: { label: string; path: string }[];
+    /** Von Restorff: one primary CTA per toast (index into links). */
+    primaryLinkIndex?: number;
 };
 
 function localizeNextPack(pack: NextPack): NextPack {
@@ -18,6 +20,7 @@ function localizeNextPack(pack: NextPack): NextPack {
     return {
         headline: uiTranslate(lang, pack.headline),
         detail: uiTranslate(lang, pack.detail),
+        primaryLinkIndex: pack.primaryLinkIndex,
         links: pack.links.map((l) => ({ ...l, label: uiTranslate(lang, l.label) })),
     };
 }
@@ -105,8 +108,8 @@ export function celebrateWinRitual(args: {
                 role="status"
                 className={
                     leveledUp
-                        ? 'pointer-events-auto w-[min(100vw-2rem,22rem)] rounded-2xl border-2 border-amber-400/70 bg-gradient-to-br from-amber-500/15 via-slate-900 to-purple-500/10 p-4 shadow-2xl shadow-amber-500/20 relative overflow-hidden'
-                        : 'pointer-events-auto w-[min(100vw-2rem,20rem)] rounded-xl border border-emerald-400/30 bg-slate-900 p-3.5 shadow-xl'
+                        ? 'pointer-events-auto w-[min(100vw-2rem,22rem)] rounded-2xl border-2 border-amber-400/70 bg-gradient-to-br from-amber-500/15 via-[var(--surface-elevated)] to-purple-500/10 dark:via-slate-900 p-4 shadow-2xl shadow-amber-500/20 relative overflow-hidden'
+                        : 'pointer-events-auto w-[min(100vw-2rem,20rem)] rounded-xl border border-emerald-400/30 bg-[var(--surface-elevated)] dark:bg-slate-900 p-3.5 shadow-xl'
                 }
             >
                 {leveledUp && (
@@ -117,8 +120,8 @@ export function celebrateWinRitual(args: {
                         <p className={leveledUp ? 'text-base font-black text-amber-300 tracking-wide' : 'text-sm font-bold text-emerald-300'}>
                             {headline}
                         </p>
-                        <p className="text-xs text-slate-300 mt-1 leading-snug">{subhead}</p>
-                        <div className="mt-2 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                        <p className="text-xs text-[var(--text-secondary)] dark:text-slate-300 mt-1 leading-snug">{subhead}</p>
+                        <div className="mt-2 h-1.5 rounded-full bg-[var(--surface-hover)] dark:bg-slate-800 overflow-hidden">
                             <div
                                 className={
                                     leveledUp
@@ -128,14 +131,14 @@ export function celebrateWinRitual(args: {
                                 style={{ width: `${after.pct}%` }}
                             />
                         </div>
-                        <p className="mt-1.5 text-[10px] text-slate-500 tabular-nums">
+                        <p className="mt-1.5 text-[10px] text-[var(--text-muted)] dark:text-slate-500 tabular-nums">
                             Level {after.level} · {after.xp.toLocaleString()} XP · next at {after.next.toLocaleString()}
                         </p>
                     </div>
                     <button
                         type="button"
                         onClick={() => toast.dismiss(tid.id)}
-                        className="text-slate-500 hover:text-slate-300 flex-shrink-0"
+                        className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] dark:text-slate-500 dark:hover:text-slate-300 flex-shrink-0"
                         aria-label="Dismiss"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -347,10 +350,22 @@ const PACKS: Record<string, NextPack> = {
         headline: 'Lead saved — move them towards qualified',
         detail:
             'Enrich what you know with email, phone, company size, or LinkedIn context. Set a clear follow-up; leads that sit die quiet deaths.',
+        primaryLinkIndex: 1,
         links: [
             { label: 'Lead Finder', path: '/dashboard/business/lead-finder' },
-            { label: 'Contacts', path: '/dashboard/contacts' },
+            { label: 'Qualify in CRM', path: '/dashboard/crm' },
             { label: 'Outreach', path: '/dashboard/business/campaigns' },
+        ],
+    },
+    lead_finder_accepted: {
+        headline: 'Prospect saved to CRM',
+        detail:
+            'No outreach was sent automatically. Review the record, qualify fit, then start outreach when you are ready.',
+        primaryLinkIndex: 0,
+        links: [
+            { label: 'Qualify in CRM', path: '/dashboard/crm' },
+            { label: 'Add to list', path: '/dashboard/leads/campaigns' },
+            { label: 'Start outreach', path: '/dashboard/business/campaigns' },
         ],
     },
     client_saved: {
@@ -367,6 +382,8 @@ const PACKS: Record<string, NextPack> = {
 
 export type ActionNextStepKey = keyof typeof PACKS;
 
+export { emitCrossModulePropagation, propagation } from '@/lib/behavioral/propagationBridge';
+
 export function showActionNextSteps(
     key: ActionNextStepKey,
     navigate: NavigateToTab,
@@ -381,15 +398,17 @@ export function showActionNextSteps(
         (tid) => (
             <div
                 role="status"
-                className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-slate-500 bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
+                className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-[var(--border-default)] bg-[var(--surface-elevated)] dark:border-slate-500 dark:bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
             >
                 <div className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide next-step-highlight">
                     What next
                 </div>
-                <p className="text-sm font-bold text-white leading-snug mt-2">{pack.headline}</p>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">{pack.detail}</p>
+                <p className="text-sm font-bold text-[var(--text-primary)] dark:text-white leading-snug mt-2">{pack.headline}</p>
+                <p className="text-xs text-[var(--text-secondary)] dark:text-slate-300 mt-2 leading-relaxed">{pack.detail}</p>
                 <div className="flex flex-wrap gap-2 mt-3">
-                    {pack.links.map((l) => (
+                    {pack.links.map((l, index) => {
+                        const isPrimary = (pack.primaryLinkIndex ?? 0) === index;
+                        return (
                         <button
                             key={l.path + l.label}
                             type="button"
@@ -397,16 +416,21 @@ export function showActionNextSteps(
                                 navigate(l.path);
                                 toast.dismiss(tid.id);
                             }}
-                            className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors"
+                            className={
+                                isPrimary
+                                    ? 'text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors'
+                                    : 'text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] text-[var(--text-primary)] dark:border-white/10 dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-slate-200 transition-colors'
+                            }
                         >
                             {l.label}
                         </button>
-                    ))}
+                        );
+                    })}
                 </div>
                 <button
                     type="button"
                     onClick={() => toast.dismiss(tid.id)}
-                    className="mt-3 text-xs text-slate-500 hover:text-slate-400 uppercase tracking-wide"
+                    className="mt-3 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] dark:text-slate-500 dark:hover:text-slate-400 uppercase tracking-wide"
                 >
                     {uiTranslate(lang, 'Dismiss')}
                 </button>
@@ -427,15 +451,15 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
             <div
                 role="dialog"
                 aria-labelledby="inv-next-title"
-                className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-teal-500/40 bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
+                className="max-w-sm w-[min(100vw-2rem,22rem)] rounded-xl border border-teal-500/40 bg-[var(--surface-elevated)] dark:bg-slate-900 shadow-xl p-4 text-left pointer-events-auto"
             >
                 <div className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wide next-step-highlight">
                     What next
                 </div>
-                <p id="inv-next-title" className="text-sm font-bold text-white leading-snug">
+                <p id="inv-next-title" className="text-sm font-bold text-[var(--text-primary)] dark:text-white leading-snug">
                     {uiTranslate(lang, 'Invoice saved')}
                 </p>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                <p className="text-xs text-[var(--text-secondary)] dark:text-slate-300 mt-2 leading-relaxed">
                     {uiTranslate(
                         lang,
                         'Did you already send this to the client (email, SMS, portal, or handoff)?'
@@ -464,19 +488,19 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                             toast.dismiss(t.id);
                             showActionNextSteps('invoice_not_sent_yet', navigate);
                         }}
-                        className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-colors"
+                        className="text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[var(--surface-hover)] hover:bg-[var(--surface-secondary)] text-[var(--text-primary)] dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-white transition-colors"
                     >
                         {uiTranslate(lang, 'Not yet')}
                     </button>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-700">
+                <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-[var(--border-default)] dark:border-slate-700">
                     <button
                         type="button"
                         onClick={() => {
                             navigate('/dashboard/business/billing');
                             toast.dismiss(t.id);
                         }}
-                        className="text-[11px] font-semibold px-2 py-1 rounded-md text-teal-400 hover:text-teal-300"
+                        className="text-[11px] font-semibold px-2 py-1 rounded-md text-teal-700 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"
                     >
                         {uiTranslate(lang, 'Open Billing')}
                     </button>
@@ -486,7 +510,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                             navigate('/dashboard/business/messages');
                             toast.dismiss(t.id);
                         }}
-                        className="text-[11px] font-semibold px-2 py-1 rounded-md text-teal-400 hover:text-teal-300"
+                        className="text-[11px] font-semibold px-2 py-1 rounded-md text-teal-700 hover:text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"
                     >
                         {uiTranslate(lang, 'Messages')}
                     </button>
@@ -494,7 +518,7 @@ export function showInvoiceCreatedWithSendPrompt(navigate: NavigateToTab): void 
                 <button
                     type="button"
                     onClick={() => toast.dismiss(t.id)}
-                    className="mt-2 text-xs text-slate-500 hover:text-slate-400 uppercase tracking-wide"
+                    className="mt-2 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] dark:text-slate-500 dark:hover:text-slate-400 uppercase tracking-wide"
                 >
                     {uiTranslate(lang, 'Dismiss')}
                 </button>

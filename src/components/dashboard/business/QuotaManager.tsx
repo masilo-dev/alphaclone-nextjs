@@ -6,6 +6,8 @@ import { quotaService, type DetailedUsageSummary } from '../../../services/quota
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
 import toast from 'react-hot-toast';
+import { formatPlanDisplayName, formatQuotaResetLabel } from '@/lib/entitlements/quotaDisplay';
+import { formatFailureToastMessage } from '@/lib/copy/formatFailureForUser';
 
 interface QuotaManagerProps {
     className?: string;
@@ -35,7 +37,10 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
             setSummary(usage);
         } catch (error) {
             console.error('Error loading quota data:', error);
-            toast.error('Failed to load quota information');
+            toast.error(formatFailureToastMessage({
+                action: 'load quota information',
+                rawError: error,
+            }));
         } finally {
             setLoading(false);
         }
@@ -89,7 +94,7 @@ const QuotaManager: React.FC<QuotaManagerProps> = ({ className }) => {
                     </h3>
                     <p className="text-slate-400 text-sm mt-1">
                         {summary
-                            ? `${summary.plan.toUpperCase()} plan · resets daily at midnight UTC`
+                            ? `${formatPlanDisplayName(summary.plan)} plan · ${formatQuotaResetLabel()}`
                             : 'Track your daily usage across different resources'}
                     </p>
                 </div>

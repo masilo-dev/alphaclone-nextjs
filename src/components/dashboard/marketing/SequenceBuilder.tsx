@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, Trash2, Loader2, Mail } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 
 interface SequenceStep {
   id?: string;
@@ -169,7 +169,7 @@ export default function SequenceBuilder() {
       </div>
 
       {sequences.length === 0 ? (
-        <EmptyState icon={Mail} title="No sequences" description="Build a drip sequence to nurture leads over time." />
+        <EmptyStateFromPreset moduleId="campaigns" onAction={() => setSteps([{ delay_days: 0, subject: '', body: '' }])} />
       ) : (
         <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
           {sequences.map((s) => (

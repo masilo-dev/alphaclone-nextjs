@@ -36,6 +36,8 @@ import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/desig
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { TASKS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
+import { offlineService } from '@/services/offlineService';
+import { usePullToRefreshListener } from '@/components/common/DashboardScrollRegion';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -365,8 +367,9 @@ const TaskCreateContent: React.FC<{
   onClose: () => void;
   tenantId?: string;
   initialProjectId?: string;
-}> = ({ onCreate, creating, onClose, tenantId, initialProjectId }) => {
-  const [title, setTitle] = useState('');
+  initialTitle?: string;
+}> = ({ onCreate, creating, onClose, tenantId, initialProjectId, initialTitle }) => {
+  const [title, setTitle] = useState(initialTitle || '');
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState('');
   const [projectId, setProjectId] = useState(initialProjectId || '');
@@ -557,6 +560,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   }, [hasMore, loadPage, loading, page]);
 
   useEffect(() => { load(); }, [load]);
+  usePullToRefreshListener(load);
 
   const handleComplete = async (id: string) => {
     if (!currentTenant?.id) return;
@@ -581,6 +585,25 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
 
   const handleUpdate = async (id: string, changes: Partial<Task>) => {
     if (!currentTenant?.id) return;
+
+    if (!offlineService.isOnline() && !id.startsWith('offline-')) {
+      try {
+        await offlineService.init();
+        await offlineService.enqueueMutation(
+          { tenantId: currentTenant.id, userId: user.id },
+          'task.update',
+          { taskId: id, changes },
+          { entityId: id },
+        );
+        setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...changes } : t)));
+        toast.success('Task update saved offline — it will sync when you reconnect.');
+        return;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Could not queue offline update');
+        return;
+      }
+    }
+
     const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id], changes }),
     });
@@ -629,6 +652,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
 
   const searchParams = useSearchParams();
   const initialProjectId = searchParams?.get('project') || undefined;
+  const initialTitle = searchParams?.get('title') || undefined;
 
   useEffect(() => {
     if (!searchParams) return;
@@ -651,6 +675,40 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     if (!currentTenant?.id) return;
     setCreating(true);
     try {
+      if (!offlineService.isOnline()) {
+        await offlineService.init();
+        const record = await offlineService.enqueueMutation(
+          { tenantId: currentTenant.id, userId: user.id },
+          'task.create',
+          {
+            title: data.title,
+            priority: data.priority,
+            due_date: data.due_date || null,
+            related_to_project: data.related_to_project || null,
+            related_to_deal: data.related_to_deal || null,
+            related_to_contact: data.related_to_contact || null,
+            related_to_lead: data.related_to_lead || null,
+          },
+        );
+        const optimistic: Task = {
+          id: `offline-${record.id}`,
+          title: data.title,
+          status: 'todo',
+          priority: data.priority,
+          due_date: data.due_date,
+          project_id: data.related_to_project,
+          related_to_deal: data.related_to_deal ?? null,
+          related_to_contact: data.related_to_contact ?? null,
+          related_to_lead: data.related_to_lead ?? null,
+          tenant_id: currentTenant.id,
+          created_at: new Date().toISOString(),
+        };
+        setTasks((prev) => [optimistic, ...prev]);
+        setCreateOpen(false);
+        toast.success('Task saved offline — it will sync when you reconnect.');
+        return;
+      }
+
       const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1062,7 +1120,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       </button>
 
       <DetailDrawer open={createOpen} onOpenChange={setCreateOpen} title="New task">
-        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} tenantId={currentTenant?.id} initialProjectId={initialProjectId} />
+        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} tenantId={currentTenant?.id} initialProjectId={initialProjectId} initialTitle={initialTitle} />
       </DetailDrawer>
 
       <DetailDrawer

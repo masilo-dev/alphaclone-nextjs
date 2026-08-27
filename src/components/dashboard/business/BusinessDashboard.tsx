@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     LayoutDashboard,
     Users,
@@ -159,6 +159,7 @@ import { extractTenantBranding } from '@/lib/tenantBranding';
 import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
 import { DashboardRouteTransition } from '../DashboardRouteTransition';
+import { DashboardScrollRegion, dispatchPullRefresh } from '@/components/common/DashboardScrollRegion';
 
 /** Full-bleed tabs: no outer padding; child manages its own scroll (mail, projects, etc.). Social pages scroll with the main column like CRM. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
@@ -175,6 +176,18 @@ const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/pwa-settings',
 ];
 
+const BUSINESS_PULL_SCROLL_ROUTES = new Set([
+    '/dashboard/leads/campaigns',
+    '/dashboard/leads/finder',
+    '/dashboard/business/projects',
+    '/dashboard/sales-agent',
+]);
+
+function isBusinessMainScrollable(tabRoute: string): boolean {
+    if (!DASHBOARD_EDGE_TO_EDGE_TABS.includes(tabRoute)) return true;
+    return BUSINESS_PULL_SCROLL_ROUTES.has(tabRoute);
+}
+
 interface BusinessDashboardProps {
     user: User;
     onLogout: () => void;
@@ -185,6 +198,7 @@ interface BusinessDashboardProps {
 
 export default function BusinessDashboard({ currentTenant: propTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const { t } = useLanguage();
     const route = useMemo(
         () => normalizeBusinessRoute(activeTab, user.role),
@@ -413,6 +427,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     });
 
     const projects = projectData?.projects || [];
+
+    const handlePullRefresh = React.useCallback(async () => {
+        await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentTenant?.id, user.id] }),
+            queryClient.invalidateQueries({ queryKey: ['projects', user.id] }),
+        ]);
+        dispatchPullRefresh(route);
+    }, [queryClient, currentTenant?.id, user.id, route]);
 
     // Check for Due Tasks on Load
     React.useEffect(() => {
@@ -1237,17 +1259,15 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 </header>
 
                 {/* Dynamic Content Area */}
-                <div
+                <DashboardScrollRegion
+                    scrollable={isBusinessMainScrollable(route)}
+                    onRefresh={handlePullRefresh}
                     className={`flex-1 min-h-0 ac-workspace-canvas ac-business-scroll ${
-                        DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
-                            ? // Lead Finder & similar tall modules must scroll; mail/messages keep clipped shells.
-                              route === '/dashboard/leads/campaigns' ||
-                              route === '/dashboard/leads/finder' ||
-                              route === '/dashboard/business/projects' ||
-                              route === '/dashboard/sales-agent'
-                                ? 'overflow-y-auto overflow-x-hidden p-0'
-                                : 'overflow-hidden p-0'
-                            : `overflow-y-auto overflow-x-hidden ${WORKSPACE.canvas.padding} dashboard-content-padding`
+                        isBusinessMainScrollable(route)
+                            ? DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
+                                ? 'overflow-x-hidden p-0'
+                                : `overflow-x-hidden ${WORKSPACE.canvas.padding} dashboard-content-padding`
+                            : 'p-0'
                     }`}
                 >
                     <WidgetErrorBoundary title="Business Dashboard Error">
@@ -1264,7 +1284,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         </EnterpriseTabWrapper>
                         </DashboardRouteTransition>
                     </WidgetErrorBoundary>
-                </div>
+                </DashboardScrollRegion>
             </main>
 
             {/* Contract Modal */}

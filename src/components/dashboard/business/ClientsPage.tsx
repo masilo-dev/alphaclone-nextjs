@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import Link from 'next/link';
 import { offlineService } from '@/services/offlineService';
+import { usePullToRefreshListener } from '@/components/common/DashboardScrollRegion';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessClientService, BusinessClient } from '../../../services/businessClientService';
@@ -238,6 +239,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
         void loadClients(true);
     }, [currentTenant, pathname, showArchived]); // searchTerm is omitted to avoid re-fetching on every keystroke; we'll use a manual search button or debounce if needed
+
+    usePullToRefreshListener(() => loadClients(true), Boolean(currentTenant));
 
     useEffect(() => {
         if (stageParam) {

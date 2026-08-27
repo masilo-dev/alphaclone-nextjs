@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { generateMessengerReply } from '@/services/unifiedAIService';
 import toast from 'react-hot-toast';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
 
 interface Conversation {
@@ -312,12 +312,16 @@ export default function MessengerInbox() {
                                 ))}
                             </div>
                         ) : filteredConversations.length === 0 ? (
+                            conversations.length === 0 ? (
+                                <EmptyStateFromPreset moduleId="messages" className="py-20 opacity-80" />
+                            ) : (
                             <EmptyState
                                 icon={Inbox}
                                 title="No conversations"
-                                description="Your inbox is empty right now. New messages will appear here when customers reach out."
+                                description="No conversations match your search."
                                 className="py-20 opacity-80"
                             />
+                            )
                         ) : (
                             filteredConversations.map(conv => (
                                 <button

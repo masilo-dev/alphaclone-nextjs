@@ -12,11 +12,12 @@ import { useTenant } from '../../contexts/TenantContext';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { offlineService } from '@/services/offlineService';
 import { DetailDrawer } from '../ui/DetailDrawer';
 import { StatusBadge, invoiceStatusVariant, expenseStatusVariant } from '../ui/StatusBadge';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
 import { Input } from '../ui/UIComponents';
-import EmptyState from '@/components/ui/EmptyState';
+import { EmptyStateFromPreset } from '../ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
 import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 
@@ -140,16 +141,54 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
     if (!currentTenant?.id || !newExpense.description.trim()) return;
     setSavingExpense(true);
     try {
+      const amount = Number(newExpense.amount) || 0;
+      const date = new Date().toISOString().split('T')[0];
+      const description = newExpense.description.trim();
+
+      if (!offlineService.isOnline()) {
+        await offlineService.init();
+        const record = await offlineService.enqueueMutation(
+          { tenantId: currentTenant.id, userId: user.id },
+          'expense.draft',
+          {
+            date,
+            amount,
+            description,
+            vendor_name: newExpense.vendor.trim() || undefined,
+            currency: 'USD',
+            payment_method: 'card',
+          },
+        );
+        setExpenses((prev) => [
+          {
+            id: `offline-${record.id}`,
+            description,
+            amount,
+            category: newExpense.category,
+            vendor: newExpense.vendor.trim() || undefined,
+            date,
+            status: 'pending',
+            tenant_id: currentTenant.id,
+            created_at: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+        toast.success('Expense saved offline — it will sync when you reconnect.');
+        setShowAddExpense(false);
+        setNewExpense({ description: '', amount: '', category: 'other', vendor: '' });
+        return;
+      }
+
       const response = await fetch('/api/finance/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
         action: 'create',
         tenantId: currentTenant.id,
-        description: newExpense.description.trim(),
-        amount: Number(newExpense.amount) || 0,
+        description,
+        amount,
         vendor_name: newExpense.vendor.trim() || undefined,
-        date: new Date().toISOString().split('T')[0],
+        date,
       }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || 'Failed to add expense');
@@ -350,6 +389,10 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             </div>
             {loading ? (
               <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+            ) : invoices.length === 0 && invFilter === 'all' ? (
+              <div className="p-6">
+                <EmptyStateFromPreset moduleId="invoices" onAction={handleFabClick} />
+              </div>
             ) : (
               <div className="px-2">
                 <EnterpriseDataTable

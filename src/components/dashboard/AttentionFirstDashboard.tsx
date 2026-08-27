@@ -25,6 +25,7 @@ import {
 } from '@/lib/copy/businessFriendlyErrors';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/format/currency';
+import { DashboardHomeLayoutToggle } from '@/components/dashboard/DashboardHomeLayoutToggle';
 import { WORKSPACE } from '@/constants/design';
 
 interface AttentionItem {
@@ -193,13 +194,16 @@ export function AttentionFirstDashboard() {
                 : 'Focus on what needs you, then let Bonnie handle the rest.'}
             </p>
           </div>
-          <Link
-            href="/dashboard/bonnie"
-            className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-2 min-h-11 px-4 shrink-0')}
-          >
-            <Bot className="w-4 h-4" aria-hidden />
-            Ask Bonnie
-          </Link>
+          <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
+            <DashboardHomeLayoutToggle />
+            <Link
+              href="/dashboard/bonnie"
+              className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-2 min-h-11 px-4 shrink-0')}
+            >
+              <Bot className="w-4 h-4" aria-hidden />
+              Ask Bonnie
+            </Link>
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">

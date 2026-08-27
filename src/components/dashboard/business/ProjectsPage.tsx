@@ -39,6 +39,7 @@ import toast from 'react-hot-toast';
 import { ProjectPortalShareDialog } from './ProjectPortalShareDialog';
 import { showActionNextSteps, celebrateWinRitual, XP_TIERS } from '../../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
+import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { exportToCSV } from '../../../utils/exportUtils';
 import { TaskCountdown } from '../tasks/TaskCountdown';
 import { ProjectStage } from '../../../types';
@@ -312,7 +313,14 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                         </div>
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
-                            {filteredProjects.length === 0 ? (
+                            {projects.length === 0 ? (
+                                <div className="py-8 px-4">
+                                    <EmptyStateFromPreset
+                                        moduleId="projects"
+                                        onAction={() => setShowAddModal(true)}
+                                    />
+                                </div>
+                            ) : filteredProjects.length === 0 ? (
                                 <div className="py-16 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-3xl border border-dashed border-white/5">
                                     <Target className="w-12 h-12 mb-3 opacity-20" />
                                     <p className="text-xs text-slate-500">No projects found</p>

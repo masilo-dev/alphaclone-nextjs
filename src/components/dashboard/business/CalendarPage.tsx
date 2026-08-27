@@ -24,6 +24,7 @@ import {
 import toast from 'react-hot-toast';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { EmptyStatePlaceholder } from '../../ui/EmptyStatePlaceholder';
+import { EmptyStateFromPreset } from '../../ui/EmptyState';
 import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 
@@ -464,16 +465,19 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 </span>
             </div>
 
-            {filteredEvents.length === 0 && (
+            {allEvents.length === 0 ? (
+                <EmptyStateFromPreset
+                    moduleId="calendar"
+                    onAction={() => setShowAddModal(true)}
+                />
+            ) : filteredEvents.length === 0 ? (
                 <EmptyStatePlaceholder
                     icon={CalendarIcon}
-                    title="No events scheduled"
-                    description="Add a meeting, task, or booking to bring this calendar to life."
+                    title="No events match filters"
+                    description="Turn on more event sources or add something new."
                     action={{ label: 'Add Event', onClick: () => setShowAddModal(true) }}
-                    secondaryAction={{ label: 'Connect Google Calendar', onClick: () => router.push(`/api/auth/google/calendar/connect?userId=${user.id}`) }}
                 />
-            )}
-
+            ) : null}
 
             {/* Desktop Calendar Grid */}
             <div className="hidden md:block bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
