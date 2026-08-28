@@ -12,9 +12,9 @@ function normalizeSubscriptionStatus(raw: unknown): string {
   return value;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
-    await requirePlatformSuperAdmin(req);
+    await requirePlatformSuperAdmin();
     const admin = createSupabaseAdminClient();
     const today = new Date().toISOString().slice(0, 10);
 
@@ -95,6 +95,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ rows });
   } catch (error) {
-    return routeErrorResponse(error, 'Tenant billing summary could not be loaded', req);
+    return routeErrorResponse(error, 'Tenant billing summary could not be loaded', _req);
   }
 }

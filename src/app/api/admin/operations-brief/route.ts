@@ -54,7 +54,7 @@ export async function GET() {
     .order('created_at', { ascending: false })
     .limit(100);
 
-  let logs = primary.data;
+  let rawRows: Record<string, unknown>[] | null = (primary.data as Record<string, unknown>[] | null) ?? null;
   let error = primary.error;
 
   if (error && /column|does not exist/i.test(error.message || '')) {
@@ -63,7 +63,7 @@ export async function GET() {
       .select('id, message, severity, url, created_at, user_agent')
       .order('created_at', { ascending: false })
       .limit(100);
-    logs = legacy.data;
+    rawRows = (legacy.data as Record<string, unknown>[] | null) ?? null;
     error = legacy.error;
   }
 
@@ -71,7 +71,7 @@ export async function GET() {
     return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
   }
 
-  const normalized = ((logs as Record<string, unknown>[]) || []).map(normalizeErrorLogRow);
+  const normalized = (rawRows || []).map(normalizeErrorLogRow);
   const brief = buildOperationsBrief(normalized);
   return NextResponse.json({
     brief,
