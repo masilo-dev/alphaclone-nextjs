@@ -21,29 +21,15 @@ import {
   IconInvoicing,
   IconLeads,
   IconPipeline,
-  IconTasks,
   IconMoney,
-  IconCrm,
 } from '@/components/icons/alphaclone';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
-import { BacklitSurface } from '@/components/ui/os/BacklitSurface';
 import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
 import { buildDashboardDecisionViewModel } from '@/lib/analytics/dashboardViewModel';
 import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
-import {
-  IntelligentKpiCard,
-  MaterialChangesStrip,
-  BonnieBrief,
-  BottleneckDetector,
-  OpportunityHighlight,
-  FunnelVisualization,
-} from '@/components/ui/intelligence';
-import { UniversalModuleExecutionHeader } from '@/components/dashboard/common/UniversalModuleExecutionHeader';
-import { BusinessControlCenter } from '@/components/dashboard/business/BusinessControlCenter';
+import { IntelligentKpiCard } from '@/components/ui/intelligence';
 import { DashboardHomeLayoutToggle } from '@/components/dashboard/DashboardHomeLayoutToggle';
-import { WorkspaceInvestmentSummary } from '@/components/dashboard/WorkspaceInvestmentSummary';
-import { BonnieRankedActions } from '@/components/dashboard/bonnie/BonnieRankedActions';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -137,7 +123,6 @@ export function OperatingSystemHome() {
   const outstanding = Number(normalizedStats.outstanding ?? normalizedStats.pendingRevenue ?? 0);
   const outstandingPrev = Number(normalizedStats.outstandingPrev ?? 0);
   const tasksCompleted = Number(normalizedStats.tasksCompleted ?? normalizedStats.completedTasks ?? 0);
-  const tasksCompletedPrev = Number(normalizedStats.tasksCompletedPrev ?? 0);
   const openTasks = Number(normalizedStats.openTasks ?? normalizedStats.open_tasks ?? 0);
   const overdueInvoices = Number(normalizedStats.overdueInvoices ?? normalizedStats.overdue_invoices ?? 0);
 
@@ -282,7 +267,6 @@ export function OperatingSystemHome() {
 
   const revenueTrend = [revenuePrev * 0.8, revenuePrev, revenuePrev * 0.95, revenue * 0.9, revenue];
   const leadsTrend = [leadsPrev * 0.7, leadsPrev * 0.9, leadsPrev, leads * 0.85, leads];
-  const tasksTrend = [tasksCompletedPrev * 0.6, tasksCompletedPrev * 0.8, tasksCompletedPrev, tasksCompleted * 0.9, tasksCompleted];
 
 
   if (!currentTenant?.id) {
@@ -354,62 +338,6 @@ export function OperatingSystemHome() {
         </div>
       </header>
 
-      {/* OS-wide execution state: reads live KPIs to compute system posture */}
-      <UniversalModuleExecutionHeader
-        moduleName="AlphaClone Business OS"
-        recordTitle="Operational Command Overview — All Systems"
-        nextActionState={{
-          currentState: loading ? 'Loading…' : `${revenue > 0 ? `£${Math.round(revenue / 1000)}k rev` : 'No revenue yet'} · ${leads} leads · ${dealsWon} deals won`,
-          owner: user?.name || user?.email || 'Business Owner',
-          nextAction: pendingCount > 0
-            ? `Review ${pendingCount} Bonnie approval(s) — actions are blocked`
-            : overdueInvoices > 0
-              ? `Chase ${overdueInvoices} overdue invoice(s) — cash is locked`
-              : openTasks > 0
-                ? `Execute ${openTasks} open task(s) to advance delivery`
-                : 'No critical blockers — continue growth execution',
-          deadline: overdueInvoices > 0 ? `${overdueInvoices} invoices overdue` : 'Rolling 30-day window',
-          blocker: pendingCount > 0
-            ? `${pendingCount} Bonnie action(s) awaiting approval`
-            : overdueInvoices > 0
-              ? `${overdueInvoices} unpaid invoice(s) — cash flow risk`
-              : null,
-          expectedOutcome: 'Revenue growing, leads converting, tasks completing, invoices paid',
-          outcomeStatus: !loading && overdueInvoices === 0 && pendingCount === 0 ? 'verified' : 'pending',
-          verifiedResult: !loading
-            ? `Revenue £${Math.round(revenue / 1000)}k · ${leads} leads · ${dealsWon} deals won · ${tasksCompleted} tasks done`
-            : 'Loading KPIs…',
-          authorityLevel: pendingCount > 0 ? 'approval_required' : 'automatic_logged',
-        }}
-        questions={{
-          whatCameIn: `Business OS dashboard data: revenue, leads, deals, tasks, invoices, approvals`,
-          whatDoesItMean: `Live business health across all modules — ${leads} leads, ${dealsWon} deals won, ${overdueInvoices} overdue invoices, ${openTasks} open tasks`,
-          whatShouldHappen: pendingCount > 0
-            ? 'Review and action pending Bonnie approvals before anything else'
-            : overdueInvoices > 0
-              ? 'Send payment chasers for overdue invoices — cash flow is the priority'
-              : 'Continue current growth execution across CRM, pipeline, and delivery',
-          whoOwnsIt: user?.name || user?.email || 'Business Owner',
-          canAlphaCloneAct: pendingCount > 0 ? 'approval_required' : 'automatic_logged',
-          whatActuallyHappened: !loading
-            ? `Revenue £${Math.round(revenue / 1000)}k · ${leads} leads · ${dealsWon} deals won · ${tasksCompleted} tasks completed · ${overdueInvoices} overdue invoices`
-            : 'Loading…',
-          didItProduceExpectedOutcome: overdueInvoices > 0 || pendingCount > 0 ? 'PARTIALLY' : 'YES',
-          whatHappensNext: pendingCount > 0
-            ? 'Go to Bonnie Approvals and action all pending items'
-            : overdueInvoices > 0
-              ? 'Open Billing and send payment reminders for overdue invoices'
-              : 'Open Tasks module and work the highest-priority items for today',
-        }}
-        onExecuteNextAction={() => {
-          if (pendingCount > 0) window.location.href = '/dashboard/business/bonnie/approvals';
-          else if (overdueInvoices > 0) window.location.href = '/dashboard/business/billing/manage';
-          else window.location.href = '/dashboard/tasks';
-        }}
-      />
-
-      <BusinessControlCenter />
-
       <section
         className="grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4"
         aria-label="Business pulse key performance indicators"
@@ -427,7 +355,7 @@ export function OperatingSystemHome() {
               iconColor="#168C5C"
               trend={revenueTrend}
               isBetterHigher
-              showNarrative
+              compact
             />
             <IntelligentKpiCard
               label="New leads"
@@ -438,7 +366,7 @@ export function OperatingSystemHome() {
               iconColor="#3196E8"
               trend={leadsTrend}
               isBetterHigher
-              showNarrative
+              compact
             />
             <IntelligentKpiCard
               label="Deals won"
@@ -448,7 +376,7 @@ export function OperatingSystemHome() {
               icon={IconPipeline}
               iconColor="#E69222"
               isBetterHigher
-              showNarrative
+              compact
             />
             <IntelligentKpiCard
               label="Outstanding A/R"
@@ -458,56 +386,16 @@ export function OperatingSystemHome() {
               icon={IconInvoicing}
               iconColor="#149C86"
               isBetterHigher={false}
-              showNarrative
+              compact
             />
-            <div className="min-[576px]:col-span-2 lg:col-span-4 grid grid-cols-1 min-[576px]:grid-cols-3 gap-3 md:gap-4 pt-1 border-t border-white/[0.03]">
-              <IntelligentKpiCard
-                label="Tasks completed"
-                current={tasksCompleted}
-                previous={tasksCompletedPrev}
-                href="/dashboard/tasks"
-                icon={IconTasks}
-                iconColor="#0F9F8F"
-                trend={tasksTrend}
-                compact
-              />
-              <IntelligentKpiCard
-                label="Active customers"
-                current={decisionVm.kpis.activeCustomers.current}
-                previous={decisionVm.kpis.activeCustomers.previous}
-                href="/dashboard/contacts"
-                icon={IconCrm}
-                iconColor="#7F56D9"
-                compact
-              />
-              <IntelligentKpiCard
-                label="Lead → win rate"
-                current={decisionVm.kpis.conversionRate.current}
-                previous={decisionVm.kpis.conversionRate.previous}
-                href="/dashboard/deals"
-                isPercentage
-                compact
-              />
-            </div>
           </>
         )}
       </section>
 
-      {!loading && decisionVm.prioritizedChanges.length > 0 ? (
-        <MaterialChangesStrip changes={decisionVm.materialChanges} />
-      ) : null}
-
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-4 md:gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 md:gap-5">
         <div className="space-y-4 md:space-y-5 min-w-0">
           {attentionItems.length > 0 ? (
             <AttentionPanel items={attentionItems} />
-          ) : null}
-
-          {!loading && decisionVm.funnelAnalysis.bottleneck ? (
-            <BottleneckDetector
-              funnelStages={decisionVm.funnelStages}
-              multiplierName="opportunities"
-            />
           ) : null}
 
           <OverviewChartCard
@@ -517,81 +405,10 @@ export function OperatingSystemHome() {
             loading={loading}
           />
 
-          {!loading ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5">
-              <FunnelVisualization
-                stages={decisionVm.funnelStages}
-                multiplierName="opportunities"
-              />
-              <OpportunityHighlight deals={decisionVm.opportunityDeals.slice(0, 3)} />
-            </div>
-          ) : null}
-
-          {!loading ? (
-            <BonnieBrief
-              whatChanged={decisionVm.bonnieBrief.whatChanged}
-              whyItMatters={decisionVm.bonnieBrief.whyItMatters}
-              whatToDo={decisionVm.bonnieBrief.whatToDo}
-            />
-          ) : (
-            <BacklitSurface tone="teal" intensity="active">
-              <div className="p-4 md:p-5 space-y-2">
-                <div className="h-4 w-32 bg-[var(--ws-surface-tertiary)] rounded ac-skeleton-pulse" />
-                <div className="h-3 w-full bg-[var(--ws-surface-tertiary)] rounded ac-skeleton-pulse" />
-                <div className="h-3 w-5/6 bg-[var(--ws-surface-tertiary)] rounded ac-skeleton-pulse" />
-              </div>
-            </BacklitSurface>
-          )}
-
           <ModuleLauncher items={modules} />
         </div>
         <div className="space-y-4 md:space-y-5">
           <TodayPanel items={todayItems} className="xl:sticky xl:top-4 h-fit" />
-          {!loading ? (
-            <BonnieRankedActions
-              stats={stats}
-              pendingApprovals={pendingCount}
-              className="xl:sticky xl:top-4 h-fit"
-            />
-          ) : null}
-          <WorkspaceInvestmentSummary stats={stats} loading={loading} className="xl:sticky xl:top-4 h-fit" />
-          {!loading ? (
-            <div className={cn(WORKSPACE.panel.base, 'p-4 md:p-5 h-fit')}>
-              <p className="text-[11px] font-black uppercase tracking-wider text-[var(--ws-text-muted)] mb-2">Pipeline summary</p>
-              <div className="space-y-3 text-[12.5px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--ws-text-secondary)]">Total value</span>
-                  <span className="font-bold tabular-nums text-[var(--ws-text-primary)]">{formatMoney0(decisionVm.pipelineSummary.totalValue)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--ws-text-secondary)]">Weighted (× prob)</span>
-                  <span className="font-bold tabular-nums text-[var(--success-text)]">{formatMoney0(decisionVm.pipelineSummary.weightedValue)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--ws-text-secondary)]">Forecast</span>
-                  <span className="font-bold tabular-nums text-[var(--brand-amber-400)]">{formatMoney0(decisionVm.pipelineSummary.forecastValue)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[var(--ws-text-secondary)]">Deals</span>
-                  <span className="font-bold tabular-nums text-[var(--ws-text-primary)]">{decisionVm.pipelineSummary.totalDeals}</span>
-                </div>
-                {decisionVm.pipelineSummary.averageDealValue > 0 ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-[var(--ws-text-secondary)]">Avg deal</span>
-                    <span className="font-bold tabular-nums text-[var(--ws-text-primary)]">{formatMoney0(decisionVm.pipelineSummary.averageDealValue)}</span>
-                  </div>
-                ) : null}
-                {decisionVm.pipelineSummary.expectedWinRate != null ? (
-                  <div className="pt-2 mt-2 border-t border-white/[0.04]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[var(--ws-text-secondary)]">Expected win rate</span>
-                      <span className="font-bold tabular-nums text-[var(--ws-text-primary)]">{decisionVm.pipelineSummary.expectedWinRate}%</span>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
     </div>

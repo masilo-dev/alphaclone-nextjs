@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { WorkspaceInvestmentSummary } from '@/components/dashboard/WorkspaceInvestmentSummary';
 import { MetricCard, MetricCardSkeleton } from '../MetricCard';
 import { DashboardLineChart } from '../DashboardLineChart';
 import { DashboardBarChart } from '../DashboardBarChart';
@@ -200,9 +199,6 @@ function DashboardContent({
             </button>
           ))}
         </div>
-      ) : null}
-      {moduleId === 'overview' || moduleId === 'crm' ? (
-        <WorkspaceInvestmentSummary stats={workspaceStats} loading={!workspaceStats} />
       ) : null}
       {executionSteps.length ? (
         <ExecutionDecisionGuide

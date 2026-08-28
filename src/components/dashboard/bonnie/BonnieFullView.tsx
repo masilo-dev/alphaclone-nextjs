@@ -24,7 +24,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { openBonniePopoutWindow, resolveBonnieDashboardRoute } from '@/lib/bonnie/bonnieWorkspace';
-import { BonnieRankedActions } from '@/components/dashboard/bonnie/BonnieRankedActions';
 import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath, type BonnieModuleId } from '@/lib/bonnie/bonnieToolCatalog';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -588,7 +587,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             chatSlot={
               <Box position="absolute" inset={0} p={{ base: 2, sm: 3 }} display="flex" flexDirection="column" minH={0}>
                 {showWelcome && !activeConversationId ? (
-                  <Box flexShrink={0} maxH={{ base: '40%', sm: '45%' }} overflowY="auto" mb={2}>
+                  <Box flexShrink={0} maxH={{ base: '28%', sm: '32%' }} overflowY="auto" mb={2}>
                     <BonnieWelcome
                       workspaceName={currentTenant?.name}
                       suggestions={suggestions}
@@ -599,17 +598,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                     />
                   </Box>
                 ) : null}
-                {workspaceStats ? (
-                  <Box flexShrink={0} mb={2}>
-                    <BonnieRankedActions
-                      stats={workspaceStats}
-                      pendingApprovals={pendingCount}
-                      module={effectiveModule === 'general' ? undefined : effectiveModule}
-                      maxItems={2}
-                    />
-                  </Box>
-                ) : null}
-                <Box flex={1} minH={0}>
+                <Box flex={1} minH={0} display="flex" flexDirection="column">
                   <BonnieChatPanel
                     workspaceMode
                     streaming
