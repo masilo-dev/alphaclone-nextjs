@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -48,6 +48,7 @@ import { BusinessContextPanel } from '@/components/dashboard/crm/BusinessContext
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { PROJECT_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
+import { ProjectTasksPanel } from '@/components/dashboard/projects/ProjectTasksPanel';
 
 interface ProjectsPageProps {
     user: User;
@@ -77,6 +78,7 @@ const getNormalizedStage = (stage: string | undefined): ProjectStage => {
 
 const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const router = useRouter();
+    const pathname = usePathname();
     const nextSearch = useSearchParams();
     const { currentTenant } = useTenant();
     const [projects, setProjects] = useState<BusinessProject[]>([]);
@@ -94,9 +96,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         const newVal = nextSearch.get('new');
         if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
             setShowAddModal(true);
-            router.replace('/dashboard/business/projects', { scroll: false });
+            router.replace('/dashboard/business/projects/manage', { scroll: false });
         }
-    }, [nextSearch, router]);
+        const projectId =
+            nextSearch.get('project') ||
+            nextSearch.get('projectId') ||
+            pathname?.match(/\/dashboard\/(?:business\/)?projects\/([0-9a-f-]{36})/i)?.[1] ||
+            null;
+        if (projectId && projects.length > 0) {
+            const match = projects.find((p) => p.id === projectId);
+            if (match) {
+                setViewingProject(match);
+                router.replace('/dashboard/business/projects/manage', { scroll: false });
+            }
+        }
+    }, [nextSearch, router, projects, pathname]);
 
     const loadData = useCallback(async () => {
         if (!currentTenant) return;
@@ -1209,6 +1223,16 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                             <p className="text-xs text-slate-500">No team members assigned yet.</p>
                         )}
                     </div>
+
+                    <ProjectTasksPanel
+                        projectId={project.id}
+                        userId={currentUser.id}
+                        onProgressChange={async () => {
+                            const { progress: recalculated } = await projectService.recalculateProjectProgress(project.id);
+                            setProgress(recalculated);
+                            onProgressChange?.(project.id, recalculated);
+                        }}
+                    />
 
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">

@@ -6,107 +6,89 @@ import {
   readPortalPassword,
 } from '@/lib/projects/portalPublicHandlers';
 
-type RouteContext = { params: Promise<{ token: string }> };
-
-const commentSchema = z.object({
-  authorName: z.string().min(1).max(200),
-  authorEmail: z.string().email().optional().or(z.literal('')),
-  content: z.string().min(1).max(8000),
+const postSchema = z.object({
+  authorName: z.string().trim().min(1).max(200),
+  authorEmail: z.string().trim().email().optional().or(z.literal('')),
+  content: z.string().trim().min(1).max(10_000),
   isClient: z.boolean().optional(),
   password: z.string().optional(),
 });
 
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { token } = await context.params;
-  if (!token?.trim()) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ token: string }> }
+) {
+  try {
+    const { token } = await context.params;
+    if (!token?.trim()) {
+      return NextResponse.json({ error: 'Token required' }, { status: 400 });
+    }
+
+    const admin = createSupabaseAdminClient();
+    const password = readPortalPassword(req);
+    const access = await loadPublicPortalContext(admin, token.trim(), password);
+
+    if (!access.ok) {
+      return NextResponse.json(access.body, { status: access.status });
+    }
+
+    const { data, error } = await admin
+      .from('project_comments')
+      .select('id, author_name, author_email, content, is_client, created_at')
+      .eq('project_id', access.project.id)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, comments: data || [] });
+  } catch (error) {
+    console.error('[projects/public/comments GET]', error);
+    return NextResponse.json({ error: 'Failed to load comments' }, { status: 500 });
   }
-
-  const admin = createSupabaseAdminClient();
-  const password = readPortalPassword(req);
-  const ctx = await loadPublicPortalContext(admin, token.trim(), password);
-  if (!ctx.ok) {
-    return NextResponse.json(ctx.body, { status: ctx.status });
-  }
-
-  const { data, error } = await admin
-    .from('project_comments')
-    .select('id, author_name, author_email, content, is_client, created_at')
-    .eq('project_id', ctx.project.id)
-    .eq('tenant_id', ctx.project.tenant_id)
-    .order('created_at', { ascending: true })
-    .limit(200);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true, comments: data || [] });
 }
 
-export async function POST(req: NextRequest, context: RouteContext) {
-  const { token } = await context.params;
-  if (!token?.trim()) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
-  }
-
-  const body = await req.json().catch(() => ({}));
-  const parsed = commentSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid comment', details: parsed.error.flatten() }, { status: 422 });
-  }
-
-  const admin = createSupabaseAdminClient();
-  const password = readPortalPassword(req, parsed.data.password);
-  const ctx = await loadPublicPortalContext(admin, token.trim(), password);
-  if (!ctx.ok) {
-    return NextResponse.json(ctx.body, { status: ctx.status });
-  }
-
-  const { data, error } = await admin
-    .from('project_comments')
-    .insert({
-      tenant_id: ctx.project.tenant_id,
-      project_id: ctx.project.id,
-      author_name: parsed.data.authorName.trim(),
-      author_email: parsed.data.authorEmail?.trim() || null,
-      content: parsed.data.content.trim(),
-      is_client: parsed.data.isClient !== false,
-    })
-    .select('id, author_name, author_email, content, is_client, created_at')
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  await admin.from('client_portal_events').insert({
-    tenant_id: ctx.project.tenant_id,
-    project_id: ctx.project.id,
-    event_type: 'portal_message_sent',
-    metadata: {
-      comment_id: data.id,
-      author_name: data.author_name,
-      from_client: true,
-    },
-  });
-
-  if (parsed.data.isClient !== false) {
-    try {
-      const { notifyProjectTeamClientPortalMessage } = await import('@/lib/projects/projectClientNotification');
-      await notifyProjectTeamClientPortalMessage({
-        admin,
-        projectId: ctx.project.id,
-        tenantId: ctx.project.tenant_id,
-        projectName: ctx.project.name,
-        authorName: data.author_name,
-        content: data.content,
-        origin: req.nextUrl.origin,
-      });
-    } catch (notifyErr) {
-      console.warn('[portal/comments] team notify failed:', notifyErr);
+export async function POST(
+  req: NextRequest,
+  context: { params: Promise<{ token: string }> }
+) {
+  try {
+    const { token } = await context.params;
+    if (!token?.trim()) {
+      return NextResponse.json({ error: 'Token required' }, { status: 400 });
     }
-  }
 
-  return NextResponse.json({ success: true, comment: data });
+    const body = await req.json().catch(() => ({}));
+    const parsed = postSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Name and message are required' }, { status: 400 });
+    }
+
+    const admin = createSupabaseAdminClient();
+    const password = readPortalPassword(req, parsed.data.password);
+    const access = await loadPublicPortalContext(admin, token.trim(), password);
+
+    if (!access.ok) {
+      return NextResponse.json(access.body, { status: access.status });
+    }
+
+    const { data, error } = await admin
+      .from('project_comments')
+      .insert({
+        tenant_id: access.project.tenant_id,
+        project_id: access.project.id,
+        author_name: parsed.data.authorName,
+        author_email: parsed.data.authorEmail || null,
+        content: parsed.data.content,
+        is_client: parsed.data.isClient !== false,
+      })
+      .select('id, author_name, author_email, content, is_client, created_at')
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, comment: data }, { status: 201 });
+  } catch (error) {
+    console.error('[projects/public/comments POST]', error);
+    return NextResponse.json({ error: 'Failed to post comment' }, { status: 500 });
+  }
 }

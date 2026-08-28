@@ -6,22 +6,28 @@ import {
   readPortalPassword,
 } from '@/lib/projects/portalPublicHandlers';
 
-type RouteContext = { params: Promise<{ token: string }> };
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ token: string }> }
+) {
+  try {
+    const { token } = await context.params;
+    if (!token?.trim()) {
+      return NextResponse.json({ error: 'Token required' }, { status: 400 });
+    }
 
-export async function GET(req: NextRequest, context: RouteContext) {
-  const { token } = await context.params;
-  if (!token?.trim()) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+    const admin = createSupabaseAdminClient();
+    const password = readPortalPassword(req);
+    const access = await loadPublicPortalContext(admin, token.trim(), password);
+
+    if (!access.ok) {
+      return NextResponse.json(access.body, { status: access.status });
+    }
+
+    const payload = await loadPublicPortalPayload(admin, access.project);
+    return NextResponse.json({ success: true, ...payload });
+  } catch (error) {
+    console.error('[projects/public/access]', error);
+    return NextResponse.json({ error: 'Failed to load project portal' }, { status: 500 });
   }
-
-  const admin = createSupabaseAdminClient();
-  const password = readPortalPassword(req);
-  const ctx = await loadPublicPortalContext(admin, token.trim(), password);
-
-  if (!ctx.ok) {
-    return NextResponse.json(ctx.body, { status: ctx.status });
-  }
-
-  const payload = await loadPublicPortalPayload(admin, ctx.project);
-  return NextResponse.json({ success: true, ...payload });
 }
