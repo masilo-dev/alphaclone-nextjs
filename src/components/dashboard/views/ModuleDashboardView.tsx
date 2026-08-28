@@ -5,7 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { MetricCard, MetricCardSkeleton } from '../MetricCard';
+import { useMetricDateRange } from '@/hooks/useMetricDateRange';
+import { platformKpiFromDashboardMetric } from '@/lib/metrics/metricPresentation';
+import { PlatformKpiGrid, MetricDateRangeSelector } from '@/components/dashboard/metrics';
+import { PlatformKpiCardSkeleton } from '@/components/dashboard/metrics/PlatformKpiCard';
 import { DashboardLineChart } from '../DashboardLineChart';
 import { DashboardBarChart } from '../DashboardBarChart';
 import { DASHBOARD_COLORS } from '@/types/dashboardStats';
@@ -54,7 +57,8 @@ function DashboardContent({
   const { currentTenant, getDashboardStats } = useTenant();
   const { user } = useAuth();
   const router = useRouter();
-  const { data, loading, isValidating, error } = useDashboardStats(currentTenant?.id, endpoint);
+  const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
+  const { data, loading, isValidating, error } = useDashboardStats(currentTenant?.id, endpoint, preset);
   const [workspaceStats, setWorkspaceStats] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
@@ -67,9 +71,9 @@ function DashboardContent({
   if (loading && !data) {
     return (
       <div className="space-y-4 ac-scroll-full ac-module-section">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <MetricCardSkeleton key={i} className="ac-metric-enter" style={{ animationDelay: `${i * 40}ms` } as React.CSSProperties} />
+            <PlatformKpiCardSkeleton key={i} className="ac-metric-enter" />
           ))}
         </div>
         <ChartSkeleton />
@@ -100,7 +104,12 @@ function DashboardContent({
 
   const { actions, executionSteps } = resolveModuleActions(moduleId, user?.role ?? 'client');
   const workspaceAction = actions.find((a) => a.primary) ?? actions[0];
-  const metrics = data.metrics.slice(0, 4);
+  const metrics = data.metrics.slice(0, 8);
+  const kpiItems = metrics.map((m) => ({
+    ...platformKpiFromDashboardMetric(m),
+    label: metricLabel(m.label),
+    referencePeriod: m.comparisonText ?? comparisonLabel,
+  }));
   const allMetricsZero = metrics.every((m) => Number(m.value) === 0 || m.value === '0' || m.value === '0%');
 
   const overviewQuickModules =
@@ -219,21 +228,12 @@ function DashboardContent({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {metrics.map((m, i) => (
-          <MetricCard
-            key={m.label}
-            label={metricLabel(m.label)}
-            value={m.value}
-            delta={m.delta}
-            deltaDir={m.deltaDir}
-            deltaColor={m.deltaColor}
-            comparisonText={m.comparisonText}
-            className="ac-metric-enter ac-metric-card"
-            style={{ animationDelay: `${i * 45}ms` } as React.CSSProperties}
-          />
-        ))}
-      </div>
+      <MetricDateRangeSelector value={preset} onChange={setPeriod} compact />
+
+      <PlatformKpiGrid
+        items={kpiItems}
+        className="ac-metric-enter"
+      />
 
       <div className="ac-chart-enter">
         {chartType === 'line' ? (

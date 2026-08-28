@@ -1,21 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import {
-  Users,
-  Building2,
-  AlertTriangle,
-  ShieldCheck,
-  UserCheck,
-  UserMinus,
-  RefreshCw,
-  Clock,
-} from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { RefreshCw, ShieldCheck } from 'lucide-react';
 import { userService } from '@/services/userService';
+import { PlatformKpiGrid, MetricDateRangeSelector } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
+import { useMetricDateRange } from '@/hooks/useMetricDateRange';
 
 export const SuperAdminDashboardTab: React.FC = () => {
   const [metrics, setMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
 
   const fetchMetrics = async () => {
     setLoading(true);
@@ -28,104 +23,92 @@ export const SuperAdminDashboardTab: React.FC = () => {
     fetchMetrics();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 font-medium">Loading Platform Executive Overview...</p>
-        </div>
-      </div>
-    );
-  }
-
   const users = metrics?.users || {};
   const workspaces = metrics?.workspaces || {};
   const platform = metrics?.platform || {};
   const warnings: string[] = platform.systemWarnings || [];
   const recentLogs: any[] = metrics?.security?.recentAuditLogs || [];
 
+  const adminKpis = useMemo(
+    () => [
+      platformKpiFromNumbers({
+        metricId: 'admin.total_users',
+        label: 'Total users',
+        current: users.total ?? null,
+        previous: users.totalPrev ?? undefined,
+        referencePeriod: comparisonLabel,
+        formattedValue: users.total != null ? String(users.total) : undefined,
+        state: loading ? 'loading' : users.total == null ? 'empty' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        metricId: 'admin.active_users',
+        label: 'Active users',
+        current: users.active ?? null,
+        formattedValue: users.active != null ? String(users.active) : undefined,
+        referencePeriod: `${users.suspended ?? 0} suspended`,
+        state: loading ? 'loading' : users.active == null ? 'empty' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        label: 'New signups today',
+        current: users.newToday ?? null,
+        referencePeriod: `+${users.newThisWeek ?? 0} this week`,
+        state: loading ? 'loading' : users.newToday == null ? 'empty' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        label: 'Workspaces',
+        current: workspaces.total ?? null,
+        referencePeriod: `+${workspaces.newThisWeek ?? 0} this week`,
+        state: loading ? 'loading' : workspaces.total == null ? 'empty' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        label: 'Pending password resets',
+        current: users.pendingPasswordReset ?? null,
+        isBetterHigher: false,
+        referencePeriod: comparisonLabel,
+        state: loading ? 'loading' : users.pendingPasswordReset == null ? 'empty' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        metricId: 'admin.failed_jobs',
+        label: 'Failed jobs',
+        current: platform.failedJobs ?? null,
+        isBetterHigher: false,
+        referencePeriod: comparisonLabel,
+        state: loading ? 'loading' : platform.failedJobs == null ? 'empty' : 'ready',
+      }),
+    ],
+    [loading, users, workspaces, platform.failedJobs, comparisonLabel],
+  );
+
   return (
     <div className="space-y-6 animate-fade-in ac-enterprise-module">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <ShieldCheck className="w-6 h-6 text-teal-400" />
+            <ShieldCheck className="w-6 h-6 text-[var(--brand-green-500,#22c55e)]" />
             Super Admin Control Center
           </h2>
-          <p className="text-slate-400 text-sm">Platform-wide health & executive overview</p>
+          <p className="text-[var(--ws-text-secondary)] text-sm">Platform-wide health and executive overview</p>
         </div>
-        <button
-          onClick={fetchMetrics}
-          className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold border border-white/5 transition-all"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Refresh Stats
-        </button>
-      </div>
-
-      {/* Primary KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">Total Users</span>
-            <Users className="w-5 h-5 text-teal-400" />
-          </div>
-          <p className="text-3xl font-black text-white">{users.total || 0}</p>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-emerald-400 font-bold">+{users.newToday || 0} today</span>
-            <span className="text-slate-500">•</span>
-            <span className="text-slate-400">+{users.newThisWeek || 0} this week</span>
-          </div>
-        </div>
-
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">Active vs Suspended</span>
-            <UserCheck className="w-5 h-5 text-emerald-400" />
-          </div>
-          <p className="text-3xl font-black text-white">{users.active || 0}</p>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-emerald-400 font-bold">{users.active || 0} active</span>
-            <span className="text-slate-500">•</span>
-            <span className="text-orange-400 font-bold">{users.suspended || 0} suspended</span>
-          </div>
-        </div>
-
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">Workspaces</span>
-            <Building2 className="w-5 h-5 text-blue-400" />
-          </div>
-          <p className="text-3xl font-black text-white">{workspaces.total || 0}</p>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span>+{workspaces.newThisWeek || 0} created this week</span>
-          </div>
-        </div>
-
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2 shadow-lg">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase tracking-wider">Pending Password Resets</span>
-            <UserMinus className="w-5 h-5 text-purple-400" />
-          </div>
-          <p className="text-3xl font-black text-white">{users.pendingPasswordReset || 0}</p>
-          <div className="flex items-center gap-2 text-xs text-purple-400">
-            <span>Forced bootstrap resets</span>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <MetricDateRangeSelector value={preset} onChange={setPeriod} compact className="mb-0" />
+          <button
+            onClick={fetchMetrics}
+            className="flex items-center gap-2 px-3 py-1.5 bg-[var(--ws-surface-secondary)] hover:bg-[var(--ws-hover)] text-[var(--ws-text-secondary)] rounded-lg text-xs font-semibold border border-[var(--ws-border)] transition-all"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh
+          </button>
         </div>
       </div>
 
-      {/* Actionable Warnings */}
+      <PlatformKpiGrid items={adminKpis} loading={loading} skeletonCount={6} />
+
       {warnings.length > 0 && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 space-y-2">
-          <h3 className="text-sm font-bold text-amber-400 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            Platform System Warnings ({warnings.length})
-          </h3>
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 space-y-2">
+          <p className="text-sm font-semibold text-amber-200">System warnings</p>
           <ul className="space-y-1">
-            {warnings.map((w, idx) => (
-              <li key={idx} className="text-xs text-amber-200/90 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            {warnings.map((w, i) => (
+              <li key={i} className="text-sm text-amber-100/90">
                 {w}
               </li>
             ))}
@@ -133,46 +116,23 @@ export const SuperAdminDashboardTab: React.FC = () => {
         </div>
       )}
 
-      {/* Recent Security & Admin Activity */}
-      <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Clock className="w-4 h-4 text-teal-400" />
-          Recent Platform Audit Activity
-        </h3>
-
-        {recentLogs.length === 0 ? (
-          <p className="text-xs text-slate-500">No audit events recorded yet.</p>
-        ) : (
-          <div className="divide-y divide-slate-800">
-            {recentLogs.map((log) => {
-              const resourceLabel =
-                log.resource_type ||
-                log.entity_type ||
-                (typeof log.metadata?.resource === 'string' ? log.metadata.resource : null) ||
-                'platform event';
-              const resourceId =
-                log.resource_id ||
-                log.entity_id ||
-                (typeof log.metadata?.resource_id === 'string' ? log.metadata.resource_id : null);
-              return (
-              <div key={log.id} className="py-2.5 flex items-center justify-between text-xs">
-                <div className="space-y-0.5">
-                  <span className="px-2 py-0.5 bg-slate-800 text-teal-300 font-mono text-[10px] rounded uppercase font-bold">
-                    {log.action}
-                  </span>
-                  <p className="text-slate-300 font-medium">
-                    {resourceLabel}
-                    {resourceId ? ` (${resourceId.slice(0, 8)}…)` : ''}
-                  </p>
-                </div>
-                <span className="text-slate-500 text-[11px]">
-                  {new Date(log.created_at).toLocaleString()}
-                </span>
-              </div>
-            );})}
-          </div>
-        )}
-      </div>
+      {recentLogs.length > 0 && (
+        <div className="ac-workspace-panel p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ws-text-muted)] mb-3">
+            Recent audit activity
+          </p>
+          <ul className="space-y-2">
+            {recentLogs.slice(0, 8).map((log, i) => (
+              <li key={log.id ?? i} className="text-sm text-[var(--ws-text-secondary)] border-b border-[var(--ws-border)] pb-2 last:border-0">
+                {log.action || log.event_type || 'Audit event'}
+                {log.created_at ? (
+                  <span className="ml-2 text-[var(--ws-text-muted)] text-xs">{log.created_at}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

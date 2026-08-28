@@ -7,14 +7,14 @@ import type { SlimHubStats } from '@/lib/dashboard/hubKpi';
 
 const CLIENT_CACHE_MS = 5 * 60_000;
 
-function cacheKey(endpoint: string, tenantId: string) {
-  return `ac_dash_stats:${endpoint}:${tenantId}`;
+function cacheKey(endpoint: string, tenantId: string, period?: string) {
+  return `ac_dash_stats:${endpoint}:${tenantId}:${period ?? 'last_30_days'}`;
 }
 
-function readClientCache(endpoint: string, tenantId: string): DashboardStatsResponse | null {
+function readClientCache(endpoint: string, tenantId: string, period?: string): DashboardStatsResponse | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(cacheKey(endpoint, tenantId));
+    const raw = sessionStorage.getItem(cacheKey(endpoint, tenantId, period));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { at: number; data: DashboardStatsResponse };
     if (Date.now() - parsed.at > CLIENT_CACHE_MS) return null;
@@ -24,10 +24,10 @@ function readClientCache(endpoint: string, tenantId: string): DashboardStatsResp
   }
 }
 
-function writeClientCache(endpoint: string, tenantId: string, data: DashboardStatsResponse) {
+function writeClientCache(endpoint: string, tenantId: string, data: DashboardStatsResponse, period?: string) {
   if (typeof window === 'undefined') return;
   try {
-    sessionStorage.setItem(cacheKey(endpoint, tenantId), JSON.stringify({ at: Date.now(), data }));
+    sessionStorage.setItem(cacheKey(endpoint, tenantId, period), JSON.stringify({ at: Date.now(), data }));
   } catch {
     // sessionStorage may be unavailable
   }
@@ -44,12 +44,14 @@ function slimToFull(slim: SlimHubStats): DashboardStatsResponse {
   };
 }
 
-function statsUrl(endpoint: string, tenantId: string): string {
+function statsUrl(endpoint: string, tenantId: string, period?: string): string {
   const hub = resolveHubFromEndpoint(endpoint);
+  const periodParam = period ? `&period=${encodeURIComponent(period)}` : '';
   if (hub) {
-    return `/api/dashboard/hub-stats?hub=${encodeURIComponent(hub)}&tenantId=${encodeURIComponent(tenantId)}`;
+    return `/api/dashboard/hub-stats?hub=${encodeURIComponent(hub)}&tenantId=${encodeURIComponent(tenantId)}${periodParam}`;
   }
-  return `${endpoint}?tenantId=${encodeURIComponent(tenantId)}`;
+  const sep = endpoint.includes('?') ? '&' : '?';
+  return `${endpoint}${sep}tenantId=${encodeURIComponent(tenantId)}${period ? `&period=${encodeURIComponent(period)}` : ''}`;
 }
 
 /** Warm sessionStorage cache for overview + common hub stats. */
@@ -89,9 +91,13 @@ export function usePrefetchDashboardStats(tenantId: string | undefined) {
   }, [tenantId]);
 }
 
-export function useDashboardStats(tenantId: string | undefined, endpoint: string) {
+export function useDashboardStats(
+  tenantId: string | undefined,
+  endpoint: string,
+  period: string = 'last_30_days',
+) {
   const [data, setData] = useState<DashboardStatsResponse | null>(() =>
-    tenantId ? readClientCache(endpoint, tenantId) : null,
+    tenantId ? readClientCache(endpoint, tenantId, period) : null,
   );
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +105,7 @@ export function useDashboardStats(tenantId: string | undefined, endpoint: string
   useEffect(() => {
     if (!tenantId) return;
 
-    const cached = readClientCache(endpoint, tenantId);
+    const cached = readClientCache(endpoint, tenantId, period);
     if (cached) {
       setData(cached);
     }
@@ -109,7 +115,7 @@ export function useDashboardStats(tenantId: string | undefined, endpoint: string
     setIsValidating(true);
     setError(null);
 
-    fetch(statsUrl(endpoint, tenantId), {
+    fetch(statsUrl(endpoint, tenantId, period), {
       signal: controller.signal,
       credentials: 'include',
     })
@@ -128,7 +134,7 @@ export function useDashboardStats(tenantId: string | undefined, endpoint: string
             ? (raw as DashboardStatsResponse)
             : slimToFull(raw as SlimHubStats);
         setData(stats);
-        writeClientCache(endpoint, tenantId, stats);
+        writeClientCache(endpoint, tenantId, stats, period);
       })
       .catch((err) => {
         if (cancelled || err?.name === 'AbortError') return;
@@ -144,7 +150,7 @@ export function useDashboardStats(tenantId: string | undefined, endpoint: string
       cancelled = true;
       controller.abort();
     };
-  }, [tenantId, endpoint]);
+  }, [tenantId, endpoint, period]);
 
   const loading = !data && isValidating;
 

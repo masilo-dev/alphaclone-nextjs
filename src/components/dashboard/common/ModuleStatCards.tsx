@@ -2,9 +2,9 @@
 
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { ENTERPRISE } from '@/constants/design';
 import { cn } from '@/lib/utils';
-import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
+import { platformKpiFromModuleStat } from '@/lib/metrics/metricPresentation';
+import { PlatformKpiGrid } from '@/components/dashboard/metrics/PlatformKpiGrid';
 
 export type StatAccent = 'teal' | 'blue' | 'purple' | 'emerald' | 'orange' | 'rose' | 'amber' | 'sky';
 
@@ -14,41 +14,43 @@ export interface ModuleStat {
   sub?: string;
   Icon: LucideIcon;
   accent?: StatAccent;
-  /** Optional percentage trend; positive renders green, negative red. */
+  /** Optional percentage trend; positive renders green when higher-is-better. */
   trend?: number;
+  metricId?: string;
+  isBetterHigher?: boolean;
+  href?: string;
 }
 
 /**
- * Enterprise-structured KPI row (AlphaClone brand). Icons + metric card anatomy.
+ * Enterprise KPI row using the canonical PlatformKpiCard system.
  */
-export function ModuleStatCards({ stats, className = '' }: { stats: ModuleStat[]; className?: string }) {
-  return (
-    <div className={cn(ENTERPRISE.moduleLayout.summaryGrid, className)}>
-      {stats.map((s) => {
-        // Map accent to themeColor safely
-        const accent = s.accent || 'teal';
-        let themeColor: CardTheme = 'teal';
-        if (accent === 'emerald') themeColor = 'emerald';
-        else if (accent === 'blue') themeColor = 'blue';
-        else if (accent === 'purple') themeColor = 'purple';
-        else if (accent === 'orange') themeColor = 'orange';
-        else if (accent === 'rose') themeColor = 'rose';
-        else if (accent === 'amber') themeColor = 'amber';
-        else if (accent === 'sky') themeColor = 'sky';
+export function ModuleStatCards({
+  stats,
+  className = '',
+  loading = false,
+}: {
+  stats: ModuleStat[];
+  className?: string;
+  loading?: boolean;
+}) {
+  const items = stats.map((s) => ({
+    ...platformKpiFromModuleStat({
+      label: s.label,
+      value: s.value,
+      sub: s.sub,
+      trend: s.trend,
+      metricId: s.metricId,
+      isBetterHigher: s.isBetterHigher,
+      href: s.href,
+    }),
+  }));
 
-        return (
-          <StandardStatCard
-            key={s.label}
-            label={s.label}
-            value={s.value}
-            comparisonText={s.sub || ''}
-            icon={s.Icon}
-            themeColor={themeColor}
-            delta={s.trend}
-            interactive={false}
-          />
-        );
-      })}
-    </div>
+  return (
+    <PlatformKpiGrid
+      items={items}
+      loading={loading}
+      skeletonCount={Math.min(stats.length || 4, 8)}
+      className={cn('space-y-0', className)}
+    />
   );
 }

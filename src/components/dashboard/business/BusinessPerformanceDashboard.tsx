@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   TrendingUp, 
@@ -16,17 +16,39 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Card } from '../../ui/UIComponents';
-import { analyticsService, AnalyticsData } from '../../../services/analyticsService';
+import { analyticsService } from '../../../services/analyticsService';
 import { useCurrency } from '../../../hooks/useCurrency';
 import { useTenant } from '@/contexts/TenantContext';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useMetricDateRange } from '@/hooks/useMetricDateRange';
+import { PlatformKpiGrid, MetricDateRangeSelector } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer } from '../../ui/ChartContainer';
-import { StandardStatCard } from '@/components/ui/design-system';
 import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
+import type { MetricPeriodPreset } from '@/lib/metrics/dateRange';
+
+function analyticsRangeForPreset(preset: MetricPeriodPreset): '7d' | '30d' | '90d' {
+  switch (preset) {
+    case 'today':
+    case 'last_7_days':
+      return '7d';
+    case 'this_quarter':
+    case 'this_year':
+      return '90d';
+    case 'last_30_days':
+    case 'this_month':
+    case 'previous_month':
+    default:
+      return '30d';
+  }
+}
 
 const BusinessPerformanceDashboard: React.FC = () => {
   const { currentTenant: tenant } = useTenant();
   const { format: formatCurrency } = useCurrency();
+  const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
+  const { data: socialStats } = useDashboardStats(tenant?.id, '/api/social/stats', preset);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,7 +78,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
   const fetchData = async () => {
     setRefreshing(true);
     try {
-      const analyticsRes = await analyticsService.getAnalytics('30d');
+      const analyticsRes = await analyticsService.getAnalytics(analyticsRangeForPreset(preset));
       const osData = await analyticsService.getBusinessOSData();
       
       const analyticsData = (analyticsRes?.data || {}) as any;
@@ -93,7 +115,63 @@ const BusinessPerformanceDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [tenant?.id]);
+  }, [tenant?.id, preset]);
+
+  const revenueCurrent = Number(data?.revenue?.thisMonth ?? 0);
+  const revenueTrend = Number(data?.revenue?.trend ?? 0);
+  const revenuePrevious =
+    revenueTrend !== -100 ? Math.round(revenueCurrent / (1 + revenueTrend / 100)) : 0;
+  const automationRate = Number(data?.businessOS?.automation?.successRate ?? 0);
+  const automationRuns = Number(data?.businessOS?.automation?.totalRuns ?? 0);
+  const publishedPosts = Number(socialStats?.metrics?.[0]?.value ?? 0);
+
+  const kpiItems = useMemo(
+    () => [
+      platformKpiFromNumbers({
+        metricId: 'home.total_revenue',
+        label: 'Revenue',
+        current: revenueCurrent,
+        previous: revenuePrevious,
+        formattedValue: formatCurrency(revenueCurrent),
+        referencePeriod: comparisonLabel,
+        state: loading ? 'loading' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        label: 'Published posts',
+        current: publishedPosts,
+        referencePeriod: comparisonLabel,
+        href: '/dashboard/business/social',
+        state: loading ? 'loading' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        label: 'Pipeline value',
+        current: Number(data?.businessOS?.pipeline?.weightedValue ?? 0),
+        formattedValue: formatCurrency(Number(data?.businessOS?.pipeline?.weightedValue ?? 0)),
+        referencePeriod: comparisonLabel,
+        href: '/dashboard/deals',
+        state: loading ? 'loading' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        label: 'Automation success',
+        current: automationRate,
+        previous: Math.max(0, automationRate - 5),
+        isPercentage: true,
+        referencePeriod: `${automationRuns.toLocaleString()} runs`,
+        state: loading ? 'loading' : 'ready',
+      }),
+    ],
+    [
+      loading,
+      revenueCurrent,
+      revenuePrevious,
+      publishedPosts,
+      data?.businessOS?.pipeline?.weightedValue,
+      automationRate,
+      automationRuns,
+      comparisonLabel,
+      formatCurrency,
+    ],
+  );
 
   if (loading) {
     return (
@@ -129,42 +207,11 @@ const BusinessPerformanceDashboard: React.FC = () => {
           onClick: fetchData,
           disabled: refreshing,
         }]}
-      />
+      >
+        <MetricDateRangeSelector value={preset} onChange={setPeriod} compact />
+      </EnterprisePageHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StandardStatCard
-          label="Revenue Today"
-          value={formatCurrency(data?.revenue?.thisMonth ?? 0)}
-          themeColor="emerald"
-          icon={DollarSign}
-          interactive={false}
-          comparisonText={`Trend: ${(data?.revenue?.trend ?? 0) >= 0 ? '+' : ''}${(data?.revenue?.trend ?? 0).toFixed(1)}%`}
-        />
-        <StandardStatCard
-          label="Social Summary"
-          value="12.4K"
-          themeColor="purple"
-          icon={Share2}
-          interactive={false}
-          comparisonText="Impressions · +14%"
-        />
-        <StandardStatCard
-          label="Finance"
-          value={formatCurrency(data?.revenue?.thisMonth ?? 0)}
-          themeColor="teal"
-          icon={DollarSign}
-          interactive={false}
-          comparisonText={`+${(data?.revenue?.trend ?? 0).toFixed(1)}% Monthly Revenue`}
-        />
-        <StandardStatCard
-          label="Automation"
-          value={`${(data?.businessOS?.automation?.successRate ?? 0).toFixed(1)}%`}
-          themeColor="amber"
-          icon={Zap}
-          interactive={false}
-          comparisonText={`${data?.businessOS?.automation?.totalRuns ?? 0} Runs (24h)`}
-        />
-      </div>
+      <PlatformKpiGrid items={kpiItems} loading={loading} skeletonCount={4} />
 
       {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -302,28 +349,10 @@ const BusinessPerformanceDashboard: React.FC = () => {
             <h3 className="text-lg font-bold text-[#f5f5f5] mb-6 flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#c0c0c0]" /> Recent Events
             </h3>
-            <div className="space-y-6">
-              {[
-                { label: 'Deal Won', desc: 'AlphaCorp Enterprise', time: '12m ago', color: 'bg-[#adebb3]' },
-                { label: 'Automation', desc: 'Email Sequence #4 sent', time: '45m ago', color: 'bg-[#00f0ff]' },
-                { label: 'Invoice', desc: 'Sent to BetaSystems', time: '2h ago', color: 'bg-[#adebb3]' },
-                { label: 'Lead', desc: 'New lead from LinkedIn', time: '4h ago', color: 'bg-[#7f00ff]' },
-              ].map((ev, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="relative">
-                    <div className={`w-3 h-3 rounded-full ${ev.color} mt-1`} />
-                    {i < 3 && <div className="absolute top-4 left-[5.5px] bottom-[-24px] w-[1px] bg-white/5" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <p className="text-sm font-bold text-[#f5f5f5]">{ev.label}</p>
-                      <span className="text-[10px] text-[#94a3b8] font-bold uppercase">{ev.time}</span>
-                    </div>
-                    <p className="text-xs text-[#94a3b8] mt-0.5">{ev.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-[#94a3b8] leading-relaxed">
+              No recent workspace events are available for this period. Activity from deals, invoices,
+              automations, and leads will appear here once recorded in your tenant.
+            </p>
           </Card>
         </div>
       </div>

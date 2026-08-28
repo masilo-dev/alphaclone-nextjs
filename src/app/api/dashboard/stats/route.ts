@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { dashboardStatsService } from '@/services/dashboardStatsService';
+import {
+  resolveMetricDateRange,
+  type MetricPeriodPreset,
+} from '@/lib/metrics/dateRange';
+
+const VALID_PERIODS = new Set<MetricPeriodPreset>([
+  'today',
+  'last_7_days',
+  'last_30_days',
+  'this_month',
+  'previous_month',
+  'this_quarter',
+  'this_year',
+]);
+
+function parsePeriod(request: NextRequest): MetricPeriodPreset {
+  const periodRaw = request.nextUrl.searchParams.get('period') ?? 'last_30_days';
+  return VALID_PERIODS.has(periodRaw as MetricPeriodPreset)
+    ? (periodRaw as MetricPeriodPreset)
+    : 'last_30_days';
+}
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -353,6 +376,39 @@ export async function GET(req: NextRequest) {
     if (!stats) {
       console.info('[dashboard/stats] Running direct-query fallback for tenant:', tenantId);
       stats = await getStatsFallback(supabase, tenantId, user.id);
+    }
+
+    const period = parsePeriod(req);
+    const range = resolveMetricDateRange(period);
+    try {
+      const admin = createSupabaseAdminClient();
+      const periodMetrics = await dashboardStatsService.getHomePeriodMetrics(
+        admin,
+        tenantId,
+        period,
+      );
+      stats = {
+        ...stats,
+        revenue: periodMetrics.revenue,
+        totalRevenue: periodMetrics.revenue,
+        revenuePrev: periodMetrics.revenuePrev,
+        previousRevenue: periodMetrics.revenuePrev,
+        newLeads: periodMetrics.newLeads,
+        leadsPrev: periodMetrics.leadsPrev,
+        previousLeads: periodMetrics.leadsPrev,
+        dealsWon: periodMetrics.dealsWon,
+        dealsWonPrev: periodMetrics.dealsWonPrev,
+        previousDealsWon: periodMetrics.dealsWonPrev,
+        outstanding: periodMetrics.outstanding,
+        outstandingPrev: periodMetrics.outstandingPrev,
+        pendingRevenue: periodMetrics.outstanding,
+        overdueInvoices: periodMetrics.overdueInvoices,
+        periodPreset: period,
+        comparisonLabel: periodMetrics.comparisonLabel,
+      };
+    } catch (periodError) {
+      console.warn('[dashboard/stats] Period overlay failed:', periodError);
+      stats = { ...stats, comparisonLabel: range.comparisonLabel, periodPreset: period };
     }
 
     return NextResponse.json({ stats: normalizeDashboardStats(stats) });

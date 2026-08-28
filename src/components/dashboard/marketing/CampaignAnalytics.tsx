@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     X, Eye, MousePointerClick, Mail, CheckCircle2, AlertCircle, Loader2
 } from 'lucide-react';
 import { campaignService, Campaign, CampaignRecipient } from '@/services/campaignService';
-import { StandardStatCard, StandardStatusBadge, resolveStatusVariant, type CardTheme } from '@/components/ui/design-system';
+import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
+import { PlatformKpiGrid } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 
 interface CampaignAnalyticsProps {
     campaign: Campaign;
@@ -30,6 +32,49 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
         load();
     }, [campaign.id]);
 
+    const countKpis = useMemo(
+        () => [
+            platformKpiFromNumbers({ label: 'Total Sent', current: analytics?.sent || 0 }),
+            platformKpiFromNumbers({ label: 'Delivered', current: analytics?.delivered || 0 }),
+            platformKpiFromNumbers({ label: 'Opened', current: analytics?.opened || 0 }),
+            platformKpiFromNumbers({ label: 'Clicked', current: analytics?.clicked || 0 }),
+        ],
+        [analytics],
+    );
+
+    const rateKpis = useMemo(
+        () => [
+            platformKpiFromNumbers({
+                label: 'Open Rate',
+                current: Number(analytics?.openRate || 0),
+                isPercentage: true,
+            }),
+            platformKpiFromNumbers({
+                label: 'Click Rate',
+                current: Number(analytics?.clickRate || 0),
+                isPercentage: true,
+            }),
+            platformKpiFromNumbers({
+                label: 'Delivery Rate',
+                current: Number(analytics?.deliveryRate || 0),
+                isPercentage: true,
+            }),
+        ],
+        [analytics],
+    );
+
+    const statusCounts = useMemo(
+        () => ({
+            sent: recipients.filter((r) => r.status !== 'pending').length,
+            delivered: recipients.filter((r) => ['delivered', 'opened', 'clicked'].includes(r.status)).length,
+            opened: recipients.filter((r) => ['opened', 'clicked'].includes(r.status)).length,
+            clicked: recipients.filter((r) => r.status === 'clicked').length,
+            bounced: recipients.filter((r) => r.status === 'bounced').length,
+            failed: recipients.filter((r) => r.status === 'failed').length,
+        }),
+        [recipients],
+    );
+
     if (loading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -38,18 +83,8 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
         );
     }
 
-    const statusCounts = {
-        sent: recipients.filter(r => r.status !== 'pending').length,
-        delivered: recipients.filter(r => ['delivered', 'opened', 'clicked'].includes(r.status)).length,
-        opened: recipients.filter(r => ['opened', 'clicked'].includes(r.status)).length,
-        clicked: recipients.filter(r => r.status === 'clicked').length,
-        bounced: recipients.filter(r => r.status === 'bounced').length,
-        failed: recipients.filter(r => r.status === 'failed').length,
-    };
-
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">{campaign.name}</h2>
@@ -60,41 +95,9 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
                 </button>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                    { label: 'Total Sent', value: analytics?.sent || 0, theme: 'blue' as CardTheme, icon: Mail },
-                    { label: 'Delivered', value: analytics?.delivered || 0, theme: 'emerald' as CardTheme, icon: CheckCircle2 },
-                    { label: 'Opened', value: analytics?.opened || 0, theme: 'purple' as CardTheme, icon: Eye },
-                    { label: 'Clicked', value: analytics?.clicked || 0, theme: 'amber' as CardTheme, icon: MousePointerClick },
-                ].map(s => (
-                    <StandardStatCard
-                        key={s.label}
-                        label={s.label}
-                        value={s.value.toLocaleString()}
-                        themeColor={s.theme}
-                        icon={s.icon}
-                        interactive={false}
-                    />
-                ))}
-            </div>
+            <PlatformKpiGrid items={countKpis} skeletonCount={4} />
 
-            {/* Rates */}
-            <div className="grid grid-cols-3 gap-3">
-                {[
-                    { label: 'Open Rate', value: `${analytics?.openRate || 0}%`, theme: 'purple' as CardTheme },
-                    { label: 'Click Rate', value: `${analytics?.clickRate || 0}%`, theme: 'amber' as CardTheme },
-                    { label: 'Delivery Rate', value: `${analytics?.deliveryRate || 0}%`, theme: 'emerald' as CardTheme },
-                ].map(s => (
-                    <StandardStatCard
-                        key={s.label}
-                        label={s.label}
-                        value={s.value}
-                        themeColor={s.theme}
-                        interactive={false}
-                    />
-                ))}
-            </div>
+            <PlatformKpiGrid items={rateKpis} skeletonCount={3} />
 
             {/* Issues */}
             {(statusCounts.bounced > 0 || statusCounts.failed > 0) && (

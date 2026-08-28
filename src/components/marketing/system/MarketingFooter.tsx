@@ -142,7 +142,7 @@ export default function MarketingFooter() {
         </div>
 
         <div className="mkt-footer-bottom">
-          <p>{formatCopyrightLine()}</p>
+          <p suppressHydrationWarning>{formatCopyrightLine()}</p>
           <div className="mkt-footer-legal flex items-center gap-4 flex-wrap">
             <PublicStatusPill />
             <Link href="/privacy-policy" className="mkt-footer-link">

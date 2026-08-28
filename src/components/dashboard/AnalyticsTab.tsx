@@ -1,18 +1,35 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   TrendingUp, TrendingDown, FileText, ChevronRight,
-  BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Loader2,
+  BarChart3, PieChart, Loader2,
 } from 'lucide-react';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
 import { format, parseISO } from 'date-fns';
-import { StandardStatCard, StandardLineChart, type CardTheme } from '@/components/ui/design-system';
+import { StandardLineChart } from '@/components/ui/design-system';
 import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
+import { PlatformKpiGrid, MetricDateRangeSelector } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
+import { useMetricDateRange } from '@/hooks/useMetricDateRange';
+import type { MetricPeriodPreset } from '@/lib/metrics/dateRange';
 
-type DateRange = '7d' | '30d' | '90d';
-type ChartMetric = 'revenue' | 'projects';
+function analyticsRangeForPreset(preset: MetricPeriodPreset): '7d' | '30d' | '90d' {
+  switch (preset) {
+    case 'today':
+    case 'last_7_days':
+      return '7d';
+    case 'this_quarter':
+    case 'this_year':
+      return '90d';
+    case 'last_30_days':
+    case 'this_month':
+    case 'previous_month':
+    default:
+      return '30d';
+  }
+}
 
 const REPORTS = [
   { name: 'P&L Statement', icon: BarChart3, href: '/dashboard/accounting' },
@@ -39,47 +56,49 @@ function formatChartLabel(dateStr: string): string {
   }
 }
 
-function buildKpiChips(stats: AnalyticsData) {
+function buildKpiItems(stats: AnalyticsData, comparisonLabel: string) {
   const trend = stats.revenue.trend;
+  const revenuePrev =
+    trend !== -100 ? Math.round(stats.revenue.total / (1 + trend / 100)) : stats.revenue.lastMonth;
   return [
-    {
+    platformKpiFromNumbers({
+      metricId: 'home.total_revenue',
       label: 'Revenue',
-      value: `$${stats.revenue.total.toLocaleString()}`,
-      delta: trend >= 0 ? `+${trend.toFixed(1)}%` : `${trend.toFixed(1)}%`,
-      deltaDir: (trend >= 0 ? 'up' : 'down') as 'up' | 'down',
-      theme: 'teal' as CardTheme,
+      current: stats.revenue.total,
+      previous: revenuePrev,
+      formattedValue: `$${stats.revenue.total.toLocaleString()}`,
+      referencePeriod: comparisonLabel,
       href: '/dashboard/business/reports',
-    },
-    {
+    }),
+    platformKpiFromNumbers({
       label: 'Active Projects',
-      value: String(stats.projects.active),
-      delta: `${stats.projects.completed} completed`,
-      deltaDir: 'none' as const,
-      theme: 'purple' as CardTheme,
+      current: stats.projects.active,
+      previous: stats.projects.completed,
+      referencePeriod: `${stats.projects.completed} completed`,
       href: '/dashboard/business/projects',
-    },
-    {
+    }),
+    platformKpiFromNumbers({
       label: 'Clients',
-      value: String(stats.users.clients),
-      delta: stats.users.growth >= 0 ? `+${stats.users.growth.toFixed(1)}%` : `${stats.users.growth.toFixed(1)}%`,
-      deltaDir: (stats.users.growth >= 0 ? 'up' : 'down') as 'up' | 'down',
-      theme: 'blue' as CardTheme,
+      current: stats.users.clients,
+      previous: Math.round(stats.users.clients / (1 + stats.users.growth / 100)),
+      referencePeriod: comparisonLabel,
       href: '/dashboard/contacts',
-    },
-    {
+    }),
+    platformKpiFromNumbers({
       label: 'On-Time Delivery',
-      value: `${stats.performance.onTimeDelivery}%`,
-      delta: `${stats.performance.clientSatisfaction}/5 sat`,
-      deltaDir: 'none' as const,
-      theme: 'amber' as CardTheme,
+      current: stats.performance.onTimeDelivery,
+      isPercentage: true,
+      referencePeriod: `${stats.performance.clientSatisfaction}/5 satisfaction`,
       href: '/dashboard/performance',
-    },
+    }),
   ];
 }
 
+type ChartMetric = 'revenue' | 'projects';
+
 const AnalyticsTab: React.FC = () => {
   const router = useRouter();
-  const [dateRange, setDateRange] = useState<DateRange>('30d');
+  const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
   const [metric, setMetric] = useState<ChartMetric>('revenue');
   const [stats, setStats] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,12 +107,12 @@ const AnalyticsTab: React.FC = () => {
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
-    const { data, error } = await analyticsService.getAnalytics(dateRange);
+    const { data, error } = await analyticsService.getAnalytics(analyticsRangeForPreset(preset));
     if (data) setStats(data);
     else console.error('Failed to load analytics:', error);
     setLoading(false);
     setRefreshing(false);
-  }, [dateRange]);
+  }, [preset]);
 
   useEffect(() => {
     loadData();
@@ -110,7 +129,10 @@ const AnalyticsTab: React.FC = () => {
     };
   }) ?? [];
 
-  const kpiChips = stats ? buildKpiChips(stats) : [];
+  const kpiItems = useMemo(
+    () => (stats ? buildKpiItems(stats, comparisonLabel) : []),
+    [stats, comparisonLabel],
+  );
 
   if (loading) {
     return (
@@ -130,34 +152,10 @@ const AnalyticsTab: React.FC = () => {
           disabled: refreshing,
         }]}
       >
-        <div className="flex gap-2">
-          {(['7d', '30d', '90d'] as DateRange[]).map((r) => (
-            <button
-              key={r}
-              onClick={() => setDateRange(r)}
-              className={`h-[34px] px-4 rounded-lg text-[12px] font-semibold transition-all ${dateRange === r ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-white/5 text-[var(--ws-text-secondary)] border border-white/5'}`}
-            >
-              {r.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        <MetricDateRangeSelector value={preset} onChange={setPeriod} compact />
       </EnterprisePageHeader>
 
-      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-        {kpiChips.map((kpi) => (
-          <StandardStatCard
-            key={kpi.label}
-            label={kpi.label}
-            value={kpi.value}
-            delta={kpi.delta}
-            deltaDir={kpi.deltaDir}
-            themeColor={kpi.theme}
-            onClick={() => router.push(kpi.href)}
-            className="flex-shrink-0 min-w-[170px]"
-            comparisonText=""
-          />
-        ))}
-      </div>
+      <PlatformKpiGrid items={kpiItems} loading={loading} skeletonCount={4} />
 
       <div className="space-y-4">
         <div className="flex gap-1.5">

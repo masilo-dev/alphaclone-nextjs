@@ -18,6 +18,8 @@ export interface IntelligentKpiCardProps {
   isBetterHigher?: boolean;
   unit?: string;
   isPercentage?: boolean;
+  /** When set, overrides numeric formatting (e.g. pre-formatted currency strings). */
+  displayValue?: string;
   referencePeriod?: string;
   href?: string;
   onClick?: () => void;
@@ -132,6 +134,7 @@ export function IntelligentKpiCard({
   isBetterHigher = true,
   unit = '',
   isPercentage = false,
+  displayValue,
   referencePeriod,
   href,
   onClick,
@@ -196,7 +199,7 @@ export function IntelligentKpiCard({
               compact ? 'text-[1.25rem]' : 'text-[1.6rem] sm:text-[1.75rem]',
             )}
           >
-            {vm.valueFormatted}
+            {displayValue ?? vm.valueFormatted}
           </p>
         </div>
         {Icon ? (

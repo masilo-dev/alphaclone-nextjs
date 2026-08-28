@@ -9,7 +9,6 @@ import { useBonnieMorningBrief } from '@/hooks/useBonnieMorningBrief';
 import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
 import {
   AttentionPanel,
-  KpiCardSkeleton,
   ModuleLauncher,
   OverviewChartCard,
   TodayPanel,
@@ -17,20 +16,16 @@ import {
   type ModuleLauncherItem,
   type TodayItem,
 } from '@/components/ui/os';
-import {
-  IconInvoicing,
-  IconLeads,
-  IconPipeline,
-  IconMoney,
-} from '@/components/icons/alphaclone';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
 import { buildDashboardDecisionViewModel } from '@/lib/analytics/dashboardViewModel';
 import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
-import { IntelligentKpiCard } from '@/components/ui/intelligence';
 import { DashboardHomeLayoutToggle } from '@/components/dashboard/DashboardHomeLayoutToggle';
 import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
+import { PlatformKpiGrid, MetricDateRangeSelector } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
+import { useMetricDateRange } from '@/hooks/useMetricDateRange';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -61,13 +56,14 @@ const DEFAULT_MODULES: ModuleLauncherItem[] = [
 ];
 
 export function OperatingSystemHome() {
-  const { currentTenant, getDashboardStats } = useTenant();
+  const { currentTenant } = useTenant();
   const { user } = useAuth();
   const { pendingCount } = useBonnieApprovals(currentTenant?.id);
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
 
   useEffect(() => {
     if (!currentTenant?.id || !user?.id) {
@@ -77,11 +73,23 @@ export function OperatingSystemHome() {
     let active = true;
     setLoading(true);
     setLoadError(null);
-    void getDashboardStats(currentTenant.id, user.id)
-      .then((r) => {
+    const url = `/api/dashboard/stats?tenantId=${encodeURIComponent(currentTenant.id)}&period=${encodeURIComponent(preset)}`;
+    void fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } })
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || 'Failed to load dashboard stats');
+        }
+        return res.json();
+      })
+      .then((payload) => {
         if (!active) return;
-        setStats((r.stats as Record<string, unknown>) ?? null);
-        setLoadError(r.error ?? null);
+        setStats((payload.stats as Record<string, unknown>) ?? null);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setLoadError(err instanceof Error ? err.message : 'Failed to load dashboard stats');
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -89,16 +97,27 @@ export function OperatingSystemHome() {
     return () => {
       active = false;
     };
-  }, [currentTenant?.id, user?.id, getDashboardStats]);
+  }, [currentTenant?.id, user?.id, preset]);
 
   const retry = async () => {
     if (!currentTenant?.id || !user?.id) return;
     setLoading(true);
     setLoadError(null);
-    const r = await getDashboardStats(currentTenant.id, user.id, true);
-    setStats((r.stats as Record<string, unknown>) ?? null);
-    setLoadError(r.error ?? null);
-    setLoading(false);
+    try {
+      const url = `/api/dashboard/stats?tenantId=${encodeURIComponent(currentTenant.id)}&period=${encodeURIComponent(preset)}`;
+      const res = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to load dashboard stats');
+      }
+      const payload = await res.json();
+      setStats((payload.stats as Record<string, unknown>) ?? null);
+      setLoadError(null);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Failed to load dashboard stats');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const firstName =
@@ -270,6 +289,102 @@ export function OperatingSystemHome() {
   const revenueTrend = [revenuePrev * 0.8, revenuePrev, revenuePrev * 0.95, revenue * 0.9, revenue];
   const leadsTrend = [leadsPrev * 0.7, leadsPrev * 0.9, leadsPrev, leads * 0.85, leads];
 
+  const upcomingMeetingsCount = Array.isArray(stats?.upcomingMeetings)
+    ? (stats.upcomingMeetings as unknown[]).length
+    : null;
+  const tasksAttention = openTasks + (Number(normalizedStats.missedTasks) || 0);
+  const conversionCurrent = decisionVm.kpis.conversionRate.current;
+  const conversionPrev = decisionVm.kpis.conversionRate.previous;
+
+  const homeKpis = useMemo(
+    () => [
+      platformKpiFromNumbers({
+        metricId: 'home.total_revenue',
+        label: 'Total revenue',
+        current: revenue,
+        previous: revenuePrev,
+        referencePeriod: comparisonLabel,
+        trend: revenueTrend,
+        state: loading ? 'loading' : revenue == null ? 'empty' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        metricId: 'home.new_leads',
+        label: 'New leads',
+        current: leads,
+        previous: leadsPrev,
+        referencePeriod: comparisonLabel,
+        trend: leadsTrend,
+        state: loading ? 'loading' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        metricId: 'home.conversion_rate',
+        label: 'Conversion rate',
+        current: conversionCurrent,
+        previous: conversionPrev,
+        isPercentage: true,
+        referencePeriod: comparisonLabel,
+        state: loading ? 'loading' : leads === 0 && leadsPrev === 0 ? 'empty' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        metricId: 'home.outstanding_invoices',
+        label: 'Outstanding invoices',
+        current: outstanding,
+        previous: outstandingPrev,
+        formattedValue: money(outstanding),
+        referencePeriod: comparisonLabel,
+        state: loading ? 'loading' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        metricId: 'home.upcoming_meetings',
+        label: 'Upcoming meetings',
+        current: upcomingMeetingsCount,
+        referencePeriod: 'Next 7 days',
+        state: loading ? 'loading' : upcomingMeetingsCount == null ? 'empty' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        metricId: 'home.tasks_attention',
+        label: 'Tasks requiring attention',
+        current: tasksAttention,
+        referencePeriod: comparisonLabel,
+        state: loading ? 'loading' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        label: 'Deals won',
+        current: dealsWon,
+        previous: dealsWonPrev,
+        referencePeriod: comparisonLabel,
+        href: '/dashboard/deals',
+        state: loading ? 'loading' : 'ready',
+      }),
+      platformKpiFromNumbers({
+        metricId: 'invoices.overdue_invoices',
+        label: 'Overdue invoices',
+        current: overdueInvoices,
+        referencePeriod: comparisonLabel,
+        state: loading ? 'loading' : 'ready',
+      }),
+    ],
+    [
+      loading,
+      revenue,
+      revenuePrev,
+      leads,
+      leadsPrev,
+      conversionCurrent,
+      conversionPrev,
+      outstanding,
+      outstandingPrev,
+      upcomingMeetingsCount,
+      tasksAttention,
+      dealsWon,
+      dealsWonPrev,
+      overdueInvoices,
+      comparisonLabel,
+      revenueTrend,
+      leadsTrend,
+    ],
+  );
+
 
   if (!currentTenant?.id) {
     return (
@@ -323,9 +438,7 @@ export function OperatingSystemHome() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <DashboardHomeLayoutToggle />
-          <span className="inline-flex min-h-9 items-center rounded-[8px] border border-[var(--ws-border)] px-3 text-xs font-medium text-[var(--ws-text-secondary)]">
-            Last 30 days
-          </span>
+          <MetricDateRangeSelector value={preset} onChange={setPeriod} compact className="mb-0" />
           <a
             href="/dashboard/business/settings"
             className={WORKSPACE.action.secondary}
@@ -341,59 +454,16 @@ export function OperatingSystemHome() {
         </div>
       </header>
 
-      <section
-        className="grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4"
-        aria-label="Business pulse key performance indicators"
-      >
-        {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <KpiCardSkeleton key={i} />)
-        ) : (
-          <>
-            <IntelligentKpiCard
-              label="Revenue collected"
-              current={revenue}
-              previous={revenuePrev}
-              href="/dashboard/business/billing"
-              icon={IconMoney}
-              iconColor="#168C5C"
-              trend={revenueTrend}
-              isBetterHigher
-              compact
-            />
-            <IntelligentKpiCard
-              label="New leads"
-              current={leads}
-              previous={leadsPrev}
-              href="/dashboard/leads"
-              icon={IconLeads}
-              iconColor="#3196E8"
-              trend={leadsTrend}
-              isBetterHigher
-              compact
-            />
-            <IntelligentKpiCard
-              label="Deals won"
-              current={dealsWon}
-              previous={dealsWonPrev}
-              href="/dashboard/deals"
-              icon={IconPipeline}
-              iconColor="#E69222"
-              isBetterHigher
-              compact
-            />
-            <IntelligentKpiCard
-              label="Outstanding A/R"
-              current={outstanding}
-              previous={outstandingPrev}
-              href="/dashboard/business/billing/manage"
-              icon={IconInvoicing}
-              iconColor="#149C86"
-              isBetterHigher={false}
-              compact
-            />
-          </>
-        )}
-      </section>
+      <PlatformKpiGrid
+        items={homeKpis.map((item) => ({
+          ...item,
+          compact: true,
+          formattedValue: item.metricId === 'home.total_revenue' ? money(revenue) : item.formattedValue,
+        }))}
+        loading={loading}
+        skeletonCount={8}
+        className="ac-metric-enter"
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 md:gap-5">
         <div className="space-y-4 md:space-y-5 min-w-0">

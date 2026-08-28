@@ -45,8 +45,9 @@ export async function getHubKpiStats(
   supabase: SupabaseClient,
   tenantId: string,
   hub: HubKpiId,
+  period: string = 'last_30_days',
 ): Promise<SlimHubStats> {
-  const cacheKey = `hub-kpi:${hub}:${tenantId}`;
+  const cacheKey = `hub-kpi:${hub}:${tenantId}:${period}`;
   const cached = getStatsCache<SlimHubStats>(cacheKey);
   if (cached) return cached;
 

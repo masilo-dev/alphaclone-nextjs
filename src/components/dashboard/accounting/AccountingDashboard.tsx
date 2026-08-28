@@ -9,7 +9,8 @@ import {
     ArrowRight, Clock, Plus, Filter, MoreHorizontal, Receipt,
     AlertTriangle, CreditCard, Landmark, RefreshCcw
 } from 'lucide-react';
-import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
+import { PlatformKpiGrid } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 import { WORKSPACE } from '@/constants/design';
 import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { supabase } from '../../../lib/supabase';
@@ -277,23 +278,15 @@ export default function AccountingDashboard() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-                {[
-                    { label: 'Open Bills', value: stats.openBills, theme: 'amber' as CardTheme, icon: FileText },
-                    { label: 'Overdue Bills', value: stats.overdueBills, theme: 'rose' as CardTheme, icon: AlertTriangle },
-                    { label: 'Unreconciled', value: stats.unreconciledTransactions, theme: 'blue' as CardTheme, icon: RefreshCcw },
-                    { label: 'Bank Accounts', value: stats.activeBankAccounts, theme: 'emerald' as CardTheme, icon: Landmark },
-                ].map((item) => (
-                    <StandardStatCard
-                        key={item.label}
-                        label={item.label}
-                        value={item.value}
-                        themeColor={item.theme}
-                        icon={item.icon}
-                        interactive={false}
-                    />
-                ))}
-            </div>
+            <PlatformKpiGrid
+                items={[
+                    platformKpiFromNumbers({ label: 'Open Bills', current: stats.openBills, isBetterHigher: false }),
+                    platformKpiFromNumbers({ label: 'Overdue Bills', current: stats.overdueBills, isBetterHigher: false }),
+                    platformKpiFromNumbers({ label: 'Unreconciled', current: stats.unreconciledTransactions, isBetterHigher: false }),
+                    platformKpiFromNumbers({ label: 'Bank Accounts', current: stats.activeBankAccounts }),
+                ]}
+                skeletonCount={4}
+            />
 
             {/* Mobile-Friendly Tab Switcher */}
             <div className="flex border-b border-white/5 overflow-x-auto no-scrollbar">
@@ -310,29 +303,27 @@ export default function AccountingDashboard() {
 
             {activeTab === 'overview' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <StandardStatCard
-                            label="Available Cash"
-                            value={`$${stats.cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                            themeColor="teal"
-                            icon={Landmark}
-                            interactive={false}
-                        />
-                        <StandardStatCard
-                            label="Revenue (MTD)"
-                            value={`$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                            themeColor="emerald"
-                            icon={TrendingUp}
-                            interactive={false}
-                        />
-                        <StandardStatCard
-                            label="Expenses (MTD)"
-                            value={`$${stats.totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                            themeColor="rose"
-                            icon={CreditCard}
-                            interactive={false}
-                        />
-                    </div>
+                    <PlatformKpiGrid
+                        items={[
+                            platformKpiFromNumbers({
+                                label: 'Available Cash',
+                                current: stats.cashBalance,
+                                formattedValue: `$${stats.cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                            }),
+                            platformKpiFromNumbers({
+                                label: 'Revenue (period)',
+                                current: stats.totalRevenue,
+                                formattedValue: `$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                            }),
+                            platformKpiFromNumbers({
+                                label: 'Expenses (period)',
+                                current: stats.totalExpenses,
+                                formattedValue: `$${stats.totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                                isBetterHigher: false,
+                            }),
+                        ]}
+                        skeletonCount={3}
+                    />
 
                     {/* Responsive Ledger List */}
                     <div className="ac-workspace-panel rounded-lg overflow-hidden">

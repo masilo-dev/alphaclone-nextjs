@@ -2,16 +2,11 @@
 
 import type { CSSProperties } from 'react';
 import type { DeltaColor, DeltaDir } from '@/types/dashboardStats';
-import { ENTERPRISE, WORKSPACE } from '@/constants/design';
-import { cn } from '@/lib/utils';
-
-const DELTA_STYLES: Record<DeltaColor, string> = {
-  green: 'text-dashboard-green',
-  amber: 'text-dashboard-amber',
-  red: 'text-dashboard-red',
-  blue: 'text-dashboard-blue',
-  teal: 'text-teal-400',
-};
+import { platformKpiFromDashboardMetric } from '@/lib/metrics/metricPresentation';
+import {
+  PlatformKpiCard,
+  PlatformKpiCardSkeleton,
+} from '@/components/dashboard/metrics/PlatformKpiCard';
 
 interface MetricCardProps {
   label: string;
@@ -22,67 +17,31 @@ interface MetricCardProps {
   comparisonText?: string;
   className?: string;
   style?: CSSProperties;
+  metricId?: string;
+  href?: string;
 }
 
+/** @deprecated Prefer PlatformKpiCard directly. Kept for legacy imports. */
 export function MetricCard({
   label,
   value,
   delta,
   deltaDir,
-  deltaColor = 'green',
+  deltaColor,
   comparisonText,
   className,
   style,
+  metricId,
+  href,
 }: MetricCardProps) {
-  const arrow = deltaDir === 'down' ? '↓' : deltaDir === 'up' ? '↑' : '';
-  const period =
-    comparisonText ?? (delta ? ENTERPRISE.metricCard.defaultComparison : undefined);
+  const model = platformKpiFromDashboardMetric(
+    { label, value, delta, deltaDir, deltaColor, comparisonText },
+    { metricId, href },
+  );
 
   return (
-    <div
-      className={cn(
-        WORKSPACE.panel.base,
-        ENTERPRISE.metricCard.minHeight,
-        'p-4 flex flex-col justify-between shadow-none',
-        className
-      )}
-      style={style}
-    >
-      <span className={cn('text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--ws-text-tertiary)] truncate')}>
-        {label}
-      </span>
-
-      <div className="mt-2">
-        <span
-          className={cn(
-            ENTERPRISE.metricCard.valueSize,
-            'font-bold text-[var(--ws-text-primary)] leading-none tabular-nums tracking-tight block',
-          )}
-        >
-          {value}
-        </span>
-
-        {(delta || period) && (
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-2">
-            {delta ? (
-              <span
-                className={cn(
-                  ENTERPRISE.metricCard.trendSize,
-                  'font-medium tabular-nums',
-                  DELTA_STYLES[deltaColor]
-                )}
-              >
-                {arrow} {delta}
-              </span>
-            ) : null}
-            {period ? (
-              <span className={cn(ENTERPRISE.metricCard.comparisonSize, 'text-[var(--ws-text-muted)]')}>
-                {period}
-              </span>
-            ) : null}
-          </div>
-        )}
-      </div>
+    <div className={className} style={style}>
+      <PlatformKpiCard {...model} />
     </div>
   );
 }
@@ -95,18 +54,8 @@ export function MetricCardSkeleton({
   style?: CSSProperties;
 }) {
   return (
-    <div
-      className={cn(
-        WORKSPACE.panel.base,
-        ENTERPRISE.metricCard.minHeight,
-        'p-4 ac-skeleton-pulse shadow-none',
-        className
-      )}
-      style={style}
-    >
-      <div className="h-3.5 w-24 bg-[var(--ws-surface-tertiary)] rounded" />
-      <div className="h-8 w-32 bg-[var(--ws-surface-tertiary)] rounded mt-3" />
-      <div className="h-3 w-20 bg-[var(--ws-surface-tertiary)] rounded mt-2" />
+    <div className={className} style={style}>
+      <PlatformKpiCardSkeleton />
     </div>
   );
 }
