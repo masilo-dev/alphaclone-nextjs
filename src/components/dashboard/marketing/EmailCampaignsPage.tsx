@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useSearchParams, usePathname } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import CampaignBuilderShell from '@/components/dashboard/business/CampaignBuilder';
 import { Button } from '@/components/ui/button';
@@ -21,11 +22,14 @@ type CampaignListEntry = {
   id: string;
   name: string;
   subject: string;
-  status: 'draft' | 'scheduled' | 'queued' | 'sending' | 'sent' | 'paused' | 'cancelled';
+  status: 'draft' | 'scheduled' | 'queued' | 'sending' | 'sent' | 'paused' | 'cancelled' | 'failed' | 'processing';
   recipients: number;
+  sent: number;
   opened: number;
   clicked: number;
   replied: number;
+  openRate: number;
+  clickRate: number;
   updatedAt: string;
   createdAt: string;
   startedAt?: string | null;
@@ -41,6 +45,8 @@ const statusLabel: Record<CampaignListEntry['status'], string> = {
   sent: 'Sent ✅',
   paused: 'Paused',
   cancelled: 'Cancelled',
+  failed: 'Failed',
+  processing: 'Processing',
 };
 
 const statusTone: Record<CampaignListEntry['status'], string> = {
@@ -51,6 +57,8 @@ const statusTone: Record<CampaignListEntry['status'], string> = {
   sent: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
   paused: 'bg-slate-600/15 text-slate-400 border-slate-600/30',
   cancelled: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+  failed: 'bg-red-500/15 text-red-300 border-red-500/30',
+  processing: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
 };
 
 type WizardStep = {
@@ -83,6 +91,8 @@ const WIZARD_STEPS: WizardStep[] = [
 ];
 
 export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [activeStep, setActiveStep] = useState<number>(1);
   const [completed, setCompleted] = useState<Set<number>>(new Set([1]));
   const { currentTenant } = useTenant();
@@ -91,11 +101,11 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
   const [campaignLoadError, setCampaignLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadCampaigns = useCallback(() => {
     if (!currentTenant?.id) {
       setCampaignList([]);
       setCampaignLoadError('Select a workspace to view campaigns.');
-      return;
+      return () => undefined;
     }
 
     let cancelled = false;
@@ -112,23 +122,31 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
             ? 'sending'
             : rawStatus === 'completed'
               ? 'sent'
-              : ['draft', 'scheduled', 'queued', 'sending', 'sent', 'paused', 'cancelled'].includes(rawStatus)
+              : ['draft', 'scheduled', 'queued', 'sending', 'sent', 'paused', 'cancelled', 'failed', 'processing'].includes(rawStatus)
                 ? rawStatus as CampaignListEntry['status']
                 : 'draft';
+          const sent = Number(row.total_sent || 0);
+          const recipients = Number(row.total_recipients || row.recipient_count || sent || 0);
+          const opened = Number(row.total_opened || 0);
+          const clicked = Number(row.total_clicked || 0);
+          const denom = sent > 0 ? sent : recipients;
           return {
             id: String(row.id || ''),
             name: String(row.name || 'Untitled campaign'),
             subject: String(row.subject || '(no subject)'),
             status,
-            recipients: Number(row.sent_count || row.recipient_count || 0),
-            opened: Number(row.opened_count || 0),
-            clicked: Number(row.clicked_count || 0),
+            recipients,
+            sent,
+            opened,
+            clicked,
             replied: Number(row.replied_count || row.reply_count || 0),
+            openRate: denom > 0 ? Math.round((opened / denom) * 1000) / 10 : 0,
+            clickRate: denom > 0 ? Math.round((clicked / denom) * 1000) / 10 : 0,
             updatedAt: String(row.updated_at || row.created_at || ''),
             createdAt: String(row.created_at || ''),
             startedAt: typeof row.started_at === 'string' ? row.started_at : null,
             scheduledAt: typeof row.scheduled_at === 'string' ? row.scheduled_at : null,
-            sentAt: typeof row.sent_at === 'string' ? row.sent_at : null,
+            sentAt: typeof row.sent_at === 'string' ? row.sent_at : (typeof row.completed_at === 'string' ? row.completed_at : null),
           };
         });
         if (!cancelled) setCampaignList(mapped);
@@ -140,6 +158,20 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
       });
     return () => { cancelled = true; };
   }, [currentTenant?.id]);
+
+  useEffect(() => {
+    return loadCampaigns();
+  }, [loadCampaigns]);
+
+  useEffect(() => {
+    const fromQuery = searchParams?.get('campaign') || searchParams?.get('campaignId');
+    const fromPath = pathname?.match(/\/marketing\/campaigns\/([0-9a-f-]{36})/i)?.[1];
+    const id = fromQuery || fromPath;
+    if (id) {
+      setSelectedId(id);
+      setOpenDraft(true);
+    }
+  }, [searchParams, pathname]);
 
   const selected = useMemo(() => campaignList?.find(m => m.id === selectedId) || null, [campaignList, selectedId]);
 
@@ -306,9 +338,13 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
                           </div>
                           <p className="text-[11px] text-slate-400 truncate">{c.subject}</p>
                           <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
-                            <span className="px-1.5 py-0.5 rounded bg-slate-800/70 text-slate-300">{c.recipients} people</span>
-                            {c.opened > 0 && <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300">{c.opened} opened</span>}
-                            {c.clicked > 0 && <span className="px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-300">{c.clicked} clicked</span>}
+                            <span className="px-1.5 py-0.5 rounded bg-slate-800/70 text-slate-300">
+                              {c.status === 'sent' || c.status === 'sending' ? `${c.sent}/${c.recipients} sent` : `${c.recipients} recipients`}
+                            </span>
+                            {c.openRate > 0 && <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300">{c.openRate}% open</span>}
+                            {c.clickRate > 0 && <span className="px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-300">{c.clickRate}% click</span>}
+                            {c.opened > 0 && c.openRate === 0 && <span className="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300">{c.opened} opened</span>}
+                            {c.clicked > 0 && c.clickRate === 0 && <span className="px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-300">{c.clicked} clicked</span>}
                             {c.replied > 0 && <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">{c.replied} replied</span>}
                             {c.status === 'scheduled' && c.scheduledAt ? (
                               <span className="ml-auto px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 tabular-nums">
@@ -456,15 +492,15 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
                           <div className="grid grid-cols-4 gap-1.5 text-center">
                             <div className="rounded-lg bg-slate-900/70 border border-white/5 p-2">
                               <p className="text-[9px] uppercase tracking-widest text-slate-500">Sent</p>
-                              <p className="text-[13px] font-black text-slate-200 tabular-nums">{selected.recipients}</p>
+                              <p className="text-[13px] font-black text-slate-200 tabular-nums">{selected.sent}/{selected.recipients}</p>
                             </div>
                             <div className="rounded-lg bg-slate-900/70 border border-white/5 p-2">
                               <p className="text-[9px] uppercase tracking-widest text-sky-400">Open</p>
-                              <p className="text-[13px] font-black text-sky-300 tabular-nums">{selected.opened}</p>
+                              <p className="text-[13px] font-black text-sky-300 tabular-nums">{selected.openRate}%</p>
                             </div>
                             <div className="rounded-lg bg-slate-900/70 border border-white/5 p-2">
                               <p className="text-[9px] uppercase tracking-widest text-violet-400">Click</p>
-                              <p className="text-[13px] font-black text-violet-300 tabular-nums">{selected.clicked}</p>
+                              <p className="text-[13px] font-black text-violet-300 tabular-nums">{selected.clickRate}%</p>
                             </div>
                             <div className="rounded-lg bg-slate-900/70 border border-white/5 p-2">
                               <p className="text-[9px] uppercase tracking-widest text-emerald-400">Reply</p>
@@ -499,7 +535,11 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
                   </Button>
                 </div>
                 <div className="min-h-0 flex-1 bg-white/0">
-                  <CampaignBuilderShell userId={userId} initialCampaignId={selectedId} />
+                  <CampaignBuilderShell
+                    userId={userId}
+                    initialCampaignId={selectedId}
+                    onCampaignChanged={() => loadCampaigns()}
+                  />
                 </div>
               </div>
             )}
@@ -517,6 +557,9 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
               <PieChart className="w-3.5 h-3.5 mr-1" />
               Restart wizard
             </Button>
+            <a href="/dashboard/marketing/deliverability" className="inline-flex h-8 items-center px-3 rounded-lg border border-white/10 text-slate-300 hover:text-white text-xs">
+              Deliverability stats
+            </a>
             <Button size="sm" onClick={() => { setOpenDraft(true); WIZARD_STEPS.forEach(s => mark(s.id, true)); }} className="h-8 px-3 rounded-lg text-xs font-black bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/15">
               <Rocket className="w-3.5 h-3.5 mr-1" />
               Open full builder

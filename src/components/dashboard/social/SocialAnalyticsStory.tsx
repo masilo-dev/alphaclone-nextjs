@@ -94,7 +94,9 @@ export function SocialAnalyticsStory({
                     sum.comments += metric.comments;
                     sum.clicks += metric.clicks;
                     sum.shares += metric.shares;
-                    sum.synced += 1;
+                    const hasValues =
+                        metric.impressions + metric.reactions + metric.comments + metric.clicks + metric.shares > 0;
+                    if (hasValues) sum.synced += 1;
                     return sum;
                 },
                 { impressions: 0, reactions: 0, comments: 0, clicks: 0, shares: 0, synced: 0 },

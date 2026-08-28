@@ -54,6 +54,7 @@ interface EnhancedInvoiceModalProps {
 
 interface InvoiceFormData {
   clientId: string;
+  contractId: string;
   clientName: string;
   clientEmail: string;
   items: Array<{
@@ -99,6 +100,7 @@ export default function EnhancedInvoiceModal({
 
   const [formData, setFormData] = useState<InvoiceFormData>({
     clientId: '',
+    contractId: '',
     clientName: '',
     clientEmail: '',
     items: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
@@ -126,6 +128,7 @@ export default function EnhancedInvoiceModal({
     setFormData((prev) => ({
       ...prev,
       clientId: invoice.clientId || invoice.client_id || prev.clientId,
+      contractId: invoice.contractId || invoice.contract_id || prev.contractId,
       clientName: metadata?.clientName || invoice.clientName || prev.clientName,
       clientEmail: metadata?.clientEmail || metadata?.email || invoice.clientEmail || prev.clientEmail,
       dueDate: invoice.dueDate || invoice.due_date ? String(invoice.dueDate || invoice.due_date).slice(0, 10) : prev.dueDate,
@@ -193,6 +196,7 @@ export default function EnhancedInvoiceModal({
             tax: formData.tax,
             total: formData.total,
             due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
+            contract_id: formData.contractId || null,
             notes: buildPersistedNotes(),
             line_items: formData.items.map((item) => ({
               description: item.description,
@@ -214,6 +218,7 @@ export default function EnhancedInvoiceModal({
   }, [formData, draftInvoiceId, currentTenant?.id, mode]);
 
   const [clients, setClients] = useState<any[]>([]);
+  const [contracts, setContracts] = useState<Array<{ id: string; title: string; status: string; client_id?: string | null }>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showContactDropdown, setShowContactDropdown] = useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -229,8 +234,26 @@ export default function EnhancedInvoiceModal({
         console.error('Failed to load clients:', error);
       }
     };
+    const loadContracts = async () => {
+      if (!currentTenant?.id) return;
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase
+          .from('contracts')
+          .select('id,title,status,client_id')
+          .eq('tenant_id', currentTenant.id)
+          .in('status', ['draft', 'sent', 'fully_signed', 'approved', 'active'])
+          .order('updated_at', { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        setContracts(data || []);
+      } catch (error) {
+        console.error('Failed to load contracts:', error);
+      }
+    };
     if (isOpen && currentTenant?.id) {
-      loadClients();
+      void loadClients();
+      void loadContracts();
     }
   }, [isOpen, currentTenant?.id]);
 
@@ -292,6 +315,7 @@ export default function EnhancedInvoiceModal({
     try {
       const invoiceData = {
         ...formData,
+        contractId: formData.contractId || undefined,
         notes: buildPersistedNotes(),
         lineItems: formData.items,
         status: 'draft' as const,
@@ -340,6 +364,7 @@ export default function EnhancedInvoiceModal({
       // Create or update invoice with sent status
       const invoiceData = {
         ...formData,
+        contractId: formData.contractId || undefined,
         notes: buildPersistedNotes(),
         lineItems: formData.items,
         status: 'sent' as const,
@@ -512,7 +537,10 @@ export default function EnhancedInvoiceModal({
                           ...prev,
                           clientId: c.id,
                           clientName: c.name || '',
-                          clientEmail: c.email || ''
+                          clientEmail: c.email || '',
+                          contractId: prev.contractId && contracts.some((contract) => contract.id === prev.contractId && contract.client_id === c.id)
+                            ? prev.contractId
+                            : '',
                         }));
                         setSearchQuery('');
                         setShowContactDropdown(false);
@@ -559,6 +587,27 @@ export default function EnhancedInvoiceModal({
             placeholder="client@example.com"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-300 mb-2">Linked contract (optional)</label>
+        <select
+          value={formData.contractId}
+          onChange={(e) => setFormData((prev) => ({ ...prev, contractId: e.target.value }))}
+          className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+        >
+          <option value="">No contract linked</option>
+          {contracts
+            .filter((contract) => !formData.clientId || contract.client_id === formData.clientId || !contract.client_id)
+            .map((contract) => (
+              <option key={contract.id} value={contract.id}>
+                {contract.title} ({contract.status.replaceAll('_', ' ')})
+              </option>
+            ))}
+        </select>
+        <p className="mt-1 text-[11px] text-slate-500">
+          Billing documents filed to the vault will reference this agreement when sent.
+        </p>
       </div>
 
       {formData.clientId && currentTenant?.id && (

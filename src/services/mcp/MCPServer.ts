@@ -6037,12 +6037,32 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const invoice_id = String(a.invoice_id || '').trim();
           if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid UUID');
-          const patch: Record<string, unknown> = { status: 'paid', paid_at: a.paid_at ? String(a.paid_at) : new Date().toISOString() };
-          if (a.amount != null) patch.paid_amount = Number(a.amount) || 0;
-          if (a.payment_ref) patch.payment_reference = String(a.payment_ref);
-          const { data, error } = await supabaseAdmin.from('invoices').update(patch).eq('tenant_id', tenant_id).eq('id', invoice_id).select('id,status,paid_at,updated_at').single();
-          if (error) throw supabaseErrorToMcpClientError('reconcile_payment', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          const amount = a.amount != null ? Number(a.amount) : null;
+          const { data: invoice, error: fetchError } = await supabaseAdmin
+            .from('business_invoices')
+            .select('id,total,amount_paid,status')
+            .eq('tenant_id', tenant_id)
+            .eq('id', invoice_id)
+            .maybeSingle();
+          if (fetchError) throw supabaseErrorToMcpClientError('reconcile_payment', fetchError.message);
+          if (!invoice) throw new Error('Invoice not found');
+          const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
+          const payAmount = amount && amount > 0 ? amount : remaining;
+          if (payAmount <= 0) {
+            result = { content: [{ type: 'text', text: JSON.stringify({ id: invoice.id, status: invoice.status, message: 'Nothing to reconcile' }, null, 2) }] };
+            break;
+          }
+          const { recordInvoicePaymentServer } = await import('@/lib/invoices/recordInvoicePaymentServer');
+          const paid = await recordInvoicePaymentServer(supabaseAdmin, {
+            tenantId: tenant_id,
+            invoiceId: invoice_id,
+            amount: payAmount,
+            idempotencyKey: `mcp:reconcile:${invoice_id}:${a.payment_ref || Date.now()}`,
+            source: 'mcp_reconcile',
+            externalReference: a.payment_ref ? String(a.payment_ref) : null,
+            actorUserId: null,
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify({ id: paid?.id, status: paid?.status, paid_at: paid?.paid_at, amount_paid: paid?.amount_paid }, null, 2) }] };
           break;
         }
 

@@ -56,6 +56,21 @@ export async function getUnifiedContacts(
   const { data: contactRows, error: contactErr } = await contactQuery;
   if (contactErr) throw contactErr;
 
+  const contactIds = (contactRows || []).map((row) => row.id);
+  const clientByContactId = new Map<string, string>();
+  if (contactIds.length > 0) {
+    const { data: linkedClients } = await supabase
+      .from('business_clients')
+      .select('id, crm_contact_id')
+      .eq('tenant_id', tenantId)
+      .in('crm_contact_id', contactIds);
+    for (const client of linkedClients || []) {
+      if (client.crm_contact_id) {
+        clientByContactId.set(String(client.crm_contact_id), String(client.id));
+      }
+    }
+  }
+
   const unified: UnifiedContact[] = (contactRows || []).map((row) => ({
     id: row.id,
     tenant_id: row.tenant_id,
@@ -67,7 +82,7 @@ export async function getUnifiedContacts(
     status: row.status || 'active',
     lifecycle_stage: (row.custom_fields as Record<string, unknown> | null)?.sales_stage as string | null ?? row.status,
     company_id: row.company_id,
-    business_client_id: (row.custom_fields as Record<string, unknown> | null)?.business_client_id as string | null ?? null,
+    business_client_id: clientByContactId.get(row.id) ?? null,
     source: 'contacts' as const,
     created_at: row.created_at,
   }));

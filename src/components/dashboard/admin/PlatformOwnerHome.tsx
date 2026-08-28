@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { PlatformEnvStatus } from '@/types/platformSettings';
+import { useAuth } from '@/contexts/AuthContext';
+import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
 
 type HealthPayload = {
   status?: string;
@@ -110,6 +112,7 @@ const ENV_LABELS: Array<{ key: keyof PlatformEnvStatus; label: string }> = [
 ];
 
 export default function PlatformOwnerHome() {
+  const { user } = useAuth();
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [ops, setOps] = useState<OpsBrief | null>(null);
   const [tenants, setTenants] = useState<TenantRow[]>([]);
@@ -158,7 +161,8 @@ export default function PlatformOwnerHome() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl animate-fade-in px-1 py-2">
+    <div className="space-y-6 max-w-6xl animate-fade-in px-1 py-2" data-tour="platform-owner-home">
+      {user?.id ? <PlatformExecutionWelcome userId={user.id} surface="platform" /> : null}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.22em] text-teal-400/80">Platform owner</p>
@@ -177,6 +181,14 @@ export default function PlatformOwnerHome() {
           Refresh
         </button>
       </div>
+
+      {loading && !health && tenants.length === 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[0, 1, 2].map((key) => (
+            <div key={key} className="h-24 rounded-2xl border border-white/5 bg-slate-900/50 animate-pulse" />
+          ))}
+        </div>
+      ) : null}
 
       {(missingKeys.length > 0 || healthGaps.length > 0) && (
         <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">

@@ -79,7 +79,6 @@ registerTool('revenue-lifecycle', {
   handler: async (args) => {
     const db = createSupabaseAdminClient();
     let result = await db.from('business_invoices').select('*').eq('tenant_id', args.tenant_id).eq('id', args.invoice_id).maybeSingle();
-    if (!result.data) result = await db.from('invoices').select('*').eq('tenant_id', args.tenant_id).eq('id', args.invoice_id).maybeSingle();
     if (result.error) throw result.error;
     if (!result.data) throw new Error('Invoice not found');
     return { invoice: result.data, mission: { action: 'send_payment_reminder', requires_approval: true, verify_delivery: true, verify_payment_link: true }, verified_invoice_exists: true };

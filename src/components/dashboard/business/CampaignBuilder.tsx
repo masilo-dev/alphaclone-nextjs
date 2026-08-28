@@ -206,9 +206,10 @@ type ComposeAudit = {
 type CampaignBuilderProps = {
     userId: string;
     initialCampaignId?: string | null;
+    onCampaignChanged?: () => void;
 };
 
-const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampaignId = null }) => {
+const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampaignId = null, onCampaignChanged }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { isMobile } = useBreakpoint();
@@ -527,6 +528,7 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
         if (!campsResult.error) setCampaigns(campsResult.campaigns);
         if (!contactsResult.error) setContacts(contactsResult.contacts);
         setLoading(false);
+        onCampaignChanged?.();
     };
 
     const handleImportLeads = async () => {
@@ -1933,7 +1935,9 @@ Voice & rules:
 
                                         {recipientType === 'specific' && (
                                             <>
-                                            <SegmentBuilder />
+                                            <SegmentBuilder
+                                                onApply={(ids) => setSelectedContactIds(ids)}
+                                            />
                                             <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
                                                 <span className="text-[10px] font-bold text-slate-500 uppercase">Select Industry Target</span>
                                                 {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).length === 0 && (

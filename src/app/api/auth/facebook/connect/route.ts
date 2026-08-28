@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
         'pages_show_list',
         'pages_read_engagement',
         'pages_manage_posts',       // required to post content to page
+        'read_insights',            // post/page reach metrics for analytics
     ];
     const advancedScopes = [
         ...publishingScopes,

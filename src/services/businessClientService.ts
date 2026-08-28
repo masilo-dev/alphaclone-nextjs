@@ -19,6 +19,7 @@ export interface BusinessClient {
     industry?: string;
     website?: string;
     metadata?: Record<string, any>;
+    crmContactId?: string | null;
 }
 
 export interface ClientsResponse { clients: BusinessClient[]; count: number; error: string | null }
@@ -38,7 +39,7 @@ function mapClient(row: any): BusinessClient {
         salesStage: row.sales_stage, value: Number(row.value || 0), description: row.description,
         location: row.location, customFields: row.custom_fields || {}, createdAt: row.created_at,
         updatedAt: row.updated_at, isActive: row.is_active, industry: row.industry,
-        website: row.website, metadata: row.metadata,
+        website: row.website, metadata: row.metadata, crmContactId: row.crm_contact_id || null,
     };
 }
 
@@ -64,6 +65,24 @@ export const businessClientService = {
             const { data, error } = await supabase.from('business_clients').select('*').eq('tenant_id', tenantId).eq('id', clientId).maybeSingle();
             if (error) throw error;
             if (!data) throw new Error('Client not found');
+            return { client: mapClient(data), error: null };
+        } catch (error) {
+            return { client: null, error: error instanceof Error ? error.message : 'Client could not be loaded' };
+        }
+    },
+
+    async getClientByCrmContactId(crmContactId: string): Promise<{ client: BusinessClient | null; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before loading a client');
+            const { data, error } = await supabase
+                .from('business_clients')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .eq('crm_contact_id', crmContactId)
+                .maybeSingle();
+            if (error) throw error;
+            if (!data) return { client: null, error: null };
             return { client: mapClient(data), error: null };
         } catch (error) {
             return { client: null, error: error instanceof Error ? error.message : 'Client could not be loaded' };

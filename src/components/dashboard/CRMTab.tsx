@@ -1545,6 +1545,15 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     router.replace(qs ? `${base}?${qs}` : base, { scroll: false });
   }, [pathname, router, searchParams]);
 
+  useEffect(() => {
+    const contactId = searchParams?.get('contactId')?.trim();
+    if (!contactId) return;
+    router.replace(
+      `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(contactId)}`,
+      { scroll: false }
+    );
+  }, [router, searchParams]);
+
   const closeCreateDrawer = useCallback(() => {
     setIsCreateOpen(false);
     stripQuickAddParam();

@@ -233,14 +233,14 @@ export const enterpriseBillingService = {
     ): Promise<{ success: boolean; plan?: any; error?: string }> {
         try {
             const { data: invoice } = await supabase
-                .from('invoices')
-                .select('amount, due_date')
+                .from('business_invoices')
+                .select('total, due_date')
                 .eq('id', invoiceId)
                 .single();
 
             if (!invoice) throw new Error('Invoice not found');
 
-            const installmentAmount = Math.round(invoice.amount / installments);
+            const installmentAmount = Math.round(Number(invoice.total) / installments);
             const plan = [];
 
             for (let i = 0; i < installments; i++) {

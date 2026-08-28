@@ -25,10 +25,10 @@ export async function startInvoiceCollectionRun(params: {
 
   // Load overdue invoices from authoritative DB (tenant-scoped)
   let invoiceQuery = admin
-    .from('invoices')
+    .from('business_invoices')
     .select('id, client_id, status, total, currency, due_date, tenant_id')
     .eq('tenant_id', params.tenantId)
-    .in('status', ['overdue', 'sent', 'unpaid', 'partial'])
+    .in('status', ['overdue', 'sent', 'partially_paid', 'draft'])
     .order('due_date', { ascending: true })
     .limit(params.limit || 25);
 

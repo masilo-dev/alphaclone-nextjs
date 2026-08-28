@@ -110,27 +110,66 @@ export async function unifiedSearch(
   }
 }
 
-interface ContactRow { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; title: string | null; company: string | null; status: string; updated_at: string }
+interface ContactRow {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  title: string | null;
+  company_id: string | null;
+  status: string;
+  updated_at: string;
+  companies?: { name: string | null } | null;
+}
+interface ClientRow { id: string; name: string; email: string | null; phone: string | null; industry: string | null; sales_stage: string | null; updated_at: string }
 
 async function searchContacts(term: string, tenantId: string, limit: number): Promise<SearchResult[]> {
-  const { data } = await supabase
-    .from('contacts')
-    .select('id, first_name, last_name, email, phone, title, company, status, updated_at')
-    .eq('tenant_id', tenantId)
-    .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,title.ilike.%${term}%`)
-    .limit(limit);
+  const [{ data: contactRows }, { data: clientRows }] = await Promise.all([
+    supabase
+      .from('contacts')
+      .select('id, first_name, last_name, email, phone, title, company_id, status, updated_at, companies(name)')
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
+      .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,title.ilike.%${term}%`)
+      .limit(limit),
+    supabase
+      .from('business_clients')
+      .select('id, name, email, phone, industry, sales_stage, updated_at')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,industry.ilike.%${term}%`)
+      .limit(limit),
+  ]);
 
-  return (data || []).map((c: ContactRow) => ({
+  const fromContacts = (contactRows || []).map((c: ContactRow) => {
+    const companyName = c.companies?.name || null;
+    return {
     id: c.id,
-    type: 'contact',
-    title: `${c.first_name} ${c.last_name}`,
+    type: 'contact' as const,
+    title: `${c.first_name} ${c.last_name}`.trim(),
     subtitle: c.email || c.phone || '',
-    content: c.title ? `${c.title} at ${c.company || 'Unknown Company'}` : '',
-    metadata: { status: c.status, company: c.company },
+    content: c.title ? `${c.title}${companyName ? ` at ${companyName}` : ''}` : companyName || '',
+    metadata: { status: c.status, company: companyName, source: 'contacts' },
     score: 0,
     updatedAt: c.updated_at,
-    route: `/dashboard/crm/contacts/${c.id}`,
+    route: `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(c.id)}`,
+  };
+  });
+
+  const fromClients = (clientRows || []).map((c: ClientRow) => ({
+    id: c.id,
+    type: 'contact' as const,
+    title: c.name,
+    subtitle: c.email || c.phone || '',
+    content: [c.industry, c.sales_stage].filter(Boolean).join(' · '),
+    metadata: { stage: c.sales_stage, industry: c.industry, source: 'business_clients' },
+    score: 0,
+    updatedAt: c.updated_at,
+    route: `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(c.id)}`,
   }));
+
+  return [...fromClients, ...fromContacts].slice(0, limit);
 }
 
 interface CompanyRow { id: string; name: string; industry: string | null; website: string | null; updated_at: string }
@@ -152,7 +191,7 @@ async function searchCompanies(term: string, tenantId: string, limit: number): P
     metadata: { industry: c.industry },
     score: 0,
     updatedAt: c.updated_at,
-    route: `/dashboard/crm/companies/${c.id}`,
+    route: `/dashboard/crm/accounts?company=${encodeURIComponent(c.id)}`,
   }));
 }
 
@@ -175,7 +214,7 @@ async function searchDeals(term: string, tenantId: string, limit: number): Promi
     metadata: { value: d.value, stage: d.stage },
     score: 0,
     updatedAt: d.updated_at,
-    route: `/dashboard/crm/deals/${d.id}`,
+    route: `/dashboard/deals?deal=${encodeURIComponent(d.id)}`,
   }));
 }
 
@@ -198,7 +237,7 @@ async function searchProjects(term: string, tenantId: string, limit: number): Pr
     metadata: { status: p.status },
     score: 0,
     updatedAt: p.updated_at,
-    route: `/dashboard/projects/${p.id}`,
+    route: `/dashboard/business/projects/manage?project=${encodeURIComponent(p.id)}`,
   }));
 }
 
@@ -221,7 +260,7 @@ async function searchTasks(term: string, tenantId: string, limit: number): Promi
     metadata: { status: t.status, priority: t.priority },
     score: 0,
     updatedAt: t.updated_at,
-    route: `/dashboard/tasks/${t.id}`,
+    route: `/dashboard/tasks?task=${encodeURIComponent(t.id)}`,
   }));
 }
 
@@ -267,7 +306,7 @@ async function searchCampaigns(term: string, tenantId: string, limit: number): P
     metadata: { status: c.status },
     score: 0,
     updatedAt: c.updated_at,
-    route: `/dashboard/marketing/campaigns/${c.id}`,
+    route: `/dashboard/business/campaigns?campaign=${encodeURIComponent(String(c.id))}`,
   }));
 }
 
@@ -410,7 +449,7 @@ export async function getRecentItems(types?: SearchResult['type'][]): Promise<Se
         metadata: {},
         score: 0,
         updatedAt: c.updated_at,
-        route: `/dashboard/crm/contacts/${c.id}`,
+        route: `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(c.id)}`,
       })));
     }
 
@@ -431,7 +470,7 @@ export async function getRecentItems(types?: SearchResult['type'][]): Promise<Se
         metadata: { value: d.value },
         score: 0,
         updatedAt: d.updated_at,
-        route: `/dashboard/crm/deals/${d.id}`,
+        route: `/dashboard/deals?deal=${encodeURIComponent(d.id)}`,
       })));
     }
 

@@ -33,7 +33,9 @@ function actionUrlForTool(toolName: string): string | undefined {
   if (n.includes('invoice')) return '/dashboard/business/invoices';
   if (n.includes('contract')) return '/dashboard/business/contracts';
   if (n.includes('social') || n.includes('publish')) return '/dashboard/social';
-  if (n.includes('campaign') || n.includes('outreach')) return '/dashboard/marketing/campaigns';
+  if (n.includes('deal') || n.includes('pipeline')) return '/dashboard/deals';
+  if (n.includes('outreach') || n.includes('send_email')) return '/dashboard/outreach/inbox';
+  if (n.includes('campaign')) return '/dashboard/business/campaigns';
   if (n.includes('meeting') || n.includes('booking')) return '/dashboard/calendar';
   return '/dashboard';
 }

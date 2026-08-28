@@ -17,7 +17,7 @@ export const businessReportService = {
 
     const admin = createSupabaseAdminClient();
     const [invoiceResult, leadResult, dealResult, accountResult, socialResult] = await Promise.all([
-      admin.from('invoices').select('amount, total_amount, paid_at, created_at').eq('tenant_id', tid).ilike('status', 'paid').gte('created_at', sixMonthsAgo.toISOString()).lte('created_at', now.toISOString()),
+      admin.from('business_invoices').select('total, paid_at, created_at').eq('tenant_id', tid).ilike('status', 'paid').gte('created_at', sixMonthsAgo.toISOString()).lte('created_at', now.toISOString()),
       admin.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).gte('created_at', sixMonthsAgo.toISOString()),
       admin.from('deals').select('id, stage, value, probability').eq('tenant_id', tid).gte('created_at', sixMonthsAgo.toISOString()),
       admin.from('chart_of_accounts').select('account_name, account_code, current_balance').eq('tenant_id', tid).eq('account_type', 'expense'),
@@ -29,7 +29,7 @@ export const businessReportService = {
     for (const invoice of invoiceResult.data || []) {
       const date = new Date(invoice.paid_at || invoice.created_at);
       const key = date.toISOString().slice(0, 7);
-      monthly.set(key, (monthly.get(key) || 0) + Number(invoice.total_amount ?? invoice.amount ?? 0));
+      monthly.set(key, (monthly.get(key) || 0) + Number(invoice.total ?? 0));
     }
     const revenueTrendData = Array.from(monthly, ([date, revenue]) => ({ date, revenue })).sort((a, b) => a.date.localeCompare(b.date));
     const deals = dealResult.data || [];

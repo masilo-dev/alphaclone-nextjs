@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { queueDocumentIntelligence } from '@/lib/documents/fileDocument';
+import { assessContractContentQuality } from '@/lib/documents/contractContentQuality';
 
 const CreateContractSchema = z.object({
   title: z.string().trim().min(1).max(300),
@@ -57,8 +59,15 @@ export async function POST(req: NextRequest) {
     }
     await validateDailyResourceQuota(tenantId, user.id, 'contracts');
 
-    // 2. Create the canonical shared document first. Contract Manager owns
-    // lifecycle metadata; Documents owns the content/version surface.
+    const quality = assessContractContentQuality(content);
+    if (!quality.ok && quality.issues.some((issue) => issue.severity === 'critical')) {
+      return NextResponse.json(
+        { error: 'Contract content failed quality check', code: 'CONTRACT_CONTENT_QUALITY', issues: quality.issues },
+        { status: 422 },
+      );
+    }
+
+    // 2. Create the canonical shared document first.
     const { data: sharedDocument, error: documentError } = await admin
       .from('documents')
       .insert({
@@ -154,6 +163,10 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString()
     });
     if (auditError) console.error('[contracts] create audit could not be recorded', auditError);
+
+    await queueDocumentIntelligence(admin, tenantId, sharedDocument.id, user.id).catch((error) =>
+      console.error('[contracts] auto-index failed', error instanceof Error ? error.message : error)
+    );
 
     return NextResponse.json({ success: true, data: contract }, { status: 201 });
   } catch (error) {

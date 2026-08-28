@@ -109,8 +109,8 @@ class Customer360Service {
       timeline.push({
         id: inv.id, type: 'invoice',
         title: `Invoice ${inv.invoice_number || inv.id.slice(0, 8)}`,
-        description: `Amount: $${Number(inv.amount || inv.total_amount || 0).toLocaleString()} | Status: ${inv.status}`,
-        status: inv.status, value: Number(inv.amount || inv.total_amount || 0),
+        description: `Amount: $${Number(inv.total || 0).toLocaleString()} | Status: ${inv.status}`,
+        status: inv.status, value: Number(inv.total || 0),
         timestamp: inv.created_at
       });
     }
@@ -186,9 +186,9 @@ class Customer360Service {
 
     // Metrics
     const paidInvoices = invoices.filter((i: any) => String(i.status).toLowerCase() === 'paid');
-    const totalRevenue = paidInvoices.reduce((s: number, i: any) => s + Number(i.amount || i.total_amount || 0), 0);
+    const totalRevenue = paidInvoices.reduce((s: number, i: any) => s + Number(i.total || i.amount_paid || 0), 0);
     const outstandingInvoices = invoices.filter((i: any) => !['paid', 'cancelled'].includes(String(i.status).toLowerCase()));
-    const outstandingBalance = outstandingInvoices.reduce((s: number, i: any) => s + Number(i.amount || i.total_amount || 0), 0);
+    const outstandingBalance = outstandingInvoices.reduce((s: number, i: any) => s + Number(i.balance_due ?? i.total ?? 0), 0);
 
     const activeDeals = deals.filter((d: any) => !['closed_won', 'closed_lost'].includes(d.stage));
     const activeDealValue = activeDeals.reduce((s: number, d: any) => s + Number(d.value || 0), 0);
@@ -276,7 +276,7 @@ class Customer360Service {
 
   private async fetchInvoices(supabase: SupabaseClient, tenantId: string, userIds: string[], email: string): Promise<any[]> {
     if (userIds.length === 0) return [];
-    const { data } = await supabase.from('invoices').select('*').eq('tenant_id', tenantId).in('client_id', userIds).limit(100);
+    const { data } = await supabase.from('business_invoices').select('*').eq('tenant_id', tenantId).in('client_id', userIds).limit(100);
     return Array.isArray(data) ? data : [];
   }
 

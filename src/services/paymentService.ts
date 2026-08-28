@@ -11,7 +11,7 @@ export const stripePromise = STRIPE_PUBLIC_KEY ? loadStripe(STRIPE_PUBLIC_KEY) :
 
 export interface Invoice {
     id: string;
-    user_id?: string; // Optional - for standalone invoices without client
+    user_id?: string;
     project_id?: string;
     amount: number;
     currency: string;
@@ -55,13 +55,32 @@ export interface Payment {
     created_at: string;
 }
 
+function mapBusinessInvoiceRow(row: any): Invoice {
+    return {
+        id: row.id,
+        user_id: row.client_id,
+        project_id: row.project_id,
+        amount: Number(row.total ?? 0),
+        currency: String(row.currency || row.currency_code || 'USD'),
+        status: row.status,
+        due_date: row.due_date,
+        paid_at: row.paid_at,
+        description: row.notes || row.invoice_number || 'Invoice',
+        items: (row.invoice_line_items || row.line_items || []).map((item: any) => ({
+            description: item.description,
+            quantity: Number(item.quantity || 0),
+            unit_price: Number(item.unit_price ?? item.rate ?? 0),
+            amount: Number(item.amount ?? Number(item.quantity || 0) * Number(item.unit_price ?? item.rate ?? 0)),
+        })),
+        created_at: row.created_at,
+        metadata: row.metadata,
+        project: row.project,
+        user: row.business_clients,
+    };
+}
+
 export const paymentService = {
-    /**
-     * @deprecated Use businessInvoiceService.createInvoice for business_invoices.
-     * Legacy path for the `invoices` table (client billing / Stripe flows).
-     */
     async createInvoice(invoice: Omit<Invoice, 'id' | 'created_at' | 'status'>) {
-        // Check if tenant has payment processing enabled
         const tenantId = tenantService.getCurrentTenantId();
         if (!tenantId) {
             return { invoice: null, error: new Error('No active organization selected.') };
@@ -73,28 +92,47 @@ export const paymentService = {
             return { invoice: null, error: new Error('Payment processing is not enabled for your current plan. Please upgrade to use this feature.') };
         }
 
+        const currency = String(invoice.currency || 'USD').toUpperCase();
         const { data, error } = await supabase
-            .from('invoices')
+            .from('business_invoices')
             .insert({
-                ...invoice,
-                status: 'draft',
                 tenant_id: tenantId,
+                client_id: invoice.user_id || null,
+                project_id: invoice.project_id || null,
+                invoice_number: `SUB-${Date.now()}`,
+                issue_date: new Date().toISOString().slice(0, 10),
+                due_date: invoice.due_date?.slice?.(0, 10) || invoice.due_date,
+                status: 'draft',
+                subtotal: invoice.amount,
+                tax: 0,
+                tax_rate: 0,
+                discount_amount: 0,
+                total: invoice.amount,
+                amount_paid: 0,
+                currency,
+                currency_code: currency,
+                notes: invoice.description,
+                line_items: invoice.items?.map((item) => ({
+                    description: item.description,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price,
+                })) || [],
+                is_public: false,
+                metadata: invoice.metadata || {},
             })
-            .select()
+            .select('*')
             .single();
 
-        // Log activity and audit
         if (!error && data) {
             if (invoice.user_id) {
                 activityService.logActivity(invoice.user_id, 'Invoice Created', {
                     invoiceId: data.id,
                     amount: invoice.amount,
-                    currency: invoice.currency,
+                    currency,
                     projectId: invoice.project_id
                 }, tenantId).catch(err => console.error('Failed to log activity:', err));
             }
 
-            // Audit log
             auditLoggingService.logAction(
                 'invoice_created',
                 'invoice',
@@ -103,32 +141,29 @@ export const paymentService = {
                 data
             ).catch(err => console.error('Failed to log audit:', err));
 
-            // EMIT AUTOMATION EVENT (client-safe — server emit via API)
             const { requestBusinessEvent } = await import('../lib/automation/request-event');
             await requestBusinessEvent(tenantId, 'invoice_created', {
                 invoiceId: data.id,
-                amount: data.amount,
-                currency: data.currency,
+                amount: invoice.amount,
+                currency,
                 status: data.status,
                 dueDate: data.due_date
             }).catch(err => console.error('Failed to emit invoice_created event:', err));
         }
 
-        return { invoice: data, error };
+        return { invoice: data ? mapBusinessInvoiceRow(data) : null, error };
     },
 
-    /**
-     * Get user invoices
-     */
     async getUserInvoices(userId: string, limit: number = 50) {
         const tenantId = tenantService.getCurrentTenantId();
         let query = supabase
-            .from('invoices')
+            .from('business_invoices')
             .select(`
         *,
-        project:project_id (name)
+        project:project_id (name),
+        business_clients:client_id (name, email)
       `)
-            .eq('user_id', userId);
+            .eq('client_id', userId);
 
         if (tenantId) {
             query = query.eq('tenant_id', tenantId);
@@ -138,24 +173,18 @@ export const paymentService = {
             .order('created_at', { ascending: false })
             .limit(limit);
 
-        return { invoices: data, error };
+        return { invoices: (data || []).map(mapBusinessInvoiceRow), error };
     },
 
-    /**
-     * Get all invoices (Admin/Tenant Admin)
-     * Super Admin (role='admin') sees ALL invoices across ALL tenants
-     * Tenant Admin (role='tenant_admin') sees invoices within their tenant only
-     */
     async getAllInvoices(role?: string, limit: number = 50) {
         let query = supabase
-            .from('invoices')
+            .from('business_invoices')
             .select(`
         *,
         project:project_id (name),
-        user:user_id (name, email)
+        business_clients:client_id (name, email)
       `);
 
-        // Only apply tenant filtering for tenant_admin, NOT for super admin
         if (role !== 'admin') {
             const tenantId = tenantService.getCurrentTenantId();
             if (tenantId) {
@@ -167,16 +196,12 @@ export const paymentService = {
             .order('created_at', { ascending: false })
             .limit(limit);
 
-        return { invoices: data, error };
+        return { invoices: (data || []).map(mapBusinessInvoiceRow), error };
     },
 
-    /**
-     * Generate PDF for an invoice (Internal)
-     */
     generateInvoicePDF(invoice: Invoice) {
         const doc = new jsPDF();
 
-        // Header
         doc.setFontSize(22);
         doc.setTextColor(40, 40, 40);
         doc.text('INVOICE', 20, 20);
@@ -187,7 +212,6 @@ export const paymentService = {
         doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString()}`, 20, 35);
         doc.text(`Due Date: ${new Date(invoice.due_date).toLocaleDateString()}`, 20, 40);
 
-        // Issuer Details (Right Side)
         const issuer = invoice.tenant || { name: 'AlphaClone Systems' };
         doc.setTextColor(40, 40, 40);
         doc.setFont('helvetica', 'bold');
@@ -200,7 +224,6 @@ export const paymentService = {
         }
         if (issuer.email) doc.text(`Email: ${issuer.email}`, 120, 55);
 
-        // Status
         doc.setFontSize(14);
         if (invoice.status === 'paid') {
             doc.setTextColor(0, 128, 0);
@@ -210,7 +233,6 @@ export const paymentService = {
             doc.text(invoice.status.toUpperCase(), 160, 25);
         }
 
-        // Details
         let yPos = 60;
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(12);
@@ -220,7 +242,6 @@ export const paymentService = {
         doc.text(`Description: ${invoice.description}`, 20, yPos);
         yPos += 20;
 
-        // Line Items Table Header
         doc.setFillColor(240, 240, 240);
         doc.rect(20, yPos, 170, 10, 'F');
         doc.setFontSize(10);
@@ -229,7 +250,6 @@ export const paymentService = {
         doc.text('Amount', 160, yPos + 7);
         yPos += 15;
 
-        // Items (Placeholder if items array is missing)
         doc.setFont('helvetica', 'normal');
         if (invoice.items && invoice.items.length > 0) {
             invoice.items.forEach(item => {
@@ -243,7 +263,6 @@ export const paymentService = {
             yPos += 10;
         }
 
-        // Total
         yPos += 10;
         doc.setLineWidth(0.5);
         doc.line(20, yPos, 190, yPos);
@@ -253,11 +272,10 @@ export const paymentService = {
         doc.text('Total:', 120, yPos);
         doc.text(`$${invoice.amount.toLocaleString()} ${invoice.currency.toUpperCase()}`, 160, yPos);
 
-        // Manual Payment Instructions
         if (invoice.payment_method && invoice.payment_method !== 'stripe' && invoice.manual_payment_instructions) {
             yPos += 20;
             doc.setFontSize(10);
-            doc.setTextColor(15, 118, 110); // Teal-700
+            doc.setTextColor(15, 118, 110);
             doc.text('PAYMENT INSTRUCTIONS:', 20, yPos);
             yPos += 7;
             doc.setFont('helvetica', 'normal');
@@ -267,7 +285,6 @@ export const paymentService = {
             doc.text(splitText, 20, yPos);
         }
 
-        // Legal Footer & Tax Disclaimer
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
         const footerY = 280;
@@ -279,13 +296,13 @@ export const paymentService = {
     },
 
     async downloadInvoicePDF(invoiceId: string) {
-        // Fetch full invoice details
         const { data: invoice, error } = await supabase
-            .from('invoices')
+            .from('business_invoices')
             .select(`
-                *, 
+                *,
                 project:project_id(name),
-                tenant:tenant_id(name, email, address)
+                tenant:tenant_id(name, email, address),
+                invoice_line_items(*)
             `)
             .eq('id', invoiceId)
             .single();
@@ -295,22 +312,16 @@ export const paymentService = {
             throw new Error('Invoice not found');
         }
 
-        // Ensure items is an array if null
-        const fullInvoice = { ...invoice, items: invoice.items || [] } as Invoice;
-
+        const fullInvoice = mapBusinessInvoiceRow({ ...invoice, items: invoice.invoice_line_items || invoice.line_items || [] });
         const doc = this.generateInvoicePDF(fullInvoice);
         doc.save(`Invoice_${invoice.id.substring(0, 8)}.pdf`);
     },
 
-    /**
-     * Create payment intent (Stripe) with retry logic
-     */
     async createPaymentIntent(invoiceId: string, retryCount: number = 0): Promise<{ clientSecret: string | null; error: any }> {
         try {
-            // Get invoice details first
             const { data: invoice, error: invoiceError } = await supabase
-                .from('invoices')
-                .select('*')
+                .from('business_invoices')
+                .select('id,total,amount_paid,currency,notes,invoice_number')
                 .eq('id', invoiceId)
                 .eq('tenant_id', tenantService.getCurrentTenantId())
                 .single();
@@ -319,20 +330,21 @@ export const paymentService = {
                 throw new Error('Invoice not found');
             }
 
-            // Call backend API to create Stripe PaymentIntent
+            const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
+            const amount = remaining > 0 ? remaining : Number(invoice.total || 0);
+
             const response = await fetch('/api/stripe/create-payment-intent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     invoiceId,
-                    amount: invoice.amount,
+                    amount,
                     currency: invoice.currency || 'usd',
-                    description: invoice.description
+                    description: invoice.notes || invoice.invoice_number || `Invoice ${invoiceId}`,
                 }),
             });
 
             if (!response.ok) {
-                // Retry logic for network failures
                 if (retryCount < 3) {
                     await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
                     return this.createPaymentIntent(invoiceId, retryCount + 1);
@@ -342,7 +354,6 @@ export const paymentService = {
 
             const { clientSecret } = await response.json();
 
-            // Audit log
             auditLoggingService.logAction(
                 'payment_intent_created',
                 'invoice',
@@ -355,7 +366,6 @@ export const paymentService = {
         } catch (error) {
             console.error('Payment intent error:', error);
 
-            // Audit log failure
             auditLoggingService.logAction(
                 'payment_intent_failed',
                 'invoice',
@@ -368,15 +378,11 @@ export const paymentService = {
         }
     },
 
-    /**
-     * Process payment with Stripe Elements
-     */
     async processPayment(
         invoiceId: string,
         paymentMethodId: string
     ): Promise<{ success: boolean; error?: string }> {
         try {
-            // Create payment intent
             const { clientSecret, error: intentError } = await this.createPaymentIntent(invoiceId);
 
             if (intentError || !clientSecret) {
@@ -388,7 +394,6 @@ export const paymentService = {
                 return { success: false, error: 'Stripe not loaded' };
             }
 
-            // Confirm payment
             const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
                 clientSecret,
                 {
@@ -397,7 +402,6 @@ export const paymentService = {
             );
 
             if (confirmError) {
-                // Audit log failure
                 auditLoggingService.logAction(
                     'payment_failed',
                     'invoice',
@@ -410,7 +414,6 @@ export const paymentService = {
             }
 
             if (paymentIntent?.status === 'succeeded') {
-                // Mark invoice as paid
                 await this.markInvoicePaid(invoiceId, paymentIntent.id);
                 return { success: true };
             }
@@ -422,67 +425,39 @@ export const paymentService = {
         }
     },
 
-    /**
-     * Mark invoice as paid (after successful Stripe payment)
-     */
     async markInvoicePaid(invoiceId: string, paymentIntentId: string) {
+        const tenantId = tenantService.getCurrentTenantId();
         const { data: oldInvoice } = await supabase
-            .from('invoices')
+            .from('business_invoices')
             .select('*')
             .eq('id', invoiceId)
-            .eq('tenant_id', tenantService.getCurrentTenantId())
+            .eq('tenant_id', tenantId)
             .single();
 
-        const { data, error } = await supabase
-            .from('invoices')
-            .update({
-                status: 'paid',
-                paid_at: new Date().toISOString(),
-                metadata: { stripe_payment_intent: paymentIntentId }
-            })
-            .eq('id', invoiceId)
-            .eq('tenant_id', tenantService.getCurrentTenantId())
-            .select()
-            .single();
+        const remaining = Math.max(0, Number(oldInvoice?.total || 0) - Number(oldInvoice?.amount_paid || 0));
+        const payAmount = remaining > 0 ? remaining : Number(oldInvoice?.total || 0);
+
+        const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}/payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tenantId,
+                amount: payAmount,
+                idempotencyKey: `stripe:${paymentIntentId}`,
+            }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        const data = payload.invoice;
+        const error = response.ok ? null : new Error(payload.error || 'Payment could not be recorded');
 
         if (!error && data) {
-            activityService.logActivity(data.user_id, 'Invoice Paid', {
+            activityService.logActivity(data.client_id, 'Invoice Paid', {
                 invoiceId: data.id,
-                amount: data.amount,
+                amount: payAmount,
                 currency: data.currency,
-                paymentIntentId: paymentIntentId
+                paymentIntentId,
             }, data.tenant_id).catch(err => console.error('Failed to log activity:', err));
 
-            // RECORD JOURNAL ENTRY IN GENERAL LEDGER
-            import('./accounting/journalEntryService').then(({ journalEntryService }) => {
-                journalEntryService.createEntry({
-                    entryDate: new Date().toISOString().split('T')[0],
-                    description: `Payment received for Invoice ${data.invoice_number || data.id.substring(0, 8)}`,
-                    reference: data.id,
-                    sourceType: 'invoice',
-                    sourceId: data.id,
-                    lines: [
-                        {
-                            accountCode: '1000', // Cash / Bank
-                            debitAmount: data.amount,
-                            description: `Cash receipt for invoice ${data.id.substring(0, 8)}`
-                        },
-                        {
-                            accountCode: '4000', // Operating Revenue
-                            creditAmount: data.amount,
-                            description: `Revenue recognition for invoice ${data.id.substring(0, 8)}`
-                        }
-                    ]
-                }).then(({ entry, error: jeError }) => {
-                    if (entry) {
-                        journalEntryService.postEntry(entry.id).catch(err => console.error('[Accounting Sync] Failed to post entry:', err));
-                    } else if (jeError) {
-                        console.error('[Accounting Sync] Failed to create journal entry:', jeError);
-                    }
-                }).catch(err => console.error('[Accounting Sync] Fatal error:', err));
-            }).catch(err => console.error('[Accounting Sync] Import error:', err));
-
-            // Audit log
             auditLoggingService.logAction(
                 'invoice_paid',
                 'invoice',
@@ -491,29 +466,25 @@ export const paymentService = {
                 data
             ).catch(err => console.error('Failed to log audit:', err));
 
-            // Trigger Payment Confirmation Email
             const { userService } = await import('./userService');
-            const { tenantService } = await import('./tenancy/TenantService');
+            const { tenantService: tenantSvc } = await import('./tenancy/TenantService');
 
-            // Determine recipient email: Tenant Billing Email > User Email
             let recipientEmail = null;
             let recipientName = 'Customer';
 
-            // Try to get tenant billing email
             if (data.tenant_id) {
-                const tenant = await tenantService.getTenant(data.tenant_id);
+                const tenant = await tenantSvc.getTenant(data.tenant_id);
                 if (tenant && tenant.settings?.billing_email) {
                     recipientEmail = tenant.settings.billing_email;
                     recipientName = tenant.name;
                 }
             }
 
-            // Fallback to user email
-            if (!recipientEmail) {
-                const { user: profile } = await userService.getUser(data.user_id);
-                if (profile?.email) {
-                    recipientEmail = profile.email;
-                    recipientName = profile.name;
+            if (!recipientEmail && data.client_id) {
+                const { data: client } = await supabase.from('business_clients').select('email,name').eq('id', data.client_id).maybeSingle();
+                if (client?.email) {
+                    recipientEmail = client.email;
+                    recipientName = client.name || recipientName;
                 }
             }
 
@@ -521,21 +492,18 @@ export const paymentService = {
                 import('./emailCampaignService').then(({ emailCampaignService }) => {
                     emailCampaignService.sendTransactionalEmail(recipientEmail!, 'Payment Confirmation', {
                         name: recipientName,
-                        amount: data.amount,
+                        amount: payAmount,
                         currency: data.currency,
-                        projectName: data.project?.name || 'Project',
+                        projectName: 'Project',
                         invoiceId: data.id
                     }).catch(err => console.error('Failed to trigger payment email:', err));
                 });
             }
         }
 
-        return { invoice: data, error };
+        return { invoice: data ? mapBusinessInvoiceRow(data) : null, error };
     },
 
-    /**
-     * Reconcile payment status with Stripe (for missed webhooks)
-     */
     async reconcilePayment(invoiceId: string): Promise<{ reconciled: boolean; error?: string }> {
         try {
             const response = await fetch(`/api/stripe/reconcile-payment`, {
@@ -562,9 +530,6 @@ export const paymentService = {
         }
     },
 
-    /**
-     * Get payment history
-     */
     async getPaymentHistory(userId: string) {
         const tenantId = tenantService.getCurrentTenantId();
         if (!tenantId) return { payments: [], error: null };
@@ -594,9 +559,6 @@ export const paymentService = {
         return { payments, error: null };
     },
 
-    /**
-     * Send payment receipt email
-     */
     async sendPaymentReceipt(invoiceId: string): Promise<{ sent: boolean; error?: string }> {
         try {
             const response = await fetch('/api/stripe/send-receipt', {
@@ -616,18 +578,11 @@ export const paymentService = {
         }
     },
 
-    /**
-     * Process recurring billing for all tenants
-     * Called by daily cron job
-     */
     async processRecurringBilling(): Promise<{ processed: number; errors: number }> {
         try {
             console.log('Starting recurring billing process...');
             const today = new Date();
 
-            // Find tenants due for billing (active subscription, period ends today or earlier)
-            // Note: This relies on the 'tenants' table having subscription columns. 
-            // If they don't exist, this query will fail, but it's the correct logical step for autonomy.
             const { data: tenantsDue, error } = await supabase
                 .from('tenants')
                 .select('*')
@@ -649,21 +604,18 @@ export const paymentService = {
 
             for (const tenant of tenantsDue) {
                 try {
-                    // Create invoice for next period
-                    // In a real system, you'd lookup price from plan ID
                     const planName = tenant.subscription_plan || 'starter';
                     const amount = planName === 'pro' ? 8900 :
-                        planName === 'enterprise' ? 20000 : 2500; // Updated to match PLAN_PRICING ($25, $89, $200)
+                        planName === 'enterprise' ? 20000 : 2500;
 
                     await this.createInvoice({
-                        user_id: tenant.admin_user_id, // Invoice the admin
-                        amount: amount,
+                        user_id: tenant.admin_user_id,
+                        amount,
                         currency: 'usd',
                         description: `Subscription renewal: ${planName} plan`,
                         due_date: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
                     } as any);
 
-                    // Update tenant period (naive extension)
                     const nextPeriod = new Date(tenant.current_period_end);
                     nextPeriod.setMonth(nextPeriod.getMonth() + 1);
 
@@ -686,4 +638,3 @@ export const paymentService = {
         }
     }
 };
-

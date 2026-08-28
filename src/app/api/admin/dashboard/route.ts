@@ -41,7 +41,7 @@ export async function GET() {
     // 3. Fetch System Audit Logs & Alerts
     const { data: recentAuditLogs } = await admin
       .from('audit_logs')
-      .select('id, action, user_id, resource_type, created_at, metadata')
+      .select('id, action, user_id, resource_type, resource_id, entity_type, entity_id, created_at, metadata')
       .order('created_at', { ascending: false })
       .limit(10);
 

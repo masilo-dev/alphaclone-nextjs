@@ -4,6 +4,7 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { fileInvoiceDocument } from '@/lib/documents/fileDocument';
 
 const lineItemSchema = z.object({
   description: z.string().trim().min(1).max(2000),
@@ -14,6 +15,7 @@ const lineItemSchema = z.object({
 const schema = z.object({
   tenantId: z.string().uuid(),
   clientId: z.string().uuid().nullable().optional(),
+  contractId: z.string().uuid().nullable().optional(),
   projectId: z.string().uuid().nullable().optional(),
   invoiceNumber: z.string().trim().max(100).optional(),
   issueDate: z.union([z.string().date(), z.string().datetime()]).optional(),
@@ -41,6 +43,7 @@ function normalizeInvoicePayload(raw: unknown) {
   if (!raw || typeof raw !== 'object') return raw;
   const body = { ...(raw as Record<string, unknown>) };
   body.clientId = emptyToNull(body.clientId);
+  body.contractId = emptyToNull(body.contractId);
   body.projectId = emptyToNull(body.projectId);
   if (body.dueDate === '') delete body.dueDate;
   if (body.issueDate === '') delete body.issueDate;
@@ -76,7 +79,20 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return NextResponse.json({ error: 'Invalid invoice details', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const value = parsed.data;
     const { user, admin } = await requireTenantAccess(value.tenantId, req);
-    await Promise.all([assertReference(admin, 'business_clients', value.clientId, value.tenantId), assertReference(admin, 'projects', value.projectId, value.tenantId)]);
+    await Promise.all([
+      assertReference(admin, 'business_clients', value.clientId, value.tenantId),
+      assertReference(admin, 'projects', value.projectId, value.tenantId),
+    ]);
+    if (value.contractId) {
+      const { data: contract, error: contractError } = await admin
+        .from('contracts')
+        .select('id')
+        .eq('tenant_id', value.tenantId)
+        .eq('id', value.contractId)
+        .maybeSingle();
+      if (contractError) throw contractError;
+      if (!contract) throw new Error('Contract is not in this workspace');
+    }
     if (value.status !== 'draft') {
       await validateDailyResourceQuota(value.tenantId, user.id, 'invoices');
     }
@@ -91,7 +107,8 @@ export async function POST(req: NextRequest) {
     for (let attempt = 0; attempt < 6; attempt += 1) {
       const number = value.invoiceNumber || `INV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
       const { data, error } = await admin.from('business_invoices').insert({
-        tenant_id: value.tenantId, client_id: value.clientId || null, project_id: value.projectId || null, invoice_number: number,
+        tenant_id: value.tenantId, client_id: value.clientId || null, project_id: value.projectId || null,
+        contract_id: value.contractId || null, invoice_number: number,
         issue_date: issueDate, due_date: dueDate, status: value.status, subtotal, tax_rate: value.taxRate, tax,
         discount_amount: value.discountAmount, total, line_items: value.lineItems, notes: value.notes || null,
         is_public: value.isPublic, sender_name: value.senderName || null, bank_details: value.bankDetails || null,
@@ -110,35 +127,21 @@ export async function POST(req: NextRequest) {
       await recordDailyResourceQuota(value.tenantId, user.id, 'invoices', 1, `invoice:${invoice.id}`);
     }
 
-    // Auto-save invoice as a document record so it appears in the Documents hub
-    void (async () => {
-      try {
-        const { data: doc, error: docErr } = await admin.from('documents').insert({
-          tenant_id: value.tenantId,
-          title: `Invoice ${invoice.invoice_number || invoice.id}`,
-          name: `Invoice ${invoice.invoice_number || invoice.id}`,
-          document_type: 'invoice',
-          status: invoice.status === 'sent' ? 'active' : 'draft',
-          owner_user_id: user.id,
-          uploaded_by: user.id,
-          metadata: {
-            invoice_id: invoice.id,
-            invoice_number: invoice.invoice_number,
-            total: invoice.total,
-            source: 'invoice_auto_save',
-          },
-        }).select('id').single();
-        if (docErr) { console.error('[invoices] document auto-save failed', docErr.message); return; }
-        const rels: Array<Record<string, unknown>> = [
-          { tenant_id: value.tenantId, document_id: doc.id, entity_type: 'invoice', entity_id: invoice.id, relationship_type: 'belongs_to', is_primary: true, created_by: user.id },
-        ];
-        if (value.clientId) rels.push({ tenant_id: value.tenantId, document_id: doc.id, entity_type: 'customer', entity_id: value.clientId, relationship_type: 'billing_document', created_by: user.id });
-        if (value.projectId) rels.push({ tenant_id: value.tenantId, document_id: doc.id, entity_type: 'project', entity_id: value.projectId, relationship_type: 'project_file', created_by: user.id });
-        await admin.from('document_relationships').insert(rels).catch((e: Error) => console.error('[invoices] document_relationships insert failed', e.message));
-      } catch (e: unknown) {
-        console.error('[invoices] document auto-save unexpected error', e instanceof Error ? e.message : e);
-      }
-    })();
+    if (value.status !== 'draft') {
+      await fileInvoiceDocument(admin, {
+        tenantId: value.tenantId,
+        userId: user.id,
+        invoice: {
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          status: invoice.status,
+          total: invoice.total,
+          client_id: invoice.client_id,
+          project_id: invoice.project_id,
+          contract_id: invoice.contract_id,
+        },
+      }).catch((error) => console.error('[invoices] document auto-save failed', error instanceof Error ? error.message : error));
+    }
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {

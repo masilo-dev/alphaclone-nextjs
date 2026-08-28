@@ -807,11 +807,13 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         },
       );
       const preferredProvider = provider.id;
+      const plainBody = stripHtml(personalizedHtml) || personalizedSubject;
       const sendResult = await sendEmailServer({
         tenantId: String(c.tenant_id || ""),
         to: recipient.email,
         subject: personalizedSubject,
-        message: personalizedHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+        message: plainBody,
+        html: personalizedHtml,
         fromName,
         replyTo,
         userId: campaignCreatorId,

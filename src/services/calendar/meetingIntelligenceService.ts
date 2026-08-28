@@ -71,14 +71,14 @@ export class MeetingIntelligenceService {
     let unpaidTotal = 0;
     if (clientId) {
       const { data: invoices } = await admin
-        .from('invoices')
-        .select('amount, total_amount, status')
+        .from('business_invoices')
+        .select('total, status')
         .eq('tenant_id', tenantId)
         .eq('client_id', clientId)
         .neq('status', 'paid');
 
       if (invoices) {
-        unpaidTotal = invoices.reduce((sum, inv) => sum + Number(inv.amount || inv.total_amount || 0), 0);
+        unpaidTotal = invoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
       }
     }
 

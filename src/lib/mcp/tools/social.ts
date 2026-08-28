@@ -198,10 +198,11 @@ registerTool('social', {
   },
 });
 
-// 3. get_scheduled_posts
+// 3. get_scheduled_posts — canonical social_posts (legacy scheduled_posts table retired)
 registerTool('social', {
   name: 'get_scheduled_posts',
-  description: 'Retrieve pending or sent scheduled social posts. Tenant is resolved from session.',
+  description:
+    'Retrieve scheduled social posts from social_posts. Legacy scheduled_posts table is retired; pending maps to status=scheduled, sent maps to published.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
     status: z.enum(['pending', 'sent', 'failed']).optional(),
@@ -229,7 +230,11 @@ registerTool('social', {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data;
+    return {
+      posts: data,
+      source_table: 'social_posts',
+      deprecated_legacy_table: 'scheduled_posts',
+    };
   },
 });
 

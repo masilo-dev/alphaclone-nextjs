@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { headers } from 'next/headers';
 import { emailProviderService } from '@/services/EmailProviderService';
 import { invoiceServerService } from '@/services/server/invoiceServerService';
+import { recordInvoicePaymentServer } from '@/lib/invoices/recordInvoicePaymentServer';
 import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -163,26 +164,30 @@ export async function POST(req: Request) {
                     const invoiceId = session.metadata.invoiceId;
                     tenantId = session.metadata.tenantId;
                     if (!invoiceId || !tenantId) throw new Error('Legacy invoice checkout metadata is incomplete');
-                    const paidAt = new Date().toISOString();
-                    const { data: invoice, error: invoiceError } = await supabaseAdmin
-                        .from('invoices')
-                        .update({
-                            status: 'paid',
-                            paid_at: paidAt,
-                            metadata: { stripe_payment_intent: session.payment_intent, stripe_checkout_session: session.id },
-                        })
+                    const { data: existingInvoice, error: fetchError } = await supabaseAdmin
+                        .from('business_invoices')
+                        .select('id, total, amount_paid, currency, status')
                         .eq('id', invoiceId)
                         .eq('tenant_id', tenantId)
-                        .neq('status', 'paid')
-                        .select('id, amount, currency')
                         .maybeSingle();
-                    if (invoiceError) throw invoiceError;
-                    if (invoice) {
-                        await supabaseAdmin.from('business_automation_events').insert({
-                            tenant_id: tenantId,
-                            event_type: 'invoice_paid',
-                            payload: { invoiceId, amount: invoice.amount, currency: invoice.currency, stripeSessionId: session.id },
+                    if (fetchError) throw fetchError;
+                    if (existingInvoice && existingInvoice.status !== 'paid') {
+                        const amount = Math.max(0, Number(existingInvoice.total || 0) - Number(existingInvoice.amount_paid || 0));
+                        const invoice = await recordInvoicePaymentServer(supabaseAdmin, {
+                            tenantId,
+                            invoiceId,
+                            amount,
+                            idempotencyKey: `stripe-checkout:${session.id}`,
+                            source: 'stripe',
+                            externalReference: typeof session.payment_intent === 'string' ? session.payment_intent : session.id,
                         });
+                        if (invoice) {
+                            await supabaseAdmin.from('business_automation_events').insert({
+                                tenant_id: tenantId,
+                                event_type: 'invoice_paid',
+                                payload: { invoiceId, amount, currency: existingInvoice.currency, stripeSessionId: session.id },
+                            });
+                        }
                     }
                     break;
                 }

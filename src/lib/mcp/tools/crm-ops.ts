@@ -516,7 +516,7 @@ defineConnectorTool({
 defineConnectorTool({
   module: 'crm-ops',
   name: 'list_companies',
-  description: 'List companies / business clients in the CRM.',
+  description: 'List CRM company accounts from the companies table.',
   permission: 'crm:read',
   inputSchema: z.object({
     tenant_id: tenantIdField,
@@ -538,8 +538,8 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const { limit, offset } = normalizePagination(args);
     let query = supabase
-      .from('business_clients')
-      .select('id, name, email, phone, company, industry, sales_stage, value, is_active, created_at, updated_at', {
+      .from('companies')
+      .select('id, tenant_id, name, domain, website, industry, lifecycle_stage, employee_count, updated_at', {
         count: 'exact',
       })
       .eq('tenant_id', args.tenant_id)
@@ -548,7 +548,7 @@ defineConnectorTool({
 
     if (args.search) {
       const q = args.search.replace(/[%_]/g, '');
-      query = query.or(`name.ilike.%${q}%,company.ilike.%${q}%,email.ilike.%${q}%`);
+      query = query.or(`name.ilike.%${q}%,domain.ilike.%${q}%,website.ilike.%${q}%,industry.ilike.%${q}%`);
     }
 
     const { data, error, count } = await query;

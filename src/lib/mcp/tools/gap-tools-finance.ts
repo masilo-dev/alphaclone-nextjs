@@ -11,6 +11,7 @@
 import { z } from 'zod';
 import { registerTool } from '@/lib/mcp/tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { recordInvoicePaymentServer } from '@/lib/invoices/recordInvoicePaymentServer';
 import { generatePnLStatement } from '@/lib/accounting/pnl';
 
 const tid = z.string().describe('AlphaClone Workspace ID');
@@ -267,9 +268,22 @@ registerTool('gap-finance', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, invoice_id: { type: 'string' }, amount_paid: { type: 'number' }, payment_method: { type: 'string' }, payment_reference: { type: 'string' } }, required: ['invoice_id', 'amount_paid'] },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase.from('business_invoices').update({ status: 'paid', paid_at: new Date().toISOString(), payment_method: args.payment_method || 'manual', payment_reference: args.payment_reference || null }).eq('id', args.invoice_id).eq('tenant_id', args.tenant_id).select().single();
-    if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
-    return { content: [{ type: 'text', text: JSON.stringify({ reconciled: true, invoice: data, amount_paid: args.amount_paid }, null, 2) }] };
+    const idempotencyKey = `mcp:${args.payment_reference || 'manual'}:${args.invoice_id}:${args.amount_paid}`;
+    try {
+      const invoice = await recordInvoicePaymentServer(supabase, {
+        tenantId: args.tenant_id,
+        invoiceId: args.invoice_id,
+        amount: args.amount_paid,
+        idempotencyKey,
+        source: args.payment_method || 'manual',
+        externalReference: args.payment_reference || null,
+        actorUserId: null,
+      });
+      return { content: [{ type: 'text', text: JSON.stringify({ reconciled: true, invoice, amount_paid: args.amount_paid }, null, 2) }] };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Payment could not be recorded';
+      return { content: [{ type: 'text', text: JSON.stringify({ error: message }) }] };
+    }
   },
 });
 

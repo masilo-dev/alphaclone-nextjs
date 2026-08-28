@@ -13,7 +13,6 @@ import {
   XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { supabase } from '@/lib/supabase';
 import { ModulePageLayout } from '../../ui/ModulePageLayout';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../../ui/EnterpriseDataTable';
 import { StatusBadge } from '../../ui/StatusBadge';
@@ -34,9 +33,11 @@ interface BillingSummaryRow {
 }
 
 const PLAN_MRR: Record<string, number> = {
-  starter: 29,
-  pro: 59,
+  free: 0,
+  starter: 15,
+  pro: 15,
   enterprise: 149,
+  trial: 0,
 };
 
 const STATUS_VARIANT: Record<string, 'success' | 'warning' | 'error' | 'neutral' | 'info'> = {
@@ -65,12 +66,19 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_tenant_billing_summary');
-      if (error) throw error;
-      setRows((data as BillingSummaryRow[]) || []);
-    } catch (err: any) {
+      const response = await fetch('/api/admin/tenant-billing-summary', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to load billing summary');
+      }
+      setRows((payload.rows as BillingSummaryRow[]) || []);
+    } catch (err: unknown) {
       console.error('[SuperAdminSubscriptionsTab]', err);
-      toast.error(err?.message || 'Failed to load billing summary');
+      toast.error(err instanceof Error ? err.message : 'Failed to load billing summary');
+      setRows([]);
     } finally {
       setLoading(false);
     }
@@ -94,14 +102,19 @@ const SuperAdminSubscriptionsTab: React.FC = () => {
   const totalMrr = useMemo(
     () =>
       rows.reduce((sum, r) => {
-        if (r.subscription_status !== 'active' && r.subscription_status !== 'trial') return sum;
-        return sum + (PLAN_MRR[r.subscription_plan || ''] || 0);
+        const status = r.subscription_status || 'free';
+        if (status !== 'active' && status !== 'trial' && status !== 'trialing') return sum;
+        const plan = (r.subscription_plan || 'free').toLowerCase();
+        return sum + (PLAN_MRR[plan] ?? 0);
       }, 0),
     [rows]
   );
 
   const activeSubs = rows.filter(
-    (r) => r.subscription_status === 'active' || r.subscription_status === 'trial'
+    (r) =>
+      r.subscription_status === 'active' ||
+      r.subscription_status === 'trial' ||
+      r.subscription_status === 'trialing'
   ).length;
   const pastDue = rows.filter((r) => r.subscription_status === 'past_due').length;
   const freeCount = rows.filter(

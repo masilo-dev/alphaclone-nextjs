@@ -124,16 +124,10 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Campaign storage is unavailable', code: 'CAMPAIGNS_UNAVAILABLE' }, { status: 503 });
         }
         if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGNS_FETCH_FAILED' }, { status: 500 });
-        return NextResponse.json(
-            {
-                success: true,
-                campaigns: data || [],
-                deprecated: true,
-                message: 'Legacy email_campaigns API is deprecated. Use /api/zoho/campaigns and Zoho CampaignsHub.',
-                migration: '/dashboard/business/campaigns',
-            },
-            { headers: { 'X-Deprecated-API': 'email-campaigns-legacy' } }
-        );
+        return NextResponse.json({
+            success: true,
+            campaigns: data || [],
+        });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to load campaigns', request);
     }

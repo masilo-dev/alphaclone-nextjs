@@ -27,10 +27,58 @@ defineConnectorTool({
   },
 });
 
+async function listScheduledSocialPosts(args: {
+  tenant_id: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const supabase = createSupabaseAdminClient();
+  const { limit, offset } = normalizePagination(args);
+  const { data, error, count } = await supabase
+    .from('social_posts')
+    .select('*', { count: 'exact' })
+    .eq('tenant_id', args.tenant_id)
+    .eq('status', 'scheduled')
+    .order('scheduled_at', { ascending: true })
+    .range(offset, offset + limit - 1);
+  if (error) throwConnectorError('QUERY_FAILED', error.message);
+  return okResult('list_scheduled_social_posts', { posts: data || [], source_table: 'social_posts' }, {
+    pagination: buildPaginationMeta({
+      limit,
+      offset,
+      returned: (data || []).length,
+      total: count ?? null,
+    }),
+  });
+}
+
+defineConnectorTool({
+  module: 'social-ops',
+  name: 'list_scheduled_social_posts',
+  description: 'List scheduled social posts from the canonical social_posts table.',
+  permission: 'social:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    limit: z.number().int().min(1).max(100).optional().default(25),
+    offset: z.number().int().min(0).optional().default(0),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      limit: { type: 'number' },
+      offset: { type: 'number' },
+    },
+    required: ['tenant_id'],
+  },
+  handler: async (args) => listScheduledSocialPosts(args),
+});
+
 defineConnectorTool({
   module: 'social-ops',
   name: 'scheduled_posts',
-  description: 'List scheduled social posts with pagination.',
+  description:
+    'DEPRECATED — use list_scheduled_social_posts. Reads social_posts (legacy scheduled_posts table is retired).',
   permission: 'social:read',
   inputSchema: z.object({
     tenant_id: tenantIdField,
@@ -47,24 +95,13 @@ defineConnectorTool({
     required: ['tenant_id'],
   },
   handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const { limit, offset } = normalizePagination(args);
-    const { data, error, count } = await supabase
-      .from('social_posts')
-      .select('*', { count: 'exact' })
-      .eq('tenant_id', args.tenant_id)
-      .eq('status', 'scheduled')
-      .order('scheduled_at', { ascending: true })
-      .range(offset, offset + limit - 1);
-    if (error) throwConnectorError('QUERY_FAILED', error.message);
-    return okResult('scheduled_posts', { posts: data || [] }, {
-      pagination: buildPaginationMeta({
-        limit,
-        offset,
-        returned: (data || []).length,
-        total: count ?? null,
-      }),
-    });
+    const result = await listScheduledSocialPosts(args);
+    return {
+      ...result,
+      deprecated: true,
+      use_instead: 'list_scheduled_social_posts',
+      legacy_table: 'scheduled_posts_retired',
+    };
   },
 });
 

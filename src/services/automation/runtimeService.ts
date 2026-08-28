@@ -379,14 +379,7 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
           .update({ status: 'sent', updated_at: new Date().toISOString() })
           .eq('tenant_id', tenantId)
           .eq('id', invoiceId);
-        if (error) {
-          const fallback = await supabase
-            .from('invoices')
-            .update({ status: 'sent', sent_at: new Date().toISOString() })
-            .eq('tenant_id', tenantId)
-            .eq('id', invoiceId);
-          if (fallback.error) throw new Error(fallback.error.message);
-        }
+        if (error) throw new Error(error.message);
         output = { invoice_id: invoiceId, status: 'sent' };
         providerReference = invoiceId;
       } else if (action === 'verify_invoice_sent') {

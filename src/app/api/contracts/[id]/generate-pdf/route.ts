@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
+import { fileContractPdfDocument } from '@/lib/documents/fileDocument';
 import { z } from 'zod';
 
 const generatePdfSchema = z.object({
@@ -81,23 +82,21 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             throw new Error(`Failed to update contract with pdf_url: ${updateError.message}`);
         }
 
-        const { error: docError } = await admin
-            .from('documents')
-            .insert({
-                tenant_id: tenantId,
-                original_filename: `${contract.title || 'Contract'}.pdf`,
-                file_type: 'application/pdf',
-                category: 'Contract',
-                entity_type: 'contract',
-                entity_id: id,
-                storage_path: filePath,
-                scan_status: 'clean',
-                created_by: user.id,
-            });
-
-        if (docError) {
-            console.error('Failed to insert document record:', docError);
-        }
+        await fileContractPdfDocument(admin, {
+            tenantId,
+            userId: user.id,
+            contract: {
+                id: contract.id,
+                title: contract.title,
+                client_id: contract.client_id,
+                project_id: contract.project_id,
+                document_id: contract.document_id,
+                status: contract.status,
+            },
+            storagePath: filePath,
+            storageBucket: 'contracts',
+            sizeBytes: pdfContent.byteLength,
+        }).catch((err) => console.error('[contracts/generate-pdf] catalog filing failed', err));
 
         return NextResponse.json({ success: true, pdf_url: pdfUrl });
     } catch (error) {

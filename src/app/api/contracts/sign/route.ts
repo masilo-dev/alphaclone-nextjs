@@ -6,6 +6,8 @@ import { contractServerService } from '@/services/server/contractServerService';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
 import { resolveContractDealId } from '@/lib/contracts/contractCoherenceServer';
+import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
+import { fileContractPdfDocument, queueDocumentIntelligence } from '@/lib/documents/fileDocument';
 
 function getClientIpAddress(req: NextRequest): string {
     const forwarded = req.headers.get('x-forwarded-for');
@@ -250,6 +252,75 @@ export async function POST(req: NextRequest) {
                     contentHash,
                     status: updatedContract.status,
                 }).catch((err) => console.error('Contract audit trail PDF failed:', err));
+
+                try {
+                    const adminClient = createSupabaseAdminClient();
+
+                    let client: { name?: string; email?: string } | undefined;
+                    if (updatedContract.client_id) {
+                        const { data: clientRow } = await adminClient
+                            .from('business_clients')
+                            .select('name, email')
+                            .eq('id', updatedContract.client_id)
+                            .maybeSingle();
+                        if (clientRow) client = { name: clientRow.name, email: clientRow.email };
+                    }
+
+                    const { data: tenant } = await adminClient
+                        .from('tenants')
+                        .select('name, logo_url, settings')
+                        .eq('id', updatedContract.tenant_id)
+                        .maybeSingle();
+
+                    const pdfContent = await generateThemedContractPdfBuffer(updatedContract, tenant, client);
+                    const filePath = `contracts/${updatedContract.tenant_id}/${updatedContract.id}.pdf`;
+                    await adminClient.storage.from('contracts').upload(filePath, pdfContent, {
+                        contentType: 'application/pdf',
+                        upsert: true,
+                    });
+
+                    const { data: publicUrlData } = adminClient.storage.from('contracts').getPublicUrl(filePath);
+                    await adminClient
+                        .from('contracts')
+                        .update({ pdf_url: publicUrlData?.publicUrl || null, updated_at: new Date().toISOString() })
+                        .eq('id', updatedContract.id)
+                        .eq('tenant_id', updatedContract.tenant_id);
+
+                    const filingUserId = String(updatedContract.created_by || updatedContract.owner_id || '');
+                    if (filingUserId) {
+                        await fileContractPdfDocument(adminClient, {
+                            tenantId: updatedContract.tenant_id,
+                            userId: filingUserId,
+                            contract: {
+                                id: updatedContract.id,
+                                title: updatedContract.title,
+                                client_id: updatedContract.client_id,
+                                project_id: updatedContract.project_id,
+                                document_id: updatedContract.document_id,
+                                status: updatedContract.status,
+                            },
+                            storagePath: filePath,
+                            storageBucket: 'contracts',
+                            sizeBytes: pdfContent.byteLength,
+                        });
+
+                        if (updatedContract.document_id) {
+                            await adminClient
+                                .from('documents')
+                                .update({ status: 'active', updated_at: new Date().toISOString() })
+                                .eq('tenant_id', updatedContract.tenant_id)
+                                .eq('id', updatedContract.document_id);
+                            await queueDocumentIntelligence(
+                                adminClient,
+                                updatedContract.tenant_id,
+                                updatedContract.document_id,
+                                filingUserId
+                            );
+                        }
+                    }
+                } catch (err) {
+                    console.error('Signed contract catalog filing failed:', err);
+                }
             }
         }
 

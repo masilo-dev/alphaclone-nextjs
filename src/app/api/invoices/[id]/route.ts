@@ -24,6 +24,7 @@ const UpdateInvoiceSchema = z.object({
     })).optional(),
     client_id: z.string().uuid().nullable().optional(),
     project_id: z.string().uuid().nullable().optional(),
+    contract_id: z.string().uuid().nullable().optional(),
     tax_rate: z.number().min(0).max(100).optional(),
     discount_amount: z.number().min(0).optional(),
     is_public: z.boolean().optional(),
@@ -66,6 +67,10 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
             const { data } = await admin.from('projects').select('id').eq('id', updatePayload.project_id).eq('tenant_id', tenantId).maybeSingle();
             if (!data) return NextResponse.json({ error: 'Project is not in this workspace' }, { status: 422 });
         }
+        if (updatePayload.contract_id) {
+            const { data } = await admin.from('contracts').select('id').eq('id', updatePayload.contract_id).eq('tenant_id', tenantId).maybeSingle();
+            if (!data) return NextResponse.json({ error: 'Contract is not in this workspace' }, { status: 422 });
+        }
 
         // 2. Security Guards
         const lockedStatuses = ['sent', 'paid', 'overdue'];
@@ -81,21 +86,22 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
             await validateDailyResourceQuota(tenantId, user.id, 'invoices');
         }
 
-        // 3. Handle paid_at and delivery_status when status changes to 'paid'
+        // 3. Handle paid_at — payments must go through /payment RPC
         const finalPayload: any = { ...updatePayload };
         if (finalPayload.due_date) finalPayload.due_date = finalPayload.due_date.slice(0, 10);
         if (finalPayload.issue_date) finalPayload.issue_date = finalPayload.issue_date.slice(0, 10);
+        if (updatePayload.status === 'paid') {
+            return NextResponse.json(
+                {
+                    error: 'Use POST /api/invoices/[id]/payment to record payments with evidence',
+                    code: 'USE_PAYMENT_ENDPOINT',
+                    action: 'POST /api/invoices/[id]/payment',
+                },
+                { status: 409 },
+            );
+        }
         if (updatePayload.status) {
-            if (updatePayload.status === 'paid') {
-                // Set paid_at if not already set
-                if (!existing.paid_at) {
-                    finalPayload.paid_at = new Date().toISOString();
-                    finalPayload.delivery_status = 'DELIVERED';
-                }
-                // Clear any previous paid_at if status is being changed away from paid
-            } else {
-                finalPayload.paid_at = null;
-            }
+            finalPayload.paid_at = null;
         }
 
         // 4. Update header and relational line items in one database transaction.

@@ -30,6 +30,7 @@ import { buildDashboardDecisionViewModel } from '@/lib/analytics/dashboardViewMo
 import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
 import { IntelligentKpiCard } from '@/components/ui/intelligence';
 import { DashboardHomeLayoutToggle } from '@/components/dashboard/DashboardHomeLayoutToggle';
+import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -55,6 +56,7 @@ const DEFAULT_MODULES: ModuleLauncherItem[] = [
   { id: 'calendar', href: '/dashboard/business/calendar', purpose: 'Protect your time' },
   { id: 'documents', href: '/dashboard/business/documents', purpose: 'Files and knowledge' },
   { id: 'marketing', href: '/dashboard/business/campaigns', purpose: 'Campaign performance' },
+  { id: 'outreach', href: '/dashboard/outreach/inbox', purpose: 'Replies and reach inbox' },
   { id: 'reports', href: '/dashboard/business/reports', purpose: 'Business insight' },
 ];
 
@@ -308,6 +310,7 @@ export function OperatingSystemHome() {
 
   return (
     <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="os-home">
+      {user?.id ? <PlatformExecutionWelcome userId={user.id} surface="home" /> : null}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-sm font-medium text-[var(--ws-text-muted)]">{todayLabel}</p>

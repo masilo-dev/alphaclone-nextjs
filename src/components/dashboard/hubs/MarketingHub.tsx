@@ -12,19 +12,22 @@ import {
   Facebook,
   Instagram,
   Twitter,
+  BarChart3,
 } from 'lucide-react';
 import HubShell from './HubShell';
 
 const MARKETING_TABS = [
-  { label: 'Overview', href: '/dashboard/business/social', icon: Globe },
+  { label: 'Campaigns', href: '/dashboard/business/campaigns', icon: Mail },
+  { label: 'Deliverability', href: '/dashboard/marketing/deliverability', icon: BarChart3 },
+  { label: 'Sequences', href: '/dashboard/marketing/sequences', icon: Mail },
+  { label: 'Social', href: '/dashboard/business/social', icon: Globe },
   { label: 'Compose', href: '/dashboard/business/social/compose', icon: PenSquare },
   { label: 'Schedule', href: '/dashboard/business/social-command', icon: Calendar },
   { label: 'LinkedIn', href: '/dashboard/business/linkedin', icon: Linkedin },
   { label: 'Facebook', href: '/dashboard/business/facebook', icon: Facebook },
   { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram },
   { label: 'X', href: '/dashboard/business/x', icon: Twitter },
-  { label: 'Campaigns', href: '/dashboard/business/campaigns', icon: Mail },
-  { label: 'Sequences', href: '/dashboard/marketing/sequences', icon: Mail },
+  { label: 'Zoho bulk', href: '/dashboard/business/campaigns/zoho', icon: Mail },
   { label: 'Forms', href: '/dashboard/business/forms', icon: FileText },
   { label: 'SMS', href: '/dashboard/business/sms', icon: MessageSquare },
   { label: 'Email', href: '/dashboard/mail', icon: MessageSquare },

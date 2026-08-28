@@ -25,7 +25,6 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { ModuleStatCards, type ModuleStat } from "../common/ModuleStatCards";
-import { supabase } from "@/lib/supabase";
 import { useTenant } from "@/contexts/TenantContext";
 import { fileUploadService } from "@/services/fileUploadService";
 import toast from "react-hot-toast";
@@ -97,32 +96,34 @@ interface DocumentIntelligence {
   }>;
 }
 
-function parseVaultRow(row: Record<string, unknown>): VaultDocument {
-  const tags = (row.tags as string[]) || [];
-  const securityTag =
-    tags.find((t) => t.startsWith("security:"))?.replace("security:", "") ||
-    "confidential";
+function parseVaultDocument(row: Record<string, unknown>): VaultDocument {
+  const metadata = (row.metadata as Record<string, unknown>) || {};
+  const securityLevel = String(metadata.security_level || "confidential");
+  const category = String(metadata.category || row.document_type || "Agreement");
+  const storagePath = String(row.storage_path || "");
+  const bucket = String(metadata.storage_bucket || "uploads");
+  const tags = Array.isArray(metadata.tags) ? (metadata.tags as string[]) : [];
   return {
     id: String(row.id),
-    document_id: row.document_id ? String(row.document_id) : undefined,
+    document_id: String(row.id),
     tenant_id: String(row.tenant_id || ""),
-    name: String(row.original_filename || row.filename || "Document"),
-    file_path: String(row.storage_path || row.filename || ""),
-    file_size: Number(row.file_size) || null,
-    mime_type: String(row.file_type || "application/pdf"),
-    category: String(row.category || "Agreement"),
+    name: String(row.name || row.title || "Document"),
+    file_path: storagePath,
+    file_size: Number(row.size_bytes) || null,
+    mime_type: String(row.mime_type || "application/pdf"),
+    category,
     security_level: ([
       "public",
       "internal",
       "confidential",
       "restricted",
-    ].includes(securityTag)
-      ? securityTag
+    ].includes(securityLevel)
+      ? securityLevel
       : "confidential") as VaultDocument["security_level"],
-    is_encrypted: tags.includes("encrypted"),
+    is_encrypted: tags.includes("encrypted") || Boolean(metadata.encrypted),
     created_at: String(row.created_at || new Date().toISOString()),
-    proxiedUrl: row.storage_path
-      ? fileUploadService.getProxiedUrl("uploads", String(row.storage_path))
+    proxiedUrl: storagePath
+      ? fileUploadService.getProxiedUrl(bucket, storagePath)
       : undefined,
   };
 }
@@ -161,17 +162,18 @@ export default function DocumentVaultTab() {
     if (!tenant?.id) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("file_uploads")
-        .select("*")
-        .eq("tenant_id", tenant.id)
-        .contains("tags", ["vault"])
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const response = await fetch(
+        `/api/tenant/${encodeURIComponent(tenant.id)}/documents?vault=true&limit=100`,
+        { credentials: "include" },
+      );
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to load vault documents");
+      }
       setDocuments(
-        (data || []).map((row: Record<string, unknown>) => parseVaultRow(row)),
+        (payload.documents || []).map((row: Record<string, unknown>) =>
+          parseVaultDocument(row),
+        ),
       );
     } catch (err: any) {
       toast.error("Failed to load vault documents: " + err.message);
@@ -321,15 +323,26 @@ export default function DocumentVaultTab() {
 
   const handleDelete = async (doc: VaultDocument) => {
     if (
+      !tenant?.id ||
       !confirm(
         "Are you sure you want to permanently delete this document from the vault?",
       )
     )
       return;
     try {
-      const result = await fileUploadService.deleteFile(doc.id);
-      if (!result.success)
-        throw new Error(result.error || "Document could not be deleted");
+      const response = await fetch(
+        `/api/tenant/${encodeURIComponent(tenant.id)}/documents/${encodeURIComponent(doc.document_id || doc.id)}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deleted: true }),
+        },
+      );
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || "Document could not be deleted");
+      }
       toast.success("Document deleted");
       setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
     } catch (err: any) {
@@ -362,7 +375,7 @@ export default function DocumentVaultTab() {
       );
       if (Array.isArray(classifications)) {
         const response = await fetch(
-          `/api/tenant/${encodeURIComponent(tenant?.id || "")}/files`,
+          `/api/tenant/${encodeURIComponent(tenant?.id || "")}/documents`,
           {
             method: "PATCH",
             credentials: "include",
@@ -396,9 +409,7 @@ export default function DocumentVaultTab() {
 
   const queueDocumentIntelligence = async (doc: VaultDocument) => {
     if (!tenant?.id || !doc.document_id) {
-      toast.error(
-        "This upload has not been linked to the canonical document record yet. Refresh after migrations run.",
-      );
+      toast.error("This document record is missing a stable id.");
       return;
     }
     setAnalyzingDocumentId(doc.id);

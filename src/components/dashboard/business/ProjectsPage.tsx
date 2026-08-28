@@ -6,11 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { projectService } from '../../../services/projectService';
-import { supabase } from '../../../lib/supabase';
+import { projectStageService } from '../../../services/projectStageService';
 import { businessClientService } from '../../../services/businessClientService';
 import { Project as BusinessProject } from '../../../types';
-import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
-import { milestoneService } from '../../../services/milestoneService';
 import {
     Plus,
     X,
@@ -31,9 +29,7 @@ import {
     Zap,
     LayoutList,
     Download,
-    FileText,
     Share2,
-    Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ProjectPortalShareDialog } from './ProjectPortalShareDialog';
@@ -43,12 +39,10 @@ import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { exportToCSV } from '../../../utils/exportUtils';
 import { TaskCountdown } from '../tasks/TaskCountdown';
 import { ProjectStage } from '../../../types';
-import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
-import { BusinessContextPanel } from '@/components/dashboard/crm/BusinessContextPanel';
-import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { PROJECT_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
-import { ProjectTasksPanel } from '@/components/dashboard/projects/ProjectTasksPanel';
+import { ProjectWorkspaceDrawer } from '@/components/dashboard/projects/ProjectWorkspaceDrawer';
+import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
 
 interface ProjectsPageProps {
     user: User;
@@ -208,16 +202,22 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const handleStageUpdate = useCallback(async (projectId: string, newStage: ProjectStage) => {
         if (!currentTenant) return;
 
-        const previousStage = projects.find((project) => project.id === projectId)?.currentStage;
-        setProjects(prev => prev.map(p => p.id === projectId ? { ...p, currentStage: newStage } : p));
-
-        const { error } = await projectService.updateProject(projectId, { currentStage: newStage });
-
-        if (error) {
-            if (previousStage) setProjects(prev => prev.map(p => p.id === projectId ? { ...p, currentStage: previousStage } : p));
-            toast.error(`Project stage was not changed: ${error}`);
+        let result = await projectStageService.updateProjectStage(projectId, newStage, user.id);
+        if (!result.success && result.transition?.requiresConfirmation) {
+            const ok = window.confirm(`Move this project back to ${newStage}?`);
+            if (!ok) return;
+            result = await projectStageService.updateProjectStage(projectId, newStage, user.id, undefined, true);
         }
-    }, [currentTenant, projects]);
+
+        if (!result.success) {
+            toast.error(result.error || 'Stage change blocked');
+            return;
+        }
+
+        setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, currentStage: newStage } : p)));
+        setViewingProject((prev) => (prev?.id === projectId ? { ...prev, currentStage: newStage } : prev));
+        toast.success(`Stage updated to ${newStage}`);
+    }, [currentTenant, user.id]);
 
     const handleDeleteProject = useCallback(async (projectId: string) => {
         if (!confirm('Delete this project? This action cannot be undone.')) return;
@@ -248,7 +248,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
+        <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0" data-tour="projects-center">
+            <PlatformExecutionWelcome userId={user.id} surface="projects" />
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
             <ExecutionDecisionGuide
                 steps={PROJECT_MANAGER_EXECUTION_STEPS}
@@ -377,12 +378,13 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
             <AnimatePresence>
                 {viewingProject && (
-                    <ProjectDetailsDrawer
+                    <ProjectWorkspaceDrawer
                         project={viewingProject}
                         tenantId={currentTenant?.id || ''}
                         currentUser={user}
                         onClose={() => setViewingProject(null)}
                         onEdit={setEditingProject}
+                        onStageChange={handleStageUpdate}
                         onProgressChange={(projectId, progress) => {
                             setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, progress } : p)));
                             setViewingProject((prev) => (prev?.id === projectId ? { ...prev, progress } : prev));
@@ -886,515 +888,6 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                 })}
             </div>
         </div>
-    );
-};
-
-
-interface ProjectDetailsDrawerProps {
-    project: BusinessProject;
-    tenantId: string;
-    currentUser: User;
-    onClose: () => void;
-    onEdit: (project: BusinessProject) => void;
-    onProgressChange?: (projectId: string, progress: number) => void;
-}
-
-const DEFAULT_MILESTONE_LABELS = [
-    'Kickoff Meeting & Alignment',
-    'Project Scope & Requirements Sign-off',
-    'UI/UX Prototypes & Wireframes Approval',
-    'Core Infrastructure & Database Setup',
-    'First Functional Build Delivery',
-    'User Acceptance Testing (UAT)',
-    'Production Launch & Handover',
-];
-
-const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, tenantId, currentUser, onClose, onEdit, onProgressChange }) => {
-    const router = useRouter();
-    const [progress, setProgress] = useState(project.progress || 0);
-    const [milestones, setMilestones] = useState<{ id: string; label: string; checked: boolean }[]>([]);
-    const [milestonesLoading, setMilestonesLoading] = useState(true);
-    const [shareDialogOpen, setShareDialogOpen] = useState(false);
-    const [comments, setComments] = useState<Array<{
-        id: string;
-        author_name: string;
-        author_email?: string | null;
-        content: string;
-        is_client: boolean;
-        created_at: string;
-    }>>([]);
-    const [commentsLoading, setCommentsLoading] = useState(true);
-    const [commentDraft, setCommentDraft] = useState('');
-    const [commentAuthorName, setCommentAuthorName] = useState(currentUser.name || '');
-    const [commentAuthorEmail, setCommentAuthorEmail] = useState(currentUser.email || '');
-    const [postingComment, setPostingComment] = useState(false);
-    const [clientEmail, setClientEmail] = useState('');
-    const [clientName, setClientName] = useState('');
-
-    useEffect(() => {
-        setProgress(project.progress || 0);
-    }, [project.id, project.progress]);
-
-    const handleShareWithClient = () => {
-        setShareDialogOpen(true);
-    };
-
-    useEffect(() => {
-        let cancelled = false;
-        const loadMilestones = async () => {
-            setMilestonesLoading(true);
-            const { milestones: rows } = await milestoneService.getMilestones(project.id);
-            if (cancelled) return;
-
-            if (rows.length > 0) {
-                setMilestones(rows.map(m => ({
-                    id: m.id,
-                    label: m.name,
-                    checked: m.status === 'completed',
-                })));
-            } else {
-                // Seed default milestones for this project once, persisted to the DB.
-                const created: { id: string; label: string; checked: boolean }[] = [];
-                for (const label of DEFAULT_MILESTONE_LABELS) {
-                    const { milestone } = await milestoneService.createMilestone(project.id, {
-                        name: label,
-                        status: 'pending',
-                    });
-                    if (milestone) {
-                        created.push({ id: milestone.id, label: milestone.name, checked: false });
-                    }
-                }
-                if (!cancelled) setMilestones(created);
-            }
-            if (!cancelled) {
-                const { progress: recalculated } = await projectService.recalculateProjectProgress(project.id);
-                setProgress(recalculated);
-                onProgressChange?.(project.id, recalculated);
-                setMilestonesLoading(false);
-            }
-        };
-        loadMilestones();
-        return () => { cancelled = true; };
-    }, [project.id]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        const loadComments = async () => {
-            setCommentsLoading(true);
-            const { data, error } = await supabase
-                .from('project_comments')
-                .select('id, author_name, author_email, content, is_client, created_at')
-                .eq('project_id', project.id)
-                .order('created_at', { ascending: true });
-
-            if (!cancelled && !error) {
-                setComments((data || []) as any[]);
-            }
-            if (!cancelled) {
-                setCommentsLoading(false);
-            }
-        };
-
-        loadComments();
-        return () => { cancelled = true; };
-    }, [project.id]);
-
-    useEffect(() => {
-        let cancelled = false;
-        const loadClient = async () => {
-            if (!project.clientId) {
-                setClientEmail('');
-                setClientName('');
-                return;
-            }
-
-            const { client } = await businessClientService.getClient(project.clientId);
-            if (cancelled) return;
-            setClientEmail(client?.email || '');
-            setClientName(client?.name || '');
-        };
-
-        loadClient();
-        return () => { cancelled = true; };
-    }, [project.clientId]);
-
-    const toggleMilestone = async (id: string) => {
-        const target = milestones.find(m => m.id === id);
-        if (!target) return;
-        const nextChecked = !target.checked;
-        // Optimistic update
-        setMilestones(prev => prev.map(m => m.id === id ? { ...m, checked: nextChecked } : m));
-        const { error } = await milestoneService.updateMilestone(id, {
-            status: nextChecked ? 'completed' : 'pending',
-        });
-        if (error) {
-            // Revert on failure
-            setMilestones(prev => prev.map(m => m.id === id ? { ...m, checked: !nextChecked } : m));
-            import('react-hot-toast').then(({ toast }) => toast.error('Failed to update milestone'));
-            return;
-        }
-        const { progress: recalculated } = await projectService.recalculateProjectProgress(project.id);
-        setProgress(recalculated);
-        onProgressChange?.(project.id, recalculated);
-    };
-
-    const radius = 36;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - ((progress || 0) / 100) * circumference;
-
-    const teamList = project.team && project.team.length > 0 ? project.team : [];
-
-    const getHealthColor = (health: string | undefined) => {
-        if (health === 'At Risk') return 'bg-red-500';
-        if (health === 'Delayed') return 'bg-amber-500';
-        return 'bg-emerald-500';
-    };
-
-    const handleAddComment = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!tenantId) return;
-        const authorName = commentAuthorName.trim();
-        const content = commentDraft.trim();
-        if (!authorName || !content) return;
-
-        setPostingComment(true);
-        try {
-            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/projects/${encodeURIComponent(project.id)}/comments`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content }) });
-            const payload = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(payload.error || 'Project comment could not be saved');
-            const data = payload.comment;
-            if (data) {
-                setComments((prev) => [...prev, data as any]);
-                setCommentDraft('');
-
-                const notifyResult = await projectService.notifyClientProjectNote(
-                    project.id,
-                    content,
-                    authorName
-                );
-                import('react-hot-toast').then(({ toast }) => {
-                    if (notifyResult?.sent) {
-                        toast.success('Note saved and emailed to the client');
-                    } else if (notifyResult?.skipped === 'no_client_email' && clientEmail) {
-                        toast.success('Note saved (client has no email on file)');
-                    } else if (notifyResult?.skipped === 'portal_not_enabled') {
-                        toast.success('Note saved (enable client portal to auto-email)');
-                    } else {
-                        toast.success('Note saved');
-                    }
-                });
-            }
-        } catch (err: any) {
-            import('react-hot-toast').then(({ toast }) => toast.error(err?.message || 'Failed to add note'));
-        } finally {
-            setPostingComment(false);
-        }
-    };
-
-    return (
-        <>
-            {/* Backdrop */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={onClose}
-                className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100]"
-            />
-
-            {/* Sheet */}
-            <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92vh] md:h-auto md:max-h-[85vh] md:max-w-md rounded-t-lg md:rounded-lg bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[1110] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-            >
-                {/* Drag Handle Indicator */}
-                <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto my-3 md:hidden" />
-
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-white/5 bg-slate-900/50 flex justify-between items-start gap-4">
-                    <div className="flex items-center gap-2">
-                        <span className={`w-2.5 h-2.5 rounded-full ${getHealthColor(project.health)} animate-pulse`} />
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{project.health || 'On Track'}</span>
-                    </div>
-                    <button onClick={onClose} className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-24">
-                    <RecordHeader
-                        moduleId="projects"
-                        title={project.name}
-                        subtitle={project.description || 'No description provided.'}
-                        status={
-                            <StandardStatusBadge variant={resolveStatusVariant(project.health || 'On Track')}>
-                                {project.health || 'On Track'}
-                            </StandardStatusBadge>
-                        }
-                        meta={
-                            <>
-                                <span>{progress || 0}% complete</span>
-                                {project.dueDate ? (
-                                    <span>Due {new Date(project.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                ) : null}
-                                {clientName ? <span>{clientName}</span> : null}
-                            </>
-                        }
-                        actions={
-                            <AskBonnieButton
-                                compact
-                                mode="summarise"
-                                contexts={[
-                                    { type: 'Project', id: project.id, label: project.name },
-                                    ...(clientName ? [{ type: 'Client', label: clientName }] : []),
-                                ]}
-                            />
-                        }
-                    />
-
-                    {tenantId ? (
-                        <BusinessContextPanel
-                            tenantId={tenantId}
-                            entityType="project"
-                            entityId={project.id}
-                        />
-                    ) : null}
-
-                    <div className="bg-slate-900/40 border border-white/5 rounded-lg p-4 flex items-center justify-between gap-6">
-                        <div className="relative w-24 h-24 flex-shrink-0">
-                            <svg className="w-full h-full transform -rotate-90">
-                                <circle cx="48" cy="48" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
-                                <circle cx="48" cy="48" r={radius} className="stroke-[var(--brand-blue-500)] transition-all duration-500" strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white font-mono">
-                                {progress || 0}%
-                            </div>
-                        </div>
-
-                        <div className="flex-1 space-y-2">
-                            <div className="text-xs text-slate-500 uppercase tracking-wider">Project Progress</div>
-                            {project.budget && (
-                                <div>
-                                    <div className="text-xs text-slate-500 uppercase tracking-wider">Budget</div>
-                                    <div className="text-lg font-bold text-[var(--brand-blue-400)]">${project.budget.toLocaleString()}</div>
-                                </div>
-                            )}
-                            <div>
-                                <div className="text-xs text-slate-500 uppercase tracking-wider">Target Date</div>
-                                <div className="text-sm font-semibold text-white">
-                                    {project.dueDate ? new Date(project.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'No deadline'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <div className="flex justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            <span>Completeness</span>
-                            <span>{progress || 0}%</span>
-                        </div>
-                        <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
-                            <div
-                                className="h-full bg-gradient-to-r from-[var(--brand-blue-500)] to-[var(--brand-blue-500)] rounded-full transition-all duration-1000"
-                                style={{ width: `${progress || 0}%` }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Project Team</span>
-                        {teamList.length > 0 ? (
-                            <div className="flex items-center gap-3">
-                                <div className="flex -space-x-2 overflow-hidden">
-                                    {teamList.map((name, i) => (
-                                        <div key={i} className="inline-block rounded-full ring-2 ring-slate-950 bg-[var(--brand-blue-600)] text-[10px] font-bold flex items-center justify-center text-white select-none" style={{ width: '28px', height: '28px' }}>
-                                            {name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                        </div>
-                                    ))}
-                                </div>
-                                <span className="text-xs text-slate-500">{teamList.length} members assigned</span>
-                            </div>
-                        ) : (
-                            <p className="text-xs text-slate-500">No team members assigned yet.</p>
-                        )}
-                    </div>
-
-                    <ProjectTasksPanel
-                        projectId={project.id}
-                        userId={currentUser.id}
-                        onProgressChange={async () => {
-                            const { progress: recalculated } = await projectService.recalculateProjectProgress(project.id);
-                            setProgress(recalculated);
-                            onProgressChange?.(project.id, recalculated);
-                        }}
-                    />
-
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Milestones Checklist</span>
-                            {milestones.length > 0 && (
-                                <span className="text-xs font-bold text-[var(--brand-blue-400)]">
-                                    {milestones.filter(m => m.checked).length}/{milestones.length} done
-                                </span>
-                            )}
-                        </div>
-                        <div className="space-y-2 bg-slate-950/20 rounded-lg p-3 border border-white/5 max-h-48 overflow-y-auto custom-scrollbar">
-                            {milestonesLoading ? (
-                                [...Array(4)].map((_, i) => <div key={i} className="h-6 bg-slate-900/60 rounded animate-pulse" />)
-                            ) : milestones.length === 0 ? (
-                                <p className="text-xs text-slate-500 py-2 text-center">No milestones yet.</p>
-                            ) : (
-                                milestones.map((m) => (
-                                    <div key={m.id} className="flex items-start gap-3 py-1 cursor-pointer select-none" onClick={() => toggleMilestone(m.id)}>
-                                        <input
-                                            type="checkbox"
-                                            checked={m.checked}
-                                            onChange={() => {}}
-                                            className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800 text-[var(--brand-blue-500)] focus:ring-[var(--brand-blue-500)] focus:ring-offset-0 shrink-0"
-                                        />
-                                        <span className={`text-sm ${m.checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
-                                            {m.label}
-                                        </span>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="space-y-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Documents</span>
-                        <a
-                            href="/dashboard/business/documents"
-                            className="flex items-center gap-2 p-3 bg-slate-950/40 border border-white/5 rounded-xl hover:border-[var(--brand-blue-500)]/30 transition-all cursor-pointer"
-                        >
-                            <FileText className="w-4 h-4 text-[var(--brand-blue-400)] flex-shrink-0" />
-                            <span className="text-xs text-slate-300 font-medium">Open Document Hub to manage project files</span>
-                        </a>
-                    </div>
-
-                    {(clientEmail || clientName) && (
-                        <div className="rounded-lg border border-white/5 bg-slate-900/40 p-4 space-y-1">
-                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Client Inbox</p>
-                            <p className="text-sm text-white font-semibold truncate">{clientName || 'Linked client'}</p>
-                            {clientEmail ? (
-                                <button
-                                    type="button"
-                                    onClick={() => router.push(buildMailComposeUrl(clientEmail, `Re: ${clientName || 'project update'}`))}
-                                    className="text-xs text-[var(--brand-blue-300)] hover:text-[var(--brand-blue-200)] break-all text-left"
-                                >
-                                    {clientEmail}
-                                </button>
-                            ) : (
-                                <p className="text-xs text-slate-500">No email address on file yet.</p>
-                            )}
-                            <p className="text-[11px] text-slate-500">
-                                Project notes will be emailed here automatically when available.
-                            </p>
-                        </div>
-                    )}
-
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between gap-3">
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Project Notes</span>
-                            <span className="text-[11px] text-slate-500">{comments.length} messages</span>
-                        </div>
-                        <div className="space-y-2 bg-slate-950/20 rounded-lg p-3 border border-white/5 max-h-72 overflow-y-auto custom-scrollbar">
-                            {commentsLoading ? (
-                                [...Array(3)].map((_, i) => <div key={i} className="h-16 bg-slate-900/60 rounded-xl animate-pulse" />)
-                            ) : comments.length === 0 ? (
-                                <p className="text-xs text-slate-500 py-2 text-center">No notes yet. Add the first project update below.</p>
-                            ) : (
-                                comments.map((comment) => (
-                                    <div key={comment.id} className={`rounded-xl border p-3 ${comment.is_client ? 'border-[var(--brand-blue-500)]/20 bg-[var(--brand-blue-500)]/5' : 'border-white/5 bg-slate-900/60'}`}>
-                                        <div className="flex items-start justify-between gap-3 mb-2">
-                                            <div className="min-w-0">
-                                                <p className="text-sm font-semibold text-white truncate">
-                                                    {comment.author_name}
-                                                    {comment.is_client ? ' (Client)' : ' (Team)'}
-                                                </p>
-                                                {comment.author_email && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => router.push(buildMailComposeUrl(comment.author_email || '', 'Re: project comment'))}
-                                                        className="text-[11px] text-slate-500 hover:text-[var(--brand-blue-300)] break-all text-left"
-                                                    >
-                                                        {comment.author_email}
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <span className="text-[11px] text-slate-500 shrink-0">
-                                                {new Date(comment.created_at).toLocaleString()}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{comment.content}</p>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                        <form onSubmit={handleAddComment} className="space-y-2">
-                            <div className="grid grid-cols-2 gap-2">
-                                <input
-                                    value={commentAuthorName}
-                                    onChange={(e) => setCommentAuthorName(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-[var(--brand-blue-500)]"
-                                    placeholder="Your name"
-                                />
-                                <input
-                                    value={commentAuthorEmail}
-                                    onChange={(e) => setCommentAuthorEmail(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-[var(--brand-blue-500)]"
-                                    placeholder="Your email"
-                                    type="email"
-                                />
-                            </div>
-                            <textarea
-                                value={commentDraft}
-                                onChange={(e) => setCommentDraft(e.target.value)}
-                                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-[var(--brand-blue-500)] resize-none min-h-[96px]"
-                                placeholder="Leave a note, ask a question, or record a client update..."
-                            />
-                            <button
-                                type="submit"
-                                disabled={postingComment || !commentDraft.trim() || !commentAuthorName.trim()}
-                                className="w-full px-4 py-2.5 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all"
-                            >
-                                {postingComment ? 'Saving...' : 'Add Note'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                {/* Sticky Action Footer */}
-                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 px-6 py-4 border-t border-white/10 z-10 flex gap-3 items-center justify-end">
-                    <button
-                        onClick={handleShareWithClient}
-                        title="Copy a public link to share this project's progress and milestones with the client"
-                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[var(--brand-blue-600)]/20 hover:bg-[var(--brand-blue-600)]/30 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 rounded-md font-semibold text-xs transition-all"
-                    >
-                        <Share2 className="w-3.5 h-3.5" />
-                        Share with Client
-                    </button>
-                    <button
-                        onClick={() => { onEdit(project); onClose(); }}
-                        className="flex-1 px-4 py-2 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-xl font-bold text-xs transition-all text-center"
-                    >
-                        Edit Properties
-                    </button>
-                </div>
-            </motion.div>
-            <ProjectPortalShareDialog
-                isOpen={shareDialogOpen}
-                onClose={() => setShareDialogOpen(false)}
-                projectId={project.id}
-                tenantId={tenantId}
-                projectName={project.name}
-            />
-        </>
     );
 };
 

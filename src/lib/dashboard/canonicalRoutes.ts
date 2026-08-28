@@ -65,15 +65,15 @@ export const CANONICAL_ROUTES: CanonicalRouteDefinition[] = [
     breadcrumb: ['Sales', 'Leads'],
   },
   {
-    path: '/dashboard/contacts',
+    path: '/dashboard/crm/unified-contacts',
     title: 'Contacts',
     section: 'sales',
     roles: ['admin', 'tenant_admin', 'staff'],
     permissions: ['crm:read'],
     aliases: [
+      '/dashboard/contacts',
       '/dashboard/clients',
       '/dashboard/business/clients',
-      '/dashboard/crm/unified-contacts',
     ],
     mobileSupported: true,
     breadcrumb: ['Sales', 'Contacts'],

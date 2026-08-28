@@ -12,6 +12,9 @@ import { generateThemedContractPdfBuffer } from "@/lib/documents/themedDocumentP
 import { randomBytes } from "crypto";
 import { AppUrls } from "@/lib/urls";
 import { validateContract } from "@/lib/documents/documentValidationEngine";
+import { runContractLegalConsistencyCheck } from "@/lib/documents/contractLegalPreflight";
+import { assessContractContentQuality } from "@/lib/documents/contractContentQuality";
+import { generateContractFromTemplate } from "@/services/alphacloneContractTemplate";
 import {
   AlignmentType,
   Document,
@@ -129,8 +132,8 @@ async function createContract(tenantId: string, config: any, supabase: any) {
       template = "standard",
     } = config;
 
-    // Generate AI-powered contract content
-    const contractContent = await generateAIContractContent({
+    // Generate contract content (structured template fallback when AI params are thin)
+    let contractContent = await generateAIContractContent({
       type,
       parties,
       terms,
@@ -141,6 +144,16 @@ async function createContract(tenantId: string, config: any, supabase: any) {
       lineSpacing,
       template,
     });
+
+    const quality = assessContractContentQuality(contractContent);
+    if (!quality.ok) {
+      contractContent = generateContractFromTemplate(
+        parties?.client?.name || parties?.clientName || 'Client',
+        terms?.projectName || title || 'Professional Services Engagement',
+        terms?.scope || terms?.description || 'Professional services as described in the statement of work.',
+        parties?.provider?.name || parties?.providerName || 'Service Provider',
+      );
+    }
 
     // Save contract to database
     const { data: contract, error } = await supabase
@@ -401,24 +414,27 @@ export async function sendContract(
     }
 
     const metadata = (contract.metadata || {}) as Record<string, unknown>;
+    const contractText = String(contract.content || "");
+    const clientName =
+      String(contract.client_name || metadata.client_name || "").trim() ||
+      undefined;
+    const clientEmail =
+      String(contract.client_email || metadata.client_email || "").trim() ||
+      undefined;
+    const jurisdiction =
+      String(contract.jurisdiction || contract.governing_law || "").trim() ||
+      undefined;
+
     const validation = validateContract({
-      text: String(contract.content || ""),
-      clientName:
-        String(contract.client_name || metadata.client_name || "").trim() ||
-        undefined,
-      clientEmail:
-        String(contract.client_email || metadata.client_email || "").trim() ||
-        undefined,
+      text: contractText,
+      clientName,
+      clientEmail,
       clientAddress:
         String(
           contract.client_address || metadata.client_address || "",
         ).trim() || undefined,
-      jurisdiction:
-        String(contract.jurisdiction || contract.governing_law || "").trim() ||
-        undefined,
-      hasSignatureBlock: /signature|signed\s+by|\/s\//i.test(
-        String(contract.content || ""),
-      ),
+      jurisdiction,
+      hasSignatureBlock: /signature|signed\s+by|\/s\//i.test(contractText),
       isDraft: contract.status === "draft",
       hasSignaturesFilled: Boolean(
         contract.client_signature || contract.admin_signature,
@@ -430,17 +446,41 @@ export async function sendContract(
       pageCount: Number(contract.pages || 0) || null,
       hasPageNumbers: metadata.has_page_numbers === true,
     });
+
+    const legalConsistencyFindings = runContractLegalConsistencyCheck({
+      content: contractText,
+      clientName,
+      clientEmail,
+      jurisdiction,
+      governingLaw: jurisdiction,
+      supplierLegalName: String(metadata.supplier_legal_name || "").trim() || undefined,
+    });
+    const mergedFindings = [...validation.findings, ...legalConsistencyFindings];
+    const canSend =
+      validation.can_send &&
+      !legalConsistencyFindings.some((finding) => finding.severity === "critical");
+    const mergedValidation = {
+      ...validation,
+      findings: mergedFindings,
+      valid: canSend,
+      can_send: canSend,
+      score: Math.max(
+        0,
+        validation.score - legalConsistencyFindings.filter((f) => f.severity === "critical").length * 25
+      ),
+    };
     const reviewedAt = new Date().toISOString();
     await supabase
       .from("contracts")
       .update({
         last_risk_review_at: reviewedAt,
-        risk_findings: validation.findings,
+        risk_findings: mergedValidation.findings,
         metadata: {
           ...metadata,
           last_pre_send_validation: {
-            score: validation.score,
-            can_send: validation.can_send,
+            score: mergedValidation.score,
+            can_send: mergedValidation.can_send,
+            legal_consistency_checked: true,
             reviewed_at: reviewedAt,
           },
         },
@@ -454,21 +494,25 @@ export async function sendContract(
         contract_id: contractId,
         from_status: contract.lifecycle_status || contract.status,
         to_status: contract.lifecycle_status || contract.status,
-        reason: validation.can_send
+        reason: mergedValidation.can_send
           ? "Pre-send validation passed"
           : "Pre-send validation blocked delivery",
         actor_user_id: actorUserId,
         source: "pre_send_validation",
-        evidence: { score: validation.score, findings: validation.findings },
+        evidence: {
+          score: mergedValidation.score,
+          findings: mergedValidation.findings,
+          legal_consistency_checked: true,
+        },
       });
-    if (!validation.can_send) {
+    if (!mergedValidation.can_send) {
       return {
         success: false,
-        error: `Contract failed pre-send legal checks: ${validation.findings
+        error: `Contract failed pre-send legal checks: ${mergedValidation.findings
           .filter((finding) => finding.severity === "critical")
           .map((finding) => finding.message)
           .join(" ")}`,
-        validation,
+        validation: mergedValidation,
       };
     }
 

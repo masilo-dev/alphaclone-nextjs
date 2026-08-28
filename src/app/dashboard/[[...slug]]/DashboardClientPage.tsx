@@ -14,12 +14,12 @@ import dynamic from 'next/dynamic';
 
 const Dashboard = dynamic(() => import('@/components/Dashboard'), {
     ssr: false,
-    loading: () => null,
+    loading: () => <DashboardShellSkeleton />,
 });
 
 const BusinessDashboard = dynamic(() => import('@/components/dashboard/business/BusinessDashboard'), {
     ssr: false,
-    loading: () => null,
+    loading: () => <DashboardShellSkeleton />,
 });
 
 /** Tenant admins use BusinessDashboard only — skip the heavy Dashboard shell hooks. */

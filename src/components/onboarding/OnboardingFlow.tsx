@@ -93,6 +93,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
 
             // 5. Save to localStorage for instant UI resolution
             localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+            window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
 
             toast.success('Your workspace is ready!', { id: toastId });
 

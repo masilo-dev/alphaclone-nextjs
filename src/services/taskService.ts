@@ -61,7 +61,7 @@ export interface Task {
     relatedToDeal?: string;
     relatedToLead?: string;
     priority: 'low' | 'medium' | 'high' | 'urgent';
-    status: 'ideas' | 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
+    status: 'ideas' | 'todo' | 'in_progress' | 'review' | 'blocked' | 'completed' | 'cancelled';
     dueDate?: string;
     startDate?: string;
     completedAt?: string;
@@ -97,7 +97,7 @@ export interface CreateTaskInput {
     relatedToDeal?: string;
     relatedToLead?: string;
     priority?: 'low' | 'medium' | 'high' | 'urgent';
-    status?: 'ideas' | 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
+    status?: 'ideas' | 'todo' | 'in_progress' | 'review' | 'blocked' | 'completed' | 'cancelled';
     dueDate?: string;
     startDate?: string;
     estimatedHours?: number;
@@ -440,7 +440,7 @@ export const taskService = {
                     .single();
 
                 if (existingTask) {
-                    const statusOrder = ['ideas', 'todo', 'in_progress', 'review', 'completed'];
+                    const statusOrder = ['ideas', 'todo', 'in_progress', 'review', 'blocked', 'completed'];
                     const currentIdx = statusOrder.indexOf(existingTask.status);
                     const newIdx = statusOrder.indexOf(updates.status);
 

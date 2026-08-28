@@ -144,19 +144,32 @@ export const SuperAdminDashboardTab: React.FC = () => {
           <p className="text-xs text-slate-500">No audit events recorded yet.</p>
         ) : (
           <div className="divide-y divide-slate-800">
-            {recentLogs.map((log) => (
+            {recentLogs.map((log) => {
+              const resourceLabel =
+                log.resource_type ||
+                log.entity_type ||
+                (typeof log.metadata?.resource === 'string' ? log.metadata.resource : null) ||
+                'platform event';
+              const resourceId =
+                log.resource_id ||
+                log.entity_id ||
+                (typeof log.metadata?.resource_id === 'string' ? log.metadata.resource_id : null);
+              return (
               <div key={log.id} className="py-2.5 flex items-center justify-between text-xs">
                 <div className="space-y-0.5">
                   <span className="px-2 py-0.5 bg-slate-800 text-teal-300 font-mono text-[10px] rounded uppercase font-bold">
                     {log.action}
                   </span>
-                  <p className="text-slate-300 font-medium">{log.resource_type} ({log.resource_id})</p>
+                  <p className="text-slate-300 font-medium">
+                    {resourceLabel}
+                    {resourceId ? ` (${resourceId.slice(0, 8)}…)` : ''}
+                  </p>
                 </div>
                 <span className="text-slate-500 text-[11px]">
                   {new Date(log.created_at).toLocaleString()}
                 </span>
               </div>
-            ))}
+            );})}
           </div>
         )}
       </div>

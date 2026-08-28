@@ -203,7 +203,7 @@ export async function bonnieGetProactiveBrief(tenantId: string, userId: string) 
   const admin = createSupabaseAdminClient();
   const [overdueInvoices, openTickets, hotLeads, staleDeals, needsResponseMessages] = await Promise.all([
     admin
-      .from('invoices')
+      .from('business_invoices')
       .select('id,total,client_name,due_date')
       .eq('tenant_id', tenantId)
       .eq('status', 'overdue')

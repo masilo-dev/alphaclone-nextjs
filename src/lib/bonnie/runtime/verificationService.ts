@@ -243,7 +243,7 @@ export async function verifyBusinessOutcome(params: {
     const invoiceId = structuredOutput?.invoice_id as string | undefined;
     if (invoiceId) {
       const { data: invoice } = await admin
-        .from('invoices')
+        .from('business_invoices')
         .select('id, status')
         .eq('tenant_id', tenantId)
         .eq('id', invoiceId)

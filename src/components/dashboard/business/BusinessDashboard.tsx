@@ -129,6 +129,7 @@ const BillsPayablePage = React.lazy(() => import('../accounting/BillsPayablePage
 const PeriodClosePage = React.lazy(() => import('../accounting/PeriodClosePage'));
 const SequenceBuilder = React.lazy(() => import('../marketing/SequenceBuilder'));
 const DeliverabilityPanel = React.lazy(() => import('../marketing/DeliverabilityPanel'));
+const ZohoCampaignsHub = React.lazy(() => import('../zoho/ZohoCampaignsHub'));
 const ExecutiveDashboard = React.lazy(() => import('../ExecutiveDashboard'));
 import { renderSharedDashboardRoute } from '@/lib/dashboard/sharedDashboardRoutes';
 import { isHubRoute, wrapRouteInHub } from '@/lib/dashboard/hubRoutes';
@@ -150,6 +151,7 @@ import { OfflineQueueIndicator } from '@/components/common/OfflineQueueIndicator
 import CommandPalette from '../CommandPalette';
 import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
 import ProductTour from '../../onboarding/ProductTour';
+import { PLATFORM_TOUR_EVENT } from '../PlatformExecutionWelcome';
 import OnboardingFlow from '../../onboarding/OnboardingFlow';
 import { BusinessWelcomeModal } from './BusinessWelcomeModal';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -300,6 +302,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const handleBusinessWelcomeClose = () => {
         if (typeof window !== 'undefined') {
             localStorage.setItem(`business_welcome_seen_${user.id}`, '1');
+            localStorage.setItem(`welcome_seen_${user.id}`, 'true');
+            window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
         }
         setShowBusinessWelcome(false);
         if (typeof window !== 'undefined' && !localStorage.getItem(`onboarding_completed_${user.id}`)) {
@@ -313,10 +317,27 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     const handleOnboardingComplete = () => {
         setShowOnboarding(false);
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
+        }
         if (typeof window !== 'undefined' && !localStorage.getItem(`business_tour_completed_${user.id}`) && route === '/dashboard') {
             window.setTimeout(() => setShowProductTour(true), 1500);
         }
     };
+
+    const markTourCompleted = React.useCallback(() => {
+        if (typeof window === 'undefined' || !user?.id) return;
+        localStorage.setItem(`business_tour_completed_${user.id}`, '1');
+        localStorage.setItem(`tour_completed_${user.id}`, '1');
+        setShowProductTour(false);
+    }, [user?.id]);
+
+    React.useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const onStartTour = () => setShowProductTour(true);
+        window.addEventListener(PLATFORM_TOUR_EVENT, onStartTour);
+        return () => window.removeEventListener(PLATFORM_TOUR_EVENT, onStartTour);
+    }, []);
 
     // Initialize MS Teams-like Presence
     React.useEffect(() => {
@@ -502,6 +523,18 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         if (tab === '/dashboard/business/documents' || tab.startsWith('/dashboard/business/documents/')) {
             const section = tab.slice('/dashboard/business/documents'.length).replace(/^\//, '').split('/')[0];
             return <SharedDocumentsWorkspace section={section} />;
+        }
+
+        if (/^\/dashboard\/(?:business\/)?projects\/[0-9a-f-]{36}$/i.test(tab)) {
+            return <ProjectsPage user={user} />;
+        }
+
+        if (tab.startsWith('/dashboard/marketing/campaigns')) {
+            return (
+                <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                    <EmailCampaignsPage userId={user.id} />
+                </React.Suspense>
+            );
         }
 
         switch (tab) {
@@ -747,6 +780,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
                         <EmailCampaignsPage userId={user.id} />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/campaigns/zoho':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <ZohoCampaignsHub userId={user.id} />
                     </React.Suspense>
                 );
             case '/dashboard/marketplace':
@@ -1007,6 +1046,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/contact-submissions': return t('Contact Submissions');
             case '/dashboard/business/forms': return t('Branded Forms');
             case '/dashboard/business/campaigns': return t('Campaigns');
+            case '/dashboard/business/campaigns/zoho': return t('Zoho Campaigns');
+            case '/dashboard/marketing/campaigns': return t('Campaigns');
             case '/dashboard/business/facebook': return t('Facebook');
             case '/dashboard/business/expenses': return t('Expense Tracker');
             case '/dashboard/automations':
@@ -1141,6 +1182,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 setActiveTab={setActiveTab}
                 unreadMessageCount={unreadMessageCount}
                 onLogout={onLogout}
+                onStartTour={() => setShowProductTour(true)}
             />
             </div>
 
@@ -1334,12 +1376,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             <ProductTour
                 isOpen={showProductTour}
-                onComplete={() => {
-                    setShowProductTour(false);
-                    if (typeof window !== 'undefined') {
-                        localStorage.setItem(`business_tour_completed_${user.id}`, '1');
-                    }
-                }}
+                onComplete={markTourCompleted}
                 userRole="tenant_admin"
             />
 

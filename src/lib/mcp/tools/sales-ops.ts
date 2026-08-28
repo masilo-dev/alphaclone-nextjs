@@ -37,16 +37,6 @@ defineConnectorTool({
     if (args.status) query = query.eq('status', args.status);
     let { data, error, count } = await query;
 
-    if (error?.code === '42P01') {
-      let q = supabase
-        .from('invoices')
-        .select('*', { count: 'exact' })
-        .eq('tenant_id', args.tenant_id)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
-      if (args.status) q = q.eq('status', args.status);
-      ({ data, error, count } = await q);
-    }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
     return okResult('invoices', { invoices: data || [], source: 'business_invoices' }, {
       pagination: buildPaginationMeta({
@@ -237,24 +227,13 @@ defineConnectorTool({
       error = fallback.error;
     }
 
-    if (error?.code === '42P01') {
-      const legacy = await supabase
-        .from('invoices')
-        .select('id, status, amount, total, amount_paid, amount_due, created_at, paid_at, currency')
-        .eq('tenant_id', args.tenant_id)
-        .gte('created_at', since)
-        .limit(2000);
-      invoices = legacy.data as typeof invoices;
-      error = legacy.error;
-    }
-
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 
     const rows = (invoices || []).map((i: any) => ({
       ...i,
-      total: Number(i.total ?? i.amount ?? 0),
-      amount_paid: Number(i.amount_paid ?? (String(i.status).toLowerCase() === 'paid' ? i.total ?? i.amount ?? 0 : 0)),
-      amount_due: Number(i.amount_due ?? i.balance_due ?? Math.max(Number(i.total ?? i.amount ?? 0) - Number(i.amount_paid ?? 0), 0)),
+      total: Number(i.total ?? 0),
+      amount_paid: Number(i.amount_paid ?? (String(i.status).toLowerCase() === 'paid' ? i.total ?? 0 : 0)),
+      amount_due: Number(i.amount_due ?? i.balance_due ?? Math.max(Number(i.total ?? 0) - Number(i.amount_paid ?? 0), 0)),
     }));
 
     const paid = rows.filter((i) => String(i.status).toLowerCase() === 'paid');

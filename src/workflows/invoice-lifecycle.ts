@@ -7,6 +7,8 @@ import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { generateThemedInvoicePdfBuffer } from '@/lib/documents/themedDocumentPdf';
 import { recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { fileInvoiceDocument } from '@/lib/documents/fileDocument';
+import { postInvoiceIssueJournalServer } from '@/lib/invoices/postInvoiceIssueJournalServer';
 
 interface InvoiceLifecycleInput {
   invoiceId: string;
@@ -20,7 +22,7 @@ interface InvoiceLifecycleInput {
 export async function invoiceLifecycleWorkflow(input: InvoiceLifecycleInput) {
   "use workflow";
 
-  await generateAndStorePDF(input.invoiceId, input.tenantId);
+  await generateAndStorePDF(input.invoiceId, input.tenantId, input.actorUserId);
   await sendInvoiceEmail(input);
   await markInvoiceSent(input);
 
@@ -40,7 +42,7 @@ async function loadInvoice(invoiceId: string, tenantId: string) {
   return invoice;
 }
 
-async function generateAndStorePDF(invoiceId: string, tenantId: string) {
+async function generateAndStorePDF(invoiceId: string, tenantId: string, actorUserId?: string) {
   "use step";
   const invoice = await loadInvoice(invoiceId, tenantId);
   const admin = createSupabaseAdminClient();
@@ -82,6 +84,26 @@ async function generateAndStorePDF(invoiceId: string, tenantId: string) {
   if (updateError) {
     await admin.storage.from('invoice-documents').remove([storagePath]).catch(() => undefined);
     throw updateError;
+  }
+
+  const { data: invoiceRow } = await admin
+    .from('business_invoices')
+    .select('id, invoice_number, status, total, client_id, project_id, contract_id')
+    .eq('tenant_id', tenantId)
+    .eq('id', invoiceId)
+    .maybeSingle();
+
+  if (invoiceRow && actorUserId) {
+    await fileInvoiceDocument(admin, {
+      tenantId,
+      userId: actorUserId,
+      invoice: invoiceRow,
+      storagePath,
+      storageBucket: 'invoice-documents',
+      sizeBytes: pdf.byteLength,
+    }).catch((error) =>
+      console.error('[invoice-lifecycle] catalog filing failed', error instanceof Error ? error.message : error)
+    );
   }
 
   return { storagePath };
@@ -211,6 +233,16 @@ async function markInvoiceSent(input: InvoiceLifecycleInput) {
   if (auditResult.status === 'rejected') console.error('[invoice-lifecycle] sent audit failed', auditResult.reason);
   if (eventResult.status === 'rejected') console.error('[invoice-lifecycle] sent event failed', eventResult.reason);
   if (lifecycleResult.status === 'rejected') console.error('[invoice-lifecycle] lifecycle event failed', lifecycleResult.reason);
+
+  try {
+    await postInvoiceIssueJournalServer(admin, {
+      tenantId: input.tenantId,
+      invoiceId: input.invoiceId,
+      actorUserId: input.actorUserId || null,
+    });
+  } catch (journalError) {
+    console.error('[invoice-lifecycle] issue journal failed', journalError);
+  }
 }
 
 async function checkPaymentStatus(invoiceId: string, tenantId: string) {

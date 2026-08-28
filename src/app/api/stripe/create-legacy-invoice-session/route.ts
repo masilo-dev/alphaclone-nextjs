@@ -9,12 +9,36 @@ export async function POST(req: NextRequest) {
     const { user } = await requireAuthenticatedUser(req);
     const { invoiceId } = z.object({ invoiceId: z.string().uuid() }).parse(await req.json());
     const admin = createSupabaseAdminClient();
-    const { data: invoice, error } = await admin.from('invoices').select('id,tenant_id,user_id,amount,currency,status,description').eq('id', invoiceId).single();
+    const { data: invoice, error } = await admin
+      .from('business_invoices')
+      .select('id,tenant_id,client_id,total,currency,status,notes')
+      .eq('id', invoiceId)
+      .single();
     if (error || !invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-    const { data: membership } = await admin.from('tenant_users').select('user_id').eq('tenant_id', invoice.tenant_id).eq('user_id', user.id).maybeSingle();
-    if (invoice.user_id !== user.id && !membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const { data: membership } = await admin
+      .from('tenant_users')
+      .select('user_id')
+      .eq('tenant_id', invoice.tenant_id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (!membership) {
+      if (invoice.client_id) {
+        const { data: client } = await admin
+          .from('business_clients')
+          .select('email')
+          .eq('id', invoice.client_id)
+          .maybeSingle();
+        if (client?.email !== user.email) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     if (invoice.status === 'paid') return NextResponse.json({ error: 'Invoice is already paid' }, { status: 409 });
-    const amount = Math.round(Number(invoice.amount) * 100);
+    const amount = Math.round(Number(invoice.total) * 100);
     if (!Number.isSafeInteger(amount) || amount < 50) return NextResponse.json({ error: 'Invoice amount is invalid' }, { status: 422 });
 
     const origin = req.nextUrl.origin;
@@ -24,7 +48,7 @@ export async function POST(req: NextRequest) {
       line_items: [{
         price_data: {
           currency: String(invoice.currency || 'usd').toLowerCase(),
-          product_data: { name: `Invoice ${invoice.id.slice(0, 8).toUpperCase()}`, description: invoice.description || 'Invoice payment' },
+          product_data: { name: `Invoice ${invoice.id.slice(0, 8).toUpperCase()}`, description: invoice.notes || 'Invoice payment' },
           unit_amount: amount,
         },
         quantity: 1,

@@ -51,15 +51,15 @@ class AnomalyAlertingService {
   ): Promise<AnomalyAlert | null> {
     // Fetch last 30 invoices
     const { data: invoices } = await supabase
-      .from('invoices')
-      .select('amount, total_amount, created_at')
+      .from('business_invoices')
+      .select('total, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(30);
 
     if (!Array.isArray(invoices) || invoices.length < 5) return null;
 
-    const values = invoices.map(i => Number(i.total_amount || i.amount || 0));
+    const values = invoices.map(i => Number(i.total || 0));
     const current = values[0];
     const historical = values.slice(1);
 

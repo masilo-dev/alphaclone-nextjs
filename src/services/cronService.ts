@@ -126,16 +126,16 @@ export const cronService = {
     dueDate.setDate(dueDate.getDate() + 30);
 
     // Create invoice in database
-    const { error } = await supabase.from('invoices').insert({
+    const { error } = await supabase.from('business_invoices').insert({
       invoice_number: invoiceNumber,
-      client_id: config.tenantId, // In production, this would be the actual client ID
-      amount: parseFloat(config.amount),
+      client_id: null,
+      total: parseFloat(config.amount),
+      subtotal: parseFloat(config.amount),
       status: 'sent',
-      due_date: dueDate.toISOString(),
+      due_date: dueDate.toISOString().slice(0, 10),
+      issue_date: new Date().toISOString().slice(0, 10),
       tenant_id: config.tenantId,
-      description: config.description,
-      is_recurring: true,
-      recurring_config_id: config.id
+      notes: config.description,
     });
 
     if (error) {

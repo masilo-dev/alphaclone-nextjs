@@ -123,6 +123,8 @@ export default function SocialCommandCenter() {
     const [recentInteractions, setRecentInteractions] = useState<any[]>([]);
     const [postMetrics, setPostMetrics] = useState<Record<string, PostMetrics>>({});
     const [loading, setLoading] = useState(true);
+    const [syncingMetrics, setSyncingMetrics] = useState(false);
+    const [metricsSyncedAt, setMetricsSyncedAt] = useState<string | null>(null);
 
     // Detail Bottom Sheet
     const [selectedPost, setSelectedPost] = useState<SocialPost | null>(null);
@@ -304,14 +306,15 @@ export default function SocialCommandCenter() {
             // Query social posts, fb pages, and linkedin profiles from DB
             const [postsRes, pagesRes, linkedinRes, analyticsRes] = await Promise.all([
                 supabase.from('social_posts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(60),
-                supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user?.id || '').eq('is_active', true),
+                supabase.from('facebook_integrations').select('page_id,page_name').eq('tenant_id', currentTenant.id).eq('is_active', true),
                 supabase.from('linkedin_integrations').select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
-                supabase.from('social_post_analytics').select('post_id,impressions,clicks,reactions,created_at').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(250),
+                supabase.from('social_post_analytics').select('post_id,impressions,clicks,reactions,comments,shares,synced_at,created_at').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(250),
             ]);
 
             if (!postsRes.error) setPosts(postsRes.data || []);
             if (!analyticsRes.error) {
                 const latestMetrics: Record<string, PostMetrics> = {};
+                let latestSync: string | null = null;
                 (analyticsRes.data || []).forEach((row: any) => {
                     if (!latestMetrics[row.post_id]) {
                         latestMetrics[row.post_id] = {
@@ -321,9 +324,13 @@ export default function SocialCommandCenter() {
                             comments: Number(row.comments || 0),
                             shares: Number(row.shares || 0),
                         };
+                        if (row.synced_at && (!latestSync || row.synced_at > latestSync)) {
+                            latestSync = row.synced_at;
+                        }
                     }
                 });
                 setPostMetrics(latestMetrics);
+                setMetricsSyncedAt(latestSync);
             }
             if (!pagesRes.error) {
                 setFbPages(pagesRes.data || []);
@@ -369,6 +376,37 @@ export default function SocialCommandCenter() {
             shares: Number(shares) || 0,
         };
     };
+
+    const refreshSocialMetrics = async () => {
+        if (!currentTenant?.id || syncingMetrics) return;
+        setSyncingMetrics(true);
+        try {
+            const res = await fetch('/api/social/analytics/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id, days: 90, limit: 40 }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Could not refresh social metrics');
+                return;
+            }
+            toast.success(`Synced metrics for ${data.synced ?? 0} post${data.synced === 1 ? '' : 's'}`);
+            await loadData();
+        } catch {
+            toast.error('Failed to refresh social metrics');
+        } finally {
+            setSyncingMetrics(false);
+        }
+    };
+
+    const mergedMetricsByPost = useMemo(() => {
+        const merged: Record<string, PostMetrics> = {};
+        for (const post of posts) {
+            merged[post.id] = getPostMetrics(post);
+        }
+        return merged;
+    }, [posts, postMetrics]);
 
     const addComposeMediaUrl = () => {
         const url = composeMediaUrl.trim();
@@ -852,14 +890,39 @@ export default function SocialCommandCenter() {
                             />
                         ) : null}
                         {activeSubView === 'analytics' ? (
-                            <SocialAnalyticsStory
-                                posts={publishedPlatformPosts}
-                                metricsByPost={postMetrics}
-                                platform={activePlatform}
-                                range={analyticsDateRange}
-                                onRangeChange={setAnalyticsDateRange}
-                                onOpenPost={setSelectedPost}
-                            />
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/80 px-4 py-3">
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Provider metrics</p>
+                                        <p className="text-[11px] text-slate-500">
+                                            {metricsSyncedAt
+                                                ? `Last synced ${new Date(metricsSyncedAt).toLocaleString()}`
+                                                : 'Not synced yet — pull reach and engagement from Facebook/LinkedIn'}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={refreshSocialMetrics}
+                                        disabled={syncingMetrics}
+                                        className="inline-flex items-center gap-2 rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-xs font-bold text-teal-300 disabled:opacity-60"
+                                    >
+                                        {syncingMetrics ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <RefreshCw className="h-3.5 w-3.5" />
+                                        )}
+                                        Refresh metrics
+                                    </button>
+                                </div>
+                                <SocialAnalyticsStory
+                                    posts={publishedPlatformPosts}
+                                    metricsByPost={mergedMetricsByPost}
+                                    platform={activePlatform}
+                                    range={analyticsDateRange}
+                                    onRangeChange={setAnalyticsDateRange}
+                                    onOpenPost={setSelectedPost}
+                                />
+                            </div>
                         ) : (
                             /* Feed List / Queue with Swipe gestures */
                             <div className="space-y-1">

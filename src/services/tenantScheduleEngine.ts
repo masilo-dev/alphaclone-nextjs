@@ -43,7 +43,7 @@ export class TenantScheduleEngine {
       admin.from('communication_slas').select('*').eq('tenant_id', tenantId).eq('status', 'pending').limit(50),
       admin.from('operations_blockers').select('*').eq('tenant_id', tenantId).eq('status', 'active').limit(50),
       admin.from('deals').select('*').eq('tenant_id', tenantId).limit(50),
-      admin.from('invoices').select('*').eq('tenant_id', tenantId).eq('status', 'unpaid').limit(50),
+      admin.from('business_invoices').select('*').eq('tenant_id', tenantId).in('status', ['sent', 'overdue', 'partially_paid', 'draft']).limit(50),
     ]);
 
     const tasksList = tasks || [];
@@ -56,7 +56,7 @@ export class TenantScheduleEngine {
       (t) => String(t.priority).toLowerCase() === 'high' || String(t.priority).toLowerCase() === 'urgent' || Number(t.priority) >= 13000
     );
 
-    const pendingInvoiceTotal = invoicesList.reduce((acc, inv) => acc + Number(inv.amount || inv.total_amount || 0), 0);
+    const pendingInvoiceTotal = invoicesList.reduce((acc, inv) => acc + Number(inv.total || inv.balance_due || 0), 0);
 
     let summaryTitle = '';
     let subject = '';

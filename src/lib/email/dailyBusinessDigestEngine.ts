@@ -65,7 +65,7 @@ export async function collectDailyOperationsSummary(
     admin.from('meetings').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'completed').gte('updated_at', since24h),
     admin.from('business_projects').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).gte('created_at', since24h),
     admin.from('tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'completed').gte('updated_at', since24h),
-    admin.from('invoices').select('amount_paid').eq('tenant_id', tenantId).gte('created_at', since24h),
+    admin.from('business_invoices').select('amount_paid').eq('tenant_id', tenantId).gte('created_at', since24h),
   ]);
 
   const paymentsReceivedAmount = (paymentsData || []).reduce(
@@ -80,7 +80,7 @@ export async function collectDailyOperationsSummary(
     { data: failedAuditLogs },
     { data: unansweredEmailsData },
   ] = await Promise.all([
-    admin.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'overdue'),
+    admin.from('business_invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'overdue'),
     admin.from('business_projects').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['at_risk', 'blocked']),
     admin.from('audit_logs').select('action, metadata').eq('tenant_id', tenantId).eq('severity', 'high').gte('created_at', since24h).limit(5),
     admin.from('emails').select('subject, sender').eq('tenant_id', tenantId).eq('status', 'unanswered').limit(5),

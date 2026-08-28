@@ -138,7 +138,7 @@ export function OverviewChartCard({
                     color: '#f8fafc',
                     fontSize: 12,
                   }}
-                  formatter={(value) => [formatTooltipValue(Number(value), tab), tab === 'pipeline' ? 'Deals' : 'Value']}
+                  formatter={(value: number | string) => [formatTooltipValue(Number(value), tab), tab === 'pipeline' ? 'Deals' : 'Value']}
                 />
                 <Bar dataKey="value" fill={CHART_STROKE} radius={[6, 6, 0, 0]} maxBarSize={48} />
               </BarChart>
@@ -177,7 +177,7 @@ export function OverviewChartCard({
                     color: '#f8fafc',
                     fontSize: 12,
                   }}
-                  formatter={(value) => [formatTooltipValue(Number(value), tab), tab === 'revenue' ? 'Revenue' : 'Completed']}
+                  formatter={(value: number | string) => [formatTooltipValue(Number(value), tab), tab === 'revenue' ? 'Revenue' : 'Completed']}
                 />
                 <Area
                   type="monotone"

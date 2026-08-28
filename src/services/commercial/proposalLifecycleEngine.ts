@@ -115,15 +115,17 @@ export class ProposalLifecycleEngine {
     dueDate.setDate(dueDate.getDate() + 14);
 
     const { data: invoice } = await admin
-      .from('invoices')
+      .from('business_invoices')
       .insert({
         tenant_id: tenantId,
         client_id: proposal.client_id,
-        amount: deposit,
-        total_amount: deposit,
+        total: deposit,
+        subtotal: deposit,
         status: 'draft',
         notes: `Initial 50% deposit invoice for ${proposal.title || 'Project'}`,
         due_date: dueDate.toISOString().split('T')[0],
+        issue_date: new Date().toISOString().split('T')[0],
+        invoice_number: `INV-${Date.now()}`,
       })
       .select('id')
       .single();

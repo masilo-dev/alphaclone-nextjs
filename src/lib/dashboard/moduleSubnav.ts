@@ -40,7 +40,8 @@ export const MODULE_SUBNAV: Record<ModuleId, SubNavItem[]> = {
     { id: 'inbox', label: 'Reach inbox', href: '/dashboard/outreach/inbox' },
     { id: 'outreach', label: 'Overview', href: '/dashboard/outreach' },
     { id: 'campaigns', label: 'Campaign outreach', href: '/dashboard/business/campaigns' },
-    { id: 'tracking', label: 'Tracking', href: '/dashboard/marketing/deliverability' },
+    { id: 'zoho', label: 'Zoho bulk', href: '/dashboard/business/campaigns/zoho' },
+    { id: 'tracking', label: 'Deliverability', href: '/dashboard/marketing/deliverability' },
   ],
   invoicing: [
     { id: 'overview', label: 'Overview', href: '/dashboard/business/billing' },

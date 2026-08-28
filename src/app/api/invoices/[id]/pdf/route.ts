@@ -39,18 +39,11 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
         .select('*, tenant:tenants(*)')
         .eq('id', id)
         .eq('metadata->>public_token', publicToken)
+        .eq('is_public', true)
         .maybeSingle();
 
       if (!byMetadata) {
-        try {
-          const decodedId = Buffer.from(publicToken, 'base64url').toString('utf8');
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          if (decodedId !== id || !uuidRegex.test(decodedId)) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-          }
-        } catch {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
     } else {
       return NextResponse.json(

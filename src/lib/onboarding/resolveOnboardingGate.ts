@@ -31,6 +31,13 @@ function isWelcomeSeen(userId: string) {
   );
 }
 
+/** Inline welcome banner after welcome modal or onboarding is complete. */
+export function canShowPlatformWelcomeBanner(userId: string): boolean {
+  if (typeof window === 'undefined' || !userId) return false;
+  const onboardingDone = localStorage.getItem(onboardingKey(userId)) === 'true';
+  return isWelcomeSeen(userId) || onboardingDone;
+}
+
 /** Sync profile/auth onboarding flags into localStorage for returning users. */
 export async function resolveOnboardingGate(
   userId: string,

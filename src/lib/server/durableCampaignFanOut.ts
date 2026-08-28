@@ -6,12 +6,6 @@
 
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 import { createRunForObjective } from "@/lib/bonnie/runtime/goalRunService";
-import {
-  beginIdempotentAction,
-  completeIdempotentAction,
-  saveExternalReference,
-  buildIdempotencyKey,
-} from "@/lib/bonnie/runtime/idempotencyService";
 import { insertOutboxEvent } from "@/lib/bonnie/runtime/outboxService";
 import { sendScheduledCampaignServer } from "@/lib/server/sendScheduledCampaignServer";
 
@@ -133,28 +127,9 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
     return { success: false, processedRecipients: 0, sentCount: 0, failedCount: 0, error: "campaign_not_found" };
   }
 
-  // Set status to processing
-  await admin
-    .from("email_campaigns")
-    .update({ status: "processing", updated_at: new Date().toISOString() })
-    .eq("id", campaignId);
-
-  // Create parent durable run for the campaign
-  const runResult = await createRunForObjective({
-    tenantId: campaign.tenant_id,
-    objective: `Execute Email Campaign Fan-Out: ${campaign.name || campaign.subject || campaign.id}`,
-    executionMode: "autonomous",
-    successCriteria: { campaignId: campaign.id },
-    seedGraph: true,
-  });
-
-  const runId = runResult.run.id;
-
-  // Check if campaign was cancelled or paused
   if (campaign.status === "cancelled" || campaign.status === "paused") {
     return {
       success: true,
-      runId,
       processedRecipients: 0,
       sentCount: 0,
       failedCount: 0,
@@ -162,105 +137,64 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
     };
   }
 
-  // Fetch recipients
-  const { data: recipients } = await admin
-    .from("campaign_recipients")
-    .select("id, email, status, metadata")
-    .eq("campaign_id", campaignId)
-    .eq("status", "pending");
-
-  const pendingRecipients = recipients || [];
-
-  if (pendingRecipients.length === 0) {
-    await admin
-      .from("email_campaigns")
-      .update({ status: "sent", updated_at: new Date().toISOString() })
-      .eq("id", campaignId);
-
-    return { success: true, runId, processedRecipients: 0, sentCount: 0, failedCount: 0 };
-  }
-
-  let sentCount = 0;
-  let failedCount = 0;
-
-  // Execute actual campaign sending loop with recipient-level idempotency
-  for (const recipient of pendingRecipients) {
-    // Touch campaign timestamp for heartbeat
-    await admin
-      .from("email_campaigns")
-      .update({ updated_at: new Date().toISOString() })
-      .eq("id", campaignId);
-
-    const idempotencyKey = buildIdempotencyKey({
-      tenantId: campaign.tenant_id,
-      taskId: `camp-${campaignId}-rec-${recipient.id}`,
-      actionType: "campaign.email.send",
-      targetRecordId: recipient.id,
-      actionVersion: 1,
-    });
-
-    const gate = await beginIdempotentAction({
-      tenantId: campaign.tenant_id,
-      key: idempotencyKey,
-      taskId: `rec-${recipient.id}`,
-      attemptId: `att-${Date.now()}`,
-      actionType: "campaign.email.send",
-    });
-
-    if (!gate.proceed && gate.existing?.state === "completed") {
-      sentCount++;
-      continue;
-    }
-
-    // Process using server execution core
-    try {
-      // Delegate single campaign batch processing safely
-      const serverResult = await sendScheduledCampaignServer(campaignId);
-      if (serverResult.success) {
-        sentCount++;
-        await completeIdempotentAction({
-          tenantId: campaign.tenant_id,
-          key: idempotencyKey,
-          result: { status: "sent", recipientId: recipient.id },
-        });
-
-        await insertOutboxEvent({
-          tenantId: campaign.tenant_id,
-          eventType: "campaign.email.sent",
-          payload: { campaignId, recipientId: recipient.id, email: recipient.email },
-        });
-      } else {
-        failedCount++;
-      }
-    } catch (err: any) {
-      failedCount++;
-    }
-  }
-
-  // Re-check remaining pending recipients
-  const { count: remainingPending } = await admin
+  const { count: pendingBefore } = await admin
     .from("campaign_recipients")
     .select("id", { count: "exact", head: true })
     .eq("campaign_id", campaignId)
     .eq("status", "pending");
 
-  const finalStatus = (remainingPending || 0) === 0 ? "sent" : "paused";
+  const processedRecipients = pendingBefore || 0;
+
+  if (processedRecipients === 0) {
+    await admin
+      .from("email_campaigns")
+      .update({ status: "sent", updated_at: new Date().toISOString() })
+      .eq("id", campaignId);
+
+    return { success: true, processedRecipients: 0, sentCount: 0, failedCount: 0 };
+  }
+
   await admin
     .from("email_campaigns")
-    .update({
-      status: finalStatus,
-      total_sent: sentCount,
-      total_failed: failedCount,
-      updated_at: new Date().toISOString(),
-    })
+    .update({ status: "sending", updated_at: new Date().toISOString() })
     .eq("id", campaignId);
 
+  const runResult = await createRunForObjective({
+    tenantId: campaign.tenant_id,
+    objective: `Execute Email Campaign: ${campaign.name || campaign.subject || campaign.id}`,
+    executionMode: "autonomous",
+    successCriteria: { campaignId: campaign.id },
+    seedGraph: true,
+  });
+
+  const runId = runResult.run.id;
+
+  const serverResult = await sendScheduledCampaignServer(campaignId);
+
+  const { data: recipientRows } = await admin
+    .from("campaign_recipients")
+    .select("status")
+    .eq("campaign_id", campaignId);
+
+  const list = recipientRows || [];
+  const sentCount = list.filter((r) => r.status === "sent").length;
+  const failedCount = list.filter((r) => r.status === "failed" || r.status === "bounced").length;
+  const pendingCount = list.filter((r) => r.status === "pending").length;
+
+  if (serverResult.success) {
+    await insertOutboxEvent({
+      tenantId: campaign.tenant_id,
+      eventType: "campaign.execution.completed",
+      payload: { campaignId, totalSent: sentCount, totalFailed: failedCount, runId },
+    });
+  }
+
   return {
-    success: true,
+    success: serverResult.success,
     runId,
-    processedRecipients: pendingRecipients.length,
+    processedRecipients,
     sentCount,
     failedCount,
+    error: serverResult.error || (pendingCount > 0 ? `${pendingCount} recipients still pending` : undefined),
   };
 }
-

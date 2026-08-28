@@ -22,6 +22,8 @@ const BUCKET_CONFIG: AgingBucket[] = [
   { range: '90+', label: '90+ Days (Critical)', count: 0, totalAmount: 0, color: '#ef4444' },
 ];
 
+const OPEN_STATUSES = ['draft', 'sent', 'viewed', 'partially_paid', 'overdue', 'disputed'];
+
 export function InvoiceAgingReport() {
   const { currentTenant } = useTenant();
   const [loading, setLoading] = useState(true);
@@ -41,10 +43,10 @@ export function InvoiceAgingReport() {
     try {
       const now = new Date();
       const { data: invoices, error } = await supabase
-        .from('invoices')
-        .select('id, total_amount, due_date, lifecycle_status, status')
+        .from('business_invoices')
+        .select('id, total, amount_paid, due_date, status')
         .eq('tenant_id', currentTenant.id)
-        .not('lifecycle_status', 'in', '("paid","cancelled")');
+        .in('status', OPEN_STATUSES);
 
       if (error) throw error;
 
@@ -55,7 +57,8 @@ export function InvoiceAgingReport() {
       for (const inv of invoices || []) {
         const dueDate = inv.due_date ? new Date(inv.due_date) : now;
         const diffDays = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 3600 * 24));
-        const amount = Number(inv.total_amount || 0);
+        const amount = Math.max(0, Number(inv.total || 0) - Number(inv.amount_paid || 0));
+        if (amount <= 0) continue;
 
         if (diffDays <= 30) {
           newBuckets[0].count++;

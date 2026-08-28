@@ -41,13 +41,13 @@ export function BusinessWelcomeModal({ isOpen, onClose, userName }: BusinessWelc
       <div className="space-y-6 py-2">
         <div className="text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-teal-400 mb-2">
-            Workspace ready
+            AlphaClone Systems · the platform for execution
           </p>
           <h3 className="text-2xl font-bold text-white tracking-tight">
             Welcome, {firstName}
           </h3>
           <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
-            Your 14-day trial is live. Here is exactly what to do next — most owners finish these three steps in under 10 minutes.
+            Your workspace is live. Finish these three steps to start executing — most owners complete them in under 10 minutes.
           </p>
         </div>
 

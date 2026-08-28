@@ -270,13 +270,13 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
     toast.success('Invoice deleted');
   };
   const markPaid = async (id: string) => {
-    const { error } = await businessInvoiceService.updateInvoice(id, { status: 'paid' });
+    const { error } = await businessInvoiceService.markAsPaid(id);
     if (error) {
       toast.error(error);
       return;
     }
     setInvoices(prev => prev.map(i => i.id === id ? { ...i, status: 'paid' as InvoiceStatus } : i));
-    toast.success('Invoice marked paid');
+    toast.success('Payment recorded');
   };
   const deleteExpense = async (id: string) => {
     if (!currentTenant?.id) return;

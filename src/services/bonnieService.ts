@@ -99,7 +99,7 @@ export function resolveBonnieNavIntent(
     [/\b(leads?|lead board|pipeline of leads)\b/, '/dashboard/leads', '/dashboard/leads', 'Leads'],
     [/\b(deals?|sales pipeline|opportunit)/, '/dashboard/deals', '/dashboard/deals', 'Deals'],
     [/\b(ticket|support|help ?desk|deep ?desk)/, '/dashboard/business/tickets', '/dashboard/tickets', 'Tickets'],
-    [/\b(campaign|marketing|email blast|newsletter)/, '/dashboard/business/campaigns', '/dashboard/campaigns', 'Marketing Campaigns'],
+    [/\b(campaign|marketing|email blast|newsletter)/, '/dashboard/business/campaigns', '/dashboard/business/campaigns', 'Marketing Campaigns'],
     [/\b(account(ing)?|book ?keep|quickbooks|ledger|journal|chart of accounts)/, '/dashboard/accounting', '/dashboard/finance', 'Accounting'],
     [/\b(invoice|billing|payment)/, '/dashboard/business/billing', '/dashboard/finance', 'Billing'],
     [/\b(quote|proposal)/, '/dashboard/business/quotes', '/dashboard/contracts', 'Quotes & Proposals'],

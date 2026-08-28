@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
+import { isPlatformAdminRole } from '@/lib/platformAdmin';
 
 interface ProductTourProps {
     isOpen: boolean;
@@ -81,15 +82,25 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
 
     const tenantAdminSteps: Step[] = [
         {
+            target: '[data-tour="platform-welcome"]',
+            content: 'AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.',
+            placement: 'bottom',
+            disableBeacon: true,
+        },
+        {
+            target: '[data-tour="os-home"]',
+            content: 'Your command center surfaces KPIs, attention items, and modules so you know what to execute today.',
+            placement: 'bottom',
+        },
+        {
             target: '[data-tour="business-setup-checklist"]',
             content: 'New here? Follow these three steps first — add a client, invoice, then connect inbox.',
             placement: 'bottom',
         },
         {
             target: '[data-tour="business-home"]',
-            content: 'Welcome to your Business OS. This home screen shows setup steps and quick actions for your workspace.',
+            content: 'This home screen is your daily starting point — stats, blockers, and quick actions for your workspace.',
             placement: 'bottom',
-            disableBeacon: true,
         },
         {
             target: '[data-tour="navigation"]',
@@ -116,14 +127,59 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
             content: 'Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.',
             placement: 'left',
         },
+        {
+            target: '[data-tour="projects-center"]',
+            content: 'Projects is where delivery happens — stages, blockers, tasks, and client visibility in one workspace.',
+            placement: 'bottom',
+        },
     ];
 
-    const steps =
-        userRole === 'tenant_admin'
-            ? tenantAdminSteps
-            : userRole === 'admin'
-              ? adminSteps
-              : clientSteps;
+    const platformOwnerSteps: Step[] = [
+        {
+            target: '[data-tour="platform-welcome"]',
+            content: 'AlphaClone Systems is the platform for execution — oversee every tenant and service from here.',
+            placement: 'bottom',
+            disableBeacon: true,
+        },
+        {
+            target: '[data-tour="platform-owner-home"]',
+            content: 'Your command center shows platform health, tenant activity, missing keys, and ops signals.',
+            placement: 'bottom',
+        },
+        {
+            target: '[data-tour="navigation"]',
+            content: 'Use the sidebar to jump between tenants, ops logs, security, subscriptions, and Bonnie AI.',
+            placement: 'right',
+        },
+        {
+            target: '[data-tour="global-search"]',
+            content: 'Press ⌘K or Ctrl+K to search tenants, users, and records across the platform.',
+            placement: 'bottom',
+        },
+        {
+            target: '[data-tour="business-notifications"]',
+            content: 'Notifications surface tickets, approvals, and platform alerts here.',
+            placement: 'bottom',
+        },
+        {
+            target: '[data-tour="bonnie-widget"]',
+            content: 'Bonnie is your AI operator — run platform checks, approvals, and automations from this assistant.',
+            placement: 'left',
+        },
+        {
+            target: '[data-tour="projects-center"]',
+            content: 'Projects is where tenant delivery happens — stages, blockers, tasks, and client portals.',
+            placement: 'bottom',
+        },
+    ];
+
+    const steps = isPlatformAdminRole(userRole)
+        ? platformOwnerSteps
+        : userRole === 'tenant_admin' || userRole === 'business_dashboard'
+          ? tenantAdminSteps
+          : userRole === 'admin'
+            ? adminSteps
+            : clientSteps;
 
     useEffect(() => {
         if (!isOpen || typeof document === 'undefined') {

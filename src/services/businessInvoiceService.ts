@@ -19,6 +19,7 @@ export interface BusinessInvoice {
     tenantId: string;
     clientId?: string;
     projectId?: string;
+    contractId?: string;
     invoiceNumber: string;
     issueDate: string;
     dueDate: string;
@@ -45,7 +46,7 @@ export interface BusinessInvoice {
 function mapInvoice(row: any): BusinessInvoice {
     const lineRows = row.invoice_line_items || row.line_items || [];
     return {
-        id: row.id, tenantId: row.tenant_id, clientId: row.client_id, projectId: row.project_id,
+        id: row.id, tenantId: row.tenant_id, clientId: row.client_id, projectId: row.project_id, contractId: row.contract_id,
         invoiceNumber: row.invoice_number, issueDate: row.issue_date, dueDate: row.due_date, status: row.status,
         subtotal: Number(row.subtotal || 0), taxRate: Number(row.tax_rate || 0), tax: Number(row.tax || 0),
         discountAmount: Number(row.discount_amount || 0), total: Number(row.total || 0), amountPaid: Number(row.amount_paid || 0),
@@ -93,7 +94,7 @@ export const businessInvoiceService = {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) return { error: 'Select a workspace before updating an invoice' };
             const body: Record<string, unknown> = { tenantId };
-            const mapping: Record<string, string> = { clientId: 'client_id', projectId: 'project_id', issueDate: 'issue_date', dueDate: 'due_date', taxRate: 'tax_rate', discountAmount: 'discount_amount', lineItems: 'line_items', isPublic: 'is_public', senderName: 'sender_name', bankDetails: 'bank_details', mobilePaymentDetails: 'mobile_payment_details' };
+            const mapping: Record<string, string> = { clientId: 'client_id', projectId: 'project_id', contractId: 'contract_id', issueDate: 'issue_date', dueDate: 'due_date', taxRate: 'tax_rate', discountAmount: 'discount_amount', lineItems: 'line_items', isPublic: 'is_public', senderName: 'sender_name', bankDetails: 'bank_details', mobilePaymentDetails: 'mobile_payment_details' };
             for (const [key, value] of Object.entries(updates)) {
                 if (value === undefined || ['id', 'tenantId', 'invoiceNumber', 'createdAt', 'updatedAt'].includes(key)) continue;
                 body[mapping[key] || key] = key === 'lineItems' && Array.isArray(value)

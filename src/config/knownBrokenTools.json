@@ -60,5 +60,13 @@
     "workaround": {
       "tool": "get_business_snapshot"
     }
+  },
+  "scheduled_posts": {
+    "symptom": "deprecated",
+    "action": "redirect",
+    "reason": "Legacy scheduled_posts table retired; use list_scheduled_social_posts (social_posts).",
+    "workaround": {
+      "tool": "list_scheduled_social_posts"
+    }
   }
 }

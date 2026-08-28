@@ -157,7 +157,7 @@ export async function generateDailyOperationsSummary(
     supabase.from('opportunities').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).gte('created_at', startOfDay),
     supabase.from('projects').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'at_risk'),
     supabase.from('projects').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'blocked'),
-    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'overdue'),
+    supabase.from('business_invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'overdue'),
     supabase.from('communication_slas').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('sla_breached', true),
   ]);
 

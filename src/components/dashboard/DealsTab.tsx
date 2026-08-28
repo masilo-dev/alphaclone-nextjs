@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import {
   ChevronRight, ArrowLeft, Plus, TrendingUp, Clock,
   User, Mail, Phone, FileText, CheckSquare, ArrowRight,
@@ -39,7 +39,6 @@ import { showActionNextSteps, showInvoiceCreatedWithSendPrompt } from '@/compone
 import { CRMNav } from './crm/CRMNav';
 import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
-import { usePathname } from 'next/navigation';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
 import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types/moduleExecution';
@@ -494,7 +493,7 @@ const DealDetail: React.FC<{
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => navigate(deal.contact_id ? `/dashboard/crm/workspace?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/workspace')}
+              onClick={() => navigate(deal.contact_id ? `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/unified-contacts')}
               className="min-h-11 px-3 text-[13px] text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
             >
               Open customer
@@ -524,7 +523,7 @@ const DealDetail: React.FC<{
       ) : (
       <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
         <div className="flex divide-x divide-white/5 overflow-x-auto">
-          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/crm/workspace?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/workspace')} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Customer</button>
+          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/unified-contacts')} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Customer</button>
           <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Quote</button>
           <button type="button" onClick={() => navigate('/dashboard/business/calendar')} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Follow-up</button>
         </div>
@@ -544,6 +543,7 @@ const DealDetail: React.FC<{
 const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const router = useRouter();
   const pathname = usePathname() || '';
+  const searchParams = useSearchParams();
   const { currentTenant } = useTenant();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -655,6 +655,16 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   }, [currentTenant?.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const dealId = searchParams?.get('deal') || searchParams?.get('dealId');
+    if (!dealId || deals.length === 0) return;
+    const match = deals.find((d) => d.id === dealId);
+    if (match) {
+      setSelectedDeal(match);
+      router.replace('/dashboard/deals', { scroll: false });
+    }
+  }, [searchParams, deals, router]);
 
   const applyStageChange = async (id: string, newStage: DealStage) => {
     const deal = deals.find((d) => d.id === id);

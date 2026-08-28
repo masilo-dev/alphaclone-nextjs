@@ -63,19 +63,30 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
 
       // Invoices linked by email
       if (contactEmail) {
-        const { data: invoices } = await supabase
-          .from('invoices')
-          .select('id, invoice_number, total_amount, lifecycle_status, created_at')
+        const { data: clientRow } = await supabase
+          .from('business_clients')
+          .select('id')
           .eq('tenant_id', currentTenant.id)
-          .ilike('client_email', contactEmail)
+          .ilike('email', contactEmail)
+          .maybeSingle();
+
+        const invoiceQuery = supabase
+          .from('business_invoices')
+          .select('id, invoice_number, total, status, lifecycle_status, created_at')
+          .eq('tenant_id', currentTenant.id)
+          .order('created_at', { ascending: false })
           .limit(20);
+
+        const { data: invoices } = clientRow?.id
+          ? await invoiceQuery.eq('client_id', clientRow.id)
+          : await invoiceQuery.ilike('client_email', contactEmail);
 
         for (const inv of invoices || []) {
           items.push({
             id: `inv-${inv.id}`,
             type: 'invoice',
             title: `Invoice #${inv.invoice_number || inv.id.slice(0, 8)}`,
-            detail: `$${Number(inv.total_amount).toLocaleString()} · ${String(inv.lifecycle_status || 'draft').replace(/_/g, ' ')}`,
+            detail: `$${Number(inv.total).toLocaleString()} · ${String(inv.status || inv.lifecycle_status || 'draft').replace(/_/g, ' ')}`,
             date: inv.created_at,
           });
         }

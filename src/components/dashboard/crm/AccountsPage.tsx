@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Building2, Plus, Loader2, ChevronRight } from 'lucide-react';
 import { companyService, type Company } from '@/services/unified/CompanyService';
 import ListViewToolbar from './ListViewToolbar';
@@ -10,7 +10,6 @@ import RecordFilesTab from './RecordFilesTab';
 import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import toast from 'react-hot-toast';
 import { CRMNav } from './CRMNav';
-import { usePathname } from 'next/navigation';
 import { AccountFormModal } from './AccountFormModal';
 import { useTenant } from '@/contexts/TenantContext';
 import { CrmSyncToolbar } from './CrmSyncToolbar';
@@ -27,6 +26,7 @@ const STAGE_FILTERS = [
 export default function AccountsPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -60,6 +60,16 @@ export default function AccountsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const companyId = searchParams?.get('company') || searchParams?.get('companyId') || searchParams?.get('account');
+    if (!companyId || companies.length === 0) return;
+    const match = companies.find((c) => c.id === companyId);
+    if (match) {
+      setSelected(match);
+      router.replace('/dashboard/crm/accounts', { scroll: false });
+    }
+  }, [searchParams, companies, router]);
 
   const handleCreateAccount = async (name: string) => {
     setCreating(true);

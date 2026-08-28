@@ -61,12 +61,14 @@ import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
 import { CRMNav } from '../crm/CRMNav';
+import { resolveContactDeepLink } from '@/lib/crm/resolveContactDeepLink';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
 const ContactsList = lazy(() => import('../crm/ContactsList'));
+const UnifiedContactsList = lazy(() => import('../crm/UnifiedContactsList'));
 
-type ContactDirectoryView = 'sales' | 'email';
+type ContactDirectoryView = 'sales' | 'email' | 'unified';
 
 interface ClientsPageProps {
     user: User;
@@ -106,7 +108,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [page, setPage] = useState(1);
     const [showArchived, setShowArchived] = useState(false);
     const [hasMore, setHasMore] = useState(true);
-    const [directoryView, setDirectoryView] = useState<ContactDirectoryView>('sales');
+    const [directoryView, setDirectoryView] = useState<ContactDirectoryView>(() =>
+        pathname === '/dashboard/crm/unified-contacts' ? 'unified' : 'sales'
+    );
 
     const openContactDetail = useCallback((client: BusinessClient) => {
         setSelectedClient(client);
@@ -249,16 +253,60 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     }, [stageParam]);
 
     useEffect(() => {
-        if (!contactParam || clients.length === 0) return;
-        const match = clients.find((c) => c.id === contactParam);
-        if (match) {
-            setSelectedClient(match);
-            setViewMode('list');
-            const base =
-                pathname === '/dashboard/business/clients' ? '/dashboard/business/clients' : '/dashboard/contacts';
-            router.replace(base, { scroll: false });
+        if (!contactParam || !currentTenant?.id) return;
+
+        if (pathname === '/dashboard/leads') {
+            router.replace(
+                `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(contactParam)}`,
+                { scroll: false }
+            );
+            return;
         }
-    }, [contactParam, clients, pathname, router]);
+
+        let cancelled = false;
+        const resolveDeepLink = async () => {
+            const resolved = await resolveContactDeepLink(
+                supabase,
+                currentTenant.id,
+                contactParam,
+                clients.map((client) => ({ id: client.id, crmContactId: client.crmContactId }))
+            );
+            if (cancelled) return;
+
+            if (resolved.kind === 'business_client') {
+                const match =
+                    clients.find((client) => client.id === resolved.clientId) ||
+                    (await businessClientService.getClient(resolved.clientId)).client;
+                if (match) {
+                    setSelectedClient(match);
+                    setViewMode('list');
+                    setDirectoryView('sales');
+                }
+                return;
+            }
+
+            if (resolved.kind === 'contacts_only') {
+                setDirectoryView('email');
+                router.replace(
+                    `/dashboard/crm/unified-contacts?directory=email&contactId=${encodeURIComponent(resolved.contactId)}`,
+                    { scroll: false }
+                );
+                return;
+            }
+
+            if (resolved.kind === 'lead') {
+                router.replace(
+                    `/dashboard/leads?leadId=${encodeURIComponent(resolved.leadId)}`,
+                    { scroll: false }
+                );
+            }
+        };
+
+        void resolveDeepLink();
+        return () => {
+            cancelled = true;
+        };
+    }, [contactParam, clients, currentTenant?.id, pathname, router]);
 
     useEffect(() => {
         if (searchParams?.get('add') === 'true') {
@@ -270,17 +318,20 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     }, [searchParams, pathname, router]);
 
     useEffect(() => {
-        if (pathname === '/dashboard/crm/unified-contacts') {
-            const base = pathname.includes('business') ? '/dashboard/business/clients' : '/dashboard/contacts';
-            router.replace(`${base}?directory=email`, { scroll: false });
-            return;
-        }
         if (directoryParam === 'email') setDirectoryView('email');
         else if (directoryParam === 'sales') setDirectoryView('sales');
-    }, [pathname, directoryParam, router]);
+        else if (directoryParam === 'unified') setDirectoryView('unified');
+        else if (pathname === '/dashboard/crm/unified-contacts' && !directoryParam) {
+            setDirectoryView('unified');
+        }
+    }, [directoryParam, pathname]);
 
     const contactsBasePath =
-        pathname === '/dashboard/business/clients' ? '/dashboard/business/clients' : '/dashboard/contacts';
+        pathname === '/dashboard/crm/unified-contacts'
+            ? '/dashboard/crm/unified-contacts'
+            : pathname === '/dashboard/business/clients'
+              ? '/dashboard/business/clients'
+              : '/dashboard/contacts';
 
     const setDirectoryViewAndUrl = (view: ContactDirectoryView) => {
         setDirectoryView(view);
@@ -290,6 +341,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const directorySwitcher = (
         <div className="space-y-2">
             <div className="flex gap-1 p-1 bg-slate-900/80 border border-slate-800 rounded-xl w-full sm:w-fit">
+                <button
+                    type="button"
+                    onClick={() => setDirectoryViewAndUrl('unified')}
+                    className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                        directoryView === 'unified' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
+                    }`}
+                >
+                    Unified
+                </button>
                 <button
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('sales')}
@@ -310,7 +370,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 </button>
             </div>
             <p className="text-xs text-slate-500 leading-relaxed">
-                {directoryView === 'sales'
+                {directoryView === 'unified'
+                    ? 'Merged CRM + sales directory. Search and deep links resolve here first.'
+                    : directoryView === 'sales'
                     ? 'Clients and prospects in your pipeline — tie to deals, invoices, and outreach.'
                     : 'Imported and campaign contacts for email and SMS. These are separate from sales pipeline records.'}
             </p>
@@ -679,7 +741,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         );
     }
 
-    const isContactsRoute = ['/dashboard/contacts', '/dashboard/business/clients', '/dashboard/clients'].includes(pathname);
+    const isContactsRoute = [
+        '/dashboard/contacts',
+        '/dashboard/business/clients',
+        '/dashboard/clients',
+        '/dashboard/crm/unified-contacts',
+        '/dashboard/leads',
+    ].includes(pathname);
 
     if (isContactsRoute && directoryView === 'email') {
         return (
@@ -688,6 +756,25 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 {directorySwitcher}
                 <Suspense fallback={crmSectionFallback}>
                     <ContactsList />
+                </Suspense>
+            </div>
+        );
+    }
+
+    if (isContactsRoute && directoryView === 'unified') {
+        return (
+            <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
+                <CRMNav pathname={pathname} />
+                {directorySwitcher}
+                <Suspense fallback={crmSectionFallback}>
+                    <UnifiedContactsList
+                        highlightContactId={contactParam}
+                        onOpenClient={async (clientId) => {
+                            const { client } = await businessClientService.getClient(clientId);
+                            if (client) openContactDetail(client);
+                        }}
+                        onOpenContact={() => setDirectoryViewAndUrl('email')}
+                    />
                 </Suspense>
             </div>
         );

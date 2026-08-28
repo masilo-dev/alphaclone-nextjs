@@ -165,6 +165,7 @@ import WelcomeModal from "./dashboard/WelcomeModal";
 import OnboardingFlow from "./onboarding/OnboardingFlow";
 import CreateInvoiceModal from "./dashboard/CreateInvoiceModal";
 import ProductTour from "./onboarding/ProductTour";
+import { PLATFORM_TOUR_EVENT } from "./dashboard/PlatformExecutionWelcome";
 import { WidgetErrorBoundary } from "./dashboard/WidgetErrorBoundary";
 import { useOverdueTaskNotifier } from "../hooks/useOverdueTaskNotifier";
 import { useMeetingSession } from "../hooks/useMeetingSession";
@@ -376,6 +377,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       setSidebarOpen(window.innerWidth >= 1024 && !(standalone && touchDevice));
     }
   }, []);
+
+  useEffect(() => {
+    if (!isPlatformAdminRole(user.role)) return;
+    void import("./dashboard/admin/PlatformOwnerHome");
+    void import("./dashboard/admin/SuperAdminTenantsTab");
+    void import("./dashboard/admin/SuperAdminSubscriptionsTab");
+    void import("./dashboard/admin/SuperAdminUsersTab");
+    void import("./dashboard/admin/OperationsConsoleTab");
+    void import("./dashboard/admin/GlobalSettingsTab");
+  }, [user.role]);
   const normalizeTabForRole = (tab: string) => {
     if (!tab) return "/dashboard";
     if (user.role === "tenant_admin") {
@@ -444,6 +455,15 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [activeTab]);
 
+  const navigateToTab = useCallback(
+    (href: string) => {
+      if (!href?.startsWith("/dashboard")) return;
+      void router.prefetch(href);
+      router.push(href);
+    },
+    [router],
+  );
+
   const handleJoinCall = (callId: string) => {
     startMeeting(callId);
     router.push(`/meet/${callId}`);
@@ -479,29 +499,26 @@ const Dashboard: React.FC<DashboardProps> = ({
       ).detail;
       const path = detail?.path;
       if (path?.startsWith("/dashboard")) {
-        setActiveTab(normalizeTabForRole(path.split("?")[0]));
-        if (typeof window !== "undefined") {
-          const url = new URL(path, window.location.origin);
-          if (detail?.tab) url.searchParams.set("tab", detail.tab);
-          if (detail?.focus) url.searchParams.set("focus", detail.focus);
-          if (detail?.recordId) url.searchParams.set("id", detail.recordId);
-          if (detail?.workflowId)
-            url.searchParams.set("workflow", detail.workflowId);
-          if (detail?.reason)
-            url.searchParams.set("bonnieReason", detail.reason);
-          window.history.replaceState({}, "", url.pathname + url.search);
-          window.dispatchEvent(
-            new CustomEvent("bonnie:focus", {
-              detail: {
-                tab: detail?.tab,
-                focus: detail?.focus,
-                recordId: detail?.recordId,
-                workflowId: detail?.workflowId,
-                reason: detail?.reason,
-              },
-            }),
-          );
-        }
+        const url = new URL(path, window.location.origin);
+        if (detail?.tab) url.searchParams.set("tab", detail.tab);
+        if (detail?.focus) url.searchParams.set("focus", detail.focus);
+        if (detail?.recordId) url.searchParams.set("id", detail.recordId);
+        if (detail?.workflowId)
+          url.searchParams.set("workflow", detail.workflowId);
+        if (detail?.reason)
+          url.searchParams.set("bonnieReason", detail.reason);
+        router.push(url.pathname + url.search);
+        window.dispatchEvent(
+          new CustomEvent("bonnie:focus", {
+            detail: {
+              tab: detail?.tab,
+              focus: detail?.focus,
+              recordId: detail?.recordId,
+              workflowId: detail?.workflowId,
+              reason: detail?.reason,
+            },
+          }),
+        );
         toast.success(
           detail?.reason ||
             `Navigating to ${detail?.label || path.replace("/dashboard/", "").replace(/\//g, " › ")}`,
@@ -511,7 +528,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
     window.addEventListener("bonnie:navigate", handleBonnieNav);
     return () => window.removeEventListener("bonnie:navigate", handleBonnieNav);
-  }, []);
+  }, [router]);
   const [invoices, setInvoices] = useState<Invoice[]>([]); // Initialize empty
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
 
@@ -595,17 +612,53 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       if (cancelled) return;
 
-      setWelcomeOpen(!gate.welcomeSeen && !gate.establishedWorkspace);
-      setShowOnboarding(!gate.onboardingCompleted);
+      if (!gate.welcomeSeen && !gate.establishedWorkspace) {
+        setWelcomeOpen(true);
+        setShowOnboarding(false);
+        return;
+      }
+
+      if (!gate.onboardingCompleted) {
+        setShowOnboarding(true);
+        return;
+      }
+
+      if (
+        !gate.tourCompleted &&
+        !gate.establishedWorkspace &&
+        (location === "/dashboard" || location === "/dashboard/business")
+      ) {
+        window.setTimeout(() => setShowProductTour(true), 2000);
+      }
     };
 
     resolveGates();
     return () => {
       cancelled = true;
     };
-  }, [user.id, currentTenant?.id]);
+  }, [user.id, currentTenant?.id, location]);
 
   const [showProductTour, setShowProductTour] = useState(false);
+
+  const markTourCompleted = useCallback(() => {
+    if (typeof window === "undefined" || !user?.id) return;
+    localStorage.setItem(`business_tour_completed_${user.id}`, "1");
+    localStorage.setItem(`tour_completed_${user.id}`, "1");
+    setShowProductTour(false);
+  }, [user?.id]);
+
+  const scheduleProductTour = useCallback(() => {
+    if (typeof window === "undefined" || !user?.id) return;
+    if (localStorage.getItem(`business_tour_completed_${user.id}`) === "1") return;
+    window.setTimeout(() => setShowProductTour(true), 1200);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onStartTour = () => setShowProductTour(true);
+    window.addEventListener(PLATFORM_TOUR_EVENT, onStartTour);
+    return () => window.removeEventListener(PLATFORM_TOUR_EVENT, onStartTour);
+  }, []);
 
   // Admin Tool States
   const [contractModalOpen, setContractModalOpen] = useState(false);
@@ -2051,6 +2104,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return <OutreachDashboard />;
 
       case "/dashboard/email-campaigns":
+      case "/dashboard/marketing/campaigns":
       case "/dashboard/business/campaigns":
         return (
           <React.Suspense fallback={<TabSkeleton />}>
@@ -2142,7 +2196,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <PwaSettingsScreen
             user={user}
-            onBack={() => setActiveTab("/dashboard")}
+            onBack={() => navigateToTab("/dashboard")}
           />
         );
 
@@ -2232,8 +2286,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         onClose={() => {
           if (typeof window !== "undefined") {
             localStorage.setItem(`welcome_seen_${user.id}`, "true");
+            localStorage.setItem(`business_welcome_seen_${user.id}`, "1");
+            window.dispatchEvent(new CustomEvent("alphaclone:onboarding-updated"));
           }
           setWelcomeOpen(false);
+          if (
+            typeof window !== "undefined" &&
+            localStorage.getItem(`onboarding_completed_${user.id}`) !== "true"
+          ) {
+            setShowOnboarding(true);
+            return;
+          }
+          scheduleProductTour();
         }}
         userName={user.name}
       />
@@ -2245,7 +2309,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             setShowOnboarding(false);
             if (typeof window !== "undefined") {
               localStorage.setItem(`onboarding_completed_${user.id}`, "true");
+              window.dispatchEvent(new CustomEvent("alphaclone:onboarding-updated"));
             }
+            scheduleProductTour();
           }}
         />
       )}
@@ -2492,7 +2558,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Mobile Bottom Navigation */}
       <BottomNav
         activeTab={activeTab}
-        onNavigate={(href) => setActiveTab(href)}
+        onNavigate={(href) => navigateToTab(href)}
         onToggleMenu={() => setSidebarOpen(true)}
         unreadCount={unreadMessageCount}
         userRole={user.role}
@@ -2557,7 +2623,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </span>
                   </div>
                 )}
-                <EnhancedGlobalSearch user={user} onNavigate={router.push} />
+                <div data-tour="global-search" className="hidden md:block">
+                  <EnhancedGlobalSearch user={user} onNavigate={router.push} />
+                </div>
                 <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
                 <ThemeToggle userId={user.id} />
                 <MissedCallsNotification
@@ -2568,15 +2636,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                     router.push(`/call/${roomId}`);
                   }}
                 />
-                <NotificationCenter
-                  userId={user.id}
-                  tenantId={currentTenant?.id || ""}
-                />
+                <div data-tour="business-notifications">
+                  <NotificationCenter
+                    userId={user.id}
+                    tenantId={currentTenant?.id || ""}
+                  />
+                </div>
                 <DashboardAccountMenu
                   user={user}
                   onLogout={onLogout}
-                  onSettings={() => setActiveTab("/dashboard/settings")}
-                  onPwaSettings={() => setActiveTab("/dashboard/pwa-settings")}
+                  onSettings={() => navigateToTab("/dashboard/settings")}
+                  onPwaSettings={() => navigateToTab("/dashboard/pwa-settings")}
                 />
               </div>
             </div>
@@ -2623,7 +2693,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <EnterpriseTabWrapper
                   fullBleed={isEnterpriseFullBleedTab(activeTab)}
                 >
-                  {renderContent()}
+                  <React.Suspense fallback={<TabSkeleton />}>
+                    {renderContent()}
+                  </React.Suspense>
                 </EnterpriseTabWrapper>
               </WidgetErrorBoundary>
             </div>
@@ -2740,7 +2812,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <ProductTour
         isOpen={showProductTour}
-        onComplete={() => setShowProductTour(false)}
+        onComplete={markTourCompleted}
         userRole={user.role}
       />
       <CelebrationOverlay

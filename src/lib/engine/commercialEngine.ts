@@ -156,17 +156,19 @@ export class CommercialEngine {
     // 2. Create initial invoice
     const invoiceData = {
       tenant_id: tenantId,
-      lead_id: leadId,
       contract_id: contractId,
-      amount: amount,
-      status: "issued",
-      due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      total: amount,
+      subtotal: amount,
+      status: "sent",
+      due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      issue_date: now.slice(0, 10),
+      invoice_number: `INV-${Date.now()}`,
       created_at: now,
       updated_at: now,
     };
 
     try {
-      await supabase.from("invoices").insert(invoiceData);
+      await supabase.from("business_invoices").insert(invoiceData);
     } catch (e) {}
 
     console.log(`[CommercialEngine] Onboarded signed client for contract ${contractId}! Initial invoice issued ($${amount})`);

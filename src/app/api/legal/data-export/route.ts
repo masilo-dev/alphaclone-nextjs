@@ -27,6 +27,19 @@ async function fetchRows<T = any>(query: PromiseLike<{ data: T[] | null; error: 
   return data || [];
 }
 
+async function fetchUserInvoices(admin: { from: (table: string) => any }, user: { id: string; email?: string | null }) {
+  const { data: clients } = user.email
+    ? await admin.from('business_clients').select('id').eq('email', user.email)
+    : { data: [] as { id: string }[] };
+  const clientIds = (clients || []).map((client: { id: string }) => client.id);
+  const filters = [`approved_by.eq.${user.id}`];
+  if (user.email) filters.push(`client_email.eq.${user.email}`);
+  if (clientIds.length) filters.push(`client_id.in.(${clientIds.join(',')})`);
+  const { data, error } = await admin.from('business_invoices').select('*').or(filters.join(','));
+  if (error) return [];
+  return data || [];
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { admin, user } = await resolveUser(req);
@@ -51,7 +64,7 @@ export async function GET(req: NextRequest) {
     const [profile, contacts, invoices, contracts, emails, campaigns, activityLogs] = await Promise.all([
       admin.from('profiles').select('*').eq('id', user.id).maybeSingle(),
       fetchRows(admin.from('contacts').select('*').eq('owner_id', user.id)),
-      fetchRows(admin.from('invoices').select('*').or(`user_id.eq.${user.id},created_by.eq.${user.id},owner_id.eq.${user.id}`)),
+      fetchUserInvoices(admin, user),
       fetchRows(admin.from('contracts').select('*').or(`created_by.eq.${user.id},owner_id.eq.${user.id},client_id.eq.${user.id}`)),
       fetchRows(admin.from('email_logs').select('*').or(`user_id.eq.${user.id},created_by.eq.${user.id},sender_id.eq.${user.id}`)),
       fetchRows(admin.from('campaigns').select('*').or(`user_id.eq.${user.id},created_by.eq.${user.id},owner_id.eq.${user.id}`)),

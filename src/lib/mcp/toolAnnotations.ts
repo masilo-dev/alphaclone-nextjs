@@ -117,6 +117,7 @@ export const CHATGPT_CONNECTOR_TOOL_NAMES = [
   'pipeline_status',
   'opportunities',
   'connected_accounts',
+  'list_scheduled_social_posts',
   'scheduled_posts',
   'drafts',
   'analytics',

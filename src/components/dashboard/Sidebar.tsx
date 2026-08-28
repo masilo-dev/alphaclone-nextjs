@@ -48,6 +48,7 @@ const Sidebar = React.memo<SidebarProps>(({
     forceHidden = false,
     onNavigate,
     activeBgTasksCount = 0,
+    onStartTour,
 }) => {
     const router = useRouter();
     const { t } = useLanguage();
@@ -105,14 +106,23 @@ const Sidebar = React.memo<SidebarProps>(({
 
     const navigate = useCallback((href: string) => {
         if (!href || href === '#') return;
-        const path = href.split('?')[0]?.split('#')[0] || href;
-        setActiveTab(path);
+        void router.prefetch(href);
         router.push(href);
         if (onNavigate) onNavigate();
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setSidebarOpen(false);
         }
-    }, [router, onNavigate, setSidebarOpen, setActiveTab]);
+    }, [router, onNavigate, setSidebarOpen]);
+
+    useEffect(() => {
+        if (!navItems?.length) return;
+        for (const item of navItems) {
+            if (item.href && item.href !== '#') void router.prefetch(item.href);
+            for (const sub of item.subItems || []) {
+                if (sub.href) void router.prefetch(sub.href);
+            }
+        }
+    }, [navItems, router]);
 
     const settingsPath =
         user.role === 'tenant_admin' ? '/dashboard/business/settings' : '/dashboard/settings';
@@ -393,6 +403,28 @@ const Sidebar = React.memo<SidebarProps>(({
                             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </button>
                     )}
+
+                    {onStartTour && sidebarOpen ? (
+                        <button
+                            type="button"
+                            onClick={onStartTour}
+                            className="mb-2 flex w-full items-center gap-2 rounded-lg border border-teal-500/20 bg-teal-500/5 px-3 py-2 text-xs font-semibold text-teal-300 transition hover:border-teal-500/40 hover:bg-teal-500/10"
+                        >
+                            <Sparkles className="h-3.5 w-3.5" />
+                            {t('Platform tour')}
+                        </button>
+                    ) : null}
+
+                    {onStartTour && !sidebarOpen ? (
+                        <button
+                            type="button"
+                            onClick={onStartTour}
+                            title={t('Platform tour')}
+                            className="mb-2 flex w-full items-center justify-center rounded-lg py-2 text-teal-400 transition hover:bg-slate-800"
+                        >
+                            <Sparkles className="h-4 w-4" />
+                        </button>
+                    ) : null}
 
                     {/* User row — identity only; account actions live in header menu */}
                     <div className={`flex ${sidebarOpen ? 'items-center gap-3' : 'flex-col items-center gap-2'}`}>

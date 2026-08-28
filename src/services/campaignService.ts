@@ -214,7 +214,7 @@ export const campaignService = {
                 .eq('id', id);
 
             // Trigger async send via API
-            const res = await fetch('/api/campaigns/send', {
+            const res = await fetch('/api/email/campaigns/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ campaignId: id, tenantId }),

@@ -497,7 +497,7 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
         supabase.from('projects').select('*').eq('tenant_id', tenantId).limit(5),
         supabase.from('deals').select('*').eq('tenant_id', tenantId).limit(5),
         supabase.from('business_clients').select('*').eq('tenant_id', tenantId).limit(5),
-        supabase.from('invoices').select('*').eq('tenant_id', tenantId).eq('status', 'pending').limit(5)
+        supabase.from('business_invoices').select('*').eq('tenant_id', tenantId).in('status', ['sent', 'overdue', 'partially_paid', 'draft']).limit(5)
       ]);
 
       return `
