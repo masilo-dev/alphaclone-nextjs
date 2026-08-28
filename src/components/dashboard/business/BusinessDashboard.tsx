@@ -573,6 +573,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
             case '/dashboard/settings':
             case '/dashboard/business/settings':
+            case '/dashboard/settings/integrations':
                 return (
                     <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={2} /></div>}>
                         <SettingsPage user={user} />
@@ -995,7 +996,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return t('Analytics & Reports');
             case '/dashboard/performance': return t('Business OS Performance');
             case '/dashboard/settings':
-            case '/dashboard/business/settings': return t('Settings');
+            case '/dashboard/business/settings':
+            case '/dashboard/settings/integrations':
+                return t('Settings');
             case '/dashboard/pwa-settings': return t('Mobile app');
             case '/dashboard/contracts':
             case '/dashboard/business/contracts': return t('Contracts');

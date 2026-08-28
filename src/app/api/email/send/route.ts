@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     if (!result.success) {
       return NextResponse.json(
         { error: result.error || 'Failed to send email', code: result.code || 'SEND_FAILED', tried: result.tried },
-        { status: 502 }
+        { status: result.code === 'CONFIG_MISSING' || result.code === 'VALIDATION_ERROR' ? 400 : 503 }
       );
     }
 

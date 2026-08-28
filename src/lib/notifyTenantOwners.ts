@@ -104,8 +104,11 @@ export async function notifyTenantOwners(options: {
         action_url: options.link || null,
         read: false,
       });
-      if (error) throw error;
-      report.inAppCreated += 1;
+      if (error) {
+        console.error("[notifyTenantOwners] in-app notification insert failed:", error.message);
+      } else {
+        report.inAppCreated += 1;
+      }
     }
 
     if (pushEnabled && vapidReady) {
@@ -144,8 +147,8 @@ export async function notifyTenantOwners(options: {
       });
       if (expired.length)
         await admin.from("push_subscriptions").delete().in("id", expired);
-      if (results.length)
-        await admin
+      if (results.length) {
+        const { error: pushDeliveryError } = await admin
           .from("notification_deliveries")
           .insert({
             tenant_id: options.tenantId,
@@ -160,6 +163,10 @@ export async function notifyTenantOwners(options: {
               ? "All push deliveries failed"
               : null,
           });
+        if (pushDeliveryError) {
+          console.error("[notifyTenantOwners] push delivery audit insert failed:", pushDeliveryError.message);
+        }
+      }
     }
 
     if (emailEnabled && profile?.email) {
@@ -185,7 +192,7 @@ export async function notifyTenantOwners(options: {
         }),
       );
 
-      await admin.from("notification_deliveries").insert({
+      const { error: emailDeliveryError } = await admin.from("notification_deliveries").insert({
         tenant_id: options.tenantId,
         user_id: userId,
         channel: "email",
@@ -195,6 +202,9 @@ export async function notifyTenantOwners(options: {
         provider_message_id: result.emailId || null,
         error: result.error || null,
       });
+      if (emailDeliveryError) {
+        console.error("[notifyTenantOwners] email delivery audit insert failed:", emailDeliveryError.message);
+      }
       if (result.success) report.emailsSent += 1;
       else {
         report.emailsFailed += 1;

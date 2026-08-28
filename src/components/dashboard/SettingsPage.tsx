@@ -23,6 +23,7 @@ import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '@/services/universalServ
 import { getTaxRateForCountry } from '@/lib/tax/taxRules';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 // Integration subcomponents
 import CalendlySettings from './business/CalendlySettings';
@@ -39,6 +40,7 @@ import DeletedRecordsSection from './settings/DeletedRecordsSection';
 import EmailProviderSettings from './settings/EmailProviderSettings';
 import {
     SettingsCategoryNav,
+    SETTINGS_CATEGORIES,
     type SettingsCategory,
     type SettingsCategoryId,
 } from './settings/SettingsCategoryNav';
@@ -54,6 +56,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function SettingsPage({ user }: SettingsPageProps) {
+    const searchParams = useSearchParams();
     const { signOut } = useAuth();
     const { currentTenant, refreshTenants } = useTenant();
     const { backgroundColor, setBackgroundColor, themeMode, setThemeMode } = useTheme();
@@ -89,6 +92,45 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             });
         }
     };
+
+    useEffect(() => {
+        const tab = searchParams.get('tab')?.trim().toLowerCase();
+        const provider = searchParams.get('provider')?.trim().toLowerCase();
+        if (!tab && !provider) return;
+
+        const categoryByTab: Record<string, SettingsCategoryId> = {
+            integrations: 'integrations',
+            billing: 'billing',
+            booking: 'calendar',
+            communications: 'communications',
+        };
+        const categoryId = tab ? categoryByTab[tab] : undefined;
+        if (categoryId) {
+            const category = SETTINGS_CATEGORIES.find((item) => item.id === categoryId);
+            if (category) handleSelectCategory(category);
+        }
+
+        const providerSectionMap: Record<string, string> = {
+            zoho: 'integ_zoho',
+            microsoft: 'integ_m365',
+            m365: 'integ_m365',
+            resend: 'integ_resend',
+            sendgrid: 'integ_sendgrid',
+            brevo: 'integ_brevo',
+            twilio: 'integ_twilio',
+            hubspot: 'integ_hubspot',
+            stripe: 'integ_stripe',
+            calendly: 'integ_calendly',
+        };
+        const sectionId = provider ? providerSectionMap[provider] : undefined;
+        if (sectionId) {
+            setExpandedRows((prev) => ({ ...prev, [sectionId]: true }));
+            requestAnimationFrame(() => {
+                document.getElementById(`settings-section-${sectionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deep link bootstrap from URL params
+    }, [searchParams]);
 
     // States
     const [isSaving, setIsSaving] = useState(false);

@@ -473,7 +473,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             <Button 
                                                 variant="outline" 
                                                 size="sm" 
-                                                onClick={() => window.open('/dashboard/settings/integrations', '_blank')}
+                                                onClick={() => window.open('/dashboard/business/settings?tab=integrations', '_blank')}
                                                 className="text-xs uppercase tracking-widest font-bold"
                                             >
                                                 Connect Provider

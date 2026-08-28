@@ -327,6 +327,7 @@ export async function sendEmail(
         listUnsubscribeUrl: unsubscribeUrl || payload.listUnsubscribeUrl,
         attachments: normalizeEmailAttachments(payload.attachments),
         userId: config.ownerUserId || payload.userId,
+        tenantId,
       });
 
       if (providerResult.ok) {
