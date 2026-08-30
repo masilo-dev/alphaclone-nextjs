@@ -737,7 +737,7 @@ defineConnectorTool({
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
-    limit: z.number().int().min(1).max(50).optional().default(20),
+    limit: z.coerce.number().int().min(1).max(50).optional().default(20),
     folder: z.string().optional().default('inbox'),
   }),
   jsonSchema: {

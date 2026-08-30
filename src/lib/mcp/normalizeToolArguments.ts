@@ -7,6 +7,8 @@ import {
 const WRITE_TOOL_PATTERN =
   /(^|_)(send|publish|upload|create|update|delete|queue|retry|approve|reject|schedule|sign|pay|mark)_?|^(send|publish|upload|create|update|delete|queue|approve|reject)/i;
 
+const WORKFLOW_TOOLS = new Set(['run_workflow', 'run_playbook', 'stop_workflow', 'resume_workflow']);
+
 const EMAIL_TOOLS = new Set([
   'send_email',
   'send_transactional_email',
@@ -57,12 +59,28 @@ function coalesceArgs(args: Record<string, unknown>): Record<string, unknown> {
     next.publish_now = true;
   }
 
+  // Social post ID aliases (ChatGPT often sends post_id / id)
+  next.social_post_id = firstNonEmpty(
+    next.social_post_id,
+    next.post_id,
+    next.socialPostId,
+    next.postId,
+    next.id
+  );
+
+  // Email read aliases
+  next.message_id = firstNonEmpty(next.message_id, next.email_id, next.messageId);
+  if (next.limit !== undefined && next.limit !== null && typeof next.limit !== 'number') {
+    const parsed = parseInt(String(next.limit), 10);
+    if (!Number.isNaN(parsed)) next.limit = parsed;
+  }
+
   return next;
 }
 
 function needsAutoIdempotency(toolName: string): boolean {
   if (WRITE_TOOL_PATTERN.test(toolName)) return true;
-  return EMAIL_TOOLS.has(toolName) || SOCIAL_PUBLISH_TOOLS.has(toolName);
+  return EMAIL_TOOLS.has(toolName) || SOCIAL_PUBLISH_TOOLS.has(toolName) || WORKFLOW_TOOLS.has(toolName);
 }
 
 /**
@@ -88,6 +106,15 @@ export async function normalizeToolArguments(
       const defaults = await resolveEmailIntegrationDefaults(ctx.tenantId);
       if (defaults.provider) args.provider = defaults.provider;
       if (!args.from && defaults.senderEmail) args.from = defaults.senderEmail;
+    }
+  }
+
+  if (toolName === 'run_workflow' || toolName === 'run_playbook') {
+    if (!args.playbook_id && args.workflow_id) {
+      args.playbook_id = args.workflow_id;
+    }
+    if (!args.inputs && args.input) {
+      args.inputs = args.input;
     }
   }
 

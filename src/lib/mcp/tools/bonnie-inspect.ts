@@ -234,68 +234,7 @@ defineConnectorTool({
   },
 });
 
-defineConnectorTool({
-  module: 'bonnie-inspect',
-  name: 'run_workflow',
-  description: 'Start a Bonnie playbook/workflow run for the tenant.',
-  permission: 'bonnie:execute',
-  rateLimitClass: 'write',
-  auditAction: 'mcp_run_workflow',
-  inputSchema: z.object({
-    tenant_id: tenantIdField,
-    workflow_id: z.string().min(1),
-    input: z.record(z.string(), z.unknown()).optional(),
-  }),
-  jsonSchema: {
-    type: 'object',
-    properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
-      workflow_id: { type: 'string' },
-      input: { type: 'object' },
-    },
-    required: ['tenant_id', 'workflow_id'],
-  },
-  handler: async (args, ctx) => {
-    const { startPlaybookRun } = await import('@/services/automation/runtimeService');
-    const run = await startPlaybookRun({
-      tenantId: args.tenant_id,
-      userId: ctx.userId,
-      playbookId: args.workflow_id,
-      inputs: args.input || {},
-      autoHighRisk: false,
-    });
-    if ((run as any)?.success === false) {
-      throwConnectorError('WORKFLOW_START_FAILED', (run as any).error || 'Failed to start workflow');
-    }
-    return { run };
-  },
-});
-
-defineConnectorTool({
-  module: 'bonnie-inspect',
-  name: 'stop_workflow',
-  description: 'Cancel a running Bonnie workflow/playbook run.',
-  permission: 'bonnie:execute',
-  rateLimitClass: 'write',
-  auditAction: 'mcp_stop_workflow',
-  inputSchema: z.object({
-    tenant_id: tenantIdField,
-    run_id: z.string().min(1),
-  }),
-  jsonSchema: {
-    type: 'object',
-    properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
-      run_id: { type: 'string' },
-    },
-    required: ['tenant_id', 'run_id'],
-  },
-  handler: async (args) => {
-    const { cancelRun } = await import('@/services/automation/runtimeService');
-    const result = await cancelRun(args.run_id, args.tenant_id);
-    return { cancelled: true, result };
-  },
-});
+// run_workflow and stop_workflow are registered in autonomous-ops.ts (canonical handlers).
 
 defineConnectorTool({
   module: 'bonnie-inspect',

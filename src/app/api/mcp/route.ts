@@ -426,13 +426,31 @@ export async function POST(req: NextRequest) {
         catalogMode: requestedCatalogMode,
       });
 
-      const checksum = getCatalogChecksum(tools);
+      let discoveryTools = tools;
+      if (tenantId) {
+        try {
+          const { getTenantIntegrationSnapshot } = await import('@/services/integrationStatusService');
+          const { enrichToolsWithCapabilityMeta } = await import('@/lib/mcp/capabilityFilter');
+          const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
+          initializeRegistry();
+          const executableNames = new Set(listTools(false).map((tool) => tool.name));
+          const integrationSnapshot = await getTenantIntegrationSnapshot(tenantId);
+          discoveryTools = enrichToolsWithCapabilityMeta(tools, {
+            integrationSnapshot,
+            executableNames,
+          });
+        } catch (capErr) {
+          console.warn('[mcp.route tools/list] capability enrichment skipped:', capErr);
+        }
+      }
+
+      const checksum = getCatalogChecksum(discoveryTools);
 
       console.info(
-        `[mcp.route tools/list] count=${tools.length} catalogMode=${requestedCatalogMode} checksum=${checksum} clientId=${clientId || '-'} label=${clientLabel || '-'}`
+        `[mcp.route tools/list] count=${discoveryTools.length} catalogMode=${requestedCatalogMode} checksum=${checksum} clientId=${clientId || '-'} label=${clientLabel || '-'}`
       );
 
-      if (tools.length === 0) {
+      if (discoveryTools.length === 0) {
         console.error('[mcp.route tools/list] CRITICAL: returning empty tool list');
       }
 
@@ -443,7 +461,7 @@ export async function POST(req: NextRequest) {
       // Extract pagination arguments from params or query params
       const rawCursor = requestBody.params?.cursor || req.nextUrl.searchParams.get('cursor');
       const rawLimit = requestBody.params?.limit || requestBody.params?.pageSize || req.nextUrl.searchParams.get('limit');
-      const hasPaginationArgs = rawCursor !== undefined && rawCursor !== null || rawLimit !== undefined && rawLimit !== null;
+      const MAX_PAGE_SIZE = 250;
 
       let offset = 0;
       if (typeof rawCursor === 'string' && rawCursor.trim() !== '') {
@@ -453,26 +471,36 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      let limit = tools.length;
-      if (rawLimit !== undefined && rawLimit !== null) {
+      const hasExplicitLimit = rawLimit !== undefined && rawLimit !== null;
+      const hasCursor = typeof rawCursor === 'string' && rawCursor.trim() !== '';
+      const paginate =
+        hasExplicitLimit ||
+        (hasCursor && requestedCatalogMode !== 'full') ||
+        (hasCursor && offset > 0);
+
+      let limit = discoveryTools.length;
+      if (hasExplicitLimit) {
         const parsedLimit = parseInt(String(rawLimit).trim(), 10);
         if (!isNaN(parsedLimit) && parsedLimit > 0) {
-          limit = Math.min(parsedLimit, 250);
+          limit = Math.min(parsedLimit, MAX_PAGE_SIZE);
         }
-      } else if (hasPaginationArgs) {
+      } else if (paginate && requestedCatalogMode !== 'full') {
         limit = 75;
+      } else if (hasCursor && requestedCatalogMode === 'full') {
+        // Full catalog: when paginating with cursor only, return up to MAX_PAGE_SIZE per page
+        limit = Math.min(Math.max(discoveryTools.length - offset, 0), MAX_PAGE_SIZE);
       }
 
-      const paginatedTools = hasPaginationArgs ? tools.slice(offset, offset + limit) : tools;
+      const paginatedTools = paginate || hasCursor ? discoveryTools.slice(offset, offset + limit) : discoveryTools;
       const nextOffset = offset + paginatedTools.length;
-      const nextCursor = (hasPaginationArgs && nextOffset < tools.length) ? String(nextOffset) : undefined;
+      const nextCursor = (paginate || hasCursor) && nextOffset < discoveryTools.length ? String(nextOffset) : undefined;
 
       const result: Record<string, unknown> = {
         tools: paginatedTools,
         _meta: {
           registry_version: '2.0.0',
           catalog_checksum: checksum,
-          total_tools: tools.length,
+          total_tools: discoveryTools.length,
           returned_tools: paginatedTools.length,
           catalog_mode: requestedCatalogMode,
           offset,

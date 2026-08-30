@@ -11,7 +11,11 @@ import {
   sleep,
 } from '@/lib/mcp/knownBrokenTools';
 import { logMcpToolExecution, normalizeToolName } from '@/lib/mcp/mcpToolTelemetry';
-import { humanizeTechnicalFailure } from '@/lib/copy/businessFriendlyErrors';
+import {
+  formatQuotaExceededError,
+  formatToolExecutionError,
+  structuredErrorToMcpContent,
+} from '@/lib/mcp/formatMcpError';
 
 const registry = new Map<string, MCPTool>();
 
@@ -142,22 +146,13 @@ export async function executeTool(
       );
       if (!projected.allowed) {
         errorMessage = projected.reason || 'Daily quota would be exceeded';
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                error: 'QUOTA_EXCEEDED',
-                metric: primaryMetric,
-                message: errorMessage,
-                limit: projected.limit,
-                currentUsage: projected.currentUsage,
-                upgradeUrl: '/pricing',
-              }, null, 2),
-            },
-          ],
-          isError: true,
-        };
+        const quotaError = formatQuotaExceededError(requestedTool, {
+          category: primaryMetric,
+          used: projected.currentUsage ?? 0,
+          limit: projected.limit ?? 0,
+          message: errorMessage,
+        });
+        return structuredErrorToMcpContent(quotaError);
       }
     }
 
@@ -225,25 +220,9 @@ export async function executeTool(
     executionResult = result;
     return result;
   } catch (err: any) {
-    const rawMessage = err?.message || 'Unknown error';
-    // Never persist or return Zod issue JSON to operators / dashboards.
-    errorMessage = humanizeTechnicalFailure(err?.name === 'ZodError' ? err : rawMessage, {
-      tool: resolvedToolName,
-    });
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            error: true,
-            message: errorMessage,
-            tool: resolvedToolName,
-            requested_tool: requestedTool,
-          }),
-        },
-      ],
-      isError: true,
-    };
+    const structured = formatToolExecutionError(resolvedToolName, err);
+    errorMessage = structured.error.message;
+    return structuredErrorToMcpContent(structured);
   } finally {
     const durationMs = Date.now() - startTime;
     await logMcpToolExecution({
