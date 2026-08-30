@@ -29,6 +29,7 @@ export type ConnectorPermission =
   | 'documents:read'
   | 'documents:write'
   | 'reports:read'
+  | 'operations:read'
   | 'integrations:read'
   | 'integrations:write'
   | 'contracts:read'
