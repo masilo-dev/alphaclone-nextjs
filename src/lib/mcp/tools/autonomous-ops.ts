@@ -17,6 +17,7 @@ import {
   getRunStatus,
 } from '@/services/automation/runtimeService';
 import { validateContract, validateInvoice } from '@/lib/documents/documentValidationEngine';
+import { updateWithOptionalTimestamp } from '@/lib/mcp/schemaCompat';
 
 const TEST_CONTACTS = new Set(['bonniiehendrix@gmail.com', 'bornfacemasilo22@gmail.com']);
 
@@ -269,13 +270,14 @@ defineConnectorTool({
 
     const stamp = new Date().toISOString();
     const merged = [existing.notes, `[${stamp}] ${args.note}`].filter(Boolean).join('\n\n');
-    const { data, error } = await supabase
-      .from(table)
-      .update({ notes: merged, updated_at: stamp })
-      .eq('tenant_id', args.tenant_id)
-      .eq('id', args.entity_id)
-      .select('id, notes')
-      .single();
+    const { data, error } = await updateWithOptionalTimestamp({
+      supabase,
+      table,
+      tenantId: args.tenant_id,
+      entityId: args.entity_id,
+      payload: { notes: merged },
+      select: 'id, notes',
+    });
     if (error) throwConnectorError('UPDATE_FAILED', error.message);
     return okResult('add_note', data, {
       receipt: {
@@ -1280,39 +1282,59 @@ defineConnectorTool({
 defineConnectorTool({
   module: 'autonomous-ops',
   name: 'run_workflow',
-  description: 'Start a Bonnie/automation playbook workflow. High-risk steps create portable MCP approvals.',
+  description:
+    'Start a Bonnie/automation playbook workflow with structured input. Accepts playbook_id or workflow_id and inputs or input object.',
   permission: 'bonnie:execute',
   rateLimitClass: 'write',
-  inputSchema: z.object({
-    tenant_id: tenantIdField,
-    playbook_id: z.string().min(1),
-    inputs: z.record(z.string(), z.unknown()).optional().default({}),
-    auto_high_risk: z.boolean().optional().default(false),
-    idempotency_key: z.string().optional(),
-  }),
+  inputSchema: z
+    .object({
+      tenant_id: tenantIdField,
+      playbook_id: z.string().min(1).optional(),
+      workflow_id: z.string().min(1).optional(),
+      inputs: z.record(z.string(), z.unknown()).optional().default({}),
+      input: z.record(z.string(), z.unknown()).optional(),
+      auto_high_risk: z.boolean().optional().default(false),
+      idempotency_key: z.string().optional(),
+    })
+    .refine((value) => Boolean(value.playbook_id || value.workflow_id), {
+      message: 'playbook_id or workflow_id is required',
+      path: ['playbook_id'],
+    }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', format: 'uuid' },
-      playbook_id: { type: 'string' },
-      inputs: { type: 'object' },
+      playbook_id: { type: 'string', description: 'Playbook/workflow identifier' },
+      workflow_id: { type: 'string', description: 'Alias for playbook_id' },
+      inputs: { type: 'object', description: 'Structured workflow input object' },
+      input: { type: 'object', description: 'Alias for inputs' },
       auto_high_risk: { type: 'boolean' },
       idempotency_key: { type: 'string' },
     },
-    required: ['tenant_id', 'playbook_id'],
+    required: ['tenant_id'],
   },
   handler: async (args, ctx) => {
-    const inputs = { ...(args.inputs || {}) };
+    const playbookId = args.playbook_id || args.workflow_id;
+    if (!playbookId) {
+      throwConnectorError('VALIDATION_ERROR', 'playbook_id or workflow_id is required', {
+        field: 'playbook_id',
+      });
+    }
+    const inputs = { ...(args.inputs || args.input || {}) };
     if (args.idempotency_key) inputs.idempotency_key = args.idempotency_key;
     inputs.user_id = ctx.userId;
     const result = await startPlaybookRun({
       tenantId: args.tenant_id,
       userId: ctx.userId,
-      playbookId: args.playbook_id,
+      playbookId,
       inputs,
       autoHighRisk: args.auto_high_risk,
     });
-    if (!result.success) throwConnectorError('WORKFLOW_FAILED', result.error || 'Failed to start workflow');
+    if (!result.success) {
+      throwConnectorError('WORKFLOW_FAILED', result.error || 'Failed to start workflow', {
+        playbook_id: playbookId,
+      });
+    }
     return okResult('run_workflow', result, {
       receipt: {
         action_id: newActionId(),

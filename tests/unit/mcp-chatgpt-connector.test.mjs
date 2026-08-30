@@ -105,6 +105,8 @@ const CONNECTOR_FILES = [
   "documents-ops.ts",
   "reports-ops.ts",
   "integrations-health.ts",
+  "autonomous-ops.ts",
+  "email-ops.ts",
 ];
 
 describe("mcp connector helpers", () => {
