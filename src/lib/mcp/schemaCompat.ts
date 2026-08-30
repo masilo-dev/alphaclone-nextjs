@@ -12,13 +12,13 @@ export function isMissingColumnError(
   );
 }
 
-type SupabaseLike = {
+type SupabaseUpdateClient = {
   from: (table: string) => {
     update: (payload: Record<string, unknown>) => {
       eq: (col: string, val: string) => {
         eq: (col2: string, val2: string) => {
           select: (cols: string) => {
-            single: () => Promise<{ data: unknown; error: { code?: string; message?: string } | null }>;
+            single: () => PromiseLike<{ data: unknown; error: { code?: string; message?: string } | null }>;
           };
         };
       };
@@ -30,16 +30,17 @@ type SupabaseLike = {
  * Update a row, retrying without `updated_at` when the column is absent in schema cache.
  */
 export async function updateWithOptionalTimestamp<T = unknown>(params: {
-  supabase: SupabaseLike;
+  supabase: unknown;
   table: string;
   tenantId: string;
   entityId: string;
   payload: Record<string, unknown>;
   select?: string;
 }): Promise<{ data: T | null; error: { code?: string; message?: string } | null }> {
+  const client = params.supabase as SupabaseUpdateClient;
   const select = params.select || 'id';
   const stamp = new Date().toISOString();
-  let { data, error } = await params.supabase
+  let { data, error } = await client
     .from(params.table)
     .update({ ...params.payload, updated_at: stamp })
     .eq('tenant_id', params.tenantId)
@@ -48,7 +49,7 @@ export async function updateWithOptionalTimestamp<T = unknown>(params: {
     .single();
 
   if (error && isMissingColumnError(error)) {
-    ({ data, error } = await params.supabase
+    ({ data, error } = await client
       .from(params.table)
       .update(params.payload)
       .eq('tenant_id', params.tenantId)
