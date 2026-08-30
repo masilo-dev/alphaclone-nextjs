@@ -221,37 +221,6 @@ export class ZohoService {
         this.invalidateConfigCache();
     }
 
-    /** Clear stale auth-expired flags after a successful token refresh or OAuth reconnect. */
-    protected async clearAuthExpiredFlags(): Promise<void> {
-        this.invalidateConfigCache();
-        const supabase = this.getSupabaseClient();
-        const { data: existing } = await supabase
-            .from('integrations')
-            .select('id, config')
-            .eq('tenant_id', this.tenantId)
-            .eq('user_id', this.userId)
-            .eq('type', 'zoho')
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        if (!existing?.id) return;
-
-        const config = { ...((existing.config as Record<string, unknown>) || {}) };
-        delete config.authExpiredAt;
-        delete config.authExpiredReason;
-
-        await supabase
-            .from('integrations')
-            .update({
-                enabled: true,
-                config,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', existing.id);
-        this.invalidateConfigCache();
-    }
-
     /** Disable cron/API use when Zoho revokes the refresh token. */
     protected async markRefreshTokenRevoked(reason: string): Promise<void> {
         this.invalidateConfigCache();
