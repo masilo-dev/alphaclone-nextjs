@@ -7,6 +7,7 @@ import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
 import { okResult, throwConnectorError } from '@/lib/mcp/connector/response';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import type { OutboundEmailProvider } from '@/lib/email/sendEmail';
 import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
 import { ingestMediaInput } from '@/lib/media/ingestMedia';
 import type { MediaInput } from '@/lib/media/types';
@@ -334,6 +335,15 @@ defineConnectorTool({
 
     const attachments = await attachmentsFromMedia(tenantId, userId, args.attachments);
 
+    // gmail/outlook use OAuth paths; sendEmailServer only accepts API providers
+    const preferredOutbound: OutboundEmailProvider | undefined =
+      args.provider === 'zoho' ||
+      args.provider === 'brevo' ||
+      args.provider === 'sendgrid' ||
+      args.provider === 'resend'
+        ? args.provider
+        : undefined;
+
     const result = await sendEmailServer({
       tenantId,
       userId,
@@ -362,15 +372,7 @@ defineConnectorTool({
             contentType: a.contentType,
           }))
         : undefined,
-      preferredProvider:
-        args.provider === 'zoho' ||
-        args.provider === 'brevo' ||
-        args.provider === 'sendgrid' ||
-        args.provider === 'resend' ||
-        args.provider === 'gmail' ||
-        args.provider === 'outlook'
-          ? args.provider
-          : undefined,
+      preferredProvider: preferredOutbound,
     });
 
     if (!result.success) {
