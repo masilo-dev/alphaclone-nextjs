@@ -1399,26 +1399,37 @@ registerTool('social-publishing', {
 
 registerTool('social-publishing', {
   name: 'get_social_post',
-  description: 'Fetch a single social post by id for the tenant.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(),
-    social_post_id: z.string().uuid(),
-  }),
+  description:
+    'Fetch a single social post by id for the tenant. Accepts social_post_id or post_id.',
+  inputSchema: z
+    .object({
+      tenant_id: z.string().uuid().optional(),
+      social_post_id: z.string().uuid().optional(),
+      post_id: z.string().uuid().optional(),
+    })
+    .refine((value) => Boolean(value.social_post_id || value.post_id), {
+      message: 'social_post_id or post_id is required',
+      path: ['social_post_id'],
+    }),
   jsonSchema: {
     type: 'object',
     properties: {
-      social_post_id: { type: 'string', format: 'uuid' },
+      social_post_id: { type: 'string', format: 'uuid', description: 'Social post UUID' },
+      post_id: { type: 'string', format: 'uuid', description: 'Alias for social_post_id' },
     },
-    required: ['social_post_id'],
+    required: [],
+    anyOf: [{ required: ['social_post_id'] }, { required: ['post_id'] }],
   },
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
+    const postId = args.social_post_id || args.post_id;
+    if (!postId) throw new Error('social_post_id or post_id is required');
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from('social_posts')
       .select('*')
       .eq('tenant_id', tenantId)
-      .eq('id', args.social_post_id)
+      .eq('id', postId)
       .maybeSingle();
     if (error) throw error;
     if (!data) throw new Error('Social post not found');

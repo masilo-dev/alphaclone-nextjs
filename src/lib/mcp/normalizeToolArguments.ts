@@ -59,6 +59,22 @@ function coalesceArgs(args: Record<string, unknown>): Record<string, unknown> {
     next.publish_now = true;
   }
 
+  // Social post ID aliases (ChatGPT often sends post_id / id)
+  next.social_post_id = firstNonEmpty(
+    next.social_post_id,
+    next.post_id,
+    next.socialPostId,
+    next.postId,
+    next.id
+  );
+
+  // Email read aliases
+  next.message_id = firstNonEmpty(next.message_id, next.email_id, next.messageId);
+  if (next.limit !== undefined && next.limit !== null && typeof next.limit !== 'number') {
+    const parsed = parseInt(String(next.limit), 10);
+    if (!Number.isNaN(parsed)) next.limit = parsed;
+  }
+
   return next;
 }
 
