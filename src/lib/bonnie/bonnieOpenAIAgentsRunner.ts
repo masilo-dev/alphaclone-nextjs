@@ -1,6 +1,7 @@
 import type { BonnieModuleId } from '@/lib/bonnie/bonnieToolCatalog';
-import { BONNIE_MODULE_HINTS, BONNIE_CUSTOM_TOOLS } from '@/lib/bonnie/bonnieToolCatalog';
-import { buildBonnieTenantDataRulesBlock, suggestToolsForQuestion } from '@/lib/bonnie/bonnieTenantDataRules';
+import { BONNIE_MODULE_HINTS } from '@/lib/bonnie/bonnieToolCatalog';
+import { buildBonnieAgentToolDefinitions } from '@/lib/bonnie/resolveBonnieAgentTools';
+import { buildBonnieTenantDataRulesBlock } from '@/lib/bonnie/bonnieTenantDataRules';
 import { executeSingleBonnieTool } from '@/lib/bonnie/executeSingleBonnieTool';
 import type { BonnieToolResult } from '@/lib/bonnie/bonnieToolTypes';
 import { getUnifiedMcpTools } from '@/lib/mcp/listAllTools';
@@ -48,23 +49,6 @@ function normalizeParameters(schema: Record<string, unknown>) {
   };
 }
 
-function selectedToolNames(
-  instruction: string,
-  moduleId: BonnieModuleId,
-  specialistTools: string[] = []
-): Set<string> {
-  const moduleTools = BONNIE_MODULE_HINTS[moduleId]?.tools || BONNIE_MODULE_HINTS.general.tools;
-  return new Set([
-    ...moduleTools,
-    ...suggestToolsForQuestion(instruction, moduleId),
-    ...specialistTools,
-    'get_business_snapshot',
-    'get_account_overview',
-    'summarize_workspace',
-    'list_pending_approvals',
-  ]);
-}
-
 function buildInstructions(input: RunInput, supervisionSummary: string): string {
   const moduleHint = BONNIE_MODULE_HINTS[input.moduleId] || BONNIE_MODULE_HINTS.general;
   return `You are Bonnie, the agentic chief operating assistant inside AlphaClone Systems.
@@ -103,23 +87,14 @@ export async function runBonnieWithOpenAIAgents(input: RunInput): Promise<OpenAI
     selectedAgents: specialists,
   });
   const specialistToolNames = collectToolsFromAgents(specialists, 24);
-  const selected = selectedToolNames(input.instruction, input.moduleId, specialistToolNames);
-  const customSet = new Set<string>(BONNIE_CUSTOM_TOOLS);
-  const definitions = catalog.filter((definition) => selected.has(definition.name));
-  const definitionNames = new Set(definitions.map((definition) => definition.name));
-
-  for (const name of selected) {
-    if (customSet.has(name) && !definitionNames.has(name)) {
-      definitions.push({
-        name,
-        description: `Run the AlphaClone Bonnie capability ${name}.`,
-        inputSchema: { type: 'object', properties: {}, additionalProperties: true },
-      });
-    }
-  }
-
+  const definitions = buildBonnieAgentToolDefinitions(
+    input.instruction,
+    input.moduleId,
+    catalog,
+    specialistToolNames,
+  );
   const toolResults: BonnieToolResult[] = [];
-  const sdkTools = definitions.slice(0, 40).map((definition) =>
+  const sdkTools = definitions.map((definition) =>
     tool({
       name: definition.name,
       description: definition.description || `Run ${definition.name}`,

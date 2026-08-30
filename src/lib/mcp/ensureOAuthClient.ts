@@ -27,7 +27,12 @@ const PLATFORM_CLIENT_SEEDS: Record<
     client_name: "OpenAI Apps MCP Connector",
     redirect_uris: [...OPENAI_APPS_OAUTH_REDIRECT_URIS],
     scopes: ["read", "write", "mcp:tools", "mcp:resources"],
-    // Full platform — size handled by schema compaction in tools/list, not by cutting tools.
+    toolCatalog: "full",
+  },
+  "cursor-connector": {
+    client_name: "Cursor IDE MCP",
+    redirect_uris: [],
+    scopes: ["read", "write", "mcp:tools", "mcp:resources"],
     toolCatalog: "full",
   },
   // Generic public client — NOT an alias of chatgpt-connector
@@ -96,6 +101,13 @@ export function getToolCatalogModeForClient(
 ): ToolCatalogMode {
   if (!clientId) return "full";
   return PLATFORM_CLIENT_SEEDS[clientId]?.toolCatalog || "full";
+}
+
+/** Maps registered client policy to unified tools/list catalog mode. */
+export function resolveUnifiedCatalogMode(
+  clientId: string | null | undefined,
+): "full" | "progressive" {
+  return getToolCatalogModeForClient(clientId) === "curated" ? "progressive" : "full";
 }
 
 function isMissingColumnError(

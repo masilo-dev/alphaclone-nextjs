@@ -43,6 +43,7 @@ import {
   BookOpen,
   ShieldAlert,
   CreditCard,
+  Monitor,
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -101,6 +102,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Operations Command', href: '/dashboard/operations', icon: Activity },
   { label: 'Tenants', href: '/dashboard/admin/tenants', icon: Users },
   { label: 'Ops & logs', href: '/dashboard/admin/operations', icon: Activity },
+  { label: 'MCP monitor', href: '/dashboard/admin/mcp-sessions', icon: Monitor },
   { label: 'Pre-customer review', href: '/dashboard/admin/improvements', icon: Zap },
   { label: 'Platform Users', href: '/dashboard/admin/users', icon: Users },
   { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },

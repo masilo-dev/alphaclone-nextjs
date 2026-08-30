@@ -113,6 +113,7 @@ export const CHATGPT_OAUTH_REDIRECT_URIS = OPENAI_APPS_OAUTH_REDIRECT_URIS;
  */
 export const PLATFORM_MCP_OAUTH_CLIENT_IDS = new Set([
   "chatgpt-connector",
+  "cursor-connector",
   "alphaclone-mcp-client",
   "grok-connector",
   "manus-ai",

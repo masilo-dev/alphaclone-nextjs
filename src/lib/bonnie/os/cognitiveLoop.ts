@@ -208,11 +208,14 @@ export async function runCognitiveLoop(input: CognitiveRunInput): Promise<Cognit
     const isEventTrigger = (input.triggerType || 'instruction') === 'event'
       || input.triggerType === 'continuous'
       || input.triggerType === 'cron';
+    const healthScore = Number(twin.snapshot.kpis.health_score ?? 100);
+    const lowHealth = healthScore < 75 || (twin.snapshot.risks || []).length > 0;
+    const useOrchestrator =
+      (!isEventTrigger && agents.length >= 2)
+      || (isEventTrigger && (input.triggerType === 'continuous' || input.triggerType === 'cron') && lowHealth);
 
     if (executeActions) {
-      // Instruction/complex missions: multi-agent orchestrate_task.
-      // Events/cron: gather with read tools only (still full reason/plan/reflect/memory).
-      if (!isEventTrigger && agents.length >= 2) {
+      if (useOrchestrator) {
         const orch = await executeSingleBonnieTool({
           tenantId: input.tenantId,
           userId: input.userId || '',
@@ -239,7 +242,8 @@ export async function runCognitiveLoop(input: CognitiveRunInput): Promise<Cognit
           orchestrationRunId = null;
         }
       } else {
-        for (const tool of plannedTools.slice(0, isEventTrigger ? 3 : 3)) {
+        const eventToolCap = isEventTrigger ? 8 : 3;
+        for (const tool of plannedTools.slice(0, eventToolCap)) {
           const result = await executeSingleBonnieTool({
             tenantId: input.tenantId,
             userId: input.userId || '',

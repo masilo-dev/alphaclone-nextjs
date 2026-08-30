@@ -7,18 +7,15 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 import { getUnifiedMcpToolCount } from '@/lib/mcp/listAllTools';
 import { buildApiHealthReport } from '@/lib/mcp/apiHealthReport';
+import {
+  CORE_INTEGRATIONS_FOR_HEALTH,
+  hasBookingIntegration,
+  normalizeIntegrationType,
+  OPTIONAL_INTEGRATIONS_FOR_HEALTH,
+} from '@/lib/mcp/integrationHealthPolicy';
 import type { AuditFinding, PlatformHealthScore } from '@/lib/mcp/connector/types';
 
-const REQUIRED_INTEGRATIONS = [
-  'google_calendar',
-  'zoho',
-  'stripe',
-  'calendly',
-  'railway',
-  'supabase',
-  'openai',
-  'deepseek',
-] as const;
+const REQUIRED_INTEGRATIONS = [...CORE_INTEGRATIONS_FOR_HEALTH] as const;
 
 function severityWeight(severity: AuditFinding['severity']): number {
   switch (severity) {
@@ -193,21 +190,24 @@ export async function runPlatformAudit(params: {
 
   const connectedTypes = new Set<string>();
   (integrationsRes.data || []).forEach((i: any) => {
-    if (i.enabled !== false && i.type) connectedTypes.add(String(i.type).toLowerCase());
+    if (i.enabled !== false && i.type) {
+      connectedTypes.add(normalizeIntegrationType(String(i.type)));
+    }
   });
   (tenantIntegRes.data || []).forEach((i: any) => {
-    if (i.integration_id) connectedTypes.add(String(i.integration_id).toLowerCase());
+    if (i.integration_id) connectedTypes.add(normalizeIntegrationType(String(i.integration_id)));
   });
   const settings = (tenantRes.data?.settings || {}) as Record<string, any>;
   if (settings.calendly?.enabled || settings.calendly?.calendlyUserUri) connectedTypes.add('calendly');
+  if (settings.calcom?.enabled || settings.calcom?.userId) connectedTypes.add('calcom');
   if (settings.google_calendar || settings.googleCalendar) connectedTypes.add('google_calendar');
   if (settings.gmail || settings.google_gmail) connectedTypes.add('gmail');
   if (settings.zoho || settings.zoho_mail) connectedTypes.add('zoho');
 
-  // Env-backed platform integrations
   const envIntegrationStatus: Record<string, boolean> = {
     github: envPresent('GITHUB_TOKEN', 'GITHUB_APP_ID') || connectedTypes.has('github'),
     gmail: connectedTypes.has('gmail') || connectedTypes.has('google_gmail'),
+    calcom: connectedTypes.has('calcom') || connectedTypes.has('cal_com'),
     google_calendar: connectedTypes.has('google_calendar'),
     zoho: connectedTypes.has('zoho') || connectedTypes.has('zoho_mail'),
     stripe: envPresent('STRIPE_SECRET_KEY') || connectedTypes.has('stripe'),
@@ -224,12 +224,17 @@ export async function runPlatformAudit(params: {
         id: `integ-missing-${name}`,
         module: 'integrations',
         severity: name === 'supabase' || name === 'stripe' ? 'high' : 'medium',
-        title: `Missing integration: ${name}`,
+        title: `Missing core integration: ${name}`,
         detail: `${name} is not connected or configured for this tenant.`,
         recommendation: `Connect ${name} from Integrations or set the required secrets.`,
       });
     }
   }
+
+  const optionalConnected = OPTIONAL_INTEGRATIONS_FOR_HEALTH.filter(
+    (name) => envIntegrationStatus[name] || connectedTypes.has(name)
+  );
+  const bookingReady = hasBookingIntegration(connectedTypes);
   markModule(
     'integrations',
     findings.length - integFindingsBefore > 3 ? 'degraded' : findings.length - integFindingsBefore > 0 ? 'degraded' : 'healthy',
@@ -417,9 +422,13 @@ export async function runPlatformAudit(params: {
     score,
     grade: gradeFromScore(score),
     summary:
-      criticalCount > 0
+      (criticalCount > 0
         ? `Platform health score ${score}/100 (${gradeFromScore(score)}). ${criticalCount} critical and ${highCount} high findings require attention.`
-        : `Platform health score ${score}/100 (${gradeFromScore(score)}). ${findings.length} findings; ${recommendations.length} actionable recommendations.`,
+        : `Platform health score ${score}/100 (${gradeFromScore(score)}). ${findings.length} findings; ${recommendations.length} actionable recommendations.`) +
+      (optionalConnected.length
+        ? ` Optional integrations connected: ${optionalConnected.join(', ')}.`
+        : ' Gmail, GitHub, and Cal.com are optional and do not reduce this score.') +
+      (bookingReady ? ' Booking: ready (Cal.com or Calendly).' : ''),
     findings,
     recommendations,
     modules: moduleScores,

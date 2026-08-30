@@ -2,7 +2,11 @@ import * as Sentry from '@sentry/nextjs';
 
 const SENTRY_DSN = process.env.SENTRY_DSN;
 const ENVIRONMENT = process.env.NODE_ENV || 'development';
-const RELEASE = process.env.VERCEL_GIT_COMMIT_SHA || 'development';
+const RELEASE =
+  process.env.RAILWAY_GIT_COMMIT_SHA ||
+  process.env.NEXT_PUBLIC_RAILWAY_GIT_COMMIT_SHA ||
+  process.env.GIT_COMMIT ||
+  'development';
 
 Sentry.init({
     dsn: SENTRY_DSN,

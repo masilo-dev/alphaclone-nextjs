@@ -194,6 +194,27 @@ export async function executeSingleBonnieTool(params: {
       });
     }
 
+    if (!toolResult.approvalRequired) {
+      const { notifyAfterMcpToolExecution } = await import('@/lib/notifications/mcpToolNotificationHook');
+      void notifyAfterMcpToolExecution({
+        tenantId,
+        userId,
+        toolName: tool,
+        args,
+        success: toolResult.success,
+        resultContent: [
+          {
+            text: JSON.stringify({
+              message: toolResult.summary,
+              ...(toolResult.details ? { details: toolResult.details } : {}),
+            }),
+          },
+        ],
+        errorMessage: toolResult.success ? null : toolResult.summary,
+        source: 'bonnie',
+      });
+    }
+
     return toolResult;
   } catch (err: unknown) {
     const { humanizeTechnicalFailure } = await import('@/lib/copy/businessFriendlyErrors');

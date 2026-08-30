@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ZohoService } from '../../../../../services/zoho/ZohoService';
+import { ZohoService, ZohoAuthExpiredError } from '../../../../../services/zoho/ZohoService';
 import { ZohoMailService } from '../../../../../services/zoho/ZohoMailService';
 import { ZohoCampaignsService } from '../../../../../services/zoho/ZohoCampaignsService';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
@@ -22,6 +22,14 @@ export async function GET(req: NextRequest) {
     try {
         const { user } = await requireTenantAccess(tenantId, req);
         const zohoService = new ZohoService(user.id, tenantId);
+        // Proactively ensure access token is fresh before health checks.
+        try {
+            await zohoService.getValidAccessToken();
+        } catch (refreshErr) {
+            if (!(refreshErr instanceof ZohoAuthExpiredError)) {
+                console.warn('[zoho/status] token refresh skipped:', refreshErr);
+            }
+        }
         const config = await zohoService.getConfig();
         const configuredRegion = inferZohoRegionFromAccountsServer(config?.accountsServer);
         const health = await zohoService.getDetailedHealthStatus();
@@ -53,6 +61,7 @@ export async function GET(req: NextRequest) {
             campaignsReady,
             baseConnected: health.tokenValid,
             configuredRegion,
+            needsReconnect: health.status === 'auth_expired',
         });
     } catch (err: unknown) {
         console.error('Zoho Status Check Error:', err);

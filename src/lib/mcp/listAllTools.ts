@@ -12,6 +12,7 @@ import {
   moduleForTool,
 } from '@/lib/mcp/progressiveDiscovery';
 import { getToolGovernance, withGovernanceDescription } from '@/lib/mcp/canonicalToolRegistry';
+import { resolveUnifiedCatalogMode } from '@/lib/mcp/ensureOAuthClient';
 
 export type UnifiedMcpTool = McpDiscoveryTool;
 
@@ -134,7 +135,9 @@ export async function getUnifiedMcpTools(options?: {
   catalogMode?: 'stable' | 'progressive' | 'full';
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
-  const catalogMode = options?.catalogMode || 'full';
+  const catalogMode =
+    options?.catalogMode ??
+    (options?.clientId ? resolveUnifiedCatalogMode(options.clientId) : 'full');
   const now = Date.now();
 
   if (

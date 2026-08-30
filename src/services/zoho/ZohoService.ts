@@ -93,11 +93,10 @@ export class ZohoService {
         const supabase = this.getSupabaseClient();
         const { data, error } = await supabase
             .from('integrations')
-            .select('config')
+            .select('config, enabled')
             .eq('tenant_id', this.tenantId)
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
-            .eq('enabled', true)
             .order('updated_at', { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -173,7 +172,7 @@ export class ZohoService {
         if (existing?.id) {
             const { error: updateError } = await supabase
                 .from('integrations')
-                .update(payload)
+                .update({ ...payload, enabled: true })
                 .eq('id', existing.id);
             if (updateError) {
                 throw new Error(`Failed to update Zoho integration config: ${updateError.message}`);
@@ -188,6 +187,68 @@ export class ZohoService {
             throw new Error(`Failed to save Zoho integration config: ${insertError.message}`);
         }
 
+        this.invalidateConfigCache();
+    }
+
+    /** Clear stale auth-expired flags after a successful token refresh or OAuth reconnect. */
+    protected async clearAuthExpiredFlags(): Promise<void> {
+        this.invalidateConfigCache();
+        const supabase = this.getSupabaseClient();
+        const { data: existing } = await supabase
+            .from('integrations')
+            .select('id, config')
+            .eq('tenant_id', this.tenantId)
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (!existing?.id) return;
+
+        const config = { ...((existing.config as Record<string, unknown>) || {}) };
+        delete config.authExpiredAt;
+        delete config.authExpiredReason;
+
+        await supabase
+            .from('integrations')
+            .update({
+                enabled: true,
+                config,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', existing.id);
+        this.invalidateConfigCache();
+    }
+
+    /** Clear stale auth-expired flags after a successful token refresh or OAuth reconnect. */
+    protected async clearAuthExpiredFlags(): Promise<void> {
+        this.invalidateConfigCache();
+        const supabase = this.getSupabaseClient();
+        const { data: existing } = await supabase
+            .from('integrations')
+            .select('id, config')
+            .eq('tenant_id', this.tenantId)
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (!existing?.id) return;
+
+        const config = { ...((existing.config as Record<string, unknown>) || {}) };
+        delete config.authExpiredAt;
+        delete config.authExpiredReason;
+
+        await supabase
+            .from('integrations')
+            .update({
+                enabled: true,
+                config,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', existing.id);
         this.invalidateConfigCache();
     }
 
@@ -265,6 +326,7 @@ export class ZohoService {
         if (data.access_token) {
             const expiryDate = new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString();
             await this.saveConfig({ accessToken: data.access_token, expiryDate });
+            await this.clearAuthExpiredFlags();
             return data.access_token;
         }
 
@@ -382,20 +444,19 @@ export class ZohoService {
             };
         }
 
-        if (config.authExpiredAt) {
-            return {
-                status: 'auth_expired',
-                senderConfigured: false,
-                tokenValid: false,
-                details: config.authExpiredReason || 'Zoho authentication expired. Reconnect required.',
-            };
-        }
-
         const senderConfigured = !!(config.mailApiHost || config.crmApiHost);
 
         try {
             const token = await this.getValidAccessToken();
             if (!token) {
+                if (config.authExpiredAt) {
+                    return {
+                        status: 'auth_expired',
+                        senderConfigured,
+                        tokenValid: false,
+                        details: config.authExpiredReason || 'Zoho authentication expired. Reconnect required.',
+                    };
+                }
                 return {
                     status: 'auth_expired',
                     senderConfigured,
@@ -403,6 +464,8 @@ export class ZohoService {
                     details: 'Failed to refresh Zoho access token.',
                 };
             }
+
+            await this.clearAuthExpiredFlags();
 
             if (!senderConfigured) {
                 return {
@@ -419,12 +482,21 @@ export class ZohoService {
                 tokenValid: true,
                 details: 'Zoho integration is healthy, authenticated, and ready for operations.',
             };
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Zoho API call failed during health check.';
+            if (err instanceof ZohoAuthExpiredError) {
+                return {
+                    status: 'auth_expired',
+                    senderConfigured,
+                    tokenValid: false,
+                    details: message,
+                };
+            }
             return {
                 status: 'permission_missing',
                 senderConfigured,
                 tokenValid: false,
-                details: err.message || 'Zoho API call failed during health check.',
+                details: message,
             };
         }
     }

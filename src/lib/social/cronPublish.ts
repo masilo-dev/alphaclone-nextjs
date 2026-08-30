@@ -388,6 +388,20 @@ export async function publishSocialPost(postId: string) {
       error_message: message,
     });
 
+    const { emitTenantBusinessEvent } = await import("@/lib/notifications/emitTenantBusinessEvent");
+    void emitTenantBusinessEvent({
+      eventType: "social.post_failed",
+      tenantId: post.tenant_id,
+      source: "cron",
+      title: "Scheduled social post failed to publish",
+      message: `Your scheduled post did not go live: ${message}`,
+      actionUrl: `/dashboard/business/social?id=${postId}`,
+      entityType: "social_post",
+      entityId: postId,
+      status: "failed",
+      metadata: { failures: failed, postId },
+    }).catch((err) => console.error("[cron/social-publish] event emit failed:", err));
+
     const { dispatchBusinessNotification } = await import("@/lib/notifications/businessNotificationEngine");
     await dispatchBusinessNotification({
       tenantId: post.tenant_id,
@@ -436,6 +450,8 @@ export type DueSocialPublishSummary = {
   published: number;
   failed: number;
   overdue: number;
+  reclaimed?: number;
+  skipped_claim?: number;
 };
 
 export async function publishDueSocialPostSummary(

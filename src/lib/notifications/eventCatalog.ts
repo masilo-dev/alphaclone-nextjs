@@ -37,6 +37,7 @@ const IN_APP_PATTERNS = [
   /^lead\./,
   /^crm\./,
   /^deal\./,
+  /^project\./,
   /^campaign\./,
   /^email\./,
   /^meeting\./,
@@ -87,6 +88,47 @@ export function priorityToNotificationLevel(
 export function shouldSendImmediateEmail(eventType: string, priority: EventPriority): boolean {
   if (priority === 'P0' || priority === 'P1') return true;
   return IMMEDIATE_EMAIL_PATTERNS.some((p) => p.test(eventType.toLowerCase()));
+}
+
+/** When true (default), successful business writes email the workspace owner in plain language. */
+export function shouldNotifyEveryBusinessWrite(): boolean {
+  return process.env.MCP_NOTIFY_EVERY_ACTION !== 'false';
+}
+
+export function shouldEmailForBusinessEvent(
+  eventType: string,
+  priority: EventPriority,
+  source?: TenantBusinessEventInput['source'],
+  status?: TenantBusinessEventInput['status'],
+): boolean {
+  if (shouldSendImmediateEmail(eventType, priority)) return true;
+  if (!shouldNotifyEveryBusinessWrite()) return false;
+  if (status === 'failed') return true;
+
+  const type = eventType.toLowerCase();
+  const writeSources = new Set<TenantBusinessEventInput['source']>([
+    'mcp',
+    'bonnie',
+    'user',
+    'system',
+    'webhook',
+    'cron',
+  ]);
+  if (source && !writeSources.has(source)) return false;
+
+  return (
+    type.startsWith('mcp.') ||
+    type.startsWith('lead.') ||
+    type.startsWith('social.') ||
+    type.startsWith('crm.') ||
+    type.startsWith('project.') ||
+    type.startsWith('deal.') ||
+    type.startsWith('invoice.') ||
+    type.startsWith('contract.') ||
+    type.startsWith('campaign.') ||
+    type.startsWith('email.') ||
+    type.startsWith('document.')
+  );
 }
 
 export function isMutatingMcpTool(toolName: string): boolean {

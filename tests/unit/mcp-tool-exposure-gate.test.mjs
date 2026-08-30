@@ -23,7 +23,7 @@ test("alphaclone-mcp-client is NOT treated as ChatGPT (fixes Claude empty tools)
   assert.equal(isChatgptClient({ clientId: "cursor-ide" }), false);
 });
 
-test("ChatGPT connector clients are still detected for curated catalog", () => {
+test("ChatGPT connector clients are still detected by registered client id", () => {
   assert.equal(
     isChatgptClient({ clientId: "chatgpt-connector", userAgent: "ChatGPT" }),
     true,
@@ -201,6 +201,28 @@ test("credentialed ChatGPT MCP audit scripts exist and default to non-destructiv
   assert.match(execution, /--execute-read-tools/);
   assert.match(execution, /--execute-write-tools/);
   assert.match(execution, /skipped_destructive/);
+});
+
+test("every platform MCP client resolves to the full executable catalog", async () => {
+  invalidateUnifiedMcpToolCache();
+  const full = await getUnifiedMcpTools({
+    sanitizeForClient: false,
+    forceRefresh: true,
+    catalogMode: "full",
+  });
+  for (const clientId of ["chatgpt-connector", "cursor-connector", "manus-ai", "claude-web"]) {
+    invalidateUnifiedMcpToolCache();
+    const clientTools = await getUnifiedMcpTools({
+      sanitizeForClient: false,
+      forceRefresh: true,
+      clientId,
+    });
+    assert.equal(
+      clientTools.length,
+      full.length,
+      `${clientId} should expose the same tool count as full catalog (${full.length})`,
+    );
+  }
 });
 
 test("progressive catalog remains available only for explicit compatibility mode", async () => {

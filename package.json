@@ -9,7 +9,7 @@
     "dev": "next dev --webpack",
     "build": "rm -rf app && cross-env NEXT_TELEMETRY_DISABLED=1 SERWIST_SUPPRESS_TURBOPACK_WARNING=1 NODE_OPTIONS=--max-old-space-size=12288 next build --webpack",
     "build:prod": "rm -rf app && cross-env NODE_OPTIONS=--max-old-space-size=12288 next build --webpack",
-    "start": "node scripts/validate-production-env.mjs --warn-only && NODE_OPTIONS=\"${NODE_OPTIONS:---max-old-space-size=4096}\" next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "start": "node scripts/validate-production-env.mjs --warn-only && NODE_OPTIONS=\"${NODE_OPTIONS:---max-old-space-size=8192}\" next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint",
     "typecheck": "rm -rf .next/types .next/dev/types && cross-env NODE_OPTIONS=--max-old-space-size=7168 tsc --noEmit",
     "test": "node --import tsx --test tests/unit/*.test.mjs",

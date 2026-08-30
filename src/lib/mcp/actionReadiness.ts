@@ -79,6 +79,13 @@ export async function resolveMcpActionReadiness(input: {
     social_post: {
       executable: socialMissing.length === 0,
       missing: socialMissing,
+      recommended_tool: 'publish_social_post',
+      auto_defaults:
+        'When only one Facebook/LinkedIn identity exists, the server auto-selects it for publish_social_post.',
+      setup_hint:
+        socialMissing.length > 0
+          ? 'Connect Facebook or LinkedIn under Dashboard → Integrations, then call get_social_identities.'
+          : 'Ready — call publish_social_post with caption/content (identity auto-selected when unambiguous).',
       identities: publishableIdentities.map((identity) => ({
         identity_id: identity.identity_id,
         provider: identity.provider,
@@ -97,6 +104,13 @@ export async function resolveMcpActionReadiness(input: {
     email_send: {
       executable: emailMissing.length === 0,
       missing: emailMissing,
+      recommended_tool: 'send_email',
+      auto_defaults:
+        'Server auto-selects the connected email provider and generates idempotency_key when omitted.',
+      setup_hint:
+        emailMissing.length > 0
+          ? 'Connect Zoho or Gmail under Dashboard → Integrations, verify a sender address, then retry.'
+          : 'Ready — call send_email with subject, to or recipient_name, and text/body.',
       providers: emailIntegrations.map((integration) => ({
         integration_id: integration.id,
         provider: integration.provider || integration.type,

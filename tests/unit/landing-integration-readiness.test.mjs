@@ -12,10 +12,15 @@ test('landing integration strip uses the approved current connector set', async 
   assert.doesNotMatch(strip, /'google'|'github'|'gmail'|'whatsapp'/);
 });
 
-test('Gmail and GitHub are optional and do not reduce platform readiness', async () => {
+test('Gmail, GitHub, and Cal.com are optional and do not reduce platform readiness', async () => {
   const audit = await read('src/lib/mcp/audit/platformAuditEngine.ts');
+  const policy = await read('src/lib/mcp/integrationHealthPolicy.ts');
   const requiredBlock = audit.match(/const REQUIRED_INTEGRATIONS = \[([\s\S]*?)\] as const;/)?.[1] || '';
-  assert.doesNotMatch(requiredBlock, /'gmail'|'github'/);
+  assert.doesNotMatch(requiredBlock, /'gmail'|'github'|'calcom'|'calendly'|'google_calendar'/);
+  assert.match(policy, /OPTIONAL_INTEGRATIONS_FOR_HEALTH/);
+  assert.match(policy, /'gmail'/);
+  assert.match(policy, /'github'/);
+  assert.match(policy, /'calcom'/);
 });
 
 test('demo CTA is explicit and Calendly bookings notify the host', async () => {

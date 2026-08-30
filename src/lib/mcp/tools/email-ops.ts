@@ -260,7 +260,7 @@ defineConnectorTool({
       .enum(['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'])
       .optional(),
     attachments: z.array(z.record(z.string(), z.unknown())).optional(),
-    idempotency_key: z.string().min(1),
+    idempotency_key: z.string().min(1).optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -289,17 +289,20 @@ defineConnectorTool({
       attachments: { type: 'array', items: { type: 'object' } },
       idempotency_key: { type: 'string' },
     },
-    required: ['subject', 'idempotency_key'],
+    required: ['subject'],
   },
   handler: async (args, ctx) => {
     const tenantId = ctx.tenantId;
     const userId = ctx.userId;
     if (!tenantId || !userId) throwConnectorError('AUTH_REQUIRED', 'Authenticated workspace session required');
 
+    const idempotencyKey =
+      args.idempotency_key?.trim() || `mcp-send_email-${crypto.randomUUID()}`;
+
     const existing = await findReceiptByIdempotency({
       tenantId,
       tool: 'send_email',
-      idempotencyKey: args.idempotency_key,
+      idempotencyKey,
     });
     if (existing) {
       return okResult('send_email', existing.sanitized_output, {
@@ -310,7 +313,7 @@ defineConnectorTool({
           provider_reference: existing.provider_reference as string,
           entity_type: 'email',
         },
-        meta: { deduplicated: true, idempotency_key: args.idempotency_key },
+        meta: { deduplicated: true, idempotency_key: idempotencyKey },
       });
     }
 
@@ -351,7 +354,7 @@ defineConnectorTool({
       campaignId: args.campaign_id,
       workflowId: args.workflow_id,
       initiationSource: 'mcp.send_email',
-      idempotencyKey: args.idempotency_key,
+      idempotencyKey,
       attachments: attachments.length
         ? attachments.map((a) => ({
             filename: a.filename,
@@ -363,7 +366,9 @@ defineConnectorTool({
         args.provider === 'zoho' ||
         args.provider === 'brevo' ||
         args.provider === 'sendgrid' ||
-        args.provider === 'resend'
+        args.provider === 'resend' ||
+        args.provider === 'gmail' ||
+        args.provider === 'outlook'
           ? args.provider
           : undefined,
     });
@@ -375,13 +380,21 @@ defineConnectorTool({
         tool: 'send_email',
         status: 'failed',
         provider: result.provider,
-        idempotencyKey: args.idempotency_key,
+        idempotencyKey,
         metadata: { code: result.code, error: result.error },
       });
       throwConnectorError(
         result.code || 'PROVIDER_REJECTED',
         result.error || 'Email provider rejected the send',
-        result.errorDetails
+        {
+          ...(result.errorDetails && typeof result.errorDetails === 'object'
+            ? (result.errorDetails as Record<string, unknown>)
+            : {}),
+          next_action:
+            result.code === 'PROVIDER_MISSING' || /provider|integration|sender/i.test(String(result.error))
+              ? 'Call check_mcp_execution_readiness with action=email_send, connect Zoho or Gmail under Integrations, then retry send_email.'
+              : 'Verify recipient email and plain-text body, then retry send_email.',
+        }
       );
     }
 
@@ -416,7 +429,7 @@ defineConnectorTool({
       tenantId,
       userId,
       tool: 'send_email',
-      idempotencyKey: args.idempotency_key,
+      idempotencyKey,
       receipt,
       success: true,
       sanitizedInput: {
@@ -435,13 +448,13 @@ defineConnectorTool({
       status: 'completed',
       provider: result.provider,
       providerReference: result.emailId,
-      idempotencyKey: args.idempotency_key,
+      idempotencyKey,
       metadata: { recipient_source: recipient.source },
     });
 
     return okResult('send_email', delivery, {
       receipt,
-      meta: { idempotency_key: args.idempotency_key, tenant_id: tenantId },
+      meta: { idempotency_key: idempotencyKey, tenant_id: tenantId },
     });
   },
 });

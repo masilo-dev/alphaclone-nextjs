@@ -172,6 +172,57 @@ export function translateMcpToolToBusinessEvent(
     };
   }
 
+  if (normalizedTool.includes('create_client') || normalizedTool.includes('add_client')) {
+    const name = input.name || input.company_name || input.client_name || 'New client';
+    return {
+      event: 'Client added to CRM',
+      businessContext: `Client "${name}" was added to your workspace.`,
+      result: success
+        ? `${name} is now in your client list.`
+        : `Client creation failed: ${output.error || 'Unknown error'}`,
+      nextAction: 'Review client profile and link contacts or deals.',
+    };
+  }
+
+  if (normalizedTool.includes('create_contact') || normalizedTool.includes('add_contact')) {
+    const name = input.name || input.full_name || input.email || 'New contact';
+    return {
+      event: 'Contact added',
+      businessContext: `Contact "${name}" was added to your CRM.`,
+      result: success
+        ? `${name} is saved and ready for outreach.`
+        : `Contact creation failed: ${output.error || 'Unknown error'}`,
+      nextAction: 'Assign to a client or start a follow-up sequence.',
+    };
+  }
+
+  if (normalizedTool.includes('publish_social') || normalizedTool.includes('publish_post')) {
+    const network = input.platform || input.network || 'social channel';
+    return {
+      event: 'Social post published',
+      businessContext: `A post was published to ${network}.`,
+      result: success
+        ? `Your post is live on ${network}.`
+        : `Publishing failed: ${output.error || 'Provider did not confirm the post'}`,
+      nextAction: 'Check Social Command Center for reach and engagement.',
+    };
+  }
+
+  if (normalizedTool.includes('import') && (normalizedTool.includes('bulk') || normalizedTool.includes('leads') || normalizedTool.includes('contacts'))) {
+    const imported = Number(output.succeeded_count ?? output.created ?? output.imported ?? 0);
+    const failed = Number(output.failed_count ?? 0);
+    return {
+      event: imported > 1 ? `${imported} records imported` : 'Bulk import completed',
+      businessContext: `Bulk import finished with ${imported} record(s) added.`,
+      result: success
+        ? failed > 0
+          ? `${imported} imported, ${failed} skipped or failed.`
+          : `${imported} record(s) are now in your workspace.`
+        : `Import failed: ${output.error || 'Unknown error'}`,
+      nextAction: 'Review imported records and assign follow-ups.',
+    };
+  }
+
   // Fallback human readable translation
   const readableName = toolName.replace(/[_-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   return {

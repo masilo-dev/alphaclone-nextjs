@@ -47,7 +47,7 @@ async function requireSocialAuth(
 registerTool('social-publishing', {
   name: 'check_mcp_execution_readiness',
   description:
-    'Check whether the current MCP workspace can execute ChatGPT write actions, especially social publishing and email sending. Use this when tools are visible but posting or sending fails.',
+    'Check whether the current MCP workspace can execute write actions (social publishing and email sending). Returns missing setup steps and the recommended tool to call next.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(),
     action: z.enum(['all', 'social_post', 'email_send', 'media_upload']).optional().default('all'),

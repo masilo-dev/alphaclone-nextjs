@@ -5,7 +5,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import {
   classifyEventPriority,
   priorityToNotificationLevel,
-  shouldSendImmediateEmail,
+  shouldEmailForBusinessEvent,
   type TenantBusinessEventInput,
 } from './eventCatalog';
 import { dispatchBusinessNotification } from './businessNotificationEngine';
@@ -106,9 +106,15 @@ export async function emitTenantBusinessEvent(input: TenantBusinessEventInput) {
     return { skipped: true, reason: 'duplicate', priority, level };
   }
 
+  const emailNow = shouldEmailForBusinessEvent(
+    input.eventType,
+    priority,
+    input.source,
+    input.status,
+  );
   const dispatch = await dispatchBusinessNotification({
     tenantId: input.tenantId,
-    level: shouldSendImmediateEmail(input.eventType, priority) ? 'level3_urgent_email' : level,
+    level: emailNow ? 'level3_urgent_email' : level,
     type: input.eventType,
     title: input.title,
     message: input.message,

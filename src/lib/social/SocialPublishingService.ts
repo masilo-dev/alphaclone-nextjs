@@ -1292,25 +1292,53 @@ export class SocialPublishingService {
     published: number;
     failed: number;
     overdue: number;
+    reclaimed: number;
+    skipped_claim: number;
   }> {
     if (!isSocialPublishEnabled()) {
-      return { processed: 0, published: 0, failed: 0, overdue: 0 };
+      return { processed: 0, published: 0, failed: 0, overdue: 0, reclaimed: 0, skipped_claim: 0 };
     }
 
     const admin = createSupabaseAdminClient();
     const nowIso = new Date().toISOString();
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const stuckCutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+
+    // Reclaim posts stuck in publishing (worker crash / timeout) so they can run again.
+    const { data: stuckPublishing } = await admin
+      .from('social_posts')
+      .select('id, tenant_id')
+      .eq('status', 'publishing')
+      .lt('updated_at', stuckCutoff)
+      .limit(50);
+
+    let reclaimed = 0;
+    for (const row of stuckPublishing || []) {
+      const { data: reclaimedRow } = await admin
+        .from('social_posts')
+        .update({
+          status: 'scheduled',
+          error_message: 'Reclaimed from stuck publishing — will retry on next cron tick',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', row.id)
+        .eq('tenant_id', row.tenant_id)
+        .eq('status', 'publishing')
+        .select('id')
+        .maybeSingle();
+      if (reclaimedRow?.id) reclaimed += 1;
+    }
 
     const { count: overdueCount } = await admin
       .from('social_posts')
       .select('id', { count: 'exact', head: true })
-      .eq('status', 'scheduled')
+      .in('status', ['scheduled', 'queued'])
       .not('scheduled_at', 'is', null)
       .lte('scheduled_at', fiveMinAgo);
 
     if ((overdueCount || 0) > 0) {
       console.warn(
-        `[SocialPublishingService] ALERT: ${overdueCount} scheduled posts overdue by >5 minutes`
+        `[SocialPublishingService] ALERT: ${overdueCount} scheduled posts overdue by >5 minutes (reclaimed=${reclaimed})`
       );
     }
 
@@ -1319,7 +1347,7 @@ export class SocialPublishingService {
       .select(
         'id, tenant_id, user_id, platforms, platform, caption, media_urls, facebook_page_id, linkedin_organization_id, linkedin_member_id, metadata, idempotency_key, correlation_id, attempt_count'
       )
-      .eq('status', 'scheduled')
+      .in('status', ['scheduled', 'queued'])
       .not('scheduled_at', 'is', null)
       .lte('scheduled_at', nowIso)
       .order('scheduled_at', { ascending: true })
@@ -1329,9 +1357,10 @@ export class SocialPublishingService {
 
     let published = 0;
     let failed = 0;
+    let skippedClaim = 0;
 
     for (const post of duePosts || []) {
-      // Atomic claim: only one worker may move scheduled → publishing
+      // Atomic claim: only one worker may move scheduled/queued → publishing
       const adminClaim = createSupabaseAdminClient();
       const claimedAt = new Date().toISOString();
       const { data: claimed, error: claimError } = await adminClaim
@@ -1342,10 +1371,21 @@ export class SocialPublishingService {
           updated_at: claimedAt,
         })
         .eq('id', post.id)
-        .eq('status', 'scheduled')
+        .in('status', ['scheduled', 'queued'])
         .select('id')
         .maybeSingle();
-      if (claimError || !claimed?.id) continue;
+      if (claimError) {
+        console.warn(
+          `[SocialPublishingService] claim failed post=${post.id}:`,
+          claimError.message
+        );
+        skippedClaim += 1;
+        continue;
+      }
+      if (!claimed?.id) {
+        skippedClaim += 1;
+        continue;
+      }
 
       const platform = (Array.isArray(post.platforms) ? post.platforms[0] : post.platform) as
         | 'facebook'
@@ -1425,6 +1465,8 @@ export class SocialPublishingService {
       published,
       failed,
       overdue: overdueCount || 0,
+      reclaimed,
+      skipped_claim: skippedClaim,
     };
   }
 

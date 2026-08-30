@@ -11,8 +11,9 @@ defineConnectorTool({
   module: 'platform-ops',
   name: 'get_platform_status',
   description:
-    'Return Alphaclone platform status for ChatGPT: uptime, MCP catalog size, deployment readiness, and module availability.',
+    'Return live Alphaclone platform status: database, MCP catalog, health score, API error pressure, and module readiness. Status is operational, degraded, or unhealthy — never a static placeholder.',
   permission: 'platform:read',
+  rateLimitClass: 'heavy',
   inputSchema: z.object({
     tenant_id: tenantIdField,
   }),
@@ -28,14 +29,65 @@ defineConnectorTool({
     const toolCount = await getUnifiedMcpToolCount();
     const { MCP_TOOL_CATALOG_VERSION } = await import('@/lib/mcp/standardResponse');
     const { SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } = await import('@/lib/social/types');
-    const { count: leadCount } = await supabase
-      .from('leads')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', args.tenant_id);
 
-    return {
-      status: 'operational',
+    const [{ error: dbError }, { count: leadCount }] = await Promise.all([
+      supabase.from('tenants').select('id').eq('id', args.tenant_id).maybeSingle(),
+      supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id),
+    ]);
+
+    let audit: Awaited<ReturnType<typeof import('@/lib/mcp/audit/platformAuditEngine').runPlatformAudit>> | null =
+      null;
+    try {
+      const { runPlatformAudit } = await import('@/lib/mcp/audit/platformAuditEngine');
+      audit = await runPlatformAudit({
+        tenantId: args.tenant_id,
+        includeSlowQueries: false,
+      });
+    } catch {
+      audit = null;
+    }
+
+    let apiHealth: Record<string, unknown> | null = null;
+    try {
+      apiHealth = (await buildApiHealthReport(args.tenant_id, 24)) as Record<string, unknown>;
+    } catch (err: unknown) {
+      apiHealth = { error: err instanceof Error ? err.message : String(err) };
+    }
+
+    const errorRate = Number(
+      apiHealth?.error_rate ?? (apiHealth?.summary as Record<string, unknown> | undefined)?.error_rate ?? 0
+    );
+    const dbHealthy = !dbError;
+    const catalogHealthy = toolCount >= 500;
+    const auditScore = audit?.score ?? null;
+    const criticalFindings = (audit?.findings || []).filter((f) => f.severity === 'critical').length;
+
+    let status: 'operational' | 'degraded' | 'unhealthy' = 'operational';
+    if (!dbHealthy || toolCount < 50 || criticalFindings > 0) {
+      status = 'unhealthy';
+    } else if ((auditScore !== null && auditScore < 75) || errorRate > 0.15 || !catalogHealthy) {
+      status = 'degraded';
+    }
+
+    return okResult('get_platform_status', {
+      status,
       product: 'Alphaclone Systems',
+      checks: {
+        database: dbHealthy ? 'healthy' : 'unhealthy',
+        mcp_catalog: catalogHealthy ? 'healthy' : 'degraded',
+        api_error_rate_24h: errorRate,
+        platform_audit_score: auditScore,
+        platform_audit_grade: audit?.grade ?? null,
+      },
+      health: audit
+        ? {
+            score: audit.score,
+            grade: audit.grade,
+            summary: audit.summary,
+            critical_findings: criticalFindings,
+            modules: audit.modules,
+          }
+        : null,
       mcp: {
         protocol_version: '2025-11-25',
         discovered_tools: toolCount,
@@ -51,7 +103,7 @@ defineConnectorTool({
       },
       uptime_seconds: Math.round(process.uptime()),
       timestamp: new Date().toISOString(),
-    };
+    });
   },
 });
 

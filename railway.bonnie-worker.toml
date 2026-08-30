@@ -1,0 +1,12 @@
+# Deploy as a separate Railway service: bonnie-worker
+# Settings → New Service → Connect repo → set Config Path to railway.bonnie-worker.toml
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+buildCommand = "rm -rf app && NODE_OPTIONS='--max-old-space-size=12288' npm run build"
+
+[deploy]
+startCommand = "npm run bonnie:worker"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

@@ -6,7 +6,7 @@ import {
   isRedirectUriAllowed,
   PLATFORM_MCP_OAUTH_CLIENT_IDS,
 } from '../../src/lib/mcp/oauthRedirect.ts';
-import { getToolCatalogModeForClient } from '../../src/lib/mcp/ensureOAuthClient.ts';
+import { getToolCatalogModeForClient, resolveUnifiedCatalogMode } from '../../src/lib/mcp/ensureOAuthClient.ts';
 import { isChatgptClient } from '../../src/lib/mcp/toolAnnotations.ts';
 import { hasRequiredScopes, requiredScopesForTool } from '../../src/lib/mcp/scopes.ts';
 import { getMcpPrompt, listMcpPrompts } from '../../src/lib/mcp/prompts/review_bonnie_patterns.ts';
@@ -17,10 +17,18 @@ test('normalizeMcpClientId never aliases generic client to chatgpt-connector', (
   assert.equal(normalizeMcpClientId('cursor-mcp'), 'cursor-mcp');
 });
 
-test('tool catalog mode defaults to full platform for all clients', () => {
-  assert.equal(getToolCatalogModeForClient('chatgpt-connector'), 'full');
-  assert.equal(getToolCatalogModeForClient('alphaclone-mcp-client'), 'full');
-  assert.equal(getToolCatalogModeForClient('1778309945386-41bab8272f61'), 'full');
+test('tool catalog mode: every platform connector gets the full executable catalog', () => {
+  for (const clientId of [
+    'chatgpt-connector',
+    'cursor-connector',
+    'alphaclone-mcp-client',
+    '1778309945386-41bab8272f61',
+    'claude-web',
+    'manus-ai',
+  ]) {
+    assert.equal(getToolCatalogModeForClient(clientId), 'full', `${clientId} should use full catalog`);
+    assert.equal(resolveUnifiedCatalogMode(clientId), 'full', `${clientId} should resolve to full mode`);
+  }
   assert.equal(getToolCatalogModeForClient('some-new-client'), 'full');
   assert.equal(getToolCatalogModeForClient(null), 'full');
   assert.equal(getToolCatalogModeForClient(undefined), 'full');

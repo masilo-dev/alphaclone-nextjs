@@ -28,7 +28,7 @@ interface Invoice {
  * Cron Job Service for Automated Recurring Invoices
  * 
  * This service handles the scheduling and generation of recurring invoices.
- * In production, this would be triggered by Vercel Cron Jobs or an external scheduler.
+ * In production, triggered by Railway cron jobs (see railway.crons.json).
  */
 export const cronService = {
   /**

@@ -5,8 +5,14 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { CrmNextStepsPanel } from './CrmNextStepsPanel';
+import { RevenueChainNetworkDiagram } from './RevenueChainNetworkDiagram';
 import { buildCombinedCrmNextSteps } from '@/lib/crmNextSteps';
-import { computeRevenueLeakage, computePipelineHealthScore, type RevenueLeakageInput } from '@/lib/revenueLifecycle';
+import {
+    buildRevenueChainNetwork,
+    computeRevenueLeakage,
+    computePipelineHealthScore,
+    type RevenueLeakageInput,
+} from '@/lib/revenueLifecycle';
 import type { Deal } from '@/services/dealService';
 
 type RevenueLeakagePanelProps = {
@@ -134,6 +140,11 @@ export function RevenueLeakagePanel({
         return computePipelineHealthScore(leakageInput);
     }, [leakageInput]);
 
+    const networkNodes = useMemo(() => {
+        if (!leakageInput) return [];
+        return buildRevenueChainNetwork(leakageInput, items);
+    }, [leakageInput, items]);
+
     if (loading) {
         return (
             <div className="flex items-center gap-2 px-4 py-3 mb-4 rounded-xl border border-white/5 bg-slate-900/40">
@@ -144,33 +155,29 @@ export function RevenueLeakagePanel({
     }
 
     return (
-        <div className="space-y-2 mb-4">
-            {health != null && (
-                <div className="rounded-xl border border-white/5 bg-slate-900/50 px-4 py-3">
-                    <div className="flex items-center justify-between gap-3 mb-2">
-                        <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                            Revenue chain health
-                        </span>
-                        <span className="text-sm font-black text-teal-400 tabular-nums">{health.score}%</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                        <div
-                            className="h-full bg-teal-500 rounded-full transition-all"
-                            style={{ width: `${health.score}%` }}
-                        />
-                    </div>
-                    {health.urgentCount > 0 && (
-                        <p className="text-[10px] text-amber-400/90 mt-2">
-                            {health.urgentCount} urgent leak{health.urgentCount === 1 ? '' : 's'} — fix below to protect revenue.
-                        </p>
+        <div className="space-y-3 mb-4">
+            <div className="rounded-xl border border-white/5 bg-slate-900/50 px-4 py-3">
+                <div className="mb-1">
+                    <p className="text-sm font-bold text-white">{heading}</p>
+                    {subheading && (
+                        <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{subheading}</p>
                     )}
                 </div>
+                {health != null && networkNodes.length > 0 && (
+                    <RevenueChainNetworkDiagram
+                        nodes={networkNodes}
+                        healthScore={health.score}
+                        urgentCount={health.urgentCount}
+                        className="mt-2"
+                    />
+                )}
+            </div>
+            {!leakageOnly && items.length > 0 && (
+                <CrmNextStepsPanel
+                    heading="Deal next steps"
+                    items={items}
+                />
             )}
-            <CrmNextStepsPanel
-                heading={heading}
-                subheading={subheading}
-                items={items}
-            />
         </div>
     );
 }

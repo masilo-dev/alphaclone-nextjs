@@ -1,6 +1,7 @@
 import { inferMcpAttribution, formatAttributionLabel } from '@/lib/audit/sourceAttribution';
 import { translateMcpToolToBusinessEvent } from '@/lib/audit/businessAuditEngine';
-import { isMutatingMcpTool } from './eventCatalog';
+import { humanizeTechnicalFailure } from '@/lib/copy/businessFriendlyErrors';
+import { isMutatingMcpTool, type TenantBusinessEventInput } from './eventCatalog';
 import { emitTenantBusinessEvent } from './emitTenantBusinessEvent';
 
 function parseToolResultText(content: unknown): Record<string, unknown> {
@@ -24,6 +25,8 @@ function eventTypeForTool(toolName: string, success: boolean): string {
   if (n.includes('meeting') || n.includes('booking')) return success ? 'meeting.booked' : 'mcp.action_failed';
   if (n.includes('campaign')) return success ? 'campaign.completed' : 'campaign.failed';
   if (n.includes('import')) return success ? 'lead.imported_bulk' : 'mcp.action_failed';
+  if (n.includes('create_client') || n.includes('add_client')) return success ? 'crm.client_created' : 'mcp.action_failed';
+  if (n.includes('create_project') || n.includes('add_project')) return success ? 'project.created' : 'mcp.action_failed';
   return success ? 'mcp.action_completed' : 'mcp.action_failed';
 }
 
@@ -34,6 +37,8 @@ function actionUrlForTool(toolName: string): string | undefined {
   if (n.includes('contract')) return '/dashboard/business/contracts';
   if (n.includes('social') || n.includes('publish')) return '/dashboard/social';
   if (n.includes('deal') || n.includes('pipeline')) return '/dashboard/deals';
+  if (n.includes('project')) return '/dashboard/business/projects';
+  if (n.includes('client')) return '/dashboard/crm/accounts';
   if (n.includes('outreach') || n.includes('send_email')) return '/dashboard/outreach/inbox';
   if (n.includes('campaign')) return '/dashboard/business/campaigns';
   if (n.includes('meeting') || n.includes('booking')) return '/dashboard/calendar';
@@ -71,12 +76,14 @@ export async function notifyAfterMcpToolExecution(params: {
   success: boolean;
   resultContent?: unknown;
   errorMessage?: string | null;
+  source?: TenantBusinessEventInput['source'];
 }): Promise<void> {
   if (!isMutatingMcpTool(params.toolName)) return;
 
   const output = parseToolResultText(params.resultContent);
-  if (params.errorMessage && !output.error) {
-    output.error = params.errorMessage;
+  const rawError = params.errorMessage || (typeof output.error === 'string' ? output.error : null);
+  if (rawError && !output.error) {
+    output.error = rawError;
   }
 
   const { effectiveSuccess, partial } = deriveExecutionOutcome(params.toolName, params.success, output);
@@ -102,14 +109,18 @@ export async function notifyAfterMcpToolExecution(params: {
     (params.args.entity_id as string) ||
     undefined;
 
+  const failureMessage = !effectiveSuccess && rawError
+    ? humanizeTechnicalFailure(rawError, { tool: params.toolName })
+    : translated.result;
+
   await emitTenantBusinessEvent({
     eventType,
     tenantId: params.tenantId,
     userId: params.userId,
     actor: formatAttributionLabel(attribution),
-    source: 'mcp',
+    source: params.source || 'mcp',
     title: translated.event,
-    message: translated.result,
+    message: failureMessage,
     actionUrl: actionUrlForTool(params.toolName),
     entityType: eventType.split('.')[0],
     entityId,

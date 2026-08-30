@@ -64,7 +64,21 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     if (createdLeadCount) {
       await recordDailyResourceQuota(tenantId, user.id, 'leads', createdLeadCount);
     }
-    await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: bulk.success ? 'clients_imported' : 'client_created', payload: { clientIds: (data || []).map((item: any) => item.id), actorUserId: user.id, skippedDuplicates: values.length - accepted.length } });
+    await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: bulk.success ? 'clients_imported' : 'client_created', payload: { clientIds: (data || []).map((item: any) => item.id), clientId: data?.[0]?.id, clientName: data?.[0]?.name || data?.[0]?.company_name, count: data?.length || 0, actorUserId: user.id, skippedDuplicates: values.length - accepted.length } });
+
+    const { bridgeAutomationEventToTenantNotification } = await import('@/lib/audit/businessEventBridge');
+    void bridgeAutomationEventToTenantNotification(
+      tenantId,
+      bulk.success ? 'clients_imported' : 'client_created',
+      {
+        clientIds: (data || []).map((item: { id: string }) => item.id),
+        clientId: data?.[0]?.id,
+        clientName: data?.[0]?.name || data?.[0]?.company_name,
+        count: data?.length || 0,
+        actorUserId: user.id,
+      },
+    );
+
     return NextResponse.json({ clients: data || [], client: bulk.success ? undefined : data?.[0], count: data?.length || 0, skipped: values.length - accepted.length }, { status: 201 });
   } catch (error) { return routeErrorResponse(error, 'Client records could not be created', req); }
 }

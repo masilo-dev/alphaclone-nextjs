@@ -407,12 +407,16 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      const { resolveUnifiedCatalogMode } = await import('@/lib/mcp/ensureOAuthClient');
+      const clientDefaultMode = resolveUnifiedCatalogMode(clientId);
       const rawCatalogMode = requestBody.params?.catalogMode || requestBody.params?.catalog_mode;
       const requestedCatalogMode = rawCatalogMode === 'stable'
         ? 'stable'
         : rawCatalogMode === 'progressive'
           ? 'progressive'
-          : 'full';
+          : rawCatalogMode === 'full'
+            ? 'full'
+            : clientDefaultMode;
 
       const tools = await getUnifiedMcpTools({
         clientId,

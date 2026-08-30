@@ -1,16 +1,20 @@
 /** Strip session-resolved IDs so MCP clients stop asking for tenant/user on every call. */
 const SESSION_FIELDS = new Set(['tenant_id', 'user_id', 'tenantId', 'userId']);
+/** Auto-filled server-side for write tools — do not require from chat agents. */
+const AUTO_FILLED_FIELDS = new Set(['idempotency_key', 'idempotencyKey']);
 
 export function sanitizeToolSchemaForClient(schema: Record<string, unknown> | undefined): Record<string, unknown> {
   if (!schema || typeof schema !== 'object') return { type: 'object', properties: {} };
 
   const properties = { ...((schema.properties as Record<string, unknown>) || {}) };
-  for (const key of SESSION_FIELDS) {
+  for (const key of [...SESSION_FIELDS, ...AUTO_FILLED_FIELDS]) {
     delete properties[key];
   }
 
   const required = Array.isArray(schema.required)
-    ? (schema.required as string[]).filter((f) => !SESSION_FIELDS.has(f))
+    ? (schema.required as string[]).filter(
+        (f) => !SESSION_FIELDS.has(f) && !AUTO_FILLED_FIELDS.has(f)
+      )
     : [];
 
   // Do not append a long session disclaimer onto every schema — that alone can push

@@ -244,6 +244,7 @@ export async function POST(
         event_type: "project_created",
         payload: {
           projectId: project.id,
+          projectName: project.name || input.name,
           actorUserId: user.id,
           templateId: input.templateId || null,
         },
@@ -253,6 +254,17 @@ export async function POST(
         "[projects] project_created event could not be recorded",
         eventError,
       );
+
+    const { bridgeAutomationEventToTenantNotification } = await import(
+      '@/lib/audit/businessEventBridge'
+    );
+    void bridgeAutomationEventToTenantNotification(tenantId, 'project_created', {
+      projectId: project.id,
+      projectName: project.name || input.name,
+      actorUserId: user.id,
+      source: 'user',
+    });
+
     return NextResponse.json({ project }, { status: 201 });
   } catch (error) {
     return routeErrorResponse(error, "Project could not be created", req);

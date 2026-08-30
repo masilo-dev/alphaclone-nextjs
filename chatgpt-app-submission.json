@@ -6223,6 +6223,66 @@
         "open_world_justification": "Operates only on private workspace data and does not publish externally.",
         "destructive_justification": "Can delete or archive records; use with care."
       }
+    },
+    "ask_bonnie_operations": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_leads": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "get_business_health_summary": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_today_operational_hud": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "list_scheduled_social_posts": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "May publish content to connected social platforms or external providers.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
     }
   },
   "test_cases": [

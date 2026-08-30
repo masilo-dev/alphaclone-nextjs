@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-08-26T05:17:30.481Z",
+  "generated_at": "2026-08-30T14:14:38.331Z",
   "source_of_truth": "runtime MCP registry + unified tools/list full catalog",
   "policy": "Existing clients retain the full executable catalog for compatibility. Stable-core and domain-pack discovery are available as the migration target; catalog-only entries are audit visibility only.",
   "totals": {
-    "full_catalog_tools": 519,
-    "registry_executable_tools": 519,
+    "full_catalog_tools": 524,
+    "registry_executable_tools": 524,
     "progressive_route_tools": 7,
     "catalog_only_tools": 0,
-    "write_tools": 328,
+    "write_tools": 329,
     "write_tools_with_idempotency": 29,
     "write_tools_with_receipt_signal": 20,
     "duplicate_names": []
@@ -1042,9 +1042,9 @@
       ]
     },
     "bonnie": {
-      "total": 31,
-      "executable": 31,
-      "write": 25,
+      "total": 32,
+      "executable": 32,
+      "write": 26,
       "tools": [
         {
           "canonical_tool_name": "activate_skill_for_session",
@@ -1069,6 +1069,51 @@
             "required": [
               "tenant_id",
               "skill_name"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "ask_bonnie_operations",
+          "module": "bonnie",
+          "description": "Ask Bonnie a natural-language operations question. Returns exception-based intelligence with evidence labels.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "query": {
+                "type": "string",
+                "description": "Natural language operations question"
+              }
+            },
+            "required": [
+              "tenant_id",
+              "query"
             ]
           },
           "output_schema": {
@@ -3444,7 +3489,7 @@
         {
           "canonical_tool_name": "list_companies",
           "module": "companies",
-          "description": "List companies / business clients in the CRM.",
+          "description": "List CRM company accounts from the companies table.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -8551,6 +8596,10 @@
                 "type": "string",
                 "description": "Plain text message body (gateway renders branded HTML)"
               },
+              "html": {
+                "type": "string",
+                "description": "Rejected unless text is also provided — use text and let the gateway render HTML"
+              },
               "category": {
                 "type": "string",
                 "enum": [
@@ -8595,8 +8644,7 @@
               }
             },
             "required": [
-              "subject",
-              "idempotency_key"
+              "subject"
             ]
           },
           "output_schema": {
@@ -9166,8 +9214,8 @@
       ]
     },
     "health": {
-      "total": 35,
-      "executable": 35,
+      "total": 37,
+      "executable": 37,
       "write": 8,
       "tools": [
         {
@@ -9206,6 +9254,46 @@
           "supports_action_receipt": false,
           "annotations": {
             "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "calcom_health",
+          "module": "health",
+          "description": "Health/status for Cal.com booking integration (optional — does not reduce platform health score).",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "tenant_id"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON data or read-only result."
+          },
+          "read_write_classification": "read",
+          "risk_level": "low",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": true,
             "openWorldHint": false,
             "destructiveHint": false
           }
@@ -9253,7 +9341,7 @@
         {
           "canonical_tool_name": "check_mcp_execution_readiness",
           "module": "health",
-          "description": "Check whether the current MCP workspace can execute ChatGPT write actions, especially social publishing and email sending. Use this when tools are visible but posting or sending fails.",
+          "description": "Check whether the current MCP workspace can execute write actions (social publishing and email sending). Returns missing setup steps and the recommended tool to call next.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -9669,6 +9757,46 @@
           }
         },
         {
+          "canonical_tool_name": "get_business_health_summary",
+          "module": "health",
+          "description": "High-level operational health: project risks, SLA compliance, bottlenecks, outstanding revenue, and blockers.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "tenant_id"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON data or read-only result."
+          },
+          "read_write_classification": "read",
+          "risk_level": "low",
+          "approval_requirement": false,
+          "auth_scope": [
+            "read",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
           "canonical_tool_name": "get_calendly_status",
           "module": "health",
           "description": "Check status of Calendly OAuth connection and active event types.",
@@ -9875,7 +10003,7 @@
         {
           "canonical_tool_name": "get_platform_status",
           "module": "health",
-          "description": "Return Alphaclone platform status for ChatGPT: uptime, MCP catalog size, deployment readiness, and module availability.",
+          "description": "Return live Alphaclone platform status: database, MCP catalog, health score, API error pressure, and module readiness. Status is operational, degraded, or unhealthy — never a static placeholder.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -10297,7 +10425,7 @@
         {
           "canonical_tool_name": "integrations_status",
           "module": "health",
-          "description": "Aggregate health/status for all Alphaclone integrations (GitHub, Gmail, Google Calendar, Zoho, Stripe, Calendly, Railway, Supabase, OpenAI, DeepSeek).",
+          "description": "Aggregate health/status for Alphaclone integrations. Core integrations affect readiness score; Gmail, GitHub, Cal.com, Calendly, and Google Calendar are optional and never reduce the score.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -18551,8 +18679,8 @@
       ]
     },
     "social": {
-      "total": 55,
-      "executable": 55,
+      "total": 56,
+      "executable": 56,
       "write": 39,
       "tools": [
         {
@@ -19922,7 +20050,7 @@
         {
           "canonical_tool_name": "get_scheduled_posts",
           "module": "social",
-          "description": "Retrieve pending or sent scheduled social posts. Tenant is resolved from session.",
+          "description": "Retrieve scheduled social posts from social_posts. Legacy scheduled_posts table is retired; pending maps to status=scheduled, sent maps to published.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -20160,6 +20288,52 @@
           "annotations": {
             "readOnlyHint": true,
             "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "list_scheduled_social_posts",
+          "module": "social",
+          "description": "List scheduled social posts from the canonical social_posts table.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "limit": {
+                "type": "number"
+              },
+              "offset": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "tenant_id"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON data or read-only result."
+          },
+          "read_write_classification": "read",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "read",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true,
             "destructiveHint": false
           }
         },
@@ -21307,7 +21481,7 @@
         {
           "canonical_tool_name": "scheduled_posts",
           "module": "social",
-          "description": "List scheduled social posts with pagination.",
+          "description": "DEPRECATED — use list_scheduled_social_posts. Reads social_posts (legacy scheduled_posts table is retired).",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -23856,8 +24030,8 @@
       ]
     },
     "workspace": {
-      "total": 48,
-      "executable": 48,
+      "total": 49,
+      "executable": 49,
       "write": 30,
       "tools": [
         {
@@ -25150,6 +25324,46 @@
               }
             },
             "required": []
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON data or read-only result."
+          },
+          "read_write_classification": "read",
+          "risk_level": "low",
+          "approval_requirement": false,
+          "auth_scope": [
+            "read",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "get_today_operational_hud",
+          "module": "workspace",
+          "description": "Real-time operational HUD: tasks due today, overdue work, pending client SLAs, blockers, approvals, and failures.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "tenant_id"
+            ]
           },
           "output_schema": {
             "type": "object",
@@ -27049,6 +27263,51 @@
         "required": [
           "tenant_id",
           "skill_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "ask_bonnie_operations",
+      "module": "bonnie",
+      "description": "Ask Bonnie a natural-language operations question. Returns exception-based intelligence with evidence labels.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "query": {
+            "type": "string",
+            "description": "Natural language operations question"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "query"
         ]
       },
       "output_schema": {
@@ -29410,7 +29669,7 @@
     {
       "canonical_tool_name": "list_companies",
       "module": "companies",
-      "description": "List companies / business clients in the CRM.",
+      "description": "List CRM company accounts from the companies table.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -34489,6 +34748,10 @@
             "type": "string",
             "description": "Plain text message body (gateway renders branded HTML)"
           },
+          "html": {
+            "type": "string",
+            "description": "Rejected unless text is also provided — use text and let the gateway render HTML"
+          },
           "category": {
             "type": "string",
             "enum": [
@@ -34533,8 +34796,7 @@
           }
         },
         "required": [
-          "subject",
-          "idempotency_key"
+          "subject"
         ]
       },
       "output_schema": {
@@ -35135,6 +35397,46 @@
       }
     },
     {
+      "canonical_tool_name": "calcom_health",
+      "module": "health",
+      "description": "Health/status for Cal.com booking integration (optional — does not reduce platform health score).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "tenant_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON data or read-only result."
+      },
+      "read_write_classification": "read",
+      "risk_level": "low",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "calendly_health",
       "module": "health",
       "description": "Health/status for Calendly integration.",
@@ -35177,7 +35479,7 @@
     {
       "canonical_tool_name": "check_mcp_execution_readiness",
       "module": "health",
-      "description": "Check whether the current MCP workspace can execute ChatGPT write actions, especially social publishing and email sending. Use this when tools are visible but posting or sending fails.",
+      "description": "Check whether the current MCP workspace can execute write actions (social publishing and email sending). Returns missing setup steps and the recommended tool to call next.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -35593,6 +35895,46 @@
       }
     },
     {
+      "canonical_tool_name": "get_business_health_summary",
+      "module": "health",
+      "description": "High-level operational health: project risks, SLA compliance, bottlenecks, outstanding revenue, and blockers.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "tenant_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON data or read-only result."
+      },
+      "read_write_classification": "read",
+      "risk_level": "low",
+      "approval_requirement": false,
+      "auth_scope": [
+        "read",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "get_calendly_status",
       "module": "health",
       "description": "Check status of Calendly OAuth connection and active event types.",
@@ -35799,7 +36141,7 @@
     {
       "canonical_tool_name": "get_platform_status",
       "module": "health",
-      "description": "Return Alphaclone platform status for ChatGPT: uptime, MCP catalog size, deployment readiness, and module availability.",
+      "description": "Return live Alphaclone platform status: database, MCP catalog, health score, API error pressure, and module readiness. Status is operational, degraded, or unhealthy — never a static placeholder.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -36221,7 +36563,7 @@
     {
       "canonical_tool_name": "integrations_status",
       "module": "health",
-      "description": "Aggregate health/status for all Alphaclone integrations (GitHub, Gmail, Google Calendar, Zoho, Stripe, Calendly, Railway, Supabase, OpenAI, DeepSeek).",
+      "description": "Aggregate health/status for Alphaclone integrations. Core integrations affect readiness score; Gmail, GitHub, Cal.com, Calendly, and Google Calendar are optional and never reduce the score.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -45769,7 +46111,7 @@
     {
       "canonical_tool_name": "get_scheduled_posts",
       "module": "social",
-      "description": "Retrieve pending or sent scheduled social posts. Tenant is resolved from session.",
+      "description": "Retrieve scheduled social posts from social_posts. Legacy scheduled_posts table is retired; pending maps to status=scheduled, sent maps to published.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -46007,6 +46349,52 @@
       "annotations": {
         "readOnlyHint": true,
         "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "list_scheduled_social_posts",
+      "module": "social",
+      "description": "List scheduled social posts from the canonical social_posts table.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "offset": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "tenant_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON data or read-only result."
+      },
+      "read_write_classification": "read",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "read",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
         "destructiveHint": false
       }
     },
@@ -47154,7 +47542,7 @@
     {
       "canonical_tool_name": "scheduled_posts",
       "module": "social",
-      "description": "List scheduled social posts with pagination.",
+      "description": "DEPRECATED — use list_scheduled_social_posts. Reads social_posts (legacy scheduled_posts table is retired).",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -50969,6 +51357,46 @@
           }
         },
         "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON data or read-only result."
+      },
+      "read_write_classification": "read",
+      "risk_level": "low",
+      "approval_requirement": false,
+      "auth_scope": [
+        "read",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "get_today_operational_hud",
+      "module": "workspace",
+      "description": "Real-time operational HUD: tasks due today, overdue work, pending client SLAs, blockers, approvals, and failures.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "tenant_id"
+        ]
       },
       "output_schema": {
         "type": "object",

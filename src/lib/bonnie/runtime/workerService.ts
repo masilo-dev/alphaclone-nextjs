@@ -21,7 +21,7 @@ import { getRunProgressSummary } from './goalRunService';
 import { classifyError, backoffWithJitter } from './utils';
 import { openIntervention } from './interventionService';
 import { startChaseForTask } from './chasingService';
-import { verifyTaskSideEffect } from './verificationService';
+import { verifyTaskSideEffect, verifyBusinessOutcome } from './verificationService';
 import { runBonnieWithOpenAIAgents } from '@/lib/bonnie/bonnieOpenAIAgentsRunner';
 import type { BonnieModuleId } from '@/lib/bonnie/bonnieToolCatalog';
 import { createHash } from 'crypto';
@@ -307,11 +307,18 @@ async function executeTaskStages(params: {
 
     if (stage === 'verify') {
       const side = await verifyTaskSideEffect({ tenantId, taskId: task.id });
-      intermediate.verified = side.ok;
-      intermediate.verifyDetail = side.detail;
+      const outcome = await verifyBusinessOutcome({
+        tenantId,
+        taskId: task.id,
+        taskType: String(task.task_type || ''),
+        structuredOutput: (intermediate.result || {}) as Record<string, unknown>,
+      });
+      intermediate.verified = side.ok && outcome.verified;
+      intermediate.verifyDetail = outcome.verified ? outcome.detail : `${side.detail}; ${outcome.detail}`;
+      intermediate.outcomeTier = outcome.tier;
       intermediate.verifiedAt = new Date().toISOString();
-      if (['specialist', 'communicate'].includes(String(task.task_type)) && !side.ok) {
-        throw new Error(`Task verification failed: ${side.detail}`);
+      if (['specialist', 'communicate', 'billing', 'publish'].includes(String(task.task_type)) && !intermediate.verified) {
+        throw new Error(`Task verification failed: ${intermediate.verifyDetail}`);
       }
     }
 

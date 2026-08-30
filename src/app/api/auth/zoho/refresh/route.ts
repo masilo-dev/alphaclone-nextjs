@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ZohoService } from '../../../../../services/zoho/ZohoService';
+import { ZohoService, ZohoAuthExpiredError } from '../../../../../services/zoho/ZohoService';
 import { requireTenantAccess } from '@/lib/apiAuth';
 
 function tokenNeedsRefresh(expiryDate: string | undefined, force: boolean): boolean {
@@ -35,23 +35,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Could not refresh Zoho token. Reconnect Zoho if this keeps happening.',
-          reconnect: true,
+          error: 'Could not refresh Zoho token. Try again in a moment.',
+          reconnect: false,
         },
-        { status: 401 }
+        { status: 503 }
       );
     }
 
     return NextResponse.json({ success: true, refreshed: true });
   } catch (err: unknown) {
     console.error('[Zoho Refresh] Error:', err);
+    const expired = err instanceof ZohoAuthExpiredError;
     return NextResponse.json(
       {
         success: false,
         error: err instanceof Error ? err.message : 'Failed to refresh Zoho token',
-        reconnect: true,
+        reconnect: expired,
       },
-      { status: 500 }
+      { status: expired ? 401 : 503 }
     );
   }
 }

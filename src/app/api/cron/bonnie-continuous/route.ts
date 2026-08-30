@@ -35,16 +35,17 @@ export async function GET(req: NextRequest) {
         let goalsChased = 0;
 
         const health = Number(twin.snapshot.kpis.health_score || 100);
-        if (health < 75 || (twin.snapshot.risks || []).length > 0) {
-          const cognitive = await runCognitiveLoop({
-            tenantId,
-            goal: 'Continuous business monitor: review digital twin risks, prioritize next actions across departments, and update memory with actionable patterns.',
-            triggerType: 'continuous',
-            executeActions: true,
-          });
-          cognitiveRunId = cognitive.runId;
-          cognitiveStatus = cognitive.status;
-        }
+        const hasRisks = (twin.snapshot.risks || []).length > 0;
+        const cognitive = await runCognitiveLoop({
+          tenantId,
+          goal: health < 75 || hasRisks
+            ? 'Continuous business monitor: review digital twin risks, prioritize next actions across departments, and update memory with actionable patterns.'
+            : 'Lightweight continuous monitor: refresh workspace health, scan for blockers, and queue follow-ups without mutating data unless critical.',
+          triggerType: 'continuous',
+          executeActions: health < 75 || hasRisks,
+        });
+        cognitiveRunId = cognitive.runId;
+        cognitiveStatus = cognitive.status;
 
         try {
           const chase = await chaseOpenGoals({

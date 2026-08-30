@@ -74,7 +74,7 @@ test("inspect_tools catalog (full) and tools/list include the same canonical soc
     assert.ok(fullNames.has(name), `full catalog missing ${name}`);
     assert.ok(
       chatgptNames.has(name),
-      `ChatGPT curated catalog missing ${name}`,
+      `ChatGPT full catalog missing ${name}`,
     );
   }
 });

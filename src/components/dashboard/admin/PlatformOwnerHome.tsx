@@ -61,6 +61,12 @@ const QUICK_LINKS = [
     icon: ClipboardList,
   },
   {
+    href: '/dashboard/admin/mcp-sessions',
+    label: 'MCP monitor',
+    description: 'ChatGPT and Cursor MCP calls, failures, and tool usage.',
+    icon: KeyRound,
+  },
+  {
     href: '/dashboard/admin/users',
     label: 'Platform users',
     description: 'Accounts across all tenants.',

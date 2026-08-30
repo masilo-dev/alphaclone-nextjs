@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { emitTenantBusinessEvent } from '@/lib/notifications/emitTenantBusinessEvent';
+import type { TenantBusinessEventInput } from '@/lib/notifications/eventCatalog';
 import { recordBusinessActivity } from '@/lib/audit/businessAuditEngine';
 
 const EVENT_MAP: Record<string, { eventType: string; title: (p: Record<string, unknown>) => string; message: (p: Record<string, unknown>) => string; actionUrl?: string }> = {
@@ -46,6 +47,24 @@ const EVENT_MAP: Record<string, { eventType: string; title: (p: Record<string, u
     message: (p) => `New inquiry from ${p.email || 'prospect'}.`,
     actionUrl: '/dashboard/leads',
   },
+  project_created: {
+    eventType: 'project.created',
+    title: (p) => `Project created — ${p.projectName || p.name || 'New project'}`,
+    message: (p) => `Project "${p.projectName || p.name || 'New project'}" was added to your workspace.`,
+    actionUrl: '/dashboard/business/projects',
+  },
+  client_created: {
+    eventType: 'crm.client_created',
+    title: (p) => `Client added — ${p.clientName || p.name || 'New client'}`,
+    message: (p) => `${p.clientName || p.name || 'A new client'} is now in your CRM.`,
+    actionUrl: '/dashboard/crm/accounts',
+  },
+  clients_imported: {
+    eventType: 'crm.clients_imported',
+    title: (p) => `${Number(p.count) || 'Multiple'} clients imported`,
+    message: (p) => `${Number(p.count) || 'Several'} client record(s) were imported into your workspace.`,
+    actionUrl: '/dashboard/crm/accounts',
+  },
 };
 
 /**
@@ -79,13 +98,14 @@ export async function bridgeAutomationEventToTenantNotification(
     tenantId,
     userId,
     eventType: mapping.eventType,
-    source: 'system',
+    source: (payload.source as TenantBusinessEventInput['source']) || 'user',
     title: mapping.title(payload),
     message: mapping.message(payload),
     actionUrl: mapping.actionUrl,
     clientName,
+    projectName: (payload.projectName || payload.name) as string | undefined,
     entityType: mapping.eventType.split('.')[0],
-    entityId: (payload.contractId || payload.leadId || payload.invoiceId || payload.campaignId) as string | undefined,
+    entityId: (payload.contractId || payload.leadId || payload.invoiceId || payload.campaignId || payload.projectId || payload.clientId) as string | undefined,
     status: 'success',
     metadata: payload,
   }).catch((err) => {

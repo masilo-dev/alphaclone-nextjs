@@ -33,6 +33,19 @@ export const REVENUE_LIFECYCLE_LABELS: Record<RevenueLifecycleStep, string> = {
     project_active: 'Project delivery',
 };
 
+export const REVENUE_STEP_HREF: Record<RevenueLifecycleStep, string> = {
+    discovered: '/dashboard/leads',
+    qualified: '/dashboard/deals',
+    engaged: '/dashboard/business/messages',
+    proposal_sent: '/dashboard/business/quotes',
+    proposal_accepted: '/dashboard/business/quotes',
+    contract_sent: '/dashboard/business/contracts',
+    contract_signed: '/dashboard/business/contracts',
+    invoice_sent: '/dashboard/business/billing',
+    invoice_paid: '/dashboard/accounting',
+    project_active: '/dashboard/business/projects',
+};
+
 const MS_DAY = 86_400_000;
 
 export type RevenueLeakageInput = {
@@ -312,6 +325,122 @@ export function computePipelineHealthScore(
     }
     const penalty = urgentCount * 18 + items.filter((i) => i.tone === 'normal').length * 6;
     return { score: Math.max(0, Math.min(100, 100 - penalty)), urgentCount };
+}
+
+export type RevenueChainNodeTone = 'ok' | 'warn' | 'urgent' | 'idle';
+
+export type RevenueChainNetworkNode = {
+    step: RevenueLifecycleStep;
+    label: string;
+    shortLabel: string;
+    href: string;
+    volume: number;
+    leakCount: number;
+    tone: RevenueChainNodeTone;
+    detail?: string;
+    actionLabel?: string;
+};
+
+const REVENUE_STEP_SHORT: Record<RevenueLifecycleStep, string> = {
+    discovered: 'Find',
+    qualified: 'Qualify',
+    engaged: 'Engage',
+    proposal_sent: 'Propose',
+    proposal_accepted: 'Accepted',
+    contract_sent: 'Contract',
+    contract_signed: 'Signed',
+    invoice_sent: 'Invoice',
+    invoice_paid: 'Paid',
+    project_active: 'Deliver',
+};
+
+const LEAK_STEP_MAP: Record<string, RevenueLifecycleStep> = {
+    'leak-stale-leads': 'discovered',
+    'leak-no-proposal': 'proposal_sent',
+    'leak-won-no-contract': 'contract_signed',
+    'leak-contract-no-invoice': 'invoice_sent',
+    'leak-no-project': 'project_active',
+    'leak-stale-deals': 'engaged',
+    'leak-unpaid-invoices': 'invoice_paid',
+    'leak-social-inactive': 'discovered',
+    'leak-campaign-no-pipeline': 'discovered',
+    'leak-unlinked-meeting-actions': 'engaged',
+};
+
+/** Build clickable network nodes with real volumes + leak highlights. */
+export function buildRevenueChainNetwork(
+    input: RevenueLeakageInput,
+    items: CrmNextStepItem[],
+): RevenueChainNetworkNode[] {
+    const openDeals = input.deals.filter((d) => d.stage !== 'closed_won' && d.stage !== 'closed_lost');
+    const wonDeals = input.deals.filter((d) => d.stage === 'closed_won');
+    const signedContracts = input.contracts.filter((c) =>
+        ['fully_signed', 'client_signed', 'signed'].includes(String(c.status || '')),
+    );
+    const sentInvoices = input.invoices.filter((i) =>
+        ['sent', 'overdue', 'viewed', 'partially_paid'].includes(String(i.status || '')),
+    );
+    const paidInvoices = input.invoices.filter((i) => String(i.status || '') === 'paid');
+    const activeProjects = input.projects.length;
+    const qualifiedLeads = input.leads.filter((l) => {
+        const stage = (l.stage || l.status || '').toLowerCase();
+        return stage === 'qualified' || stage === 'contacted';
+    }).length;
+    const discoveredLeads = input.leads.filter((l) => {
+        const stage = (l.stage || l.status || 'lead').toLowerCase();
+        return stage === 'lead' || stage === 'new' || stage === 'discovered';
+    }).length;
+    const proposalDeals = openDeals.filter((d) => d.stage === 'proposal' || d.stage === 'negotiation').length;
+    const acceptedQuotes = input.quotes.filter((q) =>
+        ['accepted', 'approved', 'signed'].includes(String(q.status || '').toLowerCase()),
+    ).length;
+    const sentContracts = input.contracts.filter((c) =>
+        ['sent', 'pending', 'client_signed', 'fully_signed', 'signed', 'active'].includes(String(c.status || '')),
+    ).length;
+
+    const volumes: Record<RevenueLifecycleStep, number> = {
+        discovered: discoveredLeads,
+        qualified: qualifiedLeads,
+        engaged: openDeals.length,
+        proposal_sent: proposalDeals + input.quotes.length,
+        proposal_accepted: acceptedQuotes,
+        contract_sent: sentContracts,
+        contract_signed: signedContracts.length,
+        invoice_sent: sentInvoices.length,
+        invoice_paid: paidInvoices.length,
+        project_active: activeProjects,
+    };
+
+    const leakByStep = new Map<RevenueLifecycleStep, CrmNextStepItem>();
+    for (const item of items) {
+        if (item.id === 'leak-all-clear') continue;
+        const step = LEAK_STEP_MAP[item.id];
+        if (step) leakByStep.set(step, item);
+    }
+
+    return REVENUE_LIFECYCLE_STEPS.map((step) => {
+        const leak = leakByStep.get(step);
+        const volume = volumes[step];
+        let tone: RevenueChainNodeTone = volume > 0 ? 'ok' : 'idle';
+        if (leak?.tone === 'urgent') tone = 'urgent';
+        else if (leak?.tone === 'normal') tone = 'warn';
+
+        const leakCount = leak
+            ? Number((leak.title.match(/^(\d+)/)?.[1] ?? '1'))
+            : 0;
+
+        return {
+            step,
+            label: REVENUE_LIFECYCLE_LABELS[step],
+            shortLabel: REVENUE_STEP_SHORT[step],
+            href: REVENUE_STEP_HREF[step],
+            volume,
+            leakCount,
+            tone,
+            detail: leak?.detail,
+            actionLabel: leak?.actionLabel,
+        };
+    });
 }
 
 export function mapDealStageToLifecycleHint(stage: string): RevenueLifecycleStep {

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { MCPTool, MCPToolExecutionResult } from '@/types/mcp';
 import { mergeSessionArgs, sanitizeToolSchemaForClient } from '@/lib/mcp/sanitizeToolSchema';
+import { resolveMcpToolName } from '@/lib/mcp/canonicalToolRegistry';
+import { normalizeToolArguments } from '@/lib/mcp/normalizeToolArguments';
 import {
   isTransientToolError,
   resolveToolWorkaround,
@@ -40,8 +42,9 @@ async function invokeToolHandler(
   userId: string,
   args: Record<string, any>
 ): Promise<MCPToolExecutionResult> {
+  const normalizedArgs = await normalizeToolArguments(tool.name, args, { tenantId, userId });
   const validatedArgs = tool.inputSchema.parse(
-    mergeSessionArgs(args, { tenantId, userId })
+    mergeSessionArgs(normalizedArgs, { tenantId, userId })
   );
   const rawResult = await tool.handler(validatedArgs, { tenantId, userId });
 
@@ -114,7 +117,7 @@ export async function executeTool(
   toolName: string,
   args: Record<string, any>
 ): Promise<MCPToolExecutionResult> {
-  const requestedTool = normalizeToolName(toolName);
+  const requestedTool = resolveMcpToolName(normalizeToolName(toolName));
   const startTime = Date.now();
   let success = false;
   let errorMessage: string | undefined;
@@ -323,6 +326,7 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/nexus-memory'), './tools/nexus-memory');
   // Connector / multi-client surface
   loadToolModule(() => require('./tools/platform-ops'), './tools/platform-ops');
+  loadToolModule(() => require('./tools/operations-ops'), './tools/operations-ops');
   loadToolModule(() => require('./tools/bonnie-inspect'), './tools/bonnie-inspect');
   loadToolModule(() => require('./tools/crm-ops'), './tools/crm-ops');
   loadToolModule(() => require('./tools/bulk-operations'), './tools/bulk-operations');

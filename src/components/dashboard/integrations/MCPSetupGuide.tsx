@@ -84,7 +84,7 @@ const SETUP_STEPS = [
   },
 ];
 
-type McpSetupType = 'claude' | 'manus' | 'grok' | 'chatgpt';
+type McpSetupType = 'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor';
 
 /** Platform OAuth client IDs — same for all AlphaClone users; copy into connector settings. */
 const MCP_OAUTH_PLATFORM_CONFIG: Record<
@@ -114,6 +114,12 @@ const MCP_OAUTH_PLATFORM_CONFIG: Record<
     clientId: 'manus-ai',
     scopes: 'read write mcp:tools mcp:resources',
     hint: 'In Manus → MCP / Tools settings, paste Client ID when connecting via OAuth.',
+  },
+  cursor: {
+    title: 'Cursor MCP (API key)',
+    clientId: 'cursor-connector',
+    scopes: 'read write mcp:tools mcp:resources',
+    hint: 'In Cursor → Settings → MCP, add the HTTP server below. Use your personal connection key as the Bearer token (shown in Step 2).',
   },
 };
 
@@ -368,12 +374,12 @@ function McpBusinessPromptPlaybook({
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 interface MCPSetupGuideProps {
-  initialType?: 'claude' | 'manus' | 'grok' | 'chatgpt';
+  initialType?: 'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor';
 }
 
 const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const currentTenant = useCurrentTenantSafe();
-  const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok' | 'chatgpt'>(initialType ?? 'claude');
+  const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor'>(initialType ?? 'claude');
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
@@ -398,6 +404,8 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         setSetupType('grok');
       } else if (mcpParam === 'chatgpt') {
         setSetupType('chatgpt');
+      } else if (mcpParam === 'cursor') {
+        setSetupType('cursor');
       }
     }
   }, [initialType]);
@@ -413,11 +421,12 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     setupType === 'claude' ? 'Claude'
     : setupType === 'manus' ? 'Manus'
     : setupType === 'chatgpt' ? 'ChatGPT'
+    : setupType === 'cursor' ? 'Cursor'
     : 'Grok';
 
   /** Single-query URL: tenant and user are resolved from the key server-side. */
   const buildConnectionUrl = (token: string | null) => {
-    const path = (setupType === 'claude' || setupType === 'grok' || setupType === 'chatgpt') ? '/api/mcp' : '/api/mcp/sse';
+    const path = (setupType === 'claude' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor') ? '/api/mcp' : '/api/mcp/sse';
     if (setupType === 'chatgpt') {
       return `${mcpOrigin}${path}`;
     }
@@ -524,6 +533,17 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   }
 }`;
 
+  const cursorMcpConfigJson = `{
+  "mcpServers": {
+    "alphaclone": {
+      "url": "${mcpOrigin}/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${mcpKey}"
+      }
+    }
+  }
+}`;
+
   const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     toast.success(`${label} copied!`);
@@ -566,7 +586,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : setupType === 'chatgpt' ? 'ChatGPT' : 'Grok'} AI to Your Account</h1>
+            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : setupType === 'chatgpt' ? 'ChatGPT' : setupType === 'cursor' ? 'Cursor' : 'Grok'} AI to Your Account</h1>
             <p className="text-slate-400 text-sm mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
           </div>
         </div>
@@ -597,15 +617,38 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           >
             ChatGPT
           </button>
+          <button
+            onClick={() => setSetupType('cursor')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'cursor' ? 'bg-sky-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Cursor
+          </button>
         </div>
 
-        <McpOAuthCredentialsPanel setupType={setupType} mcpOrigin={mcpOrigin} onCopy={copyText} />
+        {setupType !== 'cursor' && (
+          <McpOAuthCredentialsPanel setupType={setupType} mcpOrigin={mcpOrigin} onCopy={copyText} />
+        )}
+
+        {setupType === 'cursor' && (
+          <div className="mb-6 p-5 rounded-2xl bg-sky-500/10 border border-sky-500/20 space-y-3">
+            <p className="text-slate-200 text-sm">
+              In <strong>Cursor → Settings → MCP</strong>, click <strong>Add MCP server</strong> and paste the JSON from Step 4 below.
+              Your personal connection key (Step 2) goes in the <code className="text-teal-400 text-xs">Authorization</code> header.
+            </p>
+            <p className="text-slate-400 text-xs">
+              Registered client ID: <code className="text-sky-300">cursor-connector</code> — full platform tool catalog (same executable surface as Claude and Manus).
+            </p>
+          </div>
+        )}
 
         {setupType === 'chatgpt' && (
-          <div className="mb-6 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+          <div className="mb-6 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
             <p className="text-slate-200 text-sm">
               In ChatGPT, go to <strong>Settings → Connectors → MCP</strong> and add the <strong>MCP Server URL</strong> from the OAuth credentials box above.
               When ChatGPT asks you to sign in, approve access on AlphaClone — your workspace is attached automatically.
+            </p>
+            <p className="text-slate-400 text-xs">
+              Registered client ID: <code className="text-emerald-300">chatgpt-connector</code> — full platform tool catalog (all workspace tools, read and write).
             </p>
           </div>
         )}
@@ -660,17 +703,21 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
       <div className="mb-8">
         <h2 className="text-lg font-bold text-white mb-5">Step-by-step setup guide</h2>
         <div className="space-y-4">
-          {SETUP_STEPS.filter(s => setupType === 'claude' || [1, 2, 3, 6].includes(s.number)).map((step, idx) => {
-            const isWebAgent = setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt';
+          {SETUP_STEPS.filter((s) => {
+            if (setupType === 'claude') return true;
+            if (setupType === 'cursor') return [1, 2, 3, 4, 6].includes(s.number);
+            return [1, 2, 3, 6].includes(s.number);
+          }).map((step, idx) => {
+            const isWebAgent = setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor';
             const displayNum = idx + 1;
             const isDone = completedSteps.has(step.number);
             const isOpen = expandedStep === step.number;
 
-            // Adjust title/body/action for Manus
             const stepTitle = isWebAgent
               ? step.number === 1 ? `Open ${agentLabel}`
-              : step.number === 2 ? (setupType === 'chatgpt' ? 'Copy your MCP Server URL' : 'Copy your Connection URL')
-              : step.number === 3 ? (setupType === 'chatgpt' ? 'Add AlphaClone connector in ChatGPT' : `Add AlphaClone to ${agentLabel} MCP Settings`)
+              : step.number === 2 ? (setupType === 'chatgpt' ? 'Copy your MCP Server URL' : setupType === 'cursor' ? 'Copy your connection key' : 'Copy your Connection URL')
+              : step.number === 3 ? (setupType === 'chatgpt' ? 'Add AlphaClone connector in ChatGPT' : setupType === 'cursor' ? 'Add AlphaClone in Cursor MCP settings' : `Add AlphaClone to ${agentLabel} MCP Settings`)
+              : step.number === 4 && setupType === 'cursor' ? 'Paste MCP server JSON'
               : 'Test your connection'
               : step.title;
 
@@ -678,10 +725,16 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
               ? step.number === 1 ? `Open ${agentLabel} and sign in to your account.`
               : step.number === 2 ? (setupType === 'chatgpt'
                 ? 'Copy your MCP Server URL below (no API key in the URL — ChatGPT uses OAuth). When you approve access, your workspace and user are attached automatically.'
+                : setupType === 'cursor'
+                  ? 'Copy your personal connection key below. Cursor sends it as a Bearer token so AlphaClone knows which workspace is yours.'
                 : `Copy your unique Connection URL below. This is what tells ${agentLabel} which AlphaClone account to connect to. Keep it private.`)
               : step.number === 3 ? (setupType === 'chatgpt'
                 ? 'In ChatGPT: Settings → Connectors → MCP → Add connector. Paste the MCP Server URL from Step 2. Choose OAuth when prompted, then sign in on the AlphaClone consent page with your connection key.'
+                : setupType === 'cursor'
+                  ? 'In Cursor: Settings → MCP → Add MCP server. You can paste JSON directly or edit your user/project mcp.json file.'
                 : `In your ${agentLabel} dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.`)
+              : step.number === 4 && setupType === 'cursor'
+                ? 'Paste the JSON below into Cursor MCP settings. Replace YOUR_KEY_HERE with your connection key from Step 2 if needed, then save and reload Cursor.'
               : `In ${agentLabel}, start a new conversation and try one of these prompts to verify everything is connected:`
               : step.body;
 
@@ -689,11 +742,12 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im'
               : setupType === 'grok' && step.number === 1 ? 'https://grok.com'
               : setupType === 'chatgpt' && step.number === 1 ? 'https://chatgpt.com'
+              : setupType === 'cursor' && step.number === 1 ? 'https://cursor.com'
               : step.action?.url;
 
-            // For Manus: don't show the Claude config JSON or Mac/Windows file paths
             const showSubSteps = setupType === 'claude' && step.subSteps;
-            const showConfigStep = setupType === 'claude' && step.isConfigStep;
+            const showConfigStep = (setupType === 'claude' && step.isConfigStep) || (setupType === 'cursor' && step.number === 4);
+            const showCursorConfigOnly = setupType === 'cursor' && step.number === 4;
 
             return (
               <motion.div
@@ -820,6 +874,24 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {/* Config JSON copy */}
                         {showConfigStep && (
                           <div className="mb-4 space-y-5">
+                            {showCursorConfigOnly ? (
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Cursor — MCP server JSON:</p>
+                                  <button
+                                    onClick={() => copyText(cursorMcpConfigJson, 'Cursor MCP config')}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition-all"
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                    Copy Cursor config
+                                  </button>
+                                </div>
+                                <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-sky-300 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                                  {cursorMcpConfigJson}
+                                </pre>
+                              </div>
+                            ) : (
+                              <>
                             <div>
                               <div className="flex items-center justify-between mb-2">
                                 <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Claude Desktop — paste into claude_desktop_config.json:</p>
@@ -856,26 +928,28 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                                 <code className="text-slate-400">&quot;type&quot;: &quot;http&quot;</code> is required. Prefer the Bearer header over putting the key in the URL. Prefer <code className="text-slate-400">${'{ALPHACLONE_MCP_KEY}'}</code> in shared configs so the secret is not committed.
                               </p>
                             </div>
+                              </>
+                            )}
                           </div>
                         )}
 
                         {/* Test prompts */}
-                        {(step.testPrompts || ((setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt') && step.number === 6)) && (
+                        {(step.testPrompts || ((setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor') && step.number === 6)) && (
                           <div className="mb-4">
                             <p className="text-slate-400 text-xs font-medium mb-3">
                               Quick test — try saying these to {agentLabel}:
                             </p>
                             <div className="space-y-2">
-                              {(setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt' ? [
+                              {(setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor' ? [
                                 'Using AlphaClone, give me a quick snapshot: open leads, active deals, tasks due today, outstanding invoices.',
                                 'Show me all my leads and flag any with no follow-up in the last 7 days.',
                                 'Add a new lead: Jane Smith, jane@acme.com, Acme Ltd, source: website.',
                                 'What is my total outstanding invoice amount?',
                                 'Create a high-priority task: follow up with Acme Ltd — due tomorrow.',
                               ] : step.testPrompts ?? []).map((prompt: string) => (
-                                <div key={prompt} className={`flex items-start gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : setupType === 'grok' ? 'bg-fuchsia-500/10 border-fuchsia-500/20' : setupType === 'chatgpt' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
-                                  <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 ${setupType === 'manus' ? 'text-teal-400' : setupType === 'grok' ? 'text-fuchsia-400' : setupType === 'chatgpt' ? 'text-emerald-400' : 'text-indigo-400'}`} />
-                                  <span className={`flex-1 text-sm font-medium leading-relaxed ${setupType === 'manus' ? 'text-teal-300' : setupType === 'grok' ? 'text-fuchsia-300' : setupType === 'chatgpt' ? 'text-emerald-300' : 'text-indigo-300'}`}>{prompt}</span>
+                                <div key={prompt} className={`flex items-start gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : setupType === 'grok' ? 'bg-fuchsia-500/10 border-fuchsia-500/20' : setupType === 'chatgpt' ? 'bg-emerald-500/10 border-emerald-500/20' : setupType === 'cursor' ? 'bg-sky-500/10 border-sky-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
+                                  <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 ${setupType === 'manus' ? 'text-teal-400' : setupType === 'grok' ? 'text-fuchsia-400' : setupType === 'chatgpt' ? 'text-emerald-400' : setupType === 'cursor' ? 'text-sky-400' : 'text-indigo-400'}`} />
+                                  <span className={`flex-1 text-sm font-medium leading-relaxed ${setupType === 'manus' ? 'text-teal-300' : setupType === 'grok' ? 'text-fuchsia-300' : setupType === 'chatgpt' ? 'text-emerald-300' : setupType === 'cursor' ? 'text-sky-300' : 'text-indigo-300'}`}>{prompt}</span>
                                   <button
                                     type="button"
                                     onClick={() => copyText(prompt, 'Test prompt')}

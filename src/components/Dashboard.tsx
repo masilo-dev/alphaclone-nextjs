@@ -199,6 +199,9 @@ const SuperAdminTenantsTab = React.lazy(
 const SuperAdminUsersTab = React.lazy(
   () => import("./dashboard/admin/SuperAdminUsersTab"),
 );
+const SuperAdminMcpSessionsTab = React.lazy(
+  () => import("./dashboard/admin/SuperAdminMcpSessionsTab"),
+);
 const SuperAdminSubscriptionsTab = React.lazy(
   () => import("./dashboard/admin/SuperAdminSubscriptionsTab"),
 );
@@ -1759,6 +1762,21 @@ const Dashboard: React.FC<DashboardProps> = ({
         return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TabSkeleton />}>
             <SuperAdminAuditTab />
+          </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">
+              Platform administrator access required.
+            </p>
+          </div>
+        );
+
+      case "/dashboard/admin/mcp-sessions":
+        return isPlatformAdminRole(user.role) ? (
+          <React.Suspense fallback={<TabSkeleton rows={6} showStats />}>
+            <SuperAdminMcpSessionsTab />
           </React.Suspense>
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">

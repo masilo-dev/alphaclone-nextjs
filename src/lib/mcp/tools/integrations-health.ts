@@ -1,6 +1,12 @@
 import { z } from 'zod';
 import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import {
+  CORE_INTEGRATIONS_FOR_HEALTH,
+  hasBookingIntegration,
+  normalizeIntegrationType,
+  OPTIONAL_INTEGRATIONS_FOR_HEALTH,
+} from '@/lib/mcp/integrationHealthPolicy';
 
 type IntegrationHealth = {
   name: string;
@@ -50,7 +56,7 @@ defineConnectorTool({
       key: 'github',
       status: connected ? (rows.length ? 'connected' : 'configured') : 'missing',
       connected,
-      details: { tenant_rows: rows.length, env_configured: configured, error },
+      details: { tenant_rows: rows.length, env_configured: configured, error, optional: true },
     };
     return result;
   },
@@ -82,7 +88,7 @@ defineConnectorTool({
       key: 'gmail',
       status: connected ? 'connected' : 'missing',
       connected,
-      details: { accounts: gmail || [], integration_rows: rows.length },
+      details: { accounts: gmail || [], integration_rows: rows.length, optional: true },
     } satisfies IntegrationHealth;
   },
 });
@@ -170,6 +176,33 @@ defineConnectorTool({
 
 defineConnectorTool({
   module: 'integrations-health',
+  name: 'calcom_health',
+  description: 'Health/status for Cal.com booking integration (optional — does not reduce platform health score).',
+  permission: 'integrations:read',
+  inputSchema: z.object({ tenant_id: tenantIdField }),
+  jsonSchema: {
+    type: 'object',
+    properties: { tenant_id: { type: 'string', format: 'uuid' } },
+    required: ['tenant_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { rows } = await tenantHasIntegration(supabase, args.tenant_id, ['calcom', 'cal.com']);
+    const configured = envPresent('CAL_OAUTH_CLIENT_ID', 'CAL_OAUTH_CLIENT_SECRET');
+    const connected = rows.some((r: { enabled?: boolean | null }) => r.enabled !== false) || configured;
+    return {
+      name: 'Cal.com',
+      key: 'calcom',
+      optional: true,
+      status: connected ? (rows.length ? 'connected' : 'configured') : 'missing',
+      connected,
+      details: { integration_rows: rows.length, env_configured: configured },
+    } satisfies IntegrationHealth & { optional: boolean };
+  },
+});
+
+defineConnectorTool({
+  module: 'integrations-health',
   name: 'calendly_health',
   description: 'Health/status for Calendly integration.',
   permission: 'integrations:read',
@@ -185,10 +218,11 @@ defineConnectorTool({
     return {
       name: 'Calendly',
       key: 'calendly',
+      optional: true,
       status: rows.length ? 'connected' : 'missing',
       connected: rows.length > 0,
       details: { integration_rows: rows },
-    } satisfies IntegrationHealth;
+    } satisfies IntegrationHealth & { optional: boolean };
   },
 });
 
@@ -309,7 +343,7 @@ defineConnectorTool({
   module: 'integrations-health',
   name: 'integrations_status',
   description:
-    'Aggregate health/status for all Alphaclone integrations (GitHub, Gmail, Google Calendar, Zoho, Stripe, Calendly, Railway, Supabase, OpenAI, DeepSeek).',
+    'Aggregate health/status for Alphaclone integrations. Core integrations affect readiness score; Gmail, GitHub, Cal.com, Calendly, and Google Calendar are optional and never reduce the score.',
   permission: 'integrations:read',
   rateLimitClass: 'heavy',
   inputSchema: z.object({ tenant_id: tenantIdField }),
@@ -326,38 +360,71 @@ defineConnectorTool({
       .eq('tenant_id', args.tenant_id)
       .limit(200);
 
-    const connectedTypes = new Set((rows || []).map((r: any) => String(r.type).toLowerCase()));
-    const checks = [
-      { key: 'github', connected: connectedTypes.has('github') || envPresent('GITHUB_TOKEN') },
-      { key: 'gmail', connected: connectedTypes.has('gmail') || connectedTypes.has('google_gmail') },
-      { key: 'google_calendar', connected: connectedTypes.has('google_calendar') },
-      { key: 'zoho', connected: connectedTypes.has('zoho') || connectedTypes.has('zoho_mail') },
-      { key: 'stripe', connected: connectedTypes.has('stripe') || envPresent('STRIPE_SECRET_KEY') },
-      { key: 'calendly', connected: connectedTypes.has('calendly') },
-      {
-        key: 'railway',
-        connected: Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID),
-      },
-      {
-        key: 'supabase',
-        connected: envPresent('SUPABASE_SERVICE_ROLE_KEY'),
-      },
-      { key: 'openai', connected: envPresent('OPENAI_API_KEY') },
-      { key: 'deepseek', connected: envPresent('DEEPSEEK_API_KEY', 'OPENROUTER_API_KEY') },
-    ];
+    const connectedTypes = new Set(
+      (rows || [])
+        .filter((r: { enabled?: boolean | null }) => r.enabled !== false)
+        .map((r: { type?: string | null }) => normalizeIntegrationType(String(r.type || '')))
+    );
 
-    const connected = checks.filter((c) => c.connected).length;
+    const coreChecks = CORE_INTEGRATIONS_FOR_HEALTH.map((key) => {
+      let connected = connectedTypes.has(key);
+      if (key === 'stripe') connected = connected || envPresent('STRIPE_SECRET_KEY');
+      if (key === 'railway') {
+        connected =
+          connected ||
+          Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID);
+      }
+      if (key === 'supabase') connected = connected || envPresent('SUPABASE_SERVICE_ROLE_KEY');
+      if (key === 'openai') connected = connected || envPresent('OPENAI_API_KEY');
+      if (key === 'deepseek') {
+        connected = connected || envPresent('DEEPSEEK_API_KEY', 'OPENROUTER_API_KEY');
+      }
+      return {
+        key,
+        tier: 'core' as const,
+        status: connected ? ('connected' as const) : ('missing' as const),
+        connected,
+      };
+    });
+
+    const optionalChecks = OPTIONAL_INTEGRATIONS_FOR_HEALTH.map((key) => {
+      let connected = connectedTypes.has(key);
+      if (key === 'github') connected = connected || envPresent('GITHUB_TOKEN', 'GITHUB_APP_ID');
+      if (key === 'gmail') {
+        connected = connected || connectedTypes.has('google_gmail');
+      }
+      if (key === 'calcom') {
+        connected = connected || connectedTypes.has('cal_com') || envPresent('CAL_OAUTH_CLIENT_ID');
+      }
+      return {
+        key,
+        tier: 'optional' as const,
+        status: connected ? ('connected' as const) : ('missing' as const),
+        connected,
+      };
+    });
+
+    const coreConnected = coreChecks.filter((c) => c.connected).length;
+    const optionalConnected = optionalChecks.filter((c) => c.connected).length;
+
     return {
       overall: {
-        connected,
-        total: checks.length,
-        percentage: Math.round((connected / checks.length) * 100),
+        status:
+          coreConnected === coreChecks.length
+            ? 'ready'
+            : coreConnected >= Math.ceil(coreChecks.length * 0.7)
+              ? 'degraded'
+              : 'needs_setup',
+        core_connected: coreConnected,
+        core_total: coreChecks.length,
+        core_percentage: Math.round((coreConnected / coreChecks.length) * 100),
+        optional_connected: optionalConnected,
+        optional_total: optionalChecks.length,
+        booking_ready: hasBookingIntegration(connectedTypes),
+        note: 'Gmail, GitHub, and Cal.com are optional and do not reduce core readiness.',
       },
-      integrations: checks.map((c) => ({
-        key: c.key,
-        status: c.connected ? 'connected' : 'missing',
-        connected: c.connected,
-      })),
+      core_integrations: coreChecks,
+      optional_integrations: optionalChecks,
       tenant_integration_rows: rows || [],
       generated_at: new Date().toISOString(),
     };
