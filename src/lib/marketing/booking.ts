@@ -89,7 +89,28 @@ export function getCalComLink(url: string): string {
   }
 }
 
-/** AlphaClone-native dark theme for Cal.com inline embed. */
+/** AlphaClone-native Cal.com inline embed UI (dark-first; light vars required by Cal types). */
+const CAL_EMBED_THEME_VARS = {
+  'cal-brand': '#14b8a6',
+  'cal-brand-emphasis': '#2dd4bf',
+  'cal-brand-text': '#020617',
+  'cal-brand-subtle': '#0d9488',
+  'cal-text': '#cbd5e1',
+  'cal-text-emphasis': '#f8fafc',
+  'cal-text-subtle': '#94a3b8',
+  'cal-text-muted': '#64748b',
+  'cal-bg': '#0f172a',
+  'cal-bg-emphasis': '#1e293b',
+  'cal-bg-subtle': '#172033',
+  'cal-bg-muted': '#0b1220',
+  'cal-border': '#334155',
+  'cal-border-subtle': '#1e293b',
+  'cal-border-muted': '#1e293b',
+  'cal-border-booker': 'transparent',
+  'cal-border-booker-width': '0px',
+  radius: '0.75rem',
+} as const;
+
 export const CAL_EMBED_UI = {
   theme: 'dark' as const,
   hideEventTypeDetails: false,
@@ -99,26 +120,8 @@ export const CAL_EMBED_UI = {
     },
   },
   cssVarsPerTheme: {
-    dark: {
-      'cal-brand': '#14b8a6',
-      'cal-brand-emphasis': '#2dd4bf',
-      'cal-brand-text': '#020617',
-      'cal-brand-subtle': '#0d9488',
-      'cal-text': '#cbd5e1',
-      'cal-text-emphasis': '#f8fafc',
-      'cal-text-subtle': '#94a3b8',
-      'cal-text-muted': '#64748b',
-      'cal-bg': '#0f172a',
-      'cal-bg-emphasis': '#1e293b',
-      'cal-bg-subtle': '#172033',
-      'cal-bg-muted': '#0b1220',
-      'cal-border': '#334155',
-      'cal-border-subtle': '#1e293b',
-      'cal-border-muted': '#1e293b',
-      'cal-border-booker': 'transparent',
-      'cal-border-booker-width': '0px',
-      radius: '0.75rem',
-    },
+    light: { ...CAL_EMBED_THEME_VARS },
+    dark: { ...CAL_EMBED_THEME_VARS },
   },
 };
 
