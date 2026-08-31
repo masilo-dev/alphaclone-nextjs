@@ -27,7 +27,6 @@ import { useSearchParams } from 'next/navigation';
 
 // Integration subcomponents
 import CalendlySettings from './business/CalendlySettings';
-import HubspotIntegration from './business/HubspotIntegration';
 import StripeConnectSettings from './business/StripeConnectSettings';
 import ZohoIntegration from './business/ZohoIntegration';
 import TwilioIntegration from './business/TwilioIntegration';
@@ -118,7 +117,6 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             sendgrid: 'integ_sendgrid',
             brevo: 'integ_brevo',
             twilio: 'integ_twilio',
-            hubspot: 'integ_hubspot',
             stripe: 'integ_stripe',
             calendly: 'integ_calendly',
         };

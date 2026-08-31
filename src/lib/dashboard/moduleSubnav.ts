@@ -63,11 +63,11 @@ export const MODULE_SUBNAV: Record<ModuleId, SubNavItem[]> = {
   projects: [
     { id: 'overview', label: 'Overview', href: '/dashboard/business/projects' },
     { id: 'all', label: 'All projects', href: '/dashboard/business/projects/manage' },
-    { id: 'tasks', label: 'Tasks', href: '/dashboard/business/tasks' },
+    { id: 'tasks', label: 'Tasks', href: '/dashboard/tasks' },
   ],
   tasks: [
     { id: 'my', label: 'My tasks', href: '/dashboard/tasks' },
-    { id: 'team', label: 'Team tasks', href: '/dashboard/business/tasks' },
+    { id: 'team', label: 'Team tasks', href: '/dashboard/tasks?scope=team' },
   ],
   calendar: [
     { id: 'calendar', label: 'Calendar', href: '/dashboard/business/calendar' },

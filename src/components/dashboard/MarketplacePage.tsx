@@ -35,7 +35,7 @@ interface MarketplaceItem {
   developer: string;
   actionUrl?: string;
   isMCP?: boolean;
-  mcpType?: 'claude' | 'manus' | 'grok' | 'chatgpt';
+  mcpType?: 'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor';
   badge?: string;
 }
 
@@ -116,6 +116,24 @@ const ITEMS: MarketplaceItem[] = [
     badge: 'New',
   },
   {
+    id: 'mcp-cursor',
+    name: 'Cursor IDE (MCP)',
+    description: 'Connect Cursor to your AlphaClone workspace with a personal API key. Full CRM, deals, tasks, and invoicing from your editor.',
+    category: 'ai',
+    status: 'free',
+    rating: 5.0,
+    installs: 480,
+    icon: Layers,
+    iconBg: 'bg-sky-500/15',
+    iconColor: 'text-sky-400',
+    features: ['API key auth', 'Full tool catalog', 'CRM read & write', 'Copy-paste MCP JSON', 'Works in Cursor Settings'],
+    tags: ['ai', 'mcp', 'cursor', 'ide'],
+    developer: 'AlphaClone',
+    isMCP: true,
+    mcpType: 'cursor',
+    badge: 'New',
+  },
+  {
     id: 'sales-agent',
     name: 'AI Sales Agent',
     description: 'Your in-platform AI agent for lead prospecting, outreach campaigns, deal qualification, and CRM automation.',
@@ -132,23 +150,6 @@ const ITEMS: MarketplaceItem[] = [
     actionUrl: '/dashboard/sales-agent',
   },
   // ── Integrations ───────────────────────────────────────────────────────────
-  {
-    id: 'hubspot',
-    name: 'HubSpot CRM',
-    description: 'Two-way sync between HubSpot and AlphaClone. Contacts, deals, and activities stay in perfect alignment.',
-    category: 'integration',
-    status: 'paid',
-    price: 19,
-    rating: 4.8,
-    installs: 3200,
-    icon: Users,
-    iconBg: 'bg-orange-500/15',
-    iconColor: 'text-orange-400',
-    features: ['Contact sync', 'Deal pipeline sync', 'Two-way updates', 'Activity tracking', 'Lead scoring'],
-    tags: ['crm', 'hubspot', 'contacts', 'deals'],
-    developer: 'HubSpot',
-    actionUrl: '/dashboard/business/settings?tab=integrations',
-  },
   {
     id: 'facebook',
     name: 'Facebook & Lead Ads',
@@ -384,15 +385,15 @@ const MarketplacePage: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category>('all');
-  const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | 'grok' | 'chatgpt' | null>(null);
-  const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'mcp-grok', 'mcp-chatgpt', 'sales-agent', 'proposal-template', 'invoice-template']));
+  const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor' | null>(null);
+  const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'mcp-grok', 'mcp-chatgpt', 'mcp-cursor', 'sales-agent', 'proposal-template', 'invoice-template']));
 
   // Handle ?mcp=claude / ?mcp=manus deep link
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const p = new URLSearchParams(window.location.search);
     const mcp = p.get('mcp');
-    if (mcp === 'claude' || mcp === 'manus' || mcp === 'grok' || mcp === 'chatgpt') setActiveMcp(mcp);
+    if (mcp === 'claude' || mcp === 'manus' || mcp === 'grok' || mcp === 'chatgpt' || mcp === 'cursor') setActiveMcp(mcp);
   }, []);
 
   const filtered = ITEMS.filter(item => {
@@ -460,6 +461,12 @@ const MarketplacePage: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeMcp === 'chatgpt' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
             >
               ChatGPT
+            </button>
+            <button
+              onClick={() => setActiveMcp('cursor')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeMcp === 'cursor' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Cursor
             </button>
           </div>
         </div>

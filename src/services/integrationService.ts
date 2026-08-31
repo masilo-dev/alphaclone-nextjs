@@ -104,14 +104,6 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
   },
   // ── CRM & Sales ───────────────────────────────────────────────────────────
   {
-    id: 'hubspot',
-    name: 'HubSpot',
-    description: 'Two-way contact and deal sync with HubSpot CRM.',
-    category: 'crm',
-    features: ['Contact sync', 'Deal tracking', 'Two-way sync', 'Custom field mapping'],
-    oauthFlow: true,
-  },
-  {
     id: 'facebook-leads',
     name: 'Facebook Lead Ads',
     description: 'Automatically capture Facebook Lead Ads into your CRM pipeline.',
@@ -313,7 +305,6 @@ export const integrationService = {
     if (catalog.oauthFlow) {
       const redirectMap: Record<string, string> = {
         slack: `/api/slack/oauth/authorize?tenantId=${encodeURIComponent(tenantId)}`,
-        hubspot: `/api/auth/hubspot/connect?tenantId=${encodeURIComponent(tenantId)}`,
         'google-calendar': `/api/auth/google/calendar/connect?tenantId=${encodeURIComponent(tenantId)}`,
         'google-analytics': '/dashboard/business/settings?tab=integrations&provider=google-analytics',
         'zoho-mail': `/api/auth/zoho/connect?tenantId=${encodeURIComponent(tenantId)}`,

@@ -41,15 +41,6 @@ export const EXTERNAL_MCP_SERVERS: ExternalMcpServer[] = [
     requiredEnvVars: ['SLACK_BOT_TOKEN'],
     enabled: !!process.env.SLACK_BOT_TOKEN,
   },
-  {
-    id: 'hubspot',
-    name: 'HubSpot',
-    description: 'Read and write HubSpot CRM contacts, deals, and companies via MCP.',
-    transport: 'sse',
-    url: process.env.HUBSPOT_MCP_URL || 'https://api.hubspot.com/mcp/sse',
-    requiredEnvVars: ['HUBSPOT_CLIENT_ID', 'HUBSPOT_CLIENT_SECRET'],
-    enabled: !!(process.env.HUBSPOT_CLIENT_ID && process.env.HUBSPOT_CLIENT_SECRET),
-  },
 ];
 
 /**

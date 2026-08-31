@@ -9,7 +9,7 @@ import {
   ExternalLink, Info, DollarSign, Briefcase, Star, Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
+import { useCurrentTenantSafe, useTenantLoadingSafe } from '@/hooks/useTenantSafe';
 import { MCPAuthService } from '@/services/mcp/MCPAuthService';
 import { supabase } from '@/lib/supabase';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
@@ -379,10 +379,13 @@ interface MCPSetupGuideProps {
 
 const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const currentTenant = useCurrentTenantSafe();
+  const tenantLoading = useTenantLoadingSafe();
   const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor'>(initialType ?? 'claude');
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
+  const [keyNeedsRegenerate, setKeyNeedsRegenerate] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const [isDpaAccepted, setIsDpaAccepted] = useState<boolean>(true); // Default to true for non-enterprise
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -412,7 +415,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
 
   const isEnterprise = currentTenant?.subscription_plan === 'enterprise';
-  const tenantId = currentTenant?.id ?? 'your-workspace-id';
+  const tenantId = currentTenant?.id;
 
   const mcpOrigin = (typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com')
     .replace('//www.', '//');
@@ -443,19 +446,43 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     async function loadForUser(user: User | null) {
       setCurrentUser(user);
 
-      if (tenantId === 'your-workspace-id' || !user?.id) {
+      if (tenantLoading) {
+        return;
+      }
+
+      if (!tenantId || !user?.id) {
         if (!cancelled) {
           setConnectionToken(null);
+          setKeyNeedsRegenerate(false);
+          setTokenError(!tenantId ? 'Select or create a workspace first.' : null);
           setIsLoading(false);
         }
         return;
       }
 
-      if (!cancelled) setIsLoading(true);
+      if (!cancelled) {
+        setIsLoading(true);
+        setTokenError(null);
+        setKeyNeedsRegenerate(false);
+      }
       try {
         const { token, error: tokenErr } = await MCPAuthService.getOrCreateToken(tenantId, user.id);
         if (tokenErr) console.error('MCP token:', tokenErr);
-        if (!cancelled) setConnectionToken(token);
+        if (!cancelled) {
+          if (token) {
+            setConnectionToken(token);
+            setKeyNeedsRegenerate(false);
+            setTokenError(null);
+          } else if (tokenErr?.includes('cannot be retrieved')) {
+            setConnectionToken(null);
+            setKeyNeedsRegenerate(true);
+            setTokenError(null);
+          } else {
+            setConnectionToken(null);
+            setKeyNeedsRegenerate(false);
+            setTokenError(tokenErr || 'Could not load connection key.');
+          }
+        }
 
         if (isEnterprise) {
           const accepted = await MCPAuthService.isDPAAccepted(tenantId);
@@ -484,11 +511,11 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [tenantId, isEnterprise]);
+  }, [tenantId, isEnterprise, tenantLoading]);
 
   const handleRotateToken = async () => {
-    if (!currentUser?.id) {
-      toast.error('You must be signed in to regenerate your connection key.');
+    if (!currentUser?.id || !tenantId) {
+      toast.error('You must be signed in with a workspace to regenerate your connection key.');
       return;
     }
     if (!window.confirm('Are you sure? Your old connection key will stop working immediately.')) return;
@@ -496,6 +523,8 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     const { token, error } = await MCPAuthService.rotateToken(tenantId, currentUser.id);
     if (token) {
       setConnectionToken(token);
+      setKeyNeedsRegenerate(false);
+      setTokenError(null);
       toast.success('Connection key regenerated!');
     } else {
       toast.error(error || 'Failed to regenerate key');
@@ -536,6 +565,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const cursorMcpConfigJson = `{
   "mcpServers": {
     "alphaclone": {
+      "type": "http",
       "url": "${mcpOrigin}/api/mcp",
       "headers": {
         "Authorization": "Bearer ${mcpKey}"
@@ -564,7 +594,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   }
 
   // Enforce DPA Gate for Enterprise
-  if (isEnterprise && !isDpaAccepted && currentUser) {
+  if (isEnterprise && !isDpaAccepted && currentUser && tenantId) {
     return (
       <div className="p-6">
         <EnterpriseDPA 
@@ -648,7 +678,10 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
               When ChatGPT asks you to sign in, approve access on AlphaClone — your workspace is attached automatically.
             </p>
             <p className="text-slate-400 text-xs">
-              Registered client ID: <code className="text-emerald-300">chatgpt-connector</code> — full platform tool catalog (all workspace tools, read and write).
+              Registered client ID: <code className="text-emerald-300">chatgpt-connector</code> — full platform tool catalog (500+ tools).
+            </p>
+            <p className="text-slate-500 text-xs leading-relaxed">
+              ChatGPT may show ~75–80 tools in the connector UI — that is the first page. The full catalog is available via discovery tools like <code className="text-teal-400">list_tools</code>, <code className="text-teal-400">search_tools</code>, and <code className="text-teal-400">load_module_tools</code>. Ask ChatGPT to search or load modules when you need a specific tool.
             </p>
           </div>
         )}
@@ -811,13 +844,28 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {/* Copy key step */}
                         {step.isCopyStep && (
                           <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 mb-4">
-                            <p className="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wider">Your Connection URL</p>
+                            <p className="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wider">
+                              {setupType === 'cursor' ? 'Your Connection Key' : 'Your Connection URL'}
+                            </p>
                             <div className="flex items-center gap-3">
                               <code className="flex-1 text-teal-400 text-xs font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
-                                {connectionToken ? connectionUrl : 'Loading your key...'}
+                                {connectionToken
+                                  ? (setupType === 'cursor' ? connectionToken : connectionUrl)
+                                  : keyNeedsRegenerate
+                                    ? 'Key already exists — click Regenerate Key below to reveal a new one.'
+                                    : tokenError
+                                      ? tokenError
+                                      : tenantLoading || isLoading
+                                        ? 'Loading your key...'
+                                        : 'No workspace selected.'}
                               </code>
                               <button
-                                onClick={() => copyText(connectionToken ? connectionUrl : '', 'Connection URL')}
+                                onClick={() => copyText(
+                                  connectionToken
+                                    ? (setupType === 'cursor' ? connectionToken : connectionUrl)
+                                    : '',
+                                  setupType === 'cursor' ? 'Connection key' : 'Connection URL'
+                                )}
                                 disabled={!connectionToken}
                                 className="flex-shrink-0 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all disabled:opacity-50"
                               >

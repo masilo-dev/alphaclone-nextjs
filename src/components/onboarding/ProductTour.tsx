@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
+import Joyride, { Step, CallBackProps, STATUS, EVENTS, ACTIONS } from 'react-joyride';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
 
 interface ProductTourProps {
@@ -215,7 +215,7 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
     }, [isOpen, userRole]);
 
     const handleJoyrideCallback = (data: CallBackProps) => {
-        const { status, index } = data;
+        const { status, type, action, index } = data;
 
         if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
             setRun(false);
@@ -225,8 +225,9 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
                 body: JSON.stringify({ walkthrough_completed: true }),
             }).catch((err) => console.error('ProductTour: save walkthrough status failed', err));
             onComplete();
-        } else if (status === STATUS.RUNNING) {
-            setStepIndex(index);
+        } else if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
+            const delta = action === ACTIONS.PREV ? -1 : 1;
+            setStepIndex(index + delta);
         }
     };
 

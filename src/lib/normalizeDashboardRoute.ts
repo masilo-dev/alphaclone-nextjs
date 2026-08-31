@@ -45,6 +45,9 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         '/dashboard/crm/contacts': '/dashboard/crm/unified-contacts',
         '/dashboard/crm/companies': '/dashboard/crm/accounts',
         '/dashboard/crm/deals': '/dashboard/deals',
+        '/dashboard/growth/social': '/dashboard/business/social',
+        '/dashboard/growth/social/compose': '/dashboard/business/social/compose',
+        '/dashboard/business/tasks': '/dashboard/tasks',
     };
 
     const aliased = tenantAliases[base] ?? base;

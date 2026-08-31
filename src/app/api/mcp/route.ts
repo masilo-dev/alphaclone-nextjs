@@ -491,7 +491,10 @@ export async function POST(req: NextRequest) {
         limit = Math.min(Math.max(discoveryTools.length - offset, 0), MAX_PAGE_SIZE);
       }
 
-      const paginatedTools = paginate || hasCursor ? discoveryTools.slice(offset, offset + limit) : discoveryTools;
+      const paginatedTools =
+        !paginate && (!hasCursor || (requestedCatalogMode === 'full' && offset === 0 && !hasExplicitLimit))
+          ? discoveryTools
+          : discoveryTools.slice(offset, offset + limit);
       const nextOffset = offset + paginatedTools.length;
       const nextCursor = (paginate || hasCursor) && nextOffset < discoveryTools.length ? String(nextOffset) : undefined;
 

@@ -137,6 +137,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     }, [currentTenant, loadData]);
 
     const [editingProject, setEditingProject] = useState<BusinessProject | null>(null);
+    const [sharingProject, setSharingProject] = useState<BusinessProject | null>(null);
 
     const handleSaveProject = useCallback(async (projectData: Partial<BusinessProject>) => {
         if (!currentTenant) {
@@ -346,6 +347,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                         key={project.id}
                                         project={project}
                                         onEdit={setEditingProject}
+                                        onShare={setSharingProject}
                                         onDelete={handleDeleteProject}
                                         onStageChange={handleStageUpdate}
                                         onViewDetails={setViewingProject}
@@ -376,6 +378,16 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 />
             )}
 
+            {sharingProject && currentTenant?.id ? (
+                <ProjectPortalShareDialog
+                    isOpen={Boolean(sharingProject)}
+                    onClose={() => setSharingProject(null)}
+                    projectId={sharingProject.id}
+                    tenantId={currentTenant.id}
+                    projectName={sharingProject.name}
+                />
+            ) : null}
+
             <AnimatePresence>
                 {viewingProject && (
                     <ProjectWorkspaceDrawer
@@ -399,12 +411,14 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 const ProjectListRow = ({
     project,
     onEdit,
+    onShare,
     onDelete,
     onStageChange,
     onViewDetails
 }: {
     project: BusinessProject,
     onEdit: any,
+    onShare: (project: BusinessProject) => void,
     onDelete: any,
     onStageChange: (id: string, stage: ProjectStage) => void,
     onViewDetails: (project: BusinessProject) => void
@@ -516,6 +530,13 @@ const ProjectListRow = ({
                 </div>
                 <div className="flex items-end justify-end gap-1">
                     <button
+                        onClick={(e) => { e.stopPropagation(); onShare(project); }}
+                        className="h-8 w-8 p-0.5 hover:bg-violet-500/10 text-slate-500 hover:text-violet-300 rounded-full transition-all"
+                        title="Share client portal link"
+                    >
+                        <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
                         onClick={(e) => { e.stopPropagation(); onEdit(project); }}
                         className="h-8 w-8 p-0.5 hover:bg-[var(--brand-blue-500)]/10 text-slate-500 hover:text-[var(--brand-blue-400)] rounded-full transition-all"
                         title="Edit project"
@@ -566,6 +587,13 @@ const ProjectListRow = ({
 
             {/* Ops */}
             <div className="hidden lg:flex col-span-1 lg:col-span-1 justify-end gap-1">
+                <button
+                    onClick={(e) => { e.stopPropagation(); onShare(project); }}
+                    className="p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-300 rounded-lg transition-all"
+                    title="Share client portal link"
+                >
+                    <Share2 className="w-4 h-4" />
+                </button>
                 <button
                     onClick={(e) => { e.stopPropagation(); onEdit(project); }}
                     className="p-2 hover:bg-[var(--brand-blue-500)]/10 text-slate-500 hover:text-[var(--brand-blue-400)] rounded-lg transition-all"
