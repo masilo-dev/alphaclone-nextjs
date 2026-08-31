@@ -233,3 +233,32 @@ export function assertRecipientsAllowed(
     );
   }
 }
+
+/** Map outbound SDK/provider ids to canonical unified inbox provider ids. */
+export function toUnifiedEmailProvider(provider: string): UnifiedEmailProvider {
+  const normalized = String(provider || '').trim().toLowerCase();
+  switch (normalized) {
+    case 'zoho':
+      return 'zoho';
+    case 'brevo':
+      return 'brevo';
+    case 'sendgrid':
+      return 'sendgrid';
+    case 'resend':
+      return 'resend';
+    case 'gmail':
+      return 'gmail';
+    case 'smtp':
+      return 'smtp';
+    case 'outlook':
+    case 'microsoft':
+    case 'microsoft365':
+    case 'microsoft_graph':
+      return 'microsoft_graph';
+    case 'mailflow':
+    case 'other':
+      return 'other';
+    default:
+      return 'other';
+  }
+}

@@ -10,6 +10,7 @@ import sanitizeHtml from 'sanitize-html';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
 import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
+import { toUnifiedEmailProvider } from '@/lib/email/unifiedEmailDomain';
 import {
   type EmailAttachment,
   normalizeEmailAttachments,
@@ -193,7 +194,7 @@ export async function sendEmail(
             supabase,
             tenantId,
             userId: config.ownerUserId || payload.userId || null,
-            provider: config.provider,
+            provider: toUnifiedEmailProvider(config.provider),
             providerMessageId,
             fromEmail,
             recipients,
@@ -211,7 +212,7 @@ export async function sendEmail(
           await logEmailSend({
             tenantId,
             userId: config.ownerUserId || payload.userId || null,
-            provider: config.provider,
+            provider: toUnifiedEmailProvider(config.provider),
             toEmail: recipients.join(', '),
             subject: normalizedSubject,
             templateName: payload.templateName,
@@ -223,7 +224,7 @@ export async function sendEmail(
           return {
             success: false,
             emailId: providerMessageId,
-            provider: config.provider,
+            provider: toUnifiedEmailProvider(config.provider),
             tried: [...tried, { provider: config.provider, error: persistenceMessage }],
             error: 'Provider accepted the email, but AlphaClone could not save the canonical communication record.',
             errorDetails: persistenceError,
