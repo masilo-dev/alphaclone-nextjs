@@ -63,15 +63,15 @@ export function isValidBookingUrl(url?: string | null): boolean {
   }
 }
 
-/** Cal.com pages embed cleanly with ?embed=true. */
+/** Cal.com pages embed with ?embed=true and mobile-friendly layout. */
 export function getBookingEmbedUrl(url: string): string {
   try {
     const parsed = new URL(url);
     const host = parsed.hostname.toLowerCase();
     if (host === 'cal.com' || host.endsWith('.cal.com')) {
-      if (!parsed.searchParams.has('embed')) {
-        parsed.searchParams.set('embed', 'true');
-      }
+      parsed.searchParams.set('embed', 'true');
+      parsed.searchParams.set('layout', 'month_view');
+      parsed.searchParams.set('theme', 'dark');
       return parsed.toString();
     }
   } catch {
@@ -79,6 +79,48 @@ export function getBookingEmbedUrl(url: string): string {
   }
   return url;
 }
+
+/** Path segment for @calcom/embed-react (e.g. alphaclonesystems). */
+export function getCalComLink(url: string): string {
+  try {
+    return new URL(url).pathname.replace(/^\/+|\/+$/g, '');
+  } catch {
+    return 'alphaclonesystems';
+  }
+}
+
+/** AlphaClone-native dark theme for Cal.com inline embed. */
+export const CAL_EMBED_UI = {
+  theme: 'dark' as const,
+  hideEventTypeDetails: false,
+  styles: {
+    branding: {
+      brandColor: '#14b8a6',
+    },
+  },
+  cssVarsPerTheme: {
+    dark: {
+      'cal-brand': '#14b8a6',
+      'cal-brand-emphasis': '#2dd4bf',
+      'cal-brand-text': '#020617',
+      'cal-brand-subtle': '#0d9488',
+      'cal-text': '#cbd5e1',
+      'cal-text-emphasis': '#f8fafc',
+      'cal-text-subtle': '#94a3b8',
+      'cal-text-muted': '#64748b',
+      'cal-bg': '#0f172a',
+      'cal-bg-emphasis': '#1e293b',
+      'cal-bg-subtle': '#172033',
+      'cal-bg-muted': '#0b1220',
+      'cal-border': '#334155',
+      'cal-border-subtle': '#1e293b',
+      'cal-border-muted': '#1e293b',
+      'cal-border-booker': 'transparent',
+      'cal-border-booker-width': '0px',
+      radius: '0.75rem',
+    },
+  },
+};
 
 export function isCalComBookingUrl(url?: string | null): boolean {
   if (!url) return false;

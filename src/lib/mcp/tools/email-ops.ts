@@ -335,12 +335,13 @@ defineConnectorTool({
 
     const attachments = await attachmentsFromMedia(tenantId, userId, args.attachments);
 
-    // gmail/outlook use OAuth paths; sendEmailServer only accepts API providers
     const preferredOutbound: OutboundEmailProvider | undefined =
       args.provider === 'zoho' ||
       args.provider === 'brevo' ||
       args.provider === 'sendgrid' ||
-      args.provider === 'resend'
+      args.provider === 'resend' ||
+      args.provider === 'outlook' ||
+      args.provider === 'gmail'
         ? args.provider
         : undefined;
 

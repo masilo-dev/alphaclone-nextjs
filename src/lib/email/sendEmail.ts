@@ -4,6 +4,7 @@ import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { logEmailSend } from '@/lib/emailLogger';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
+import { resolveAllConnectedEmailProviders } from '@/lib/email/providerIntegrationResolver';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 import sanitizeHtml from 'sanitize-html';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,7 +17,13 @@ import {
 
 export type { EmailAttachment } from '@/lib/email/emailAttachment';
 
-export type OutboundEmailProvider = 'zoho' | 'brevo' | 'sendgrid' | 'resend';
+export type OutboundEmailProvider =
+  | 'zoho'
+  | 'brevo'
+  | 'sendgrid'
+  | 'resend'
+  | 'outlook'
+  | 'gmail';
 
 export interface EmailPayload {
   to: string | string[];
@@ -52,172 +59,20 @@ export interface SendEmailResult {
   code?: string;
 }
 
-type ProviderConfig = {
-  provider: OutboundEmailProvider;
-  apiKey: string;
-  fromEmail?: string;
-  fromName?: string;
-  ownerUserId?: string | null;
-};
-
-const DEFAULT_PROVIDER_ORDER: OutboundEmailProvider[] = ['zoho', 'brevo', 'sendgrid', 'resend'];
-
-function normalizeProvider(value: unknown): OutboundEmailProvider | null {
+function normalizePreferredProvider(value: unknown): OutboundEmailProvider | undefined {
   const provider = String(value || '').trim().toLowerCase();
-  if (provider === 'zoho' || provider === 'brevo' || provider === 'sendgrid' || provider === 'resend') return provider;
-  return null;
-}
-
-function readConfigString(config: Record<string, unknown>, keys: string[]): string {
-  for (const key of keys) {
-    const value = String(config[key] || '').trim();
-    if (value) return value;
+  if (provider === 'microsoft' || provider === 'microsoft365') return 'outlook';
+  if (
+    provider === 'zoho' ||
+    provider === 'brevo' ||
+    provider === 'sendgrid' ||
+    provider === 'resend' ||
+    provider === 'outlook' ||
+    provider === 'gmail'
+  ) {
+    return provider;
   }
-  return '';
-}
-
-function getProviderOrder(settings: Record<string, any>, preferredProvider?: OutboundEmailProvider): OutboundEmailProvider[] {
-  const emailSettings = settings.email || settings.email_provider || settings.emailProviders || {};
-  const configuredOrder = Array.isArray(emailSettings.provider_order || emailSettings.providerOrder)
-    ? (emailSettings.provider_order || emailSettings.providerOrder).map(normalizeProvider).filter(Boolean)
-    : [];
-  const defaultProvider = normalizeProvider(emailSettings.default_provider || emailSettings.defaultProvider);
-  const order = [
-    preferredProvider,
-    defaultProvider,
-    ...configuredOrder,
-    ...DEFAULT_PROVIDER_ORDER,
-  ].filter(Boolean) as OutboundEmailProvider[];
-  return [...new Set(order)];
-}
-
-function envProviderConfig(provider: OutboundEmailProvider): ProviderConfig | null {
-  if (provider === 'brevo') {
-    const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY || process.env.SENDINBLUE_API_KEY || '';
-    if (!apiKey) return null;
-    return {
-      provider,
-      apiKey,
-      fromEmail: process.env.BREVO_FROM_EMAIL || process.env.EMAIL_FROM || undefined,
-      fromName: process.env.BREVO_FROM_NAME || undefined,
-    };
-  }
-  if (provider === 'sendgrid') {
-    if (!process.env.SENDGRID_API_KEY) return null;
-    return {
-      provider,
-      apiKey: process.env.SENDGRID_API_KEY,
-      fromEmail: process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_FROM || undefined,
-      fromName: process.env.SENDGRID_FROM_NAME || undefined,
-    };
-  }
-  if (provider === 'resend') {
-    if (!process.env.RESEND_API_KEY) return null;
-    return {
-      provider,
-      apiKey: process.env.RESEND_API_KEY,
-      fromEmail: process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || undefined,
-      fromName: process.env.RESEND_FROM_NAME || undefined,
-    };
-  }
-  return null;
-}
-
-async function resolveProviderConfigs(params: {
-  tenantId: string;
-  preferredUserId?: string | null;
-  preferredProvider?: OutboundEmailProvider;
-  fallbackToEnv?: boolean;
-  forcePlatform?: boolean;
-}): Promise<ProviderConfig[]> {
-  const supabase = createSupabaseAdminClient();
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('created_by, settings')
-    .eq('id', params.tenantId)
-    .maybeSingle();
-
-  const { data: business } = await supabase
-    .from('business_settings')
-    .select('settings')
-    .eq('tenant_id', params.tenantId)
-    .maybeSingle();
-
-  const mergedSettings = {
-    ...(tenant?.settings || {}),
-    ...(business?.settings || {}),
-  };
-
-  const emailSettings = mergedSettings.email || mergedSettings.email_provider || mergedSettings.emailProviders || {};
-  const defaultProvider = normalizeProvider(emailSettings.default_provider || emailSettings.defaultProvider);
-
-  const order = getProviderOrder(mergedSettings, params.preferredProvider || defaultProvider || undefined);
-  let lookupUserId = params.preferredUserId || tenant?.created_by || null;
-
-  if (!lookupUserId) {
-    const { data: membership } = await supabase
-      .from('tenant_users')
-      .select('user_id')
-      .eq('tenant_id', params.tenantId)
-      .in('role', ['admin', 'tenant_admin'])
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    lookupUserId = membership?.user_id || null;
-  }
-
-  const integrationRows: Array<{ type: string; config: Record<string, unknown>; user_id?: string | null }> = [];
-  if (lookupUserId) {
-    const { data } = await supabase
-      .from('integrations')
-      .select('type, config, user_id')
-      .eq('user_id', lookupUserId)
-      .eq('enabled', true)
-      .in('type', order);
-    integrationRows.push(...((data || []) as typeof integrationRows));
-  }
-
-  const { data: tenantIntegrations } = await supabase
-    .from('integrations')
-    .select('type, config, user_id')
-    .eq('tenant_id', params.tenantId)
-    .eq('enabled', true)
-    .in('type', order)
-    .order('updated_at', { ascending: false });
-  integrationRows.push(...((tenantIntegrations || []) as typeof integrationRows));
-
-  const resolved: ProviderConfig[] = [];
-  
-  const hasConfiguredProvider = !!defaultProvider;
-  const hasIntegrations = integrationRows.length > 0;
-  const allowEnvFallback = params.forcePlatform || (params.fallbackToEnv !== false && !hasConfiguredProvider && !hasIntegrations);
-
-  for (const provider of order) {
-    const row = integrationRows.find((item) => item.type === provider);
-    if (row) {
-      const config = row.config || {};
-      const apiKey = readConfigString(config, ['apiKey', 'api_key', 'key']);
-      const requiresKey = provider === 'brevo' || provider === 'sendgrid' || provider === 'resend';
-      if (!requiresKey || apiKey) {
-        resolved.push({
-          provider,
-          apiKey,
-          fromEmail: readConfigString(config, ['fromEmail', 'from_email', 'email']) || undefined,
-          fromName: readConfigString(config, ['fromName', 'from_name']) || undefined,
-          ownerUserId: row.user_id || lookupUserId,
-        });
-      }
-    }
-
-    if (allowEnvFallback) {
-      const envConfig = envProviderConfig(provider);
-      if (envConfig) resolved.push(envConfig);
-    }
-  }
-
-  return resolved.filter((config, index, all) =>
-    all.findIndex((item) => item.provider === config.provider && item.apiKey === config.apiKey && item.ownerUserId === config.ownerUserId) === index
-  );
+  return undefined;
 }
 
 export async function sendEmail(
@@ -301,10 +156,10 @@ export async function sendEmail(
       normalizedText = insertBeforeEmailFooter(normalizedText, attachmentLines);
     }
 
-    const configs = await resolveProviderConfigs({
+    const configs = await resolveAllConnectedEmailProviders({
       tenantId,
       preferredUserId: payload.userId || null,
-      preferredProvider,
+      preferredProvider: normalizePreferredProvider(preferredProvider),
       fallbackToEnv: true,
       forcePlatform: Boolean(payload.isPlatformNotification),
     });

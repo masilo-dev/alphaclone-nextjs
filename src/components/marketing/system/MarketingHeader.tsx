@@ -227,11 +227,11 @@ export default function MarketingHeader() {
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-nav-login">
                 {CTA_LABELS.tertiaryLogin}
               </Link>
-              <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact">
-                {CTA_LABELS.secondary}
+              <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-header-cta">
+                {CTA_LABELS.headerSecondary}
               </SecondaryCTA>
-              <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
-                {CTA_LABELS.primary}
+              <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact mkt-header-cta mkt-header-cta--primary">
+                {CTA_LABELS.headerPrimary}
               </Link>
             </div>
 
@@ -274,10 +274,10 @@ export default function MarketingHeader() {
                           {CTA_LABELS.tertiaryLogin}
                         </Link>
                         <SecondaryCTA href={DEMO_HREF} onClick={() => setMobileOpen(false)} className="w-full mkt-btn-compact">
-                          {CTA_LABELS.secondary}
+                          {CTA_LABELS.headerSecondary}
                         </SecondaryCTA>
                         <Link href={TRIAL_HREF} onClick={() => setMobileOpen(false)} className="mkt-btn mkt-btn-primary w-full">
-                          {CTA_LABELS.primary}
+                          {CTA_LABELS.headerPrimary}
                         </Link>
                       </div>
                     </details>
