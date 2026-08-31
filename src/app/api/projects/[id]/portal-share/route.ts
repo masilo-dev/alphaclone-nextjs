@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { hashPortalPassword } from '@/lib/projects/portalPassword';
-import { buildCanonicalProjectPortalUrl } from '@/lib/projects/portalLinks';
+import { buildCanonicalProjectPortalUrl, toOpaquePortalToken } from '@/lib/projects/portalLinks';
 import crypto from 'crypto';
 
 const portalShareSchema = z.object({
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const token = project.portal_token || crypto.randomUUID().replace(/-/g, '');
+    const dbToken = project.portal_token ? String(project.portal_token) : crypto.randomUUID();
 
     let portalExpiresAt: string | null = null;
     if (neverExpires) {
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     };
 
     if (!project.portal_token) {
-      updatePayload.portal_token = token;
+      updatePayload.portal_token = dbToken;
     }
 
     if (portalExpiresAt !== undefined || neverExpires || expiresInDays) {
@@ -81,12 +81,13 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     if (updateError) throw updateError;
 
-    const url = buildCanonicalProjectPortalUrl(token);
+    const url = buildCanonicalProjectPortalUrl(dbToken);
+    const opaqueToken = toOpaquePortalToken(dbToken);
 
     return NextResponse.json({
       success: true,
       url,
-      token,
+      token: opaqueToken,
       expiresAt: portalExpiresAt,
       passwordProtected: clearPassword ? false : Boolean(password) || undefined,
     });

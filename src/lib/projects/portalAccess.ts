@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { verifyPortalPassword } from '@/lib/projects/portalPassword';
+import { portalTokenLookupValues } from '@/lib/projects/portalLinks';
 
 export interface PortalProjectRow {
   id: string;
@@ -33,15 +34,21 @@ export async function resolvePortalProject(
   admin: SupabaseClient,
   tokenOrId: string
 ): Promise<{ project: PortalProjectRow | null; error: string | null }> {
-  const { data, error } = await admin
+  const tokenValues = portalTokenLookupValues(tokenOrId);
+  let query = admin
     .from('projects')
     .select(
       'id, tenant_id, name, category, status, current_stage, progress, due_date, owner_name, image, description, portal_token, portal_password_hash, portal_expires_at, is_public, portal_enabled'
     )
     .eq('is_public', true)
-    .eq('portal_enabled', true)
-    .eq('portal_token', tokenOrId)
-    .maybeSingle();
+    .eq('portal_enabled', true);
+
+  query =
+    tokenValues.length === 1
+      ? query.eq('portal_token', tokenValues[0])
+      : query.in('portal_token', tokenValues);
+
+  const { data, error } = await query.maybeSingle();
 
   if (error || !data) {
     return { project: null, error: error?.message || 'Project not found' };
