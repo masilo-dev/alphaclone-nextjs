@@ -1,5 +1,17 @@
 /** Postgres / PostgREST missing-column compatibility helpers. */
 
+type SchemaCompatError = { code?: string; message: string };
+
+function normalizeError(
+  error: { code?: string; message?: string } | null | undefined
+): SchemaCompatError | null {
+  if (!error) return null;
+  return {
+    code: error.code,
+    message: error.message || error.code || 'Database update failed',
+  };
+}
+
 export function isMissingColumnError(
   error: { code?: string; message?: string } | null | undefined
 ): boolean {
@@ -36,7 +48,7 @@ export async function updateWithOptionalTimestamp<T = unknown>(params: {
   entityId: string;
   payload: Record<string, unknown>;
   select?: string;
-}): Promise<{ data: T | null; error: { code?: string; message?: string } | null }> {
+}): Promise<{ data: T | null; error: SchemaCompatError | null }> {
   const client = params.supabase as SupabaseUpdateClient;
   const select = params.select || 'id';
   const stamp = new Date().toISOString();
@@ -58,5 +70,5 @@ export async function updateWithOptionalTimestamp<T = unknown>(params: {
       .single());
   }
 
-  return { data: data as T | null, error };
+  return { data: data as T | null, error: normalizeError(error) };
 }
