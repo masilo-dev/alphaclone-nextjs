@@ -4,7 +4,7 @@ import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant, TenantSettings } from '@/services/tenancy/types';
 import { Settings, Copy, Plus, X, ExternalLink, Globe, Calendar } from 'lucide-react';
 import { Card, Button } from '@/components/ui/UIComponents';
-import { PLATFORM_CALENDLY_URL } from '@/constants';
+import { PLATFORM_BOOKING_URL } from '@/constants';
 
 async function syncBookingTypesToDb(
     tenantId: string,
@@ -112,26 +112,26 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-10 overscroll-contain">
-                    {/* Platform Calendly — for talking to Bonnie / sales */}
+                    {/* Platform Cal.com — for talking to Bonnie / sales */}
                     <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-start gap-4">
                             <div className="p-2 bg-purple-500/20 rounded-lg shrink-0">
                                 <Calendar className="w-5 h-5 text-purple-400" />
                             </div>
                             <div>
-                                <h3 className="text-sm font-bold text-purple-200">Platform Calendly</h3>
+                                <h3 className="text-sm font-bold text-purple-200">Platform booking (Cal.com)</h3>
                                 <p className="text-xs text-purple-400/80 leading-relaxed">
                                     For prospects who want to talk to you directly. Native booking below is for your clients booking your services.
                                 </p>
                             </div>
                         </div>
                         <a
-                            href={PLATFORM_CALENDLY_URL}
+                            href={PLATFORM_BOOKING_URL}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-100 text-xs font-bold uppercase tracking-wider shrink-0"
                         >
-                            <ExternalLink className="w-4 h-4" /> Open Calendly
+                            <ExternalLink className="w-4 h-4" /> Open Cal.com
                         </a>
                     </div>
 

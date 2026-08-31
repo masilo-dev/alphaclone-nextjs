@@ -1059,6 +1059,38 @@ export const dashboardStatsService = {
     );
     const postFreq = Math.round((publishedInPeriod / periodDays) * 10) / 10;
 
+    const analyticsRows = await safeRows<{
+      post_id?: string;
+      impressions?: number;
+      reactions?: number;
+      comments?: number;
+      clicks?: number;
+      synced_at?: string | null;
+      created_at: string;
+    }>(
+      supabase,
+      'social_post_analytics',
+      'post_id, impressions, reactions, comments, clicks, synced_at, created_at',
+      tenantId,
+    );
+
+    const analyticsInPeriod = analyticsRows.filter((row) =>
+      inPeriod(row.synced_at || row.created_at, startIso, endIso),
+    );
+    const analyticsPrevPeriod = analyticsRows.filter((row) =>
+      inPeriod(row.synced_at || row.created_at, previousStartIso, previousEndIso),
+    );
+    const impressionsInPeriod = analyticsInPeriod.reduce(
+      (sum, row) => sum + Number(row.impressions || 0),
+      0,
+    );
+    const impressionsPrevPeriod = analyticsPrevPeriod.reduce(
+      (sum, row) => sum + Number(row.impressions || 0),
+      0,
+    );
+    const syncedPostCount = new Set(analyticsRows.map((row) => row.post_id).filter(Boolean)).size;
+    const publishedTotal = posts.filter((p) => p.status === 'published').length;
+
     const feed = await fetchActivityFeed(supabase, tenantId, ['social', 'post'], DASHBOARD_COLORS.red);
 
     return {
@@ -1071,7 +1103,15 @@ export const dashboardStatsService = {
         },
         { label: 'Scheduled', value: scheduled, deltaColor: 'teal' },
         { label: 'Posting rhythm', value: `${postFreq}/day`, deltaColor: postFreq > 0.5 ? 'green' : 'amber', comparisonText: 'Consistency audit' },
-        { label: 'Tracking', value: 'Connected metrics only', deltaColor: 'amber' },
+        {
+          label: 'Impressions',
+          value: impressionsInPeriod,
+          ...formatDelta(impressionsInPeriod, impressionsPrevPeriod),
+          comparisonText:
+            syncedPostCount > 0
+              ? `${syncedPostCount} of ${publishedTotal} published posts synced`
+              : 'Sync metrics in Social Command → Analytics',
+        },
       ],
       mainChart: dayKeys.map((k) => ({ label: dayLabel(k), value: reachByDay[k] || 0 })),
       breakdown: Object.entries(platformMap).map(([label, value], i) => ({

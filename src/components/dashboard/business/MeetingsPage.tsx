@@ -5,7 +5,7 @@ import { Settings, Video, Link, Plus, Clock, Calendar, Users } from 'lucide-reac
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { CalendlySettingsModal } from './CalendlySettingsModal';
 import { BookingSettings } from './BookingSettings';
-import { PLATFORM_CALENDLY_URL } from '@/constants';
+import { PLATFORM_BOOKING_URL } from '@/constants';
 import { Button, Badge } from '@/components/ui/UIComponents';
 import { supabase } from '../../../lib/supabase';
 import { createInstantMeeting } from '../../../services/instantMeetingService';
@@ -82,7 +82,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
             toast.success('Native booking link copied');
             return;
         }
-        const calendlyUrl = (currentTenant?.settings as any)?.calendly?.eventUrl || PLATFORM_CALENDLY_URL;
+        const calendlyUrl = (currentTenant?.settings as any)?.calendly?.eventUrl || PLATFORM_BOOKING_URL;
         navigator.clipboard.writeText(calendlyUrl);
         toast.success('Booking link copied');
     };

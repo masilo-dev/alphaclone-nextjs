@@ -130,6 +130,7 @@ OAuth discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-s
 ## High-Priority URLs
 
 - [Platform Home](https://alphaclonesystems.com/) — Main landing page and product overview
+- [Book a Demo](https://alphaclonesystems.com/book-demo) — Free 30-minute live platform walkthrough (Cal.com scheduling)
 - [About AlphaClone](https://alphaclonesystems.com/about) — Company background and mission
 - [Pricing Plans](https://alphaclonesystems.com/pricing) — Starter, Pro, and Enterprise plan details
 - [Services Overview](https://alphaclonesystems.com/services) — Professional services and implementation support

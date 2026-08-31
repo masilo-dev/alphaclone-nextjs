@@ -51,7 +51,10 @@ export const APP_NAME = "Alphaclone Systems";
 export const APP_SHORT_NAME = "Alphaclone";
 export const APP_TAGLINE = "Your business operating system";
 
-/** Platform Calendly link for sales/demo calls (marketing + dashboard). */
+/** Platform public booking page (Cal.com) for marketing demo/sales calls. */
+export const PLATFORM_BOOKING_URL = 'https://cal.com/alphaclonesystems';
+
+/** Legacy Calendly URL — tenant OAuth integrations only; public marketing uses PLATFORM_BOOKING_URL. */
 export const PLATFORM_CALENDLY_URL = 'https://calendly.com/bonniealphaclonesystems/30min';
 
 /** Shown in Settings; keep in sync with package.json version. */

@@ -458,45 +458,18 @@ export async function POST(req: NextRequest) {
       headers.set('X-MCP-Version', '2.0.0');
       headers.set('X-Catalog-Checksum', checksum);
 
-      // Extract pagination arguments from params or query params
+      const { paginateMcpToolsList } = await import('@/lib/mcp/toolsListPagination');
       const rawCursor = requestBody.params?.cursor || req.nextUrl.searchParams.get('cursor');
       const rawLimit = requestBody.params?.limit || requestBody.params?.pageSize || req.nextUrl.searchParams.get('limit');
-      const MAX_PAGE_SIZE = 250;
-
-      let offset = 0;
-      if (typeof rawCursor === 'string' && rawCursor.trim() !== '') {
-        const parsed = parseInt(rawCursor.trim(), 10);
-        if (!isNaN(parsed) && parsed >= 0) {
-          offset = parsed;
-        }
-      }
-
-      const hasExplicitLimit = rawLimit !== undefined && rawLimit !== null;
-      const hasCursor = typeof rawCursor === 'string' && rawCursor.trim() !== '';
-      const paginate =
-        hasExplicitLimit ||
-        (hasCursor && requestedCatalogMode !== 'full') ||
-        (hasCursor && offset > 0);
-
-      let limit = discoveryTools.length;
-      if (hasExplicitLimit) {
-        const parsedLimit = parseInt(String(rawLimit).trim(), 10);
-        if (!isNaN(parsedLimit) && parsedLimit > 0) {
-          limit = Math.min(parsedLimit, MAX_PAGE_SIZE);
-        }
-      } else if (paginate && requestedCatalogMode !== 'full') {
-        limit = 75;
-      } else if (hasCursor && requestedCatalogMode === 'full') {
-        // Full catalog: when paginating with cursor only, return up to MAX_PAGE_SIZE per page
-        limit = Math.min(Math.max(discoveryTools.length - offset, 0), MAX_PAGE_SIZE);
-      }
-
-      const paginatedTools =
-        !paginate && (!hasCursor || (requestedCatalogMode === 'full' && offset === 0 && !hasExplicitLimit))
-          ? discoveryTools
-          : discoveryTools.slice(offset, offset + limit);
-      const nextOffset = offset + paginatedTools.length;
-      const nextCursor = (paginate || hasCursor) && nextOffset < discoveryTools.length ? String(nextOffset) : undefined;
+      const pagination = paginateMcpToolsList({
+        tools: discoveryTools,
+        catalogMode: requestedCatalogMode,
+        clientId,
+        rawCursor: typeof rawCursor === 'string' ? rawCursor : null,
+        rawLimit,
+      });
+      const paginatedTools = pagination.tools;
+      const { offset, limit, nextCursor } = pagination;
 
       const result: Record<string, unknown> = {
         tools: paginatedTools,

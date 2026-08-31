@@ -383,8 +383,9 @@ export default function SocialCommandCenter() {
         try {
             const res = await fetch('/api/social/analytics/sync', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId: currentTenant.id, days: 90, limit: 40 }),
+                body: JSON.stringify({ tenantId: currentTenant.id, days: 90, limit: 80 }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data.success) {

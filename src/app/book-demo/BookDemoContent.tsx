@@ -4,7 +4,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, CheckCircle2, Clock, ExternalLink, AlertCircle } from 'lucide-react';
-import { getBookingConfig, isValidBookingUrl } from '@/lib/marketing/booking';
+import {
+  getBookingConfig,
+  getBookingEmbedUrl,
+  isCalComBookingUrl,
+  isValidBookingUrl,
+  DEFAULT_BOOKING_URL,
+} from '@/lib/marketing/booking';
 import { TRIAL_HREF } from '@/lib/marketing/cta';
 
 export default function BookDemoContent() {
@@ -16,15 +22,24 @@ export default function BookDemoContent() {
   const config = getBookingConfig('demo');
   const bookingUrl = isValidBookingUrl(config.calendlyUrl)
     ? config.calendlyUrl
-    : 'https://calendly.com/bonniealphaclonesystems/30min';
+    : DEFAULT_BOOKING_URL;
+  const embedUrl = getBookingEmbedUrl(bookingUrl);
+  const usesCalCom = isCalComBookingUrl(bookingUrl);
 
   useEffect(() => {
+    if (usesCalCom) {
+      setWidgetReady(false);
+      setIframeFailed(false);
+      return;
+    }
     if (!bookingUrl) return;
 
     setWidgetReady(false);
     setIframeFailed(false);
 
-    const win = window as any;
+    const win = window as Window & {
+      Calendly?: { initInlineWidget: (options: Record<string, unknown>) => void };
+    };
 
     const initWidget = () => {
       if (!widgetRef.current) return;
@@ -57,15 +72,17 @@ export default function BookDemoContent() {
       clearTimeout(failSafeTimeout);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scriptLoaded, bookingUrl]);
+  }, [scriptLoaded, bookingUrl, usesCalCom]);
 
   return (
     <div className="marketing-theme min-h-screen text-white">
-      <Script
-        src="https://assets.calendly.com/assets/external/widget.js"
-        strategy="afterInteractive"
-        onLoad={() => setScriptLoaded(true)}
-      />
+      {!usesCalCom && (
+        <Script
+          src="https://assets.calendly.com/assets/external/widget.js"
+          strategy="afterInteractive"
+          onLoad={() => setScriptLoaded(true)}
+        />
+      )}
 
       {/* Page Header */}
       <section className="pt-28 pb-12 px-4">
@@ -79,7 +96,6 @@ export default function BookDemoContent() {
           </Link>
 
           <div className="grid md:grid-cols-2 gap-10 items-start mb-12">
-            {/* Left: Text */}
             <div>
               <p className="text-xs font-semibold text-teal-400 uppercase tracking-widest mb-3">Free Live Walkthrough</p>
               <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight mb-4">
@@ -113,7 +129,6 @@ export default function BookDemoContent() {
               </div>
             </div>
 
-            {/* Right: Stats/badges */}
             <div className="hidden md:grid grid-cols-2 gap-4">
               {[
                 { label: 'Starting from', value: '$15/mo', sub: 'No hidden fees' },
@@ -135,7 +150,7 @@ export default function BookDemoContent() {
         </div>
       </section>
 
-      {/* Calendly Embed */}
+      {/* Booking embed */}
       <section className="px-4 pb-24">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-4">
@@ -155,7 +170,6 @@ export default function BookDemoContent() {
           </div>
 
           <div className="relative min-h-[680px] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-            {/* Loading overlay */}
             {!widgetReady && !iframeFailed && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-900 z-10">
                 <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
@@ -181,6 +195,15 @@ export default function BookDemoContent() {
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </div>
+            ) : usesCalCom ? (
+              <iframe
+                title="Book a demo with AlphaClone Systems"
+                src={embedUrl}
+                className="w-full border-0 bg-white"
+                style={{ minHeight: '680px', height: '680px' }}
+                onLoad={() => setWidgetReady(true)}
+                onError={() => setIframeFailed(true)}
+              />
             ) : (
               <div
                 ref={widgetRef}
@@ -191,8 +214,33 @@ export default function BookDemoContent() {
           </div>
 
           <p className="text-center text-xs text-slate-500 mt-4">
-            Scheduling powered by Calendly. All times are in your local timezone.
+            Scheduling powered by {usesCalCom ? 'Cal.com' : 'Calendly'}. All times are in your local timezone.
           </p>
+
+          <nav
+            className="mt-10 rounded-xl border border-slate-800 bg-slate-900/40 p-6"
+            aria-label="Explore AlphaClone"
+          >
+            <p className="text-xs font-semibold uppercase tracking-widest text-teal-400 mb-4">
+              Explore the platform
+            </p>
+            <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 text-sm">
+              {[
+                { href: '/services', label: 'Services & platform overview' },
+                { href: '/pricing', label: 'Pricing plans' },
+                { href: '/about', label: 'About AlphaClone' },
+                { href: '/crm', label: 'CRM & pipeline' },
+                { href: '/ai-agents', label: 'Bonnie AI agents' },
+                { href: '/ecosystem', label: 'Integrations' },
+              ].map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href} className="text-slate-300 hover:text-teal-400 transition-colors">
+                    {label} →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
       </section>
     </div>

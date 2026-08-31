@@ -68,13 +68,8 @@ export function PrimaryCTA({
 
 /**
  * SecondaryCTA — used for "Book a demo" marketing CTAs.
- *
- * Intentional behaviour (per public-landing-page rules):
- *  1. Always opens the EXTERNAL calendar booking page in a new tab.
- *  2. Never opens an internal modal or broken internal form.
- *  3. Targets the same single source of truth: PUBLIC_DEMO_BOOKING_URL.
- *  4. Preserves marketing attribution (UTM / gclid / fbclid / ref).
- *  5. Works identically on desktop and mobile with a real <a> link.
+ * Links to /book-demo (product context + embedded Cal.com scheduler).
+ * Preserves marketing attribution (UTM / gclid / fbclid / ref).
  */
 export function SecondaryCTA({
   href = DEMO_HREF,

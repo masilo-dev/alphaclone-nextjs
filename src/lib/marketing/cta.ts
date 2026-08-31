@@ -1,6 +1,6 @@
 /** Marketing CTA destinations — single source of truth. */
 
-import { DEFAULT_CALENDLY_URL } from '@/lib/marketing/booking';
+import { DEFAULT_BOOKING_URL } from '@/lib/marketing/booking';
 
 export const LOGIN_HREF = '/auth/login';
 
@@ -19,23 +19,22 @@ export const BUSINESS_SIGNUP_HREF = TRIAL_HREF;
  */
 export const PUBLIC_DEMO_BOOKING_URL: string =
   process.env.NEXT_PUBLIC_DEMO_BOOKING_URL?.trim() ||
+  process.env.NEXT_PUBLIC_BOOKING_URL?.trim() ||
   process.env.NEXT_PUBLIC_CALENDLY_URL?.trim() ||
-  DEFAULT_CALENDLY_URL;
+  DEFAULT_BOOKING_URL;
 
 /**
- * Internal marketing route: /book-demo page embeds the same calendar and
- * adds more product context. Marketing CTAs should prefer the external link,
- * but DEMO_HREF is retained for any existing deep links that rely on the
- * in-app route.
+ * Internal marketing route: /book-demo page embeds Cal.com and
+ * adds more product context. Marketing CTAs may link here or directly
+ * to PUBLIC_DEMO_BOOKING_URL.
  */
 export const DEMO_HREF_INTERNAL = '/book-demo';
 
 /**
- * Public demo CTA destination. Opens the external Calendly page directly.
- * Used by Primary/Secondary CTAs, nav, pricing, footer, and all other
- * public marketing surfaces.
+ * Marketing demo CTA destination — internal /book-demo page with product context
+ * and embedded Cal.com scheduler. Keeps demo discoverable in search and site nav.
  */
-export const DEMO_HREF = PUBLIC_DEMO_BOOKING_URL;
+export const DEMO_HREF = DEMO_HREF_INTERNAL;
 
 export const CTA_LABELS = {
   primary: 'Start for $15/month',

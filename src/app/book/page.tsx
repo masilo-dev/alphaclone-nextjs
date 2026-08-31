@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PLATFORM_CALENDLY_URL } from '@/constants';
+import { PLATFORM_BOOKING_URL } from '@/constants';
 
 export default function BookIndexPage() {
   return (
@@ -18,12 +18,12 @@ export default function BookIndexPage() {
             Book a platform demo
           </Link>
           <a
-            href={PLATFORM_CALENDLY_URL}
+            href={PLATFORM_BOOKING_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-slate-800 hover:bg-slate-700 px-5 py-3 text-sm font-semibold transition-colors"
           >
-            Open Calendly (30 min)
+            Open Cal.com booking
           </a>
           <Link
             href="/"

@@ -196,7 +196,7 @@ function McpOAuthCredentialsPanel({
 }
 
 /** Paste at the start of a session so the AI uses AlphaClone MCP correctly. */
-const MCP_MASTER_INSTRUCTION = `You are connected to my AlphaClone business workspace via MCP. Use AlphaClone tools for CRM, leads, deals, tasks, invoices, contracts, and messages — do not guess or make up data. MCP tool calls execute immediately (no dashboard approval queue).
+const MCP_MASTER_INSTRUCTION = `You are connected to my AlphaClone business workspace via MCP. Use AlphaClone tools for CRM, leads, deals, tasks, invoices, contracts, email, social publishing, and media — do not guess or make up data. MCP tool calls execute immediately (no dashboard approval queue).
 
 Rules:
 1. Before creating records, search for duplicates (same email, company, or name).
@@ -204,6 +204,12 @@ Rules:
 3. Summarize what you changed after each action (what was created/updated and IDs if returned).
 4. If a tool fails, tell me the error and suggest one fix — do not retry blindly.
 5. Keep responses concise: bullet lists for data, short paragraphs for recommendations.
+
+Images & media (required workflow):
+- NEVER pass local paths like /mnt/data/… to publish tools — they are blocked.
+- When I attach or generate an image: call upload_media with content_base64 or data_url (or source_url if already HTTPS).
+- Use the returned media_url or media_asset_id in publish_social_post, publish_post, publish_linkedin_image, or send_email attachments.
+- Flow: upload_media → publish_social_post (or send_email with attachments). Use get_post_status to verify publish.
 
 When I ask about "my business", pull live data from AlphaClone first, then answer.`;
 
@@ -262,6 +268,17 @@ const MCP_BUSINESS_PROMPT_GROUPS: {
       'What is my total outstanding invoice amount and which clients owe the most?',
       'List invoices overdue by more than 14 days. Draft a polite payment reminder I can send for each.',
       'Summarize paid vs unpaid revenue this month from AlphaClone.',
+    ],
+  },
+  {
+    title: 'Email, social & images',
+    description: 'Send mail, upload images, and publish to LinkedIn/Facebook.',
+    prompts: [
+      'Send an email via AlphaClone to bonnie@example.com — subject "Quick update", body: thank them for the call today.',
+      'I have an image to post. Upload it with upload_media (use my attached image as base64 or data URL), then publish to LinkedIn with a professional caption about AlphaClone.',
+      'Upload this image to AlphaClone media library and publish it to my connected Facebook Page with caption: "Building smarter with AlphaClone."',
+      'Create a LinkedIn post with the image I attached — upload first, then publish_linkedin_image or publish_social_post. Confirm the live URL when done.',
+      'List my media assets in AlphaClone and show the 5 most recent uploads.',
     ],
   },
   {
@@ -681,7 +698,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
               Registered client ID: <code className="text-emerald-300">chatgpt-connector</code> — full platform tool catalog (500+ tools).
             </p>
             <p className="text-slate-500 text-xs leading-relaxed">
-              ChatGPT may show ~75–80 tools in the connector UI — that is the first page. The full catalog is available via discovery tools like <code className="text-teal-400">list_tools</code>, <code className="text-teal-400">search_tools</code>, and <code className="text-teal-400">load_module_tools</code>. Ask ChatGPT to search or load modules when you need a specific tool.
+              After connect, ChatGPT receives the <strong>full compact catalog</strong> (500+ tools) on the first sync — leads, email, image upload, LinkedIn/Facebook/Instagram publish, CRM, and finance tools are prioritized at the top. For images: ChatGPT must call <code className="text-teal-400">upload_media</code> first (base64 or data URL), then <code className="text-teal-400">publish_social_post</code> — local <code className="text-slate-500">/mnt/data</code> paths do not work. Paste the <strong>Master instruction</strong> below into ChatGPT once per session.
             </p>
           </div>
         )}
@@ -988,13 +1005,24 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                               Quick test — try saying these to {agentLabel}:
                             </p>
                             <div className="space-y-2">
-                              {(setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor' ? [
-                                'Using AlphaClone, give me a quick snapshot: open leads, active deals, tasks due today, outstanding invoices.',
-                                'Show me all my leads and flag any with no follow-up in the last 7 days.',
-                                'Add a new lead: Jane Smith, jane@acme.com, Acme Ltd, source: website.',
-                                'What is my total outstanding invoice amount?',
-                                'Create a high-priority task: follow up with Acme Ltd — due tomorrow.',
-                              ] : step.testPrompts ?? []).map((prompt: string) => (
+                              {(setupType === 'chatgpt'
+                                ? [
+                                    'Using AlphaClone, give me a quick snapshot: open leads, active deals, tasks due today, outstanding invoices.',
+                                    'Add a new lead: Jane Smith, jane@acme.com, Acme Ltd, source: website.',
+                                    'Send an email via AlphaClone to a contact — subject and body from our conversation.',
+                                    'Upload the image I attached with upload_media, then publish it to LinkedIn with a short caption.',
+                                    'Search AlphaClone tools for invoice tools, then create an invoice for Acme Ltd.',
+                                  ]
+                                : setupType === 'manus' || setupType === 'grok' || setupType === 'cursor'
+                                  ? [
+                                      'Using AlphaClone, give me a quick snapshot: open leads, active deals, tasks due today, outstanding invoices.',
+                                      'Show me all my leads and flag any with no follow-up in the last 7 days.',
+                                      'Add a new lead: Jane Smith, jane@acme.com, Acme Ltd, source: website.',
+                                      'What is my total outstanding invoice amount?',
+                                      'Create a high-priority task: follow up with Acme Ltd — due tomorrow.',
+                                    ]
+                                  : step.testPrompts ?? []
+                              ).map((prompt: string) => (
                                 <div key={prompt} className={`flex items-start gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : setupType === 'grok' ? 'bg-fuchsia-500/10 border-fuchsia-500/20' : setupType === 'chatgpt' ? 'bg-emerald-500/10 border-emerald-500/20' : setupType === 'cursor' ? 'bg-sky-500/10 border-sky-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
                                   <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 ${setupType === 'manus' ? 'text-teal-400' : setupType === 'grok' ? 'text-fuchsia-400' : setupType === 'chatgpt' ? 'text-emerald-400' : setupType === 'cursor' ? 'text-sky-400' : 'text-indigo-400'}`} />
                                   <span className={`flex-1 text-sm font-medium leading-relaxed ${setupType === 'manus' ? 'text-teal-300' : setupType === 'grok' ? 'text-fuchsia-300' : setupType === 'chatgpt' ? 'text-emerald-300' : setupType === 'cursor' ? 'text-sky-300' : 'text-indigo-300'}`}>{prompt}</span>

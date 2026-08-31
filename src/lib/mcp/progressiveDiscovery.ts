@@ -12,8 +12,11 @@ export const CORE_TOOL_NAMES = new Set([
   'load_module_tools', 'load_skill', 'execute_internal_tool',
   'dispatch_tool', 'execute_action',
   // Essential CRM & Lead mutations
-  'create_lead', 'update_lead', 'create_deal', 'score_deal',
-  'create_company', 'create_contact', 'qualify_crm_leads', 'find_and_qualify_leads',
+  'list_leads', 'get_leads', 'create_lead', 'create_leads', 'update_lead', 'delete_lead',
+  'add_note', 'create_deal', 'score_deal', 'change_pipeline_stage', 'create_follow_up',
+  'create_company', 'create_contact', 'update_contact', 'update_company',
+  'qualify_crm_leads', 'find_and_qualify_leads', 'parse_lead_criteria', 'get_scraper_leads',
+  'search_facebook_leads',
   // Social Media publishing & media ingestion
   'upload_social_media', 'create_social_post_with_media', 'publish_social_post',
   'publish_post', 'get_social_identities', 'get_facebook_identities',
@@ -26,6 +29,15 @@ export const CORE_TOOL_NAMES = new Set([
   'update_contract_status', 'get_contracts',
   // Email & Outreach
   'send_email', 'send_outreach_email', 'reply_to_email', 'generate_outreach_draft',
+  'read_emails', 'search_emails', 'create_email_draft', 'list_email_accounts',
+  'send_transactional_email',
+  // Social scheduling, media library & LinkedIn/Instagram publish
+  'schedule_social_post', 'create_social_post', 'get_social_posts', 'get_social_post',
+  'upload_media_asset', 'get_media', 'get_media_asset', 'list_media_assets', 'delete_media',
+  'create_social_post_with_ai_image', 'publish_now', 'create_post', 'schedule_post',
+  'publish_linkedin_image', 'publish_linkedin_document', 'publish_facebook_photo',
+  'publish_instagram_photo', 'publish_instagram_reel', 'upload_document',
+  'analytics', 'engagement_report', 'get_post_status',
   // Projects & Tasks
   'create_project', 'update_project_stage',
 ]);

@@ -13,7 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/marketing/ui/sheet';
-import { CTA_LABELS, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
+import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
 import { AlphaIcon, type AlphaIconName } from '@/components/marketing/icons';
 
 type DropdownKey = 'product' | 'solutions' | 'resources' | 'company';
@@ -21,6 +21,7 @@ type DropdownKey = 'product' | 'solutions' | 'resources' | 'company';
 type SimpleLink = { label: string; path: string; icon?: AlphaIconName };
 
 const PRODUCT_LINKS: SimpleLink[] = [
+  { label: 'Platform overview', path: '/services', icon: 'connected' },
   { label: 'CRM', path: '/crm', icon: 'crm' },
   { label: 'Leads', path: '/lead-management', icon: 'leads' },
   { label: 'Projects', path: '/project-management', icon: 'projects' },
@@ -38,6 +39,7 @@ const SOLUTIONS_LINKS: SimpleLink[] = [
 ];
 
 const RESOURCES_LINKS: SimpleLink[] = [
+  { label: 'Book a demo', path: '/book-demo', icon: 'growth' },
   { label: 'Docs', path: '/docs', icon: 'documents' },
   { label: 'Guide', path: '/guide', icon: 'setup' },
   { label: 'FAQ', path: '/faq', icon: 'reports' },
@@ -48,6 +50,8 @@ const RESOURCES_LINKS: SimpleLink[] = [
 const COMPANY_LINKS: SimpleLink[] = [
   { label: 'About', path: '/about', icon: 'connected' },
   { label: 'Contact', path: '/contact', icon: 'leads' },
+  { label: 'Legal hub', path: '/legal', icon: 'documents' },
+  { label: 'Compliance', path: '/compliance', icon: 'security' },
   { label: 'Security', path: '/security-policy', icon: 'security' },
   { label: 'Status', path: '/platform-status', icon: 'automation' },
 ];
@@ -90,6 +94,8 @@ export default function MarketingHeader() {
       resources: hit(RESOURCES_LINKS),
       company: hit(COMPANY_LINKS),
       pricing: current === '/pricing',
+      services: current === '/services' || current.startsWith('/services/'),
+      bookDemo: current === '/book-demo',
     };
   }, [pathname]);
 
@@ -218,16 +224,31 @@ export default function MarketingHeader() {
                 );
               })}
               <Link
+                href="/services"
+                className={`mkt-nav-trigger${activeSections.services ? ' is-active' : ''}`}
+              >
+                Services
+              </Link>
+              <Link
                 href="/pricing"
                 className={`mkt-nav-trigger${activeSections.pricing ? ' is-active' : ''}`}
               >
                 Pricing
+              </Link>
+              <Link
+                href={DEMO_HREF}
+                className={`mkt-nav-trigger${activeSections.bookDemo ? ' is-active' : ''}`}
+              >
+                Book a demo
               </Link>
             </nav>
 
             <div className="mkt-header-actions">
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-nav-login">
                 {CTA_LABELS.tertiaryLogin}
+              </Link>
+              <Link href={DEMO_HREF} className="mkt-btn mkt-btn-secondary mkt-btn-compact hidden lg:inline-flex">
+                {CTA_LABELS.secondary}
               </Link>
               <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
                 {CTA_LABELS.primary}
@@ -278,11 +299,25 @@ export default function MarketingHeader() {
                       </div>
                     </details>
                     <Link
+                      href="/services"
+                      onClick={() => setMobileOpen(false)}
+                      className="mkt-mobile-pricing"
+                    >
+                      Services
+                    </Link>
+                    <Link
                       href="/pricing"
                       onClick={() => setMobileOpen(false)}
                       className="mkt-mobile-pricing"
                     >
                       Pricing
+                    </Link>
+                    <Link
+                      href={DEMO_HREF}
+                      onClick={() => setMobileOpen(false)}
+                      className="mkt-mobile-pricing"
+                    >
+                      Book a demo
                     </Link>
                     {DROPDOWNS.map((section) => (
                       <details key={section.key} className="group rounded-xl border border-[var(--border-subtle)] bg-white/[0.02]">

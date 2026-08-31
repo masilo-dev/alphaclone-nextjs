@@ -50,7 +50,9 @@ export {
 
 /** Top-level desktop links (non-dropdown). */
 export const MARKETING_PRIMARY_LINKS: MarketingNavLink[] = [
+  { label: 'Services', path: '/services' },
   { label: 'Pricing', path: '/pricing' },
+  { label: 'Book a demo', path: DEMO_HREF },
 ];
 
 /** Product — grouped by business job */
@@ -199,6 +201,12 @@ export const SOLUTIONS_NAV_GROUP: MarketingNavGroup = {
 export const RESOURCES_NAV_GROUP: MarketingNavGroup = {
   label: 'Resources',
   items: [
+    {
+      label: 'Book a demo',
+      path: DEMO_HREF,
+      description: 'Live walkthrough of the platform',
+      icon: Calendar,
+    },
     {
       label: 'Documentation',
       path: '/docs',

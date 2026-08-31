@@ -25,6 +25,7 @@ const COLUMNS = [
     title: 'Product',
     links: [
       { label: 'Platform overview', path: '/services' },
+      { label: 'Book a demo', path: '/book-demo' },
       { label: 'CRM', path: '/crm' },
       { label: 'Project management', path: '/project-management' },
       { label: 'Bonnie AI', path: '/ai-agents' },
@@ -56,6 +57,8 @@ const COLUMNS = [
     links: [
       { label: 'About AlphaClone', path: '/about' },
       { label: 'Contact us', path: '/contact' },
+      { label: 'Legal hub', path: '/legal' },
+      { label: 'Compliance', path: '/compliance' },
       { label: 'Privacy Policy', path: '/privacy-policy' },
       { label: 'Terms of Service', path: '/terms-of-service' },
       { label: 'Security Policy', path: '/security-policy' },
@@ -159,6 +162,9 @@ export default function MarketingFooter() {
             </Link>
             <Link href="/privacy-choices" className="mkt-footer-link">
               Privacy choices
+            </Link>
+            <Link href="/legal" className="mkt-footer-link">
+              Legal
             </Link>
           </div>
         </div>

@@ -249,7 +249,8 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0" data-tour="projects-center">
+        <div className="h-full min-h-0 flex flex-col overflow-hidden min-w-0" data-tour="projects-center">
+            <div className="shrink-0 space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:px-8 md:pt-8 md:pb-4">
             <PlatformExecutionWelcome userId={user.id} surface="projects" />
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
             <ExecutionDecisionGuide
@@ -314,11 +315,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     </button>
                 </div>
             </div>
+            </div>
 
-            {/* Main Content Area */}
-            <div className="flex-1 overflow-hidden">
+            {/* Main Content Area — scrollable project list */}
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-3 sm:px-5 md:px-8 pb-6 sm:pb-8">
                 {viewMode === 'list' ? (
-                    <div className="h-full flex flex-col space-y-4">
+                    <div className="flex flex-col space-y-4">
                         {/* List Header */}
                         <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-slate-900/40 border border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                             <div className="col-span-5">Project</div>
@@ -328,7 +330,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                             <div className="col-span-1 text-right">Actions</div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                        <div className="space-y-3 pr-1">
                             {projects.length === 0 ? (
                                 <div className="py-8 px-4">
                                     <EmptyStateFromPreset
@@ -359,7 +361,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 ) : viewMode === 'timeline' ? (
                     <ProjectTimeline projects={projects} />
                 ) : (
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                    <div>
                         <ProjectHealthDashboard projects={projects} />
                     </div>
                 )}

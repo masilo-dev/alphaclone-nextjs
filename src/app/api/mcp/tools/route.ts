@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
-import { createMCPServer } from '@/services/mcp/MCPServer';
+import { validateMCPAuthApp, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
+import { resolveUnifiedCatalogMode } from '@/lib/mcp/ensureOAuthClient';
+import { paginateMcpToolsList } from '@/lib/mcp/toolsListPagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,49 +21,36 @@ async function handleDiscovery(req: NextRequest, method: string) {
   try {
     if (method === 'tools/list') {
       const { getUnifiedMcpTools, getCatalogChecksum } = await import('@/lib/mcp/listAllTools');
-      const tools = await getUnifiedMcpTools({ catalogMode: 'full' });
+      const clientId = auth.client_id || null;
+      const catalogMode = resolveUnifiedCatalogMode(clientId);
+      const tools = await getUnifiedMcpTools({ clientId, catalogMode });
       const checksum = getCatalogChecksum(tools);
 
       const rawCursor = req.nextUrl.searchParams.get('cursor');
       const rawLimit = req.nextUrl.searchParams.get('limit') || req.nextUrl.searchParams.get('pageSize');
-      const hasPaginationArgs = rawCursor !== null || rawLimit !== null;
-
-      let offset = 0;
-      if (typeof rawCursor === 'string' && rawCursor.trim() !== '') {
-        const parsed = parseInt(rawCursor.trim(), 10);
-        if (!isNaN(parsed) && parsed >= 0) {
-          offset = parsed;
-        }
-      }
-
-      let limit = tools.length;
-      if (rawLimit !== null) {
-        const parsedLimit = parseInt(String(rawLimit).trim(), 10);
-        if (!isNaN(parsedLimit) && parsedLimit > 0) {
-          limit = Math.min(parsedLimit, 250);
-        }
-      } else if (hasPaginationArgs) {
-        limit = 75;
-      }
-
-      const paginatedTools = hasPaginationArgs ? tools.slice(offset, offset + limit) : tools;
-      const nextOffset = offset + paginatedTools.length;
-      const nextCursor = (hasPaginationArgs && nextOffset < tools.length) ? String(nextOffset) : undefined;
+      const pagination = paginateMcpToolsList({
+        tools,
+        catalogMode,
+        clientId,
+        rawCursor,
+        rawLimit,
+      });
 
       const responsePayload: Record<string, unknown> = {
-        tools: paginatedTools,
+        tools: pagination.tools,
         metadata: {
           registry_version: '2.0.0',
           catalog_checksum: checksum,
           total_tools: tools.length,
-          returned_tools: paginatedTools.length,
-          offset,
-          next_cursor: nextCursor || null,
+          returned_tools: pagination.tools.length,
+          catalog_mode: catalogMode,
+          offset: pagination.offset,
+          next_cursor: pagination.nextCursor || null,
         },
       };
 
-      if (nextCursor) {
-        responsePayload.nextCursor = nextCursor;
+      if (pagination.nextCursor) {
+        responsePayload.nextCursor = pagination.nextCursor;
       }
 
       return NextResponse.json(
