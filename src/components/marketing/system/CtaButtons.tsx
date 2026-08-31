@@ -80,7 +80,7 @@ export function SecondaryCTA({
 }: CtaProps) {
   const destination = useAttributedHref(href);
   const external = isExternalHref(destination);
-  const classes = `mkt-btn mkt-btn-secondary ${className}`.trim();
+  const classes = `mkt-btn mkt-btn-demo ${className}`.trim();
   const label = ariaLabel || (typeof children === 'string' ? (children as string) : 'Book a demo');
 
   const handleClick = (e: React.MouseEvent) => {

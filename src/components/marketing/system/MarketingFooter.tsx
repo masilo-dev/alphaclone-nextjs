@@ -109,7 +109,7 @@ export default function MarketingFooter() {
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-btn mkt-btn-secondary mkt-btn-compact">
                 Log in
               </Link>
-              <SecondaryCTA href={DEMO_HREF} className="mkt-btn-ghost mkt-btn-compact">
+              <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact">
                 {CTA_LABELS.secondary}
               </SecondaryCTA>
             </div>

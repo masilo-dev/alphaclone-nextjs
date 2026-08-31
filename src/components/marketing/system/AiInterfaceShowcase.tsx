@@ -177,7 +177,7 @@ export default function AiInterfaceShowcase() {
             </div>
 
             <div className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-2 text-center text-[10px] font-extrabold text-emerald-300">
-              ⚡ Interfacing with {currentClient.name}
+              Live sync with {currentClient.name}
             </div>
           </div>
         </div>

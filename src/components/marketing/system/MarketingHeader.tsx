@@ -14,6 +14,7 @@ import {
   SheetTrigger,
 } from '@/components/marketing/ui/sheet';
 import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
+import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { AlphaIcon, type AlphaIconName } from '@/components/marketing/icons';
 
 type DropdownKey = 'product' | 'solutions' | 'resources' | 'company';
@@ -93,7 +94,6 @@ export default function MarketingHeader() {
       resources: hit(RESOURCES_LINKS),
       company: hit(COMPANY_LINKS),
       pricing: current === '/pricing',
-      services: current === '/services' || current.startsWith('/services/'),
       bookDemo: current === '/book-demo',
     };
   }, [pathname]);
@@ -221,18 +221,15 @@ export default function MarketingHeader() {
               >
                 Pricing
               </Link>
-              <Link
-                href={DEMO_HREF}
-                className={`mkt-nav-trigger mkt-nav-cta${activeSections.bookDemo ? ' is-active' : ''}`}
-              >
-                Book a demo
-              </Link>
             </nav>
 
             <div className="mkt-header-actions">
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-nav-login">
                 {CTA_LABELS.tertiaryLogin}
               </Link>
+              <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact">
+                {CTA_LABELS.secondary}
+              </SecondaryCTA>
               <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
                 {CTA_LABELS.primary}
               </Link>
@@ -276,31 +273,20 @@ export default function MarketingHeader() {
                         <Link href={LOGIN_HREF} onClick={() => setMobileOpen(false)} data-login-trigger className="mkt-btn mkt-btn-secondary w-full">
                           {CTA_LABELS.tertiaryLogin}
                         </Link>
+                        <SecondaryCTA href={DEMO_HREF} onClick={() => setMobileOpen(false)} className="w-full mkt-btn-compact">
+                          {CTA_LABELS.secondary}
+                        </SecondaryCTA>
                         <Link href={TRIAL_HREF} onClick={() => setMobileOpen(false)} className="mkt-btn mkt-btn-primary w-full">
                           {CTA_LABELS.primary}
                         </Link>
                       </div>
                     </details>
                     <Link
-                      href="/services"
-                      onClick={() => setMobileOpen(false)}
-                      className="mkt-mobile-pricing"
-                    >
-                      Services
-                    </Link>
-                    <Link
                       href="/pricing"
                       onClick={() => setMobileOpen(false)}
                       className="mkt-mobile-pricing"
                     >
                       Pricing
-                    </Link>
-                    <Link
-                      href={DEMO_HREF}
-                      onClick={() => setMobileOpen(false)}
-                      className="mkt-mobile-pricing"
-                    >
-                      Book a demo
                     </Link>
                     {DROPDOWNS.map((section) => (
                       <details key={section.key} className="group rounded-xl border border-[var(--border-subtle)] bg-white/[0.02]">

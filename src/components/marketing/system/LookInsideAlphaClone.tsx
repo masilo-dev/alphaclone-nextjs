@@ -49,7 +49,7 @@ const TABS: FeatureTab[] = [
     imageAlt: "AlphaClone Bonnie AI execution platform view",
     urlPath: "alphaclone.app/bonnie/execution-live",
     metrics: [
-      { label: "Execution Speed", value: "0.4s", change: "⚡ Instant", positive: true },
+      { label: "Execution Speed", value: "0.4s", change: "Instant", positive: true },
       { label: "Tasks Automated", value: "1,420/mo", change: "+34% this week", positive: true },
       { label: "Context Retention", value: "100%", change: "Zero loss", positive: true },
     ],
