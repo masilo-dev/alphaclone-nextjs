@@ -39,7 +39,6 @@ const SOLUTIONS_LINKS: SimpleLink[] = [
 ];
 
 const RESOURCES_LINKS: SimpleLink[] = [
-  { label: 'Book a demo', path: '/book-demo', icon: 'growth' },
   { label: 'Docs', path: '/docs', icon: 'documents' },
   { label: 'Guide', path: '/guide', icon: 'setup' },
   { label: 'FAQ', path: '/faq', icon: 'reports' },
@@ -179,19 +178,12 @@ export default function MarketingHeader() {
                   <details
                     key={dropdown.key}
                     className="mkt-nav-item"
-                    open={activeDropdown === dropdown.key ? true : undefined}
+                    open={activeDropdown === dropdown.key}
                     onToggle={(event) => {
-                      const open = (event.currentTarget as HTMLDetailsElement).open;
-                      setActiveDropdown(open ? dropdown.key : null);
-                      if (open) {
-                        desktopNavRef.current
-                          ?.querySelectorAll('details.mkt-nav-item[open]')
-                          .forEach((node) => {
-                            if (node !== event.currentTarget) {
-                              (node as HTMLDetailsElement).open = false;
-                            }
-                          });
-                      }
+                      event.preventDefault();
+                      setActiveDropdown((current) =>
+                        current === dropdown.key ? null : dropdown.key,
+                      );
                     }}
                   >
                     <summary
@@ -224,12 +216,6 @@ export default function MarketingHeader() {
                 );
               })}
               <Link
-                href="/services"
-                className={`mkt-nav-trigger${activeSections.services ? ' is-active' : ''}`}
-              >
-                Services
-              </Link>
-              <Link
                 href="/pricing"
                 className={`mkt-nav-trigger${activeSections.pricing ? ' is-active' : ''}`}
               >
@@ -237,7 +223,7 @@ export default function MarketingHeader() {
               </Link>
               <Link
                 href={DEMO_HREF}
-                className={`mkt-nav-trigger${activeSections.bookDemo ? ' is-active' : ''}`}
+                className={`mkt-nav-trigger mkt-nav-cta${activeSections.bookDemo ? ' is-active' : ''}`}
               >
                 Book a demo
               </Link>

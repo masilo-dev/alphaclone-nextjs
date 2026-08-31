@@ -49,7 +49,7 @@ const COLUMNS = [
       { label: 'Getting started', path: '/guide' },
       { label: 'Blog', path: '/blog' },
       { label: 'Integrations', path: '/ecosystem' },
-      { label: 'Book a demo', path: '/book-demo' },
+      { label: 'FAQ', path: '/faq' },
     ],
   },
   {
