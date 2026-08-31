@@ -1,89 +1,25 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import Script from 'next/script';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, CheckCircle2, Clock, ExternalLink, AlertCircle } from 'lucide-react';
 import {
   getBookingConfig,
   getBookingEmbedUrl,
-  isCalComBookingUrl,
-  isValidBookingUrl,
-  DEFAULT_BOOKING_URL,
+  resolvePlatformBookingUrl,
 } from '@/lib/marketing/booking';
 import { TRIAL_HREF } from '@/lib/marketing/cta';
 
 export default function BookDemoContent() {
-  const widgetRef = useRef<HTMLDivElement>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
   const [widgetReady, setWidgetReady] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
 
   const config = getBookingConfig('demo');
-  const bookingUrl = isValidBookingUrl(config.calendlyUrl)
-    ? config.calendlyUrl
-    : DEFAULT_BOOKING_URL;
+  const bookingUrl = resolvePlatformBookingUrl(config.bookingUrl);
   const embedUrl = getBookingEmbedUrl(bookingUrl);
-  const usesCalCom = isCalComBookingUrl(bookingUrl);
-
-  useEffect(() => {
-    if (usesCalCom) {
-      setWidgetReady(false);
-      setIframeFailed(false);
-      return;
-    }
-    if (!bookingUrl) return;
-
-    setWidgetReady(false);
-    setIframeFailed(false);
-
-    const win = window as Window & {
-      Calendly?: { initInlineWidget: (options: Record<string, unknown>) => void };
-    };
-
-    const initWidget = () => {
-      if (!widgetRef.current) return;
-      if (win.Calendly && typeof win.Calendly.initInlineWidget === 'function') {
-        try {
-          widgetRef.current.innerHTML = '';
-          win.Calendly.initInlineWidget({
-            url: bookingUrl,
-            parentElement: widgetRef.current,
-            prefill: {},
-            utm: { utmSource: 'book-demo-page' },
-          });
-          setWidgetReady(true);
-        } catch (err) {
-          console.error('[book-demo] Failed to initialize Calendly widget:', err);
-          setIframeFailed(true);
-        }
-      } else {
-        setWidgetReady(true);
-      }
-    };
-
-    const initTimeout = setTimeout(initWidget, 300);
-    const failSafeTimeout = setTimeout(() => {
-      if (!widgetReady) setIframeFailed(true);
-    }, 7000);
-
-    return () => {
-      clearTimeout(initTimeout);
-      clearTimeout(failSafeTimeout);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scriptLoaded, bookingUrl, usesCalCom]);
 
   return (
     <div className="marketing-theme min-h-screen text-white">
-      {!usesCalCom && (
-        <Script
-          src="https://assets.calendly.com/assets/external/widget.js"
-          strategy="afterInteractive"
-          onLoad={() => setScriptLoaded(true)}
-        />
-      )}
-
       {/* Page Header */}
       <section className="pt-28 pb-12 px-4">
         <div className="max-w-5xl mx-auto">
@@ -195,7 +131,7 @@ export default function BookDemoContent() {
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </div>
-            ) : usesCalCom ? (
+            ) : (
               <iframe
                 title="Book a demo with AlphaClone Systems"
                 src={embedUrl}
@@ -204,17 +140,11 @@ export default function BookDemoContent() {
                 onLoad={() => setWidgetReady(true)}
                 onError={() => setIframeFailed(true)}
               />
-            ) : (
-              <div
-                ref={widgetRef}
-                className="w-full"
-                style={{ minHeight: '680px', minWidth: '280px' }}
-              />
             )}
           </div>
 
           <p className="text-center text-xs text-slate-500 mt-4">
-            Scheduling powered by {usesCalCom ? 'Cal.com' : 'Calendly'}. All times are in your local timezone.
+            Scheduling powered by Cal.com. All times are in your local timezone.
           </p>
 
           <nav

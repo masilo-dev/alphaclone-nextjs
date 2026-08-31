@@ -63,7 +63,7 @@ export const OUTCOME_CASE_STUDIES: OutcomeCaseStudy[] = [
     id: 'solo-consultant',
     persona: 'Solo consultant',
     industry: 'Professional services',
-    stackReplaced: 'HubSpot + QuickBooks + Calendly',
+    stackReplaced: 'HubSpot + QuickBooks + Cal.com',
     problem:
       'Every new client meant three logins, duplicate contact entry, and invoices disconnected from the deal that created them.',
     whatChanged:

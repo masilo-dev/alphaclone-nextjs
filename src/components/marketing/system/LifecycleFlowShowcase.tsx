@@ -14,7 +14,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { FaLinkedin, FaMicrosoft } from "react-icons/fa6";
-import { SiCalendly, SiStripe, SiZoho } from "react-icons/si";
+import { SiCaldotcom, SiStripe, SiZoho } from "react-icons/si";
 
 interface LifecycleStep {
   num: string;
@@ -51,7 +51,7 @@ const STEPS: LifecycleStep[] = [
       { name: "Zoho", icon: SiZoho, color: "#f6c344" },
       { name: "Outlook", icon: FaMicrosoft, color: "#0078d4" },
       { name: "LinkedIn", icon: FaLinkedin, color: "#0a66c2" },
-      { name: "Calendly", icon: SiCalendly, color: "#006bfc" },
+      { name: "Cal.com", icon: SiCaldotcom, color: "#292524" },
     ],
     details: ["Context attachment", "2-way calendar sync", "Deal scoring"],
   },

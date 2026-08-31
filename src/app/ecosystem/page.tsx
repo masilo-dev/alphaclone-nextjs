@@ -4,7 +4,7 @@ import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
     title: 'The AlphaClone Ecosystem | One Unified Business OS Architecture',
-    description: 'Explore the AlphaClone Business OS ecosystem, including CRM, finance, Bonnie AI, Hermes, Calendly, LinkedIn, Facebook, DeepSeek, Claude, OpenAI, OpenRouter, Microsoft 365, WhatsApp, and Instagram integration status.',
+    description: 'Explore the AlphaClone Business OS ecosystem, including CRM, finance, Bonnie AI, Hermes, Cal.com, LinkedIn, Facebook, DeepSeek, Claude, OpenAI, OpenRouter, Microsoft 365, WhatsApp, and Instagram integration status.',
     keywords: [
         'AlphaClone ecosystem',
         'unified business OS architecture',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
         'Mission Control software',
         'Unified CRM Intelligence',
         'revenue operations platform',
-        'Calendly integration',
+        'Cal.com scheduling',
         'LinkedIn integration',
         'Facebook integration',
         'DeepSeek API',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     alternates: { canonical: 'https://alphaclonesystems.com/ecosystem' },
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
-        description: 'Integrated modules plus provider status for Calendly, LinkedIn, Facebook, AI APIs, Microsoft 365, WhatsApp, and Instagram.',
+        description: 'Integrated modules plus provider status for Cal.com, LinkedIn, Facebook, AI APIs, Microsoft 365, WhatsApp, and Instagram.',
         url: 'https://alphaclonesystems.com/ecosystem',
         type: 'website',
     },

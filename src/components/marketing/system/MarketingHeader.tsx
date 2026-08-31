@@ -247,9 +247,6 @@ export default function MarketingHeader() {
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-nav-login">
                 {CTA_LABELS.tertiaryLogin}
               </Link>
-              <Link href={DEMO_HREF} className="mkt-btn mkt-btn-secondary mkt-btn-compact hidden lg:inline-flex">
-                {CTA_LABELS.secondary}
-              </Link>
               <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
                 {CTA_LABELS.primary}
               </Link>

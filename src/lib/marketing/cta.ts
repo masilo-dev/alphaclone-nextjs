@@ -20,7 +20,6 @@ export const BUSINESS_SIGNUP_HREF = TRIAL_HREF;
 export const PUBLIC_DEMO_BOOKING_URL: string =
   process.env.NEXT_PUBLIC_DEMO_BOOKING_URL?.trim() ||
   process.env.NEXT_PUBLIC_BOOKING_URL?.trim() ||
-  process.env.NEXT_PUBLIC_CALENDLY_URL?.trim() ||
   DEFAULT_BOOKING_URL;
 
 /**

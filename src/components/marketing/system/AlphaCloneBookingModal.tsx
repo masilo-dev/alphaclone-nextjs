@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Calendar, ExternalLink, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
-import Script from 'next/script';
 import { useBookingModal } from '@/contexts/BookingModalContext';
 import {
   getBookingEmbedUrl,
-  isCalComBookingUrl,
-  isValidBookingUrl,
+  resolvePlatformBookingUrl,
 } from '@/lib/marketing/booking';
 
 export default function AlphaCloneBookingModal() {
@@ -20,17 +18,13 @@ export default function AlphaCloneBookingModal() {
     closeBookingModal,
   } = useBookingModal();
 
-  const widgetRef = useRef<HTMLDivElement>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
   const [widgetReady, setWidgetReady] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
 
   const title = customTitle || activeConfig.title;
   const subtitle = customSubtitle || activeConfig.subtitle;
-  const rawUrl = customUrl || activeConfig.calendlyUrl;
-  const validUrl = isValidBookingUrl(rawUrl) ? rawUrl : activeConfig.calendlyUrl;
-  const embedUrl = getBookingEmbedUrl(validUrl);
-  const usesCalCom = isCalComBookingUrl(validUrl);
+  const bookingUrl = resolvePlatformBookingUrl(customUrl || activeConfig.bookingUrl);
+  const embedUrl = getBookingEmbedUrl(bookingUrl);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -52,55 +46,11 @@ export default function AlphaCloneBookingModal() {
   }, [isOpen, closeBookingModal]);
 
   useEffect(() => {
-    if (!isOpen || !validUrl || usesCalCom) return;
-
-    setWidgetReady(false);
-    setIframeFailed(false);
-
-    const win = window as Window & {
-      Calendly?: { initInlineWidget: (options: Record<string, unknown>) => void };
-    };
-
-    const initWidget = () => {
-      if (!widgetRef.current) return;
-      if (win.Calendly && typeof win.Calendly.initInlineWidget === 'function') {
-        try {
-          widgetRef.current.innerHTML = '';
-          win.Calendly.initInlineWidget({
-            url: validUrl,
-            parentElement: widgetRef.current,
-            prefill: {},
-            utm: {},
-          });
-          setWidgetReady(true);
-        } catch (err) {
-          console.error('Failed to initialize Calendly inline widget:', err);
-          setIframeFailed(true);
-        }
-      } else {
-        setWidgetReady(true);
-      }
-    };
-
-    const timeout = setTimeout(initWidget, 200);
-    const failTimeout = setTimeout(() => {
-      if (!widgetReady) {
-        setIframeFailed(true);
-      }
-    }, 6000);
-
-    return () => {
-      clearTimeout(timeout);
-      clearTimeout(failTimeout);
-    };
-  }, [isOpen, scriptLoaded, validUrl, usesCalCom, widgetReady]);
-
-  useEffect(() => {
-    if (isOpen && usesCalCom) {
+    if (isOpen) {
       setWidgetReady(false);
       setIframeFailed(false);
     }
-  }, [isOpen, usesCalCom, validUrl]);
+  }, [isOpen, bookingUrl]);
 
   if (!isOpen) return null;
 
@@ -114,14 +64,6 @@ export default function AlphaCloneBookingModal() {
         if (e.target === e.currentTarget) closeBookingModal();
       }}
     >
-      {!usesCalCom && (
-        <Script
-          src="https://assets.calendly.com/assets/external/widget.js"
-          strategy="afterInteractive"
-          onLoad={() => setScriptLoaded(true)}
-        />
-      )}
-
       <div className="relative w-full max-w-4xl min-h-screen sm:min-h-0 sm:max-h-[90vh] bg-slate-900 border border-slate-800 rounded-none sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60 sticky top-0 z-20">
           <div className="flex items-center gap-3">
@@ -138,7 +80,7 @@ export default function AlphaCloneBookingModal() {
 
           <div className="flex items-center gap-3">
             <a
-              href={validUrl}
+              href={bookingUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:inline-flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors font-medium"
@@ -169,7 +111,7 @@ export default function AlphaCloneBookingModal() {
               </span>
             </div>
             <a
-              href={validUrl}
+              href={bookingUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="md:hidden inline-flex items-center gap-1 text-teal-400 hover:text-teal-300 font-medium"
@@ -191,10 +133,10 @@ export default function AlphaCloneBookingModal() {
                 <AlertCircle className="w-10 h-10 text-amber-400 mb-3" />
                 <h3 className="text-base font-bold text-white mb-2">Calendar Embed Unavailable</h3>
                 <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
-                  Your browser or privacy extensions prevented loading the embedded calendar widget. You can open the booking page directly in a new tab.
+                  Your browser or privacy extensions prevented loading the embedded calendar. You can open the booking page directly in a new tab.
                 </p>
                 <a
-                  href={validUrl}
+                  href={bookingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-sm transition-colors shadow-lg"
@@ -204,7 +146,7 @@ export default function AlphaCloneBookingModal() {
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </div>
-            ) : usesCalCom ? (
+            ) : (
               <iframe
                 title={title}
                 src={embedUrl}
@@ -213,18 +155,12 @@ export default function AlphaCloneBookingModal() {
                 onLoad={() => setWidgetReady(true)}
                 onError={() => setIframeFailed(true)}
               />
-            ) : (
-              <div
-                ref={widgetRef}
-                className="w-full h-[620px]"
-                style={{ minWidth: '280px' }}
-              />
             )}
           </div>
         </div>
 
         <div className="px-6 py-3 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between text-xs text-slate-500">
-          <span>AlphaClone Systems — Direct Booking</span>
+          <span>AlphaClone Systems — Cal.com booking</span>
           <span>Press ESC to close</span>
         </div>
       </div>

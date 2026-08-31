@@ -68,7 +68,7 @@ const AI_CLIENTS: AiClient[] = [
 const MODULES: ExecutionModule[] = [
   { id: "crm", name: "CRM & Leads", detail: "Customer history & context", icon: Database, color: "#f6c344", liveStatus: "Connected" },
   { id: "outreach", name: "Email Outreach", detail: "Outlook 365 & Gmail sync", icon: Send, color: "#0078d4", liveStatus: "Auto Draft" },
-  { id: "calendar", name: "Calendar", detail: "Calendly meeting bookings", icon: Calendar, color: "#006bfc", liveStatus: "Live Sync" },
+  { id: "calendar", name: "Calendar", detail: "Cal.com scheduling", icon: Calendar, color: "#292524", liveStatus: "Live Sync" },
   { id: "projects", name: "Projects & Tasks", detail: "Milestones & client delivery", icon: FolderKanban, color: "#a855f7", liveStatus: "In Progress" },
   { id: "documents", name: "Documents", detail: "Proposals & contracts", icon: FileText, color: "#34a853", liveStatus: "Attached" },
   { id: "invoices", name: "Invoices", detail: "Automated billing", icon: ReceiptText, color: "#f59e0b", liveStatus: "Auto Generated" },

@@ -60,7 +60,7 @@ const EcosystemPage: React.FC = () => {
     ];
 
     const integrations = [
-        { name: 'Calendly', desc: 'Scheduling sync', status: 'Available' },
+        { name: 'Cal.com', desc: 'Platform demo scheduling', status: 'Available' },
         { name: 'LinkedIn', desc: 'OAuth, posting, lead forms', status: 'Available' },
         { name: 'Facebook', desc: 'Pages, posts, lead capture', status: 'Available' },
         { name: 'DeepSeek API', desc: 'Bonnie planning provider', status: 'Available' },

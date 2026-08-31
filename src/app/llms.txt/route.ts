@@ -65,7 +65,7 @@ OAuth discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-s
 - AI-generated email replies and draft generation
 
 ### 7. Scheduling & Meetings
-- Calendly integration and HD video conferencing (WebRTC)
+- Cal.com scheduling and HD video conferencing (WebRTC)
 - Meeting agenda builder with AI summary generation
 - Google Calendar and Microsoft 365 bi-directional sync
 

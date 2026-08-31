@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { IconType } from "react-icons";
 import { FaFacebook, FaHubspot, FaLinkedin, FaMicrosoft, FaSlack, FaWhatsapp } from "react-icons/fa6";
-import { SiAnthropic, SiBrevo, SiCalendly, SiGmail, SiHubspot, SiOpenai, SiQuickbooks, SiResend, SiStripe, SiZapier, SiZoho } from "react-icons/si";
+import { SiAnthropic, SiBrevo, SiCaldotcom, SiGmail, SiHubspot, SiOpenai, SiQuickbooks, SiResend, SiStripe, SiZapier, SiZoho } from "react-icons/si";
 import { ArrowDown, ArrowRight, Bot, BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, Database, FileCheck2, FileText, LockKeyhole, Mail, MessageSquareText, ReceiptText, Search, Send, ShieldCheck, UserRoundCheck, Users, WalletCards, X, Sparkles } from "lucide-react";
 import { DEMO_HREF, TRIAL_HREF } from "@/lib/marketing/cta";
 import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
@@ -38,7 +38,7 @@ const integrationGroups: Array<{ title: string; items: Integration[] }> = [
     { name: "Zoho CRM", detail: "Contacts, deals & accounts", badge: "Bi-directional", icon: SiZoho, color: "#f6c344" },
     { name: "LinkedIn", detail: "Profile research & outreach", badge: "Webhook", icon: FaLinkedin, color: "#0a66c2" },
     { name: "HubSpot", detail: "Pipeline & lead sync", badge: "OAuth 2.0", icon: SiHubspot, color: "#ff7a59" },
-    { name: "Calendly", detail: "Meeting booking & scheduling", badge: "Realtime", icon: SiCalendly, color: "#006bfc" },
+    { name: "Cal.com", detail: "Meeting booking & scheduling", badge: "Realtime", icon: SiCaldotcom, color: "#292524" },
   ]},
   { title: "Financials & Payments", items: [
     { name: "Stripe", detail: "Payments & subscriptions", badge: "Verified", icon: SiStripe, color: "#635bff" },
@@ -131,7 +131,7 @@ export default function MarketingHomePage() {
             <span className="rounded-full border border-rose-400/20 bg-rose-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-rose-300">Context breaks at every handoff</span>
           </div>
           <div className="mt-5 space-y-2.5">
-            {[[FaMicrosoft,"Outlook","Email conversation","#0078d4"],[SiZoho,"Zoho CRM","Customer record","#f6c344"],[SiCalendly,"Calendly","Meeting","#006bfc"],[FileText,"Google Sheets","Lead tracking","#34a853"],[SiStripe,"Stripe","Payment","#635bff"],[FaLinkedin,"LinkedIn","Outreach","#0a66c2"]].map(([Icon,name,detail,color],i)=>(
+            {[[FaMicrosoft,"Outlook","Email conversation","#0078d4"],[SiZoho,"Zoho CRM","Customer record","#f6c344"],[SiCaldotcom,"Cal.com","Meeting","#292524"],[FileText,"Google Sheets","Lead tracking","#34a853"],[SiStripe,"Stripe","Payment","#635bff"],[FaLinkedin,"LinkedIn","Outreach","#0a66c2"]].map(([Icon,name,detail,color],i)=>(
               <div key={String(name)} className="group flex items-center justify-between rounded-xl border border-white/[.07] bg-slate-900/60 p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:bg-slate-900/90 shadow-sm">
                 <div className="flex items-center gap-3">
                   <div className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-slate-950/80">
