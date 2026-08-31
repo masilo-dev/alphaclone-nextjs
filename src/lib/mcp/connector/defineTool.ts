@@ -18,6 +18,7 @@ type DefineConnectorToolOptions<T extends z.ZodObject<any>> = {
     type: 'object';
     properties: Record<string, any>;
     required?: string[];
+    anyOf?: Array<{ required: string[] }>;
   };
   permission: ConnectorPermission | ConnectorPermission[];
   rateLimitClass?: RateClass;

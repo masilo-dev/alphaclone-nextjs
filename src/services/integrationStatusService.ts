@@ -64,14 +64,18 @@ export async function getTenantIntegrationSnapshot(
       .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .limit(5),
-    supabase
-      .from('calendly_integrations')
-      .select('id, is_active')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .limit(5)
-      .then((res) => res)
-      .catch(() => ({ data: null })),
+    (async () => {
+      try {
+        return await supabase
+          .from('calendly_integrations')
+          .select('id, is_active')
+          .eq('tenant_id', tenantId)
+          .eq('is_active', true)
+          .limit(5);
+      } catch {
+        return { data: null };
+      }
+    })(),
   ]);
 
   if ((gmailRows || []).length > 0) {

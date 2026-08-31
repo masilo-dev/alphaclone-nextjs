@@ -270,7 +270,7 @@ defineConnectorTool({
 
     const stamp = new Date().toISOString();
     const merged = [existing.notes, `[${stamp}] ${args.note}`].filter(Boolean).join('\n\n');
-    const { data, error } = await updateWithOptionalTimestamp({
+    const { data, error } = await updateWithOptionalTimestamp<{ id: string; notes: string | null }>({
       supabase,
       table,
       tenantId: args.tenant_id,
@@ -317,24 +317,14 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const table = args.entity_type === 'deal' ? 'deals' : 'leads';
     const payload = { stage: args.stage };
-    const { data, error } =
-      table === 'leads'
-        ? await updateWithOptionalTimestamp({
-            supabase,
-            table,
-            tenantId: args.tenant_id,
-            entityId: args.entity_id,
-            payload,
-            select: 'id, stage',
-          })
-        : await supabase
-            .from(table)
-            .update({ ...payload, updated_at: new Date().toISOString() })
-            .eq('tenant_id', args.tenant_id)
-            .eq('id', args.entity_id)
-            .select('id, stage')
-            .single()
-            .then((res) => ({ data: res.data, error: res.error }));
+    const { data, error } = await updateWithOptionalTimestamp<{ id: string; stage: string }>({
+      supabase,
+      table,
+      tenantId: args.tenant_id,
+      entityId: args.entity_id,
+      payload,
+      select: 'id, stage',
+    });
     if (error) throwConnectorError('UPDATE_FAILED', error.message);
     if (!data) throwConnectorError('NOT_FOUND', `${args.entity_type} not found`);
     return okResult('change_pipeline_stage', data, {
