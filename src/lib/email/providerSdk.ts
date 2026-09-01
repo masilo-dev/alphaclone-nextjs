@@ -212,10 +212,17 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
                     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
                 }
                 : undefined,
-            attachment: input.attachments?.map((attachment) => ({
-                name: attachment.filename,
-                content: attachment.content instanceof Buffer ? attachment.content.toString('base64') : String(attachment.content),
-            })),
+            ...(input.attachments?.length
+                ? {
+                    attachment: input.attachments.map((attachment) => ({
+                        name: attachment.filename,
+                        content:
+                            attachment.content instanceof Buffer
+                                ? attachment.content.toString('base64')
+                                : String(attachment.content),
+                    })),
+                }
+                : {}),
             }),
         });
 

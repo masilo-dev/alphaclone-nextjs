@@ -60,9 +60,12 @@ export async function recordBusinessActivity(
       ? 'medium'
       : 'low';
 
+  const actorEmail = actor.includes('@') ? actor : null;
+
   const businessMetadata = {
     event: params.event,
     actor,
+    ...(actorEmail ? { user_email: actorEmail } : {}),
     client: params.client || undefined,
     business_context: params.businessContext || undefined,
     related_record: params.relatedRecordType
@@ -81,7 +84,6 @@ export async function recordBusinessActivity(
     .insert({
       tenant_id: params.tenantId,
       action: params.event,
-      user_email: actor.includes('@') ? actor : null,
       entity_type: params.relatedRecordType || 'business_process',
       entity_id: params.relatedRecordId || null,
       resource_type: params.relatedRecordType || 'business_process',

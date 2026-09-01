@@ -1,5 +1,4 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
-import { processDueRecurringInvoices } from "@/services/finance/recurringInvoiceService";
 
 /**
  * Recurring Invoices Workflow
@@ -12,6 +11,7 @@ export async function processRecurringInvoices() {
 
 async function processRecurringStep() {
     "use step";
+    const { processDueRecurringInvoices } = await import('@/services/finance/recurringInvoiceService');
     const result = await processDueRecurringInvoices();
     console.log(`[recurring-invoices] processed=${result.processed} errors=${result.errors.length}`);
     if (result.errors.length) {
