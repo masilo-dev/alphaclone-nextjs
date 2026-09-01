@@ -37,7 +37,7 @@ function firstNonEmpty(...values: unknown[]): string | undefined {
   return undefined;
 }
 
-function coalesceArgs(args: Record<string, unknown>): Record<string, unknown> {
+export function coalesceArgs(args: Record<string, unknown>): Record<string, unknown> {
   const next = { ...args };
 
   next.text = firstNonEmpty(next.text, next.body, next.message, next.content, next.email_body);
@@ -55,8 +55,21 @@ function coalesceArgs(args: Record<string, unknown>): Record<string, unknown> {
   if (next.publish_immediately === true || next.immediate === true) {
     next.publish_now = true;
   }
-  if (next.status === 'publish_now') {
-    next.publish_now = true;
+  if (next.status === 'publish_now' || next.status === 'execute_now' || next.status === 'queued') {
+    if (next.status === 'queued') {
+      next.publish_now = true;
+    } else {
+      next.publish_now = true;
+    }
+  }
+
+  // Normalized target envelope → legacy flat fields
+  const target = next.target;
+  if (target && typeof target === 'object' && !Array.isArray(target)) {
+    const t = target as Record<string, unknown>;
+    if (!next.platform && t.integration) next.platform = t.integration;
+    if (!next.identity_type && t.identity_type) next.identity_type = t.identity_type;
+    if (!next.identity_id && t.identity_id) next.identity_id = t.identity_id;
   }
 
   // Social post ID aliases (ChatGPT often sends post_id / id)

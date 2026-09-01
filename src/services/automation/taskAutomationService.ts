@@ -1,5 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { aiService } from '@/services/ai/aiService';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { absoluteUrl } from '@/lib/siteUrl';
 
 export interface ScheduledAiTask {
     id: string;
@@ -175,6 +177,8 @@ export const taskAutomationService = {
                 })
                 .eq('id', task.id);
 
+            await notifyScheduledTaskByEmail(task, output);
+
             return { success: true, output };
         } catch (error) {
             console.error(`Task ${task.id} failed:`, error);
@@ -187,7 +191,54 @@ export const taskAutomationService = {
                 ran_at: new Date().toISOString()
             });
 
+            const nextRunAt = getNextTaskRun(task.schedule, new Date());
+            await supabase
+                .from('scheduled_ai_tasks')
+                .update({
+                    last_run_at: new Date().toISOString(),
+                    next_run_at: nextRunAt.toISOString(),
+                })
+                .eq('id', task.id);
+
             return { success: false, error };
         }
     }
 };
+
+async function notifyScheduledTaskByEmail(task: ScheduledAiTask, output: string): Promise<void> {
+    const prefs = (task.notification_preference || {}) as { email?: boolean };
+    if (prefs.email === false) return;
+    if (!task.user_id) return;
+
+    const supabase = createSupabaseAdminClient();
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, name')
+        .eq('id', task.user_id)
+        .maybeSingle();
+    if (!profile?.email) return;
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', task.tenant_id)
+        .maybeSingle();
+
+    const snippet = output.length > 1200 ? `${output.slice(0, 1200)}…` : output;
+    const workspaceName = tenant?.name || 'Your Workspace';
+    const actionUrl = absoluteUrl('/dashboard/automation');
+
+    await sendEmailServer({
+        tenantId: task.tenant_id,
+        to: profile.email,
+        subject: `Scheduled task complete: ${task.name}`,
+        html: `
+          <p>Hi ${profile.name || 'there'},</p>
+          <p>Your scheduled workspace task <strong>${task.name}</strong> finished successfully in <strong>${workspaceName}</strong>.</p>
+          <pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;background:#0f172a;color:#e2e8f0;padding:16px;border-radius:12px;">${snippet.replace(/</g, '&lt;')}</pre>
+          <p><a href="${actionUrl}">Open automation dashboard</a></p>
+        `,
+        isPlatformNotification: true,
+        templateName: 'scheduledAiTaskComplete',
+    });
+}

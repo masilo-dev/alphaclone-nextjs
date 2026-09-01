@@ -42,19 +42,21 @@ async function fetchReminderTasks() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const reminderCooldownIso = new Date(Date.now() - 3 * 86400000).toISOString();
 
     const { data: dueSoon } = await admin
         .from('tasks')
-        .select('id,tenant_id,assigned_to,title,due_date,priority')
+        .select('id,tenant_id,assigned_to,title,due_date,priority,reminder_at')
         .eq('due_date', tomorrowStr)
-        .neq('status', 'completed');
+        .neq('status', 'completed')
+        .or(`reminder_at.is.null,reminder_at.lt.${reminderCooldownIso}`);
 
     const { data: overdue } = await admin
         .from('tasks')
-        .select('id,tenant_id,assigned_to,title,due_date,priority')
+        .select('id,tenant_id,assigned_to,title,due_date,priority,reminder_at')
         .lt('due_date', todayStr)
         .neq('status', 'completed')
-        .eq('reminder_sent', false);
+        .or(`reminder_at.is.null,reminder_at.lt.${reminderCooldownIso}`);
 
     return { dueSoon: dueSoon || [], overdue: overdue || [] };
 }
@@ -124,9 +126,14 @@ async function sendTaskReminder(task: any, type: "dueSoon" | "overdue") {
         return;
     }
 
-    if (type === 'overdue') {
-        await admin.from('tasks').update({ reminder_sent: true }).eq('id', task.id);
-    }
+    await admin
+        .from('tasks')
+        .update({
+            reminder_sent: true,
+            reminder_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', task.id);
 
     console.log(`[task-reminders] sent ${type} reminder for task ${task.id}`);
 }

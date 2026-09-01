@@ -195,3 +195,10 @@ export function periodPresetToIsoRange(preset: MetricPeriodPreset): {
     comparisonLabel: range.comparisonLabel,
   };
 }
+
+/** Bonnie analytics API accepts 1–90 day windows. */
+export function periodPresetToDayCount(preset: MetricPeriodPreset, now = new Date()): number {
+  const range = resolveMetricDateRange(preset, now);
+  const ms = range.end.getTime() - range.start.getTime();
+  return Math.max(1, Math.min(90, Math.ceil(ms / 86_400_000)));
+}

@@ -14,7 +14,8 @@ export class TenantIsolationError extends Error {
       | 'CROSS_TENANT'
       | 'NOT_FOUND'
       | 'PERMISSION_DENIED'
-      | 'MISSING_IDENTITY' = 'CROSS_TENANT',
+      | 'MISSING_IDENTITY'
+      | 'TARGET_AMBIGUOUS' = 'CROSS_TENANT',
     public readonly details?: unknown
   ) {
     super(message);

@@ -37,6 +37,33 @@ export async function resolveMcpActionReadiness(input: {
   const identities = identitiesRes.data || [];
   const publishableIdentities = identities.filter((identity) => identity.can_publish);
   const uploadableIdentities = identities.filter((identity) => identity.can_upload_media);
+  const identityCandidates = publishableIdentities.map((identity) => ({
+    identity_id: identity.identity_id,
+    provider: identity.provider,
+    identity_type: identity.identity_type,
+    display_name: identity.display_name,
+    can_publish: identity.can_publish,
+    can_upload_media: identity.can_upload_media,
+  }));
+  const identitiesByProvider = publishableIdentities.reduce<
+    Record<string, typeof identityCandidates>
+  >((acc, identity) => {
+    const key = String(identity.provider || 'unknown');
+    if (!acc[key]) acc[key] = [];
+    acc[key].push({
+      identity_id: identity.identity_id,
+      provider: identity.provider,
+      identity_type: identity.identity_type,
+      display_name: identity.display_name,
+      can_publish: identity.can_publish,
+      can_upload_media: identity.can_upload_media,
+    });
+    return acc;
+  }, {});
+  const ambiguousProviders = Object.entries(identitiesByProvider)
+    .filter(([, list]) => list.length > 1)
+    .map(([provider]) => provider);
+  const requiresIdentitySelection = ambiguousProviders.length > 0;
   const emailIntegrations = connectedProviders.map((provider) => ({
     provider: provider.provider,
     from_email: provider.fromEmail || null,
@@ -78,23 +105,21 @@ export async function resolveMcpActionReadiness(input: {
     verification_errors: queryFailures,
     tools,
     social_post: {
-      executable: socialMissing.length === 0,
+      executable: socialMissing.length === 0 && !requiresIdentitySelection,
       missing: socialMissing,
-      recommended_tool: 'publish_social_post',
+      requires_identity_selection: requiresIdentitySelection,
+      ambiguous_providers: ambiguousProviders,
+      identity_candidates: identityCandidates,
+      recommended_tool: requiresIdentitySelection ? 'get_social_identities' : 'publish_social_post',
       auto_defaults:
         'When only one Facebook/LinkedIn identity exists, the server auto-selects it for publish_social_post.',
       setup_hint:
-        socialMissing.length > 0
-          ? 'Connect Facebook or LinkedIn under Dashboard → Integrations, then call get_social_identities.'
-          : 'Ready — call publish_social_post with caption/content (identity auto-selected when unambiguous).',
-      identities: publishableIdentities.map((identity) => ({
-        identity_id: identity.identity_id,
-        provider: identity.provider,
-        identity_type: identity.identity_type,
-        display_name: identity.display_name,
-        can_publish: identity.can_publish,
-        can_upload_media: identity.can_upload_media,
-      })),
+        requiresIdentitySelection
+          ? 'Multiple publish destinations are connected — call get_social_identities, then publish_social_post with target.identity_id or identity_id.'
+          : socialMissing.length > 0
+            ? 'Connect Facebook or LinkedIn under Dashboard → Integrations, then call get_social_identities.'
+            : 'Ready — call publish_social_post with caption/content (identity auto-selected when unambiguous).',
+      identities: identityCandidates,
     },
     media_upload: {
       executable: mediaMissing.length === 0,

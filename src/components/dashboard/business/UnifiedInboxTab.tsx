@@ -786,7 +786,7 @@ export default function UnifiedInboxTab({
     <div className="flex flex-col h-full min-h-0 gap-3">
       {messages.length > 0 && (
         <div className="flex-shrink-0">
-          <ModuleStatCards stats={inboxStats} />
+          <ModuleStatCards stats={inboxStats} hub="outreach" />
         </div>
       )}
       <div

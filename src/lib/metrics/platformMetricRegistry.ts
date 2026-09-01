@@ -689,3 +689,11 @@ export function metricPolarityIsBetterHigher(polarity: MetricPolarity): boolean 
   if (polarity === 'higher_is_better') return true;
   return true;
 }
+
+export function resolveMetricIdByLabel(label: string): string | undefined {
+  const normalized = label.toLowerCase().trim();
+  for (const def of Object.values(PLATFORM_METRIC_REGISTRY)) {
+    if (def.label.toLowerCase() === normalized) return def.id;
+  }
+  return undefined;
+}

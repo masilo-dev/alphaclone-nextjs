@@ -812,7 +812,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 </div>
 
                 {/* Quick Stats for Solo Owner */}
-                <ModuleStatCards stats={contactStats} />
+                <ModuleStatCards stats={contactStats} hub="leads" />
 
                 {/* Simple Client List */}
                 <div className="space-y-2">
@@ -854,7 +854,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             <CRMNav pathname={pathname} />
             {directorySwitcher}
             <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
-            <ModuleStatCards stats={contactStats} />
+            <ModuleStatCards stats={contactStats} hub="leads" />
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">

@@ -224,7 +224,7 @@ export default function BankingCenterPage() {
         )}
         stats={!loading ? (
           <div className="px-1">
-            <ModuleStatCards stats={bankStats} />
+            <ModuleStatCards stats={bankStats} hub="accounting" />
           </div>
         ) : null}
       >

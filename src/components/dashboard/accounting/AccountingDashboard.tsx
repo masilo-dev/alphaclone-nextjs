@@ -10,6 +10,7 @@ import {
     AlertTriangle, CreditCard, Landmark, RefreshCcw
 } from 'lucide-react';
 import { PlatformKpiGrid } from '@/components/dashboard/metrics';
+import { ModuleRichKpiPanel } from '@/components/dashboard/metrics/ModuleRichKpiPanel';
 import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 import { WORKSPACE } from '@/constants/design';
 import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
@@ -277,6 +278,8 @@ export default function AccountingDashboard() {
                     )}
                 </div>
             </div>
+
+            <ModuleRichKpiPanel hub="accounting" compact className="mb-2" />
 
             <PlatformKpiGrid
                 items={[

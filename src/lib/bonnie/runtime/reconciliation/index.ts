@@ -12,6 +12,7 @@ import { scheduleReadyTasks } from '../schedulerService';
 import { insertOutboxEvent } from '../outboxService';
 import { transitionTask } from '../transitionService';
 import { openIntervention } from '../interventionService';
+import { reconcileAllTenantsExecutionReceipts } from '@/lib/mcp/executionAssurance';
 
 async function logRepair(reconciler: string, repaired: number, details: Record<string, unknown>, tenantId?: string) {
   const admin = createSupabaseAdminClient();
@@ -170,6 +171,7 @@ export async function runFullReconciliation() {
   const uncertain = await reconcileUncertainExecutions(20);
   const subs = await reconcileExpiredSubscriptions(40);
   const scheduled = await scheduleReadyTasks({ limit: 80 });
+  const receipts = await reconcileAllTenantsExecutionReceipts(25);
 
   return {
     leases,
@@ -181,5 +183,6 @@ export async function runFullReconciliation() {
     uncertain,
     subs,
     scheduled,
+    receipts,
   };
 }

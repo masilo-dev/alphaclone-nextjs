@@ -52,6 +52,17 @@ export async function GET(req: NextRequest) {
       .slice(0, 15)
       .map(([tool, stats]) => ({ tool, ...stats }));
 
+    const receipts = receiptsRes.data || [];
+    const targetAmbiguousFailures = (failuresRes.data || []).filter((f) =>
+      /TARGET_AMBIGUOUS|MISSING_IDENTITY|identity_id is required/i.test(String(f.error_message || ''))
+    ).length;
+    const receiptComplete = receipts.filter(
+      (r) => r.success && r.final_status && (r as { provider_reference?: string }).provider_reference
+    ).length;
+    const receiptCompletenessPct = receipts.length
+      ? Math.round((receiptComplete / receipts.length) * 100)
+      : 100;
+
     return NextResponse.json({
       since,
       summary: {
@@ -59,6 +70,14 @@ export async function GET(req: NextRequest) {
         successes,
         failures,
         successRate: total ? Math.round((successes / total) * 100) : 100,
+      },
+      executionOutcomes: {
+        receiptCompletenessPct,
+        targetAmbiguousFailures,
+        writeToolsAttempted: sessions.filter((s) =>
+          /^(publish|send|create|delete|queue)_/.test(String(s.tool_name || ''))
+        ).length,
+        firstAttemptSuccessRate: total ? Math.round((successes / total) * 100) : 100,
       },
       topTools,
       recentSessions: sessions.slice(0, 40),

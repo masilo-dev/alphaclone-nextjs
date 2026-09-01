@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
 import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
 
 // 1. get_invoices
@@ -241,30 +242,25 @@ registerTool('invoicing', {
       (invoice as any).client_email;
     if (!toEmail) throw new Error('Recipient email is required');
 
-    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
-    const res = await fetch(`${origin}/api/invoices/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tenantId: args.tenant_id,
-        invoiceId: args.invoice_id,
-        recipientEmail: toEmail,
-        userId: ctx.userId,
-      }),
+    const queued = await queueInvoiceSend({
+      tenantId: args.tenant_id!,
+      userId: ctx.userId,
+      invoiceId: args.invoice_id,
+      recipients: [toEmail],
     });
-    const payload = await res.json();
-    if (!res.ok || payload.error) {
-      throw new Error(payload.error || 'Failed to send invoice');
-    }
 
     return {
-      sent: true,
+      sent: queued.status === 'queued',
+      queued: true,
+      durable: queued.durable,
       sent_to: toEmail,
       sent_at: new Date().toISOString(),
+      run_id: queued.run_id,
+      task_id: queued.task_id,
+      poll_tool: queued.poll_tool,
       opened: Boolean(invoice.viewed_at),
       opened_at: invoice.viewed_at || null,
       payment_link: invoice.payment_link || null,
-      ...payload,
     };
   },
 });

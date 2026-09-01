@@ -11,12 +11,14 @@ registerTool('contracts', {
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     status: z.string().optional(),
+    contract_id: z.string().uuid().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', format: 'uuid' },
       status: { type: 'string', description: 'Filter by contract status (e.g. draft, sent, signed)' },
+      contract_id: { type: 'string', format: 'uuid', description: 'Return a single contract by id' },
     },
     required: ['tenant_id'],
   },
@@ -27,12 +29,21 @@ registerTool('contracts', {
       .select('*')
       .eq('tenant_id', args.tenant_id);
 
+    if (args.contract_id) {
+      query = query.eq('id', args.contract_id);
+    }
+
     if (args.status) {
       query = query.eq('status', args.status);
     }
 
     const { data, error } = await query;
     if (error) throw error;
+    if (args.contract_id) {
+      const contract = (data || [])[0];
+      if (!contract) throw new Error('Contract not found');
+      return contract;
+    }
     return data;
   },
 });

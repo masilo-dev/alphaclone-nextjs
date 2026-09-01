@@ -166,6 +166,8 @@ export const CANONICAL_SOCIAL_MCP_TOOLS = [
   'create_social_post_with_media',
   'publish_social_post',
   'publish_post',
+  'preflight_social_publish',
+  'check_mcp_execution_readiness',
   'get_post_status',
   'verify_social_post_published',
   'get_social_post',

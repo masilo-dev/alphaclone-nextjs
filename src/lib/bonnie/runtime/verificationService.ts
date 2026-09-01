@@ -13,7 +13,7 @@ export async function verifyRunOutcomes(params: {
   const admin = createSupabaseAdminClient();
   const { data: tasks } = await admin
     .from('agent_tasks')
-    .select('id, status, title, task_type, structured_output, failure_reason, idempotency_key')
+    .select('id, status, title, task_type, structured_input, structured_output, failure_reason, idempotency_key')
     .eq('run_id', params.runId)
     .eq('tenant_id', params.tenantId);
 
@@ -56,9 +56,51 @@ export async function verifyRunOutcomes(params: {
 
   const refTaskIds = new Set((refs || []).map((r) => r.task_id));
   const sideEffectTasks = completed.filter(
-    (t) => t.task_type === 'specialist' || t.task_type === 'communicate'
+    (t) =>
+      t.task_type === 'specialist' ||
+      t.task_type === 'communicate' ||
+      t.task_type === 'social.publish' ||
+      t.task_type === 'email.send' ||
+      t.task_type === 'invoice.send' ||
+      t.task_type === 'contract.lifecycle' ||
+      t.task_type === 'contract.signed' ||
+      t.task_type === 'outcome.execute_step'
   );
-  const missingRefs = sideEffectTasks.filter((t) => !refTaskIds.has(t.id));
+  const missingRefs = sideEffectTasks.filter((t) => {
+    if (refTaskIds.has(t.id)) return false;
+    if (t.task_type === 'outcome.execute_step') {
+      const input = (t.structured_input || {}) as Record<string, unknown>;
+      const output = (t.structured_output || {}) as Record<string, unknown>;
+      const mode = input.mode;
+      if (mode !== 'execute_now') return false;
+      const tool = String(input.tool || '');
+      if (tool.includes('publish') || tool === 'send_email') {
+        return !output.provider_reference && !output.message_id && !output.social_post_id;
+      }
+      return false;
+    }
+    if (t.task_type === 'email.send') {
+      const output = (t.structured_output || {}) as Record<string, unknown>;
+      return !output.message_id && !output.provider;
+    }
+    if (t.task_type === 'social.publish') {
+      const output = (t.structured_output || {}) as Record<string, unknown>;
+      return !output.provider_reference && !output.external_id;
+    }
+    if (t.task_type === 'invoice.send') {
+      const output = (t.structured_output || {}) as Record<string, unknown>;
+      return !output.message_id && output.lifecycle_status !== 'sent';
+    }
+    if (t.task_type === 'contract.lifecycle') {
+      const output = (t.structured_output || {}) as Record<string, unknown>;
+      return output.status !== 'sent' && !output.contract_id;
+    }
+    if (t.task_type === 'contract.signed') {
+      const output = (t.structured_output || {}) as Record<string, unknown>;
+      return !output.project_id && !output.contract_id;
+    }
+    return true;
+  });
   checks.push({
     name: 'side_effects_have_provider_refs',
     passed: missingRefs.length === 0,
@@ -213,6 +255,7 @@ export async function verifyBusinessOutcome(params: {
   if (
     taskType === 'communicate' ||
     taskType === 'publish' ||
+    taskType === 'social.publish' ||
     (structuredOutput?.tool_name as string | undefined)?.startsWith('publish_')
   ) {
     const { data: refs } = await admin
@@ -238,7 +281,79 @@ export async function verifyBusinessOutcome(params: {
     };
   }
 
-  // 2. Invoice / billing — require invoice row in terminal state
+  // 2. Invoice send — require provider message id or sent lifecycle state
+  if (taskType === 'invoice.send') {
+    const messageId = structuredOutput?.message_id;
+    const lifecycleStatus = structuredOutput?.lifecycle_status;
+    if (messageId || lifecycleStatus === 'sent') {
+      return {
+        taskId,
+        tier: 'provider',
+        verified: true,
+        detail: messageId
+          ? `Invoice send verified with message ID ${messageId}.`
+          : 'Invoice marked sent with delivery evidence.',
+      };
+    }
+    return {
+      taskId,
+      tier: 'technical',
+      verified: false,
+      detail: 'Invoice send task completed without provider message ID or sent state.',
+    };
+  }
+
+  // 3. Email send — require provider message id in structured output
+  if (taskType === 'email.send' || (structuredOutput?.tool_name as string | undefined) === 'send_email') {
+    const messageId = structuredOutput?.message_id || structuredOutput?.emailId;
+    const provider = structuredOutput?.provider;
+    if (messageId && provider) {
+      return {
+        taskId,
+        tier: 'provider',
+        verified: true,
+        detail: `Email accepted by ${provider} with message ID ${messageId}.`,
+      };
+    }
+    return {
+      taskId,
+      tier: 'technical',
+      verified: false,
+      detail: 'Email task completed without provider message ID — delivery unverified.',
+    };
+  }
+
+  // 4. Outcome execute step — map tool to evidence tier
+  if (taskType === 'outcome.execute_step') {
+    const tool = String(structuredOutput?.tool || '');
+    if (tool.includes('publish')) {
+      const postId = structuredOutput?.social_post_id;
+      const providerRef = structuredOutput?.provider_reference;
+      if (providerRef || postId) {
+        return {
+          taskId,
+          tier: 'provider',
+          verified: true,
+          detail: providerRef
+            ? `Outcome publish verified with provider reference ${providerRef}.`
+            : `Outcome publish recorded social_post_id ${postId}.`,
+        };
+      }
+    }
+    if (tool === 'send_email') {
+      const messageId = structuredOutput?.message_id;
+      if (messageId) {
+        return {
+          taskId,
+          tier: 'provider',
+          verified: true,
+          detail: `Outcome email verified with message ID ${messageId}.`,
+        };
+      }
+    }
+  }
+
+  // 5. Invoice / billing — require invoice row in terminal state
   if (taskType === 'billing' || (structuredOutput?.tool_name as string | undefined)?.includes('invoice')) {
     const invoiceId = structuredOutput?.invoice_id as string | undefined;
     if (invoiceId) {
@@ -265,7 +380,7 @@ export async function verifyBusinessOutcome(params: {
     }
   }
 
-  // 3. Contract — require contract row in non-draft state
+  // 6. Contract — require contract row in non-draft state
   if (taskType === 'contract' || (structuredOutput?.tool_name as string | undefined)?.includes('contract')) {
     const contractId = structuredOutput?.contract_id as string | undefined;
     if (contractId) {
@@ -292,7 +407,7 @@ export async function verifyBusinessOutcome(params: {
     }
   }
 
-  // 4. General specialist tasks — fall back to provider ref check
+  // 7. General specialist tasks — fall back to provider ref check
   const { data: refs } = await admin
     .from('agent_external_references')
     .select('id')

@@ -5,6 +5,8 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { platformKpiFromModuleStat } from '@/lib/metrics/metricPresentation';
 import { PlatformKpiGrid } from '@/components/dashboard/metrics/PlatformKpiGrid';
+import { ModuleRichKpiPanel } from '@/components/dashboard/metrics/ModuleRichKpiPanel';
+import type { HubKpiId } from '@/lib/dashboard/hubKpi';
 
 export type StatAccent = 'teal' | 'blue' | 'purple' | 'emerald' | 'orange' | 'rose' | 'amber' | 'sky';
 
@@ -14,7 +16,6 @@ export interface ModuleStat {
   sub?: string;
   Icon: LucideIcon;
   accent?: StatAccent;
-  /** Optional percentage trend; positive renders green when higher-is-better. */
   trend?: number;
   metricId?: string;
   isBetterHigher?: boolean;
@@ -22,17 +23,32 @@ export interface ModuleStat {
 }
 
 /**
- * Enterprise KPI row using the canonical PlatformKpiCard system.
+ * Enterprise KPI row — uses rich hub stats when `hub` is set, otherwise legacy stat cards.
  */
 export function ModuleStatCards({
   stats,
+  hub,
+  showPlatformHealth = false,
   className = '',
   loading = false,
 }: {
   stats: ModuleStat[];
+  hub?: HubKpiId;
+  showPlatformHealth?: boolean;
   className?: string;
   loading?: boolean;
 }) {
+  if (hub) {
+    return (
+      <ModuleRichKpiPanel
+        hub={hub}
+        showPlatformHealth={showPlatformHealth}
+        compact
+        className={className}
+      />
+    );
+  }
+
   const items = stats.map((s) => ({
     ...platformKpiFromModuleStat({
       label: s.label,

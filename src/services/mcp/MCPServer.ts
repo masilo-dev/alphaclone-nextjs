@@ -75,12 +75,12 @@ import { getCampaignLanguageInstruction, resolveCampaignLanguage } from '../../l
 import { fileUploadService } from '../fileUploadService';
 import { publicShareService } from '../publicShareService';
 import { start } from 'workflow/api';
-import { invoiceLifecycleWorkflow } from '../../workflows/invoice-lifecycle';
-import { contractLifecycleWorkflow } from '../../workflows/contract-lifecycle';
+import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
+import { queueContractLifecycle } from '@/lib/contracts/durableContractRouter';
+import { queueScheduledSocialPublish } from '@/lib/social/durableSocialScheduleRouter';
 import { leadFindingWorkflow } from '../../workflows/lead-finding';
 import { leadNurtureWorkflow } from '../../workflows/lead-nurture';
 import { dealStageWorkflow } from '../../workflows/deal-stage';
-import { socialScheduleWorkflow } from '../../workflows/social-schedule';
 import { emailCampaignWorkflow } from '../../workflows/email-campaign';
 import { projectKickoffWorkflow } from '../../workflows/project-kickoff';
 import { videoRoomOrchestrationWorkflow } from '../../workflows/video-room-orchestration';
@@ -7864,17 +7864,22 @@ Return ONLY a JSON array of 60 objects:
           if (!invoice) throw new Error('Invoice not found');
           if (invoice.status !== 'draft') throw new Error(`Only draft invoices can be sent. This invoice is ${invoice.status}.`);
           await validateDailyResourceQuota(tenant_id, user_id, 'invoices');
-          const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id, actorUserId: user_id }]);
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
+          const queued = await queueInvoiceSend({
+            tenantId: tenant_id,
+            userId: user_id,
+            invoiceId: invoice_id,
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId: queued.run_id, durable: queued.durable, poll_tool: queued.poll_tool }, null, 2) }] };
           break;
         }
 
         case 'start_contract_lifecycle': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
           const { contract_id } = a;
-          const { runId } = await start(contractLifecycleWorkflow, [{ contractId: contract_id, tenantId: tenant_id }]);
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
+          const queued = await queueContractLifecycle({ contractId: contract_id, tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId: queued.run_id, durable: queued.durable, poll_tool: queued.poll_tool }, null, 2) }] };
           break;
         }
 
@@ -7908,9 +7913,10 @@ Return ONLY a JSON array of 60 objects:
         case 'schedule_social_automation': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
           const { post_id } = a;
-          const { runId } = await start(socialScheduleWorkflow, [{ postId: post_id, tenantId: tenant_id }]);
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
+          const queued = await queueScheduledSocialPublish({ postId: post_id, tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId: queued.run_id, durable: queued.durable, poll_tool: queued.poll_tool }, null, 2) }] };
           break;
         }
 

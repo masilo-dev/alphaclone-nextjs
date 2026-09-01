@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { start } from 'workflow/api';
-import { invoiceLifecycleWorkflow } from '@/workflows/invoice-lifecycle';
 import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
 
 const schema = z.object({
   tenantId: z.string().uuid(),
@@ -38,21 +36,27 @@ export async function POST(req: NextRequest) {
 
     await validateDailyResourceQuota(tenantId, user.id, 'invoices');
 
-    const { runId } = await start(invoiceLifecycleWorkflow, [{
-      invoiceId,
+    const normalizedRecipients = [...new Set(recipients.map((email) => email.toLowerCase()))];
+    const queued = await queueInvoiceSend({
       tenantId,
-      actorUserId: user.id,
-      recipients: [...new Set(recipients.map((email) => email.toLowerCase()))],
+      userId: user.id,
+      invoiceId,
+      recipients: normalizedRecipients,
       subject,
       message,
-    }]);
+    });
 
-    return NextResponse.json({
-      success: true,
-      status: 'queued',
-      message: 'Invoice delivery has been queued',
-      runId,
-    }, { status: 202 });
+    return NextResponse.json(
+      {
+        success: true,
+        ...queued,
+        invoiceId,
+        message: queued.durable
+          ? 'Invoice delivery queued on Bonnie durable runtime'
+          : 'Invoice delivery queued on workflow runtime',
+      },
+      { status: 202 }
+    );
   } catch (error) {
     return routeErrorResponse(error, 'Invoice delivery could not be queued', req);
   }

@@ -9,6 +9,10 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import type { OutboundEmailProvider } from '@/lib/email/sendEmail';
 import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
+import { executeMcpWrite } from '@/lib/mcp/executionGateway';
+import { isDurableRuntimeEnabled } from '@/lib/bonnie/runtime/types';
+import { enqueueEmailSendTask } from '@/lib/email/durableEmailTask';
+import { processNormalizedTrigger } from '@/lib/bonnie/runtime/triggerGateway';
 import { ingestMediaInput } from '@/lib/media/ingestMedia';
 import type { MediaInput } from '@/lib/media/types';
 
@@ -345,62 +349,143 @@ defineConnectorTool({
         ? args.provider
         : undefined;
 
-    const result = await sendEmailServer({
+    if (isDurableRuntimeEnabled()) {
+      await processNormalizedTrigger({
+        tenant_id: tenantId,
+        user_id: userId,
+        trigger_type: 'api_request',
+        event_type: 'email.send',
+        source: 'mcp:send_email',
+        correlation_id: idempotencyKey,
+        deduplication_key: idempotencyKey,
+        payload: {
+          to: recipient.email,
+          subject: args.subject,
+          durable: true,
+        },
+      }).catch(() => undefined);
+
+      const enqueued = await enqueueEmailSendTask({
+        tenantId,
+        userId,
+        idempotencyKey,
+        payload: {
+          to: recipient.email,
+          subject: args.subject,
+          text: args.text,
+          provider: preferredOutbound,
+          recipient_name: args.recipient_name,
+        },
+      });
+
+      return okResult(
+        'send_email',
+        {
+          status: 'queued',
+          run_id: enqueued.runId,
+          task_id: enqueued.taskId,
+          durable: true,
+          poll_tool: 'get_outcome_status',
+          delivery_status: 'queued',
+          recipient: recipient.email,
+          idempotency_key: idempotencyKey,
+        },
+        { meta: { durable: true, idempotency_key: idempotencyKey } }
+      );
+    }
+
+    const gatewayResult = await executeMcpWrite({
       tenantId,
       userId,
-      to: recipient.email,
-      subject: args.subject,
-      message: args.text,
-      recipientName: args.recipient_name || recipient.matches?.[0]?.name,
-      headline: args.headline,
-      category: args.category || 'outreach',
-      cta:
-        args.cta_label && args.cta_url
-          ? { label: args.cta_label, url: args.cta_url }
-          : undefined,
-      relatedRecord:
-        args.related_record_type && args.related_record_id
-          ? { type: args.related_record_type, id: args.related_record_id }
-          : undefined,
-      campaignId: args.campaign_id,
-      workflowId: args.workflow_id,
-      initiationSource: 'mcp.send_email',
+      tool: 'send_email',
+      action: 'email.send',
+      mode: 'execute_now',
       idempotencyKey,
-      attachments: attachments.length
-        ? attachments.map((a) => ({
-            filename: a.filename,
-            content: a.content,
-            contentType: a.contentType,
-          }))
-        : undefined,
-      preferredProvider: preferredOutbound,
+      target: {
+        workspace_id: tenantId,
+        integration: preferredOutbound || 'email',
+        resource_type: 'email_message',
+        resource_id: recipient.email,
+      },
+      payload: {
+        subject: args.subject,
+        to: recipient.email,
+        provider: preferredOutbound,
+      },
+      execute: async () =>
+        sendEmailServer({
+          tenantId,
+          userId,
+          to: recipient.email,
+          subject: args.subject,
+          message: args.text,
+          recipientName: args.recipient_name || recipient.matches?.[0]?.name,
+          headline: args.headline,
+          category: args.category || 'outreach',
+          cta:
+            args.cta_label && args.cta_url
+              ? { label: args.cta_label, url: args.cta_url }
+              : undefined,
+          relatedRecord:
+            args.related_record_type && args.related_record_id
+              ? { type: args.related_record_type, id: args.related_record_id }
+              : undefined,
+          campaignId: args.campaign_id,
+          workflowId: args.workflow_id,
+          initiationSource: 'mcp.send_email',
+          idempotencyKey,
+          attachments: attachments.length
+            ? attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content,
+                contentType: a.contentType,
+              }))
+            : undefined,
+          preferredProvider: preferredOutbound,
+        }),
+      isSuccess: (result) => result.success,
+      mapError: (result) => ({
+        code: result.code || 'PROVIDER_REJECTED',
+        message: result.error || 'Email provider rejected the send',
+        details: result.errorDetails,
+      }),
+      buildReceipt: (result) => ({
+        action_id: '',
+        status: 'completed',
+        provider: result.provider || null,
+        provider_reference: result.emailId || null,
+        entity_id: result.emailId || null,
+        entity_type: 'email',
+        timestamp: new Date().toISOString(),
+      }),
     });
 
-    if (!result.success) {
+    if (!gatewayResult.ok) {
+      const result = gatewayResult.result;
       await recordExternalAction({
         tenantId,
         userId,
         tool: 'send_email',
         status: 'failed',
-        provider: result.provider,
+        provider: result?.provider,
         idempotencyKey,
-        metadata: { code: result.code, error: result.error },
+        metadata: { code: gatewayResult.error?.code, error: gatewayResult.error?.message },
       });
       throwConnectorError(
-        result.code || 'PROVIDER_REJECTED',
-        result.error || 'Email provider rejected the send',
+        gatewayResult.error?.code || 'PROVIDER_REJECTED',
+        gatewayResult.error?.message || 'Email provider rejected the send',
         {
-          ...(result.errorDetails && typeof result.errorDetails === 'object'
-            ? (result.errorDetails as Record<string, unknown>)
-            : {}),
+          remediation: gatewayResult.error?.remediation,
           next_action:
-            result.code === 'PROVIDER_MISSING' || /provider|integration|sender/i.test(String(result.error))
+            gatewayResult.error?.code === 'PROVIDER_MISSING' ||
+            /provider|integration|sender/i.test(String(gatewayResult.error?.message))
               ? 'Call check_mcp_execution_readiness with action=email_send, connect Zoho or Gmail under Integrations, then retry send_email.'
               : 'Verify recipient email and plain-text body, then retry send_email.',
         }
       );
     }
 
+    const result = gatewayResult.result!;
     const acceptedAt = new Date().toISOString();
     const delivery = {
       provider: result.provider,
@@ -409,6 +494,8 @@ defineConnectorTool({
       recipient_source: recipient.source,
       accepted_at: acceptedAt,
       delivery_status: 'provider_accepted',
+      action_id: gatewayResult.actionId,
+      audit_log_id: gatewayResult.auditLogId,
       verification: {
         verified: Boolean(result.emailId),
         verified_at: acceptedAt,
@@ -416,8 +503,8 @@ defineConnectorTool({
       },
     };
 
-    const receipt = {
-      action_id: newActionId(),
+    const receipt = gatewayResult.receipt || {
+      action_id: gatewayResult.actionId,
       status: 'completed' as const,
       provider: result.provider || null,
       provider_reference: result.emailId || null,
@@ -428,22 +515,6 @@ defineConnectorTool({
       retry_available: true,
     };
 
-    await persistActionReceipt({
-      tenantId,
-      userId,
-      tool: 'send_email',
-      idempotencyKey,
-      receipt,
-      success: true,
-      sanitizedInput: {
-        to: recipient.email,
-        subject: args.subject,
-        provider: args.provider,
-        attachment_count: attachments.length,
-      },
-      sanitizedOutput: delivery,
-    });
-
     await recordExternalAction({
       tenantId,
       userId,
@@ -452,7 +523,7 @@ defineConnectorTool({
       provider: result.provider,
       providerReference: result.emailId,
       idempotencyKey,
-      metadata: { recipient_source: recipient.source },
+      metadata: { recipient_source: recipient.source, action_id: gatewayResult.actionId },
     });
 
     return okResult('send_email', delivery, {

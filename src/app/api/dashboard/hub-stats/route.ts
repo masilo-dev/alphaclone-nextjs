@@ -16,6 +16,13 @@ const VALID_HUBS = new Set<HubKpiId>([
   'contracts',
   'projects',
   'social',
+  'deals',
+  'tasks',
+  'quotes',
+  'leads',
+  'calendar',
+  'accounting',
+  'campaigns',
 ]);
 
 const VALID_PERIODS = new Set<MetricPeriodPreset>([
@@ -54,10 +61,14 @@ export async function GET(request: NextRequest) {
       ...m,
       comparisonText: m.comparisonText ?? range.comparisonLabel,
     }));
+    const metricsRowB = stats.metricsRowB?.map((m) => ({
+      ...m,
+      comparisonText: m.comparisonText ?? range.comparisonLabel,
+    }));
 
     return NextResponse.json(
       {
-        stats: { ...stats, metrics },
+        stats: { ...stats, metrics, metricsRowB },
         period: { preset: period, comparisonLabel: range.comparisonLabel },
       },
       {

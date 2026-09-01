@@ -24,5 +24,6 @@ export * from './observability';
 export * from './schemas';
 export * from './verificationService';
 export * from './chasingService';
+export * from './retryPolicyRegistry';
 export { startInvoiceCollectionRun } from './workflows/invoiceCollection';
 export { runFullReconciliation } from './reconciliation';

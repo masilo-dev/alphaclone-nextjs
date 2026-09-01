@@ -133,7 +133,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
             </div>
             </div>
 
-            {!loading && <ModuleStatCards stats={meetingStats} />}
+            {!loading && <ModuleStatCards stats={meetingStats} hub="calendar" />}
 
             <div className="ac-workspace-panel rounded-lg p-6">
                 <div className="mb-4">

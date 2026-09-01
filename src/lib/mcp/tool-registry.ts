@@ -289,6 +289,8 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/bonnie-orchestrate'), './tools/bonnie-orchestrate');
   loadToolModule(() => require('./tools/bonnie-os'), './tools/bonnie-os');
   loadToolModule(() => require('./tools/bonnie-outcomes'), './tools/bonnie-outcomes');
+  loadToolModule(() => require('./tools/outcome-orchestration'), './tools/outcome-orchestration');
+  loadToolModule(() => require('./tools/execution-assurance'), './tools/execution-assurance');
   loadToolModule(() => require('./tools/bonnie-approvals'), './tools/bonnie-approvals');
   loadToolModule(() => require('./tools/bonnie-skills'), './tools/bonnie-skills');
   loadToolModule(() => require('./tools/google-workspace'), './tools/google-workspace');

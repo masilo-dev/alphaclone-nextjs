@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { start } from 'workflow/api';
-import { invoiceLifecycleWorkflow } from '@/workflows/invoice-lifecycle';
 import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
 
 /**
  * Start invoice lifecycle without MCP/AI.
@@ -69,23 +68,22 @@ export async function POST(req: NextRequest) {
 
     await validateDailyResourceQuota(tenantId, user.id, 'invoices');
 
-    const { runId } = await start(invoiceLifecycleWorkflow, [
-      {
-        invoiceId,
-        tenantId,
-        actorUserId: user.id,
-        recipients,
-        subject,
-        message,
-      },
-    ]);
+    const queued = await queueInvoiceSend({
+      tenantId,
+      userId: user.id,
+      invoiceId,
+      recipients,
+      subject,
+      message,
+    });
 
     return NextResponse.json(
       {
         success: true,
-        status: 'queued',
-        message: 'Invoice delivery has been queued',
-        runId,
+        ...queued,
+        message: queued.durable
+          ? 'Invoice delivery queued on Bonnie durable runtime'
+          : 'Invoice delivery queued on workflow runtime',
       },
       { status: 202 }
     );

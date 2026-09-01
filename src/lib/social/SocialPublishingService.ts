@@ -777,6 +777,82 @@ export class SocialPublishingService {
     return updatePost(postId, { ...payload, updated_at: new Date().toISOString() });
   }
 
+  /** Validate publish inputs without provider side effects. */
+  async preflightPublish(input: {
+    tenantId: string;
+    userId: string;
+    platform: PublishSocialPostInput['platform'];
+    identityType: PublishSocialPostInput['identityType'];
+    identityId: string;
+    caption: string;
+    mediaAssetIds?: string[];
+    mediaUrls?: string[];
+    linkUrl?: string | null;
+    publishNow?: boolean;
+    scheduledAt?: string | null;
+  }) {
+    const blockers: string[] = [];
+    let permissionsOk = true;
+    let wouldPublishTo: Record<string, unknown> | null = null;
+
+    try {
+      const identity = await this.resolveIdentity({
+        tenantId: input.tenantId,
+        platform: input.platform,
+        identityType: input.identityType,
+        identityId: input.identityId,
+      });
+      await this.validateCapabilities(identity);
+      wouldPublishTo = {
+        platform: identity.platform,
+        identity_type: identity.identity_type,
+        identity_id: identity.identity_id,
+        identity_name: identity.identity_name,
+      };
+    } catch (err) {
+      permissionsOk = false;
+      blockers.push(err instanceof Error ? err.message : 'Identity resolution failed');
+    }
+
+    if (!input.caption?.trim()) {
+      blockers.push('caption or content is required');
+    }
+
+    if (input.publishNow && !isSocialPublishEnabled()) {
+      blockers.push('Social publishing is disabled (SOCIAL_PUBLISH_ENABLED=false)');
+      permissionsOk = false;
+    }
+
+    try {
+      await resolveMediaUrls({
+        tenantId: input.tenantId,
+        userId: input.userId,
+        mediaAssetIds: input.mediaAssetIds,
+        mediaUrls: input.mediaUrls,
+      });
+    } catch (err) {
+      blockers.push(err instanceof Error ? err.message : 'Media validation failed');
+    }
+
+    const captionLength = input.caption?.trim().length || 0;
+    if (input.platform === 'linkedin' && captionLength > 3000) {
+      blockers.push('LinkedIn caption exceeds 3000 characters');
+    }
+    if (input.platform === 'facebook' && captionLength > 63206) {
+      blockers.push('Facebook caption exceeds character limit');
+    }
+
+    return {
+      dry_run: true,
+      permissions_ok: permissionsOk && blockers.length === 0,
+      would_publish_to: wouldPublishTo,
+      publish_now: Boolean(input.publishNow) && !input.scheduledAt,
+      scheduled_at: input.scheduledAt || null,
+      blockers,
+      character_count: captionLength,
+    };
+  }
+
   /**
    * Canonical publish entrypoint.
    * publish_now=true → provider call + verification before ok=true.

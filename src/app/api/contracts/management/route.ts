@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
-import { start } from "workflow/api";
-import { contractLifecycleWorkflow } from "@/workflows/contract-lifecycle";
+import { queueContractLifecycle } from "@/lib/contracts/durableContractRouter";
 import { clientErrorResponse } from "@/lib/api/clientErrorResponse";
 import { operationFailed } from "@/lib/api/operationResult";
 import { BrowserManager } from "@/lib/scraper/browserManager";
@@ -744,9 +743,11 @@ export async function sendContract(
     const writeError = [contractUpdate, partyUpdate, signatureEvidence, lifecycleEvidence].find((result) => result.error)?.error;
     if (writeError) return { success: false, error: `Contract was delivered but lifecycle evidence could not be recorded: ${writeError.message}` };
 
-    const { runId } = await start(contractLifecycleWorkflow, [
-      { contractId, tenantId },
-    ]);
+    const { run_id: runId } = await queueContractLifecycle({
+      contractId,
+      tenantId,
+      userId: actorUserId,
+    });
 
     const { notifyContractSent } =
       await import("@/services/contractNotificationService");

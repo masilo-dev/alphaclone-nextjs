@@ -126,9 +126,38 @@ export async function GET(request: NextRequest) {
           case 'lead_created':
             workflowToStart = leadCreatedWorkflow;
             break;
-          case 'contract_signed':
+          case 'contract_signed': {
+            const payload = (event.payload || {}) as Record<string, unknown>;
+            const contractId = String(payload.contractId || '');
+            const actorUserId = typeof payload.actorUserId === 'string' ? payload.actorUserId : undefined;
+            const { isDurableRuntimeEnabled } = await import('@/lib/bonnie/runtime/types');
+            if (isDurableRuntimeEnabled() && contractId) {
+              const { queueContractSigned } = await import('@/lib/contracts/durableContractSignedRouter');
+              const queued = await queueContractSigned({
+                tenantId: event.tenant_id,
+                contractId,
+                userId: actorUserId,
+                eventId: event.id,
+              });
+              await supabase.from('automation_runs').insert({
+                id: queued.run_id,
+                workflow_type: event.event_type,
+                tenant_id: event.tenant_id,
+                status: 'running',
+              });
+              await runCrmCoherenceHooks(supabase, event);
+              await supabase.from('business_automation_events').update({ processed: true }).eq('id', event.id);
+              results.push({
+                eventId: event.id,
+                status: 'dispatched',
+                runId: queued.run_id,
+                durable: queued.durable,
+              });
+              continue;
+            }
             workflowToStart = contractSignedWorkflow;
             break;
+          }
           case 'task_overdue':
             workflowToStart = taskOverdueWorkflow;
             break;

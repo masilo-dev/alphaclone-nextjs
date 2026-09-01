@@ -1,24 +1,26 @@
 # AlphaClone MCP Full Execution Audit
 
-Generated: 2026-08-30T14:08:39.520Z
+Generated: 2026-09-01T11:08:49.653Z
 
 ## Summary
 
 | Metric | Value |
 | --- | ---: |
 | Expected baseline | 518 |
-| Discovered (runtime) | 523 |
-| Implemented (registry) | 523 |
-| Passed | 194 |
+| Discovered (runtime) | 514 |
+| Implemented (registry) | 514 |
+| Passed | 195 |
 | Failed | 0 |
-| Blocked (safety) | 329 |
+| Blocked (safety) | 319 |
 | Blocked (credentials/DB) | 0 |
 | Blocked (provider) | 0 |
-| Pass % | 37.1% |
+| Pass % | 37.9% |
 
 ## Count reconciliation
 
-Runtime catalog has 523 tools; baseline 518 reflects chatgpt-app-submission.json (523 entries). Delta: none.
+Runtime catalog has 514 tools; baseline 518 reflects chatgpt-app-submission.json (523 entries). Delta: calcom_health, get_execution_assurance_report, get_outcome_status, list_supported_outcomes, reconcile_execution_receipts, request_outcome.
+
+**Drift tools:** calcom_health, get_execution_assurance_report, get_outcome_status, list_supported_outcomes, reconcile_execution_receipts, request_outcome
 
 ## Failures by root cause
 
@@ -62,80 +64,80 @@ Runtime catalog has 523 tools; baseline 518 reflects chatgpt-app-submission.json
 | 33 | bulk_upload_media | media | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-26d472b4c257 | write_tool_requires_approval_and_--execute-write |  | pending |
 | 34 | bulk_upsert_contacts | contacts | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-921445c9146c | write_tool_requires_approval_and_--execute-write |  | pending |
 | 35 | business_memory_graph | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ca5be32defe9 | write_tool_blocked_by_audit_policy |  | pending |
-| 36 | calendly_health | health | low | static_contract_registry_parity | PASS | 0 | ev-f9d6dce605a3 |  |  | pending |
-| 37 | campaign_brief | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a5099780b439 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 38 | campaign_diagnose | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1014d239ad03 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 39 | campaign_metrics | reporting | high | static_contract_registry_parity | PASS | 0 | ev-22feed2be989 |  |  | pending |
-| 40 | campaigns | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-10a7da5567e7 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 41 | cancel_meeting | calendar | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-a356a745bc91 | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 42 | cancel_run | workspace | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-5237b4f7ebc2 | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 43 | capture_linkedin_comment_leads | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7dc7faa40e3d | write_tool_blocked_by_audit_policy |  | pending |
-| 44 | change_pipeline_stage | crm | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ca0ab05ac824 | write_tool_blocked_by_audit_policy |  | pending |
-| 45 | chase_contract_signature | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-50f8641a3c7f | write_tool_blocked_by_audit_policy |  | pending |
-| 46 | check_mcp_execution_readiness | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c0b41116a06a | write_tool_blocked_by_audit_policy |  | pending |
-| 47 | classify_outreach_reply | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-487b9b0ab315 | write_tool_blocked_by_audit_policy |  | pending |
-| 48 | client_pulse | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5b74e074ff24 | write_tool_blocked_by_audit_policy |  | pending |
-| 49 | compare_contract_versions | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-0f2f35d2d32f | write_tool_blocked_by_audit_policy |  | pending |
-| 50 | compare_document_versions | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-be851dd97ff9 | write_tool_blocked_by_audit_policy |  | pending |
-| 51 | compare_versions | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8c50628683e8 | write_tool_blocked_by_audit_policy |  | pending |
-| 52 | connected_accounts | integrations | low | static_contract_registry_parity | PASS | 0 | ev-03e45aee2173 |  |  | pending |
-| 53 | conversions | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6577bc00478b | write_tool_blocked_by_audit_policy |  | pending |
-| 54 | convert_quote_to_invoice | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a9388a769294 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 55 | create_bank_account | integrations | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-cab037fdc167 | write_tool_blocked_by_audit_policy |  | pending |
-| 56 | create_bulk_email_batch | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dd3fe9e92e1a | write_tool_requires_approval_and_--execute-write |  | pending |
-| 57 | create_bulk_email_campaign | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7986644840ac | write_tool_requires_approval_and_--execute-write |  | pending |
-| 58 | create_business_event | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e10a7d822fdf | write_tool_blocked_by_audit_policy |  | pending |
-| 59 | create_client | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a82c10a2849f | write_tool_blocked_by_audit_policy |  | pending |
-| 60 | create_client_portal_event | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1aca72ed3b99 | write_tool_blocked_by_audit_policy |  | pending |
-| 61 | create_contact | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3d2f68bb7e7c | write_tool_blocked_by_audit_policy |  | pending |
-| 62 | create_contract | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-86fcf6cbafc0 | write_tool_blocked_by_audit_policy |  | pending |
-| 63 | create_contract_template | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f844f9ca46ec | write_tool_blocked_by_audit_policy |  | pending |
-| 64 | create_contract_version | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-97b6487a760d | write_tool_blocked_by_audit_policy |  | pending |
-| 65 | create_deal | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e11b249ee263 | write_tool_blocked_by_audit_policy |  | pending |
-| 66 | create_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a454d597313a | write_tool_blocked_by_audit_policy |  | pending |
-| 67 | create_document_version | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6aed33f8aef7 | write_tool_blocked_by_audit_policy |  | pending |
-| 68 | create_email_draft | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ebfb6e95e313 | write_tool_blocked_by_audit_policy |  | pending |
-| 69 | create_email_sequence | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e31e2fd89f56 | write_tool_blocked_by_audit_policy |  | pending |
-| 70 | create_expense | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e191a8298993 | write_tool_blocked_by_audit_policy |  | pending |
-| 71 | create_follow_up | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-22a3145707d4 | write_tool_blocked_by_audit_policy |  | pending |
-| 72 | create_in_app_notification | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-015750638878 | write_tool_blocked_by_audit_policy |  | pending |
-| 73 | create_invoice | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3198e68c6bdb | write_tool_requires_approval_and_--execute-write |  | pending |
-| 74 | create_invoice_collection_mission | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b370baac566b | write_tool_requires_approval_and_--execute-write |  | pending |
-| 75 | create_journal_entry | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-cb1ec9e26033 | write_tool_blocked_by_audit_policy |  | pending |
-| 76 | create_lead | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-bfb0e93ca28b | write_tool_blocked_by_audit_policy |  | pending |
-| 77 | create_leads | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1f8550207e54 | write_tool_blocked_by_audit_policy |  | pending |
-| 78 | create_linkedin_comment | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-26a86784995c | write_tool_blocked_by_audit_policy |  | pending |
-| 79 | create_linkedin_event | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a22460d9565b | write_tool_blocked_by_audit_policy |  | pending |
-| 80 | create_linkedin_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-fac5ae9a0173 | write_tool_blocked_by_audit_policy |  | pending |
-| 81 | create_linkedin_reaction | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-170f36f0becc | write_tool_blocked_by_audit_policy |  | pending |
-| 82 | create_meeting | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7c46bb630940 | write_tool_blocked_by_audit_policy |  | pending |
-| 83 | create_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-cc6c441fd1f4 | write_tool_blocked_by_audit_policy |  | pending |
-| 84 | create_post_with_ai_image | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1f7b8a415432 | write_tool_blocked_by_audit_policy |  | pending |
-| 85 | create_project | projects | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9d9523575aba | write_tool_blocked_by_audit_policy |  | pending |
-| 86 | create_project_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6d3f26e55de0 | write_tool_blocked_by_audit_policy |  | pending |
-| 87 | create_quote | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4f970761a61e | write_tool_blocked_by_audit_policy |  | pending |
-| 88 | create_reconciliation_session | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4cac6e42a7de | write_tool_blocked_by_audit_policy |  | pending |
-| 89 | create_social_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5674c5b09f5a | write_tool_blocked_by_audit_policy |  | pending |
-| 90 | create_social_post_with_ai_image | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c4ed7412c766 | write_tool_blocked_by_audit_policy |  | pending |
-| 91 | create_social_post_with_media | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b840d63c8a01 | write_tool_blocked_by_audit_policy |  | pending |
-| 92 | create_subscription_checkout | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d3e8061bbab1 | write_tool_blocked_by_audit_policy |  | pending |
-| 93 | create_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8b8ea6af390a | write_tool_blocked_by_audit_policy |  | pending |
-| 94 | create_tasks_batch | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c01397bc5159 | write_tool_blocked_by_audit_policy |  | pending |
-| 95 | create_ticket | support | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-82effad37f1e | write_tool_blocked_by_audit_policy |  | pending |
-| 96 | create_vendor_bill | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6d60b7385889 | write_tool_blocked_by_audit_policy |  | pending |
-| 97 | customer_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-13b2ca226c8d |  |  | pending |
-| 98 | dashboard_metrics | reporting | low | static_contract_registry_parity | PASS | 0 | ev-4b14f388042f |  |  | pending |
-| 99 | deal_to_cash_flow | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6f7a45e558b1 | write_tool_blocked_by_audit_policy |  | pending |
-| 100 | decline_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-817d0f92c424 | write_tool_blocked_by_audit_policy |  | pending |
-| 101 | deepseek_health | health | low | static_contract_registry_parity | PASS | 0 | ev-553579719d03 |  |  | pending |
-| 102 | define_outcome | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dd74d91422d4 | write_tool_blocked_by_audit_policy |  | pending |
-| 103 | delete_contact | contacts | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-ff2836cdda95 | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 104 | delete_facebook_post | social | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-1144d73d9497 | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 105 | delete_lead | leads | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-a2abc82d5b8e | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 106 | delete_media | media | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-c73cc128a4ba | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 107 | delete_media_asset | media | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-5a2cb314931c | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 108 | delete_post | social | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-1590e6568373 | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 109 | delete_social_post | social | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-b0896ab8a327 | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 36 | calcom_health | health | low | static_contract_registry_parity | PASS | 0 | ev-c2ff334eaa18 |  |  | pending |
+| 37 | calendly_health | health | low | static_contract_registry_parity | PASS | 0 | ev-f9d6dce605a3 |  |  | pending |
+| 38 | campaign_brief | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a5099780b439 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 39 | campaign_diagnose | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1014d239ad03 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 40 | campaign_metrics | reporting | high | static_contract_registry_parity | PASS | 0 | ev-22feed2be989 |  |  | pending |
+| 41 | campaigns | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-10a7da5567e7 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 42 | cancel_meeting | calendar | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-a356a745bc91 | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 43 | cancel_run | workspace | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-5237b4f7ebc2 | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 44 | capture_linkedin_comment_leads | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7dc7faa40e3d | write_tool_blocked_by_audit_policy |  | pending |
+| 45 | change_pipeline_stage | crm | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ca0ab05ac824 | write_tool_blocked_by_audit_policy |  | pending |
+| 46 | chase_contract_signature | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-50f8641a3c7f | write_tool_blocked_by_audit_policy |  | pending |
+| 47 | check_mcp_execution_readiness | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c0b41116a06a | write_tool_blocked_by_audit_policy |  | pending |
+| 48 | classify_outreach_reply | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-487b9b0ab315 | write_tool_blocked_by_audit_policy |  | pending |
+| 49 | client_pulse | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5b74e074ff24 | write_tool_blocked_by_audit_policy |  | pending |
+| 50 | compare_contract_versions | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-0f2f35d2d32f | write_tool_blocked_by_audit_policy |  | pending |
+| 51 | compare_document_versions | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-be851dd97ff9 | write_tool_blocked_by_audit_policy |  | pending |
+| 52 | compare_versions | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8c50628683e8 | write_tool_blocked_by_audit_policy |  | pending |
+| 53 | connected_accounts | integrations | low | static_contract_registry_parity | PASS | 0 | ev-03e45aee2173 |  |  | pending |
+| 54 | conversions | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6577bc00478b | write_tool_blocked_by_audit_policy |  | pending |
+| 55 | convert_quote_to_invoice | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a9388a769294 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 56 | create_bank_account | integrations | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-cab037fdc167 | write_tool_blocked_by_audit_policy |  | pending |
+| 57 | create_bulk_email_batch | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dd3fe9e92e1a | write_tool_requires_approval_and_--execute-write |  | pending |
+| 58 | create_bulk_email_campaign | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7986644840ac | write_tool_requires_approval_and_--execute-write |  | pending |
+| 59 | create_business_event | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e10a7d822fdf | write_tool_blocked_by_audit_policy |  | pending |
+| 60 | create_client | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a82c10a2849f | write_tool_blocked_by_audit_policy |  | pending |
+| 61 | create_client_portal_event | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1aca72ed3b99 | write_tool_blocked_by_audit_policy |  | pending |
+| 62 | create_contact | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3d2f68bb7e7c | write_tool_blocked_by_audit_policy |  | pending |
+| 63 | create_contract | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-86fcf6cbafc0 | write_tool_blocked_by_audit_policy |  | pending |
+| 64 | create_contract_template | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f844f9ca46ec | write_tool_blocked_by_audit_policy |  | pending |
+| 65 | create_contract_version | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-97b6487a760d | write_tool_blocked_by_audit_policy |  | pending |
+| 66 | create_deal | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e11b249ee263 | write_tool_blocked_by_audit_policy |  | pending |
+| 67 | create_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a454d597313a | write_tool_blocked_by_audit_policy |  | pending |
+| 68 | create_document_version | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6aed33f8aef7 | write_tool_blocked_by_audit_policy |  | pending |
+| 69 | create_email_draft | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ebfb6e95e313 | write_tool_blocked_by_audit_policy |  | pending |
+| 70 | create_email_sequence | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e31e2fd89f56 | write_tool_blocked_by_audit_policy |  | pending |
+| 71 | create_expense | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e191a8298993 | write_tool_blocked_by_audit_policy |  | pending |
+| 72 | create_follow_up | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-22a3145707d4 | write_tool_blocked_by_audit_policy |  | pending |
+| 73 | create_in_app_notification | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-015750638878 | write_tool_blocked_by_audit_policy |  | pending |
+| 74 | create_invoice | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3198e68c6bdb | write_tool_requires_approval_and_--execute-write |  | pending |
+| 75 | create_invoice_collection_mission | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b370baac566b | write_tool_requires_approval_and_--execute-write |  | pending |
+| 76 | create_journal_entry | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-cb1ec9e26033 | write_tool_blocked_by_audit_policy |  | pending |
+| 77 | create_lead | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-bfb0e93ca28b | write_tool_blocked_by_audit_policy |  | pending |
+| 78 | create_leads | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1f8550207e54 | write_tool_blocked_by_audit_policy |  | pending |
+| 79 | create_linkedin_comment | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-26a86784995c | write_tool_blocked_by_audit_policy |  | pending |
+| 80 | create_linkedin_event | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a22460d9565b | write_tool_blocked_by_audit_policy |  | pending |
+| 81 | create_linkedin_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-fac5ae9a0173 | write_tool_blocked_by_audit_policy |  | pending |
+| 82 | create_linkedin_reaction | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-170f36f0becc | write_tool_blocked_by_audit_policy |  | pending |
+| 83 | create_meeting | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7c46bb630940 | write_tool_blocked_by_audit_policy |  | pending |
+| 84 | create_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-cc6c441fd1f4 | write_tool_blocked_by_audit_policy |  | pending |
+| 85 | create_post_with_ai_image | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1f7b8a415432 | write_tool_blocked_by_audit_policy |  | pending |
+| 86 | create_project | projects | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9d9523575aba | write_tool_blocked_by_audit_policy |  | pending |
+| 87 | create_project_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6d3f26e55de0 | write_tool_blocked_by_audit_policy |  | pending |
+| 88 | create_quote | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4f970761a61e | write_tool_blocked_by_audit_policy |  | pending |
+| 89 | create_reconciliation_session | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4cac6e42a7de | write_tool_blocked_by_audit_policy |  | pending |
+| 90 | create_social_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5674c5b09f5a | write_tool_blocked_by_audit_policy |  | pending |
+| 91 | create_social_post_with_ai_image | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c4ed7412c766 | write_tool_blocked_by_audit_policy |  | pending |
+| 92 | create_social_post_with_media | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b840d63c8a01 | write_tool_blocked_by_audit_policy |  | pending |
+| 93 | create_subscription_checkout | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d3e8061bbab1 | write_tool_blocked_by_audit_policy |  | pending |
+| 94 | create_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8b8ea6af390a | write_tool_blocked_by_audit_policy |  | pending |
+| 95 | create_tasks_batch | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c01397bc5159 | write_tool_blocked_by_audit_policy |  | pending |
+| 96 | create_ticket | support | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-82effad37f1e | write_tool_blocked_by_audit_policy |  | pending |
+| 97 | create_vendor_bill | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6d60b7385889 | write_tool_blocked_by_audit_policy |  | pending |
+| 98 | customer_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-13b2ca226c8d |  |  | pending |
+| 99 | dashboard_metrics | reporting | low | static_contract_registry_parity | PASS | 0 | ev-4b14f388042f |  |  | pending |
+| 100 | deal_to_cash_flow | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6f7a45e558b1 | write_tool_blocked_by_audit_policy |  | pending |
+| 101 | decline_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-817d0f92c424 | write_tool_blocked_by_audit_policy |  | pending |
+| 102 | deepseek_health | health | low | static_contract_registry_parity | PASS | 0 | ev-553579719d03 |  |  | pending |
+| 103 | define_outcome | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dd74d91422d4 | write_tool_blocked_by_audit_policy |  | pending |
+| 104 | delete_contact | contacts | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-ff2836cdda95 | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 105 | delete_facebook_post | social | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-1144d73d9497 | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 106 | delete_lead | leads | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-a2abc82d5b8e | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 107 | delete_media | media | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-c73cc128a4ba | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 108 | delete_media_asset | media | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-5a2cb314931c | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 109 | delete_post | social | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-1590e6568373 | destructive_tool_requires_--execute-write_in_staging |  | pending |
 | 110 | disable_whatsapp_chatbot | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b68d0b9acd98 | write_tool_blocked_by_audit_policy |  | pending |
 | 111 | dispatch_tool | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dbf7265b4cae | write_tool_blocked_by_audit_policy |  | pending |
 | 112 | document_qa | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e355bf873d7b | write_tool_blocked_by_audit_policy |  | pending |
@@ -212,116 +214,116 @@ Runtime catalog has 523 tools; baseline 518 reflects chatgpt-app-submission.json
 | 183 | get_email_campaign_delivery_status | health | high | static_contract_registry_parity | PASS | 0 | ev-edcb7874196e |  |  | pending |
 | 184 | get_email_campaign_stats | social | high | static_contract_registry_parity | PASS | 0 | ev-acc02a450d36 |  |  | pending |
 | 185 | get_environment | health | low | static_contract_registry_parity | PASS | 0 | ev-c6c3474a465b |  |  | pending |
-| 186 | get_expenses | workspace | low | static_contract_registry_parity | PASS | 0 | ev-7a9b119f1e54 |  |  | pending |
-| 187 | get_facebook_identities | social | low | static_contract_registry_parity | PASS | 0 | ev-34b9a4e57721 |  |  | pending |
-| 188 | get_facebook_page_capabilities | search | low | static_contract_registry_parity | PASS | 0 | ev-1304e27edea6 |  |  | pending |
-| 189 | get_facebook_post_insights | social | low | static_contract_registry_parity | PASS | 0 | ev-8b010bf9997c |  |  | pending |
-| 190 | get_facebook_token | social | low | static_contract_registry_parity | PASS | 0 | ev-7967a8609a5e |  |  | pending |
-| 191 | get_failure_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-7af88c4d65e8 |  |  | pending |
-| 192 | get_feature_flags | health | low | static_contract_registry_parity | PASS | 0 | ev-a26c8051dc0d |  |  | pending |
-| 193 | get_file_download_url | documents | low | static_contract_registry_parity | PASS | 0 | ev-7054e9ce0591 |  |  | pending |
-| 194 | get_finance_snapshot | finance | low | static_contract_registry_parity | PASS | 0 | ev-02f66571cc45 |  |  | pending |
-| 195 | get_gamification_leaderboard | leads | low | static_contract_registry_parity | PASS | 0 | ev-0117ad1519b2 |  |  | pending |
-| 196 | get_inventory_items | finance | low | static_contract_registry_parity | PASS | 0 | ev-d676db508d04 |  |  | pending |
-| 197 | get_invoice_line_items | invoices | high | static_contract_registry_parity | PASS | 0 | ev-90b20a1a403b |  |  | pending |
-| 198 | get_invoices | invoices | high | static_contract_registry_parity | PASS | 0 | ev-d576c522effe |  |  | pending |
-| 199 | get_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-5b271f98a50e |  |  | pending |
-| 200 | get_linkedin_ad_accounts | integrations | low | static_contract_registry_parity | PASS | 0 | ev-898f684cd2a4 |  |  | pending |
-| 201 | get_linkedin_ad_campaigns | social | high | static_contract_registry_parity | PASS | 0 | ev-68fc1fb17146 |  |  | pending |
-| 202 | get_linkedin_identities | social | low | static_contract_registry_parity | PASS | 0 | ev-c93fc816559c |  |  | pending |
-| 203 | get_linkedin_member_profile | documents | low | static_contract_registry_parity | PASS | 0 | ev-6b25db1aee13 |  |  | pending |
-| 204 | get_linkedin_post_stats | social | low | static_contract_registry_parity | PASS | 0 | ev-3ff69bb769c9 |  |  | pending |
-| 205 | get_linkedin_posts | social | low | static_contract_registry_parity | PASS | 0 | ev-fb19a326c78d |  |  | pending |
-| 206 | get_media | media | low | static_contract_registry_parity | PASS | 0 | ev-f7e369009d95 |  |  | pending |
-| 207 | get_media_asset | media | low | static_contract_registry_parity | PASS | 0 | ev-5fde22b614b5 |  |  | pending |
-| 208 | get_meetings | calendar | low | static_contract_registry_parity | PASS | 0 | ev-51bc78dd5dd3 |  |  | pending |
-| 209 | get_momentum_score | workspace | low | static_contract_registry_parity | PASS | 0 | ev-4c0c010f60a7 |  |  | pending |
-| 210 | get_nexus_memory | bonnie | low | static_contract_registry_parity | PASS | 0 | ev-1aa525e93e6d |  |  | pending |
-| 211 | get_orchestration_history | workflows | low | static_contract_registry_parity | PASS | 0 | ev-45aea7ffd48b |  |  | pending |
-| 212 | get_pipeline_summary | crm | low | static_contract_registry_parity | PASS | 0 | ev-4fcf7e526cb3 |  |  | pending |
-| 213 | get_platform_status | health | low | static_contract_registry_parity | PASS | 0 | ev-dd9c4e1145d6 |  |  | pending |
-| 214 | get_pnl_statement | workspace | low | static_contract_registry_parity | PASS | 0 | ev-6879d04c7631 |  |  | pending |
-| 215 | get_post_analytics | reporting | low | static_contract_registry_parity | PASS | 0 | ev-ca8ed194fab9 |  |  | pending |
-| 216 | get_post_status | health | low | static_contract_registry_parity | PASS | 0 | ev-1dc142e1cf7e |  |  | pending |
-| 217 | get_project_details | projects | low | static_contract_registry_parity | PASS | 0 | ev-1b10c5a2b5d4 |  |  | pending |
-| 218 | get_project_milestones | projects | low | static_contract_registry_parity | PASS | 0 | ev-21eac8bdb6f2 |  |  | pending |
-| 219 | get_project_summary | projects | low | static_contract_registry_parity | PASS | 0 | ev-f0b97b897c74 |  |  | pending |
-| 220 | get_project_tasks | tasks | low | static_contract_registry_parity | PASS | 0 | ev-1217ee078796 |  |  | pending |
-| 221 | get_project_timeline | projects | low | static_contract_registry_parity | PASS | 0 | ev-9d50c20065e2 |  |  | pending |
-| 222 | get_projects | projects | low | static_contract_registry_parity | PASS | 0 | ev-754ca6a4ac70 |  |  | pending |
-| 223 | get_quotes | revenue | low | static_contract_registry_parity | PASS | 0 | ev-f2dd0fffe71d |  |  | pending |
-| 224 | get_recent_errors | health | low | static_contract_registry_parity | PASS | 0 | ev-bee06a109554 |  |  | pending |
-| 225 | get_recent_messages | email | low | static_contract_registry_parity | PASS | 0 | ev-5df28dfac81d |  |  | pending |
-| 226 | get_reconciliation_sessions | workspace | low | static_contract_registry_parity | PASS | 0 | ev-bd6dd63ee9ad |  |  | pending |
-| 227 | get_revenue_summary | revenue | low | static_contract_registry_parity | PASS | 0 | ev-322c624b4ad9 |  |  | pending |
-| 228 | get_run_status | health | low | static_contract_registry_parity | PASS | 0 | ev-e03ced484135 |  |  | pending |
-| 229 | get_scheduled_posts | social | low | static_contract_registry_parity | PASS | 0 | ev-93ae0f190bab |  |  | pending |
-| 230 | get_scraper_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-a8be8c61982b |  |  | pending |
-| 231 | get_sequence_stats | marketing | low | static_contract_registry_parity | PASS | 0 | ev-f4362dad5e9e |  |  | pending |
-| 232 | get_signature_status | health | low | static_contract_registry_parity | PASS | 0 | ev-cf7f0f439eea |  |  | pending |
-| 233 | get_social_accounts | integrations | medium | static_contract_registry_parity | PASS | 0 | ev-39072b17810f |  |  | pending |
-| 234 | get_social_identities | social | medium | static_contract_registry_parity | PASS | 0 | ev-282a5dddbeb1 |  |  | pending |
-| 235 | get_social_post | social | medium | static_contract_registry_parity | PASS | 0 | ev-0686f54ff242 |  |  | pending |
-| 236 | get_social_post_insights | social | medium | static_contract_registry_parity | PASS | 0 | ev-36f48eba913a |  |  | pending |
-| 237 | get_social_posts | social | medium | static_contract_registry_parity | PASS | 0 | ev-f2c6b10e333d |  |  | pending |
-| 238 | get_strategic_plan | workspace | low | static_contract_registry_parity | PASS | 0 | ev-fc89675d7790 |  |  | pending |
-| 239 | get_system_health | health | low | static_contract_registry_parity | PASS | 0 | ev-12233a40d771 |  |  | pending |
-| 240 | get_tasks | tasks | low | static_contract_registry_parity | PASS | 0 | ev-57d15d9b0c7c |  |  | pending |
-| 241 | get_tenant_messages | email | low | static_contract_registry_parity | PASS | 0 | ev-0191811c04a0 |  |  | pending |
-| 242 | get_throughput_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-93a4f1b4e52f |  |  | pending |
-| 243 | get_ticket_stats | support | low | static_contract_registry_parity | PASS | 0 | ev-5752d4c7f7ef |  |  | pending |
-| 244 | get_tickets | support | low | static_contract_registry_parity | PASS | 0 | ev-66a46b10af1e |  |  | pending |
-| 245 | get_today_operational_hud | workspace | low | static_contract_registry_parity | PASS | 0 | ev-077a959f7eb1 |  |  | pending |
-| 246 | get_user_points | workspace | low | static_contract_registry_parity | PASS | 0 | ev-ee7b538a597c |  |  | pending |
-| 247 | get_vendor_bills | workspace | low | static_contract_registry_parity | PASS | 0 | ev-ab68e0f221ab |  |  | pending |
-| 248 | get_version | health | low | static_contract_registry_parity | PASS | 0 | ev-fd3937954b8b |  |  | pending |
-| 249 | get_whatsapp_status | health | medium | static_contract_registry_parity | PASS | 0 | ev-a3d962653007 |  |  | pending |
-| 250 | get_workflow | workflows | low | static_contract_registry_parity | PASS | 0 | ev-70e33bebce19 |  |  | pending |
-| 251 | get_workflow_run | workflows | low | static_contract_registry_parity | PASS | 0 | ev-edfe3ef7529b |  |  | pending |
-| 252 | get_workspace_widgets | workspace | low | static_contract_registry_parity | PASS | 0 | ev-26edd41e911b |  |  | pending |
-| 253 | get_x_profile | documents | low | static_contract_registry_parity | PASS | 0 | ev-0d29c5eda692 |  |  | pending |
-| 254 | get_x_timeline | social | low | static_contract_registry_parity | PASS | 0 | ev-4ed2401a83b0 |  |  | pending |
-| 255 | get_zoho_mail_messages | integrations | medium | static_contract_registry_parity | PASS | 0 | ev-9506dafdbf9d |  |  | pending |
-| 256 | get_zoho_mail_thread | integrations | medium | static_contract_registry_parity | PASS | 0 | ev-e077a010d706 |  |  | pending |
-| 257 | github_health | health | low | static_contract_registry_parity | PASS | 0 | ev-d456935983b7 |  |  | pending |
-| 258 | gmail_get_thread | integrations | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f5d4eb05e67a | write_tool_blocked_by_audit_policy |  | pending |
-| 259 | gmail_health | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d163c707808b | write_tool_blocked_by_audit_policy |  | pending |
-| 260 | gmail_list_threads | integrations | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-aec6743c4328 | write_tool_blocked_by_audit_policy |  | pending |
-| 261 | gmail_send_email | integrations | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6504ba5ac697 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 262 | google_calendar_health | calendar | low | static_contract_registry_parity | PASS | 0 | ev-31eb4a7394af |  |  | pending |
-| 263 | growth_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-ebc97b9b2c5c |  |  | pending |
-| 264 | ingest_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5fa2885b8c4b | write_tool_blocked_by_audit_policy |  | pending |
-| 265 | inspect_agent_reasoning | search | low | static_contract_registry_parity | PASS | 0 | ev-74471e3acf3f |  |  | pending |
-| 266 | inspect_embeddings | search | low | static_contract_registry_parity | PASS | 0 | ev-afa139066ba3 |  |  | pending |
-| 267 | inspect_executor | search | low | static_contract_registry_parity | PASS | 0 | ev-699bd065d04a |  |  | pending |
-| 268 | inspect_memory | search | low | static_contract_registry_parity | PASS | 0 | ev-6c5b6a77ad28 |  |  | pending |
-| 269 | inspect_planner | search | low | static_contract_registry_parity | PASS | 0 | ev-956d1126b4d1 |  |  | pending |
-| 270 | inspect_prompts | search | low | static_contract_registry_parity | PASS | 0 | ev-4c4639c0f32e |  |  | pending |
-| 271 | inspect_rag | search | low | static_contract_registry_parity | PASS | 0 | ev-7e717c7281a5 |  |  | pending |
-| 272 | inspect_scheduler | search | low | static_contract_registry_parity | PASS | 0 | ev-3490a5d3f64b |  |  | pending |
-| 273 | inspect_task_queue | tasks | low | static_contract_registry_parity | PASS | 0 | ev-7b8d46597b54 |  |  | pending |
-| 274 | inspect_tools | search | low | static_contract_registry_parity | PASS | 0 | ev-10e2c7b9622a |  |  | pending |
-| 275 | inspect_vector_store | search | low | static_contract_registry_parity | PASS | 0 | ev-f90debdc3e70 |  |  | pending |
-| 276 | integrations_status | health | low | static_contract_registry_parity | PASS | 0 | ev-72eb117d1ec8 |  |  | pending |
-| 277 | invoices | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-fe9ab078a1cc | write_tool_requires_approval_and_--execute-write |  | pending |
-| 278 | kickoff_project_automation | workflows | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-00e1e0eeb4bd | write_tool_blocked_by_audit_policy |  | pending |
-| 279 | landing_pages | marketing | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b7cfec76c99e | write_tool_blocked_by_audit_policy |  | pending |
-| 280 | list_capabilities | search | low | static_contract_registry_parity | PASS | 0 | ev-d2ffd4403792 |  |  | pending |
-| 281 | list_companies | companies | low | static_contract_registry_parity | PASS | 0 | ev-cd0669eddc28 |  |  | pending |
-| 282 | list_contacts | contacts | low | static_contract_registry_parity | PASS | 0 | ev-9f2a6dfa8bd2 |  |  | pending |
-| 283 | list_conversations | workspace | low | static_contract_registry_parity | PASS | 0 | ev-6476963d87fb |  |  | pending |
-| 284 | list_department_agents | bonnie | low | static_contract_registry_parity | PASS | 0 | ev-218bb6a5ef64 |  |  | pending |
-| 285 | list_document_versions | documents | low | static_contract_registry_parity | PASS | 0 | ev-8e42243088e9 |  |  | pending |
-| 286 | list_email_accounts | integrations | medium | static_contract_registry_parity | PASS | 0 | ev-21fcc0c57801 |  |  | pending |
-| 287 | list_event_subscriptions | revenue | low | static_contract_registry_parity | PASS | 0 | ev-cdc91dc20d02 |  |  | pending |
-| 288 | list_files | documents | low | static_contract_registry_parity | PASS | 0 | ev-7cf196c489fc |  |  | pending |
-| 289 | list_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-0cd8627c9edd |  |  | pending |
-| 290 | list_media_assets | media | low | static_contract_registry_parity | PASS | 0 | ev-b5de9e860403 |  |  | pending |
-| 291 | list_modules | workspace | low | static_contract_registry_parity | PASS | 0 | ev-c5239e579695 |  |  | pending |
-| 292 | list_pending_approvals | approvals | low | static_contract_registry_parity | PASS | 0 | ev-22bdc80150a5 |  |  | pending |
-| 293 | list_playbooks | workflows | low | static_contract_registry_parity | PASS | 0 | ev-b6c2342033c1 |  |  | pending |
-| 294 | list_scheduled_social_posts | social | medium | static_contract_registry_parity | PASS | 0 | ev-4994cd6e2b40 |  |  | pending |
-| 295 | list_skills | bonnie | low | static_contract_registry_parity | PASS | 0 | ev-f4e15cbd73b4 |  |  | pending |
+| 186 | get_execution_assurance_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-255ba39e4ef6 |  |  | pending |
+| 187 | get_expenses | workspace | low | static_contract_registry_parity | PASS | 0 | ev-7a9b119f1e54 |  |  | pending |
+| 188 | get_facebook_identities | social | low | static_contract_registry_parity | PASS | 0 | ev-34b9a4e57721 |  |  | pending |
+| 189 | get_facebook_page_capabilities | search | low | static_contract_registry_parity | PASS | 0 | ev-1304e27edea6 |  |  | pending |
+| 190 | get_facebook_post_insights | social | low | static_contract_registry_parity | PASS | 0 | ev-8b010bf9997c |  |  | pending |
+| 191 | get_facebook_token | social | low | static_contract_registry_parity | PASS | 0 | ev-7967a8609a5e |  |  | pending |
+| 192 | get_failure_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-7af88c4d65e8 |  |  | pending |
+| 193 | get_feature_flags | health | low | static_contract_registry_parity | PASS | 0 | ev-a26c8051dc0d |  |  | pending |
+| 194 | get_file_download_url | documents | low | static_contract_registry_parity | PASS | 0 | ev-7054e9ce0591 |  |  | pending |
+| 195 | get_finance_snapshot | finance | low | static_contract_registry_parity | PASS | 0 | ev-02f66571cc45 |  |  | pending |
+| 196 | get_gamification_leaderboard | leads | low | static_contract_registry_parity | PASS | 0 | ev-0117ad1519b2 |  |  | pending |
+| 197 | get_inventory_items | finance | low | static_contract_registry_parity | PASS | 0 | ev-d676db508d04 |  |  | pending |
+| 198 | get_invoice_line_items | invoices | high | static_contract_registry_parity | PASS | 0 | ev-90b20a1a403b |  |  | pending |
+| 199 | get_invoices | invoices | high | static_contract_registry_parity | PASS | 0 | ev-d576c522effe |  |  | pending |
+| 200 | get_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-5b271f98a50e |  |  | pending |
+| 201 | get_linkedin_ad_accounts | integrations | low | static_contract_registry_parity | PASS | 0 | ev-898f684cd2a4 |  |  | pending |
+| 202 | get_linkedin_ad_campaigns | social | high | static_contract_registry_parity | PASS | 0 | ev-68fc1fb17146 |  |  | pending |
+| 203 | get_linkedin_identities | social | low | static_contract_registry_parity | PASS | 0 | ev-c93fc816559c |  |  | pending |
+| 204 | get_linkedin_member_profile | documents | low | static_contract_registry_parity | PASS | 0 | ev-6b25db1aee13 |  |  | pending |
+| 205 | get_linkedin_post_stats | social | low | static_contract_registry_parity | PASS | 0 | ev-3ff69bb769c9 |  |  | pending |
+| 206 | get_linkedin_posts | social | low | static_contract_registry_parity | PASS | 0 | ev-fb19a326c78d |  |  | pending |
+| 207 | get_media | media | low | static_contract_registry_parity | PASS | 0 | ev-f7e369009d95 |  |  | pending |
+| 208 | get_media_asset | media | low | static_contract_registry_parity | PASS | 0 | ev-5fde22b614b5 |  |  | pending |
+| 209 | get_meetings | calendar | low | static_contract_registry_parity | PASS | 0 | ev-51bc78dd5dd3 |  |  | pending |
+| 210 | get_momentum_score | workspace | low | static_contract_registry_parity | PASS | 0 | ev-4c0c010f60a7 |  |  | pending |
+| 211 | get_nexus_memory | bonnie | low | static_contract_registry_parity | PASS | 0 | ev-1aa525e93e6d |  |  | pending |
+| 212 | get_orchestration_history | workflows | low | static_contract_registry_parity | PASS | 0 | ev-45aea7ffd48b |  |  | pending |
+| 213 | get_outcome_status | health | low | static_contract_registry_parity | PASS | 0 | ev-7de0e1cd370f |  |  | pending |
+| 214 | get_pipeline_summary | crm | low | static_contract_registry_parity | PASS | 0 | ev-4fcf7e526cb3 |  |  | pending |
+| 215 | get_platform_status | health | low | static_contract_registry_parity | PASS | 0 | ev-dd9c4e1145d6 |  |  | pending |
+| 216 | get_pnl_statement | workspace | low | static_contract_registry_parity | PASS | 0 | ev-6879d04c7631 |  |  | pending |
+| 217 | get_post_analytics | reporting | low | static_contract_registry_parity | PASS | 0 | ev-ca8ed194fab9 |  |  | pending |
+| 218 | get_post_status | health | low | static_contract_registry_parity | PASS | 0 | ev-1dc142e1cf7e |  |  | pending |
+| 219 | get_project_details | projects | low | static_contract_registry_parity | PASS | 0 | ev-1b10c5a2b5d4 |  |  | pending |
+| 220 | get_project_milestones | projects | low | static_contract_registry_parity | PASS | 0 | ev-21eac8bdb6f2 |  |  | pending |
+| 221 | get_project_summary | projects | low | static_contract_registry_parity | PASS | 0 | ev-f0b97b897c74 |  |  | pending |
+| 222 | get_project_tasks | tasks | low | static_contract_registry_parity | PASS | 0 | ev-1217ee078796 |  |  | pending |
+| 223 | get_project_timeline | projects | low | static_contract_registry_parity | PASS | 0 | ev-9d50c20065e2 |  |  | pending |
+| 224 | get_projects | projects | low | static_contract_registry_parity | PASS | 0 | ev-754ca6a4ac70 |  |  | pending |
+| 225 | get_quotes | revenue | low | static_contract_registry_parity | PASS | 0 | ev-f2dd0fffe71d |  |  | pending |
+| 226 | get_recent_errors | health | low | static_contract_registry_parity | PASS | 0 | ev-bee06a109554 |  |  | pending |
+| 227 | get_recent_messages | email | low | static_contract_registry_parity | PASS | 0 | ev-5df28dfac81d |  |  | pending |
+| 228 | get_reconciliation_sessions | workspace | low | static_contract_registry_parity | PASS | 0 | ev-bd6dd63ee9ad |  |  | pending |
+| 229 | get_revenue_summary | revenue | low | static_contract_registry_parity | PASS | 0 | ev-322c624b4ad9 |  |  | pending |
+| 230 | get_run_status | health | low | static_contract_registry_parity | PASS | 0 | ev-e03ced484135 |  |  | pending |
+| 231 | get_scheduled_posts | social | low | static_contract_registry_parity | PASS | 0 | ev-93ae0f190bab |  |  | pending |
+| 232 | get_scraper_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-a8be8c61982b |  |  | pending |
+| 233 | get_sequence_stats | marketing | low | static_contract_registry_parity | PASS | 0 | ev-f4362dad5e9e |  |  | pending |
+| 234 | get_signature_status | health | low | static_contract_registry_parity | PASS | 0 | ev-cf7f0f439eea |  |  | pending |
+| 235 | get_social_accounts | integrations | medium | static_contract_registry_parity | PASS | 0 | ev-39072b17810f |  |  | pending |
+| 236 | get_social_identities | social | medium | static_contract_registry_parity | PASS | 0 | ev-282a5dddbeb1 |  |  | pending |
+| 237 | get_strategic_plan | workspace | low | static_contract_registry_parity | PASS | 0 | ev-fc89675d7790 |  |  | pending |
+| 238 | get_system_health | health | low | static_contract_registry_parity | PASS | 0 | ev-12233a40d771 |  |  | pending |
+| 239 | get_tasks | tasks | low | static_contract_registry_parity | PASS | 0 | ev-57d15d9b0c7c |  |  | pending |
+| 240 | get_tenant_messages | email | low | static_contract_registry_parity | PASS | 0 | ev-0191811c04a0 |  |  | pending |
+| 241 | get_throughput_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-93a4f1b4e52f |  |  | pending |
+| 242 | get_ticket_stats | support | low | static_contract_registry_parity | PASS | 0 | ev-5752d4c7f7ef |  |  | pending |
+| 243 | get_tickets | support | low | static_contract_registry_parity | PASS | 0 | ev-66a46b10af1e |  |  | pending |
+| 244 | get_today_operational_hud | workspace | low | static_contract_registry_parity | PASS | 0 | ev-077a959f7eb1 |  |  | pending |
+| 245 | get_user_points | workspace | low | static_contract_registry_parity | PASS | 0 | ev-ee7b538a597c |  |  | pending |
+| 246 | get_vendor_bills | workspace | low | static_contract_registry_parity | PASS | 0 | ev-ab68e0f221ab |  |  | pending |
+| 247 | get_version | health | low | static_contract_registry_parity | PASS | 0 | ev-fd3937954b8b |  |  | pending |
+| 248 | get_whatsapp_status | health | medium | static_contract_registry_parity | PASS | 0 | ev-a3d962653007 |  |  | pending |
+| 249 | get_workflow | workflows | low | static_contract_registry_parity | PASS | 0 | ev-70e33bebce19 |  |  | pending |
+| 250 | get_workflow_run | workflows | low | static_contract_registry_parity | PASS | 0 | ev-edfe3ef7529b |  |  | pending |
+| 251 | get_workspace_widgets | workspace | low | static_contract_registry_parity | PASS | 0 | ev-26edd41e911b |  |  | pending |
+| 252 | get_x_profile | documents | low | static_contract_registry_parity | PASS | 0 | ev-0d29c5eda692 |  |  | pending |
+| 253 | get_x_timeline | social | low | static_contract_registry_parity | PASS | 0 | ev-4ed2401a83b0 |  |  | pending |
+| 254 | get_zoho_mail_messages | integrations | medium | static_contract_registry_parity | PASS | 0 | ev-9506dafdbf9d |  |  | pending |
+| 255 | get_zoho_mail_thread | integrations | medium | static_contract_registry_parity | PASS | 0 | ev-e077a010d706 |  |  | pending |
+| 256 | github_health | health | low | static_contract_registry_parity | PASS | 0 | ev-d456935983b7 |  |  | pending |
+| 257 | gmail_get_thread | integrations | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f5d4eb05e67a | write_tool_blocked_by_audit_policy |  | pending |
+| 258 | gmail_health | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d163c707808b | write_tool_blocked_by_audit_policy |  | pending |
+| 259 | gmail_list_threads | integrations | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-aec6743c4328 | write_tool_blocked_by_audit_policy |  | pending |
+| 260 | gmail_send_email | integrations | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6504ba5ac697 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 261 | google_calendar_health | calendar | low | static_contract_registry_parity | PASS | 0 | ev-31eb4a7394af |  |  | pending |
+| 262 | growth_report | reporting | low | static_contract_registry_parity | PASS | 0 | ev-ebc97b9b2c5c |  |  | pending |
+| 263 | ingest_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5fa2885b8c4b | write_tool_blocked_by_audit_policy |  | pending |
+| 264 | inspect_agent_reasoning | search | low | static_contract_registry_parity | PASS | 0 | ev-74471e3acf3f |  |  | pending |
+| 265 | inspect_embeddings | search | low | static_contract_registry_parity | PASS | 0 | ev-afa139066ba3 |  |  | pending |
+| 266 | inspect_executor | search | low | static_contract_registry_parity | PASS | 0 | ev-699bd065d04a |  |  | pending |
+| 267 | inspect_memory | search | low | static_contract_registry_parity | PASS | 0 | ev-6c5b6a77ad28 |  |  | pending |
+| 268 | inspect_planner | search | low | static_contract_registry_parity | PASS | 0 | ev-956d1126b4d1 |  |  | pending |
+| 269 | inspect_prompts | search | low | static_contract_registry_parity | PASS | 0 | ev-4c4639c0f32e |  |  | pending |
+| 270 | inspect_rag | search | low | static_contract_registry_parity | PASS | 0 | ev-7e717c7281a5 |  |  | pending |
+| 271 | inspect_scheduler | search | low | static_contract_registry_parity | PASS | 0 | ev-3490a5d3f64b |  |  | pending |
+| 272 | inspect_task_queue | tasks | low | static_contract_registry_parity | PASS | 0 | ev-7b8d46597b54 |  |  | pending |
+| 273 | inspect_tools | search | low | static_contract_registry_parity | PASS | 0 | ev-10e2c7b9622a |  |  | pending |
+| 274 | inspect_vector_store | search | low | static_contract_registry_parity | PASS | 0 | ev-f90debdc3e70 |  |  | pending |
+| 275 | integrations_status | health | low | static_contract_registry_parity | PASS | 0 | ev-72eb117d1ec8 |  |  | pending |
+| 276 | invoices | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-fe9ab078a1cc | write_tool_requires_approval_and_--execute-write |  | pending |
+| 277 | kickoff_project_automation | workflows | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-00e1e0eeb4bd | write_tool_blocked_by_audit_policy |  | pending |
+| 278 | landing_pages | marketing | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b7cfec76c99e | write_tool_blocked_by_audit_policy |  | pending |
+| 279 | list_capabilities | search | low | static_contract_registry_parity | PASS | 0 | ev-d2ffd4403792 |  |  | pending |
+| 280 | list_companies | companies | low | static_contract_registry_parity | PASS | 0 | ev-cd0669eddc28 |  |  | pending |
+| 281 | list_contacts | contacts | low | static_contract_registry_parity | PASS | 0 | ev-9f2a6dfa8bd2 |  |  | pending |
+| 282 | list_conversations | workspace | low | static_contract_registry_parity | PASS | 0 | ev-6476963d87fb |  |  | pending |
+| 283 | list_department_agents | bonnie | low | static_contract_registry_parity | PASS | 0 | ev-218bb6a5ef64 |  |  | pending |
+| 284 | list_document_versions | documents | low | static_contract_registry_parity | PASS | 0 | ev-8e42243088e9 |  |  | pending |
+| 285 | list_email_accounts | integrations | medium | static_contract_registry_parity | PASS | 0 | ev-21fcc0c57801 |  |  | pending |
+| 286 | list_event_subscriptions | revenue | low | static_contract_registry_parity | PASS | 0 | ev-cdc91dc20d02 |  |  | pending |
+| 287 | list_files | documents | low | static_contract_registry_parity | PASS | 0 | ev-7cf196c489fc |  |  | pending |
+| 288 | list_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-0cd8627c9edd |  |  | pending |
+| 289 | list_media_assets | media | low | static_contract_registry_parity | PASS | 0 | ev-b5de9e860403 |  |  | pending |
+| 290 | list_modules | workspace | low | static_contract_registry_parity | PASS | 0 | ev-c5239e579695 |  |  | pending |
+| 291 | list_pending_approvals | approvals | low | static_contract_registry_parity | PASS | 0 | ev-22bdc80150a5 |  |  | pending |
+| 292 | list_playbooks | workflows | low | static_contract_registry_parity | PASS | 0 | ev-b6c2342033c1 |  |  | pending |
+| 293 | list_scheduled_social_posts | social | medium | static_contract_registry_parity | PASS | 0 | ev-4994cd6e2b40 |  |  | pending |
+| 294 | list_skills | bonnie | low | static_contract_registry_parity | PASS | 0 | ev-f4e15cbd73b4 |  |  | pending |
+| 295 | list_supported_outcomes | support | low | static_contract_registry_parity | PASS | 0 | ev-705694a31571 |  |  | pending |
 | 296 | list_tools | search | low | static_contract_registry_parity | PASS | 0 | ev-eb35f1bad87b |  |  | pending |
 | 297 | list_workflows | workflows | low | static_contract_registry_parity | PASS | 0 | ev-ecd9b5a4562b |  |  | pending |
 | 298 | load_module_tools | search | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-921d3ab695f8 | write_tool_blocked_by_audit_policy |  | pending |
@@ -380,173 +382,164 @@ Runtime catalog has 523 tools; baseline 518 reflects chatgpt-app-submission.json
 | 351 | predict_deal_win_probability | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-0e797e7a2c83 | write_tool_blocked_by_audit_policy |  | pending |
 | 352 | prepare_contract_renewal | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dd960aebbe76 | write_tool_blocked_by_audit_policy |  | pending |
 | 353 | preview_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e8c5597ae05c | write_tool_blocked_by_audit_policy |  | pending |
-| 354 | publish_facebook_album | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6dc9219aaa21 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 355 | publish_facebook_multi_photo | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f07134be468d | write_tool_requires_approval_and_--execute-write |  | pending |
-| 356 | publish_facebook_photo | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-459659c36742 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 357 | publish_facebook_reel | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4004588c93e4 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 358 | publish_facebook_video | media | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-00ebf6e6ea8b | write_tool_requires_approval_and_--execute-write |  | pending |
-| 359 | publish_instagram_carousel | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d12eafbcf889 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 360 | publish_instagram_photo | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8e7405282b48 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 361 | publish_instagram_reel | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-067da4fe7a24 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 362 | publish_linkedin_document | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-05f8628b86d1 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 363 | publish_linkedin_image | media | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1df7921b1390 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 364 | publish_now | workspace | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5a3dafe33545 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 365 | publish_post | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7c096e04a6d4 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 366 | publish_social_post | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9c886314f25b | write_tool_requires_approval_and_--execute-write |  | pending |
-| 367 | publish_x_image | media | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d45337bc9c32 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 368 | publish_x_video | media | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-38b09453a717 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 369 | qualify_crm_leads | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f58eb178f0e2 | write_tool_blocked_by_audit_policy |  | pending |
-| 370 | queue_email_campaign_send | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-089be6a880a1 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 371 | quotes | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3fe290a9e2e6 | write_tool_blocked_by_audit_policy |  | pending |
-| 372 | railway_health | health | low | static_contract_registry_parity | PASS | 0 | ev-370d603db0c7 |  |  | pending |
-| 373 | read_email_content | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5980bf35e42e | write_tool_blocked_by_audit_policy |  | pending |
-| 374 | read_emails | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-30bcf33384da | write_tool_blocked_by_audit_policy |  | pending |
-| 375 | read_url_content | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1f17b3528fbe | write_tool_blocked_by_audit_policy |  | pending |
-| 376 | recommend_next_steps | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8367ea7c01c0 | write_tool_blocked_by_audit_policy |  | pending |
-| 377 | reconcile_outreach_vs_logs | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f6c8ae1979f0 | write_tool_blocked_by_audit_policy |  | pending |
-| 378 | reconcile_payment | payments | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4d9784b70dbf | write_tool_requires_approval_and_--execute-write |  | pending |
-| 379 | record_document_view | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-23157fe188bf | write_tool_blocked_by_audit_policy |  | pending |
-| 380 | refresh_business_digital_twin | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7601d7cdb181 | write_tool_blocked_by_audit_policy |  | pending |
-| 381 | reject_document | approvals | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a3e28f2ba58e | write_tool_requires_approval_and_--execute-write |  | pending |
-| 382 | reject_pending_action | approvals | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-32082291d0da | write_tool_requires_approval_and_--execute-write |  | pending |
-| 383 | reject_workflow_step | approvals | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-63ba42b38c81 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 384 | release_legal_hold | admin | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e57859f7d4d9 | write_tool_blocked_by_audit_policy |  | pending |
-| 385 | reminders | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-34428072d90b | write_tool_blocked_by_audit_policy |  | pending |
-| 386 | render_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a4dfefff5239 | write_tool_blocked_by_audit_policy |  | pending |
-| 387 | reorder_widgets | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6e309c928085 | write_tool_blocked_by_audit_policy |  | pending |
-| 388 | reply_to_email | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-87f3ffb69971 | write_tool_blocked_by_audit_policy |  | pending |
-| 389 | reply_to_x_tweet | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-27150fbd3f42 | write_tool_blocked_by_audit_policy |  | pending |
-| 390 | reply_to_zoho_mail | integrations | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1b887c94d273 | write_tool_blocked_by_audit_policy |  | pending |
-| 391 | request_changes | approvals | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8bde098c25f9 | write_tool_blocked_by_audit_policy |  | pending |
-| 392 | request_contract_approval | approvals | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-cae4657647ee | write_tool_blocked_by_audit_policy |  | pending |
-| 393 | restart_service | admin | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-9868292f4cfc | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 394 | restore_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-2bad576c119a | write_tool_blocked_by_audit_policy |  | pending |
-| 395 | resume_workflow | workflows | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5fb5cba99ac1 | write_tool_blocked_by_audit_policy |  | pending |
-| 396 | retrieve_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9fa5fe389799 | write_tool_blocked_by_audit_policy |  | pending |
-| 397 | retry_run_step | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b417efe84922 | write_tool_blocked_by_audit_policy |  | pending |
-| 398 | retry_social_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d10b2cc07fd6 | write_tool_blocked_by_audit_policy |  | pending |
-| 399 | revenue_dashboard | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-602f58580ff8 | write_tool_blocked_by_audit_policy |  | pending |
-| 400 | revenue_recovery_agent | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dae7350e8baa | write_tool_blocked_by_audit_policy |  | pending |
-| 401 | revenue_report | revenue | low | static_contract_registry_parity | PASS | 0 | ev-5e0d73661c21 |  |  | pending |
-| 402 | review_contract_approval | approvals | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4cc53440a906 | write_tool_blocked_by_audit_policy |  | pending |
-| 403 | run_autonomous_scan | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7e1ef3324cfe | write_tool_blocked_by_audit_policy |  | pending |
-| 404 | run_chief_of_staff_routine | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9a3c23e006c3 | write_tool_blocked_by_audit_policy |  | pending |
-| 405 | run_cognitive_loop | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-22da928d74ef | write_tool_blocked_by_audit_policy |  | pending |
-| 406 | run_growth_lifecycle | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a32c8688d024 | write_tool_blocked_by_audit_policy |  | pending |
-| 407 | run_mcp_agent_workflow | workflows | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5d80a3770a32 | write_tool_blocked_by_audit_policy |  | pending |
-| 408 | run_playbook | workflows | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-29c562c5a901 | write_tool_blocked_by_audit_policy |  | pending |
-| 409 | run_strategic_pnl_audit | admin | low | static_contract_registry_parity | PASS | 0 | ev-467486059757 |  |  | pending |
-| 410 | run_workflow | workflows | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e25dc252aa14 | write_tool_blocked_by_audit_policy |  | pending |
-| 411 | save_contract | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ac2b8f0a42c0 | write_tool_blocked_by_audit_policy |  | pending |
-| 412 | schedule_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-2017dea5e65f | write_tool_blocked_by_audit_policy |  | pending |
-| 413 | schedule_social_automation | workflows | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dcb7efad1838 | write_tool_blocked_by_audit_policy |  | pending |
-| 414 | schedule_social_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-2f0e959a2001 | write_tool_blocked_by_audit_policy |  | pending |
-| 415 | scheduled_posts | social | low | static_contract_registry_parity | PASS | 0 | ev-dae775b92532 |  |  | pending |
-| 416 | score_deal | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1ac54c3de619 | write_tool_blocked_by_audit_policy |  | pending |
-| 417 | search | search | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-25ac39f0eea9 | write_tool_blocked_by_audit_policy |  | pending |
-| 418 | search_clients | search | low | static_contract_registry_parity | PASS | 0 | ev-44babed93eb2 |  |  | pending |
-| 419 | search_contacts | contacts | low | static_contract_registry_parity | PASS | 0 | ev-862bf264770f |  |  | pending |
-| 420 | search_documents | documents | low | static_contract_registry_parity | PASS | 0 | ev-d0fcffa11412 |  |  | pending |
-| 421 | search_documents_os | documents | low | static_contract_registry_parity | PASS | 0 | ev-6cfb5b57941b |  |  | pending |
-| 422 | search_emails | search | medium | static_contract_registry_parity | PASS | 0 | ev-2f7efed1fd5c |  |  | pending |
-| 423 | search_facebook_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-0f04ee89dcc0 |  |  | pending |
-| 424 | search_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-dacfd105d195 |  |  | pending |
-| 425 | search_tools | search | low | static_contract_registry_parity | PASS | 0 | ev-2a2d6e88913c |  |  | pending |
-| 426 | search_x_tweets | search | medium | static_contract_registry_parity | PASS | 0 | ev-bdbba5afe575 |  |  | pending |
-| 427 | search_x_users | search | low | static_contract_registry_parity | PASS | 0 | ev-a4ce6b029083 |  |  | pending |
-| 428 | segment_clients_by_criteria | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3545802150c4 | write_tool_blocked_by_audit_policy |  | pending |
-| 429 | send_batch_outreach | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-90a3fdff0fd0 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 430 | send_bulk_email | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-38fb4328fd5c | write_tool_requires_approval_and_--execute-write |  | pending |
-| 431 | send_bulk_email_campaign | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9b9af07169f4 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 432 | send_contract | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c0dda1873056 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 433 | send_document | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-688f73655bde | write_tool_requires_approval_and_--execute-write |  | pending |
-| 434 | send_document_to_claude | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ddf3c0d3fe53 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 435 | send_email | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-01a9ca03a516 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 436 | send_for_signature | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e29eb6a352a9 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 437 | send_invoice | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-afc394861fea | write_tool_requires_approval_and_--execute-write |  | pending |
-| 438 | send_message | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-0cd3ec7f5a17 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 439 | send_project_email | projects | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-95f58d6e92e2 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 440 | send_quote | revenue | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4eb02bbe9b62 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 441 | send_receipt | payments | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-85f7e099ce9a | write_tool_requires_approval_and_--execute-write |  | pending |
-| 442 | send_task_email | tasks | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a876d9b03669 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 443 | send_tenant_message | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-29cadc510880 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 444 | send_transactional_email | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c66d6b5a78c7 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 445 | send_whatsapp_message | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-661fd6106929 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 446 | send_x_dm | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-49d9c038402a | write_tool_requires_approval_and_--execute-write |  | pending |
-| 447 | set_chatbot_handoff_rules | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6cab1e2aafb1 | write_tool_blocked_by_audit_policy |  | pending |
-| 448 | set_outreach_limits | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b617652fff15 | write_tool_blocked_by_audit_policy |  | pending |
-| 449 | set_task_recurrence | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d9a3cfd80291 | write_tool_blocked_by_audit_policy |  | pending |
-| 450 | show_related_records | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f10a922fa755 | write_tool_blocked_by_audit_policy |  | pending |
-| 451 | solo_owner_operator_brief | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-46a954d3d73f | write_tool_blocked_by_audit_policy |  | pending |
-| 452 | solo_owner_time_savings_meter | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f9859a914fb5 | write_tool_blocked_by_audit_policy |  | pending |
-| 453 | solo_owner_value_map | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-70ffdedd497f | write_tool_blocked_by_audit_policy |  | pending |
-| 454 | start_contract_lifecycle | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-27f09e9c0846 | write_tool_blocked_by_audit_policy |  | pending |
-| 455 | start_email_campaign | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ad1101072713 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 456 | start_invoice_lifecycle | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f0238a74c6a0 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 457 | start_lead_campaign | leads | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b5031290740f | write_tool_requires_approval_and_--execute-write |  | pending |
-| 458 | start_lead_nurture | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4a0cbba01b9c | write_tool_blocked_by_audit_policy |  | pending |
-| 459 | stop_workflow | workflows | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-dd6c70022675 | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 460 | store_facebook_token | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ae0d91da52c5 | write_tool_blocked_by_audit_policy |  | pending |
-| 461 | stripe_health | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-57969f24d8b5 | write_tool_blocked_by_audit_policy |  | pending |
-| 462 | submit_for_review | approvals | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b0bc87838500 | write_tool_blocked_by_audit_policy |  | pending |
-| 463 | subscribe_events | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ca4de87b444c | write_tool_blocked_by_audit_policy |  | pending |
-| 464 | subscriptions | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-50bf673d893e | write_tool_blocked_by_audit_policy |  | pending |
-| 465 | summarize_ticket | support | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-865f050a1960 | write_tool_blocked_by_audit_policy |  | pending |
-| 466 | summarize_workspace | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3b69711a0271 | write_tool_blocked_by_audit_policy |  | pending |
-| 467 | supabase_health | health | low | static_contract_registry_parity | PASS | 0 | ev-9eb1a9cb4983 |  |  | pending |
-| 468 | supersede_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-58acbb7b34d9 | write_tool_blocked_by_audit_policy |  | pending |
-| 469 | supervise_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7cc195ea5257 | write_tool_blocked_by_audit_policy |  | pending |
-| 470 | sync_all_inboxes | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dc0a23c8d713 | write_tool_blocked_by_audit_policy |  | pending |
-| 471 | sync_calendly_events | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-49ee956225ae | write_tool_blocked_by_audit_policy |  | pending |
-| 472 | sync_knowledge_graph | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-091d13c5f1d0 | write_tool_blocked_by_audit_policy |  | pending |
-| 473 | task_create | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b2051f10a2d8 | write_tool_blocked_by_audit_policy |  | pending |
-| 474 | task_delete | tasks | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-877637e63b73 | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 475 | task_get_results | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f985d9044a1e | write_tool_blocked_by_audit_policy |  | pending |
-| 476 | task_list | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e7e0b299b8ac | write_tool_blocked_by_audit_policy |  | pending |
-| 477 | task_pause | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-44a9be266198 | write_tool_blocked_by_audit_policy |  | pending |
-| 478 | task_resume | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-03fe0676cab0 | write_tool_blocked_by_audit_policy |  | pending |
-| 479 | tasks | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1e4c3e6b960f | write_tool_blocked_by_audit_policy |  | pending |
-| 480 | toggle_widget_visibility | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f62282d3a2cc | write_tool_blocked_by_audit_policy |  | pending |
-| 481 | train_chatbot | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d8386544b394 | write_tool_blocked_by_audit_policy |  | pending |
-| 482 | trigger_bonnie_dream | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-955d442cc233 | write_tool_blocked_by_audit_policy |  | pending |
-| 483 | trigger_deal_automation | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7a9da0e7a6a2 | write_tool_blocked_by_audit_policy |  | pending |
-| 484 | trust_ledger | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-16ffa21e0d0c | write_tool_blocked_by_audit_policy |  | pending |
-| 485 | unsubscribe_event | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1956cf41879b | write_tool_blocked_by_audit_policy |  | pending |
-| 486 | update_business_ai_state | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3f09b022bd47 | write_tool_blocked_by_audit_policy |  | pending |
-| 487 | update_chatbot_persona | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8661b4cb7d45 | write_tool_blocked_by_audit_policy |  | pending |
-| 488 | update_client | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-0522592b029e | write_tool_blocked_by_audit_policy |  | pending |
-| 489 | update_client_metadata | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c81c9f0e93f2 | write_tool_blocked_by_audit_policy |  | pending |
-| 490 | update_client_status_batch | health | low | static_contract_registry_parity | PASS | 0 | ev-e9e68c77e1ea |  |  | pending |
-| 491 | update_company | companies | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-af6751043604 | write_tool_blocked_by_audit_policy |  | pending |
-| 492 | update_contact | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-75094478b422 | write_tool_blocked_by_audit_policy |  | pending |
-| 493 | update_contract_status | documents | low | static_contract_registry_parity | PASS | 0 | ev-ddf9b238ecef |  |  | pending |
-| 494 | update_deal | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e3325883cbb9 | write_tool_blocked_by_audit_policy |  | pending |
-| 495 | update_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-67835e365b93 | write_tool_blocked_by_audit_policy |  | pending |
-| 496 | update_inventory_stock | finance | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ae237e6de272 | write_tool_blocked_by_audit_policy |  | pending |
-| 497 | update_invoice | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8549bfcd5794 | write_tool_requires_approval_and_--execute-write |  | pending |
-| 498 | update_invoice_status | invoices | high | static_contract_registry_parity | PASS | 0 | ev-a874439d650c |  |  | pending |
-| 499 | update_lead | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6d297e9b4462 | write_tool_blocked_by_audit_policy |  | pending |
-| 500 | update_lead_status | leads | low | static_contract_registry_parity | PASS | 0 | ev-7324ed87f096 |  |  | pending |
-| 501 | update_project | projects | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3a7d9282ae82 | write_tool_blocked_by_audit_policy |  | pending |
-| 502 | update_project_status | projects | low | static_contract_registry_parity | PASS | 0 | ev-8d1656b257e9 |  |  | pending |
-| 503 | update_project_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4b663ffbff11 | write_tool_blocked_by_audit_policy |  | pending |
-| 504 | update_quote | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-114be7d6790a | write_tool_blocked_by_audit_policy |  | pending |
-| 505 | update_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ab4e7462aa64 | write_tool_blocked_by_audit_policy |  | pending |
-| 506 | update_ticket | support | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c8e1f81d8bbd | write_tool_blocked_by_audit_policy |  | pending |
-| 507 | upload_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4f0294f6fa87 | write_tool_blocked_by_audit_policy |  | pending |
-| 508 | upload_file | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-520be74801b6 | write_tool_blocked_by_audit_policy |  | pending |
-| 509 | upload_media | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-acae0240ac73 | write_tool_blocked_by_audit_policy |  | pending |
-| 510 | upload_media_asset | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a502149e1764 | write_tool_blocked_by_audit_policy |  | pending |
-| 511 | upload_social_media | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c2347c519a4f | write_tool_blocked_by_audit_policy |  | pending |
-| 512 | upsert_nexus_memory | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f479127f95a5 | write_tool_blocked_by_audit_policy |  | pending |
-| 513 | validate_document | documents | medium | static_contract_registry_parity | PASS | 0 | ev-2e4f335b2d70 |  |  | pending |
-| 514 | verify_invoice_sent | invoices | high | static_contract_registry_parity | PASS | 0 | ev-e0525d6b0659 |  |  | pending |
-| 515 | verify_lead_created | leads | medium | static_contract_registry_parity | PASS | 0 | ev-8ff007d50d7e |  |  | pending |
-| 516 | verify_outreach_delivery | email | medium | static_contract_registry_parity | PASS | 0 | ev-cba7517cad05 |  |  | pending |
-| 517 | verify_social_post_published | social | high | static_contract_registry_parity | PASS | 0 | ev-ef1cb5a41970 |  |  | pending |
-| 518 | voice_action_router | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3bf3b49aea42 | write_tool_blocked_by_audit_policy |  | pending |
-| 519 | void_document | documents | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-d471da5516fc | destructive_tool_requires_--execute-write_in_staging |  | pending |
-| 520 | write_audit_log | admin | low | static_contract_registry_parity | PASS | 0 | ev-afa5ff4518e8 |  |  | pending |
-| 521 | write_task_note | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e2000d86d428 | write_tool_blocked_by_audit_policy |  | pending |
-| 522 | x_connection_diagnostic | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-34b0eafe9748 | write_tool_blocked_by_audit_policy |  | pending |
-| 523 | zoho_health | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d49205b8101b | write_tool_blocked_by_audit_policy |  | pending |
+| 354 | publish_facebook_multi_photo | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f07134be468d | write_tool_requires_approval_and_--execute-write |  | pending |
+| 355 | publish_facebook_reel | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4004588c93e4 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 356 | publish_now | workspace | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5a3dafe33545 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 357 | publish_post | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7c096e04a6d4 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 358 | publish_social_post | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9c886314f25b | write_tool_requires_approval_and_--execute-write |  | pending |
+| 359 | qualify_crm_leads | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f58eb178f0e2 | write_tool_blocked_by_audit_policy |  | pending |
+| 360 | queue_email_campaign_send | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-089be6a880a1 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 361 | quotes | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3fe290a9e2e6 | write_tool_blocked_by_audit_policy |  | pending |
+| 362 | railway_health | health | low | static_contract_registry_parity | PASS | 0 | ev-370d603db0c7 |  |  | pending |
+| 363 | read_email_content | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5980bf35e42e | write_tool_blocked_by_audit_policy |  | pending |
+| 364 | read_emails | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-30bcf33384da | write_tool_blocked_by_audit_policy |  | pending |
+| 365 | read_url_content | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1f17b3528fbe | write_tool_blocked_by_audit_policy |  | pending |
+| 366 | recommend_next_steps | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8367ea7c01c0 | write_tool_blocked_by_audit_policy |  | pending |
+| 367 | reconcile_execution_receipts | payments | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1d78ca06dcf2 | write_tool_blocked_by_audit_policy |  | pending |
+| 368 | reconcile_outreach_vs_logs | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f6c8ae1979f0 | write_tool_blocked_by_audit_policy |  | pending |
+| 369 | reconcile_payment | payments | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4d9784b70dbf | write_tool_requires_approval_and_--execute-write |  | pending |
+| 370 | record_document_view | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-23157fe188bf | write_tool_blocked_by_audit_policy |  | pending |
+| 371 | refresh_business_digital_twin | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7601d7cdb181 | write_tool_blocked_by_audit_policy |  | pending |
+| 372 | reject_document | approvals | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a3e28f2ba58e | write_tool_requires_approval_and_--execute-write |  | pending |
+| 373 | reject_pending_action | approvals | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-32082291d0da | write_tool_requires_approval_and_--execute-write |  | pending |
+| 374 | reject_workflow_step | approvals | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-63ba42b38c81 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 375 | release_legal_hold | admin | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e57859f7d4d9 | write_tool_blocked_by_audit_policy |  | pending |
+| 376 | reminders | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-34428072d90b | write_tool_blocked_by_audit_policy |  | pending |
+| 377 | render_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a4dfefff5239 | write_tool_blocked_by_audit_policy |  | pending |
+| 378 | reorder_widgets | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6e309c928085 | write_tool_blocked_by_audit_policy |  | pending |
+| 379 | reply_to_email | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-87f3ffb69971 | write_tool_blocked_by_audit_policy |  | pending |
+| 380 | reply_to_x_tweet | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-27150fbd3f42 | write_tool_blocked_by_audit_policy |  | pending |
+| 381 | reply_to_zoho_mail | integrations | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1b887c94d273 | write_tool_blocked_by_audit_policy |  | pending |
+| 382 | request_changes | approvals | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8bde098c25f9 | write_tool_blocked_by_audit_policy |  | pending |
+| 383 | request_contract_approval | approvals | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-cae4657647ee | write_tool_blocked_by_audit_policy |  | pending |
+| 384 | request_outcome | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3a29fe804645 | write_tool_blocked_by_audit_policy |  | pending |
+| 385 | restart_service | admin | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-9868292f4cfc | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 386 | restore_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-2bad576c119a | write_tool_blocked_by_audit_policy |  | pending |
+| 387 | resume_workflow | workflows | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5fb5cba99ac1 | write_tool_blocked_by_audit_policy |  | pending |
+| 388 | retrieve_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9fa5fe389799 | write_tool_blocked_by_audit_policy |  | pending |
+| 389 | retry_run_step | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b417efe84922 | write_tool_blocked_by_audit_policy |  | pending |
+| 390 | revenue_dashboard | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-602f58580ff8 | write_tool_blocked_by_audit_policy |  | pending |
+| 391 | revenue_recovery_agent | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dae7350e8baa | write_tool_blocked_by_audit_policy |  | pending |
+| 392 | revenue_report | revenue | low | static_contract_registry_parity | PASS | 0 | ev-5e0d73661c21 |  |  | pending |
+| 393 | review_contract_approval | approvals | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4cc53440a906 | write_tool_blocked_by_audit_policy |  | pending |
+| 394 | run_autonomous_scan | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7e1ef3324cfe | write_tool_blocked_by_audit_policy |  | pending |
+| 395 | run_chief_of_staff_routine | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9a3c23e006c3 | write_tool_blocked_by_audit_policy |  | pending |
+| 396 | run_cognitive_loop | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-22da928d74ef | write_tool_blocked_by_audit_policy |  | pending |
+| 397 | run_growth_lifecycle | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a32c8688d024 | write_tool_blocked_by_audit_policy |  | pending |
+| 398 | run_mcp_agent_workflow | workflows | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-5d80a3770a32 | write_tool_blocked_by_audit_policy |  | pending |
+| 399 | run_playbook | workflows | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-29c562c5a901 | write_tool_blocked_by_audit_policy |  | pending |
+| 400 | run_strategic_pnl_audit | admin | low | static_contract_registry_parity | PASS | 0 | ev-467486059757 |  |  | pending |
+| 401 | run_workflow | workflows | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e25dc252aa14 | write_tool_blocked_by_audit_policy |  | pending |
+| 402 | save_contract | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ac2b8f0a42c0 | write_tool_blocked_by_audit_policy |  | pending |
+| 403 | schedule_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-2017dea5e65f | write_tool_blocked_by_audit_policy |  | pending |
+| 404 | schedule_social_automation | workflows | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dcb7efad1838 | write_tool_blocked_by_audit_policy |  | pending |
+| 405 | schedule_social_post | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-2f0e959a2001 | write_tool_blocked_by_audit_policy |  | pending |
+| 406 | scheduled_posts | social | low | static_contract_registry_parity | PASS | 0 | ev-dae775b92532 |  |  | pending |
+| 407 | score_deal | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1ac54c3de619 | write_tool_blocked_by_audit_policy |  | pending |
+| 408 | search | search | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-25ac39f0eea9 | write_tool_blocked_by_audit_policy |  | pending |
+| 409 | search_clients | search | low | static_contract_registry_parity | PASS | 0 | ev-44babed93eb2 |  |  | pending |
+| 410 | search_contacts | contacts | low | static_contract_registry_parity | PASS | 0 | ev-862bf264770f |  |  | pending |
+| 411 | search_documents | documents | low | static_contract_registry_parity | PASS | 0 | ev-d0fcffa11412 |  |  | pending |
+| 412 | search_documents_os | documents | low | static_contract_registry_parity | PASS | 0 | ev-6cfb5b57941b |  |  | pending |
+| 413 | search_emails | search | medium | static_contract_registry_parity | PASS | 0 | ev-2f7efed1fd5c |  |  | pending |
+| 414 | search_facebook_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-0f04ee89dcc0 |  |  | pending |
+| 415 | search_leads | leads | low | static_contract_registry_parity | PASS | 0 | ev-dacfd105d195 |  |  | pending |
+| 416 | search_tools | search | low | static_contract_registry_parity | PASS | 0 | ev-2a2d6e88913c |  |  | pending |
+| 417 | search_x_tweets | search | medium | static_contract_registry_parity | PASS | 0 | ev-bdbba5afe575 |  |  | pending |
+| 418 | search_x_users | search | low | static_contract_registry_parity | PASS | 0 | ev-a4ce6b029083 |  |  | pending |
+| 419 | segment_clients_by_criteria | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3545802150c4 | write_tool_blocked_by_audit_policy |  | pending |
+| 420 | send_batch_outreach | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-90a3fdff0fd0 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 421 | send_bulk_email | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-38fb4328fd5c | write_tool_requires_approval_and_--execute-write |  | pending |
+| 422 | send_bulk_email_campaign | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-9b9af07169f4 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 423 | send_contract | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c0dda1873056 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 424 | send_document | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-688f73655bde | write_tool_requires_approval_and_--execute-write |  | pending |
+| 425 | send_document_to_claude | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ddf3c0d3fe53 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 426 | send_email | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-01a9ca03a516 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 427 | send_for_signature | documents | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e29eb6a352a9 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 428 | send_invoice | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-afc394861fea | write_tool_requires_approval_and_--execute-write |  | pending |
+| 429 | send_message | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-0cd3ec7f5a17 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 430 | send_project_email | projects | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-95f58d6e92e2 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 431 | send_quote | revenue | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4eb02bbe9b62 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 432 | send_receipt | payments | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-85f7e099ce9a | write_tool_requires_approval_and_--execute-write |  | pending |
+| 433 | send_task_email | tasks | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a876d9b03669 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 434 | send_tenant_message | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-29cadc510880 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 435 | send_transactional_email | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c66d6b5a78c7 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 436 | send_whatsapp_message | email | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-661fd6106929 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 437 | send_x_dm | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-49d9c038402a | write_tool_requires_approval_and_--execute-write |  | pending |
+| 438 | set_chatbot_handoff_rules | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6cab1e2aafb1 | write_tool_blocked_by_audit_policy |  | pending |
+| 439 | set_outreach_limits | email | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b617652fff15 | write_tool_blocked_by_audit_policy |  | pending |
+| 440 | set_task_recurrence | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d9a3cfd80291 | write_tool_blocked_by_audit_policy |  | pending |
+| 441 | show_related_records | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f10a922fa755 | write_tool_blocked_by_audit_policy |  | pending |
+| 442 | solo_owner_operator_brief | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-46a954d3d73f | write_tool_blocked_by_audit_policy |  | pending |
+| 443 | solo_owner_time_savings_meter | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f9859a914fb5 | write_tool_blocked_by_audit_policy |  | pending |
+| 444 | solo_owner_value_map | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-70ffdedd497f | write_tool_blocked_by_audit_policy |  | pending |
+| 445 | start_contract_lifecycle | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-27f09e9c0846 | write_tool_blocked_by_audit_policy |  | pending |
+| 446 | start_email_campaign | social | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ad1101072713 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 447 | start_invoice_lifecycle | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f0238a74c6a0 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 448 | start_lead_campaign | leads | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b5031290740f | write_tool_requires_approval_and_--execute-write |  | pending |
+| 449 | start_lead_nurture | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4a0cbba01b9c | write_tool_blocked_by_audit_policy |  | pending |
+| 450 | stop_workflow | workflows | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-dd6c70022675 | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 451 | store_facebook_token | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ae0d91da52c5 | write_tool_blocked_by_audit_policy |  | pending |
+| 452 | stripe_health | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-57969f24d8b5 | write_tool_blocked_by_audit_policy |  | pending |
+| 453 | submit_for_review | approvals | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b0bc87838500 | write_tool_blocked_by_audit_policy |  | pending |
+| 454 | subscribe_events | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ca4de87b444c | write_tool_blocked_by_audit_policy |  | pending |
+| 455 | subscriptions | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-50bf673d893e | write_tool_blocked_by_audit_policy |  | pending |
+| 456 | summarize_ticket | support | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-865f050a1960 | write_tool_blocked_by_audit_policy |  | pending |
+| 457 | summarize_workspace | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3b69711a0271 | write_tool_blocked_by_audit_policy |  | pending |
+| 458 | supabase_health | health | low | static_contract_registry_parity | PASS | 0 | ev-9eb1a9cb4983 |  |  | pending |
+| 459 | supersede_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-58acbb7b34d9 | write_tool_blocked_by_audit_policy |  | pending |
+| 460 | supervise_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7cc195ea5257 | write_tool_blocked_by_audit_policy |  | pending |
+| 461 | sync_all_inboxes | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-dc0a23c8d713 | write_tool_blocked_by_audit_policy |  | pending |
+| 462 | sync_calendly_events | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-49ee956225ae | write_tool_blocked_by_audit_policy |  | pending |
+| 463 | sync_knowledge_graph | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-091d13c5f1d0 | write_tool_blocked_by_audit_policy |  | pending |
+| 464 | task_create | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-b2051f10a2d8 | write_tool_blocked_by_audit_policy |  | pending |
+| 465 | task_delete | tasks | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-877637e63b73 | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 466 | task_get_results | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f985d9044a1e | write_tool_blocked_by_audit_policy |  | pending |
+| 467 | task_list | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e7e0b299b8ac | write_tool_blocked_by_audit_policy |  | pending |
+| 468 | task_pause | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-44a9be266198 | write_tool_blocked_by_audit_policy |  | pending |
+| 469 | task_resume | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-03fe0676cab0 | write_tool_blocked_by_audit_policy |  | pending |
+| 470 | tasks | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1e4c3e6b960f | write_tool_blocked_by_audit_policy |  | pending |
+| 471 | toggle_widget_visibility | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f62282d3a2cc | write_tool_blocked_by_audit_policy |  | pending |
+| 472 | train_chatbot | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d8386544b394 | write_tool_blocked_by_audit_policy |  | pending |
+| 473 | trigger_bonnie_dream | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-955d442cc233 | write_tool_blocked_by_audit_policy |  | pending |
+| 474 | trigger_deal_automation | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-7a9da0e7a6a2 | write_tool_blocked_by_audit_policy |  | pending |
+| 475 | trust_ledger | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-16ffa21e0d0c | write_tool_blocked_by_audit_policy |  | pending |
+| 476 | unsubscribe_event | calendar | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-1956cf41879b | write_tool_blocked_by_audit_policy |  | pending |
+| 477 | update_business_ai_state | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3f09b022bd47 | write_tool_blocked_by_audit_policy |  | pending |
+| 478 | update_chatbot_persona | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8661b4cb7d45 | write_tool_blocked_by_audit_policy |  | pending |
+| 479 | update_client | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-0522592b029e | write_tool_blocked_by_audit_policy |  | pending |
+| 480 | update_client_metadata | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c81c9f0e93f2 | write_tool_blocked_by_audit_policy |  | pending |
+| 481 | update_client_status_batch | health | low | static_contract_registry_parity | PASS | 0 | ev-e9e68c77e1ea |  |  | pending |
+| 482 | update_company | companies | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-af6751043604 | write_tool_blocked_by_audit_policy |  | pending |
+| 483 | update_contact | contacts | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-75094478b422 | write_tool_blocked_by_audit_policy |  | pending |
+| 484 | update_contract_status | documents | low | static_contract_registry_parity | PASS | 0 | ev-ddf9b238ecef |  |  | pending |
+| 485 | update_deal | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e3325883cbb9 | write_tool_blocked_by_audit_policy |  | pending |
+| 486 | update_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-67835e365b93 | write_tool_blocked_by_audit_policy |  | pending |
+| 487 | update_inventory_stock | finance | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ae237e6de272 | write_tool_blocked_by_audit_policy |  | pending |
+| 488 | update_invoice | invoices | high | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-8549bfcd5794 | write_tool_requires_approval_and_--execute-write |  | pending |
+| 489 | update_invoice_status | invoices | high | static_contract_registry_parity | PASS | 0 | ev-a874439d650c |  |  | pending |
+| 490 | update_lead | leads | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-6d297e9b4462 | write_tool_blocked_by_audit_policy |  | pending |
+| 491 | update_lead_status | leads | low | static_contract_registry_parity | PASS | 0 | ev-7324ed87f096 |  |  | pending |
+| 492 | update_project | projects | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3a7d9282ae82 | write_tool_blocked_by_audit_policy |  | pending |
+| 493 | update_project_status | projects | low | static_contract_registry_parity | PASS | 0 | ev-8d1656b257e9 |  |  | pending |
+| 494 | update_project_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4b663ffbff11 | write_tool_blocked_by_audit_policy |  | pending |
+| 495 | update_quote | revenue | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-114be7d6790a | write_tool_blocked_by_audit_policy |  | pending |
+| 496 | update_task | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-ab4e7462aa64 | write_tool_blocked_by_audit_policy |  | pending |
+| 497 | update_ticket | support | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c8e1f81d8bbd | write_tool_blocked_by_audit_policy |  | pending |
+| 498 | upload_document | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-4f0294f6fa87 | write_tool_blocked_by_audit_policy |  | pending |
+| 499 | upload_file | documents | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-520be74801b6 | write_tool_blocked_by_audit_policy |  | pending |
+| 500 | upload_media | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-acae0240ac73 | write_tool_blocked_by_audit_policy |  | pending |
+| 501 | upload_media_asset | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-a502149e1764 | write_tool_blocked_by_audit_policy |  | pending |
+| 502 | upload_social_media | media | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-c2347c519a4f | write_tool_blocked_by_audit_policy |  | pending |
+| 503 | upsert_nexus_memory | bonnie | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-f479127f95a5 | write_tool_blocked_by_audit_policy |  | pending |
+| 504 | validate_document | documents | medium | static_contract_registry_parity | PASS | 0 | ev-2e4f335b2d70 |  |  | pending |
+| 505 | verify_invoice_sent | invoices | high | static_contract_registry_parity | PASS | 0 | ev-e0525d6b0659 |  |  | pending |
+| 506 | verify_lead_created | leads | medium | static_contract_registry_parity | PASS | 0 | ev-8ff007d50d7e |  |  | pending |
+| 507 | verify_outreach_delivery | email | medium | static_contract_registry_parity | PASS | 0 | ev-cba7517cad05 |  |  | pending |
+| 508 | verify_social_post_published | social | high | static_contract_registry_parity | PASS | 0 | ev-ef1cb5a41970 |  |  | pending |
+| 509 | voice_action_router | workspace | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-3bf3b49aea42 | write_tool_blocked_by_audit_policy |  | pending |
+| 510 | void_document | documents | critical | static_contract_destructive_blocked | BLOCKED_BY_SAFETY | 0 | ev-d471da5516fc | destructive_tool_requires_--execute-write_in_staging |  | pending |
+| 511 | write_audit_log | admin | low | static_contract_registry_parity | PASS | 0 | ev-afa5ff4518e8 |  |  | pending |
+| 512 | write_task_note | tasks | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-e2000d86d428 | write_tool_blocked_by_audit_policy |  | pending |
+| 513 | x_connection_diagnostic | social | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-34b0eafe9748 | write_tool_blocked_by_audit_policy |  | pending |
+| 514 | zoho_health | health | medium | static_contract_write_blocked | BLOCKED_BY_SAFETY | 0 | ev-d49205b8101b | write_tool_blocked_by_audit_policy |  | pending |

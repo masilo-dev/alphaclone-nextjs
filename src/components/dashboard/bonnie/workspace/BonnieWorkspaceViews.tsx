@@ -12,7 +12,12 @@ import {
   RefreshCw,
   ScrollText,
   BarChart3,
+  Target,
 } from 'lucide-react';
+import { PlatformKpiGrid, MetricDateRangeSelector } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
+import { useMetricDateRange } from '@/hooks/useMetricDateRange';
+import { periodPresetToDayCount } from '@/lib/metrics/dateRange';
 
 export type BonnieWorkspaceView =
   | 'chat'
@@ -23,7 +28,8 @@ export type BonnieWorkspaceView =
   | 'interventions'
   | 'audit'
   | 'results'
-  | 'analytics';
+  | 'analytics'
+  | 'outcomes';
 
 const VIEWS: Array<{ id: BonnieWorkspaceView; label: string; icon: React.ElementType }> = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -35,6 +41,7 @@ const VIEWS: Array<{ id: BonnieWorkspaceView; label: string; icon: React.Element
   { id: 'audit', label: 'Audit', icon: ScrollText },
   { id: 'results', label: 'Results', icon: CheckSquare },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'outcomes', label: 'Outcomes', icon: Target },
 ];
 
 type Props = {
@@ -60,6 +67,15 @@ export default function BonnieWorkspaceViews({
   const [loading, setLoading] = useState(false);
   const [acting, setActing] = useState(false);
   const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const { preset: analyticsPreset, setPeriod: setAnalyticsPeriod, comparisonLabel: analyticsComparison } =
+    useMetricDateRange('last_30_days');
+  const [outcomesCatalog, setOutcomesCatalog] = useState<any[]>([]);
+  const [outcomeKey, setOutcomeKey] = useState('content_to_publish');
+  const [outcomeExecute, setOutcomeExecute] = useState(false);
+  const [outcomeParams, setOutcomeParams] = useState<Record<string, string>>({ caption: '' });
+  const [outcomeResult, setOutcomeResult] = useState<any>(null);
+  const [outcomeError, setOutcomeError] = useState<string | null>(null);
 
   const loadRuns = useCallback(async () => {
     const res = await fetch(`/api/bonnie/runtime/runs?tenantId=${encodeURIComponent(tenantId)}`, {
@@ -89,14 +105,46 @@ export default function BonnieWorkspaceViews({
   );
 
   useEffect(() => {
-    if (view === 'chat') return;
+    if (view !== 'analytics') return;
+    let cancelled = false;
+    setLoading(true);
+    setAnalyticsError(null);
+    const days = periodPresetToDayCount(analyticsPreset);
+    void fetch(`/api/bonnie/analytics?tenantId=${encodeURIComponent(tenantId)}&days=${days}`, {
+      credentials: 'include',
+    })
+      .then(async (res) => {
+        const payload = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (!res.ok || !payload?.success) {
+          setAnalytics(null);
+          setAnalyticsError(payload?.error || 'Bonnie analytics could not be loaded');
+          return;
+        }
+        setAnalytics(payload);
+      })
+      .catch(() => {
+        if (!cancelled) setAnalyticsError('Bonnie analytics could not be loaded');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [view, tenantId, analyticsPreset]);
+
+  useEffect(() => {
+    if (view === 'chat' || view === 'analytics') return;
     void (async () => {
       setLoading(true);
       try {
-        if (view === 'analytics') {
-          const response = await fetch(`/api/bonnie/analytics?tenantId=${encodeURIComponent(tenantId)}&days=30`, { credentials: 'include' });
+        if (view === 'outcomes') {
+          const response = await fetch(`/api/bonnie/outcomes/list?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
           const payload = await response.json().catch(() => null);
-          setAnalytics(payload);
+          setOutcomesCatalog(payload?.outcomes || []);
+          setOutcomeResult(null);
+          setOutcomeError(null);
           return;
         }
         const list = await loadRuns();
@@ -135,6 +183,39 @@ export default function BonnieWorkspaceViews({
         body: JSON.stringify({ tenantId, approvalId, decision }),
       });
       await loadDetail(detail.run.id);
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const launchOutcome = async () => {
+    setActing(true);
+    setOutcomeError(null);
+    try {
+      const body: Record<string, unknown> = {
+        tenantId,
+        outcome_key: outcomeKey,
+        execute: outcomeExecute,
+        ...Object.fromEntries(Object.entries(outcomeParams).filter(([, v]) => v.trim())),
+      };
+      const res = await fetch('/api/bonnie/outcomes/execute', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || !payload.ok) {
+        setOutcomeError(payload.error || payload.message || 'Outcome could not be started');
+        setOutcomeResult(null);
+        return;
+      }
+      setOutcomeResult(payload);
+      if (payload.run_id) {
+        onChangeView('graph');
+        await loadRuns();
+        await loadDetail(payload.run_id);
+      }
     } finally {
       setActing(false);
     }
@@ -449,13 +530,236 @@ export default function BonnieWorkspaceViews({
               </ul>
             </div>
           )}
-          {view === 'analytics' && analytics?.success && (
+          {view === 'outcomes' && (
             <div className="space-y-4">
-              <div><h3 className="text-sm font-semibold">Agent performance</h3><p className="text-xs text-slate-500">Last {analytics.periodDays} days · tenant-isolated execution evidence</p></div>
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                {[['Tool success', `${Math.round(analytics.tools.successRate * 100)}%`, `${analytics.tools.calls} calls`], ['Run success', `${Math.round(analytics.runs.successRate * 100)}%`, `${analytics.runs.completed}/${analytics.runs.total} completed`], ['Latency', `${analytics.tools.averageLatencyMs} ms`, `p95 ${analytics.tools.p95LatencyMs} ms`], ['Approvals', analytics.approvals.pending, `${analytics.approvals.decided} decided`]].map(([label,value,sub]) => <div key={String(label)} className="rounded-xl border border-slate-200 p-3 dark:border-slate-800"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p><p className="mt-1 text-xl font-black text-slate-900 dark:text-white">{value}</p><p className="text-[10px] text-slate-500">{sub}</p></div>)}
+              <div>
+                <h3 className="text-sm font-semibold">Governed outcomes</h3>
+                <p className="text-xs text-slate-500">Launch multi-step missions on the Bonnie durable runtime. Dry-run by default; enable execute for provider writes.</p>
               </div>
-              <div className="grid gap-3 lg:grid-cols-2"><section className="rounded-xl border border-slate-200 p-3 dark:border-slate-800"><h4 className="text-xs font-semibold">Tool reliability</h4><div className="mt-2 max-h-80 overflow-y-auto"><table className="w-full text-left text-[11px]"><thead className="text-slate-500"><tr><th className="pb-2">Tool</th><th>Calls</th><th>Success</th><th>Latency</th></tr></thead><tbody>{analytics.tools.performance.map((row: any) => <tr key={row.tool} className="border-t border-slate-100 dark:border-slate-900"><td className="max-w-44 truncate py-1.5">{row.tool}</td><td>{row.calls}</td><td className={row.successRate >= .9 ? 'text-teal-600' : 'text-amber-600'}>{Math.round(row.successRate*100)}%</td><td>{row.averageLatencyMs} ms</td></tr>)}</tbody></table></div></section><section className="rounded-xl border border-slate-200 p-3 dark:border-slate-800"><h4 className="text-xs font-semibold">Attributed revenue impact</h4><div className="mt-3 space-y-2">{Object.entries(analytics.revenueByCurrency).length ? Object.entries(analytics.revenueByCurrency).map(([currency, amount]) => <div key={currency} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900"><span className="text-xs text-slate-500">{currency}</span><span className="text-sm font-black text-teal-600">{Number(amount).toLocaleString()}</span></div>) : <p className="text-xs text-slate-500">Revenue attribution will appear when outreach creates deals, contracts or paid invoices.</p>}</div><div className="mt-4 rounded-lg border border-slate-200 p-3 text-xs dark:border-slate-800"><p className="font-semibold">Estimated model/tool cost</p><p className="mt-1 text-lg font-black">${Number(analytics.tools.estimatedCostUsd || 0).toFixed(4)}</p><p className="text-[10px] text-slate-500">Recorded cost metadata only; providers without cost telemetry show zero.</p></div></section></div>
+              <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Mission</label>
+                <select
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950"
+                  value={outcomeKey}
+                  onChange={(e) => setOutcomeKey(e.target.value)}
+                >
+                  {outcomesCatalog.map((o: any) => (
+                    <option key={o.outcome_key} value={o.outcome_key}>{o.title}</option>
+                  ))}
+                </select>
+                <label className="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+                  <input type="checkbox" checked={outcomeExecute} onChange={(e) => setOutcomeExecute(e.target.checked)} />
+                  Execute provider writes (publish, send, invoice, schedule)
+                </label>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {[
+                    ['caption', 'Caption / content'],
+                    ['deal_id', 'Deal ID'],
+                    ['invoice_id', 'Invoice ID'],
+                    ['client_id', 'Client ID'],
+                    ['amount', 'Invoice amount'],
+                    ['to', 'Email to'],
+                    ['subject', 'Email subject'],
+                    ['text', 'Email body'],
+                    ['lead_id', 'Lead ID'],
+                  ].map(([key, label]) => (
+                    <div key={key}>
+                      <label className="text-[10px] text-slate-500">{label}</label>
+                      <input
+                        className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-950"
+                        value={outcomeParams[key] || ''}
+                        onChange={(e) => setOutcomeParams((prev) => ({ ...prev, [key]: e.target.value }))}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  disabled={acting}
+                  onClick={() => void launchOutcome()}
+                  className="mt-4 rounded-lg bg-teal-600 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+                >
+                  {acting ? 'Starting…' : 'Request outcome'}
+                </button>
+                {outcomeError && <p className="mt-2 text-xs text-rose-600">{outcomeError}</p>}
+                {outcomeResult?.run_id && (
+                  <p className="mt-2 text-xs text-teal-700">Run {outcomeResult.run_id} · {outcomeResult.steps_planned} steps planned</p>
+                )}
+              </div>
+              <ul className="space-y-2">
+                {outcomesCatalog.map((o: any) => (
+                  <li key={o.outcome_key} className="rounded-lg border border-slate-200 px-3 py-2 text-xs dark:border-slate-800">
+                    <p className="font-semibold">{o.title}</p>
+                    <p className="text-slate-500">{o.description}</p>
+                    <p className="mt-1 text-[10px] text-slate-400">{o.step_count} steps · required: {(o.required_params || []).join(', ') || 'see mission'}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {view === 'analytics' && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold">Agent performance</h3>
+                  <p className="text-xs text-slate-500">
+                    {analytics?.periodDays ? `Last ${analytics.periodDays} days` : analyticsComparison} · tenant-isolated execution evidence
+                  </p>
+                </div>
+                <MetricDateRangeSelector value={analyticsPreset} onChange={setAnalyticsPeriod} compact />
+              </div>
+              {loading && !analytics ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
+                </div>
+              ) : null}
+              {analyticsError ? (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300">
+                  {analyticsError}
+                </div>
+              ) : null}
+              {analytics?.success ? (
+                <>
+                  <PlatformKpiGrid
+                    items={[
+                      platformKpiFromNumbers({
+                        metricId: 'agents.tool_success_rate',
+                        label: 'Tool success',
+                        current: Math.round(analytics.tools.successRate * 100),
+                        isPercentage: true,
+                        formattedValue: `${Math.round(analytics.tools.successRate * 100)}%`,
+                        referencePeriod: `${analytics.tools.calls} calls · ${analyticsComparison}`,
+                        href: '/dashboard/bonnie',
+                      }),
+                      platformKpiFromNumbers({
+                        label: 'Run success',
+                        current: Math.round(analytics.runs.successRate * 100),
+                        isPercentage: true,
+                        formattedValue: `${Math.round(analytics.runs.successRate * 100)}%`,
+                        referencePeriod: `${analytics.runs.completed}/${analytics.runs.total} completed`,
+                      }),
+                      platformKpiFromNumbers({
+                        label: 'Avg latency',
+                        current: analytics.tools.averageLatencyMs,
+                        formattedValue: `${analytics.tools.averageLatencyMs} ms`,
+                        referencePeriod: `p95 ${analytics.tools.p95LatencyMs} ms`,
+                        isBetterHigher: false,
+                      }),
+                      platformKpiFromNumbers({
+                        label: 'Pending approvals',
+                        current: analytics.approvals.pending,
+                        referencePeriod: `${analytics.approvals.decided} decided`,
+                        href: '/dashboard/bonnie',
+                        isBetterHigher: false,
+                      }),
+                    ]}
+                  />
+                  <div className="grid gap-3 lg:grid-cols-2">
+                    <section className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+                      <h4 className="text-xs font-semibold">Tool reliability</h4>
+                      <div className="mt-2 max-h-80 overflow-y-auto">
+                        <table className="w-full text-left text-[11px]">
+                          <thead className="text-slate-500">
+                            <tr>
+                              <th className="pb-2">Tool</th>
+                              <th>Calls</th>
+                              <th>Success</th>
+                              <th>Latency</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {analytics.tools.performance.map((row: { tool: string; calls: number; successRate: number; averageLatencyMs: number }) => (
+                              <tr key={row.tool} className="border-t border-slate-100 dark:border-slate-900">
+                                <td className="max-w-44 truncate py-1.5">{row.tool}</td>
+                                <td>{row.calls}</td>
+                                <td className={row.successRate >= 0.9 ? 'text-teal-600' : 'text-amber-600'}>
+                                  {Math.round(row.successRate * 100)}%
+                                </td>
+                                <td>{row.averageLatencyMs} ms</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </section>
+                    <section className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+                      <h4 className="text-xs font-semibold">Attributed revenue impact</h4>
+                      <div className="mt-3 space-y-2">
+                        {Object.entries(analytics.revenueByCurrency as Record<string, number>).length ? (
+                          Object.entries(analytics.revenueByCurrency as Record<string, number>).map(([currency, amount]) => (
+                            <div key={currency} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900">
+                              <span className="text-xs text-slate-500">{currency}</span>
+                              <span className="text-sm font-black text-teal-600">{Number(amount).toLocaleString()}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-slate-500">
+                            Revenue attribution will appear when outreach creates deals, contracts or paid invoices.
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-4 rounded-lg border border-slate-200 p-3 text-xs dark:border-slate-800">
+                        <p className="font-semibold">Estimated model/tool cost</p>
+                        <p className="mt-1 text-lg font-black">${Number(analytics.tools.estimatedCostUsd || 0).toFixed(4)}</p>
+                      </div>
+                    </section>
+                  </div>
+                  {analytics.executionOutcomes ? (
+                    <PlatformKpiGrid
+                      header={<p className="text-[11px] font-black uppercase tracking-widest text-slate-400">MCP execution reliability</p>}
+                      items={[
+                        platformKpiFromNumbers({
+                          label: 'Receipt completeness',
+                          current: analytics.executionOutcomes.receiptCompletenessPct,
+                          isPercentage: true,
+                          formattedValue: `${analytics.executionOutcomes.receiptCompletenessPct}%`,
+                        }),
+                        platformKpiFromNumbers({
+                          label: 'First-attempt success',
+                          current: Math.round((analytics.executionOutcomes.firstAttemptSuccessRate || 0) * 100),
+                          isPercentage: true,
+                          formattedValue: `${Math.round((analytics.executionOutcomes.firstAttemptSuccessRate || 0) * 100)}%`,
+                        }),
+                        platformKpiFromNumbers({
+                          label: 'Wrong-target (ambiguous)',
+                          current: analytics.executionOutcomes.targetAmbiguousFailures,
+                          isBetterHigher: false,
+                          href: '/dashboard/bonnie?tab=interventions',
+                        }),
+                      ]}
+                    />
+                  ) : null}
+                  {analytics.executionAssurance ? (
+                    <PlatformKpiGrid
+                      header={<p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Execution assurance</p>}
+                      items={[
+                        platformKpiFromNumbers({
+                          label: 'Outcome runs',
+                          current: analytics.executionAssurance.outcomeRuns?.total || 0,
+                          referencePeriod: `${analytics.executionAssurance.outcomeRuns?.verified_completed || 0} verified`,
+                        }),
+                        platformKpiFromNumbers({
+                          label: 'Write receipt completeness',
+                          current: analytics.executionAssurance.receiptCompletenessPct ?? analytics.executionOutcomes?.receiptCompletenessPct ?? 100,
+                          isPercentage: true,
+                          formattedValue: `${analytics.executionAssurance.receiptCompletenessPct ?? analytics.executionOutcomes?.receiptCompletenessPct ?? 100}%`,
+                        }),
+                        platformKpiFromNumbers({
+                          label: 'Stale pending actions',
+                          current: analytics.executionAssurance.externalActions?.stale_pending || 0,
+                          isBetterHigher: false,
+                        }),
+                        platformKpiFromNumbers({
+                          label: 'Open receipt issues',
+                          current: analytics.executionAssurance.openReceiptIssues || 0,
+                          isBetterHigher: false,
+                          href: '/dashboard/bonnie?tab=interventions',
+                        }),
+                      ]}
+                    />
+                  ) : null}
+                </>
+              ) : null}
             </div>
           )}
         </div>

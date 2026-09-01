@@ -904,7 +904,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
         )}
         stats={!loading && quotes.length > 0 ? (
           <div className="p-4 border-b border-[var(--ws-border)]">
-            <ModuleStatCards stats={quoteStats} />
+            <ModuleStatCards stats={quoteStats} hub="quotes" />
           </div>
         ) : null}
       >

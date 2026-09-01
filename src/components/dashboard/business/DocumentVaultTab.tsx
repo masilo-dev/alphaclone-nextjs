@@ -603,7 +603,7 @@ export default function DocumentVaultTab() {
       </div>
 
       {!loading && documents.length > 0 && (
-        <ModuleStatCards stats={vaultStats} />
+        <ModuleStatCards stats={vaultStats} hub="contracts" />
       )}
 
       {/* Security Banner */}

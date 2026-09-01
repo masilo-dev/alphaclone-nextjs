@@ -245,6 +245,18 @@ async function listLegacyIdentities(
  *
  * Never returns another tenant's identity. Never silently switches destinations.
  */
+/** Shape identity candidates for MCP error responses. */
+export function formatIdentityCandidates(identities: StoredSocialIdentity[]) {
+  return identities.map((i) => ({
+    identity_id: i.identity_id,
+    display_name: i.display_name,
+    provider: i.provider,
+    identity_type: i.identity_type,
+    can_publish: i.can_publish,
+    is_default: i.is_default,
+  }));
+}
+
 export async function resolveTenantIdentityForPublish(params: {
   tenantId: string;
   identityId?: string | null;
@@ -278,7 +290,8 @@ export async function resolveTenantIdentityForPublish(params: {
       } else if (byProvider.length > 1) {
         throw new TenantIsolationError(
           'Ambiguous identity_id — multiple identities match. Use get_social_identities and pass the internal identity_id.',
-          'PERMISSION_DENIED'
+          'TARGET_AMBIGUOUS',
+          { available_identities: formatIdentityCandidates(byProvider) }
         );
       }
     }
@@ -315,14 +328,7 @@ export async function resolveTenantIdentityForPublish(params: {
 
   // No identity provided — only auto-select when exactly one publishable, or a tenant default
   const publishable = identities.filter((i) => i.can_publish);
-  const availableIdentities = publishable.map((i) => ({
-    identity_id: i.identity_id,
-    display_name: i.display_name,
-    provider: i.provider,
-    identity_type: i.identity_type,
-    can_publish: i.can_publish,
-    is_default: i.is_default,
-  }));
+  const availableIdentities = formatIdentityCandidates(publishable);
 
   if (params.identityType) {
     const typed = publishable.filter((i) => i.identity_type === params.identityType);
@@ -333,7 +339,7 @@ export async function resolveTenantIdentityForPublish(params: {
     }
     throw new TenantIsolationError(
       `Multiple or zero ${params.identityType} identities — pass identity_id from get_social_identities`,
-      'MISSING_IDENTITY',
+      typed.length > 1 ? 'TARGET_AMBIGUOUS' : 'MISSING_IDENTITY',
       { available_identities: availableIdentities }
     );
   }
@@ -345,7 +351,7 @@ export async function resolveTenantIdentityForPublish(params: {
   }
   throw new TenantIsolationError(
     'identity_id is required when the tenant has multiple social identities. Call get_social_identities.',
-    'MISSING_IDENTITY',
+    publishable.length > 1 ? 'TARGET_AMBIGUOUS' : 'MISSING_IDENTITY',
     { available_identities: availableIdentities }
   );
 }

@@ -141,7 +141,16 @@ export async function GET(request: NextRequest) {
         },
     };
 
-    // 5. System runtime
+    // 5. Bonnie durable execution (Postgres queue — not Redis)
+    const { isDurableRuntimeEnabled } = await import('@/lib/bonnie/runtime/types');
+    checks.bonnie_durable_runtime = {
+      status: isDurableRuntimeEnabled() ? 'healthy' : 'degraded',
+      enabled: isDurableRuntimeEnabled(),
+      orchestration: 'postgres_agent_tasks',
+      note: 'Redis is cache/rate-limit only; durable tasks use Postgres Bonnie runtime.',
+    };
+
+    // 6. System runtime
     checks.system = {
         status: 'operational',
     };

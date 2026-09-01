@@ -398,7 +398,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 items={getModuleSubnav('calendar')}
                 activeHref="/dashboard/business/calendar"
             />
-            <ModuleStatCards stats={calendarStats} />
+            <ModuleStatCards stats={calendarStats} hub="calendar" />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-4">

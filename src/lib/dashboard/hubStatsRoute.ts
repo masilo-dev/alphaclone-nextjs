@@ -51,10 +51,14 @@ export async function respondWithHubStats(
       ...m,
       comparisonText: m.comparisonText ?? range.comparisonLabel,
     }));
+    const metricsRowB = stats.metricsRowB?.map((m) => ({
+      ...m,
+      comparisonText: m.comparisonText ?? range.comparisonLabel,
+    }));
 
     return NextResponse.json(
       {
-        stats: { ...stats, metrics },
+        stats: { ...stats, metrics, metricsRowB },
         period: { preset: period, comparisonLabel: range.comparisonLabel },
       },
       { headers: CACHE_HEADERS },

@@ -933,7 +933,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         )}
         stats={!loading ? (
           <div className="p-4 border-b border-white/5 bg-slate-900/20">
-            <ModuleStatCards stats={taskStats} />
+            <ModuleStatCards stats={taskStats} hub="tasks" />
           </div>
         ) : null}
       >

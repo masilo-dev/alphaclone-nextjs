@@ -4,6 +4,7 @@
  */
 
 import { MCP_PROTOCOL_VERSION, MCP_TOOL_CATALOG_VERSION } from './standardResponse';
+import { isDurableRuntimeEnabled } from '@/lib/bonnie/runtime/types';
 
 export type ApprovalType = 'none' | 'normal' | 'strong';
 
@@ -25,6 +26,11 @@ export type CapabilityManifest = {
   mode: 'sandbox' | 'production' | 'dry_run';
   supported_clients: string[];
   workflow_states: string[];
+  execution_tiers: Array<{
+    tier: 'read' | 'draft' | 'reversible_write' | 'external_write' | 'high_risk';
+    agent_policy: string;
+  }>;
+  durable_runtime_enabled: boolean;
 };
 
 export const WORKFLOW_STATES = [
@@ -74,6 +80,20 @@ export function buildCapabilityManifest(input: {
     mode,
     supported_clients: [...SUPPORTED_AI_CLIENTS],
     workflow_states: [...WORKFLOW_STATES],
+    durable_runtime_enabled: isDurableRuntimeEnabled(),
+    execution_tiers: [
+      { tier: 'read', agent_policy: 'Execute freely — no side effects.' },
+      { tier: 'draft', agent_policy: 'Execute with logging — creates non-final records.' },
+      {
+        tier: 'reversible_write',
+        agent_policy: 'Execute when intent is clear; prefer confirmation for bulk changes.',
+      },
+      {
+        tier: 'external_write',
+        agent_policy: 'Require exact target + idempotency_key; verify receipt after success.',
+      },
+      { tier: 'high_risk', agent_policy: 'Requires explicit human approval before execution.' },
+    ],
   };
 }
 

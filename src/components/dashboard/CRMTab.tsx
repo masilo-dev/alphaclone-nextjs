@@ -2291,7 +2291,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         stats={(
           <>
             <div>
-              <ModuleStatCards stats={crmStats} className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3" />
+              <ModuleStatCards stats={crmStats} hub="crm" className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3" />
             </div>
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
               <RevenueLeakagePanel leakageOnly heading={t('Pipeline integrity')} />

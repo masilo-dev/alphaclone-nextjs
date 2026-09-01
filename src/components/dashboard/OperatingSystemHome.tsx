@@ -23,9 +23,10 @@ import { buildDashboardDecisionViewModel } from '@/lib/analytics/dashboardViewMo
 import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
 import { DashboardHomeLayoutToggle } from '@/components/dashboard/DashboardHomeLayoutToggle';
 import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
-import { PlatformKpiGrid, MetricDateRangeSelector } from '@/components/dashboard/metrics';
+import { PlatformKpiGrid, MetricDateRangeSelector, ModuleKpiRichSections } from '@/components/dashboard/metrics';
 import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 import { useMetricDateRange } from '@/hooks/useMetricDateRange';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -64,6 +65,7 @@ export function OperatingSystemHome() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
+  const { data: overviewRich } = useDashboardStats(currentTenant?.id, '/api/dashboard/overview', preset);
 
   useEffect(() => {
     if (!currentTenant?.id || !user?.id) {
@@ -464,6 +466,14 @@ export function OperatingSystemHome() {
         skeletonCount={8}
         className="ac-metric-enter"
       />
+
+      {overviewRich ? (
+        <ModuleKpiRichSections
+          data={overviewRich}
+          comparisonLabel={comparisonLabel}
+          showPlatformHealth
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 md:gap-5">
         <div className="space-y-4 md:space-y-5 min-w-0">

@@ -145,7 +145,7 @@ const BookingTab: React.FC = () => {
                 onNavigate={(href) => { window.location.href = href; }}
             />
 
-            <ModuleStatCards stats={bookingStats} />
+            <ModuleStatCards stats={bookingStats} hub="calendar" />
 
             {activeView === 'schedule' ? (
                 <div className="space-y-4">

@@ -6,15 +6,13 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useMetricDateRange } from '@/hooks/useMetricDateRange';
-import { platformKpiFromDashboardMetric } from '@/lib/metrics/metricPresentation';
-import { PlatformKpiGrid, MetricDateRangeSelector } from '@/components/dashboard/metrics';
+import { PlatformKpiGrid, MetricDateRangeSelector, ModuleKpiRichSections } from '@/components/dashboard/metrics';
 import { PlatformKpiCardSkeleton } from '@/components/dashboard/metrics/PlatformKpiCard';
 import { DashboardLineChart } from '../DashboardLineChart';
 import { DashboardBarChart } from '../DashboardBarChart';
 import { DASHBOARD_COLORS } from '@/types/dashboardStats';
 import type { ModuleDashboardId } from '@/config/moduleDashboardActions';
 import { resolveModuleActions } from '@/config/moduleDashboardActions';
-import { metricLabel } from '@/lib/copy/humanLabels';
 import { cn } from '@/lib/utils';
 import { BarChart3, Bot, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Trophy, Users, Zap } from 'lucide-react';
 import { CrmSyncToolbar } from '../crm/CrmSyncToolbar';
@@ -72,7 +70,7 @@ function DashboardContent({
     return (
       <div className="space-y-4 ac-scroll-full ac-module-section">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <PlatformKpiCardSkeleton key={i} className="ac-metric-enter" />
           ))}
         </div>
@@ -104,13 +102,8 @@ function DashboardContent({
 
   const { actions, executionSteps } = resolveModuleActions(moduleId, user?.role ?? 'client');
   const workspaceAction = actions.find((a) => a.primary) ?? actions[0];
-  const metrics = data.metrics.slice(0, 8);
-  const kpiItems = metrics.map((m) => ({
-    ...platformKpiFromDashboardMetric(m),
-    label: metricLabel(m.label),
-    referencePeriod: m.comparisonText ?? comparisonLabel,
-  }));
-  const allMetricsZero = metrics.every((m) => Number(m.value) === 0 || m.value === '0' || m.value === '0%');
+  const allMetrics = [...data.metrics, ...(data.metricsRowB ?? [])];
+  const allMetricsZero = allMetrics.every((m) => Number(m.value) === 0 || m.value === '0' || m.value === '0%');
 
   const overviewQuickModules =
     moduleId === 'overview'
@@ -230,9 +223,10 @@ function DashboardContent({
 
       <MetricDateRangeSelector value={preset} onChange={setPeriod} compact />
 
-      <PlatformKpiGrid
-        items={kpiItems}
-        className="ac-metric-enter"
+      <ModuleKpiRichSections
+        data={data}
+        comparisonLabel={comparisonLabel}
+        showPlatformHealth={moduleId === 'overview'}
       />
 
       <div className="ac-chart-enter">

@@ -103,6 +103,135 @@ async function executeTaskStages(params: {
 
   const checkpoint = await getLatestCheckpoint(task.id, tenantId);
   const startStage = checkpoint?.completed_stage || 'start';
+
+  if (task.task_type === 'social.publish') {
+    const { executeSocialPublishDurableTask } = await import('@/lib/social/socialPublishDurableTask');
+    const outcome = await executeSocialPublishDurableTask({
+      tenantId,
+      taskId: task.id,
+      task,
+      attemptId,
+      fencingToken,
+    });
+    if (outcome.status === 'COMPLETED') {
+      await transitionTask({
+        tenantId,
+        taskId: task.id,
+        to: 'COMPLETED',
+        trigger: 'social_publish_verified',
+        actorType: 'worker',
+        actorId: worker,
+        relatedAttemptId: attemptId,
+        patch: { structured_output: outcome.result || {} },
+      });
+      return { status: 'COMPLETED' as const };
+    }
+    if (outcome.status === 'RETRY_SCHEDULED') {
+      throw new Error(outcome.error || 'social_publish_retry');
+    }
+    throw new Error(outcome.error || 'social_publish_failed');
+  }
+
+  if (task.task_type === 'email.send') {
+    const { executeEmailSendDurableTask } = await import('@/lib/email/durableEmailTask');
+    const outcome = await executeEmailSendDurableTask({ tenantId, task });
+    if (outcome.ok) {
+      await transitionTask({
+        tenantId,
+        taskId: task.id,
+        to: 'COMPLETED',
+        trigger: 'email_send_verified',
+        actorType: 'worker',
+        actorId: worker,
+        relatedAttemptId: attemptId,
+        patch: { structured_output: outcome.result || {} },
+      });
+      return { status: 'COMPLETED' as const };
+    }
+    throw new Error(outcome.error || 'email_send_failed');
+  }
+
+  if (task.task_type === 'outcome.execute_step') {
+    const { executeOutcomeStepTask } = await import('@/lib/mcp/outcomeStepExecutor');
+    const ownerId = String(task.owner_id || task.created_by || '');
+    const outcome = await executeOutcomeStepTask({
+      tenantId,
+      userId: ownerId,
+      task: task as Record<string, unknown>,
+    });
+    if (outcome.ok) {
+      await transitionTask({
+        tenantId,
+        taskId: task.id,
+        to: 'COMPLETED',
+        trigger: 'outcome_step_verified',
+        actorType: 'worker',
+        actorId: worker,
+        relatedAttemptId: attemptId,
+        patch: { structured_output: outcome.output || {} },
+      });
+      return { status: 'COMPLETED' as const };
+    }
+    throw new Error(outcome.error || 'outcome_step_failed');
+  }
+
+  if (task.task_type === 'invoice.send') {
+    const { executeInvoiceSendDurableTask } = await import('@/lib/invoices/durableInvoiceSendTask');
+    const outcome = await executeInvoiceSendDurableTask({ tenantId, task: task as Record<string, unknown> });
+    if (outcome.ok) {
+      await transitionTask({
+        tenantId,
+        taskId: task.id,
+        to: 'COMPLETED',
+        trigger: 'invoice_send_verified',
+        actorType: 'worker',
+        actorId: worker,
+        relatedAttemptId: attemptId,
+        patch: { structured_output: outcome.result || {} },
+      });
+      return { status: 'COMPLETED' as const };
+    }
+    throw new Error(outcome.error || 'invoice_send_failed');
+  }
+
+  if (task.task_type === 'contract.lifecycle') {
+    const { executeContractLifecycleTask } = await import('@/lib/contracts/contractLifecycleDurableTask');
+    const outcome = await executeContractLifecycleTask({ tenantId, task: task as Record<string, unknown> });
+    if (outcome.ok) {
+      await transitionTask({
+        tenantId,
+        taskId: task.id,
+        to: 'COMPLETED',
+        trigger: 'contract_lifecycle_verified',
+        actorType: 'worker',
+        actorId: worker,
+        relatedAttemptId: attemptId,
+        patch: { structured_output: outcome.result || {} },
+      });
+      return { status: 'COMPLETED' as const };
+    }
+    throw new Error(outcome.error || 'contract_lifecycle_failed');
+  }
+
+  if (task.task_type === 'contract.signed') {
+    const { executeContractSignedTask } = await import('@/lib/contracts/contractSignedDurableTask');
+    const outcome = await executeContractSignedTask({ tenantId, task: task as Record<string, unknown> });
+    if (outcome.ok) {
+      await transitionTask({
+        tenantId,
+        taskId: task.id,
+        to: 'COMPLETED',
+        trigger: 'contract_signed_verified',
+        actorType: 'worker',
+        actorId: worker,
+        relatedAttemptId: attemptId,
+        patch: { structured_output: outcome.result || {} },
+      });
+      return { status: 'COMPLETED' as const };
+    }
+    throw new Error(outcome.error || 'contract_signed_failed');
+  }
+
   const stages = ['load_context', 'execute_work', 'persist_result', 'verify'];
   const startIdx = Math.max(0, stages.indexOf(startStage) + (startStage === 'start' ? 0 : 1));
 

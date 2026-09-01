@@ -18,6 +18,11 @@ import {
 import { uploadSocialMedia } from '@/lib/social/mediaUpload';
 import { CANONICAL_SOCIAL_MCP_TOOLS, SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } from '@/lib/social/types';
 import { resolveMcpActionReadiness } from '@/lib/mcp/actionReadiness';
+import {
+  handlePublishSocialPost,
+  publishSocialPostInputSchema,
+  publishSocialPostJsonSchema,
+} from '@/lib/mcp/tools/socialPublishTool';
 
 function requireTenantId(args: { tenant_id?: string }, ctx: { tenantId?: string }) {
   // Session tenant is authoritative — never prefer model-supplied tenant_id.
@@ -799,205 +804,44 @@ registerTool('social-publishing', {
 registerTool('social-publishing', {
   name: 'publish_social_post',
   description:
-    'Publish (or schedule) a social post to a tenant-scoped identity. Prefer identity_id from get_social_identities. Immediate publish returns provider post ID, live URL, and verification receipt — never ok on DB insert alone. Never accepts access tokens.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(),
-    identity_id: z.string().min(1).optional(),
-    platform: z.enum(['facebook', 'linkedin']).optional(),
-    identity_type: z.enum(['facebook_page', 'linkedin_person', 'linkedin_organization']).optional(),
-    caption: z.string().optional(),
-    content: z.string().optional(),
-    media: z.array(z.record(z.string(), z.unknown())).optional(),
-    media_ids: z.array(z.string().uuid()).optional(),
-    media_asset_ids: z.array(z.string().uuid()).optional(),
-    media_urls: z.array(z.string()).optional(),
-    media_url: z.string().optional(),
-    image_url: z.string().optional(),
-    media_id: z.string().uuid().optional(),
-    media_asset_id: z.string().uuid().optional(),
-    link_url: z.string().url().optional(),
-    publish_now: z.boolean().optional().default(false),
-    status: z.enum(['publish_now', 'draft', 'scheduled']).optional(),
-    scheduled_at: z.string().datetime().optional(),
-    idempotency_key: z.string().optional(),
-  }).refine((v) => Boolean(String(v.caption || v.content || '').trim()), {
-    message: 'caption or content is required',
+    'Publish (or schedule) a social post to a tenant-scoped identity. Prefer identity_id or target.identity_id from get_social_identities. Immediate publish returns provider post ID, live URL, and verification receipt — never ok on DB insert alone. Never accepts access tokens.',
+  inputSchema: publishSocialPostInputSchema,
+  jsonSchema: publishSocialPostJsonSchema,
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
+    return handlePublishSocialPost('publish_social_post', args, { tenantId, userId });
+  },
+});
+
+registerTool('social-publishing', {
+  name: 'publish_post',
+  description:
+    'Alias of publish_social_post with identical schema. Publish/schedule to Facebook or LinkedIn with explicit identity targeting when multiple accounts are connected.',
+  inputSchema: publishSocialPostInputSchema,
+  jsonSchema: publishSocialPostJsonSchema,
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
+    return handlePublishSocialPost('publish_post', args, { tenantId, userId });
+  },
+});
+
+registerTool('social-publishing', {
+  name: 'preflight_social_publish',
+  description:
+    'Dry-run social publish: resolve destination, validate permissions, media, and character limits without writing to Facebook or LinkedIn.',
+  inputSchema: publishSocialPostInputSchema.extend({
+    dry_run: z.literal(true).optional().default(true),
   }),
   jsonSchema: {
-    type: 'object',
+    ...publishSocialPostJsonSchema,
     properties: {
-      identity_id: {
-        type: 'string',
-        description: 'Internal identity UUID from get_social_identities (preferred)',
-      },
-      platform: { type: 'string', enum: ['facebook', 'linkedin'] },
-      identity_type: {
-        type: 'string',
-        enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
-      },
-      caption: { type: 'string' },
-      content: { type: 'string', description: 'Alias for caption' },
-      media: {
-        type: 'array',
-        description:
-          'Unified media inputs: {type:asset_id|base64|data_url|url, ...}. Prefer upload_media then asset_id.',
-        items: { type: 'object' },
-      },
-      media_asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
-      media_ids: {
-        type: 'array',
-        description: 'Canonical alias for media_asset_ids returned by upload_social_media.',
-        items: { type: 'string', format: 'uuid' },
-      },
-      media_urls: { type: 'array', items: { type: 'string' } },
-      media_url: { type: 'string', description: 'Single public HTTPS media URL from upload_social_media' },
-      image_url: { type: 'string', description: 'Alias for media_url' },
-      media_id: { type: 'string', format: 'uuid', description: 'Single media_id from upload_social_media' },
-      media_asset_id: { type: 'string', format: 'uuid', description: 'Alias for media_id' },
-      link_url: { type: 'string' },
-      publish_now: { type: 'boolean' },
-      status: { type: 'string', enum: ['publish_now', 'draft', 'scheduled'] },
-      scheduled_at: { type: 'string', format: 'date-time' },
-      idempotency_key: { type: 'string' },
+      ...publishSocialPostJsonSchema.properties,
+      dry_run: { type: 'boolean', default: true, description: 'Always true for this tool' },
     },
-    required: [],
   },
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
-
-    const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
-    const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
-    const { ingestPublishMedia } = await import('@/lib/media/ingestMedia');
-    const { persistActionReceipt } = await import('@/lib/mcp/actionReceipts');
-
-    let stored;
-    try {
-      stored = await resolveTenantIdentityForPublish({
-        tenantId,
-        identityId: args.identity_id,
-        identityType: args.identity_type,
-        provider: args.platform,
-        allowDefault: !args.identity_id && !args.identity_type,
-      });
-    } catch (err) {
-      if (err instanceof TenantIsolationError) {
-        return toMcpContent(
-          errorResult('publish_social_post', err.code, err.message, err.details)
-        );
-      }
-      throw err;
-    }
-
-    const platform = (stored.provider === 'linkedin' ? 'linkedin' : 'facebook') as
-      | 'facebook'
-      | 'linkedin';
-    const identityType = stored.identity_type as
-      | 'facebook_page'
-      | 'linkedin_person'
-      | 'linkedin_organization';
-
-    const mediaUrls = [
-      ...(args.media_urls || []),
-      ...(args.media_url ? [args.media_url] : []),
-      ...(args.image_url ? [args.image_url] : []),
-    ];
-    const mediaAssetIds = [
-      ...(args.media_ids || []),
-      ...(args.media_asset_ids || []),
-      ...(args.media_id ? [args.media_id] : []),
-      ...(args.media_asset_id ? [args.media_asset_id] : []),
-    ];
-
-    const ingested = await ingestPublishMedia({
-      tenantId,
-      userId,
-      media: args.media as any,
-      mediaUrls,
-      mediaAssetIds,
-    });
-
-    const publishNow =
-      args.publish_now === true || args.status === 'publish_now' || (!args.scheduled_at && args.status !== 'draft');
-
-    const service = getSocialPublishingService();
-    const result = await service.publish({
-      tenantId,
-      userId,
-      platform,
-      identityType,
-      identityId: stored.provider_identity_id,
-      caption: args.caption || args.content || '',
-      mediaAssetIds: ingested.assetIds,
-      mediaUrls: ingested.urls,
-      linkUrl: args.link_url,
-      publishNow,
-      scheduledAt: args.scheduled_at,
-      idempotencyKey: args.idempotency_key,
-      aiClient: 'mcp',
-    });
-
-    if (!result.ok) {
-      return toMcpContent(
-        errorResult(
-          'publish_social_post',
-          result.error?.code || 'PUBLISH_FAILED',
-          result.error?.message || 'Publish failed',
-          result.data,
-          { retryable: result.error?.retryable }
-        )
-      );
-    }
-
-    const receiptPayload = result.receipt
-      ? {
-          action_id: result.receipt.action_id,
-          status: result.data?.status || 'published',
-          provider: result.receipt.provider,
-          provider_reference: result.receipt.provider_reference,
-          live_url: result.receipt.live_url,
-          timestamp: result.receipt.verified_at || new Date().toISOString(),
-          entity_id: result.data?.social_post_id,
-          entity_type: 'social_post',
-          verification: {
-            verified: result.receipt.verified,
-            verified_at: result.receipt.verified_at,
-            correlation_id: result.receipt.correlation_id,
-          },
-        }
-      : null;
-
-    if (receiptPayload && args.idempotency_key) {
-      await persistActionReceipt({
-        tenantId,
-        userId,
-        tool: 'publish_social_post',
-        idempotencyKey: args.idempotency_key,
-        receipt: receiptPayload,
-        success: true,
-        sanitizedInput: {
-          platform,
-          identity_id: stored.identity_id,
-          media_asset_ids: ingested.assetIds,
-        },
-        sanitizedOutput: result.data,
-      }).catch(() => undefined);
-    }
-
-    return toMcpContent(
-      okResult(
-        'publish_social_post',
-        {
-          ...result.data,
-          media_asset_ids: ingested.assetIds,
-          identity_id: stored.identity_id,
-          identity_display_name: stored.display_name,
-        },
-        {
-          receipt: receiptPayload,
-          meta: { tool_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION },
-        }
-      )
-    );
+    return handlePublishSocialPost('publish_social_post', { ...args, dry_run: true }, { tenantId, userId });
   },
 });
 

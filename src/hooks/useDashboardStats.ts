@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { DashboardStatsResponse } from '@/types/dashboardStats';
+import type { DashboardStatsResponse, OverviewStatsResponse } from '@/types/dashboardStats';
 import { resolveHubFromEndpoint } from '@/lib/dashboard/hubKpi';
 import type { SlimHubStats } from '@/lib/dashboard/hubKpi';
 
@@ -11,12 +11,12 @@ function cacheKey(endpoint: string, tenantId: string, period?: string) {
   return `ac_dash_stats:${endpoint}:${tenantId}:${period ?? 'last_30_days'}`;
 }
 
-function readClientCache(endpoint: string, tenantId: string, period?: string): DashboardStatsResponse | null {
+function readClientCache(endpoint: string, tenantId: string, period?: string): OverviewStatsResponse | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = sessionStorage.getItem(cacheKey(endpoint, tenantId, period));
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { at: number; data: DashboardStatsResponse };
+    const parsed = JSON.parse(raw) as { at: number; data: OverviewStatsResponse };
     if (Date.now() - parsed.at > CLIENT_CACHE_MS) return null;
     return parsed.data;
   } catch {
@@ -24,7 +24,7 @@ function readClientCache(endpoint: string, tenantId: string, period?: string): D
   }
 }
 
-function writeClientCache(endpoint: string, tenantId: string, data: DashboardStatsResponse, period?: string) {
+function writeClientCache(endpoint: string, tenantId: string, data: OverviewStatsResponse, period?: string) {
   if (typeof window === 'undefined') return;
   try {
     sessionStorage.setItem(cacheKey(endpoint, tenantId, period), JSON.stringify({ at: Date.now(), data }));
@@ -33,14 +33,20 @@ function writeClientCache(endpoint: string, tenantId: string, data: DashboardSta
   }
 }
 
-function slimToFull(slim: SlimHubStats): DashboardStatsResponse {
+function normalizeHubStats(raw: SlimHubStats | OverviewStatsResponse): OverviewStatsResponse {
+  if ('breakdown' in raw && Array.isArray(raw.breakdown)) {
+    return raw as OverviewStatsResponse;
+  }
+  const slim = raw as SlimHubStats;
   return {
     metrics: slim.metrics,
     mainChart: slim.mainChart,
-    breakdown: [],
-    donut: [],
-    pills: [],
-    feed: [],
+    breakdown: slim.breakdown ?? [],
+    donut: slim.donut ?? [],
+    pills: slim.pills ?? [],
+    feed: slim.feed ?? [],
+    metricsRowB: slim.metricsRowB,
+    platformHealth: slim.platformHealth,
   };
 }
 
@@ -63,12 +69,8 @@ export function prefetchDashboardStats(tenantId: string, endpoints: string[]) {
       .then(async (res) => {
         if (!res.ok) return;
         const json = await res.json();
-        const raw = (json.stats ?? json.data ?? json) as SlimHubStats | DashboardStatsResponse;
-        const stats =
-          'breakdown' in raw && Array.isArray(raw.breakdown)
-            ? (raw as DashboardStatsResponse)
-            : slimToFull(raw as SlimHubStats);
-        writeClientCache(endpoint, tenantId, stats);
+        const raw = (json.stats ?? json.data ?? json) as SlimHubStats | OverviewStatsResponse;
+        writeClientCache(endpoint, tenantId, normalizeHubStats(raw));
       })
       .catch(() => undefined);
   }
@@ -82,6 +84,13 @@ const PREFETCH_ENDPOINTS = [
   '/api/contracts/stats',
   '/api/projects/stats',
   '/api/social/stats',
+  '/api/deals/stats',
+  '/api/tasks/stats',
+  '/api/quotes/stats',
+  '/api/leads/stats',
+  '/api/calendar/stats',
+  '/api/accounting/stats',
+  '/api/campaigns/stats',
 ];
 
 export function usePrefetchDashboardStats(tenantId: string | undefined) {
@@ -96,7 +105,7 @@ export function useDashboardStats(
   endpoint: string,
   period: string = 'last_30_days',
 ) {
-  const [data, setData] = useState<DashboardStatsResponse | null>(() =>
+  const [data, setData] = useState<OverviewStatsResponse | null>(() =>
     tenantId ? readClientCache(endpoint, tenantId, period) : null,
   );
   const [isValidating, setIsValidating] = useState(false);
@@ -128,11 +137,8 @@ export function useDashboardStats(
       })
       .then((json) => {
         if (cancelled) return;
-        const raw = (json.stats ?? json.data ?? json) as SlimHubStats | DashboardStatsResponse;
-        const stats =
-          'breakdown' in raw && Array.isArray(raw.breakdown)
-            ? (raw as DashboardStatsResponse)
-            : slimToFull(raw as SlimHubStats);
+        const raw = (json.stats ?? json.data ?? json) as SlimHubStats | OverviewStatsResponse;
+        const stats = normalizeHubStats(raw);
         setData(stats);
         writeClientCache(endpoint, tenantId, stats, period);
       })

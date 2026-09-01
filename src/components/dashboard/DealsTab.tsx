@@ -1345,7 +1345,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         stats={!loading && deals.length > 0 ? (
           <div className="p-4 border-b border-white/5 bg-slate-900/20 space-y-4 shrink-0">
             <RevenueLeakagePanel deals={deals} heading="What to fix next" />
-            <ModuleStatCards stats={dealStats} />
+            <ModuleStatCards stats={dealStats} hub="deals" />
             <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pipeline by Stage</h3>

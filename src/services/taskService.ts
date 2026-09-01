@@ -547,7 +547,8 @@ export const taskService = {
                         const { data: creatorData } = await supabase.from('profiles').select('name, email').eq('id', data.created_by).single();
                         if (creatorData?.email && data.created_by !== currentUser.id) {
                             const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
-                            const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${data.id}` : '';
+                            const { absoluteUrl } = await import('@/lib/siteUrl');
+                            const actionUrl = absoluteUrl(`/dashboard/tasks/${data.id}`);
 
                             await sendNotificationEmail({
                                 tenantId,
