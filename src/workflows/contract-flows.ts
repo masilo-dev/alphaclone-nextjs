@@ -1,4 +1,4 @@
-import { runContractSignedFlow } from '@/lib/contracts/contractSignedSteps';
+import { runContractSignedFlow, type ContractSignedFlowInput } from '@/lib/contracts/contractSignedSteps';
 
 /**
  * Contract Signed Workflow
@@ -17,5 +17,10 @@ export async function contractSignedWorkflow({
   if (!contractId) return;
 
   const actorUserId = typeof payload.actorUserId === 'string' ? payload.actorUserId : undefined;
-  await runContractSignedFlow({ tenantId, contractId, actorUserId });
+  await runContractSignedFlowStep({ tenantId, contractId, actorUserId });
+}
+
+async function runContractSignedFlowStep(input: ContractSignedFlowInput) {
+  "use step";
+  return runContractSignedFlow(input);
 }

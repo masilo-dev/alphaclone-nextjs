@@ -14,7 +14,7 @@ import {
   EMAIL_PURPOSE_REGISTRY,
   type EmailPurposeDefinition,
 } from '@/lib/email/emailPurposeRegistry';
-import { buildUnsubscribeUrl } from '@/lib/email/unsubscribe';
+import { buildUnsubscribeUrl } from '@/lib/email/unsubscribeToken';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { isCategoryEmailEnabled, isMarketingGloballyEnabled } from '@/lib/email/emailPreferences';
 import { renderSubjectAndPreheader, type PersonalizationVariables } from '@/lib/email/personalizationEngine';

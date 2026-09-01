@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppUrls, buildValidatedPublicUrl } from '@/lib/urls';
 
@@ -32,7 +31,7 @@ export async function ensureInvoicePublicToken(
 
   const metadata = (invoice.metadata || {}) as Record<string, unknown>;
   const existing = String(metadata.public_token || '').trim();
-  const publicToken = existing || crypto.randomUUID();
+  const publicToken = existing || globalThis.crypto.randomUUID();
 
   if (!existing || !invoice.is_public) {
     await admin

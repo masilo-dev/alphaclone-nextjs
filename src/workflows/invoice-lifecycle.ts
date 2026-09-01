@@ -8,5 +8,10 @@ export type { InvoiceLifecycleInput };
 export async function invoiceLifecycleWorkflow(input: InvoiceLifecycleInput) {
   "use workflow";
 
-  await runInvoiceInitialSend(input);
+  await runInvoiceInitialSendStep(input);
+}
+
+async function runInvoiceInitialSendStep(input: InvoiceLifecycleInput) {
+  "use step";
+  return runInvoiceInitialSend(input);
 }

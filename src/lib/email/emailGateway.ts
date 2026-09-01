@@ -13,7 +13,6 @@ import {
   type CommunicationClassification,
   type CommunicationPurpose,
 } from '@/lib/compliance/communicationCompliance';
-import { buildUnsubscribeUrl } from '@/lib/email/unsubscribe';
 import { absoluteUrl } from '@/lib/siteUrl';
 import type { EmailAttachment } from '@/lib/email/emailAttachment';
 import { recordSuccessfulEmailSend } from '@/lib/email/usageMeteringService';
@@ -204,9 +203,11 @@ export async function sendViaEmailGateway(request: EmailGatewayRequest): Promise
   const classification = mapCategoryToClassification(request.category);
   const purpose = buildPurpose(request.category, tenantName, request);
   const locale = resolveLocale({ tenantDefault: 'en' });
-  const unsubscribeUrl =
-    request.listUnsubscribeUrl ||
-    (primaryRecipient ? buildUnsubscribeUrl(primaryRecipient, request.tenantId) : undefined);
+  let unsubscribeUrl = request.listUnsubscribeUrl;
+  if (!unsubscribeUrl && primaryRecipient) {
+    const { buildUnsubscribeUrl } = await import('@/lib/email/unsubscribeToken');
+    unsubscribeUrl = buildUnsubscribeUrl(primaryRecipient, request.tenantId);
+  }
 
   const compliance = resolveCommunicationCompliance({
     tenantId: request.tenantId,
