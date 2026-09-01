@@ -1,6 +1,6 @@
 import { COMPANY_LEGAL } from '@/lib/seo/siteEntity';
 import { SITE_URL } from '@/lib/siteUrl';
-import { generateUnsubscribeToken } from '@/lib/email/unsubscribe';
+import { generateUnsubscribeToken } from '@/lib/email/unsubscribeToken';
 
 const PLATFORM_NAME = 'Alphaclone Systems';
 const PLATFORM_TAGLINE = 'Simple. Efficient.';

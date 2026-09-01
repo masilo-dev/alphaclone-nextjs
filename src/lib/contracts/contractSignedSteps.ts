@@ -3,7 +3,6 @@
  * Canonical order: contract signed → invoice → project + tasks.
  */
 
-import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
 import { validateDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
@@ -64,7 +63,7 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
   const amount = Number(contract.value ?? contract.total_amount ?? contract.payment_amount ?? 0);
   if (!Number.isFinite(amount) || amount <= 0) return null;
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const publicToken = crypto.randomUUID();
+  const publicToken = globalThis.crypto.randomUUID();
 
   const { data: invoice, error: invoiceError } = await supabase
     .from('business_invoices')

@@ -1,5 +1,5 @@
 import { getEmailFooter } from '@/lib/email/footer';
-import { buildUnsubscribeUrl } from '@/lib/email/unsubscribe';
+import { buildUnsubscribeUrl } from '@/lib/email/unsubscribeToken';
 
 export interface BuildEmailParams {
   subject: string;

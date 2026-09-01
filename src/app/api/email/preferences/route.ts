@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyUnsubscribeToken } from '@/lib/email/unsubscribe';
+import { verifyUnsubscribeToken } from '@/lib/email/unsubscribeToken';
 import {
   getPublicEmailPreferences,
   updatePublicEmailPreferences,

@@ -1,6 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ensureFooter, normalizeEmailSubject, buildAttachmentNoticeHtml, insertBeforeEmailFooter } from '@/lib/email/emailComposition';
-import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
+import { isUnsubscribed } from '@/lib/email/unsubscribe';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { logEmailSend } from '@/lib/emailLogger';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
@@ -108,8 +108,11 @@ export async function sendEmail(
     // Build a per-recipient signed unsubscribe link (single-recipient sends, e.g. campaigns/outreach).
     // Falls back gracefully inside ensureFooter when unavailable.
     const singleRecipient = recipients.length === 1 ? String(recipients[0] || '').trim() : '';
-    const unsubscribeUrl = payload.listUnsubscribeUrl
-      || (singleRecipient ? buildUnsubscribeUrl(singleRecipient, tenantId) : '');
+    let unsubscribeUrl = payload.listUnsubscribeUrl || '';
+    if (!unsubscribeUrl && singleRecipient) {
+      const { buildUnsubscribeUrl } = await import('@/lib/email/unsubscribeToken');
+      unsubscribeUrl = buildUnsubscribeUrl(singleRecipient, tenantId);
+    }
 
     const normalizedSubject = normalizeEmailSubject(payload.subject);
     const shouldAppendFooter = !payload.skipFooter;
