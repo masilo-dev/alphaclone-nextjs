@@ -1,4 +1,4 @@
-import { BrowserManager } from '@/lib/scraper/browserManager';
+import { isRailwayHost } from '@/config/railwayWorkload';
 
 export interface BrowserSerpLeadRow {
   business_name: string;
@@ -39,12 +39,21 @@ function firstEmailFromText(text: string): string {
 }
 
 export function hasRemoteBrowserConfigured(): boolean {
-  return BrowserManager.hasRemoteConfigured();
+  return Boolean(
+    process.env.BROWSERBASE_API_KEY?.trim() ||
+      process.env.BROWSER_WS_ENDPOINT?.trim()
+  );
 }
 
 /** Remote Browserbase/CDP or Railway/local Chromium. */
 export function canUseBrowserScraper(): boolean {
-  return BrowserManager.canLaunchBrowser();
+  if (hasRemoteBrowserConfigured()) return true;
+  if (isRailwayHost()) return true;
+  if (process.env.NODE_ENV !== 'production') return true;
+  if (process.env.CHROME_EXECUTABLE_PATH?.trim() || process.env.PUPPETEER_EXECUTABLE_PATH?.trim()) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -57,6 +66,7 @@ export async function fetchSerpLeadsViaBrowser(
   limit: number,
   options?: { searchQuery?: string }
 ): Promise<BrowserSerpLeadRow[]> {
+  const { BrowserManager } = await import('@/lib/scraper/browserManager');
   const { page, close } = await BrowserManager.createPage();
 
   try {

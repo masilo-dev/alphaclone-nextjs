@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import {
   getMicrosoftTokens,
+  MicrosoftReconnectRequiredError,
   refreshMicrosoftAccessToken,
 } from '@/services/microsoft/microsoftConnectionService';
 
@@ -40,6 +41,9 @@ export async function POST(req: NextRequest) {
       email: updatedConnection?.microsoft_email || connection.microsoft_email,
     });
   } catch (err: unknown) {
+    if (err instanceof MicrosoftReconnectRequiredError) {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: 401 });
+    }
     console.error('[Microsoft Access Token] Error:', err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to load Microsoft access token' },

@@ -3,6 +3,7 @@ import {
   sendEmailServer,
   type SendEmailServerResult,
 } from "@/lib/email/sendEmailServer";
+import { mapEventTypeToNotificationType } from "@/lib/notifications/notificationType";
 import { buildValidatedPublicUrl } from "@/lib/urls";
 import { escapeHtml } from '@/lib/email/escapeHtml';
 import webPush from "web-push";
@@ -95,14 +96,16 @@ export async function notifyTenantOwners(options: {
       preferences?.push_enabled !== false && eventSetting !== false;
 
     if (inAppEnabled) {
+      const notificationType = mapEventTypeToNotificationType(options.type);
       const { error } = await admin.from("notifications").insert({
         user_id: userId,
         tenant_id: options.tenantId,
-        type: options.type,
+        type: notificationType,
         title: options.title,
         message: options.message,
         action_url: options.link || null,
         read: false,
+        metadata: { event_type: options.type },
       });
       if (error) {
         console.error("[notifyTenantOwners] in-app notification insert failed:", error.message);

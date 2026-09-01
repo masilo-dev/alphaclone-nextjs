@@ -4,7 +4,6 @@ import { runLeadStep, type LeadResult } from '@/lib/scraper/freeLeadSearch';
 import { hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadNurtureWorkflow } from './lead-nurture';
 import { enrichLeadData } from '@/services/unifiedAIService';
-import { enrichLeadWebsite } from '@/lib/scraper/enrichmentPipeline';
 
 type WorkflowLead = {
   businessName: string;
@@ -126,6 +125,7 @@ async function enrichLeads(rawLeads: LeadResult[], query: string, location: stri
     let phone = String(lead.phone || '').trim();
 
     if (website && (!email || !phone)) {
+      const { enrichLeadWebsite } = await import('@/lib/scraper/enrichmentPipeline');
       const enrichment = await enrichLeadWebsite(website, 12000).catch(() => null);
       if (enrichment) {
         if (!email) email = enrichment.emails?.[0] || '';

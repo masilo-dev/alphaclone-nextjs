@@ -829,7 +829,7 @@ registerTool('social-publishing', {
   name: 'preflight_social_publish',
   description:
     'Dry-run social publish: resolve destination, validate permissions, media, and character limits without writing to Facebook or LinkedIn.',
-  inputSchema: publishSocialPostInputSchema.extend({
+  inputSchema: publishSocialPostInputSchema.safeExtend({
     dry_run: z.literal(true).optional().default(true),
   }),
   jsonSchema: {

@@ -63,13 +63,15 @@ export async function logAuditEvent(
     const { error } = await supabase.from('audit_logs').insert({
       tenant_id: tenantId,
       user_id: entry.userId,
-      user_email: entry.userEmail,
       action: entry.action,
       resource_type: entry.resourceType,
       resource_id: entry.resourceId,
       old_values: entry.oldValues,
       new_values: entry.newValues,
-      metadata: entry.metadata,
+      metadata: {
+        ...entry.metadata,
+        ...(entry.userEmail ? { user_email: entry.userEmail } : {}),
+      },
       severity,
       hash,
       created_at: new Date().toISOString(),

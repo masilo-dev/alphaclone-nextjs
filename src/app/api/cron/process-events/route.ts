@@ -179,8 +179,26 @@ export async function GET(request: NextRequest) {
           case 'deal_intelligence_requested': {
             const dealId = String(event.payload?.dealId || '');
             if (!dealId) {
+              await supabase
+                .from('business_automation_events')
+                .update({ processed: true })
+                .eq('id', event.id);
               results.push({ eventId: event.id, status: 'skipped', reason: 'missing_deal_id' });
-              break;
+              continue;
+            }
+            const { data: dealRow } = await supabase
+              .from('deals')
+              .select('id')
+              .eq('tenant_id', event.tenant_id)
+              .eq('id', dealId)
+              .maybeSingle();
+            if (!dealRow) {
+              await supabase
+                .from('business_automation_events')
+                .update({ processed: true })
+                .eq('id', event.id);
+              results.push({ eventId: event.id, status: 'skipped', reason: 'deal_not_found' });
+              continue;
             }
             await quantumDealIntelligenceService.recomputeDeal(supabase, event.tenant_id, dealId);
             await supabase

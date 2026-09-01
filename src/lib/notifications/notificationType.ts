@@ -31,6 +31,7 @@ const EVENT_PREFIX_TO_NOTIFICATION_TYPE: Array<[RegExp, NotificationType]> = [
   [/^meeting\.|^campaign\./, 'project'],
   [/^digest\.|^retention\./, 'system'],
   [/^auth\./, 'security'],
+  [/^operational_alert_/, 'system'],
 ];
 
 /**

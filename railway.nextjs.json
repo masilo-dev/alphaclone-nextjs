@@ -5,7 +5,7 @@
     "buildCommand": "NODE_OPTIONS='--max-old-space-size=12288' npm run build"
   },
   "deploy": {
-    "startCommand": "NODE_OPTIONS='--max-old-space-size=4096' next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "startCommand": "NODE_OPTIONS='--max-old-space-size=1536' next start -H 0.0.0.0 -p ${PORT:-3000}",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",

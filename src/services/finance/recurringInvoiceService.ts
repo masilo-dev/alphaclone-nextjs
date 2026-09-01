@@ -1,6 +1,5 @@
 import 'server-only';
 
-import crypto from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
@@ -226,7 +225,7 @@ export async function generateFromRecurringProfile(
   const issueDate = new Date();
   const dueDate = new Date(issueDate);
   dueDate.setDate(dueDate.getDate() + profile.paymentTermsDays);
-  const publicToken = crypto.randomUUID();
+  const publicToken = globalThis.crypto.randomUUID();
   const invoiceNumber = `INV-${Date.now().toString(36).toUpperCase()}`;
 
   const { data: invoice, error } = await admin

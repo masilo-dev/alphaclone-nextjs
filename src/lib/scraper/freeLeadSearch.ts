@@ -1,7 +1,3 @@
-import {
-  canUseBrowserScraper,
-  fetchSerpLeadsViaBrowser,
-} from '@/lib/scraper/browserSerpLeads';
 import { freePlacesService } from '@/services/freePlacesService';
 import { buildOverpassClauses, resolveOsmNiche } from '@/lib/scraper/osmNicheTags';
 import {
@@ -34,6 +30,20 @@ export interface LeadResult {
 export type LeadStep = 'init' | 'fallbacks' | 'browser' | 'finalize';
 
 const LEADS_PER_SEARCH = 25;
+
+async function maybeFetchBrowserLeads(
+  niche: string,
+  location: string,
+  limit: number,
+  usePlaywright: boolean | undefined
+) {
+  if (!usePlaywright) return [];
+  const { canUseBrowserScraper, fetchSerpLeadsViaBrowser } = await import(
+    '@/lib/scraper/browserSerpLeads'
+  );
+  if (!canUseBrowserScraper()) return [];
+  return fetchSerpLeadsViaBrowser(niche, location, limit);
+}
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -515,8 +525,8 @@ export async function runLeadStep(input: {
             )
           )
           .catch(() => []),
-        input.usePlaywright && canUseBrowserScraper()
-          ? fetchSerpLeadsViaBrowser(input.niche, input.location, LEADS_PER_SEARCH)
+        input.usePlaywright
+          ? maybeFetchBrowserLeads(input.niche, input.location, LEADS_PER_SEARCH, input.usePlaywright)
           : Promise.resolve([]),
       ]);
 
@@ -634,10 +644,10 @@ export async function runLeadStep(input: {
   }
 
   if (input.step === 'browser') {
-    if (input.usePlaywright && canUseBrowserScraper() && partial.length < LEADS_PER_SEARCH) {
+    if (input.usePlaywright && partial.length < LEADS_PER_SEARCH) {
       try {
         const want = LEADS_PER_SEARCH - partial.length + 5;
-        const rows = await fetchSerpLeadsViaBrowser(input.niche, input.location, want);
+        const rows = await maybeFetchBrowserLeads(input.niche, input.location, want, input.usePlaywright);
         const verified = rows.filter((r) => hasContactInfo(r));
         partial.push(...enrichWithContactFlag(verified as LeadResult[]));
         sourceStats.browser = (sourceStats.browser || 0) + verified.length;
