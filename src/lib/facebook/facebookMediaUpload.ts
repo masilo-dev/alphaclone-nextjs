@@ -2,6 +2,10 @@
  * Upload photos to Facebook Graph API using multipart bytes (avoids URL fetch failures).
  */
 
+function bufferToBlob(buffer: Buffer, mimeType: string): Blob {
+  return new Blob([new Uint8Array(buffer)], { type: mimeType });
+}
+
 export async function uploadFacebookPhotoFromBytes(params: {
   pageId: string;
   pageAccessToken: string;
@@ -13,7 +17,7 @@ export async function uploadFacebookPhotoFromBytes(params: {
 }): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; status: number; body: Record<string, unknown> }> {
   const form = new FormData();
   form.append('access_token', params.pageAccessToken);
-  const blob = new Blob([params.buffer], { type: params.mimeType || 'application/octet-stream' });
+  const blob = bufferToBlob(params.buffer, params.mimeType || 'application/octet-stream');
   form.append('source', blob, params.filename || 'upload.jpg');
   if (params.caption) form.append('caption', params.caption);
   if (params.published === false) form.append('published', 'false');
@@ -39,7 +43,7 @@ export async function uploadFacebookVideoFromBytes(params: {
 }): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; status: number; body: Record<string, unknown> }> {
   const form = new FormData();
   form.append('access_token', params.pageAccessToken);
-  const blob = new Blob([params.buffer], { type: params.mimeType || 'video/mp4' });
+  const blob = bufferToBlob(params.buffer, params.mimeType || 'video/mp4');
   form.append('source', blob, params.filename || 'upload.mp4');
   if (params.description) form.append('description', params.description);
 
