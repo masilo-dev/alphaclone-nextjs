@@ -1,5 +1,6 @@
 import { ZodError } from 'zod';
 import { standardError, type StandardMcpError } from '@/lib/mcp/standardResponse';
+import { sanitizeUserFacingError } from '@/lib/copy/businessFriendlyErrors';
 
 function firstIssueField(err: ZodError): string {
   const issue = err.issues[0];
@@ -57,7 +58,7 @@ export function formatToolExecutionError(tool: string, err: unknown): StandardMc
   }
 
   const e = err as Error & { code?: string; details?: unknown };
-  const message = e?.message || 'Tool execution failed';
+  const message = sanitizeUserFacingError(e?.message || 'Tool execution failed', { tool });
   const code = e?.code || 'TOOL_ERROR';
   const retryable =
     code === 'RATE_LIMITED' ||
@@ -66,13 +67,11 @@ export function formatToolExecutionError(tool: string, err: unknown): StandardMc
   if (code === 'CONFIRMATION_REQUIRED') {
     return standardError(tool, code, message, {
       retryable: true,
-      details: e.details,
     });
   }
 
   return standardError(tool, code, message, {
     retryable,
-    details: e.details,
   });
 }
 

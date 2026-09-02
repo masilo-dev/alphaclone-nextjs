@@ -2,6 +2,8 @@
  * Standard MCP response envelope — model-independent (ChatGPT, Claude, Cursor, Gemini, Bonnie, etc.).
  */
 
+import { sanitizeUserFacingError } from '@/lib/copy/businessFriendlyErrors';
+
 export type ActionReceipt = {
   action_id: string;
   status: string;
@@ -114,6 +116,7 @@ export function standardError(
     meta?: StandardMcpMeta;
   }
 ): StandardMcpError {
+  const safeMessage = sanitizeUserFacingError(message, { tool });
   return {
     ok: false,
     tool,
@@ -121,10 +124,9 @@ export function standardError(
     receipt: null,
     error: {
       code,
-      message,
+      message: safeMessage,
       retryable: options?.retryable ?? false,
       ...(options?.approval_id ? { approval_id: options.approval_id } : {}),
-      ...(options?.details !== undefined ? { details: options.details } : {}),
     },
     meta: {
       correlation_id: options?.meta?.correlation_id || newCorrelationId(),

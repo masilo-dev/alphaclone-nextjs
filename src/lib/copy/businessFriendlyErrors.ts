@@ -1,7 +1,11 @@
 /**
  * Turn technical / Zod / tool failures into plain business language
- * for dashboards and Bonnie chat — never show schema jargon to operators.
+ * for dashboards, emails, and Bonnie chat — never show schema jargon to operators.
  */
+
+/** Plain operator-safe copy for any internal/server failure. */
+export const USER_FACING_SERVER_ERROR_MESSAGE =
+  'This action failed due to a server error. Please contact AlphaClone Systems support or try again in a few minutes.';
 
 const TOOL_ACTIVITY_LABELS: Record<string, string> = {
   define_outcome: 'Checked whether the work succeeded',
@@ -17,6 +21,8 @@ const TOOL_ACTIVITY_LABELS: Record<string, string> = {
   search_contacts: 'Searched customers',
   get_clients: 'Looked up customers',
   publish_social_post: 'Published a social post',
+  publish_post: 'Published a social post',
+  upload_social_media: 'Uploaded social media',
   schedule_social_post: 'Scheduled a social post',
   create_task: 'Created a task',
   orchestrate_task: 'Ran a multi-step work plan',
@@ -54,6 +60,96 @@ function parseZodIssues(text: string): Array<{ path?: unknown; code?: string; me
   } catch {
     return [];
   }
+}
+
+/** Extract a human message from nested MCP / Error / JSON shapes. */
+export function extractErrorMessage(raw: unknown): string | null {
+  if (raw == null) return null;
+
+  if (typeof raw === 'string') {
+    const text = raw.trim();
+    if (!text) return null;
+    if (text.startsWith('{') || text.startsWith('[')) {
+      try {
+        return extractErrorMessage(JSON.parse(text));
+      } catch {
+        return text;
+      }
+    }
+    return text;
+  }
+
+  if (raw instanceof Error) {
+    return raw.message || null;
+  }
+
+  if (Array.isArray(raw)) {
+    return JSON.stringify(raw);
+  }
+
+  if (typeof raw === 'object') {
+    const obj = raw as Record<string, unknown>;
+    if (obj.error && typeof obj.error === 'object') {
+      const nested = extractErrorMessage((obj.error as { message?: unknown }).message);
+      if (nested) return nested;
+    }
+    if (typeof obj.error === 'string') return obj.error;
+    if (typeof obj.message === 'string') return obj.message;
+  }
+
+  const fallback = String(raw).trim();
+  return fallback || null;
+}
+
+/** True when text looks like JS/Postgres/schema noise that must not reach users. */
+export function isInternalTechnicalError(text: string): boolean {
+  const t = String(text || '');
+  if (!t.trim()) return false;
+  if (isTechnicalJargonText(t)) return true;
+  if (/cannot read propert(y|ies) of (undefined|null)/i.test(t)) return true;
+  if (/violates check constraint|violates foreign key|violates not-null/i.test(t)) return true;
+  if (/\brelation\s+"[^"]+"|\bcolumn\s+"[^"]+"|\bconstraint\s+"[^"]+"/i.test(t)) return true;
+  if (/\b(PGRST\d+|42703|23514|23503|42P01)\b/.test(t)) return true;
+  if (/\bstack trace\b|at\s+\w+\s+\([^)]+\:\d+\:\d+\)/i.test(t)) return true;
+  if (/^\s*[\[{]/.test(t) && /"ok"\s*:\s*false/.test(t)) return true;
+  if (/^An unknown error occurred\.?$/i.test(t)) return true;
+  if (/^Tool execution failed\.?$/i.test(t)) return true;
+  return false;
+}
+
+/**
+ * Operator-safe failure line for emails, notifications, and MCP error.message fields.
+ * Keeps short business-safe copy; replaces internal failures with a generic server message.
+ */
+export function sanitizeUserFacingError(
+  raw: unknown,
+  opts?: { tool?: string | null; preferGeneric?: boolean }
+): string {
+  if (opts?.preferGeneric) {
+    return USER_FACING_SERVER_ERROR_MESSAGE;
+  }
+
+  const extracted = extractErrorMessage(raw);
+  if (!extracted) {
+    return USER_FACING_SERVER_ERROR_MESSAGE;
+  }
+
+  if (looksLikeZodIssuesJson(extracted)) {
+    const humanized = humanizeTechnicalFailure(extracted, { tool: opts?.tool });
+    if (!isInternalTechnicalError(humanized)) {
+      return humanized;
+    }
+  }
+
+  if (isInternalTechnicalError(extracted)) {
+    return USER_FACING_SERVER_ERROR_MESSAGE;
+  }
+
+  const humanized = humanizeTechnicalFailure(extracted, { tool: opts?.tool });
+  if (isInternalTechnicalError(humanized)) {
+    return USER_FACING_SERVER_ERROR_MESSAGE;
+  }
+  return humanized;
 }
 
 /** Map Zod / validation dumps to operator-safe copy. */
@@ -157,7 +253,7 @@ export function businessOutcomeSummary(params: {
       : `${activity}.`;
   }
   if (params.errorMessage) {
-    return humanizeTechnicalFailure(params.errorMessage, { tool: params.tool });
+    return sanitizeUserFacingError(params.errorMessage, { tool: params.tool });
   }
   return `${activity} didn’t fully finish.`;
 }
@@ -169,5 +265,8 @@ export function isTechnicalJargonText(text: string): boolean {
   if (/"code"\s*:\s*"invalid_/.test(t)) return true;
   if (/\binvalid_type\b|\binvalid_value\b|\binvalid_format\b/.test(t)) return true;
   if (/\bZodError\b|\.passthrough\(|inputSchema/.test(t)) return true;
+  if (/"ok"\s*:\s*false/.test(t)) return true;
+  if (/cannot read propert/i.test(t)) return true;
+  if (/violates check constraint|violates foreign key/i.test(t)) return true;
   return false;
 }

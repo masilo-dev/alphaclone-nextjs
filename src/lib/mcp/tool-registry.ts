@@ -16,8 +16,15 @@ import {
   formatToolExecutionError,
   structuredErrorToMcpContent,
 } from '@/lib/mcp/formatMcpError';
+import { extractErrorMessage } from '@/lib/copy/businessFriendlyErrors';
 
 const registry = new Map<string, MCPTool>();
+
+function errorTextFromMcpContent(content: unknown): string | undefined {
+  if (!Array.isArray(content) || !content[0]) return undefined;
+  const text = (content[0] as { text?: string }).text;
+  return extractErrorMessage(text) || undefined;
+}
 
 export function registerTool<T extends z.ZodObject<any>>(
   moduleName: string,
@@ -168,7 +175,7 @@ export async function executeTool(
       );
       success = !result.isError;
       if (result.isError) {
-        errorMessage = result.content?.[0]?.text;
+        errorMessage = errorTextFromMcpContent(result.content);
       }
       executionResult = result;
       return result;
@@ -197,7 +204,7 @@ export async function executeTool(
 
     success = !result.isError;
     if (result.isError) {
-      errorMessage = result.content?.[0]?.text;
+      errorMessage = errorTextFromMcpContent(result.content);
     } else if (primaryMetric && shouldPreChargeMcpExecution(requestedTool)) {
       const resultText = result.content?.[0]?.text;
       const succeededCount = isBulkMeteredTool(requestedTool)
