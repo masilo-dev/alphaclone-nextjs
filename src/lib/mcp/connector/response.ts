@@ -5,6 +5,7 @@ import type {
   ConnectorSuccess,
   PaginationMeta,
 } from './types';
+import { sanitizeUserFacingError } from '@/lib/copy/businessFriendlyErrors';
 
 export function okResult<T>(
   tool: string,
@@ -52,6 +53,7 @@ export function errorResult(
   details?: unknown,
   options?: { retryable?: boolean; approval_id?: string; meta?: Record<string, unknown> }
 ): ConnectorErrorBody {
+  const safeMessage = sanitizeUserFacingError(message, { tool });
   return {
     ok: false,
     tool,
@@ -59,10 +61,9 @@ export function errorResult(
     receipt: null,
     error: {
       code,
-      message,
+      message: safeMessage,
       retryable: options?.retryable ?? false,
       ...(options?.approval_id ? { approval_id: options.approval_id } : {}),
-      ...(details !== undefined ? { details } : {}),
     },
     ...(options?.meta ? { meta: options.meta } : {}),
   };

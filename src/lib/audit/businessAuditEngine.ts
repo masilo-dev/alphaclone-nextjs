@@ -1,4 +1,14 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { sanitizeUserFacingError } from '@/lib/copy/businessFriendlyErrors';
+
+function failureResultLine(toolName: string, output: Record<string, any>): string {
+  const raw =
+    (output?.error && typeof output.error === 'object'
+      ? (output.error as { message?: string }).message
+      : null) ||
+    (typeof output?.error === 'string' ? output.error : null);
+  return sanitizeUserFacingError(raw, { tool: toolName, preferGeneric: true });
+}
 
 export interface BusinessActivityParams {
   tenantId: string;
@@ -205,7 +215,7 @@ export function translateMcpToolToBusinessEvent(
       businessContext: `A post was published to ${network}.`,
       result: success
         ? `Your post is live on ${network}.`
-        : `Publishing failed: ${output.error || 'Provider did not confirm the post'}`,
+        : failureResultLine('publish_social_post', output),
       nextAction: 'Check Social Command Center for reach and engagement.',
     };
   }
@@ -220,7 +230,7 @@ export function translateMcpToolToBusinessEvent(
         ? failed > 0
           ? `${imported} imported, ${failed} skipped or failed.`
           : `${imported} record(s) are now in your workspace.`
-        : `Import failed: ${output.error || 'Unknown error'}`,
+        : failureResultLine(toolName, output),
       nextAction: 'Review imported records and assign follow-ups.',
     };
   }
@@ -230,8 +240,8 @@ export function translateMcpToolToBusinessEvent(
   return {
     event: `${readableName} executed`,
     businessContext: `Automated operation executed by Bonnie via MCP.`,
-    result: success ? 'Task completed successfully.' : `Task failed: ${output.error || 'Execution error'}`,
-    nextAction: success ? 'Proceed with standard operational workflow.' : 'Review error details and retry.',
+    result: success ? 'Task completed successfully.' : failureResultLine(toolName, output),
+    nextAction: success ? 'Proceed with standard operational workflow.' : 'Review the action in AlphaClone and try again, or contact AlphaClone Systems support.',
   };
 }
 

@@ -6,6 +6,8 @@ const {
   businessOutcomeSummary,
   isTechnicalJargonText,
   businessToolActivity,
+  sanitizeUserFacingError,
+  extractErrorMessage,
 } = await import('../../src/lib/copy/businessFriendlyErrors.ts');
 
 const ZOD_DUMP = JSON.stringify([
@@ -36,4 +38,39 @@ test('businessOutcomeSummary never returns raw Zod for failed define_outcome', (
 
 test('businessToolActivity maps define_outcome to business language', () => {
   assert.equal(businessToolActivity('define_outcome'), 'Checked whether the work succeeded');
+});
+
+const CONNECTOR_ERROR_JSON = JSON.stringify({
+  ok: false,
+  tool: 'upload_social_media',
+  error: {
+    code: 'UPLOAD_FAILED',
+    message: "Cannot read properties of undefined (reading 'includes')",
+    retryable: false,
+  },
+});
+
+const DB_CONSTRAINT_ERROR =
+  'new row for relation "agent_runs" violates check constraint "agent_runs_execution_mode_check"';
+
+test('sanitizeUserFacingError hides JS runtime errors from connector JSON', () => {
+  const msg = sanitizeUserFacingError(CONNECTOR_ERROR_JSON, { tool: 'upload_social_media' });
+  assert.doesNotMatch(msg, /undefined|includes|UPLOAD_FAILED/);
+  assert.match(msg, /server error|AlphaClone Systems/i);
+});
+
+test('sanitizeUserFacingError hides postgres schema errors', () => {
+  const msg = sanitizeUserFacingError(DB_CONSTRAINT_ERROR, {
+    tool: 'publish_social_post',
+    preferGeneric: true,
+  });
+  assert.doesNotMatch(msg, /agent_runs|constraint|relation/i);
+  assert.match(msg, /server error|AlphaClone Systems/i);
+});
+
+test('extractErrorMessage reads nested MCP error.message', () => {
+  assert.equal(
+    extractErrorMessage(CONNECTOR_ERROR_JSON),
+    "Cannot read properties of undefined (reading 'includes')"
+  );
 });

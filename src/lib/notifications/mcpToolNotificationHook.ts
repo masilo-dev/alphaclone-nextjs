@@ -1,6 +1,10 @@
 import { inferMcpAttribution, formatAttributionLabel } from '@/lib/audit/sourceAttribution';
 import { translateMcpToolToBusinessEvent } from '@/lib/audit/businessAuditEngine';
-import { humanizeTechnicalFailure } from '@/lib/copy/businessFriendlyErrors';
+import {
+  extractErrorMessage,
+  sanitizeUserFacingError,
+  USER_FACING_SERVER_ERROR_MESSAGE,
+} from '@/lib/copy/businessFriendlyErrors';
 import { isMutatingMcpTool, type TenantBusinessEventInput } from './eventCatalog';
 import { emitTenantBusinessEvent } from './emitTenantBusinessEvent';
 
@@ -50,6 +54,7 @@ function deriveExecutionOutcome(
   success: boolean,
   output: Record<string, unknown>,
 ): { effectiveSuccess: boolean; partial: boolean } {
+  if (output.ok === false) return { effectiveSuccess: false, partial: false };
   if (!success) return { effectiveSuccess: false, partial: false };
 
   const succeededCount = Number(output.succeeded_count ?? output.created ?? 0);
@@ -81,10 +86,10 @@ export async function notifyAfterMcpToolExecution(params: {
   if (!isMutatingMcpTool(params.toolName)) return;
 
   const output = parseToolResultText(params.resultContent);
-  const rawError = params.errorMessage || (typeof output.error === 'string' ? output.error : null);
-  if (rawError && !output.error) {
-    output.error = rawError;
-  }
+  const rawError =
+    extractErrorMessage(params.errorMessage) ||
+    extractErrorMessage(output.error) ||
+    extractErrorMessage(output);
 
   const { effectiveSuccess, partial } = deriveExecutionOutcome(params.toolName, params.success, output);
 
@@ -109,8 +114,8 @@ export async function notifyAfterMcpToolExecution(params: {
     (params.args.entity_id as string) ||
     undefined;
 
-  const failureMessage = !effectiveSuccess && rawError
-    ? humanizeTechnicalFailure(rawError, { tool: params.toolName })
+  const failureMessage = !effectiveSuccess
+    ? sanitizeUserFacingError(rawError, { tool: params.toolName, preferGeneric: true })
     : translated.result;
 
   await emitTenantBusinessEvent({
@@ -120,7 +125,7 @@ export async function notifyAfterMcpToolExecution(params: {
     actor: formatAttributionLabel(attribution),
     source: params.source || 'mcp',
     title: translated.event,
-    message: failureMessage,
+    message: failureMessage || USER_FACING_SERVER_ERROR_MESSAGE,
     actionUrl: actionUrlForTool(params.toolName),
     entityType: eventType.split('.')[0],
     entityId,

@@ -5,6 +5,7 @@ import type { ConnectorPermission } from './types';
 import { assertPermission } from './permissions';
 import { checkConnectorRateLimit, type CONNECTOR_RATE_LIMITS } from './rateLimit';
 import { errorResult, okResult, toMcpContent, throwConnectorError } from './response';
+import { sanitizeUserFacingError } from '@/lib/copy/businessFriendlyErrors';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 type RateClass = keyof typeof CONNECTOR_RATE_LIMITS;
@@ -126,8 +127,10 @@ export function defineConnectorTool<T extends z.ZodObject<any>>(
         );
       } catch (err: any) {
         const code = err?.code || 'TOOL_ERROR';
-        const message = err?.message || 'Tool execution failed';
-        return toMcpContent(errorResult(options.name, code, message, err?.details));
+        const message = sanitizeUserFacingError(err?.message || 'Tool execution failed', {
+          tool: options.name,
+        });
+        return toMcpContent(errorResult(options.name, code, message));
       }
     },
   });
