@@ -1,39 +1,74 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { hasStoragePathTraversal } from '@/lib/security/safeRedirect';
 import { isValidMediaAssetId } from '@/lib/media/mediaPublicUrl';
+import { loadMediaAssetRecord } from '@/lib/media/fetchMediaAssetBytes';
 import { NextResponse } from 'next/server';
 
 const CACHE_MAX_AGE = 3600;
-const SIGNED_URL_TTL_SEC = 300;
+const DEFAULT_BUCKET = 'public-assets';
 
-type MediaAssetRow = {
-  id: string;
-  tenant_id: string;
-  storage_path: string | null;
-  file_type: string | null;
-  file_name: string | null;
-  deleted_at?: string | null;
-};
-
-async function loadMediaAsset(assetId: string): Promise<MediaAssetRow | null> {
-  const admin = createSupabaseAdminClient();
-  const { data, error } = await admin
-    .from('media_assets')
-    .select('id, tenant_id, storage_path, file_type, file_name, deleted_at')
-    .eq('id', assetId)
-    .maybeSingle();
-  if (error || !data || data.deleted_at) return null;
-  return data as MediaAssetRow;
+function storagePathFromPublicUrl(publicUrl: string): string | null {
+  try {
+    const parsed = new URL(publicUrl);
+    const marker = `/storage/v1/object/public/${DEFAULT_BUCKET}/`;
+    const idx = parsed.pathname.indexOf(marker);
+    if (idx === -1) return null;
+    return decodeURIComponent(parsed.pathname.slice(idx + marker.length));
+  } catch {
+    return null;
+  }
 }
 
-function securityHeaders(mimeType: string): HeadersInit {
-  return {
+function securityHeaders(mimeType: string, contentLength?: number): HeadersInit {
+  const headers: Record<string, string> = {
     'Content-Type': mimeType,
     'Cache-Control': `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate=600`,
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'no-referrer',
     'X-Frame-Options': 'DENY',
+    'Access-Control-Allow-Origin': '*',
   };
+  if (contentLength != null) {
+    headers['Content-Length'] = String(contentLength);
+  }
+  return headers;
+}
+
+async function streamAssetBytes(asset: NonNullable<Awaited<ReturnType<typeof loadMediaAssetRecord>>>) {
+  const storagePath =
+    asset.storage_path ||
+    (asset.public_url ? storagePathFromPublicUrl(asset.public_url) : null);
+  if (!storagePath) return null;
+
+  const pathParts = storagePath.split('/');
+  if (hasStoragePathTraversal(pathParts)) return null;
+
+  const admin = createSupabaseAdminClient();
+  const mimeType = asset.file_type || 'application/octet-stream';
+
+  const { data: signed, error: signErr } = await admin.storage
+    .from(DEFAULT_BUCKET)
+    .createSignedUrl(storagePath, 300);
+
+  if (!signErr && signed?.signedUrl) {
+    const upstream = await fetch(signed.signedUrl, { redirect: 'follow' });
+    if (upstream.ok && upstream.body) {
+      const len = upstream.headers.get('content-length');
+      return new NextResponse(upstream.body, {
+        status: 200,
+        headers: securityHeaders(upstream.headers.get('content-type') || mimeType, len ? Number(len) : undefined),
+      });
+    }
+  }
+
+  const { data: blob, error: dlErr } = await admin.storage.from(DEFAULT_BUCKET).download(storagePath);
+  if (dlErr || !blob) return null;
+
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  return new NextResponse(buffer, {
+    status: 200,
+    headers: securityHeaders(mimeType, buffer.length),
+  });
 }
 
 /**
@@ -51,13 +86,8 @@ export async function GET(
     return new NextResponse('Not found', { status: 404 });
   }
 
-  const asset = await loadMediaAsset(assetId);
-  if (!asset?.storage_path) {
-    return new NextResponse('Not found', { status: 404 });
-  }
-
-  const pathParts = asset.storage_path.split('/');
-  if (hasStoragePathTraversal(pathParts)) {
+  const asset = await loadMediaAssetRecord(assetId);
+  if (!asset) {
     return new NextResponse('Not found', { status: 404 });
   }
 
@@ -66,36 +96,11 @@ export async function GET(
     return new NextResponse('Not found', { status: 404 });
   }
 
-  const admin = createSupabaseAdminClient();
-  const mimeType = asset.file_type || 'application/octet-stream';
-
-  const { data: signed, error: signErr } = await admin.storage
-    .from('public-assets')
-    .createSignedUrl(asset.storage_path, SIGNED_URL_TTL_SEC);
-
-  if (!signErr && signed?.signedUrl) {
-    const upstream = await fetch(signed.signedUrl, { redirect: 'follow' });
-    if (upstream.ok && upstream.body) {
-      return new NextResponse(upstream.body, {
-        status: 200,
-        headers: securityHeaders(upstream.headers.get('content-type') || mimeType),
-      });
-    }
-  }
-
-  const { data: blob, error: dlErr } = await admin.storage
-    .from('public-assets')
-    .download(asset.storage_path);
-
-  if (dlErr || !blob) {
+  const response = await streamAssetBytes(asset);
+  if (!response) {
     return new NextResponse('Not found', { status: 404 });
   }
-
-  const buffer = Buffer.from(await blob.arrayBuffer());
-  return new NextResponse(buffer, {
-    status: 200,
-    headers: securityHeaders(mimeType),
-  });
+  return response;
 }
 
 /** HEAD for reachability checks (Facebook/LinkedIn prefetch). */

@@ -130,6 +130,35 @@ test('durable social publish uses SocialPublishingService.publishExistingPost', 
   assert.match(src, /publishExistingPost/);
 });
 
+test('media proxy route does not query missing deleted_at column', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL('../../src/app/api/media/[assetId]/route.ts', import.meta.url),
+    'utf8'
+  );
+  assert.doesNotMatch(src, /deleted_at/);
+});
+
+test('fetchMediaAssetBytes module resolves storage path from public_url fallback', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL('../../src/lib/media/fetchMediaAssetBytes.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(src, /storagePathFromPublicUrl/);
+  assert.match(src, /loadMediaAssetRecord/);
+});
+
+test('Facebook publish uploads branded media as multipart bytes', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL('../../src/lib/social/SocialPublishingService.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(src, /fetchMediaAssetBytes/);
+  assert.match(src, /uploadFacebookPhotoFromBytes/);
+});
+
 test('media proxy route validates UUID and blocks traversal', async () => {
   const fs = await import('node:fs');
   const src = fs.readFileSync(
