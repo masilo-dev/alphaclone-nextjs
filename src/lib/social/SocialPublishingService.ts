@@ -28,6 +28,12 @@ import {
   parseFacebookGraphError,
   sanitizeFacebookPayload,
 } from '@/lib/facebook/parseFacebookGraphError';
+import {
+  uploadFacebookPhotoFromBytes,
+  uploadFacebookVideoFromBytes,
+} from '@/lib/facebook/facebookMediaUpload';
+import { extractMediaAssetIdFromUrl, isBrandedMediaUrl } from '@/lib/media/mediaPublicUrl';
+import { fetchMediaAssetBytes } from '@/lib/media/fetchMediaAssetBytes';
 import type {
   ProviderPublishResult,
   PublishSocialPostInput,
@@ -98,6 +104,72 @@ function buildLinkedInPermalink(postUrn: string | null | undefined): string | nu
 
 function logPublishEvent(event: Record<string, unknown>): void {
   console.info('[SocialPublishingService]', JSON.stringify(redactSecrets(event)));
+}
+
+async function publishFacebookMediaItem(params: {
+  pageId: string;
+  pageAccessToken: string;
+  mediaUrl: string;
+  mediaType: string;
+  caption?: string;
+  published?: boolean;
+}): Promise<
+  | { ok: true; body: Record<string, unknown> }
+  | { ok: false; status: number; body: Record<string, unknown> }
+> {
+  const isVideo =
+    params.mediaType === 'video' ||
+    /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(params.mediaUrl);
+
+  const assetId =
+    isBrandedMediaUrl(params.mediaUrl) ? extractMediaAssetIdFromUrl(params.mediaUrl) : null;
+  if (assetId) {
+    const bytes = await fetchMediaAssetBytes(assetId);
+    if (bytes) {
+      if (isVideo || bytes.mimeType.startsWith('video/')) {
+        return uploadFacebookVideoFromBytes({
+          pageId: params.pageId,
+          pageAccessToken: params.pageAccessToken,
+          buffer: bytes.buffer,
+          mimeType: bytes.mimeType,
+          filename: bytes.filename,
+          description: params.caption,
+        });
+      }
+      return uploadFacebookPhotoFromBytes({
+        pageId: params.pageId,
+        pageAccessToken: params.pageAccessToken,
+        buffer: bytes.buffer,
+        mimeType: bytes.mimeType,
+        filename: bytes.filename,
+        caption: params.caption,
+        published: params.published,
+      });
+    }
+  }
+
+  const endpoint = `https://graph.facebook.com/v21.0/${params.pageId}/${isVideo ? 'videos' : 'photos'}`;
+  const fbBody: Record<string, string> = {
+    access_token: params.pageAccessToken,
+  };
+  if (isVideo) {
+    fbBody.file_url = params.mediaUrl;
+    if (params.caption) fbBody.description = params.caption;
+  } else {
+    fbBody.url = params.mediaUrl;
+    if (params.caption) fbBody.caption = params.caption;
+    if (params.published === false) fbBody.published = 'false';
+  }
+  const res = await fetchWithTimeout(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fbBody),
+  });
+  const body = (await res.json()) as Record<string, unknown>;
+  if (!res.ok || body?.error) {
+    return { ok: false, status: res.status, body };
+  }
+  return { ok: true, body };
 }
 
 function buildFacebookFailureResult(
@@ -404,27 +476,21 @@ export class SocialPublishingService {
               error_code: 'UNSUPPORTED_MEDIA',
             };
           }
-          const uploadRes = await fetchWithTimeout(
-            `https://graph.facebook.com/v21.0/${pageId}/photos`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                url: mediaUrls[i],
-                published: false,
-                access_token: integration.pageAccessToken,
-              }),
-            }
-          );
-          const uploadBody = (await uploadRes.json()) as Record<string, unknown>;
-          if (!uploadRes.ok || uploadBody?.error || !uploadBody?.id) {
+          const uploadResult = await publishFacebookMediaItem({
+            pageId,
+            pageAccessToken: integration.pageAccessToken,
+            mediaUrl: mediaUrls[i],
+            mediaType: mediaTypes[i] || 'image',
+            published: false,
+          });
+          if (!uploadResult.ok || !uploadResult.body?.id) {
             return buildFacebookFailureResult(
-              uploadRes.status,
-              uploadBody,
+              uploadResult.ok ? 502 : uploadResult.status,
+              uploadResult.ok ? { error: { message: 'Facebook multi-photo upload failed' } } : uploadResult.body,
               'Facebook multi-photo upload failed'
             );
           }
-          attached.push({ media_fbid: String(uploadBody.id) });
+          attached.push({ media_fbid: String(uploadResult.body.id) });
         }
         const feedRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/feed`, {
           method: 'POST',
@@ -446,35 +512,39 @@ export class SocialPublishingService {
       } else {
         const mediaUrl = mediaUrls[0];
         const mediaType = mediaTypes[0] || '';
-        const isVideo =
-          mediaType === 'video' ||
-          (typeof mediaUrl === 'string' && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(mediaUrl));
-        const fbBody: Record<string, string> = {
-          access_token: integration.pageAccessToken,
-        };
-        if (post.link_url) fbBody.link = post.link_url;
         if (mediaUrl) {
-          if (isVideo) {
-            fbBody.file_url = mediaUrl;
-            fbBody.description = post.caption;
-          } else {
-            fbBody.url = mediaUrl;
-            fbBody.caption = post.caption;
+          const uploadResult = await publishFacebookMediaItem({
+            pageId,
+            pageAccessToken: integration.pageAccessToken,
+            mediaUrl,
+            mediaType,
+            caption: post.caption,
+          });
+          if (!uploadResult.ok) {
+            return buildFacebookFailureResult(
+              uploadResult.status,
+              uploadResult.body,
+              'Facebook publish failed'
+            );
           }
+          graphResponse = uploadResult.body;
         } else {
-          fbBody.message = post.caption;
-        }
-        const endpoint = mediaUrl
-          ? `https://graph.facebook.com/v21.0/${pageId}/${isVideo ? 'videos' : 'photos'}`
-          : `https://graph.facebook.com/v21.0/${pageId}/feed`;
-        const res = await fetchWithTimeout(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fbBody),
-        });
-        graphResponse = (await res.json()) as Record<string, unknown>;
-        if (!res.ok || graphResponse?.error) {
-          return buildFacebookFailureResult(res.status, graphResponse, 'Facebook publish failed');
+          const feedRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/feed`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: post.caption,
+              access_token: integration.pageAccessToken,
+            }),
+          });
+          graphResponse = (await feedRes.json()) as Record<string, unknown>;
+          if (!feedRes.ok || graphResponse?.error) {
+            return buildFacebookFailureResult(
+              feedRes.status,
+              graphResponse,
+              'Facebook feed publish failed'
+            );
+          }
         }
       }
 
