@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { buildIlikeOrFilter } from '@/lib/db/postgrestFilters';
 
 export type UnifiedContact = {
   id: string;
@@ -48,9 +49,11 @@ export async function getUnifiedContacts(
     contactQuery = contactQuery.eq('status', options.status);
   }
   if (options?.search) {
-    contactQuery = contactQuery.or(
-      `full_name.ilike.%${options.search}%,email.ilike.%${options.search}%`
+    const contactOr = buildIlikeOrFilter(
+      ['full_name', 'email', 'phone'],
+      options.search
     );
+    if (contactOr) contactQuery = contactQuery.or(contactOr);
   }
 
   const { data: contactRows, error: contactErr } = await contactQuery;
@@ -99,9 +102,8 @@ export async function getUnifiedContacts(
     .limit(limit);
 
   if (options?.search) {
-    clientQuery = clientQuery.or(
-      `name.ilike.%${options.search}%,email.ilike.%${options.search}%`
-    );
+    const clientOr = buildIlikeOrFilter(['name', 'email', 'phone'], options.search);
+    if (clientOr) clientQuery = clientQuery.or(clientOr);
   }
 
   const { data: clientRows, error: clientErr } = await clientQuery;

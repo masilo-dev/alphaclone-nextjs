@@ -16,6 +16,8 @@ import {
   listSocialAccounts,
 } from '@/lib/social/identityResolution';
 import { uploadSocialMedia } from '@/lib/social/mediaUpload';
+import { buildPublicMediaUrl, sanitizeMediaForClient } from '@/lib/media/mediaPublicUrl';
+import { normalizePublishMediaArgs } from '@/lib/media/normalizePublishMedia';
 import { CANONICAL_SOCIAL_MCP_TOOLS, SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } from '@/lib/social/types';
 import { resolveMcpActionReadiness } from '@/lib/mcp/actionReadiness';
 import {
@@ -230,30 +232,16 @@ type MediaToolAsset = {
   provider?: string | null;
 };
 
-/** ChatGPT / Claude / connector-friendly media envelope. */
+/** ChatGPT / Claude / connector-friendly media envelope (no raw storage URLs). */
 function mediaToolResult(asset: MediaToolAsset) {
-  const mediaType = asset.mime_type.startsWith('video/')
-    ? 'video'
-    : asset.mime_type === 'application/pdf'
-      ? 'document'
-      : 'image';
-  return {
-    success: true,
-    ok: true,
-    media_id: asset.id,
-    media_asset_id: asset.id,
-    media_url: asset.url,
-    storage_url: asset.url,
-    public_url: asset.url,
-    asset_id: asset.id,
-    filename: asset.filename,
+  return sanitizeMediaForClient({
+    id: asset.id,
     mime_type: asset.mime_type,
-    media_type: mediaType,
     size_bytes: asset.size_bytes,
-    thumbnail_url: asset.thumbnail_url || null,
-    provider: asset.provider || 'supabase',
-    asset,
-  };
+    status: asset.status,
+    width: asset.width,
+    height: asset.height,
+  });
 }
 
 function rejectLocalAiPaths(value: string | undefined, field: string) {
@@ -297,7 +285,15 @@ registerTool('social-publishing', {
     const asset = await uploadSocialMedia({ tenantId, userId, filename: `bonnie-${crypto.randomUUID()}.png`, mimeType: 'image/png', contentBase64: base64, altText: args.alt_text });
     const { executeTool } = await import('../tool-registry');
     const post = await executeTool(tenantId, userId, 'create_social_post', { tenant_id: tenantId, platform: args.platform, platforms: [args.platform], identity_type: args.identity_type, identity_id: args.identity_id, caption: args.caption, media_asset_ids: [asset.media_asset_id], publish_now: args.publish_now, scheduled_at: args.scheduled_at });
-    return { generated: true, model, revised_prompt: payload?.data?.[0]?.revised_prompt || null, media_id: asset.media_asset_id, media_url: asset.public_url, post, verification: { image_stored: Boolean(asset.public_url), post_action_returned: Boolean(post) } };
+    return {
+      generated: true,
+      model,
+      revised_prompt: payload?.data?.[0]?.revised_prompt || null,
+      media_asset_id: asset.media_asset_id,
+      media_url: buildPublicMediaUrl(asset.media_asset_id),
+      post,
+      verification: { media_ready: true, post_action_returned: Boolean(post) },
+    };
   },
 });
 
@@ -305,7 +301,7 @@ defineConnectorTool({
   module: 'social-publishing',
   name: 'upload_social_media',
   description:
-    'Canonical MCP media ingestion for social publishing. Accept file bytes, base64 content, data URL, or remote HTTPS source URL. Ingests media into AlphaClone permanent storage and returns media_id + public/signed HTTPS media_url for publish_post / publish_social_post. Handles ChatGPT session files and generated images; never pass /mnt/data paths.',
+    'Canonical MCP media ingestion for social publishing. Accept file bytes, base64 content, data URL, or remote HTTPS source URL. Returns media_asset_id and a branded media_url (/api/media/:id) for publish_post / publish_social_post. Never pass /mnt/data paths or raw storage URLs.',
   permission: 'social:write',
   rateLimitClass: 'heavy',
   auditAction: 'mcp_upload_social_media',
@@ -430,11 +426,10 @@ defineConnectorTool({
           status: 'completed',
           entity_id: asset.id,
           entity_type: 'media_asset',
-          live_url: asset.url,
+          live_url: buildPublicMediaUrl(asset.id),
           timestamp: new Date().toISOString(),
           verification: {
-            permanent_public_url: Boolean(asset.url),
-            signed_url: asset.url,
+            media_ready: true,
             mime_type: asset.mime_type,
             size_bytes: asset.size_bytes,
           },
@@ -551,29 +546,24 @@ defineConnectorTool({
 
       return okResult(
         'upload_media',
-        {
-          media_asset_id: asset.id,
-          media_id: asset.id,
-          media_url: asset.url,
-          public_url: asset.url,
-          filename: asset.filename,
+        sanitizeMediaForClient({
+          id: asset.id,
           mime_type: asset.mime_type,
           size_bytes: asset.size_bytes,
+          status: asset.status,
           width: asset.width,
           height: asset.height,
-          checksum: asset.checksum,
-          status: asset.status,
-        },
+        }),
         {
           receipt: {
             action_id: asset.id,
             status: 'completed',
             entity_id: asset.id,
             entity_type: 'media_asset',
-            live_url: asset.url,
+            live_url: buildPublicMediaUrl(asset.id),
             timestamp: new Date().toISOString(),
             verification: {
-              permanent_public_url: Boolean(asset.url),
+              media_ready: true,
               mime_type: asset.mime_type,
               size_bytes: asset.size_bytes,
             },
@@ -697,21 +687,16 @@ registerTool('social-publishing', {
     const { data, error } = await query;
     if (error) throw new Error(error.message);
     return {
-      assets: (data || []).map((row) => ({
-        asset_id: row.id,
-        filename: row.file_name,
-        mime_type: row.file_type,
-        asset_type: row.asset_type,
-        size_bytes: row.file_size_bytes,
-        media_url: row.public_url,
-        thumbnail_url: row.thumbnail_url || null,
-        width: row.width,
-        height: row.height,
-        checksum: row.checksum_sha256,
-        provider: row.storage_provider || 'supabase',
-        status: row.status || 'ready',
-        created_at: row.created_at,
-      })),
+      assets: (data || []).map((row) =>
+        sanitizeMediaForClient({
+          id: row.id,
+          mime_type: row.file_type || 'application/octet-stream',
+          size_bytes: row.file_size_bytes || 0,
+          status: row.status || 'ready',
+          width: row.width,
+          height: row.height,
+        })
+      ),
     };
   },
 });
@@ -770,9 +755,8 @@ registerTool('social-publishing', {
       success: true,
       ok: true,
       deleted: true,
-      media_id: assetId,
       media_asset_id: assetId,
-      media_url: asset.public_url || null,
+      status: 'deleted',
     };
   },
 });
@@ -1083,23 +1067,23 @@ defineConnectorTool({
       }
     }
 
-    // Process media inputs
-    const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+    const normalized = normalizePublishMediaArgs(args as Record<string, unknown>);
+    if (normalized.rejected.length) {
+      throwConnectorError('INVALID_MEDIA', normalized.rejected[0]);
+    }
+
     const contentBase64 = args.content_base64 || args.file_base64 || args.file;
     const sourceUrl = args.source_url || args.url || args.media_url;
     const filename = args.filename || args.file_name;
     const mimeType = args.mime_type || args.content_type;
 
-    const finalMediaAssetIds: string[] = [
-      ...(args.media_asset_ids || []),
-      ...(args.asset_ids || []),
-      ...(args.asset_id ? [args.asset_id] : []),
-    ];
-    const finalMediaUrls: string[] = [...(args.media_urls || [])];
+    const finalMediaAssetIds: string[] = [...normalized.mediaAssetIds];
+    const finalMediaUrls: string[] = [...normalized.mediaUrls];
 
     const hasRawMediaInput = Boolean(contentBase64 || args.data_url || sourceUrl);
 
     if (hasRawMediaInput) {
+      const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
       rejectLocalAiPaths(sourceUrl, 'source_url');
       rejectLocalAiPaths(contentBase64, 'content_base64');
       rejectLocalAiPaths(args.data_url, 'data_url');
@@ -1130,8 +1114,9 @@ defineConnectorTool({
           purpose: 'social_post',
           media: mediaInput,
         });
-        if (asset?.id) finalMediaAssetIds.push(asset.id);
-        if (asset?.url) finalMediaUrls.push(asset.url);
+        if (asset?.id && !finalMediaAssetIds.includes(asset.id)) {
+          finalMediaAssetIds.push(asset.id);
+        }
       } catch (err: any) {
         // STRICT RULE: If media input was supplied but ingestion failed, DO NOT publish text-only!
         throwConnectorError(
@@ -1166,8 +1151,8 @@ defineConnectorTool({
       identityType,
       identityId: identityId || '',
       caption,
-      mediaUrls: finalMediaUrls.length > 0 ? finalMediaUrls : undefined,
       mediaAssetIds: finalMediaAssetIds.length > 0 ? finalMediaAssetIds : undefined,
+      mediaUrls: finalMediaUrls.length > 0 ? finalMediaUrls : undefined,
       publishNow,
       scheduledAt: args.scheduled_at || null,
       idempotencyKey: args.idempotency_key,

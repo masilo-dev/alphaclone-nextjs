@@ -5,6 +5,7 @@
 
 import { createHash } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { buildPublicMediaUrl } from '@/lib/media/mediaPublicUrl';
 import type { MediaAssetResult } from './types';
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15 MB
@@ -372,7 +373,7 @@ export async function resolveMediaUrls(params: {
       if (!row.public_url || isDataUri(row.public_url)) {
         throw new Error(`media_asset ${id} has no provider-fetchable URL`);
       }
-      urls.push(row.public_url);
+      urls.push(buildPublicMediaUrl(row.id));
       assetIds.push(row.id);
       types.push(row.asset_type || (String(row.file_type || '').startsWith('video/') ? 'video' : 'image'));
     }
@@ -391,7 +392,7 @@ export async function resolveMediaUrls(params: {
         mimeType: extracted.mimeType || 'image/png',
         contentBase64: extracted.base64 || '',
       });
-      urls.push(uploaded.public_url);
+      urls.push(buildPublicMediaUrl(uploaded.media_asset_id));
       assetIds.push(uploaded.media_asset_id);
       types.push(uploaded.mime_type.startsWith('video/') ? 'video' : 'image');
       continue;

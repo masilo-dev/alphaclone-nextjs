@@ -27,36 +27,83 @@ registerTool('bonnie-approvals', {
   },
   handler: async (args) => {
     const admin = createSupabaseAdminClient();
-    const { data, error } = await admin
+    const limit = args.limit ?? 20;
+
+    const { data: runnerRows, error: runnerErr } = await admin
       .from('autonomous_runner_approvals')
       .select('id, action_key, risk_level, status, reason, payload, created_at, workflow_id')
       .eq('tenant_id', args.tenant_id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
-      .limit(args.limit ?? 20);
+      .limit(limit);
 
-    if (error) throw new Error(`Failed to list approvals: ${error.message}`);
+    if (runnerErr) throw new Error(`Failed to list approvals: ${runnerErr.message}`);
 
-    const items = (data || []).map((row) => {
+    const { data: agentRows, error: agentErr } = await admin
+      .from('agent_approvals')
+      .select('id, task_id, run_id, proposed_action, status, created_at, runner_approval_id')
+      .eq('tenant_id', args.tenant_id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (agentErr) {
+      console.warn('[list_pending_approvals] agent_approvals query failed:', agentErr.message);
+    }
+
+    const seen = new Set<string>();
+    const items: Array<Record<string, unknown>> = [];
+
+    for (const row of runnerRows || []) {
+      seen.add(String(row.id));
       const payload = (row.payload || {}) as Record<string, unknown>;
-      return {
+      items.push({
         approval_id: row.id,
+        source: 'autonomous_runner_approvals',
         tool: payload.tool || payload.toolName || row.action_key,
         risk_level: row.risk_level || 'medium',
         created_at: row.created_at,
         summary: payload.summary || payload.reason || row.reason || null,
         preview: payload.preview || null,
-        args: payload.args || null,
-      };
-    });
+        args: payload.args || payload.proposed_action || null,
+      });
+    }
+
+    for (const row of agentRows || []) {
+      if (row.runner_approval_id && seen.has(String(row.runner_approval_id))) continue;
+      if (seen.has(String(row.id))) continue;
+      const proposed = (row.proposed_action || {}) as Record<string, unknown>;
+      items.push({
+        approval_id: row.runner_approval_id || row.id,
+        agent_approval_id: row.id,
+        source: 'agent_approvals',
+        tool: proposed.tool || proposed.toolName || proposed.task_type || 'bonnie_task',
+        risk_level: 'high',
+        created_at: row.created_at,
+        summary: proposed.summary || proposed.reason || null,
+        preview: proposed.preview || null,
+        args: proposed,
+        task_id: row.task_id,
+        run_id: row.run_id,
+      });
+    }
+
+    items.sort(
+      (a, b) =>
+        new Date(String(b.created_at)).getTime() - new Date(String(a.created_at)).getTime()
+    );
 
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-          success: true,
-          pending_count: items.length,
-          approvals: items,
+          ok: true,
+          tool: 'list_pending_approvals',
+          data: {
+            pending_count: items.length,
+            approvals: items.slice(0, limit),
+          },
+          error: null,
           hint: items.length
             ? 'Call approve_pending_action with approval_id to execute, or reject_pending_action to cancel.'
             : 'No pending approvals.',

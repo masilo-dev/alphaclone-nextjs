@@ -32,6 +32,9 @@ import { getFacebookTokens } from '@/services/facebook/facebookIntegrationServic
 import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import { sendScheduledCampaignServer } from '../../lib/server/sendScheduledCampaignServer';
+import { ensureEmailProviderReady } from '../../lib/mcp/ensureEmailProviderReady';
+import { shouldUseMcpDirectExecution } from '../../lib/mcp/mcpDirectExecution';
+import { executeBatchOutreach } from '../../lib/mcp/executeBatchOutreach';
 import Anthropic from '@anthropic-ai/sdk';
 import { routeAutonomousTask, cleanProfessionalContent, type AIStrengthTask } from '../aiRouter';
 import { PROFESSIONAL_GUARDRAILS } from '../ai/autonomousGuardrails';
@@ -1670,25 +1673,13 @@ class AlphaCloneMCPServer {
           if (typeof query !== 'string' || !query.trim()) {
             throw new Error('query is required');
           }
-          const q = `%${query.trim()}%`;
-          const { data, error } = await supabaseAdmin
-            .from('business_clients')
-            .select('id, name, email, phone, industry, location, sales_stage, value, website, is_active, created_at')
-            .eq('tenant_id', tenant_id)
-            .eq('is_active', true)
-            .or(`name.ilike.${q},email.ilike.${q},phone.ilike.${q},website.ilike.${q},location.ilike.${q}`)
-            .order('created_at', { ascending: false })
-            .limit(Math.min(Number(limit) || 100, 1000));
-          if (error) throw supabaseErrorToMcpClientError('search_clients', error.message);
+          const { searchBusinessClients } = await import('@/lib/crm/searchBusinessClients');
+          const data = await searchBusinessClients(supabaseAdmin, tenant_id, query, limit);
           result = {
             content: [
               {
                 type: 'text',
-                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
-              },
-              {
-                type: 'text',
-                text: JSON.stringify(data || [], null, 2),
+                text: JSON.stringify({ ok: true, tool: 'search_clients', data: { items: data, count: data.length }, error: null }, null, 2),
               },
             ],
           };
@@ -2811,6 +2802,15 @@ class AlphaCloneMCPServer {
           const campaignQuality = campaignQualityCheck(String(body_html || ''));
           const languageWarnings = campaignQuality.warnings;
 
+          if (publish_now) {
+            if (!shouldUseMcpDirectExecution('create_bulk_email_campaign')) {
+              throw new Error(
+                'Campaign durable queue is not implemented for MCP. Unset MCP_BULK_EMAIL_DURABLE to send directly in chat.',
+              );
+            }
+            await ensureEmailProviderReady(tenant_id, createdByUserId);
+          }
+
           if (publish_now && blocksBonnieSend(campaignQuality.score)) {
             throw new Error(
               `Campaign quality score ${campaignQuality.score}/100 — rewrite before send. Issues: ${languageWarnings.join('; ')}`
@@ -2818,18 +2818,24 @@ class AlphaCloneMCPServer {
           }
 
           if (publish_now) {
-             actionText = `Campaign "${campaignName}" created and queued to send to ${recipients.length} recipients with provider balancing.`;
              const sendResult = await sendScheduledCampaignServer(campaign.id);
              if (!sendResult.success) {
                throw new Error(sendResult.error || 'Campaign send failed');
              }
-             actionText = `Campaign "${campaignName}" created and sent to ${recipients.length} recipients.`;
+             actionText = `Campaign "${campaignName}" created and sent to ${recipients.length} recipients (direct execution).`;
           }
 
           result = { content: [{ type: 'text', text: JSON.stringify({
-            message: actionText,
-            campaign_id: campaign.id,
-            ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+            ok: true,
+            tool: 'create_bulk_email_campaign',
+            data: {
+              message: actionText,
+              campaign_id: campaign.id,
+              recipient_count: recipients.length,
+              publish_now: Boolean(publish_now),
+              execution_mode: publish_now ? 'direct' : 'draft',
+              ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+            },
           }, null, 2) }] };
           break;
         }
@@ -2850,6 +2856,15 @@ class AlphaCloneMCPServer {
             throw supabaseErrorToMcpClientError('queue_email_campaign_send', campaignErr?.message || 'Campaign not found');
           }
 
+          if (!shouldUseMcpDirectExecution('queue_email_campaign_send')) {
+            throw new Error(
+              'Campaign durable queue is not implemented for MCP. Unset MCP_BULK_EMAIL_DURABLE to send directly in chat.',
+            );
+          }
+
+          const userId = this.ctx?.userId || this.requireProfileUser(a);
+          await ensureEmailProviderReady(tenant_id, userId);
+
           const campaignBody = String((campaign as any)?.metadata?.bodyHtml || '');
           const preSendQuality = campaignQualityCheck(campaignBody);
           if (blocksBonnieSend(preSendQuality.score)) {
@@ -2857,12 +2872,6 @@ class AlphaCloneMCPServer {
               `Campaign quality score ${preSendQuality.score}/100 — rewrite before send. Issues: ${preSendQuality.warnings.join('; ')}`
             );
           }
-
-          await supabaseAdmin
-            .from('email_campaigns')
-            .update({ status: 'queued', queued_at: new Date().toISOString() })
-            .eq('tenant_id', tenant_id)
-            .eq('id', campaignId);
 
           const sendResult = await sendScheduledCampaignServer(campaignId);
           if (!sendResult.success) {
@@ -2873,13 +2882,17 @@ class AlphaCloneMCPServer {
 
           result = {
             content: [{ type: 'text', text: JSON.stringify({
-              campaign_id: campaignId,
-              campaign_name: campaign.name,
-              status: 'sent',
-              total_recipients: campaign.total_recipients || 0,
-              provider_routing: 'AlphaClone used connected providers through sendEmail fallback.',
-              quality_score: preSendQuality.score,
-              ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+              ok: true,
+              tool: 'queue_email_campaign_send',
+              data: {
+                campaign_id: campaignId,
+                campaign_name: campaign.name,
+                status: 'sent',
+                execution_mode: 'direct',
+                total_recipients: campaign.total_recipients || 0,
+                quality_score: preSendQuality.score,
+                ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+              },
             }, null, 2) }],
           };
           break;
@@ -2934,43 +2947,29 @@ class AlphaCloneMCPServer {
 
         case 'send_batch_outreach': {
           const a = args as Record<string, any>;
-          if (this.ctx?.internalQueueWorker !== true) {
-            throw new Error(
-              'Batch outreach must be reviewed and queued through the workspace batch-review flow before delivery.'
-            );
-          }
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { lead_ids = [], client_ids = [], tone = 'professional', custom_context = '', delivery_provider = 'sendgrid' } = a;
-          const batchLanguage = resolveCampaignLanguage({
-            languageMode: a.language_mode,
-            language: a.language,
-          });
-          
-          if (lead_ids.length === 0 && client_ids.length === 0) {
-            throw new Error('Provide at least one lead_id or client_id');
-          }
-          if (batchLanguage.mustAsk) {
-            throw new Error('language_mode is "ask". Ask the user which language to use before sending outreach, then call this tool again with language or language_mode set to that language code.');
-          }
-          
-          const recipientCount = new Set(lead_ids).size + new Set(client_ids).size;
-          if (recipientCount > 120) {
-            throw new Error('Batch outreach is limited to 120 recipients. Split the selection into smaller reviewed batches.');
-          }
-          if (a.final_confirmation !== true) {
-            throw new Error('A reviewed final confirmation is required before batch outreach can be queued or sent.');
-          }
-          const CHUNK_SIZE = 3;
-          const processInline = a.process_inline === true;
+          const isQueueWorker = this.ctx?.internalQueueWorker === true;
+          const useDirect = shouldUseMcpDirectExecution('send_batch_outreach');
 
-          if (!processInline) {
+          if (!isQueueWorker && !useDirect) {
+            const lead_ids = Array.isArray(a.lead_ids) ? a.lead_ids : [];
+            const client_ids = Array.isArray(a.client_ids) ? a.client_ids : [];
+            const recipientCount = new Set(lead_ids).size + new Set(client_ids).size;
+            if (!recipientCount) throw new Error('Provide at least one lead_id or client_id');
+            if (a.final_confirmation !== true) {
+              throw new Error('Set final_confirmation: true after reviewing recipients before queuing batch outreach.');
+            }
+            const batchLanguage = resolveCampaignLanguage({
+              languageMode: a.language_mode,
+              language: a.language,
+            });
             const batchId = await enqueueMcpEvent(supabaseAdmin, tenant_id, user_id, 'send_batch_outreach', {
               lead_ids,
               client_ids,
-              tone,
-              custom_context,
-              delivery_provider,
+              tone: a.tone || 'professional',
+              custom_context: a.custom_context || '',
+              delivery_provider: a.delivery_provider || 'sendgrid',
               language_mode: batchLanguage.code,
               final_confirmation: true,
               reviewed_at: typeof a.reviewed_at === 'string' ? a.reviewed_at : new Date().toISOString(),
@@ -2979,125 +2978,42 @@ class AlphaCloneMCPServer {
               content: [{
                 type: 'text',
                 text: JSON.stringify({
-                  status: 'queued',
-                  batch_id: batchId,
-                  job_id: batchId,
-                  message: `Batch outreach queued for ${recipientCount} recipients. Personalization and sends will run server-side. Poll the MCP event queue/dashboard outreach log for delivery.`,
-                  recipient_count: recipientCount,
+                  ok: true,
+                  tool: 'send_batch_outreach',
+                  data: {
+                    status: 'queued',
+                    execution_mode: 'durable',
+                    batch_id: batchId,
+                    job_id: batchId,
+                    recipient_count: recipientCount,
+                    message: `Batch outreach queued for ${recipientCount} recipients. Requires cron worker (MCP_BULK_OUTREACH_DURABLE=true).`,
+                  },
                 }, null, 2),
               }],
             };
             break;
           }
-          
-          const [{ data: leads }, { data: clients }] = await Promise.all([
-            lead_ids.length
-              ? supabaseAdmin.from('leads').select('*').in('id', [...new Set(lead_ids)]).eq('tenant_id', tenant_id)
-              : Promise.resolve({ data: [] }),
-            client_ids.length
-              ? supabaseAdmin.from('business_clients').select('*').in('id', [...new Set(client_ids)]).eq('tenant_id', tenant_id)
-              : Promise.resolve({ data: [] }),
-          ]);
-            
-          const allEntities = [...(leads || []), ...(clients || [])];
-          
-          if (allEntities.length === 0) {
-            throw new Error('No valid leads or clients found for the provided IDs');
-          }
 
-          const results: Array<Record<string, unknown>> = [];
-          for (let i = 0; i < allEntities.length; i += CHUNK_SIZE) {
-            const chunk = allEntities.slice(i, i + CHUNK_SIZE);
-            const chunkResults = await Promise.all(chunk.map(async (entity) => {
-             const email = entity.email || (Array.isArray((entity as any).emails) ? (entity as any).emails[0] : null) || (entity as any).contact_email;
-             if (!email || !String(email).includes('@')) {
-               return {
-                 name: entity.business_name || entity.name,
-                 status: 'failed',
-                 error: 'No direct email found on this record. Add a verified email address before retrying.',
-               };
-             }
-             const metadata = ((entity as any).metadata && typeof (entity as any).metadata === 'object')
-               ? (entity as any).metadata as Record<string, unknown>
-               : {};
-             const hasMarketingConsent = (entity as any).marketing_opt_in === true ||
-               (entity as any).email_opt_in === true ||
-               metadata.marketing_opt_in === true ||
-               metadata.email_opt_in === true ||
-               metadata.marketingConsent === true;
-             if (!hasMarketingConsent) {
-               return {
-                 name: entity.business_name || entity.name,
-                 status: 'failed',
-                 error: 'Marketing consent is not recorded for this recipient.',
-               };
-             }
-             if (await isEmailSuppressed(tenant_id, String(email).trim().toLowerCase())) {
-               return {
-                 name: entity.business_name || entity.name,
-                 status: 'failed',
-                 error: 'Recipient is suppressed or unsubscribed.',
-               };
-             }
-             
-             try {
-                const prompt = `Generate a highly personalized, professional B2B outreach email for ${entity.business_name || entity.name}.
-                Industry: ${entity.industry || 'Business'}.
-                Target Tone: ${tone}.
-                User Context: ${custom_context}.
-                Business Context: ${JSON.stringify(entity.metadata || {})}.
-                ${getCampaignLanguageInstruction({
-                  languageMode: batchLanguage.code,
-                  country: (entity as any).country,
-                  countryCode: (entity as any).country_code,
-                  address: (entity as any).address,
-                  company: entity.business_name || entity.name,
-                })}
-                
-                Rules:
-                - Max 120 words.
-                - Professional, punchy subject line.
-                - NO emojis.
-                - Clear CTA.`;
-                
-                const aiRes = await routeAutonomousTask('social_caption', prompt);
-                
-                const emailResult = await sendEmailServer({
-                  tenantId: tenant_id,
-                  userId: user_id,
-                  to: email,
-                  subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
-                  html: aiRes.content,
-                  fromName: 'AlphaClone Outreach',
-                  preferredProvider: delivery_provider as any,
-                  templateName: 'mcpAiOutreach',
-                });
-                if (!emailResult.success) throw new Error(emailResult.error || 'Outreach email failed');
+          const output = await executeBatchOutreach(
+            {
+              lead_ids: a.lead_ids,
+              client_ids: a.client_ids,
+              tone: a.tone,
+              custom_context: a.custom_context,
+              delivery_provider: a.delivery_provider,
+              language_mode: a.language_mode,
+              language: a.language,
+              final_confirmation: a.final_confirmation,
+              dry_run: a.dry_run,
+            },
+            { tenantId: tenant_id, userId: user_id },
+          );
 
-                await supabaseAdmin.from('lead_outreach_log').insert({
-                  tenant_id,
-                  user_id,
-                  lead_name: entity.business_name || entity.name,
-                  lead_email: email,
-                  subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
-                  body_html: aiRes.content,
-                  status: 'sent',
-                  provider: emailResult.provider,
-                });
-                
-                return { name: entity.business_name || entity.name, status: 'sent', language: batchLanguage.code, provider: emailResult.provider, email_id: emailResult.emailId };
-             } catch (err: any) {
-                return { name: entity.business_name || entity.name, status: 'failed', error: err.message };
-             }
-            }));
-            results.push(...chunkResults);
-          }
-          
-          result = { 
-            content: [{ 
-              type: 'text', 
-              text: `AI Outreach Batch complete. Sent to ${results.filter(r => r.status === 'sent').length}/${results.length} entities.\n\nResults: ${JSON.stringify(results, null, 2)}` 
-            }] 
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ ok: true, tool: 'send_batch_outreach', data: output }, null, 2),
+            }],
           };
           break;
         }
@@ -6783,6 +6699,17 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
           const dryRun = a.dry_run !== false;
+          if (!dryRun && a.confirm_send !== true) {
+            throw new Error('Set confirm_send: true after reviewing a dry run before sending bulk email');
+          }
+          if (!dryRun) {
+            if (!shouldUseMcpDirectExecution('send_bulk_email_campaign')) {
+              throw new Error(
+                'Bulk email durable queue is not implemented for MCP. Unset MCP_BULK_EMAIL_DURABLE to send directly in chat.',
+              );
+            }
+            await ensureEmailProviderReady(tenant_id, user_id);
+          }
           const clientIds = Array.isArray(a.client_ids) ? a.client_ids.map((id) => String(id || '').trim()).filter((id) => isUuidString(id)) : [];
           const subject = String(a.subject || '').trim();
           if (!clientIds.length || !subject) throw new Error('client_ids and subject are required');
@@ -6816,7 +6743,19 @@ class AlphaCloneMCPServer {
               }
             }
           }
-          result = { content: [{ type: 'text', text: JSON.stringify({ dry_run: dryRun, requested: clientIds.length, processed: itemResults.length, items: itemResults }, null, 2) }] };
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            ok: true,
+            tool: 'send_bulk_email_campaign',
+            data: {
+              dry_run: dryRun,
+              execution_mode: dryRun ? 'simulated' : 'direct',
+              requested: clientIds.length,
+              processed: itemResults.length,
+              sent: itemResults.filter((item) => item.status === 'sent').length,
+              failed: itemResults.filter((item) => item.status === 'failed').length,
+              items: itemResults,
+            },
+          }, null, 2) }] };
           break;
         }
 
@@ -6939,10 +6878,15 @@ class AlphaCloneMCPServer {
                     content: [{
                       type: 'text',
                       text: JSON.stringify({
-                        error: 'CIRCUIT_OPEN',
-                        provider: 'zoho',
-                        message: 'Zoho mailbox reads paused after repeated failures. Reconnect Zoho in Settings.',
-                        consecutive_failures: paused.consecutiveFailures,
+                        ok: false,
+                        tool: 'get_zoho_mail_messages',
+                        data: null,
+                        error: {
+                          code: 'CIRCUIT_OPEN',
+                          provider: 'zoho',
+                          message: 'Zoho mailbox reads paused after repeated failures. Reconnect Zoho in Settings.',
+                          consecutive_failures: paused.consecutiveFailures,
+                        },
                       }, null, 2),
                     }],
                     isError: true,
@@ -6950,7 +6894,21 @@ class AlphaCloneMCPServer {
                   break;
                 }
               }
-              throw err;
+              result = {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    ok: false,
+                    tool: 'get_zoho_mail_messages',
+                    data: null,
+                    error: {
+                      code: 'PROVIDER_ERROR',
+                      message: err?.message || 'Zoho mailbox read failed',
+                    },
+                  }, null, 2),
+                }],
+                isError: true,
+              };
             }
           }
           break;
@@ -7701,23 +7659,31 @@ Return ONLY a JSON array of 60 objects:
         case 'get_calendly_status': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { data: tenant, error } = await supabaseAdmin
-            .from('tenants')
-            .select('settings')
-            .eq('id', tenant_id)
-            .maybeSingle();
-          if (error) throw supabaseErrorToMcpClientError('get_calendly_status', error.message);
-          const settings = (tenant?.settings || {}) as Record<string, any>;
+          const { getTenantIntegrationSnapshot } = await import('@/services/integrationStatusService');
+          const { getCalendlyConfig } = await import('../calendly/calendlyIntegrationService');
+          const [snapshot, privateCalendly, tenantRow] = await Promise.all([
+            getTenantIntegrationSnapshot(tenant_id),
+            getCalendlyConfig(supabaseAdmin, tenant_id),
+            supabaseAdmin.from('tenants').select('settings').eq('id', tenant_id).maybeSingle(),
+          ]);
+          const settings = ((tenantRow.data?.settings || {}) as Record<string, any>);
           const calendly = settings.calendly || {};
           const booking = settings.booking || {};
-          const { getCalendlyConfig } = await import('../calendly/calendlyIntegrationService');
-          const privateCalendly = await getCalendlyConfig(supabaseAdmin, tenant_id);
+          const calendlyRow = snapshot.optional_integrations.find((i) => i.key === 'calendly');
+          const bookingReady = snapshot.overall.booking_ready;
           result = { content: [{ type: 'text', text: JSON.stringify({
-            calendly_connected: Boolean(privateCalendly?.accessToken && privateCalendly.calendlyUserUri),
+            calendly_connected: Boolean(
+              calendlyRow?.connected ||
+              (privateCalendly?.accessToken && privateCalendly.calendlyUserUri)
+            ),
+            booking_ready: bookingReady,
             calendly_event_url: calendly.eventUrl || null,
             local_booking_enabled: Boolean(booking.enabled && booking.slug),
             local_booking_url: booking.slug ? `${(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://')}/book/${booking.slug}` : null,
-            recommended: calendly.enabled ? 'Run sync_calendly_events to import bookings into AlphaClone calendar.' : 'Connect Calendly or enable the native AlphaClone booking link in Meetings settings.',
+            integration_snapshot_generated_at: snapshot.generated_at,
+            recommended: bookingReady
+              ? 'Run sync_calendly_events to import bookings into AlphaClone calendar.'
+              : 'Connect Cal.com or Calendly, or enable the native AlphaClone booking link in Meetings settings.',
           }, null, 2) }] };
           break;
         }

@@ -11,6 +11,7 @@ import type { OutboundEmailProvider } from '@/lib/email/sendEmail';
 import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
 import { executeMcpWrite } from '@/lib/mcp/executionGateway';
 import { isDurableRuntimeEnabled } from '@/lib/bonnie/runtime/types';
+import { shouldUseMcpDirectExecution } from '@/lib/mcp/mcpDirectExecution';
 import { enqueueEmailSendTask } from '@/lib/email/durableEmailTask';
 import { processNormalizedTrigger } from '@/lib/bonnie/runtime/triggerGateway';
 import { ingestMediaInput } from '@/lib/media/ingestMedia';
@@ -339,6 +340,17 @@ defineConnectorTool({
 
     const attachments = await attachmentsFromMedia(tenantId, userId, args.attachments);
 
+    const { resolveMcpActionReadiness } = await import('@/lib/mcp/actionReadiness');
+    const readiness = await resolveMcpActionReadiness({ tenantId, userId, action: 'email_send' });
+    if (!readiness.email_send?.executable) {
+      throwConnectorError(
+        'PROVIDER_MISSING',
+        readiness.email_send?.setup_hint ||
+          'Connect Zoho, Gmail, Brevo, or another email provider in Settings → Integrations before sending.',
+        { missing: readiness.email_send?.missing }
+      );
+    }
+
     const preferredOutbound: OutboundEmailProvider | undefined =
       args.provider === 'zoho' ||
       args.provider === 'brevo' ||
@@ -349,49 +361,53 @@ defineConnectorTool({
         ? args.provider
         : undefined;
 
-    if (isDurableRuntimeEnabled()) {
-      await processNormalizedTrigger({
-        tenant_id: tenantId,
-        user_id: userId,
-        trigger_type: 'api_request',
-        event_type: 'email.send',
-        source: 'mcp:send_email',
-        correlation_id: idempotencyKey,
-        deduplication_key: idempotencyKey,
-        payload: {
-          to: recipient.email,
-          subject: args.subject,
-          durable: true,
-        },
-      }).catch(() => undefined);
+    if (isDurableRuntimeEnabled() && !shouldUseMcpDirectExecution('send_email')) {
+      try {
+        await processNormalizedTrigger({
+          tenant_id: tenantId,
+          user_id: userId,
+          trigger_type: 'api_request',
+          event_type: 'email.send',
+          source: 'mcp:send_email',
+          correlation_id: idempotencyKey,
+          deduplication_key: idempotencyKey,
+          payload: {
+            to: recipient.email,
+            subject: args.subject,
+            durable: true,
+          },
+        }).catch(() => undefined);
 
-      const enqueued = await enqueueEmailSendTask({
-        tenantId,
-        userId,
-        idempotencyKey,
-        payload: {
-          to: recipient.email,
-          subject: args.subject,
-          text: args.text,
-          provider: preferredOutbound,
-          recipient_name: args.recipient_name,
-        },
-      });
+        const enqueued = await enqueueEmailSendTask({
+          tenantId,
+          userId,
+          idempotencyKey,
+          payload: {
+            to: recipient.email,
+            subject: args.subject,
+            text: args.text,
+            provider: preferredOutbound,
+            recipient_name: args.recipient_name,
+          },
+        });
 
-      return okResult(
-        'send_email',
-        {
-          status: 'queued',
-          run_id: enqueued.runId,
-          task_id: enqueued.taskId,
-          durable: true,
-          poll_tool: 'get_outcome_status',
-          delivery_status: 'queued',
-          recipient: recipient.email,
-          idempotency_key: idempotencyKey,
-        },
-        { meta: { durable: true, idempotency_key: idempotencyKey } }
-      );
+        return okResult(
+          'send_email',
+          {
+            status: 'queued',
+            run_id: enqueued.runId,
+            task_id: enqueued.taskId,
+            durable: true,
+            poll_tool: 'get_outcome_status',
+            delivery_status: 'queued',
+            recipient: recipient.email,
+            idempotency_key: idempotencyKey,
+          },
+          { meta: { durable: true, idempotency_key: idempotencyKey } }
+        );
+      } catch (durableErr) {
+        console.warn('[send_email] Durable enqueue failed; falling back to direct send:', durableErr);
+      }
     }
 
     const gatewayResult = await executeMcpWrite({

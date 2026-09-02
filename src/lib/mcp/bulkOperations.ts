@@ -1,6 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { preflightOutreachRecipients } from '@/lib/email/preflightRecipients';
+import { ensureEmailProviderReady } from '@/lib/mcp/ensureEmailProviderReady';
+import { shouldUseMcpDirectExecution } from '@/lib/mcp/mcpDirectExecution';
 import { ingestMediaInput } from '@/lib/media/ingestMedia';
 import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
@@ -396,6 +398,14 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
   if (!dryRun && args.confirm_send !== true) {
     throw new Error('Set confirm_send: true after reviewing a dry run before sending bulk email');
   }
+  if (!dryRun) {
+    if (!shouldUseMcpDirectExecution('send_bulk_email')) {
+      throw new Error(
+        'Bulk email durable queue is not implemented for MCP. Unset MCP_BULK_EMAIL_DURABLE to send directly in chat.',
+      );
+    }
+    await ensureEmailProviderReady(ctx.tenantId, ctx.userId || '');
+  }
   const key = dryRun ? null : idempotencyKey(args.idempotency_key);
   if (key) {
     const replay = await replayIfPresent(ctx.tenantId, 'send_bulk_email', key);
@@ -463,6 +473,7 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
   const output: Record<string, unknown> = {
     action_id: actionId,
     dry_run: dryRun,
+    execution_mode: dryRun ? 'simulated' : 'direct',
     requested: preflight.requested + skipped.length,
     eligible: eligibleRecipients.length,
     processed: dryRun ? 0 : results.length,

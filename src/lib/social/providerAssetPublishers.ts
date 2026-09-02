@@ -1,5 +1,10 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ingestMediaInput } from '@/lib/media/ingestMedia';
+import {
+  formatFacebookGraphErrorMessage,
+  parseFacebookGraphError,
+  sanitizeFacebookPayload,
+} from '@/lib/facebook/parseFacebookGraphError';
 
 export type DirectPublishReceipt = {
   published: boolean;
@@ -32,7 +37,11 @@ async function graphJson(url: string, body?: Record<string, unknown>) {
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok || payload?.error) {
-    throw new Error(payload?.error?.message || `Provider request failed (${response.status})`);
+    const parsed = parseFacebookGraphError(response.status, payload);
+    const err = new Error(formatFacebookGraphErrorMessage(parsed));
+    (err as Error & { diagnostics?: unknown; provider_response?: unknown }).diagnostics = parsed;
+    (err as Error & { provider_response?: unknown }).provider_response = sanitizeFacebookPayload(payload);
+    throw err;
   }
   return payload as Record<string, any>;
 }

@@ -3,6 +3,7 @@
  */
 
 import { okResult, errorResult, toMcpContent } from '@/lib/mcp/connector/response';
+import { normalizePublishMediaArgs } from '@/lib/media/normalizePublishMedia';
 import { getSocialPublishingService } from '@/lib/social/SocialPublishingService';
 import { SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } from '@/lib/social/types';
 import {
@@ -24,22 +25,17 @@ async function ingestInlineMedia(
   tenantId: string,
   userId: string
 ): Promise<{ assetIds: string[]; urls: string[] }> {
+  const normalized = normalizePublishMediaArgs(args as Record<string, unknown>);
+  if (normalized.rejected.length) {
+    throw new Error(normalized.rejected[0]);
+  }
+
   const contentBase64 = args.content_base64 || args.file_base64 || args.file;
   const sourceUrl = args.source_url || args.url;
   const filename = args.filename || args.file_name;
   const mimeType = args.mime_type || args.content_type;
-  const mediaAssetIds = [
-    ...(args.media_ids || []),
-    ...(args.media_asset_ids || []),
-    ...(args.media_id ? [args.media_id] : []),
-    ...(args.media_asset_id ? [args.media_asset_id] : []),
-  ];
-  const mediaUrls = [
-    ...(args.media_urls || []),
-    ...(args.media_url ? [args.media_url] : []),
-    ...(args.image_url ? [args.image_url] : []),
-    ...(args.signed_url ? [args.signed_url] : []),
-  ];
+  const mediaAssetIds = [...normalized.mediaAssetIds];
+  const mediaUrls = [...normalized.mediaUrls];
 
   const hasRawMediaInput = Boolean(contentBase64 || args.data_url || sourceUrl);
   if (hasRawMediaInput) {
@@ -73,8 +69,9 @@ async function ingestInlineMedia(
         purpose: 'social_post',
         media: mediaInput,
       });
-      if (asset?.id) mediaAssetIds.push(asset.id);
-      if (asset?.url) mediaUrls.push(asset.url);
+      if (asset?.id && !mediaAssetIds.includes(asset.id)) {
+        mediaAssetIds.push(asset.id);
+      }
     }
   }
 
@@ -82,7 +79,7 @@ async function ingestInlineMedia(
   return ingestPublishMedia({
     tenantId,
     userId,
-    media: args.media as Parameters<typeof ingestPublishMedia>[0]['media'],
+    media: normalized.media.length ? normalized.media : (args.media as Parameters<typeof ingestPublishMedia>[0]['media']),
     mediaUrls,
     mediaAssetIds,
   });
@@ -194,8 +191,9 @@ export async function handlePublishSocialPost(
     execute: async ({ actionId }) => {
       const service = getSocialPublishingService();
       const { isDurableRuntimeEnabled } = await import('@/lib/bonnie/runtime/types');
+      const { shouldUseMcpDirectExecution } = await import('@/lib/mcp/mcpDirectExecution');
 
-      if (publishNow && isDurableRuntimeEnabled()) {
+      if (publishNow && isDurableRuntimeEnabled() && !shouldUseMcpDirectExecution(toolName)) {
         const draft = await service.publish({
           tenantId,
           userId,
