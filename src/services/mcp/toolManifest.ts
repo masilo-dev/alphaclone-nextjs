@@ -1184,7 +1184,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_batch_outreach',
-    description: 'Autonomous Strategic Outreach: Orchestrate personalized high-fidelity communications to a cohort of leads or clients using AI-driven relationship intelligence.',
+    description: 'AI-personalized batch outreach to up to 120 leads or clients. Dry run is the default (preflight only); actual sending requires final_confirmation: true and a connected email provider. Sends directly in chat — no background queue unless MCP_BULK_OUTREACH_DURABLE=true.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1194,6 +1194,8 @@ export const MCP_TOOLS = [
         tone: { type: 'string', description: 'professional | friendly | direct | creative' },
         custom_context: { type: 'string', description: 'Specific strategic instructions for relationship personalization.' },
         delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'], description: 'Default: sendgrid' },
+        dry_run: { type: 'boolean', default: true, description: 'When true (default without final_confirmation), preflight recipients only — no AI or sends.' },
+        final_confirmation: { type: 'boolean', default: false, description: 'Set true after reviewing dry run to send personalized outreach.' },
         language_mode: {
           type: 'string',
           enum: ['auto', 'ask', 'en', 'es', 'pl', 'fr', 'de', 'it', 'pt', 'nl'],

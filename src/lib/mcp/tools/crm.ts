@@ -411,6 +411,36 @@ registerTool('crm', {
 });
 
 registerTool('crm', {
+  name: 'search_clients',
+  description: 'Search business clients by name, email, phone, website, location, or company.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    query: z.string().min(1),
+    limit: z.number().int().min(1).max(1000).optional().default(100),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      query: { type: 'string', description: 'Free-text search query' },
+      limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
+    },
+    required: ['tenant_id', 'query'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { searchBusinessClients } = await import('@/lib/crm/searchBusinessClients');
+    const items = await searchBusinessClients(supabase, args.tenant_id, args.query, args.limit);
+    return {
+      ok: true,
+      tool: 'search_clients',
+      data: { items, count: items.length },
+      error: null,
+    };
+  },
+});
+
+registerTool('crm', {
   name: 'search_contacts',
   description: 'Search unified CRM contacts by name, email, or phone.',
   inputSchema: z.object({

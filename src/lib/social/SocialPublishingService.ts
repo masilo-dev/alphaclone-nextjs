@@ -23,6 +23,11 @@ import {
   normalizeIdentityType,
 } from '@/lib/social/identityResolution';
 import { redactSecrets, resolveMediaUrls } from '@/lib/social/mediaUpload';
+import {
+  formatFacebookGraphErrorMessage,
+  parseFacebookGraphError,
+  sanitizeFacebookPayload,
+} from '@/lib/facebook/parseFacebookGraphError';
 import type {
   ProviderPublishResult,
   PublishSocialPostInput,
@@ -93,6 +98,37 @@ function buildLinkedInPermalink(postUrn: string | null | undefined): string | nu
 
 function logPublishEvent(event: Record<string, unknown>): void {
   console.info('[SocialPublishingService]', JSON.stringify(redactSecrets(event)));
+}
+
+function buildFacebookFailureResult(
+  httpStatus: number,
+  body: unknown,
+  fallbackMessage: string
+): ProviderPublishResult {
+  const parsed = parseFacebookGraphError(httpStatus, body);
+  logPublishEvent({
+    event: 'facebook_publish_failed',
+    http_status: parsed.http_status,
+    error_code: parsed.error_code,
+    error_subcode: parsed.error_subcode,
+    fbtrace_id: parsed.fbtrace_id,
+    message: parsed.message,
+  });
+  return {
+    ok: false,
+    provider: 'facebook',
+    provider_post_id: null,
+    live_url: null,
+    published_at: null,
+    verified: false,
+    verified_at: null,
+    error: formatFacebookGraphErrorMessage(parsed) || fallbackMessage,
+    error_code: parsed.error_code != null ? String(parsed.error_code) : 'PROVIDER_ERROR',
+    provider_response: {
+      ...(sanitizeFacebookPayload(body) as Record<string, unknown>),
+      diagnostics: parsed,
+    },
+  };
 }
 
 export class SocialPublishingService {
@@ -382,19 +418,11 @@ export class SocialPublishingService {
           );
           const uploadBody = (await uploadRes.json()) as Record<string, unknown>;
           if (!uploadRes.ok || uploadBody?.error || !uploadBody?.id) {
-            const errObj = uploadBody?.error as { message?: string } | undefined;
-            return {
-              ok: false,
-              provider: 'facebook',
-              provider_post_id: null,
-              live_url: null,
-              published_at: null,
-              verified: false,
-              verified_at: null,
-              error: errObj?.message || 'Facebook multi-photo upload failed',
-              error_code: 'PROVIDER_ERROR',
-              provider_response: redactSecrets(uploadBody) as Record<string, unknown>,
-            };
+            return buildFacebookFailureResult(
+              uploadRes.status,
+              uploadBody,
+              'Facebook multi-photo upload failed'
+            );
           }
           attached.push({ media_fbid: String(uploadBody.id) });
         }
@@ -409,19 +437,11 @@ export class SocialPublishingService {
         });
         graphResponse = (await feedRes.json()) as Record<string, unknown>;
         if (!feedRes.ok || graphResponse?.error) {
-          const errObj = graphResponse?.error as { message?: string } | undefined;
-          return {
-            ok: false,
-            provider: 'facebook',
-            provider_post_id: null,
-            live_url: null,
-            published_at: null,
-            verified: false,
-            verified_at: null,
-            error: errObj?.message || 'Facebook feed publish failed',
-            error_code: 'PROVIDER_ERROR',
-            provider_response: redactSecrets(graphResponse) as Record<string, unknown>,
-          };
+          return buildFacebookFailureResult(
+            feedRes.status,
+            graphResponse,
+            'Facebook feed publish failed'
+          );
         }
       } else {
         const mediaUrl = mediaUrls[0];
@@ -454,19 +474,7 @@ export class SocialPublishingService {
         });
         graphResponse = (await res.json()) as Record<string, unknown>;
         if (!res.ok || graphResponse?.error) {
-          const errObj = graphResponse?.error as { message?: string } | undefined;
-          return {
-            ok: false,
-            provider: 'facebook',
-            provider_post_id: null,
-            live_url: null,
-            published_at: null,
-            verified: false,
-            verified_at: null,
-            error: errObj?.message || 'Facebook publish failed',
-            error_code: 'PROVIDER_ERROR',
-            provider_response: redactSecrets(graphResponse) as Record<string, unknown>,
-          };
+          return buildFacebookFailureResult(res.status, graphResponse, 'Facebook publish failed');
         }
       }
 
@@ -624,6 +632,82 @@ export class SocialPublishingService {
     return this.publishToLinkedIn(postId, identity);
   }
 
+  /** Publish an existing social_posts row (durable worker / retry path). */
+  async publishExistingPost(postId: string, tenantId: string): Promise<ProviderPublishResult> {
+    const admin = createSupabaseAdminClient();
+    const { data: post, error } = await admin
+      .from('social_posts')
+      .select(
+        'id, tenant_id, user_id, platforms, status, facebook_post_id, linkedin_post_urn, facebook_page_id, linkedin_organization_id, linkedin_author_urn, metadata, error_message'
+      )
+      .eq('id', postId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+
+    if (error || !post) {
+      return {
+        ok: false,
+        provider: 'facebook',
+        provider_post_id: null,
+        live_url: null,
+        published_at: null,
+        verified: false,
+        verified_at: null,
+        error: 'post_not_found',
+        error_code: 'NOT_FOUND',
+      };
+    }
+
+    if (post.facebook_post_id || post.linkedin_post_urn) {
+      return {
+        ok: true,
+        provider: post.facebook_post_id ? 'facebook' : 'linkedin',
+        provider_post_id: post.facebook_post_id || post.linkedin_post_urn,
+        live_url: null,
+        published_at: null,
+        verified: true,
+        verified_at: new Date().toISOString(),
+      };
+    }
+
+    const metadata = (post.metadata || {}) as Record<string, unknown>;
+    const mediaAssetIds = Array.isArray(metadata.media_asset_ids)
+      ? (metadata.media_asset_ids as string[])
+      : [];
+    if (mediaAssetIds.length > 0 && post.user_id) {
+      const media = await resolveMediaUrls({
+        tenantId,
+        userId: String(post.user_id),
+        mediaAssetIds,
+      });
+      await admin
+        .from('social_posts')
+        .update({
+          media_urls: media.urls,
+          media_types: media.types,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', postId)
+        .eq('tenant_id', tenantId);
+    }
+
+    const platforms = Array.isArray(post.platforms) ? post.platforms : [];
+    const platform = platforms.includes('linkedin') ? 'linkedin' : 'facebook';
+    const identityType =
+      (metadata.identity_type as PublishSocialPostInput['identityType']) ||
+      (platform === 'linkedin' ? 'linkedin_person' : 'facebook_page');
+    const identityId = String(metadata.identity_id || post.facebook_page_id || '');
+
+    const identity = await this.resolveIdentity({
+      tenantId,
+      platform,
+      identityType,
+      identityId,
+    });
+
+    return this.publishToProvider(postId, identity);
+  }
+
   async verifyProviderPost(params: {
     tenantId: string;
     postId: string;
@@ -632,7 +716,7 @@ export class SocialPublishingService {
     const { data: post, error } = await admin
       .from('social_posts')
       .select(
-        'id, tenant_id, platforms, facebook_page_id, facebook_post_id, linkedin_post_urn, linkedin_author_urn, linkedin_organization_id, live_url, published_at, status'
+        'id, tenant_id, platforms, facebook_page_id, facebook_post_id, linkedin_post_urn, linkedin_author_urn, linkedin_organization_id, live_url, published_at, status, error_message'
       )
       .eq('id', params.postId)
       .eq('tenant_id', params.tenantId)
@@ -652,6 +736,37 @@ export class SocialPublishingService {
       };
     }
 
+    const inFlight = ['queued', 'publishing', 'retrying', 'uploading_media', 'scheduled'].includes(
+      String(post.status || '')
+    );
+    if (inFlight) {
+      return {
+        ok: false,
+        provider: 'facebook',
+        provider_post_id: null,
+        live_url: null,
+        published_at: post.published_at,
+        verified: false,
+        verified_at: null,
+        error: 'Post is still being published',
+        error_code: 'PUBLISH_IN_PROGRESS',
+      };
+    }
+
+    if (post.status === 'failed') {
+      return {
+        ok: false,
+        provider: 'facebook',
+        provider_post_id: post.facebook_post_id,
+        live_url: post.live_url,
+        published_at: post.published_at,
+        verified: false,
+        verified_at: null,
+        error: post.error_message || 'Publish failed',
+        error_code: 'PUBLISH_FAILED',
+      };
+    }
+
     const platforms = Array.isArray(post.platforms) ? post.platforms : [];
     if (platforms.includes('facebook') || post.facebook_post_id) {
       if (!post.facebook_post_id) {
@@ -663,7 +778,7 @@ export class SocialPublishingService {
           published_at: post.published_at,
           verified: false,
           verified_at: null,
-          error: 'No facebook_post_id on record — post was never accepted by Facebook',
+          error: 'Facebook did not accept this post — no provider post ID was recorded',
           error_code: 'MISSING_PROVIDER_ID',
         };
       }

@@ -186,18 +186,12 @@ export async function executeSocialPublishDurableTask(params: {
           .eq('id', postId)
           .eq('tenant_id', params.tenantId);
 
-        const { publishSocialPost } = await import('@/lib/social/cronPublish');
-        await publishSocialPost(postId);
+        const { getSocialPublishingService } = await import('@/lib/social/SocialPublishingService');
+        const service = getSocialPublishingService();
+        const publishResult = await service.publishExistingPost(postId, params.tenantId);
 
-        const { data: updated } = await admin
-          .from('social_posts')
-          .select('status, facebook_post_id, linkedin_post_urn, live_url, error_message, published_at')
-          .eq('id', postId)
-          .maybeSingle();
-
-        const providerRef = updated?.facebook_post_id || updated?.linkedin_post_urn || null;
-        if (updated?.status !== 'published' || !providerRef) {
-          const message = updated?.error_message || 'Provider publish did not complete';
+        if (!publishResult.ok) {
+          const message = publishResult.error || publishResult.error_code || 'Provider publish failed';
           const classified = classifyRetryableExecutionError(message);
           await admin
             .from('social_posts')
@@ -210,11 +204,12 @@ export async function executeSocialPublishDurableTask(params: {
           };
         }
 
+        const providerRef = publishResult.provider_post_id;
         intermediate.result = {
           status: 'published',
           providerReference: providerRef,
-          liveUrl: updated.live_url,
-          publishedAt: updated.published_at,
+          liveUrl: publishResult.live_url,
+          publishedAt: publishResult.published_at,
         };
         await completeIdempotentAction({
           tenantId: params.tenantId,

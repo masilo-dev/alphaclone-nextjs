@@ -10,6 +10,7 @@ import {
   uploadSocialMedia,
   assertPublicMediaUrl,
 } from '@/lib/social/mediaUpload';
+import { buildPublicMediaUrl } from '@/lib/media/mediaPublicUrl';
 import type { IngestedMediaAsset, MediaInput } from './types';
 
 function toIngested(row: {
@@ -27,7 +28,7 @@ function toIngested(row: {
     filename: row.filename,
     mime_type: row.mime_type,
     size_bytes: row.size_bytes,
-    url: row.public_url,
+    url: buildPublicMediaUrl(row.media_asset_id),
     status: 'ready',
     width: row.width ?? null,
     height: row.height ?? null,
@@ -57,7 +58,7 @@ async function loadAssetForTenant(
     filename: data.file_name || 'asset',
     mime_type: data.file_type || 'application/octet-stream',
     size_bytes: data.file_size_bytes || 0,
-    url: data.public_url,
+    url: buildPublicMediaUrl(data.id),
     status: 'ready',
     width: data.width,
     height: data.height,
@@ -318,13 +319,39 @@ export async function ingestPublishMedia(params: {
     else inputs.push({ type: 'url', url });
   }
 
+  const seenAssetKeys = new Set<string>();
+  const dedupedInputs: MediaInput[] = [];
   for (const media of inputs) {
+    if (media.type === 'asset_id') {
+      const key = `id:${media.assetId}`;
+      if (seenAssetKeys.has(key)) continue;
+      seenAssetKeys.add(key);
+      dedupedInputs.push(media);
+      continue;
+    }
+    if (media.type === 'url') {
+      const key = `url:${media.url}`;
+      if (seenAssetKeys.has(key)) continue;
+      seenAssetKeys.add(key);
+      dedupedInputs.push(media);
+      continue;
+    }
+    dedupedInputs.push(media);
+  }
+
+  for (const media of dedupedInputs) {
     assets.push(await ingestMediaInput({ tenantId: params.tenantId, userId: params.userId, media }));
   }
 
+  const uniqueAssets = new Map<string, IngestedMediaAsset>();
+  for (const asset of assets) {
+    if (!uniqueAssets.has(asset.id)) uniqueAssets.set(asset.id, asset);
+  }
+  const finalAssets = Array.from(uniqueAssets.values());
+
   return {
-    urls: assets.map((a) => a.url),
-    assetIds: assets.map((a) => a.id),
-    assets,
+    urls: finalAssets.map((a) => a.url),
+    assetIds: finalAssets.map((a) => a.id),
+    assets: finalAssets,
   };
 }

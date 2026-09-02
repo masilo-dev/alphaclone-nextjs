@@ -61,19 +61,29 @@ async function processBatchOutreachEvent(
       language_mode: payload.language_mode || 'en',
       final_confirmation: true,
       reviewed_at: payload.reviewed_at,
-      process_inline: true,
+      dry_run: false,
     });
     if (result.isError) {
       failed += chunk.lead_ids.length + chunk.client_ids.length;
     } else {
       const text = result.content?.[0]?.text || '';
-      const match = text.match(/Sent to (\d+)\/(\d+)/);
-      if (match) {
-        sent += Number(match[1]);
-        failed += Number(match[2]) - Number(match[1]);
-      } else {
-        sent += chunk.lead_ids.length + chunk.client_ids.length;
+      let chunkSent = 0;
+      let chunkFailed = 0;
+      try {
+        const parsed = JSON.parse(text);
+        chunkSent = Number(parsed?.data?.sent ?? 0);
+        chunkFailed = Number(parsed?.data?.failed ?? 0);
+      } catch {
+        const match = text.match(/Sent to (\d+)\/(\d+)/);
+        if (match) {
+          chunkSent = Number(match[1]);
+          chunkFailed = Number(match[2]) - Number(match[1]);
+        } else {
+          chunkSent = chunk.lead_ids.length + chunk.client_ids.length;
+        }
       }
+      sent += chunkSent;
+      failed += chunkFailed;
     }
   }
 

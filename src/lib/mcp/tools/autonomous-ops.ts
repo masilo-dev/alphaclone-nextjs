@@ -279,6 +279,23 @@ defineConnectorTool({
       select: 'id, notes',
     });
     if (error) throwConnectorError('UPDATE_FAILED', error.message);
+
+    const { logCrmActivityAdmin } = await import('@/lib/crm/crmActivityServer');
+    await logCrmActivityAdmin(supabase, {
+      tenantId: args.tenant_id,
+      type: 'note',
+      subject: 'Note added',
+      description: args.note,
+      contactId: args.entity_type === 'contact' ? args.entity_id : undefined,
+      companyId: args.entity_type === 'company' ? args.entity_id : undefined,
+      createdBy: ctx.userId,
+      source: 'mcp:add_note',
+      metadata: {
+        entity_type: args.entity_type,
+        lead_id: args.entity_type === 'lead' ? args.entity_id : null,
+      },
+    });
+
     return okResult('add_note', data, {
       receipt: {
         action_id: newActionId(),
