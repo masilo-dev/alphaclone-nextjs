@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
+import {
+  deleteChatGptOAuthTokensForUser,
+  userHasActiveChatGptOAuthConnection,
+} from '@/lib/mcp/resolveCanonicalOAuthClient';
 
 type Context = { params: Promise<{ tenantId: string }> };
 const adminRoles = ['owner', 'admin', 'tenant_admin', 'super_admin'];
@@ -21,7 +25,7 @@ export async function GET(req: NextRequest, context: Context) {
         .select('integration_id, status, connected_at, metadata')
         .eq('tenant_id', tenantId);
     }
-    const [{ data: rows, error }, mcpKeys, chatgptTokens, slack] = await Promise.all([
+    const [{ data: rows, error }, mcpKeys, chatgptConnected, slack] = await Promise.all([
       Promise.resolve(tenantIntegrationsRes),
       admin
         .from('mcp_api_keys')
@@ -29,12 +33,7 @@ export async function GET(req: NextRequest, context: Context) {
         .eq('tenant_id', tenantId)
         .eq('user_id', user.id)
         .eq('is_active', true),
-      admin
-        .from('mcp_oauth_tokens')
-        .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', tenantId)
-        .eq('user_id', user.id)
-        .eq('client_id', 'chatgpt-connector'),
+      userHasActiveChatGptOAuthConnection(admin, { tenantId, userId: user.id }),
       admin
         .from('slack_integrations')
         .select('id')
@@ -44,7 +43,6 @@ export async function GET(req: NextRequest, context: Context) {
     ]);
     if (error) throw error;
     if (mcpKeys.error) throw mcpKeys.error;
-    if (chatgptTokens.error) throw chatgptTokens.error;
     if (slack.error) throw slack.error;
 
     const safeRows = (rows || []).map((row: any) => ({
@@ -59,7 +57,7 @@ export async function GET(req: NextRequest, context: Context) {
       integrations: safeRows,
       personalConnections: {
         mcpApiKey: (mcpKeys.count || 0) > 0,
-        chatgpt: (chatgptTokens.count || 0) > 0,
+        chatgpt: chatgptConnected,
       },
       providerConnections: { slack: Boolean(slack.data?.id) },
     });
@@ -87,7 +85,7 @@ export async function DELETE(req: NextRequest, context: Context) {
     if (integrationId === 'claude-mcp' || integrationId === 'manus-mcp') {
       await admin.from('mcp_api_keys').delete().eq('tenant_id', tenantId).eq('user_id', user.id);
     } else if (integrationId === 'chatgpt-mcp') {
-      await admin.from('mcp_oauth_tokens').delete().eq('tenant_id', tenantId).eq('user_id', user.id).eq('client_id', 'chatgpt-connector');
+      await deleteChatGptOAuthTokensForUser(admin, { tenantId, userId: user.id });
     } else if (integrationId === 'slack') {
       await admin.from('slack_integrations').update({ is_active: false, updated_at: new Date().toISOString() }).eq('tenant_id', tenantId);
     } else if (integrationId === 'facebook-leads') {

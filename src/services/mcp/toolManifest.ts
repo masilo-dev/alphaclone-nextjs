@@ -2552,7 +2552,7 @@ export const MCP_TOOLS = [
         action: { type: 'string', description: 'Short action key, e.g. mcp_note | integration_sync | user_request' },
         entity_type: { type: 'string', description: 'Category, e.g. mcp | lead | integration' },
         entity_id: { type: 'string', description: 'Optional reference of related entity' },
-        summary: { type: 'human-readable one-line summary' },
+        summary: { type: 'string', description: 'Human-readable one-line summary' },
         payload: {
           type: 'object',
           description: 'Optional JSON object merged into new_values (along with summary and source)',

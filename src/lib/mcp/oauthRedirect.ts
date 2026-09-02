@@ -123,8 +123,9 @@ export const PLATFORM_MCP_OAUTH_CLIENT_IDS = new Set([
 ]);
 
 /**
- * Identity-preserving client id normalization.
- * Never collapse a generic client into a provider-specific id.
+ * Identity-preserving client id normalization for wire protocol.
+ * Use resolveCanonicalOAuthClientId* when storing tokens/grants so the same
+ * tenant always maps to one platform client (e.g. all ChatGPT → chatgpt-connector).
  */
 export function normalizeMcpClientId(
   clientId: string | null | undefined,

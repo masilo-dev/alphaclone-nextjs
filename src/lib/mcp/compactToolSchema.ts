@@ -10,6 +10,23 @@ const SESSION_FIELDS = new Set(['tenant_id', 'user_id', 'tenantId', 'userId']);
 
 const MAX_DESCRIPTION_CHARS = 140;
 const MAX_ENUM_VALUES = 8;
+const VALID_JSON_SCHEMA_TYPES = new Set([
+  'string',
+  'number',
+  'integer',
+  'boolean',
+  'object',
+  'array',
+  'null',
+]);
+
+function normalizePropertyType(raw: unknown): string {
+  if (typeof raw === 'string' && VALID_JSON_SCHEMA_TYPES.has(raw)) return raw;
+  if (Array.isArray(raw) && typeof raw[0] === 'string' && VALID_JSON_SCHEMA_TYPES.has(raw[0])) {
+    return raw[0];
+  }
+  return 'string';
+}
 
 function truncateDescription(text: string | undefined): string {
   const cleaned = String(text || '')
@@ -27,14 +44,18 @@ function compactProperty(raw: unknown): Record<string, unknown> {
   const prop = raw as Record<string, unknown>;
   const compact: Record<string, unknown> = {};
 
-  if (typeof prop.type === 'string') {
-    compact.type = prop.type;
-  } else if (Array.isArray(prop.type) && typeof prop.type[0] === 'string') {
-    compact.type = prop.type[0];
-  } else if (Array.isArray(prop.enum)) {
-    compact.type = 'string';
-  } else {
-    compact.type = 'string';
+  const normalizedType = normalizePropertyType(prop.type);
+  compact.type = normalizedType;
+
+  // Invalid manifests sometimes put human text in `type` — preserve it as description.
+  if (
+    typeof prop.type === 'string' &&
+    !VALID_JSON_SCHEMA_TYPES.has(prop.type) &&
+    !compact.description
+  ) {
+    compact.description = prop.type;
+  } else if (typeof prop.description === 'string' && prop.description.trim()) {
+    compact.description = prop.description;
   }
 
   if (Array.isArray(prop.enum) && prop.enum.length > 0 && prop.enum.length <= MAX_ENUM_VALUES) {
@@ -43,8 +64,7 @@ function compactProperty(raw: unknown): Record<string, unknown> {
 
   if (prop.items && typeof prop.items === 'object' && !Array.isArray(prop.items)) {
     const items = prop.items as Record<string, unknown>;
-    compact.items =
-      typeof items.type === 'string' ? { type: items.type } : { type: 'string' };
+    compact.items = { type: normalizePropertyType(items.type) };
   }
 
   // Intentionally omit property descriptions / examples / oneOf / $ref — biggest payload bloat.

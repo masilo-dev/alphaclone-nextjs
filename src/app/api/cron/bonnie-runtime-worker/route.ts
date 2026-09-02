@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { denyIfCronMemoryPressure } from '@/lib/cron/cronMemoryGuard';
 import { processClaimableTasks } from '@/lib/bonnie/runtime/workerService';
 import { reclaimExpiredLeases } from '@/lib/bonnie/runtime/leaseService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
@@ -10,6 +11,9 @@ export const maxDuration = 60;
 export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
   if (denied) return denied;
+
+  const memoryDenied = denyIfCronMemoryPressure('bonnie-runtime-worker');
+  if (memoryDenied) return memoryDenied;
 
   const ranAt = new Date().toISOString();
   try {

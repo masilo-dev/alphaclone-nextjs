@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import {
+  ensurePlatformMcpOAuthClient,
+} from '@/lib/mcp/ensureOAuthClient';
+import {
+  CHATGPT_CANONICAL_CLIENT_ID,
+  CLAUDE_CANONICAL_CLIENT_ID,
+  redirectUrisIndicateChatGpt,
+  redirectUrisIndicateClaude,
+} from '@/lib/mcp/resolveCanonicalOAuthClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +21,12 @@ const CORS_HEADERS = {
   'Pragma': 'no-cache',
   'Expires': '0',
 };
+
+function resolveCanonicalClientId(validatedUris: string[]): string | null {
+  if (redirectUrisIndicateChatGpt(validatedUris)) return CHATGPT_CANONICAL_CLIENT_ID;
+  if (redirectUrisIndicateClaude(validatedUris)) return CLAUDE_CANONICAL_CLIENT_ID;
+  return null;
+}
 
 /**
  * OAuth 2.0 Dynamic Client Registration Endpoint (RFC 7591)
@@ -86,17 +101,40 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Generate unique client credentials
+    // Connect to database
+    const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+
+    const canonicalClientId = resolveCanonicalClientId(validatedUris);
+    if (canonicalClientId) {
+      await ensurePlatformMcpOAuthClient(supabase, canonicalClientId);
+      const now = Math.floor(Date.now() / 1000);
+      console.log('[MCP Register] Reusing canonical platform client:', {
+        client_id: canonicalClientId,
+        redirect_uris: validatedUris,
+      });
+      return NextResponse.json(
+        {
+          client_id: canonicalClientId,
+          client_id_issued_at: now,
+          client_name: canonicalClientId === CHATGPT_CANONICAL_CLIENT_ID ? 'OpenAI Apps MCP Connector' : 'Claude (Anthropic)',
+          redirect_uris: validatedUris,
+          grant_types: grant_types || ['authorization_code', 'refresh_token'],
+          response_types: response_types || ['code'],
+          token_endpoint_auth_method: 'none',
+          scope: scope || 'read write mcp:tools mcp:resources openid profile',
+        },
+        { status: 201, headers: CORS_HEADERS }
+      );
+    }
+
+    // Generate unique client credentials for non-platform clients
     const client_id = `ac_${crypto.randomUUID().replace(/-/g, '')}`;
     const now = Math.floor(Date.now() / 1000);
-    
+
     // Public clients (PKCE) don't have secrets
     const isPublic = token_endpoint_auth_method === 'none' || !token_endpoint_auth_method;
     const client_secret = isPublic ? null : `cs_${crypto.randomUUID().replace(/-/g, '')}`;
-    
-    // Connect to database
-    const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-    
+
     // Persist to mcp_oauth_clients table
     const { error: insertError } = await supabase
       .from('mcp_oauth_clients')

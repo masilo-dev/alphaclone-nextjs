@@ -27,12 +27,16 @@ export async function processTaskReminders() {
     "use workflow";
 
     const { dueSoon, overdue } = await fetchReminderTasks();
+    const { mapWithConcurrency } = await import('@/lib/concurrency/mapWithConcurrency');
 
-    // Parallel execution using Promise.all for steps
-    await Promise.all([
-        ...dueSoon.map((task: any) => sendTaskReminder(task, "dueSoon")),
-        ...overdue.map((task: any) => sendTaskReminder(task, "overdue"))
-    ]);
+    const allTasks = [
+        ...dueSoon.map((task: any) => ({ task, type: 'dueSoon' as const })),
+        ...overdue.map((task: any) => ({ task, type: 'overdue' as const })),
+    ];
+
+    await mapWithConcurrency(allTasks, 5, async ({ task, type }) => {
+        await sendTaskReminder(task, type);
+    });
 }
 
 async function fetchReminderTasks() {
@@ -253,6 +257,14 @@ async function fetchDueAiTasks() {
 
 async function executeAiTaskStep(task: any) {
     "use step";
-    const { taskAutomationService } = await import("@/services/automation/taskAutomationService");
+    const { taskAutomationService, isValidCronSchedule } = await import("@/services/automation/taskAutomationService");
+    if (!isValidCronSchedule(String(task?.schedule || ''))) {
+        const admin = createSupabaseAdminClient();
+        await admin
+            .from('scheduled_ai_tasks')
+            .update({ status: 'paused', updated_at: new Date().toISOString() })
+            .eq('id', task.id);
+        return { success: false, skipped: true, reason: 'invalid_cron_schedule' };
+    }
     return taskAutomationService.executeTask(task);
 }

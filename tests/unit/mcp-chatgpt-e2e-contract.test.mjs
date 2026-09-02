@@ -92,6 +92,47 @@ test('priority business execution tools are discoverable and registered', async 
   }
 });
 
+test('exposed tool property schemas use valid JSON Schema types', async () => {
+  const { invalidateUnifiedMcpToolCache, getUnifiedMcpTools } = await import(
+    '../../src/lib/mcp/listAllTools.ts'
+  );
+  invalidateUnifiedMcpToolCache();
+  const tools = await getUnifiedMcpTools({
+    clientId: 'chatgpt-connector',
+    catalogMode: 'full',
+    forceRefresh: true,
+  });
+  const validTypes = new Set(['string', 'number', 'integer', 'boolean', 'object', 'array', 'null']);
+  const invalid = [];
+  for (const tool of tools) {
+    const schema = tool.inputSchema || tool.jsonSchema;
+    const props = schema?.properties || {};
+    for (const [key, raw] of Object.entries(props)) {
+      const type = raw && typeof raw === 'object' ? raw.type : undefined;
+      if (typeof type === 'string' && !validTypes.has(type)) {
+        invalid.push(`${tool.name}.${key}:${type}`);
+      }
+    }
+  }
+  assert.equal(invalid.length, 0, `invalid property schema types: ${invalid.slice(0, 10).join(', ')}`);
+});
+
+test('write_audit_log schema is ChatGPT-compatible', async () => {
+  const { invalidateUnifiedMcpToolCache, getUnifiedMcpTools } = await import(
+    '../../src/lib/mcp/listAllTools.ts'
+  );
+  invalidateUnifiedMcpToolCache();
+  const tools = await getUnifiedMcpTools({
+    clientId: 'chatgpt-connector',
+    catalogMode: 'full',
+    forceRefresh: true,
+  });
+  const tool = tools.find((t) => t.name === 'write_audit_log');
+  assert.ok(tool, 'write_audit_log must be in full catalog');
+  const summary = tool.inputSchema?.properties?.summary;
+  assert.equal(summary?.type, 'string');
+});
+
 test('exposed tool schemas are valid JSON Schema objects', async () => {
   const { invalidateUnifiedMcpToolCache, getUnifiedMcpTools } = await import(
     '../../src/lib/mcp/listAllTools.ts'

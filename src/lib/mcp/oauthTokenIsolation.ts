@@ -6,6 +6,8 @@
  * Client B must never revoke or overwrite Client A's tokens.
  */
 
+import { oauthClientsAreEquivalent } from '@/lib/mcp/resolveCanonicalOAuthClient';
+
 export type OAuthTokenRowLike = {
   id?: string | null;
   user_id?: string | null;
@@ -84,6 +86,8 @@ export async function revokeActiveTokensForClient(
 export function assertRefreshClientBinding(params: {
   requestClientId: string | null | undefined;
   tokenClientId: string | null | undefined;
+  requestRedirectUris?: string[] | null;
+  tokenRedirectUris?: string[] | null;
 }): { ok: true } | { ok: false; reason: string } {
   const request = (params.requestClientId || "").trim();
   const token = (params.tokenClientId || "").trim();
@@ -92,14 +96,25 @@ export function assertRefreshClientBinding(params: {
     return { ok: true };
   }
 
-  if (request !== token) {
-    return {
-      ok: false,
-      reason: `client_id mismatch on refresh: request=${request} token=${token}`,
-    };
+  if (request === token) {
+    return { ok: true };
   }
 
-  return { ok: true };
+  if (
+    oauthClientsAreEquivalent(
+      request,
+      token,
+      params.requestRedirectUris,
+      params.tokenRedirectUris
+    )
+  ) {
+    return { ok: true };
+  }
+
+  return {
+    ok: false,
+    reason: `client_id mismatch on refresh: request=${request} token=${token}`,
+  };
 }
 
 /**
