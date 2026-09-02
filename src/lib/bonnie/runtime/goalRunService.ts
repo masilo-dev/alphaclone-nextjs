@@ -9,6 +9,28 @@ import type { AgentRunRow, RunStatus } from './types';
 import { createInitialGraphForObjective } from './plannerService';
 import { verifyRunOutcomes } from './verificationService';
 
+const ALLOWED_AGENT_RUN_EXECUTION_MODES = new Set([
+  'ask_only',
+  'plan_only',
+  'approval_required',
+  'semi_autonomous',
+  'fully_autonomous',
+]);
+
+/** Map legacy/alias modes to values allowed by agent_runs_execution_mode_check. */
+export function normalizeAgentRunExecutionMode(
+  mode?: string | null,
+  fallback: string = 'semi_autonomous'
+): string {
+  const trimmed = String(mode || '').trim();
+  if (ALLOWED_AGENT_RUN_EXECUTION_MODES.has(trimmed)) return trimmed;
+  if (trimmed === 'autonomous' || trimmed === 'auto') return 'fully_autonomous';
+  if (trimmed === 'approval' || trimmed === 'manual') return 'approval_required';
+  if (trimmed === 'plan') return 'plan_only';
+  if (trimmed === 'ask') return 'ask_only';
+  return ALLOWED_AGENT_RUN_EXECUTION_MODES.has(fallback) ? fallback : 'semi_autonomous';
+}
+
 export async function createRunForObjective(params: {
   tenantId: string;
   userId?: string | null;
@@ -62,7 +84,10 @@ export async function createRunForObjective(params: {
         requireVerifiedOutcomes: true,
         allowPartial: true,
       },
-      execution_mode: params.executionMode || (supervisor.requiresApproval ? 'approval_required' : 'semi_autonomous'),
+      execution_mode: normalizeAgentRunExecutionMode(
+        params.executionMode,
+        supervisor.requiresApproval ? 'approval_required' : 'semi_autonomous'
+      ),
       priority: params.priority || 3,
       status: 'planning' satisfies RunStatus,
       metadata: {

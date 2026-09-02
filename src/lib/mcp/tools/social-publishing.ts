@@ -393,7 +393,7 @@ defineConnectorTool({
     } else if (contentBase64) {
       mediaInput = {
         type: 'base64' as const,
-        base64: contentBase64,
+        data: contentBase64,
         filename: filename || `social-upload.${args.media_type === 'document' ? 'pdf' : args.media_type === 'video' ? 'mp4' : 'png'}`,
         mimeType: mimeType || (args.media_type === 'document' ? 'application/pdf' : args.media_type === 'video' ? 'video/mp4' : 'image/png'),
       };
@@ -523,14 +523,14 @@ defineConnectorTool({
     } else if (contentBase64 && filename && mimeType) {
       mediaInput = {
         type: 'base64' as const,
-        base64: contentBase64,
+        data: contentBase64,
         filename,
         mimeType,
       };
     } else if (contentBase64) {
       mediaInput = {
         type: 'base64' as const,
-        base64: contentBase64,
+        data: contentBase64,
         filename: filename || 'upload.png',
         mimeType: mimeType || 'image/png',
       };
@@ -1117,7 +1117,7 @@ defineConnectorTool({
       } else if (contentBase64) {
         mediaInput = {
           type: 'base64' as const,
-          base64: contentBase64,
+          data: contentBase64,
           filename: filename || 'upload.png',
           mimeType: mimeType || 'image/png',
         };

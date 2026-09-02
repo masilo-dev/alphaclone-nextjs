@@ -216,34 +216,54 @@ export async function handlePublishSocialPost(
           return draft;
         }
 
-        const { enqueueSocialPublishTask } = await import('@/lib/social/socialPublishDurableTask');
-        const enqueued = await enqueueSocialPublishTask({
-          tenantId,
-          userId,
-          postId: draft.data.social_post_id,
-          actionId,
-          idempotencyKey: args.idempotency_key,
-        });
+        try {
+          const { enqueueSocialPublishTask } = await import('@/lib/social/socialPublishDurableTask');
+          const enqueued = await enqueueSocialPublishTask({
+            tenantId,
+            userId,
+            postId: draft.data.social_post_id,
+            actionId,
+            idempotencyKey: args.idempotency_key,
+          });
 
-        return {
-          ok: true,
-          data: {
-            ...draft.data,
-            status: 'queued',
-            run_id: enqueued.runId,
-            task_id: enqueued.taskId,
-            durable: true,
-            poll_tool: 'verify_social_post_published',
-          },
-          receipt: service.createActionReceipt({
-            provider: platform,
-            providerReference: null,
-            verified: false,
-            verifiedAt: null,
+          return {
+            ok: true,
+            data: {
+              ...draft.data,
+              status: 'queued',
+              run_id: enqueued.runId,
+              task_id: enqueued.taskId,
+              durable: true,
+              poll_tool: 'verify_social_post_published',
+            },
+            receipt: service.createActionReceipt({
+              provider: platform,
+              providerReference: null,
+              verified: false,
+              verifiedAt: null,
+              correlationId: actionId,
+            }),
+            error: null,
+          };
+        } catch (durableErr) {
+          console.warn('[socialPublishTool] Durable enqueue failed; falling back to direct publish:', durableErr);
+          return service.publish({
+            tenantId,
+            userId,
+            platform,
+            identityType: resolvedIdentityType,
+            identityId: stored.provider_identity_id,
+            caption,
+            mediaAssetIds: ingested.assetIds,
+            mediaUrls: ingested.urls,
+            linkUrl: args.link_url,
+            publishNow: true,
+            scheduledAt: args.scheduled_at,
+            idempotencyKey: args.idempotency_key,
+            aiClient: 'mcp',
             correlationId: actionId,
-          }),
-          error: null,
-        };
+          });
+        }
       }
 
       return service.publish({

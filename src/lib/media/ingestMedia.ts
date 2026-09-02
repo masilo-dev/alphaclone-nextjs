@@ -131,12 +131,17 @@ export async function ingestMediaInput(params: {
       return loadAssetForTenant(tenantId, media.assetId);
 
     case 'base64': {
+      const payload = media as { data?: string; base64?: string; mimeType?: string; filename?: string };
+      const rawData = payload.data ?? payload.base64;
+      if (!rawData) {
+        throw new Error('base64 media input requires data or base64 content');
+      }
       const uploaded = await uploadSocialMedia({
         tenantId,
         userId,
-        filename: media.filename,
-        mimeType: media.mimeType,
-        contentBase64: media.data,
+        filename: payload.filename || 'upload.png',
+        mimeType: payload.mimeType || 'image/png',
+        contentBase64: rawData,
       });
       return toIngested(uploaded);
     }
