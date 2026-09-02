@@ -45,6 +45,11 @@ export function resolveHeapLimitMb(): number {
   return 2048;
 }
 
+export function resolveRailwayMemoryLimitMb(): number {
+  const raw = Number(process.env.RAILWAY_MEMORY_LIMIT_MB || process.env.MEMORY_LIMIT_MB || 8192);
+  return Number.isFinite(raw) && raw > 0 ? raw : 8192;
+}
+
 export function getMemorySnapshot(): MemorySnapshot {
   return readSnapshot();
 }
@@ -75,15 +80,19 @@ export function startMemoryTelemetry(): void {
     lastLoggedAt = now;
 
     const growthMb = baseline ? snap.heapUsedMb - baseline.heapUsedMb : 0;
-    console.info('[memory] periodic', { ...snap, growthSinceBaselineMb: growthMb });
+    const rssLimitMb = resolveRailwayMemoryLimitMb();
+    const rssPct = rssLimitMb > 0 ? Math.round((snap.rssMb / rssLimitMb) * 100) : 0;
+    console.info('[memory] periodic', { ...snap, growthSinceBaselineMb: growthMb, rssPct });
 
-    if (snap.heapUsedPct >= 90) {
-      console.warn('[memory] critical pressure', snap);
+    if (snap.heapUsedPct >= 90 || rssPct >= 85) {
+      console.warn('[memory] critical pressure', { ...snap, rssPct });
       void import('@/lib/runtime/heapSnapshot').then(({ maybeWriteHeapSnapshot }) => {
         maybeWriteHeapSnapshot('critical-pressure');
       });
-    } else if (snap.heapUsedPct >= 75) {
-      console.warn('[memory] elevated pressure', snap);
+    } else if (snap.heapUsedPct >= 75 || rssPct >= 70) {
+      console.warn('[memory] elevated pressure', { ...snap, rssPct });
+    } else if (snap.heapUsedPct >= 60) {
+      console.info('[memory] moderate heap use', { heapUsedPct: snap.heapUsedPct, rssPct });
     }
   }, intervalMs);
 

@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { auditSeverityFromStatus } from '@/lib/audit/auditSeverity';
 import { sanitizeUserFacingError } from '@/lib/copy/businessFriendlyErrors';
 
 function failureResultLine(toolName: string, output: Record<string, any>): string {
@@ -33,7 +34,7 @@ export interface BusinessActivityRecord {
   user_email: string | null; // Actor
   entity_type: string | null; // Related record type
   entity_id: string | null; // Related record ID
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: 'info' | 'warning' | 'error' | 'critical';
   created_at: string;
   metadata: {
     event: string;
@@ -63,12 +64,7 @@ export async function recordBusinessActivity(
   const timestamp = params.timestamp || new Date().toISOString();
   const actor = params.actor || 'System Automation';
   const status = params.status || 'success';
-  const severity =
-    status === 'failed' || status === 'blocked'
-      ? 'high'
-      : status === 'at_risk'
-      ? 'medium'
-      : 'low';
+  const severity = auditSeverityFromStatus(status);
 
   const actorEmail = actor.includes('@') ? actor : null;
 

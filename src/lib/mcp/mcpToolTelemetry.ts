@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { resolveMcpSessionUserId } from '@/lib/mcp/resolveMcpSessionUserId';
 
 const UNKNOWN_TOOL = '_unknown_tool';
 
@@ -19,10 +20,18 @@ export async function logMcpToolExecution(params: {
   const toolName = normalizeToolName(params.toolName);
   try {
     const supabaseAdmin = createSupabaseAdminClient();
+    const userId = await resolveMcpSessionUserId({
+      tenantId: params.tenantId,
+      userId: params.userId,
+    });
+    if (!userId) {
+      console.warn(`[mcpToolTelemetry] Skipping session log for ${toolName}: no resolvable user_id`);
+      return;
+    }
     const expiresAt = new Date(Date.now() + 1000 * 60).toISOString();
     await supabaseAdmin.from('mcp_sessions').insert({
       tenant_id: params.tenantId,
-      user_id: params.userId || null,
+      user_id: userId,
       expires_at: expiresAt,
       tool_name: toolName,
       duration_ms: params.durationMs,

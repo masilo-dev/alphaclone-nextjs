@@ -37,6 +37,17 @@ async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 30000)
     });
 }
 
+function clearAuthStorage(): void {
+    if (typeof window === 'undefined') return;
+    try {
+        Object.keys(localStorage)
+            .filter((k) => k.startsWith('sb-') || k.includes('auth-token'))
+            .forEach((k) => localStorage.removeItem(k));
+    } catch {
+        // ignore
+    }
+}
+
 // In-flight deduplication: if getCurrentUser() is already running, return the same promise
 let _getCurrentUserInflight: Promise<{ user: User | null; error: string | null }> | null = null;
 
@@ -685,6 +696,16 @@ export const authService = {
             console.log(`auth:getSession: ${Date.now() - t0}ms`);
 
             if (lastError) {
+                const message = lastError.message || '';
+                const staleRefresh =
+                    /refresh token not found/i.test(message) ||
+                    /invalid refresh token/i.test(message);
+                if (staleRefresh) {
+                    console.warn('AuthService: stale refresh token — clearing local session');
+                    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+                    clearAuthStorage();
+                    return { user: null, error: null };
+                }
                 console.error("AuthService: getSession error", lastError);
                 return { user: null, error: lastError.message };
             }

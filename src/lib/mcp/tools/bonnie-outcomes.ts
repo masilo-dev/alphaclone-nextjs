@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { resolveMcpSessionUserId } from '@/lib/mcp/resolveMcpSessionUserId';
 import { normalizeDefineOutcomeArgs } from '@/lib/bonnie/outcomeArgs';
 
 /**
@@ -74,8 +75,14 @@ registerTool('bonnie-outcomes', {
           ? 'Work partly completed — follow-up may be needed'
           : 'Work did not finish as planned');
 
+    const sessionUserId = await resolveMcpSessionUserId({ tenantId });
+    if (!sessionUserId) {
+      throw new Error('Bonnie couldn’t save the result checklist — no workspace owner found.');
+    }
+
     const { error } = await supabase.from('mcp_sessions').insert({
       tenant_id: tenantId,
+      user_id: sessionUserId,
       tool_name: 'define_outcome',
       success: status === 'success',
       duration_ms: 0,

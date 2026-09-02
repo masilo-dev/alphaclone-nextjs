@@ -66,7 +66,7 @@ export async function loadTenantEmailBrandingProfile(
   const supabase = createSupabaseAdminClient();
   const { data: tenant } = await supabase
     .from('tenants')
-    .select('id, name, legal_name, logo_url, brand_color_primary, brand_color_secondary, settings, website_url')
+    .select('id, name, logo_url, brand_color_primary, brand_color_secondary, settings, website_url')
     .eq('id', tenantId)
     .maybeSingle();
 
@@ -80,8 +80,8 @@ export async function loadTenantEmailBrandingProfile(
   const extracted = extractTenantBranding(tenant);
 
   const legalName =
-    readString(tenant.legal_name) ||
     readString(brandingSettings.legalBusinessName) ||
+    readString(brandingSettings.legal_name) ||
     readString(extracted.legalName) ||
     readString(extracted.name) ||
     'Your Business';

@@ -82,7 +82,7 @@ export async function collectDailyOperationsSummary(
   ] = await Promise.all([
     admin.from('business_invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'overdue'),
     admin.from('business_projects').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['at_risk', 'blocked']),
-    admin.from('audit_logs').select('action, metadata').eq('tenant_id', tenantId).eq('severity', 'high').gte('created_at', since24h).limit(5),
+    admin.from('audit_logs').select('action, metadata').eq('tenant_id', tenantId).eq('severity', 'error').gte('created_at', since24h).limit(5),
     admin.from('emails').select('subject, sender').eq('tenant_id', tenantId).eq('status', 'unanswered').limit(5),
   ]);
 

@@ -32,10 +32,14 @@ export async function GET() {
   const startedAt = Date.now();
   const soft =
     process.env.READINESS_ALWAYS_200 === 'true' || process.env.READINESS_ALWAYS_200 === '1';
+  const lightDb =
+    process.env.READINESS_LIGHT_DB === 'true' ||
+    process.env.READINESS_LIGHT_DB === '1' ||
+    process.env.NODE_ENV === 'production';
   const configured = configurationReady();
   let dbStatus: 'unchecked' | 'ready' | 'degraded' = 'unchecked';
 
-  if (configured) {
+  if (configured && !lightDb) {
     try {
       const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
       const supabase = createSupabaseAdminClient();
@@ -47,6 +51,8 @@ export async function GET() {
     } catch {
       dbStatus = 'degraded';
     }
+  } else if (configured && lightDb) {
+    dbStatus = 'ready';
   }
 
   const opsReady = optionalOpsReady();

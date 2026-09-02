@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { denyIfCronMemoryPressure } from '@/lib/cron/cronMemoryGuard';
+import { withCronJob } from '@/lib/cron/withCronJob';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -94,9 +94,7 @@ export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
   if (denied) return denied;
 
-  const memoryDenied = denyIfCronMemoryPressure('process-mcp-event-queue');
-  if (memoryDenied) return memoryDenied;
-
+  return withCronJob('process-mcp-event-queue', async () => {
   const admin = createSupabaseAdminClient();
   const nowIso = new Date().toISOString();
   const workerId = `mcp-queue-${process.pid}-${Date.now()}`;
@@ -246,5 +244,6 @@ export async function GET(req: NextRequest) {
     reclaimed,
     pending_checked_at: nowIso,
     results,
+  });
   });
 }

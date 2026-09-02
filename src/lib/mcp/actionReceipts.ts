@@ -132,24 +132,42 @@ export async function persistActionReceipt(params: {
           .maybeSingle();
         return existing?.id || null;
       }
-      // Schema fallback if optional columns (like correlation_id) are not present in DB
+      // Schema fallback for compatibility stub tables missing MCP columns
       if (error.code === 'PGRST204' || /column.*schema cache|could not find.*column/i.test(error.message)) {
-        const { data: fallbackData } = await supabase
+        const legacyPayload = {
+          tool: params.tool,
+          correlation_id: params.correlationId || null,
+          idempotency_key: params.idempotencyKey || null,
+          entity_id: params.receipt.entity_id || null,
+          entity_type: params.receipt.entity_type || null,
+          final_status: params.receipt.status,
+          sanitized_input: sanitizeForAudit(params.sanitizedInput || {}),
+          sanitized_output: sanitizeForAudit(params.sanitizedOutput || {}),
+          verification: params.receipt.verification || {},
+        };
+        const { data: fallbackData, error: fallbackError } = await supabase
           .from('mcp_action_receipts')
           .insert({
             tenant_id: params.tenantId,
             user_id: params.userId || null,
-            tool: params.tool,
             action_id: params.receipt.action_id,
-            entity_id: params.receipt.entity_id || null,
-            entity_type: params.receipt.entity_type || null,
+            provider: params.receipt.provider || null,
+            type: params.tool,
+            name: params.tool,
             success: params.success,
-            final_status: params.receipt.status,
-            sanitized_input: sanitizeForAudit(params.sanitizedInput || {}),
-            sanitized_output: sanitizeForAudit(params.sanitizedOutput || {}),
+            payload: legacyPayload,
+            metadata: {
+              ...legacyPayload,
+              provider_reference: params.receipt.provider_reference || null,
+              live_url: params.receipt.live_url || null,
+            },
           })
           .select('id')
           .maybeSingle();
+        if (fallbackError) {
+          console.warn('[actionReceipts] legacy persist failed:', fallbackError.message);
+          return null;
+        }
         return fallbackData?.id || null;
       }
       console.warn('[actionReceipts] persist failed:', error.message);
