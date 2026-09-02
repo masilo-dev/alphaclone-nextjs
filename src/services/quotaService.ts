@@ -10,6 +10,10 @@ import {
   type NormalizedPlanId,
   type QuotaResourceType,
 } from '@/lib/entitlements/planEntitlements';
+import {
+  resolveEntitlementContext,
+  type TenantEntitlementSnapshot,
+} from '@/lib/entitlements/entitlementContext';
 import { ACTION_CATEGORY_LABELS } from '@/lib/entitlements/actionCategoryLabels';
 
 export type { QuotaResourceType } from '@/lib/entitlements/planEntitlements';
@@ -146,14 +150,25 @@ export const quotaService = {
 
     const { data: tenant } = await admin
       .from('tenants')
-      .select('subscription_plan')
+      .select('subscription_plan, subscription_status, trial_ends_at, trial_started_at, legacy_access_until, created_at, stripe_subscription_id')
       .eq('id', tenantId)
       .single();
 
     const rawPlan = (tenant?.subscription_plan || 'free').toLowerCase();
     const normalizedPlan = normalizePlanId(rawPlan);
-    const unlimited = isUnlimitedPlan(rawPlan);
-    const defaults = resolveResourceLimits(rawPlan);
+    const entitlement = resolveEntitlementContext({
+      tenantId,
+      rawPlan,
+      normalizedPlan,
+      subscriptionStatus: String(tenant?.subscription_status || 'free'),
+      createdAt: tenant?.created_at ? new Date(tenant.created_at) : null,
+      trialStartedAt: tenant?.trial_started_at ? new Date(tenant.trial_started_at) : null,
+      trialEndsAt: tenant?.trial_ends_at ? new Date(tenant.trial_ends_at) : null,
+      legacyAccessUntil: tenant?.legacy_access_until ? new Date(tenant.legacy_access_until) : null,
+      stripeSubscriptionId: tenant?.stripe_subscription_id || null,
+    } satisfies TenantEntitlementSnapshot);
+    const unlimited = entitlement.unlimited;
+    const defaults = resolveResourceLimits(unlimited ? 'premium' : rawPlan);
 
     const { data: usage } = await admin
       .from('quota_usage')

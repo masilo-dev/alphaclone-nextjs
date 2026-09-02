@@ -121,7 +121,7 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
         </button>
         <span className="text-[11px] text-[var(--ws-text-tertiary)] inline-flex items-center gap-1">
           <CheckCircle2 className="w-3.5 h-3.5" />
-          14-day trial active
+          Full access active
         </span>
       </div>
     </div>

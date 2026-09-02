@@ -1082,9 +1082,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         <div>
                             <span className="text-[9px] text-slate-500 font-bold uppercase">Current active tier</span>
                             <h4 className="text-sm font-black text-white capitalize">{currentTenant?.subscription_plan || 'free'} plan</h4>
-                            {currentTenant?.subscription_status === 'trial' && currentTenant?.trial_ends_at && (
+                            {currentTenant?.subscription_status === 'trial' && (
                                 <p className="text-[10px] text-teal-400 mt-1">
-                                    14-day trial · {Math.max(0, Math.ceil((new Date(currentTenant.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days left · ends {new Date(currentTenant.trial_ends_at).toLocaleDateString()} · no card required
+                                    Premium trial active · full access · no daily limits
                                 </p>
                             )}
                         </div>

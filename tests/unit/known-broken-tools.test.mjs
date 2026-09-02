@@ -34,9 +34,7 @@ test("schedule_social_post is not redirected (handler maps args itself)", () => 
   assert.equal(resolved.args.platform, "linkedin");
 });
 
-test("block_with_hint still throws", () => {
-  assert.throws(
-    () => resolveToolWorkaround("gmail_send_email", {}),
-    /known_broken_tool/,
-  );
+test("gmail_send_email redirects to send_email", () => {
+  const resolved = resolveToolWorkaround("gmail_send_email", {});
+  assert.equal(resolved.toolName, "send_email");
 });

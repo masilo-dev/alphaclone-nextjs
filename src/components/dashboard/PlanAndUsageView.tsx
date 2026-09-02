@@ -31,7 +31,9 @@ export default function PlanAndUsageView({
   const [portalLoading, setPortalLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
-  const unlimited = isUnlimitedPlan(currentPlan);
+  const planUnlimited = isUnlimitedPlan(currentPlan);
+  const unlimited =
+    usageSummary?.unlimited ?? planUnlimited ?? subscriptionStatus === 'trial';
 
   useEffect(() => {
     async function fetchUsage() {
@@ -88,38 +90,11 @@ export default function PlanAndUsageView({
 
   const formattedPlanName = getPublicPlanDisplayName(currentPlan);
   const isPaid = currentPlan !== 'free';
-  const isOnTrial = subscriptionStatus === 'trial' && trialEndsAt;
-  const trialEndDate = trialEndsAt ? new Date(trialEndsAt) : null;
-  const trialDaysLeft = trialEndDate
-    ? Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
-  const trialExpired = trialDaysLeft !== null && trialDaysLeft <= 0;
 
   const metricsToShow = PRIMARY_USAGE_METRICS.filter((key) => usageSummary?.metrics[key]);
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto p-4 sm:p-6">
-      {isOnTrial && trialEndDate && (
-        <div
-          className={`rounded-2xl border p-5 ${
-            trialExpired
-              ? 'border-red-500/30 bg-red-500/10'
-              : trialDaysLeft !== null && trialDaysLeft <= 3
-              ? 'border-amber-500/30 bg-amber-500/10'
-              : 'border-teal-500/30 bg-teal-500/10'
-          }`}
-        >
-          <h3 className="text-lg font-bold text-white">
-            {trialExpired ? 'Free trial ended' : '14-day Premium trial active'}
-          </h3>
-          <p className="mt-1 text-sm text-slate-300">
-            {trialExpired
-              ? 'Add a subscription to restore full workspace access.'
-              : `${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} remaining · full Premium access · no daily limits · ends ${trialEndDate.toLocaleDateString()}`}
-          </p>
-        </div>
-      )}
-
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl text-white">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6">
           <div>
