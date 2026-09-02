@@ -8,6 +8,10 @@ import {
     normalizeMcpClientId,
     PLATFORM_MCP_OAUTH_CLIENT_IDS,
 } from '@/lib/mcp/oauthRedirect';
+import {
+    getOAuthClientDisplayName,
+    resolveCanonicalOAuthClientId,
+} from '@/lib/mcp/resolveCanonicalOAuthClient';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 
 export const dynamic = 'force-dynamic';
@@ -212,6 +216,10 @@ export async function POST(req: Request) {
             }
         }
 
+        const storageClientId = client_id
+            ? await resolveCanonicalOAuthClientId(supabaseAdmin, client_id, [redirect_uri])
+            : null;
+
         // ── Generate real single-use authorization code ────────────────────
         const code = `ac_${crypto.randomUUID().replace(/-/g, '')}`;
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
@@ -229,7 +237,7 @@ export async function POST(req: Request) {
 
         const codeRow: Record<string, unknown> = {
             code,
-            client_id: client_id || null,
+            client_id: storageClientId || client_id || null,
             user_id,
             tenant_id,
             redirect_uri,
@@ -256,7 +264,9 @@ export async function POST(req: Request) {
 
         console.log('[OAuth Approve] Auth code issued', {
             user_id,
-            client_id,
+            client_id: storageClientId || client_id,
+            raw_client_id: client_id,
+            connection_label: getOAuthClientDisplayName(storageClientId || client_id, [redirect_uri]),
             tenant_id,
             ms: Date.now() - started,
         });

@@ -172,6 +172,17 @@ describe("MCP OAuth multi-client token isolation", () => {
     );
   });
 
+  it("refresh client binding allows ac_* ChatGPT DCR id against chatgpt-connector token", () => {
+    const chatgptRedirect = "https://chatgpt.com/connector_platform_oauth_redirect";
+    const acDcr = "ac_deadbeef1234567890abcdef12345678";
+    const ok = assertRefreshClientBinding({
+      requestClientId: acDcr,
+      tokenClientId: "chatgpt-connector",
+      requestRedirectUris: [chatgptRedirect],
+    });
+    assert.equal(ok.ok, true);
+  });
+
   it("refresh client binding rejects mismatched client_id", () => {
     const ok = assertRefreshClientBinding({
       requestClientId: "chatgpt-connector",

@@ -10,9 +10,15 @@ interface CacheEntry<T> {
     staleTime: number;
 }
 
+function resolveCacheMaxSize(): number {
+    const raw = Number(process.env.IN_MEMORY_CACHE_MAX_ENTRIES);
+    if (Number.isFinite(raw) && raw >= 100) return Math.floor(raw);
+    return 1000;
+}
+
 export class CacheService {
     private memoryCache: Map<string, CacheEntry<any>> = new Map();
-    private maxSize: number = 5000; // Increased from 1000 to 5000
+    private maxSize: number = resolveCacheMaxSize();
     private defaultTTL: number = 5 * 60 * 1000; // 5 minutes
     private defaultStaleTime: number = 10 * 60 * 1000; // 10 minutes
     private hits: number = 0;

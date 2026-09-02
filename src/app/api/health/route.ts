@@ -151,8 +151,16 @@ export async function GET(request: NextRequest) {
     };
 
     // 6. System runtime
+    const { getMemorySnapshot, getMemoryBaseline, resolveHeapLimitMb } = await import(
+      '@/lib/runtime/memoryTelemetry'
+    );
+    const memory = getMemorySnapshot();
+    const memoryBaseline = getMemoryBaseline();
     checks.system = {
-        status: 'operational',
+        status: memory.heapUsedPct >= 90 ? 'degraded' : 'operational',
+        memory,
+        memoryBaseline: memoryBaseline || undefined,
+        heapLimitMb: resolveHeapLimitMb(),
     };
 
     // Overall status: use 'degraded' for partial issues but always return 200

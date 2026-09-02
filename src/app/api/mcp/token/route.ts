@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash, timingSafeEqual } from 'crypto';
 import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl, PLATFORM_MCP_OAUTH_CLIENT_IDS } from '@/lib/mcp/oauthRedirect';
+import { oauthClientsAreEquivalent, resolveCanonicalOAuthClientId, getOAuthClientDisplayName } from '@/lib/mcp/resolveCanonicalOAuthClient';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 import { formatScopeString } from '@/lib/mcp/scopes';
@@ -302,7 +303,14 @@ export async function POST(req: NextRequest) {
 
       // Verify client_id (if code was issued to a specific client)
       const storedClientId = normalizeMcpClientId(authCode.client_id) ?? authCode.client_id;
-      if (storedClientId && client_id && storedClientId !== client_id) {
+      const redirectUris = [redirect_uri, authCode.redirect_uri].filter(
+        (u): u is string => typeof u === 'string' && u.length > 0
+      );
+      if (
+        storedClientId &&
+        client_id &&
+        !oauthClientsAreEquivalent(client_id, storedClientId, redirectUris, redirectUris)
+      ) {
         console.warn('[MCP Token] client_id mismatch');
         return tokenError(
           'invalid_client',
@@ -312,7 +320,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (!clientAuth.client?.is_public && storedClientId && (!client_id || storedClientId !== client_id)) {
+      if (
+        !clientAuth.client?.is_public &&
+        storedClientId &&
+        !client_id
+      ) {
         console.warn('[MCP Token] Confidential client must authenticate with matching client_id');
         return tokenError(
           'invalid_client',
@@ -427,13 +439,18 @@ export async function POST(req: NextRequest) {
       const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString(); // 1 hour
       const refreshExpiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
 
-      const issuedClientId = storedClientId || client_id || null;
+      const issuedClientId = await resolveCanonicalOAuthClientId(
+        supabase,
+        storedClientId || client_id || null,
+        redirectUris
+      );
 
       // Every authorization creates an independent grant. Reconnecting a client
       // or adding a second device must not replace any existing connection.
       const { data: oauthClient } = issuedClientId
         ? await supabase.from('mcp_oauth_clients').select('id, client_name').eq('client_id', issuedClientId).maybeSingle()
         : { data: null };
+      const connectionLabel = getOAuthClientDisplayName(issuedClientId, redirectUris);
       const { data: grant, error: grantError } = await supabase
         .from('mcp_oauth_grants')
         .insert({
@@ -441,10 +458,10 @@ export async function POST(req: NextRequest) {
           user_id: authCode.user_id,
           oauth_client_id: oauthClient?.id || null,
           external_client_key: `${issuedClientId || 'generic'}:${crypto.randomUUID()}`,
-          connection_name: oauthClient?.client_name || issuedClientId || 'MCP connection',
+          connection_name: connectionLabel,
           scopes: authCode.scopes || ['workspace:read'],
           status: 'active',
-          metadata: { authorization_code_id: authCode.id },
+          metadata: { authorization_code_id: authCode.id, raw_client_id: client_id || storedClientId || null },
         })
         .select('id')
         .single();
@@ -650,6 +667,7 @@ export async function POST(req: NextRequest) {
       const clientBind = assertRefreshClientBinding({
         requestClientId: client_id,
         tokenClientId: sessionClientId,
+        requestRedirectUris: redirect_uri ? [String(redirect_uri)] : null,
       });
       if (!clientBind.ok) {
         console.warn('[MCP Token] Refresh client binding failed:', clientBind.reason);
@@ -719,6 +737,13 @@ export async function POST(req: NextRequest) {
         return tokenError('server_error', 'Failed to secure rotated tokens', 503);
       }
 
+      const rotatedClientId =
+        (await resolveCanonicalOAuthClientId(
+          supabase,
+          sessionClientId,
+          redirect_uri ? [String(redirect_uri)] : null
+        )) ?? sessionClientId;
+
       const rotateRow: Record<string, unknown> = {
         access_token: newAccessToken,
         refresh_token: newRefreshToken,
@@ -727,7 +752,7 @@ export async function POST(req: NextRequest) {
         access_token_encrypted: newAccessTokenEncrypted,
         refresh_token_encrypted: newRefreshTokenEncrypted,
         token_type: 'Bearer',
-        client_id: sessionClientId,
+        client_id: rotatedClientId,
         user_id: session.user_id,
         tenant_id: session.tenant_id,
         scopes: session.scopes,

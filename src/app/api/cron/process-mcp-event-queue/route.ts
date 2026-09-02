@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { denyIfCronMemoryPressure } from '@/lib/cron/cronMemoryGuard';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -82,6 +83,9 @@ async function processBatchOutreachEvent(
 export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
   if (denied) return denied;
+
+  const memoryDenied = denyIfCronMemoryPressure('process-mcp-event-queue');
+  if (memoryDenied) return memoryDenied;
 
   const admin = createSupabaseAdminClient();
   const nowIso = new Date().toISOString();

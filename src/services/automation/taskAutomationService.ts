@@ -25,9 +25,14 @@ function cronFieldMatches(field: string, value: number): boolean {
     return field.split(',').some((part) => Number(part) === value);
 }
 
+export function isValidCronSchedule(schedule: string): boolean {
+    const parts = schedule.trim().split(/\s+/);
+    return parts.length === 5 && parts.every((part) => /^(?:\*|\d{1,2}(?:,\d{1,2})*)$/.test(part));
+}
+
 export function getNextTaskRun(schedule: string, after = new Date()): Date {
     const parts = schedule.trim().split(/\s+/);
-    if (parts.length !== 5 || !parts.every((part) => /^(?:\*|\d{1,2}(?:,\d{1,2})*)$/.test(part))) throw new Error('Schedule must be a supported five-field cron expression');
+    if (!isValidCronSchedule(schedule)) throw new Error('Schedule must be a supported five-field cron expression');
     const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
     const candidate = new Date(after.getTime());
     candidate.setUTCSeconds(0, 0);
@@ -146,7 +151,24 @@ export const taskAutomationService = {
      */
     async executeTask(task: ScheduledAiTask) {
         const supabase = createSupabaseAdminClient();
-        
+
+        if (!isValidCronSchedule(task.schedule)) {
+            const message = `Invalid cron schedule "${task.schedule}" — task paused until schedule is fixed`;
+            console.error(`[scheduled-ai-task] ${task.id}: ${message}`);
+            await supabase
+                .from('scheduled_ai_tasks')
+                .update({ status: 'paused', updated_at: new Date().toISOString() })
+                .eq('id', task.id);
+            await supabase.from('scheduled_ai_task_results').insert({
+                task_id: task.id,
+                tenant_id: task.tenant_id,
+                status: 'failure',
+                error: message,
+                ran_at: new Date().toISOString(),
+            });
+            return { success: false, error: message };
+        }
+
         try {
             const completion = await aiService.complete({
                 prompt: task.prompt,
@@ -191,12 +213,15 @@ export const taskAutomationService = {
                 ran_at: new Date().toISOString()
             });
 
-            const nextRunAt = getNextTaskRun(task.schedule, new Date());
+            const nextRunAt = isValidCronSchedule(task.schedule)
+                ? getNextTaskRun(task.schedule, new Date())
+                : null;
+
             await supabase
                 .from('scheduled_ai_tasks')
                 .update({
                     last_run_at: new Date().toISOString(),
-                    next_run_at: nextRunAt.toISOString(),
+                    ...(nextRunAt ? { next_run_at: nextRunAt.toISOString() } : { status: 'paused' }),
                 })
                 .eq('id', task.id);
 

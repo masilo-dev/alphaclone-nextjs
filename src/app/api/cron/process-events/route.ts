@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { denyIfCronMemoryPressure } from '@/lib/cron/cronMemoryGuard';
 import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 
 // Import workflows
@@ -26,6 +27,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const denied = denyIfCronUnauthorized(request);
   if (denied) return denied;
+
+  const memoryDenied = denyIfCronMemoryPressure('process-events');
+  if (memoryDenied) return memoryDenied;
 
   const supabase = createSupabaseAdminClient();
   const ranAt = new Date().toISOString();
