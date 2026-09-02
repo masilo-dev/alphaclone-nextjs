@@ -13,7 +13,7 @@ export const USAGE_ROLLOUT_ISO = '2026-08-24T00:00:00.000Z';
 /** Legacy unrestricted access ends 31 Aug 2026 23:59:59 UTC (account timezone fallback handled at display). */
 export const LEGACY_ACCESS_DEADLINE_ISO = '2026-08-31T23:59:59.000Z';
 
-export const TRIAL_DURATION_DAYS = 14;
+export const TRIAL_DURATION_DAYS = 30;
 
 export type EntitlementAccessMode =
   | 'legacy_unrestricted'

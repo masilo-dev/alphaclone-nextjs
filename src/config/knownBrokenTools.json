@@ -48,10 +48,12 @@
     "workaround": null
   },
   "gmail_send_email": {
-    "symptom": "broken",
-    "action": "block_with_hint",
-    "reason": "Use create_client then send_bulk_email_campaign for single-recipient email.",
-    "workaround": null
+    "symptom": "deprecated",
+    "action": "redirect",
+    "reason": "Use send_email for single-recipient mail.",
+    "workaround": {
+      "tool": "send_email"
+    }
   },
   "get_account_overview": {
     "symptom": "broken",
