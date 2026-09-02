@@ -256,7 +256,7 @@ defineConnectorTool({
     },
     required: ['tenant_id', 'entity_type', 'entity_id', 'note'],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
     const table = args.entity_type === 'lead' ? 'leads' : args.entity_type === 'contact' ? 'contacts' : 'companies';
     const { data: existing, error: findErr } = await supabase
