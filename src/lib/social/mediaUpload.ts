@@ -52,6 +52,9 @@ export function rejectOrExtractDataUri(value: string): {
 }
 
 export function decodeBase64Media(contentBase64: string): Buffer {
+  if (contentBase64 == null || String(contentBase64).trim() === '') {
+    throw new Error('content_base64 is required');
+  }
   const normalized = contentBase64.includes('base64,')
     ? contentBase64.split('base64,').pop() || ''
     : contentBase64;
