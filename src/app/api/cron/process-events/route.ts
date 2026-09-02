@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { denyIfCronMemoryPressure } from '@/lib/cron/cronMemoryGuard';
+import { withCronJob } from '@/lib/cron/withCronJob';
 import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 
 // Import workflows
@@ -28,9 +28,7 @@ export async function GET(request: NextRequest) {
   const denied = denyIfCronUnauthorized(request);
   if (denied) return denied;
 
-  const memoryDenied = denyIfCronMemoryPressure('process-events');
-  if (memoryDenied) return memoryDenied;
-
+  return withCronJob('process-events', async () => {
   const supabase = createSupabaseAdminClient();
   const ranAt = new Date().toISOString();
 
@@ -269,6 +267,7 @@ export async function GET(request: NextRequest) {
     await logCron('process-events', 'failed', { error: error.message }, ranAt);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
+  });
 }
 
 async function logCron(trigger: string, status: string, payload: any, ranAt: string) {

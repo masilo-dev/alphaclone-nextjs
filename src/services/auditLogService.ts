@@ -5,6 +5,7 @@
 
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { normalizeAuditSeverity, type AuditSeverity } from '@/lib/audit/auditSeverity';
 
 export type AuditAction =
   | 'CREATE' | 'READ' | 'UPDATE' | 'DELETE'
@@ -28,7 +29,7 @@ export interface AuditLogEntry {
     apiEndpoint?: string;
     mcpTool?: string;
   };
-  severity?: 'low' | 'medium' | 'high' | 'critical';
+  severity?: AuditSeverity | 'low' | 'medium' | 'high' | 'critical';
   createdAt: string;
   hash?: string; // Tamper-proof hash
 }
@@ -51,7 +52,9 @@ export async function logAuditEvent(
       console.warn('Audit log: No tenant context, logging with fallback');
     }
 
-    const severity = determineSeverity(entry.action, entry.resourceType);
+    const severity = normalizeAuditSeverity(
+      entry.severity || determineSeverity(entry.action, entry.resourceType)
+    );
 
     // Generate tamper-proof hash
     const hash = await generateAuditHash({
@@ -95,23 +98,23 @@ export async function logAuditEvent(
 /**
  * Determine severity based on action and resource
  */
-function determineSeverity(action: AuditAction, resourceType: string): 'low' | 'medium' | 'high' | 'critical' {
+function determineSeverity(action: AuditAction, resourceType: string): AuditSeverity {
   if (CRITICAL_ACTIONS.includes(action) && ['user', 'tenant', 'role'].includes(resourceType)) {
     return 'critical';
   }
   if (CRITICAL_ACTIONS.includes(action)) {
-    return 'high';
+    return 'error';
   }
   if (HIGH_SEVERITY_ACTIONS.includes(action)) {
-    return 'high';
+    return 'error';
   }
   if (action === 'UPDATE' && ['user', 'tenant', 'payment'].includes(resourceType)) {
-    return 'high';
+    return 'error';
   }
   if (action === 'DELETE') {
-    return 'medium';
+    return 'warning';
   }
-  return 'low';
+  return 'info';
 }
 
 /**

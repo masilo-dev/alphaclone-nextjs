@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { normalizeDefineOutcomeArgs } from '@/lib/bonnie/outcomeArgs';
 import { businessOutcomeSummary } from '@/lib/copy/businessFriendlyErrors';
+import { resolveMcpSessionUserId } from '@/lib/mcp/resolveMcpSessionUserId';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -69,13 +70,19 @@ export async function POST(req: NextRequest) {
     }
 
     const { criteria, status, session_id, notes } = normalized;
-    const { admin } = await requireTenantAccess(tenantId);
+    const { admin, user } = await requireTenantAccess(tenantId);
+
+    const sessionUserId = await resolveMcpSessionUserId({ tenantId, userId: user.id });
+    if (!sessionUserId) {
+      return NextResponse.json({ error: 'No workspace owner found for outcome recording' }, { status: 400 });
+    }
 
     const metCount = criteria.filter((c) => c.met).length;
     const score = Math.round((metCount / criteria.length) * 100);
 
     const { error } = await admin.from('mcp_sessions').insert({
       tenant_id: tenantId,
+      user_id: sessionUserId,
       tool_name: 'define_outcome',
       success: status === 'success',
       duration_ms: 0,

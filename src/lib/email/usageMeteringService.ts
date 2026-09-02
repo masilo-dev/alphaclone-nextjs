@@ -52,10 +52,11 @@ export async function recordUsageEvent(params: {
 }): Promise<void> {
   try {
     const supabase = createSupabaseAdminClient();
-    await supabase.from('tenant_usage_events').insert({
+    const operationId = params.operationId?.trim() || null;
+    const row = {
       tenant_id: params.tenantId,
       user_id: params.userId || null,
-      operation_id: params.operationId || null,
+      operation_id: operationId,
       initiation_source: params.initiationSource,
       business_action: params.businessAction,
       provider: params.provider || null,
@@ -66,9 +67,17 @@ export async function recordUsageEvent(params: {
       attempt_number: params.attemptNumber || 1,
       workflow_id: params.workflowId || null,
       metadata: params.metadata || {},
-    });
-  } catch {
-    // table may not exist yet
+    };
+
+    const { error } = await supabase.from('tenant_usage_events').insert(row);
+    if (error && operationId && /duplicate|unique|23505/i.test(error.message)) {
+      return;
+    }
+    if (error) {
+      console.warn('[usageMetering] recordUsageEvent failed:', error.message);
+    }
+  } catch (err) {
+    console.warn('[usageMetering] recordUsageEvent error:', err);
   }
 }
 
