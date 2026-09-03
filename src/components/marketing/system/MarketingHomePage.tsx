@@ -277,39 +277,6 @@ export default function MarketingHomePage() {
       <LifecycleFlowShowcase />
     </MarketingSection>
 
-    {/* Deals Dashboard Screenshot encased in Premium Browser Window Frame */}
-    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
-      <Intro title="See the business, not another collection of apps." center/>
-      <div className="relative group mx-auto mt-9 max-w-6xl">
-        <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 blur-xl opacity-70 group-hover:opacity-100 transition duration-500"/>
-        <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-[#030a16]/95 p-2 sm:p-4 shadow-2xl shadow-cyan-950/50 backdrop-blur-xl transition-all duration-300 hover:border-cyan-400/40 select-none">
-          <div className="mb-2.5 flex items-center justify-between border-b border-white/10 px-3 pb-2 pt-1">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80"/>
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80"/>
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80"/>
-            </div>
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/80 px-3 py-0.5 text-[10px] font-medium text-slate-300">
-              <LockKeyhole className="h-2.5 w-2.5 text-emerald-400"/>
-              <span>alphaclone.app/dashboard/deals</span>
-            </div>
-            <div className="w-10"/>
-          </div>
-          <div className="overflow-hidden rounded-xl border border-white/10 bg-slate-950 select-none">
-            <Image src="/screenshots/deals-dashboard.png" alt="AlphaClone deals dashboard showing connected customer and pipeline information" width={1600} height={950} draggable={false} sizes="(max-width: 768px) 100vw, 1100px" className="h-auto w-full max-w-full pointer-events-none select-none transition-transform duration-500 hover:scale-[1.005]"/>
-          </div>
-          <div className="mt-3.5 grid gap-2 sm:grid-cols-3">
-            {[["CRM KNOWS THE CUSTOMER","Sarah Johnson · $2,800 opportunity · Call tomorrow"],["BONNIE KNOWS THE NEXT ACTIONS","Follow up · Prepare contract · Schedule kickoff"],["MONEY CLOSES THE LOOP","Proposal → Contract → Invoice → Payment"]].map(([h,p])=>(
-              <div key={h} className="group rounded-xl border border-cyan-400/20 bg-[#041321] p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/40 hover:bg-[#061a2d]">
-                <p className="text-[10px] font-bold text-cyan-300 group-hover:text-cyan-200">{h}</p>
-                <p className="mt-1 text-xs text-white">{p}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </MarketingContainer></MarketingSection>
-
     {/* Work from your AI Section (Hyper-Premium Interactive Model & Module Orchestrator) */}
     <MarketingSection atmosphere="platform" className="py-10 sm:py-16 lg:py-24 border-t border-white/10">
       <AiInterfaceShowcase />

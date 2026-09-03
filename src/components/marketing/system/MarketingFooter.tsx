@@ -9,6 +9,7 @@ import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/c
 import { EXECUTION_LAYER } from '@/config/marketingPositioning';
 import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
+import ChatGptExecutionPreview from '@/components/marketing/system/ChatGptExecutionPreview';
 
 type FooterLink = {
   label: string;
@@ -83,7 +84,26 @@ const SOCIAL_LINKS = [
 export default function MarketingFooter() {
   return (
     <footer className="mkt-footer">
-      <MarketingContainer className="py-10 sm:py-12">
+      <MarketingContainer className="pt-10 sm:pt-12 pb-6">
+        <div className="mx-auto mb-10 max-w-5xl">
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[.22em] text-cyan-300">
+                See the business, not another collection of apps
+              </p>
+              <h2 className="mt-3 font-marketing-heading text-xl font-extrabold leading-tight text-white sm:text-2xl">
+                Direct work from ChatGPT. AlphaClone executes across your connected systems.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                {EXECUTION_LAYER.primaryLine} Use the AI interface you already know — with CRM, outreach,
+                documents, and billing running underneath with approval and audit.
+              </p>
+            </div>
+            <ChatGptExecutionPreview compact />
+          </div>
+        </div>
+      </MarketingContainer>
+      <MarketingContainer className="py-6 sm:py-8 border-t border-white/10">
         <div className="mkt-footer-slim">
           <div>
             <Link href="/" className="mkt-brand" aria-label="AlphaClone home">
