@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { withCronJob } from '@/lib/cron/withCronJob';
+import { toolFromEventName } from '@/lib/mcp/bulkJobQueue';
+import { processBulkMcpQueueEvent } from '@/lib/mcp/processBulkMcpQueueEvent';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -194,6 +196,14 @@ export async function GET(req: NextRequest) {
           event.user_id,
           (event.payload || {}) as Record<string, unknown>
         );
+      } else if (toolFromEventName(event.event_name)) {
+        outcome = await processBulkMcpQueueEvent({
+          eventId: event.id,
+          tenantId: event.tenant_id,
+          userId: event.user_id,
+          eventName: event.event_name,
+          payload: (event.payload || {}) as Record<string, unknown>,
+        });
       }
 
       const doneAt = new Date().toISOString();

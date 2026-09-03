@@ -1,8 +1,8 @@
+import { mapWithConcurrency } from '@/lib/concurrency/mapWithConcurrency';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { preflightOutreachRecipients } from '@/lib/email/preflightRecipients';
 import { ensureEmailProviderReady } from '@/lib/mcp/ensureEmailProviderReady';
-import { shouldUseMcpDirectExecution } from '@/lib/mcp/mcpDirectExecution';
 import { ingestMediaInput } from '@/lib/media/ingestMedia';
 import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
@@ -23,6 +23,9 @@ type BatchContext = { tenantId: string; userId?: string | null };
 const MAX_RECORDS_PER_BATCH = 250;
 const MAX_MEDIA_PER_BATCH = 50;
 const MAX_EMAIL_RECIPIENTS_PER_BATCH = 100;
+const CRM_BATCH_SIZE = 50;
+const BULK_EMAIL_CONCURRENCY = 5;
+const BULK_MEDIA_CONCURRENCY = 2;
 
 const RECORD_CONFIG: Record<RecordType, { table: string; fields: string[]; stateFields: string[] }> = {
   lead: {
@@ -169,10 +172,11 @@ export async function executeBulkUpdateRecords(args: BulkRecordArgs, ctx: BatchC
     if (replay) return replay;
   }
 
+  const selectFields = ['id', 'tenant_id', ...config.fields].join(', ');
   const supabase = createSupabaseAdminClient() as any;
   const { data, error } = await supabase
     .from(config.table)
-    .select('*')
+    .select(selectFields)
     .eq('tenant_id', ctx.tenantId)
     .in('id', recordIds);
   if (error) throw new Error(`Unable to load ${args.record_type} records: ${error.message}`);
@@ -229,18 +233,28 @@ export async function executeBulkUpdateRecords(args: BulkRecordArgs, ctx: BatchC
   }
 
   const update = { ...requestedPatch, updated_at: new Date().toISOString() };
-  const { data: updatedRows, error: updateError } = await supabase
-    .from(config.table)
-    .update(update)
-    .eq('tenant_id', ctx.tenantId)
-    .in('id', eligibleIds)
-    .select('id');
-  if (updateError) throw new Error(`Unable to update ${args.record_type} records: ${updateError.message}`);
+  let updatedCount = 0;
+  const updatedIds: string[] = [];
+
+  for (let offset = 0; offset < eligibleIds.length; offset += CRM_BATCH_SIZE) {
+    const batchIds = eligibleIds.slice(offset, offset + CRM_BATCH_SIZE);
+    const { data: updatedRows, error: updateError } = await supabase
+      .from(config.table)
+      .update(update)
+      .eq('tenant_id', ctx.tenantId)
+      .in('id', batchIds)
+      .select('id');
+    if (updateError) throw new Error(`Unable to update ${args.record_type} records: ${updateError.message}`);
+    for (const row of updatedRows || []) {
+      updatedIds.push(String(row.id));
+    }
+    updatedCount += (updatedRows || []).length;
+  }
 
   const output = {
     ...baseOutput,
-    updated_or_sent: (updatedRows || []).length,
-    updated_ids: (updatedRows || []).map((row: { id: string }) => row.id),
+    updated_or_sent: updatedCount,
+    updated_ids: updatedIds,
   };
   await recordReceipt({
     tenantId: ctx.tenantId,
@@ -270,45 +284,48 @@ export async function executeBulkUploadMedia(args: { files: MediaItem[] }, ctx: 
   if (!Array.isArray(args.files) || args.files.length === 0) throw new Error('files must contain at least one media item');
   if (args.files.length > MAX_MEDIA_PER_BATCH) throw new Error(`files cannot exceed ${MAX_MEDIA_PER_BATCH} items per request`);
 
-  const results: Array<Record<string, unknown>> = [];
-  for (const [index, item] of args.files.entries()) {
-    try {
-      assertExternalSource(item.source_url, `files[${index}].source_url`);
-      assertExternalSource(item.content_base64, `files[${index}].content_base64`);
-      assertExternalSource(item.data_url, `files[${index}].data_url`);
-      const filename = item.filename || `bulk-upload-${index + 1}.${item.media_type === 'document' ? 'pdf' : item.media_type === 'video' ? 'mp4' : 'png'}`;
-      const media: any = item.data_url
-        ? { type: 'data_url' as const, dataUrl: item.data_url, filename }
-        : item.source_url
-          ? { type: 'url' as const, url: item.source_url, filename }
-          : item.content_base64
-            ? {
-                type: 'base64' as const,
-                base64: item.content_base64,
-                filename,
-                mimeType: item.mime_type || (item.media_type === 'document' ? 'application/pdf' : item.media_type === 'video' ? 'video/mp4' : 'image/png'),
-              }
-            : null;
-      if (!media) throw new Error('Provide source_url, content_base64, or data_url');
-      const asset = await ingestMediaInput({
-        tenantId: ctx.tenantId,
-        userId: ctx.userId || '',
-        purpose: item.purpose || 'bulk_upload',
-        media,
-      });
-      results.push({
-        index,
-        status: 'uploaded',
-        media_id: asset.id,
-        filename: asset.filename,
-        mime_type: asset.mime_type,
-        size_bytes: asset.size_bytes,
-        media_url: asset.url,
-      });
-    } catch (error) {
-      results.push({ index, status: 'failed', error: error instanceof Error ? error.message : 'upload_failed' });
+  const results: Array<Record<string, unknown>> = await mapWithConcurrency(
+    args.files,
+    BULK_MEDIA_CONCURRENCY,
+    async (item, index) => {
+      try {
+        assertExternalSource(item.source_url, `files[${index}].source_url`);
+        assertExternalSource(item.content_base64, `files[${index}].content_base64`);
+        assertExternalSource(item.data_url, `files[${index}].data_url`);
+        const filename = item.filename || `bulk-upload-${index + 1}.${item.media_type === 'document' ? 'pdf' : item.media_type === 'video' ? 'mp4' : 'png'}`;
+        const media: any = item.data_url
+          ? { type: 'data_url' as const, dataUrl: item.data_url, filename }
+          : item.source_url
+            ? { type: 'url' as const, url: item.source_url, filename }
+            : item.content_base64
+              ? {
+                  type: 'base64' as const,
+                  base64: item.content_base64,
+                  filename,
+                  mimeType: item.mime_type || (item.media_type === 'document' ? 'application/pdf' : item.media_type === 'video' ? 'video/mp4' : 'image/png'),
+                }
+              : null;
+        if (!media) throw new Error('Provide source_url, content_base64, or data_url');
+        const asset = await ingestMediaInput({
+          tenantId: ctx.tenantId,
+          userId: ctx.userId || '',
+          purpose: item.purpose || 'bulk_upload',
+          media,
+        });
+        return {
+          index,
+          status: 'uploaded',
+          media_id: asset.id,
+          filename: asset.filename,
+          mime_type: asset.mime_type,
+          size_bytes: asset.size_bytes,
+          media_url: asset.url,
+        };
+      } catch (error) {
+        return { index, status: 'failed', error: error instanceof Error ? error.message : 'upload_failed' };
+      }
     }
-  }
+  );
 
   const uploaded = results.filter((item) => item.status === 'uploaded');
   return {
@@ -359,7 +376,7 @@ async function loadRecipients(args: BulkEmailArgs, tenantId: string): Promise<{ 
   for (const group of groups) {
     const { data, error } = await supabase
       .from(group.table)
-      .select('*')
+      .select('id, email, full_name, contact_name, business_name, name')
       .eq('tenant_id', tenantId)
       .in('id', group.ids);
     if (error) throw new Error(`Unable to load ${group.type} recipients: ${error.message}`);
@@ -399,11 +416,6 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
     throw new Error('Set confirm_send: true after reviewing a dry run before sending bulk email');
   }
   if (!dryRun) {
-    if (!shouldUseMcpDirectExecution('send_bulk_email')) {
-      throw new Error(
-        'Bulk email durable queue is not implemented for MCP. Unset MCP_BULK_EMAIL_DURABLE to send directly in chat.',
-      );
-    }
     await ensureEmailProviderReady(ctx.tenantId, ctx.userId || '');
   }
   const key = dryRun ? null : idempotencyKey(args.idempotency_key);
@@ -442,7 +454,7 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
     : [];
 
   if (!dryRun) {
-    for (const recipient of eligibleRecipients) {
+    const sendResults = await mapWithConcurrency(eligibleRecipients, BULK_EMAIL_CONCURRENCY, async (recipient) => {
       try {
         const sent = await sendEmailServer({
           tenantId: ctx.tenantId,
@@ -455,17 +467,18 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
           preferredProvider: args.provider as any,
           templateName: 'mcpBulkEmail',
         });
-        results.push({
+        return {
           ...recipient,
           status: sent.success ? 'sent' : 'failed',
           provider: sent.provider || null,
           email_id: sent.emailId || null,
           error: sent.success ? null : sent.error || 'send_failed',
-        });
+        };
       } catch (error) {
-        results.push({ ...recipient, status: 'failed', error: error instanceof Error ? error.message : 'send_failed' });
+        return { ...recipient, status: 'failed', error: error instanceof Error ? error.message : 'send_failed' };
       }
-    }
+    });
+    results.push(...sendResults);
   }
 
   const sentCount = results.filter((result) => result.status === 'sent').length;

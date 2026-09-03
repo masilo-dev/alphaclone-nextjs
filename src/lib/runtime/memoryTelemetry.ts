@@ -3,6 +3,8 @@
  * Logs periodically at INFO level — never generates heap snapshots.
  */
 
+import { getWorkerRuntimeCounters } from '@/lib/runtime/workerRuntimeCounters';
+
 export type MemorySnapshot = {
   timestamp: string;
   rssMb: number;
@@ -69,7 +71,7 @@ export function startMemoryTelemetry(): void {
   if (intervalHandle || process.env.DISABLE_MEMORY_TELEMETRY === 'true') return;
 
   baseline = readSnapshot();
-  const intervalMs = Math.max(60_000, Number(process.env.MEMORY_TELEMETRY_INTERVAL_MS || 300_000));
+  const intervalMs = Math.max(60_000, Number(process.env.MEMORY_TELEMETRY_INTERVAL_MS || 60_000));
 
   console.info('[memory] baseline', baseline);
 
@@ -85,14 +87,21 @@ export function startMemoryTelemetry(): void {
 
     void import('@/lib/redis/client').then(({ getRedisConnectionState }) => {
       const redisState = getRedisConnectionState();
+      const counters = getWorkerRuntimeCounters();
       console.info('[memory] periodic', {
         ...snap,
         growthSinceBaselineMb: growthMb,
         rssPct,
         redis: redisState,
+        ...counters,
       });
     }).catch(() => {
-      console.info('[memory] periodic', { ...snap, growthSinceBaselineMb: growthMb, rssPct });
+      console.info('[memory] periodic', {
+        ...snap,
+        growthSinceBaselineMb: growthMb,
+        rssPct,
+        ...getWorkerRuntimeCounters(),
+      });
     });
 
     if (snap.heapUsedPct >= 90 || rssPct >= 85) {

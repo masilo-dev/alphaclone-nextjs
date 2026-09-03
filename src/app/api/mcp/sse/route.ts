@@ -88,9 +88,21 @@ export async function GET(req: NextRequest) {
 
     const endpointUrl = `${getBaseUrl(req)}/api/mcp/messages`;
 
+    let streamCleanup: (() => void) | null = null;
+
     const stream = new ReadableStream({
       start(controller) {
         const encoder = new TextEncoder();
+        let heartbeat: ReturnType<typeof setInterval> | null = null;
+
+        streamCleanup = () => {
+          if (heartbeat) {
+            clearInterval(heartbeat);
+            heartbeat = null;
+          }
+          try { controller.close(); } catch {}
+        };
+
         try {
             controller.enqueue(encoder.encode(`event: endpoint\ndata: ${endpointUrl}\n\n`));
             if (sessionData?.id) {
@@ -98,21 +110,22 @@ export async function GET(req: NextRequest) {
             }
         } catch (err) {
             console.error('[MCP SSE GET] Initial stream enqueue failed:', err);
+            streamCleanup();
+            return;
         }
 
-        const heartbeat = setInterval(() => {
+        heartbeat = setInterval(() => {
           try {
             controller.enqueue(encoder.encode(':\n\n'));
-          } catch (e) {
-            clearInterval(heartbeat);
-            try { controller.close(); } catch {}
+          } catch {
+            streamCleanup?.();
           }
         }, 15000);
 
-        req.signal.addEventListener('abort', () => {
-          clearInterval(heartbeat);
-          try { controller.close(); } catch {}
-        });
+        req.signal.addEventListener('abort', () => streamCleanup?.(), { once: true });
+      },
+      cancel() {
+        streamCleanup?.();
       },
     });
 

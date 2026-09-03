@@ -898,11 +898,14 @@ export async function POST(req: NextRequest) {
     // Registry tools — bypass MCPServer (avoids nodemailer / heavy email import chain)
     if (hasTool(toolName)) {
       try {
-        const rawResult = await executeTool(tenantId, userId, toolName, {
-          ...toolArgs,
-          tenant_id: tenantId,
-          user_id: userId,
-        });
+        const { executeMcpToolWithBudget } = await import('@/lib/mcp/mcpToolExecutionBudget');
+        const rawResult = await executeMcpToolWithBudget(String(toolName), () =>
+          executeTool(tenantId, userId, toolName, {
+            ...toolArgs,
+            tenant_id: tenantId,
+            user_id: userId,
+          })
+        );
         const isoResult = toUtcIso(rawResult);
         const result = (isoResult && typeof isoResult === 'object' && Array.isArray((isoResult as any).content))
           ? isoResult

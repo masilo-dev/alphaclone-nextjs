@@ -9,6 +9,10 @@ import { commercialEngine } from "./commercialEngine";
 import { continuousEvaluator } from "./continuousEvaluator";
 import { workflowEngine } from "./workflowEngine";
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function getDbClient() {
   const envFiles = [".env.local", ".env.production.local", ".env"];
   let url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -37,8 +41,9 @@ export class WorkerRunner {
   private static instance: WorkerRunner;
   private isRunning: boolean = false;
   private workerId: string;
-  private intervalTimer: NodeJS.Timeout | null = null;
   private lastEvaluatorTick: number = 0;
+  private isTickRunning = false;
+  private shuttingDown = false;
 
   private constructor() {
     this.workerId = `worker_${process.pid}_${Math.random().toString(36).substring(2, 7)}`;
@@ -58,22 +63,38 @@ export class WorkerRunner {
     }
 
     this.isRunning = true;
+    this.shuttingDown = false;
     workflowEngine.init();
     console.log(`🚀 [WorkerRunner] Starting Autonomous Worker ${this.workerId} (Tick rate: ${tickMs}ms)...`);
 
-    this.intervalTimer = setInterval(async () => {
-      await this.tick();
-    }, tickMs);
+    void this.runLoop(tickMs);
+  }
 
-    // Initial immediate tick
-    this.tick().catch(console.error);
+  private async runLoop(tickMs: number): Promise<void> {
+    while (this.isRunning && !this.shuttingDown) {
+      const started = Date.now();
+      try {
+        if (this.isTickRunning) {
+          console.warn(`[WorkerRunner] tick skipped — previous tick still running`);
+        } else {
+          this.isTickRunning = true;
+          try {
+            await this.tick();
+          } finally {
+            this.isTickRunning = false;
+          }
+        }
+      } catch (err: unknown) {
+        console.error("[WorkerRunner] loop error:", err instanceof Error ? err.message : err);
+      }
+      const elapsed = Date.now() - started;
+      const waitMs = Math.max(0, tickMs - elapsed);
+      if (waitMs > 0) await sleep(waitMs);
+    }
   }
 
   public stop(): void {
-    if (this.intervalTimer) {
-      clearInterval(this.intervalTimer);
-      this.intervalTimer = null;
-    }
+    this.shuttingDown = true;
     this.isRunning = false;
     console.log(`🛑 [WorkerRunner] Stopped Worker ${this.workerId}`);
   }

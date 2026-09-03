@@ -25,6 +25,23 @@ import { verifyTaskSideEffect, verifyBusinessOutcome } from './verificationServi
 import { runBonnieWithOpenAIAgents } from '@/lib/bonnie/bonnieOpenAIAgentsRunner';
 import type { BonnieModuleId } from '@/lib/bonnie/bonnieToolCatalog';
 import { createHash } from 'crypto';
+import { mapWithConcurrency, readConcurrencyEnv } from '@/lib/concurrency/mapWithConcurrency';
+import {
+  decrementActiveBonnieTasks,
+  incrementActiveBonnieTasks,
+  setActiveBonnieTasks,
+} from '@/lib/runtime/workerRuntimeCounters';
+import { isBackgroundJobHeapBlocked } from '@/lib/runtime/backgroundJobGate';
+
+const TASK_SELECT_FIELDS =
+  'id, tenant_id, status, task_type, title, assigned_agent_id, structured_input, structured_output, run_id, owner_id, created_by, risk_level, approval_policy, version, attempt_count, max_attempts, idempotency_key, correlation_id, scheduled_at, priority, updated_at';
+
+let processClaimableTasksInFlight = false;
+
+/** Test hook — verify in-process task guard. */
+export function isProcessClaimableTasksRunning(): boolean {
+  return processClaimableTasksInFlight;
+}
 
 function workerId() {
   return `bonnie-worker-${process.pid}-${Date.now()}`;
@@ -528,145 +545,181 @@ export async function processClaimableTasks(limit = 10): Promise<{
   completed: number;
   waiting: number;
   failed: number;
+  skipped_inflight?: boolean;
+  skipped_memory?: boolean;
 }> {
+  if (processClaimableTasksInFlight) {
+    console.warn('[bonnie-worker] processClaimableTasks skipped — already in flight');
+    return { processed: 0, completed: 0, waiting: 0, failed: 0, skipped_inflight: true };
+  }
+
+  if (isBackgroundJobHeapBlocked()) {
+    console.warn('[bonnie-worker] processClaimableTasks skipped — heap pressure');
+    return { processed: 0, completed: 0, waiting: 0, failed: 0, skipped_memory: true };
+  }
+
+  processClaimableTasksInFlight = true;
   const admin = createSupabaseAdminClient();
   const worker = workerId();
-
-  await scheduleReadyTasks({ limit: 40 });
-
-  const { data: candidates } = await admin
-    .from('agent_tasks')
-    .select('*')
-    .in('status', ['READY', 'QUEUED'])
-    .or('scheduled_at.is.null,scheduled_at.lte.' + new Date().toISOString())
-    .order('priority', { ascending: true })
-    .order('updated_at', { ascending: true })
-    .limit(limit);
+  const taskConcurrency = readConcurrencyEnv('BONNIE_WORKER_TASK_CONCURRENCY', 2);
 
   let processed = 0;
   let completed = 0;
   let waiting = 0;
   let failed = 0;
 
-  for (const task of candidates || []) {
-    const claim = await claimTask({
-      tenantId: task.tenant_id,
-      taskId: task.id,
-      workerId: worker,
-    });
-    if (!claim.ok) continue;
-    processed += 1;
+  try {
+    await scheduleReadyTasks({ limit: 40 });
 
-    try {
-      const result = await executeTaskStages({
+    const { data: candidates } = await admin
+      .from('agent_tasks')
+      .select(TASK_SELECT_FIELDS)
+      .in('status', ['READY', 'QUEUED'])
+      .or('scheduled_at.is.null,scheduled_at.lte.' + new Date().toISOString())
+      .order('priority', { ascending: true })
+      .order('updated_at', { ascending: true })
+      .limit(limit);
+
+    const claimedTasks: Array<{
+      task: Record<string, any>;
+      claim: Awaited<ReturnType<typeof claimTask>>;
+    }> = [];
+
+    for (const task of candidates || []) {
+      const claim = await claimTask({
         tenantId: task.tenant_id,
-        task: { ...task, version: claim.version! - 1 },
-        attemptId: claim.attemptId!,
-        fencingToken: claim.fencingToken!,
-        leaseToken: claim.leaseToken!,
-        worker,
+        taskId: task.id,
+        workerId: worker,
       });
-
-      if (result.status === 'COMPLETED') completed += 1;
-      else waiting += 1;
-
-      await scheduleReadyTasks({ tenantId: task.tenant_id, runId: task.run_id, limit: 20 });
-      await getRunProgressSummary(task.run_id, task.tenant_id);
-    } catch (err: unknown) {
-      const classified = classifyError(err);
-      const attemptNumber = claim.attemptNumber || task.attempt_count + 1;
-
-      await admin
-        .from('agent_task_attempts')
-        .update({
-          status: classified.code === 'UNCERTAIN' ? 'uncertain' : 'failed',
-          ended_at: new Date().toISOString(),
-          error_category: classified.category,
-          error_code: classified.code,
-          error_message: classified.message,
-          retryable: classified.retryable,
-          next_retry_at: classified.retryable
-            ? new Date(Date.now() + backoffWithJitter(attemptNumber)).toISOString()
-            : null,
-        })
-        .eq('id', claim.attemptId);
-
-      if (classified.code === 'UNCERTAIN') {
-        await transitionTask({
-          tenantId: task.tenant_id,
-          taskId: task.id,
-          to: 'EXECUTION_UNCERTAIN',
-          trigger: 'worker_uncertain',
-          relatedAttemptId: claim.attemptId,
-          reason: classified.message,
-          patch: { worker_id: null, lease_token: null, lease_expires_at: null, failure_reason: classified.message },
-        });
-        await openIntervention({
-          tenantId: task.tenant_id,
-          runId: task.run_id,
-          taskId: task.id,
-          category: 'execution_uncertain',
-          title: `Uncertain execution: ${task.title}`,
-          detail: classified.message,
-        });
-        failed += 1;
-        continue;
-      }
-
-      if (classified.retryable && attemptNumber < (task.max_attempts || 3)) {
-        const nextRetry = new Date(Date.now() + backoffWithJitter(attemptNumber)).toISOString();
-        await transitionTask({
-          tenantId: task.tenant_id,
-          taskId: task.id,
-          to: 'RETRY_SCHEDULED',
-          trigger: 'worker_retry',
-          relatedAttemptId: claim.attemptId,
-          reason: classified.message,
-          patch: {
-            scheduled_at: nextRetry,
-            worker_id: null,
-            lease_token: null,
-            lease_expires_at: null,
-            failure_reason: classified.message,
-          },
-        });
-        await insertOutboxEvent({
-          tenantId: task.tenant_id,
-          eventType: 'task.retry_scheduled',
-          payload: {
-            task_id: task.id,
-            run_id: task.run_id,
-            tenant_id: task.tenant_id,
-            correlation_id: task.correlation_id,
-          },
-        });
-      } else {
-        await transitionTask({
-          tenantId: task.tenant_id,
-          taskId: task.id,
-          to: 'FAILED',
-          trigger: 'worker_failed',
-          relatedAttemptId: claim.attemptId,
-          reason: classified.message,
-          patch: {
-            worker_id: null,
-            lease_token: null,
-            lease_expires_at: null,
-            failure_reason: classified.message,
-          },
-        });
-        await openIntervention({
-          tenantId: task.tenant_id,
-          runId: task.run_id,
-          taskId: task.id,
-          category: 'retry_limit_reached',
-          title: `Failed: ${task.title}`,
-          detail: classified.message,
-          suggestedResolution: 'Retry, edit inputs, or take over manually',
-        });
-      }
-      failed += 1;
+      if (!claim.ok) continue;
+      claimedTasks.push({ task, claim });
     }
+
+    setActiveBonnieTasks(0);
+
+    const outcomes = await mapWithConcurrency(claimedTasks, taskConcurrency, async ({ task, claim }) => {
+      incrementActiveBonnieTasks();
+
+      try {
+        const result = await executeTaskStages({
+          tenantId: task.tenant_id,
+          task: { ...task, version: claim.version! - 1 },
+          attemptId: claim.attemptId!,
+          fencingToken: claim.fencingToken!,
+          leaseToken: claim.leaseToken!,
+          worker,
+        });
+
+        await scheduleReadyTasks({ tenantId: task.tenant_id, runId: task.run_id, limit: 20 });
+        await getRunProgressSummary(task.run_id, task.tenant_id);
+
+        if (result.status === 'COMPLETED') return 'completed' as const;
+        return 'waiting' as const;
+      } catch (err: unknown) {
+        const classified = classifyError(err);
+        const attemptNumber = claim.attemptNumber || task.attempt_count + 1;
+
+        await admin
+          .from('agent_task_attempts')
+          .update({
+            status: classified.code === 'UNCERTAIN' ? 'uncertain' : 'failed',
+            ended_at: new Date().toISOString(),
+            error_category: classified.category,
+            error_code: classified.code,
+            error_message: classified.message,
+            retryable: classified.retryable,
+            next_retry_at: classified.retryable
+              ? new Date(Date.now() + backoffWithJitter(attemptNumber)).toISOString()
+              : null,
+          })
+          .eq('id', claim.attemptId);
+
+        if (classified.code === 'UNCERTAIN') {
+          await transitionTask({
+            tenantId: task.tenant_id,
+            taskId: task.id,
+            to: 'EXECUTION_UNCERTAIN',
+            trigger: 'worker_uncertain',
+            relatedAttemptId: claim.attemptId,
+            reason: classified.message,
+            patch: { worker_id: null, lease_token: null, lease_expires_at: null, failure_reason: classified.message },
+          });
+          await openIntervention({
+            tenantId: task.tenant_id,
+            runId: task.run_id,
+            taskId: task.id,
+            category: 'execution_uncertain',
+            title: `Uncertain execution: ${task.title}`,
+            detail: classified.message,
+          });
+          return 'failed' as const;
+        }
+
+        if (classified.retryable && attemptNumber < (task.max_attempts || 3)) {
+          const nextRetry = new Date(Date.now() + backoffWithJitter(attemptNumber)).toISOString();
+          await transitionTask({
+            tenantId: task.tenant_id,
+            taskId: task.id,
+            to: 'RETRY_SCHEDULED',
+            trigger: 'worker_retry',
+            relatedAttemptId: claim.attemptId,
+            reason: classified.message,
+            patch: {
+              scheduled_at: nextRetry,
+              worker_id: null,
+              lease_token: null,
+              lease_expires_at: null,
+              failure_reason: classified.message,
+            },
+          });
+          await insertOutboxEvent({
+            tenantId: task.tenant_id,
+            eventType: 'task.retry_scheduled',
+            payload: {
+              task_id: task.id,
+              run_id: task.run_id,
+              tenant_id: task.tenant_id,
+              correlation_id: task.correlation_id,
+            },
+          });
+        } else {
+          await transitionTask({
+            tenantId: task.tenant_id,
+            taskId: task.id,
+            to: 'FAILED',
+            trigger: 'worker_failed',
+            relatedAttemptId: claim.attemptId,
+            reason: classified.message,
+            patch: {
+              worker_id: null,
+              lease_token: null,
+              lease_expires_at: null,
+              failure_reason: classified.message,
+            },
+          });
+          await openIntervention({
+            tenantId: task.tenant_id,
+            runId: task.run_id,
+            taskId: task.id,
+            category: 'retry_limit_reached',
+            title: `Failed: ${task.title}`,
+            detail: classified.message,
+            suggestedResolution: 'Retry, edit inputs, or take over manually',
+          });
+        }
+        return 'failed' as const;
+      } finally {
+        decrementActiveBonnieTasks();
+      }
+    });
+
+    processed = outcomes.length;
+    completed = outcomes.filter((o) => o === 'completed').length;
+    waiting = outcomes.filter((o) => o === 'waiting').length;
+    failed = outcomes.filter((o) => o === 'failed').length;
+  } finally {
+    processClaimableTasksInFlight = false;
+    setActiveBonnieTasks(0);
   }
 
   return { processed, completed, waiting, failed };

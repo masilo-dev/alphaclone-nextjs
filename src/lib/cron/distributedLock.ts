@@ -97,3 +97,79 @@ export async function acquireCronLock(
 export function clearLocalCronLockForTests(jobName: string): void {
   localLocks.delete(lockKey(jobName));
 }
+
+const bonnieLocalLocks = new Map<string, { ownerId: string; expiresAt: number }>();
+
+function bonnieLockKey(name: string): string {
+  return `lock:bonnie:${name}`;
+}
+
+/**
+ * Bonnie worker lock — Redis SET NX EX only (no in-process fallback when Redis configured).
+ */
+export async function acquireBonnieLock(
+  name: string,
+  ttlSec: number
+): Promise<CronLockResult> {
+  const ownerId = `${process.pid}-${randomUUID()}`;
+  const key = bonnieLockKey(name);
+
+  if (isRedisConfigured()) {
+    try {
+      const redis = await getRedisAsync({ requireConfigured: true });
+      if (!redis) {
+        return { acquired: false, reason: 'redis_unavailable' };
+      }
+
+      const ok = await redis.set(key, ownerId, { nx: true, ex: ttlSec });
+      const acquired = ok === 'OK' || ok === true;
+      if (!acquired) {
+        return { acquired: false, reason: 'held' };
+      }
+
+      return {
+        acquired: true,
+        ownerId,
+        release: async () => {
+          try {
+            const current = await redis.get(key);
+            if (current === ownerId) {
+              await redis.del(key);
+            }
+          } catch (err) {
+            logRateLimited(
+              `bonnie-lock:release:${name}`,
+              'warn',
+              `[bonnie-lock] release failed for ${name}`,
+              err instanceof Error ? err.message : err
+            );
+          }
+        },
+      };
+    } catch (err) {
+      logRateLimited(
+        `bonnie-lock:acquire:${name}`,
+        'warn',
+        `[bonnie-lock] Redis unavailable for ${name}`,
+        err instanceof Error ? err.message : err
+      );
+      return { acquired: false, reason: 'redis_unavailable' };
+    }
+  }
+
+  const held = bonnieLocalLocks.get(key);
+  if (held && held.expiresAt > Date.now()) {
+    return { acquired: false, reason: 'held' };
+  }
+  bonnieLocalLocks.set(key, { ownerId, expiresAt: Date.now() + ttlSec * 1000 });
+  return {
+    acquired: true,
+    ownerId,
+    release: async () => {
+      const current = bonnieLocalLocks.get(key);
+      if (current?.ownerId === ownerId) {
+        bonnieLocalLocks.delete(key);
+      }
+    },
+  };
+}

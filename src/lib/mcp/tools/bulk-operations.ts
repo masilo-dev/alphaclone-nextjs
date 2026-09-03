@@ -53,6 +53,25 @@ defineConnectorTool({
     required: ['record_type', 'record_ids', 'patch'],
   },
   handler: async (args, ctx) => {
+    const dryRun = args.dry_run !== false;
+    if (!dryRun && args.confirm_execute === true) {
+      const { enqueueBulkMcpJob } = await import('@/lib/mcp/bulkJobQueue');
+      const job = await enqueueBulkMcpJob({
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        tool: 'bulk_update_records',
+        args: args as unknown as Record<string, unknown>,
+        requested: args.record_ids.length,
+        idempotencyKey: args.idempotency_key,
+      });
+      return okResult('bulk_update_records', {
+        status: 'queued',
+        job_id: job.jobId,
+        requested: job.requested,
+        execution_mode: 'durable',
+        message: 'Bulk update queued. Poll get_bulk_job_status for progress.',
+      });
+    }
     const output = (await executeBulkUpdateRecords(args, { tenantId: ctx.tenantId, userId: ctx.userId })) as Record<string, any>;
     return okResult('bulk_update_records', output, {
       receipt: {
@@ -111,6 +130,23 @@ defineConnectorTool({
     required: ['files'],
   },
   handler: async (args, ctx) => {
+    if (args.files.length > 1) {
+      const { enqueueBulkMcpJob } = await import('@/lib/mcp/bulkJobQueue');
+      const job = await enqueueBulkMcpJob({
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        tool: 'bulk_upload_media',
+        args: args as unknown as Record<string, unknown>,
+        requested: args.files.length,
+      });
+      return okResult('bulk_upload_media', {
+        status: 'queued',
+        job_id: job.jobId,
+        requested: job.requested,
+        execution_mode: 'durable',
+        message: 'Bulk media upload queued. Poll get_bulk_job_status for progress.',
+      });
+    }
     const output = (await executeBulkUploadMedia(args, { tenantId: ctx.tenantId, userId: ctx.userId })) as Record<string, any>;
     return okResult('bulk_upload_media', output, {
       receipt: {
@@ -171,6 +207,28 @@ defineConnectorTool({
     required: ['subject'],
   },
   handler: async (args, ctx) => {
+    const dryRun = args.dry_run !== false;
+    const recipientCount =
+      (args.lead_ids?.length || 0) + (args.contact_ids?.length || 0) + (args.client_ids?.length || 0);
+    const useDurableQueue = !dryRun && args.confirm_send === true && recipientCount > 10;
+    if (useDurableQueue) {
+      const { enqueueBulkMcpJob } = await import('@/lib/mcp/bulkJobQueue');
+      const job = await enqueueBulkMcpJob({
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        tool: 'send_bulk_email',
+        args: args as unknown as Record<string, unknown>,
+        requested: recipientCount,
+        idempotencyKey: args.idempotency_key,
+      });
+      return okResult('send_bulk_email', {
+        status: 'queued',
+        job_id: job.jobId,
+        requested: job.requested,
+        execution_mode: 'durable',
+        message: 'Bulk email queued (>10 recipients). Poll get_bulk_job_status for progress.',
+      });
+    }
     const output = (await executeBulkEmail(args, { tenantId: ctx.tenantId, userId: ctx.userId })) as Record<string, any>;
     return okResult('send_bulk_email', output, {
       receipt: {
@@ -190,5 +248,31 @@ defineConnectorTool({
         retry_available: args.dry_run !== false,
       },
     });
+  },
+});
+
+defineConnectorTool({
+  module: 'bulk-operations',
+  name: 'get_bulk_job_status',
+  description:
+    'Poll status of a queued bulk MCP job (bulk_update_records, send_bulk_email, bulk_upload_media).',
+  permission: 'platform:read',
+  rateLimitClass: 'light',
+  auditAction: 'mcp_get_bulk_job_status',
+  inputSchema: z.object({
+    tenant_id: tenantIdField.optional(),
+    job_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      job_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['job_id'],
+  },
+  handler: async (args, ctx) => {
+    const { getBulkJobStatus } = await import('@/lib/mcp/bulkJobQueue');
+    const status = await getBulkJobStatus(ctx.tenantId, args.job_id);
+    return okResult('get_bulk_job_status', status);
   },
 });
