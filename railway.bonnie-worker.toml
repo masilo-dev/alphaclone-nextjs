@@ -7,6 +7,6 @@ dockerfilePath = "Dockerfile"
 buildCommand = "rm -rf app && NODE_OPTIONS='--max-old-space-size=12288' npm run build"
 
 [deploy]
-startCommand = "npm run bonnie:worker"
-restartPolicyType = "ON_FAILURE"
+startCommand = "NODE_OPTIONS='--max-old-space-size=4096' npm run start:worker"
+restartPolicyType = "ALWAYS"
 restartPolicyMaxRetries = 10

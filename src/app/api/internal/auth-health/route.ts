@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { PUBLIC_APP_ORIGIN, PUBLIC_MCP_RESOURCE, validatePublicOriginConfig } from '@/lib/config/public-origin';
-import { isRedisConfigured } from '@/lib/redis';
+import { isRedisConfigured, getRedisConnectionState } from '@/lib/redis';
 import { denyUnlessInternalApiKey } from '@/lib/security/productionGuard';
 import { createProtectedResourceResponse, createAuthorizationServerResponse } from '@/lib/mcpWellKnown';
 
@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
     oauthClientRegistered,
     databaseSchemaValid,
     redisConfigured: isRedisConfigured(),
+    redis: getRedisConnectionState(),
     auditLoggingOperational,
     mcpMetadataValid,
   };

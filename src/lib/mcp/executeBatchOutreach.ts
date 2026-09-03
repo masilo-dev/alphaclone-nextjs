@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { mapWithConcurrency, readConcurrencyEnv } from '@/lib/concurrency/mapWithConcurrency';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { ensureEmailProviderReady } from '@/lib/mcp/ensureEmailProviderReady';
@@ -127,7 +128,10 @@ export async function executeBatchOutreach(args: BatchOutreachArgs, ctx: BatchCo
     throw new Error('No valid leads or clients found for the provided IDs');
   }
 
-  const prefetched = await Promise.all(allEntities.map((entity) => preflightEntity(ctx.tenantId, entity)));
+  const preflightConcurrency = readConcurrencyEnv('OUTREACH_PREFLIGHT_CONCURRENCY', 10);
+  const prefetched = await mapWithConcurrency(allEntities, preflightConcurrency, (entity) =>
+    preflightEntity(ctx.tenantId, entity)
+  );
   const eligible = prefetched.filter((row): row is typeof row & { entity: OutreachEntity; email: string } =>
     row.status === 'eligible');
   const skipped = prefetched.filter((row) => row.status === 'skipped');

@@ -77,52 +77,51 @@ export async function POST(req: NextRequest) {
 
     if (imageUrl) body.url = imageUrl;
 
-    // Also post to Instagram if connected
-    const { data: instagramAccount } = await supabase
-        .from('facebook_integrations')
-        .select('instagram_account_id, instagram_access_token')
-        .eq('user_id', user.id)
-        .eq('page_id', pageId)
-        .eq('is_active', true)
-        .single();
-
-    if (instagramAccount?.instagram_account_id && instagramAccount?.instagram_access_token) {
+    // Also post to Instagram when a linked Business account exists for this Page
+    if (imageUrl && integration.tenant_id) {
         try {
-            const igBody: Record<string, string> = {
-                caption: message,
-                access_token: instagramAccount.instagram_access_token,
-            };
-            if (imageUrl) {
-                igBody.image_url = imageUrl;
+            const { getInstagramIntegrationWithToken } = await import(
+                '@/services/instagram/instagramIntegrationService'
+            );
+            const igIntegration = await getInstagramIntegrationWithToken(admin, {
+                tenantId: integration.tenant_id,
+                userId: user.id,
+                facebookPageId: String(pageId),
+            });
+            if (igIntegration) {
+                const igToken = igIntegration.pageAccessToken;
+                const igAccountId = igIntegration.instagram_account_id;
                 const igRes = await fetch(
-                    `https://graph.facebook.com/v21.0/${instagramAccount.instagram_account_id}/media`,
+                    `https://graph.facebook.com/v21.0/${igAccountId}/media`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(igBody),
+                        body: JSON.stringify({
+                            image_url: imageUrl,
+                            caption: message,
+                            access_token: igToken,
+                        }),
                     }
                 );
                 const igData = await igRes.json();
                 if (igData.id) {
-                    // Publish the media
                     await fetch(
-                        `https://graph.facebook.com/v21.0/${instagramAccount.instagram_account_id}/media_publish`,
+                        `https://graph.facebook.com/v21.0/${igAccountId}/media_publish`,
                         {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 creation_id: igData.id,
-                                access_token: instagramAccount.instagram_access_token,
+                                access_token: igToken,
                             }),
                         }
                     );
+                } else if (igData.error) {
+                    console.error('[Facebook Post] Instagram cross-post failed:', igData.error);
                 }
-            } else {
-                // Carousel or simple post not supported for Instagram without media
-                console.log('Instagram post requires media (image/video)');
             }
         } catch (igErr) {
-            console.error('Instagram posting failed:', igErr);
+            console.error('[Facebook Post] Instagram cross-post failed:', igErr);
         }
     }
 

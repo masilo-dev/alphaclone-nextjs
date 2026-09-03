@@ -48,6 +48,11 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         '/dashboard/growth/social': '/dashboard/business/social',
         '/dashboard/growth/social/compose': '/dashboard/business/social/compose',
         '/dashboard/business/tasks': '/dashboard/tasks',
+        '/dashboard/instagram': '/dashboard/business/instagram',
+        '/dashboard/marketing/instagram': '/dashboard/business/instagram',
+        '/dashboard/business/social/instagram': '/dashboard/business/instagram',
+        '/dashboard/business/integrations/instagram': '/dashboard/business/instagram',
+        '/dashboard/integrations/instagram': '/dashboard/business/instagram',
     };
 
     const aliased = tenantAliases[base] ?? base;

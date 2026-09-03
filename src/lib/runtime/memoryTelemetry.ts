@@ -82,7 +82,18 @@ export function startMemoryTelemetry(): void {
     const growthMb = baseline ? snap.heapUsedMb - baseline.heapUsedMb : 0;
     const rssLimitMb = resolveRailwayMemoryLimitMb();
     const rssPct = rssLimitMb > 0 ? Math.round((snap.rssMb / rssLimitMb) * 100) : 0;
-    console.info('[memory] periodic', { ...snap, growthSinceBaselineMb: growthMb, rssPct });
+
+    void import('@/lib/redis/client').then(({ getRedisConnectionState }) => {
+      const redisState = getRedisConnectionState();
+      console.info('[memory] periodic', {
+        ...snap,
+        growthSinceBaselineMb: growthMb,
+        rssPct,
+        redis: redisState,
+      });
+    }).catch(() => {
+      console.info('[memory] periodic', { ...snap, growthSinceBaselineMb: growthMb, rssPct });
+    });
 
     if (snap.heapUsedPct >= 90 || rssPct >= 85) {
       console.warn('[memory] critical pressure', { ...snap, rssPct });

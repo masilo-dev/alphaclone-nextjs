@@ -1,309 +1,264 @@
-import { Redis } from '@upstash/redis';
-import IORedis from 'ioredis';
+import {
+  getRedisAsync,
+  getActiveRedisBackend,
+  isRedisConfigured,
+  type RedisCommands,
+} from '@/lib/redis/client';
 
 /**
- * Redis caching layer using Upstash Redis
- * Provides fast caching for frequently accessed data
+ * Redis caching layer — uses centralized adapter (Railway TCP preferred).
  */
 
-// Initialize Upstash Redis client
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-const railwayRedisUrl = process.env.REDIS_URL?.trim();
+export const redisBackend = getActiveRedisBackend();
+export const redisEnabled = isRedisConfigured();
 
-type RedisCommands = {
-    get(key: string): Promise<unknown>;
-    setex(key: string, seconds: number, value: string): Promise<unknown>;
-    del(...keys: string[]): Promise<number>;
-    keys(pattern: string): Promise<string[]>;
-    incr(key: string): Promise<number>;
-    decr(key: string): Promise<number>;
-    exists(key: string): Promise<number>;
-    expire(key: string, seconds: number): Promise<unknown>;
-    ttl(key: string): Promise<number>;
-    pexpire(key: string, milliseconds: number): Promise<unknown>;
-    pttl(key: string): Promise<number>;
-    ping(): Promise<unknown>;
-};
+let cachedClient: RedisCommands | null = null;
 
-const railwayRedis = railwayRedisUrl
-    ? new IORedis(railwayRedisUrl, {
-        lazyConnect: true,
-        maxRetriesPerRequest: 1,
-        enableOfflineQueue: false,
-    })
-    : null;
-const upstashRedis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
+async function resolveClient(): Promise<RedisCommands | null> {
+  if (cachedClient) return cachedClient;
+  cachedClient = await getRedisAsync();
+  return cachedClient;
+}
 
-export const redisBackend = railwayRedis ? 'railway' : upstashRedis ? 'upstash' : 'none';
-export const redisEnabled = redisBackend !== 'none';
-
-// Railway's private Redis is preferred in production; Upstash remains a
-// compatible fallback for deployments that expose only REST credentials.
-export const redis = (railwayRedis || upstashRedis) as RedisCommands | null;
+/** Lazy-resolved client for health checks and cache operations. */
+export const redis = {
+  async get(key: string) {
+    const c = await resolveClient();
+    return c?.get(key) ?? null;
+  },
+  async setex(key: string, seconds: number, value: string) {
+    const c = await resolveClient();
+    return c?.setex(key, seconds, value);
+  },
+  async del(...keys: string[]) {
+    const c = await resolveClient();
+    return c?.del(...keys) ?? 0;
+  },
+  async keys(pattern: string) {
+    const c = await resolveClient();
+    return c?.keys(pattern) ?? [];
+  },
+  async incr(key: string) {
+    const c = await resolveClient();
+    return c?.incr(key) ?? 0;
+  },
+  async decr(key: string) {
+    const c = await resolveClient();
+    return c?.decr(key) ?? 0;
+  },
+  async exists(key: string) {
+    const c = await resolveClient();
+    return c?.exists(key) ?? 0;
+  },
+  async expire(key: string, seconds: number) {
+    const c = await resolveClient();
+    return c?.expire(key, seconds);
+  },
+  async ttl(key: string) {
+    const c = await resolveClient();
+    return c?.ttl(key) ?? -1;
+  },
+  async pexpire(key: string, milliseconds: number) {
+    const c = await resolveClient();
+    return c?.pexpire(key, milliseconds);
+  },
+  async pttl(key: string) {
+    const c = await resolveClient();
+    return c?.pttl(key) ?? -1;
+  },
+  async ping() {
+    const c = await resolveClient();
+    return c?.ping();
+  },
+} satisfies Partial<RedisCommands>;
 
 /**
  * Cache TTL presets (in seconds)
  */
 export const CacheTTL = {
-    VERY_SHORT: 60, // 1 minute
-    SHORT: 300, // 5 minutes
-    MEDIUM: 900, // 15 minutes
-    LONG: 3600, // 1 hour
-    VERY_LONG: 86400, // 24 hours
-    WEEK: 604800, // 7 days
+  VERY_SHORT: 60,
+  SHORT: 300,
+  MEDIUM: 900,
+  LONG: 3600,
+  VERY_LONG: 86400,
+  WEEK: 604800,
 };
 
 /**
  * Centralized cache keys to avoid collisions
  */
 export const CacheKeys = {
-    // User data
-    user: (userId: string) => `user:${userId}`,
-    userProfile: (userId: string) => `user:${userId}:profile`,
-    userPermissions: (userId: string) => `user:${userId}:permissions`,
-
-    // Tenant data
-    tenant: (tenantId: string) => `tenant:${tenantId}`,
-    tenantUsers: (tenantId: string) => `tenant:${tenantId}:users`,
-    tenantSubscription: (tenantId: string) => `tenant:${tenantId}:subscription`,
-    tenantUsage: (tenantId: string) => `tenant:${tenantId}:usage`,
-
-    // Analytics
-    analytics: (tenantId: string, period: string) => `analytics:${tenantId}:${period}`,
-    revenueSummary: (tenantId: string) => `revenue:${tenantId}:summary`,
-
-    // Sessions
-    session: (sessionId: string) => `session:${sessionId}`,
-
-    // Rate limiting (already used in rate limiter)
-    rateLimit: (identifier: string) => `ratelimit:${identifier}`,
-
-    // Feature flags (platform-global by design)
-    featureFlag: (flag: string) => `feature:${flag}`,
-
-    // API responses — MUST include tenant for business data
-    apiResponse: (endpoint: string, params: string) => `api:${endpoint}:${params}`,
-    /** Prefer this for any tenant-scoped cached API payload */
-    tenantApiResponse: (tenantId: string, endpoint: string, params: string) =>
-      `tenant:${tenantId}:api:${endpoint}:${params}`,
-
-    /** Tenant-scoped user permissions (permissions differ per workspace) */
-    tenantUserPermissions: (tenantId: string, userId: string) =>
-      `tenant:${tenantId}:user:${userId}:permissions`,
-
-    /** Generic tenant key builder */
-    tenantScoped: (tenantId: string, ...parts: string[]) =>
-      `tenant:${tenantId}:${parts.map((p) => String(p).replace(/:/g, '_')).join(':')}`,
+  user: (userId: string) => `user:${userId}`,
+  userProfile: (userId: string) => `user:${userId}:profile`,
+  userPermissions: (userId: string) => `user:${userId}:permissions`,
+  tenant: (tenantId: string) => `tenant:${tenantId}`,
+  tenantUsers: (tenantId: string) => `tenant:${tenantId}:users`,
+  tenantSubscription: (tenantId: string) => `tenant:${tenantId}:subscription`,
+  tenantUsage: (tenantId: string) => `tenant:${tenantId}:usage`,
+  analytics: (tenantId: string, period: string) => `analytics:${tenantId}:${period}`,
+  revenueSummary: (tenantId: string) => `revenue:${tenantId}:summary`,
+  session: (sessionId: string) => `session:${sessionId}`,
+  rateLimit: (identifier: string) => `ratelimit:${identifier}`,
+  featureFlag: (flag: string) => `feature:${flag}`,
+  apiResponse: (endpoint: string, params: string) => `api:${endpoint}:${params}`,
+  tenantApiResponse: (tenantId: string, endpoint: string, params: string) =>
+    `tenant:${tenantId}:api:${endpoint}:${params}`,
+  tenantUserPermissions: (tenantId: string, userId: string) =>
+    `tenant:${tenantId}:user:${userId}:permissions`,
+  tenantScoped: (tenantId: string, ...parts: string[]) =>
+    `tenant:${tenantId}:${parts.map((p) => String(p).replace(/:/g, '_')).join(':')}`,
 };
 
-/**
- * Cache service with common operations
- */
 export const cacheService = {
-    /**
-     * Get cached value
-     */
-    async get<T>(key: string): Promise<T | null> {
-        if (!redisEnabled || !redis) return null;
+  async get<T>(key: string): Promise<T | null> {
+    if (!redisEnabled) return null;
+    try {
+      const client = await resolveClient();
+      if (!client) return null;
+      const value = await client.get(key);
+      const backend = getActiveRedisBackend();
+      if (backend === 'railway' && typeof value === 'string') {
         try {
-            const value = await redis.get(key);
-            if (redisBackend === 'railway' && typeof value === 'string') {
-                try { return JSON.parse(value) as T; } catch { return value as T; }
-            }
-            return value as T | null;
-        } catch (error) {
-            console.error('Cache get error:', error);
-            return null;
+          return JSON.parse(value) as T;
+        } catch {
+          return value as T;
         }
-    },
+      }
+      return value as T | null;
+    } catch (error) {
+      console.error('Cache get error:', error);
+      return null;
+    }
+  },
 
-    /**
-     * Set cached value with TTL
-     */
-    async set(key: string, value: any, ttlSeconds: number = CacheTTL.MEDIUM): Promise<void> {
-        if (!redisEnabled || !redis) return;
-        try {
-            await redis.setex(key, ttlSeconds, JSON.stringify(value));
-        } catch (error) {
-            console.error('Cache set error:', error);
-        }
-    },
+  async set(key: string, value: unknown, ttlSeconds: number = CacheTTL.MEDIUM): Promise<void> {
+    if (!redisEnabled) return;
+    try {
+      const client = await resolveClient();
+      if (!client) return;
+      await client.setex(key, ttlSeconds, JSON.stringify(value));
+    } catch (error) {
+      console.error('Cache set error:', error);
+    }
+  },
 
-    /**
-     * Delete cached value
-     */
-    async del(key: string): Promise<void> {
-        if (!redisEnabled || !redis) return;
-        try {
-            await redis.del(key);
-        } catch (error) {
-            console.error('Cache delete error:', error);
-        }
-    },
+  async del(key: string): Promise<void> {
+    if (!redisEnabled) return;
+    try {
+      const client = await resolveClient();
+      if (!client) return;
+      await client.del(key);
+    } catch (error) {
+      console.error('Cache delete error:', error);
+    }
+  },
 
-    /**
-     * Delete multiple keys by pattern
-     */
-    async delPattern(pattern: string): Promise<void> {
-        if (!redisEnabled || !redis) return;
-        const redisClient = redis;
-        try {
-            const keys = await redisClient.keys(pattern);
-            if (keys.length > 0) {
-                await redisClient.del(...keys);
-            }
-        } catch (error) {
-            console.error('Cache delete pattern error:', error);
-        }
-    },
+  async delPattern(pattern: string): Promise<void> {
+    if (!redisEnabled) return;
+    try {
+      const client = await resolveClient();
+      if (!client) return;
+      const keys = await client.keys(pattern);
+      if (keys.length > 0) {
+        await client.del(...keys);
+      }
+    } catch (error) {
+      console.error('Cache delete pattern error:', error);
+    }
+  },
 
-    /**
-     * Get or fetch pattern
-     * If key doesn't exist, fetch from callback and cache
-     */
-    async getOrFetch<T>(
-        key: string,
-        fetchFn: () => Promise<T>,
-        ttl: number = CacheTTL.MEDIUM
-    ): Promise<T> {
-        if (!redisEnabled || !redis) return fetchFn();
-        // Try to get from cache
-        const cached = await this.get<T>(key);
-        if (cached !== null) {
-            return cached;
-        }
+  async getOrFetch<T>(
+    key: string,
+    fetchFn: () => Promise<T>,
+    ttl: number = CacheTTL.MEDIUM
+  ): Promise<T> {
+    if (!redisEnabled) return fetchFn();
+    const cached = await this.get<T>(key);
+    if (cached !== null) return cached;
+    const fresh = await fetchFn();
+    await this.set(key, fresh, ttl);
+    return fresh;
+  },
 
-        // Cache miss - fetch fresh data
-        const fresh = await fetchFn();
+  async incr(key: string): Promise<number> {
+    if (!redisEnabled) return 0;
+    try {
+      const client = await resolveClient();
+      return (await client?.incr(key)) ?? 0;
+    } catch (error) {
+      console.error('Cache incr error:', error);
+      return 0;
+    }
+  },
 
-        // Store in cache
-        await this.set(key, fresh, ttl);
+  async decr(key: string): Promise<number> {
+    if (!redisEnabled) return 0;
+    try {
+      const client = await resolveClient();
+      return (await client?.decr(key)) ?? 0;
+    } catch (error) {
+      console.error('Cache decr error:', error);
+      return 0;
+    }
+  },
 
-        return fresh;
-    },
+  async exists(key: string): Promise<boolean> {
+    if (!redisEnabled) return false;
+    try {
+      const client = await resolveClient();
+      const result = await client?.exists(key);
+      return result === 1;
+    } catch (error) {
+      console.error('Cache exists error:', error);
+      return false;
+    }
+  },
 
-    /**
-     * Increment a counter
-     */
-    async incr(key: string): Promise<number> {
-        if (!redisEnabled || !redis) return 0;
-        try {
-            return await redis.incr(key);
-        } catch (error) {
-            console.error('Cache incr error:', error);
-            return 0;
-        }
-    },
+  async expire(key: string, seconds: number): Promise<void> {
+    if (!redisEnabled) return;
+    try {
+      const client = await resolveClient();
+      await client?.expire(key, seconds);
+    } catch (error) {
+      console.error('Cache expire error:', error);
+    }
+  },
 
-    /**
-     * Decrement a counter
-     */
-    async decr(key: string): Promise<number> {
-        if (!redisEnabled || !redis) return 0;
-        try {
-            return await redis.decr(key);
-        } catch (error) {
-            console.error('Cache decr error:', error);
-            return 0;
-        }
-    },
-
-    /**
-     * Check if key exists
-     */
-    async exists(key: string): Promise<boolean> {
-        if (!redisEnabled || !redis) return false;
-        try {
-            const result = await redis.exists(key);
-            return result === 1;
-        } catch (error) {
-            console.error('Cache exists error:', error);
-            return false;
-        }
-    },
-
-    /**
-     * Set key expiration
-     */
-    async expire(key: string, seconds: number): Promise<void> {
-        if (!redisEnabled || !redis) return;
-        try {
-            await redis.expire(key, seconds);
-        } catch (error) {
-            console.error('Cache expire error:', error);
-        }
-    },
-
-    /**
-     * Get remaining TTL
-     */
-    async ttl(key: string): Promise<number> {
-        if (!redisEnabled || !redis) return -1;
-        try {
-            return await redis.ttl(key);
-        } catch (error) {
-            console.error('Cache ttl error:', error);
-            return -1;
-        }
-    },
+  async ttl(key: string): Promise<number> {
+    if (!redisEnabled) return -1;
+    try {
+      const client = await resolveClient();
+      return (await client?.ttl(key)) ?? -1;
+    } catch (error) {
+      console.error('Cache ttl error:', error);
+      return -1;
+    }
+  },
 };
 
-/**
- * Cache invalidation helpers
- */
 export const cacheInvalidation = {
-    /**
-     * Invalidate all user-related caches
-     */
-    async invalidateUser(userId: string) {
-        await cacheService.delPattern(`user:${userId}:*`);
-    },
-
-    /**
-     * Invalidate all tenant-related caches
-     */
-    async invalidateTenant(tenantId: string) {
-        await cacheService.delPattern(`tenant:${tenantId}:*`);
-    },
-
-    /**
-     * Invalidate analytics caches
-     */
-    async invalidateAnalytics(tenantId: string) {
-        await cacheService.delPattern(`analytics:${tenantId}:*`);
-        await cacheService.del(CacheKeys.revenueSummary(tenantId));
-    },
-
-    /**
-     * Invalidate API response caches
-     */
-    async invalidateApiResponses(endpoint: string) {
-        await cacheService.delPattern(`api:${endpoint}:*`);
-    },
+  async invalidateUser(userId: string) {
+    await cacheService.delPattern(`user:${userId}:*`);
+  },
+  async invalidateTenant(tenantId: string) {
+    await cacheService.delPattern(`tenant:${tenantId}:*`);
+  },
+  async invalidateAnalytics(tenantId: string) {
+    await cacheService.delPattern(`analytics:${tenantId}:*`);
+    await cacheService.del(CacheKeys.revenueSummary(tenantId));
+  },
+  async invalidateApiResponses(endpoint: string) {
+    await cacheService.delPattern(`api:${endpoint}:*`);
+  },
 };
 
-/**
- * Cache decorator for methods
- */
 export function Cached(key: string, ttl: number = CacheTTL.MEDIUM) {
-    return function (
-        target: any,
-        propertyKey: string,
-        descriptor: PropertyDescriptor
-    ) {
-        const originalMethod = descriptor.value;
-
-        descriptor.value = async function (...args: any[]) {
-            const cacheKey = key + ':' + JSON.stringify(args);
-
-            return cacheService.getOrFetch(
-                cacheKey,
-                () => originalMethod.apply(this, args),
-                ttl
-            );
-        };
-
-        return descriptor;
+  return function (target: object, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    descriptor.value = async function (...args: unknown[]) {
+      const cacheKey = `${key}:${JSON.stringify(args)}`;
+      return cacheService.getOrFetch(cacheKey, () => originalMethod.apply(this, args), ttl);
     };
+    return descriptor;
+  };
 }

@@ -46,7 +46,7 @@ export async function GET() {
       const { error } = await supabase
         .from('tenants')
         .select('id', { head: true, count: 'exact' })
-        .abortSignal(AbortSignal.timeout(8_000));
+        .abortSignal(AbortSignal.timeout(3_000));
       dbStatus = error ? 'degraded' : 'ready';
     } catch {
       dbStatus = 'degraded';

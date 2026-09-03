@@ -12,13 +12,13 @@ type InstagramOAuthState = {
 };
 
 function redirectError(appUrl: string, igError: string): NextResponse {
-  const u = new URL('/dashboard/business/social', appUrl);
+  const u = new URL('/dashboard/business/instagram', appUrl);
   u.searchParams.set('ig_error', igError);
   return NextResponse.redirect(u.toString());
 }
 
 function redirectSuccess(appUrl: string): NextResponse {
-  const u = new URL('/dashboard/business/social', appUrl);
+  const u = new URL('/dashboard/business/instagram', appUrl);
   u.searchParams.set('ig_connected', 'true');
   return NextResponse.redirect(u.toString());
 }

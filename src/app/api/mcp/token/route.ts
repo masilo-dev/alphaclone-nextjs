@@ -10,6 +10,7 @@ import {
   assertRefreshClientBinding,
   logOAuthTokenIssuance,
 } from '@/lib/mcp/oauthTokenIsolation';
+import { lookupOAuthClientRedirectUris } from '@/lib/mcp/lookupOAuthClientRedirectUris';
 import { encryptIntegrationToken } from '@/lib/integration/integrationTokenCrypto';
 import { validateCredentialEncryptionForOAuth } from '@/lib/integration/credentialEncryptionSecret';
 import { createSupabaseAdminClient, hasSupabaseServiceRole } from '@/lib/supabase-admin';
@@ -664,10 +665,28 @@ export async function POST(req: NextRequest) {
       }
 
       const sessionClientId = normalizeMcpClientId(session.client_id) ?? session.client_id;
+
+      // Legacy tokens issued without client_id cannot be safely refreshed — require reauthorization.
+      if (!sessionClientId) {
+        console.warn('[MCP Token] Refresh rejected: token missing client_id (legacy)');
+        return tokenError(
+          'invalid_grant',
+          'Refresh token requires reauthorization. Please reconnect the MCP integration.',
+          401,
+          'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+        );
+      }
+
+      const [requestRedirectUris, tokenRedirectUris] = await Promise.all([
+        lookupOAuthClientRedirectUris(supabase, client_id),
+        lookupOAuthClientRedirectUris(supabase, sessionClientId),
+      ]);
+
       const clientBind = assertRefreshClientBinding({
         requestClientId: client_id,
         tokenClientId: sessionClientId,
-        requestRedirectUris: redirect_uri ? [String(redirect_uri)] : null,
+        requestRedirectUris: requestRedirectUris ?? (redirect_uri ? [String(redirect_uri)] : null),
+        tokenRedirectUris,
       });
       if (!clientBind.ok) {
         console.warn('[MCP Token] Refresh client binding failed:', clientBind.reason);

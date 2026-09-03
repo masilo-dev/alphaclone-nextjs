@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
     if (!appId) {
       return NextResponse.redirect(
-        `${appUrl}/dashboard/business/social?ig_error=app_not_configured`,
+        `${appUrl}/dashboard/business/instagram?ig_error=app_not_configured`,
       );
     }
 

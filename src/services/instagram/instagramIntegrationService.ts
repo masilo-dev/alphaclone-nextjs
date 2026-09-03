@@ -70,12 +70,19 @@ export async function getInstagramPageAccessToken(
 
 export async function getInstagramIntegration(
   admin: SupabaseClient,
-  query: { tenantId?: string; userId?: string; instagramAccountId?: string; requireActive?: boolean }
+  query: {
+    tenantId?: string;
+    userId?: string;
+    instagramAccountId?: string;
+    facebookPageId?: string;
+    requireActive?: boolean;
+  }
 ): Promise<InstagramIntegrationRow | null> {
   let q = admin.from('instagram_integrations').select(`${SAFE_COLUMNS}, page_access_token`);
   if (query.tenantId) q = q.eq('tenant_id', query.tenantId);
   if (query.userId) q = q.eq('user_id', query.userId);
   if (query.instagramAccountId) q = q.eq('instagram_account_id', query.instagramAccountId);
+  if (query.facebookPageId) q = q.eq('facebook_page_id', query.facebookPageId);
   if (query.requireActive !== false) q = q.eq('is_active', true);
   const { data, error } = await q.order('updated_at', { ascending: false }).limit(1).maybeSingle();
   if (error || !data) return null;
@@ -84,7 +91,12 @@ export async function getInstagramIntegration(
 
 export async function getInstagramIntegrationWithToken(
   admin: SupabaseClient,
-  query: { tenantId?: string; userId?: string; instagramAccountId?: string }
+  query: {
+    tenantId?: string;
+    userId?: string;
+    instagramAccountId?: string;
+    facebookPageId?: string;
+  }
 ): Promise<(InstagramIntegrationRow & { pageAccessToken: string }) | null> {
   const row = await getInstagramIntegration(admin, query);
   if (!row) return null;

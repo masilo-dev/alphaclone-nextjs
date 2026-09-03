@@ -48,6 +48,9 @@ export async function GET(req: NextRequest) {
         'pages_messaging',          // required for Messenger send
         'leads_retrieval',
         'ads_management',
+        'instagram_basic',
+        'instagram_content_publish',
+        'instagram_manage_insights',
     ];
     const requestedScopes = scopeMode === 'advanced' ? advancedScopes : publishingScopes;
     const scopes = requestedScopes.join(',');

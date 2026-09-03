@@ -3,19 +3,7 @@ import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { securityLogService } from '../services/securityLogService';
-import { redis as sharedRedis, redisBackend } from './cache/redis';
-
-
-// Initialize Redis client from environment variables
-// Add these to your .env:
-// UPSTASH_REDIS_REST_URL=your_url
-// UPSTASH_REDIS_REST_TOKEN=your_token
-const redis = process.env.UPSTASH_REDIS_REST_URL?.trim() && process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
-    ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL!.trim(),
-        token: process.env.UPSTASH_REDIS_REST_TOKEN!.trim(),
-    })
-    : null;
+import { getActiveRedisBackend, getRedisAsync, isRedisConfigured } from '@/lib/redis/client';
 
 // Fallback to in-memory rate limiting if Redis is not configured
 // WARNING: This will not work across multiple server instances
@@ -149,10 +137,12 @@ export async function rateLimit(
     // 1. Determine identifier (IP address or provided custom identifier)
     const id = identifier || (request as any)?.ip || request?.headers.get('x-forwarded-for') || '127.0.0.1';
 
-    // 2. Railway Redis uses a shared fixed-window counter. This keeps limits
-    // consistent across every Railway app instance without requiring REST.
-    if (redisBackend === 'railway' && sharedRedis) {
+    // 2. Railway / standard Redis uses a shared fixed-window counter.
+    const backend = getActiveRedisBackend();
+    if (backend === 'railway' || backend === 'upstash') {
         try {
+            const sharedRedis = await getRedisAsync();
+            if (!sharedRedis) throw new Error('Redis unavailable');
             const windowMs = parseWindow(config.window);
             const key = `alphaclone:rl:${id}`;
             const count = await sharedRedis.incr(key);
@@ -173,11 +163,14 @@ export async function rateLimit(
         }
     }
 
-    // 3. Try Upstash REST rate limiter if configured
-    if (redis) {
+    // 3. Try Upstash sliding-window rate limiter when REST credentials are set
+    const upstashUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+    const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+    if (upstashUrl && upstashToken && backend !== 'railway') {
         try {
+            const upstashRedis = new Redis({ url: upstashUrl, token: upstashToken });
             const ratelimit = new Ratelimit({
-                redis,
+                redis: upstashRedis,
                 limiter: Ratelimit.slidingWindow(config.limit, config.window),
                 analytics: true,
                 prefix: 'alphaclone',

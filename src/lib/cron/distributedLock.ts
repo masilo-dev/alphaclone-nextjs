@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { getRedis, isRedisConfigured } from '@/lib/redis';
+import { getRedisAsync, isRedisConfigured } from '@/lib/redis/client';
+import { logRateLimited } from '@/lib/runtime/logRateLimit';
 
 export type CronLockResult =
   | { acquired: true; ownerId: string; release: () => Promise<void> }
@@ -20,7 +21,8 @@ function cleanupExpiredLocal(key: string): void {
 
 /**
  * Acquire a distributed cron singleton lock (Redis SET NX EX).
- * Falls back to in-process lock when Redis is unavailable (single-replica only).
+ * When Redis is configured but unreachable, returns redis_unavailable (no in-process fallback).
+ * In-process fallback is only used when Redis is not configured at all (single-replica dev).
  */
 export async function acquireCronLock(
   jobName: string,
@@ -28,49 +30,67 @@ export async function acquireCronLock(
 ): Promise<CronLockResult> {
   const ownerId = `${process.pid}-${randomUUID()}`;
   const key = lockKey(jobName);
-  const redis = getRedis();
 
-  if (redis) {
-    const ok = await redis.set(key, ownerId, { nx: true, ex: ttlSec });
-    if (!ok) {
-      return { acquired: false, reason: 'held' };
-    }
-    return {
-      acquired: true,
-      ownerId,
-      release: async () => {
-        try {
-          const current = await redis.get<string>(key);
-          if (current === ownerId) {
-            await redis.del(key);
+  if (isRedisConfigured()) {
+    try {
+      const redis = await getRedisAsync({ requireConfigured: true });
+      if (!redis) {
+        return { acquired: false, reason: 'redis_unavailable' };
+      }
+
+      const ok = await redis.set(key, ownerId, { nx: true, ex: ttlSec });
+      const acquired = ok === 'OK' || ok === true;
+      if (!acquired) {
+        return { acquired: false, reason: 'held' };
+      }
+
+      return {
+        acquired: true,
+        ownerId,
+        release: async () => {
+          try {
+            const current = await redis.get(key);
+            if (current === ownerId) {
+              await redis.del(key);
+            }
+          } catch (err) {
+            logRateLimited(
+              `cron-lock:release:${jobName}`,
+              'warn',
+              `[cron-lock] release failed for ${jobName}`,
+              err instanceof Error ? err.message : err
+            );
           }
-        } catch (err) {
-          console.warn(`[cron-lock] release failed for ${jobName}:`, err);
-        }
-      },
-    };
-  }
-
-  if (!isRedisConfigured()) {
-    cleanupExpiredLocal(key);
-    const held = localLocks.get(key);
-    if (held && held.expiresAt > Date.now()) {
-      return { acquired: false, reason: 'held' };
+        },
+      };
+    } catch (err) {
+      logRateLimited(
+        `cron-lock:acquire:${jobName}`,
+        'warn',
+        `[cron-lock] Redis unavailable for ${jobName}`,
+        err instanceof Error ? err.message : err
+      );
+      return { acquired: false, reason: 'redis_unavailable' };
     }
-    localLocks.set(key, { ownerId, expiresAt: Date.now() + ttlSec * 1000 });
-    return {
-      acquired: true,
-      ownerId,
-      release: async () => {
-        const current = localLocks.get(key);
-        if (current?.ownerId === ownerId) {
-          localLocks.delete(key);
-        }
-      },
-    };
   }
 
-  return { acquired: false, reason: 'redis_unavailable' };
+  // Dev / single-replica fallback when Redis is not configured
+  cleanupExpiredLocal(key);
+  const held = localLocks.get(key);
+  if (held && held.expiresAt > Date.now()) {
+    return { acquired: false, reason: 'held' };
+  }
+  localLocks.set(key, { ownerId, expiresAt: Date.now() + ttlSec * 1000 });
+  return {
+    acquired: true,
+    ownerId,
+    release: async () => {
+      const current = localLocks.get(key);
+      if (current?.ownerId === ownerId) {
+        localLocks.delete(key);
+      }
+    },
+  };
 }
 
 /** Force-clear an expired lock (test / recovery helper). */

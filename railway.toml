@@ -14,5 +14,5 @@ buildCommand = "rm -rf app && NODE_OPTIONS='--max-old-space-size=12288' npm run 
 startCommand = "npm start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
-restartPolicyType = "ON_FAILURE"
+restartPolicyType = "ALWAYS"
 restartPolicyMaxRetries = 10

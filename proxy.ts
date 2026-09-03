@@ -219,6 +219,11 @@ export async function proxy(request: NextRequest) {
     url.pathname = "/dashboard/business/clients";
     return applyRequiredOwaspHeaders(NextResponse.redirect(url));
   }
+  if (pathname === "/integrations/instagram") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard/business/instagram";
+    return applyRequiredOwaspHeaders(NextResponse.redirect(url));
+  }
 
   if (pathname === "/login" || pathname === "/auth/login") {
     const url = request.nextUrl.clone();
