@@ -213,4 +213,21 @@ describe("MCP OAuth multi-client token isolation", () => {
       true,
     );
   });
+
+  it("async refresh binding resolves ac_* to chatgpt-connector without redirect_uri in request", async () => {
+    const { assertRefreshClientBindingAsync } = await import(
+      "../../src/lib/mcp/lookupOAuthClientRedirectUris.ts"
+    );
+    const acDcr = "ac_deadbeef1234567890abcdef12345678";
+    const ok = await assertRefreshClientBindingAsync({
+      supabase: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }) }) },
+      requestClientId: acDcr,
+      tokenClientId: "chatgpt-connector",
+    });
+    assert.equal(ok.ok, true);
+    if (ok.ok) {
+      assert.equal(ok.requestCanonical, "chatgpt-connector");
+      assert.equal(ok.tokenCanonical, "chatgpt-connector");
+    }
+  });
 });

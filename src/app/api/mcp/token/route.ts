@@ -6,11 +6,8 @@ import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 import { formatScopeString } from '@/lib/mcp/scopes';
 import { loadMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
-import {
-  assertRefreshClientBinding,
-  logOAuthTokenIssuance,
-} from '@/lib/mcp/oauthTokenIsolation';
-import { lookupOAuthClientRedirectUris } from '@/lib/mcp/lookupOAuthClientRedirectUris';
+import { logOAuthTokenIssuance } from '@/lib/mcp/oauthTokenIsolation';
+import { assertRefreshClientBindingAsync } from '@/lib/mcp/lookupOAuthClientRedirectUris';
 import { encryptIntegrationToken } from '@/lib/integration/integrationTokenCrypto';
 import { validateCredentialEncryptionForOAuth } from '@/lib/integration/credentialEncryptionSecret';
 import { createSupabaseAdminClient, hasSupabaseServiceRole } from '@/lib/supabase-admin';
@@ -39,6 +36,65 @@ const CORS_HEADERS = {
 
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+type ActiveOAuthSession = Record<string, any>;
+
+function buildRefreshTokenResponse(session: ActiveOAuthSession, expectedResource: string) {
+  const boundResource = session.resource || expectedResource;
+  return NextResponse.json(
+    {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+      token_type: 'Bearer',
+      expires_in: 3600,
+      scope: formatScopeString(session.scopes || ['read', 'write']),
+      resource: boundResource,
+    },
+    { headers: CORS_HEADERS }
+  );
+}
+
+/** Return already-rotated tokens when ChatGPT retries with a superseded refresh token. */
+async function findIdempotentRefreshReplacement(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  refreshHash: string,
+  refreshToken: string
+): Promise<ActiveOAuthSession | null> {
+  const queries = [
+    supabase
+      .from('mcp_oauth_tokens')
+      .select('*')
+      .eq('refresh_token_hash', refreshHash)
+      .eq('revoked', true)
+      .eq('revoke_reason', 'refresh_rotation')
+      .maybeSingle(),
+    supabase
+      .from('mcp_oauth_tokens')
+      .select('*')
+      .eq('refresh_token', refreshToken)
+      .eq('revoked', true)
+      .eq('revoke_reason', 'refresh_rotation')
+      .maybeSingle(),
+  ];
+
+  for (const query of queries) {
+    const { data: rotated } = await query;
+    if (!rotated?.replaced_by_token_id) continue;
+
+    const { data: replacement } = await supabase
+      .from('mcp_oauth_tokens')
+      .select('*')
+      .eq('id', rotated.replaced_by_token_id)
+      .eq('revoked', false)
+      .maybeSingle();
+
+    if (replacement?.access_token && replacement?.refresh_token) {
+      return replacement;
+    }
+  }
+
+  return null;
 }
 
 function timingSafeStringEqual(a: string, b: string): boolean {
@@ -622,6 +678,18 @@ export async function POST(req: NextRequest) {
       if (!byHash.error && byHash.data) {
         session = byHash.data;
       } else {
+        const idempotent = await findIdempotentRefreshReplacement(supabase, refreshHash, refresh_token);
+        if (idempotent) {
+          logOAuthTokenIssuance({
+            grantType: 'refresh_token',
+            clientId: idempotent.client_id,
+            userId: idempotent.user_id,
+            tenantId: idempotent.tenant_id,
+            tokenId: idempotent.id,
+          });
+          return buildRefreshTokenResponse(idempotent, expectedResource);
+        }
+
         const byPlain = await supabase
           .from('mcp_oauth_tokens')
           .select('*')
@@ -637,6 +705,17 @@ export async function POST(req: NextRequest) {
           );
         }
         if (session.revoked === true) {
+          const rotated = await findIdempotentRefreshReplacement(supabase, refreshHash, refresh_token);
+          if (rotated) {
+            logOAuthTokenIssuance({
+              grantType: 'refresh_token',
+              clientId: rotated.client_id,
+              userId: rotated.user_id,
+              tenantId: rotated.tenant_id,
+              tokenId: rotated.id,
+            });
+            return buildRefreshTokenResponse(rotated, expectedResource);
+          }
           return tokenError(
             'invalid_grant',
             'Refresh token is invalid or revoked',
@@ -677,16 +756,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const [requestRedirectUris, tokenRedirectUris] = await Promise.all([
-        lookupOAuthClientRedirectUris(supabase, client_id),
-        lookupOAuthClientRedirectUris(supabase, sessionClientId),
-      ]);
-
-      const clientBind = assertRefreshClientBinding({
+      const clientBind = await assertRefreshClientBindingAsync({
+        supabase,
         requestClientId: client_id,
         tokenClientId: sessionClientId,
-        requestRedirectUris: requestRedirectUris ?? (redirect_uri ? [String(redirect_uri)] : null),
-        tokenRedirectUris,
+        requestRedirectUri: redirect_uri ? String(redirect_uri) : null,
       });
       if (!clientBind.ok) {
         console.warn('[MCP Token] Refresh client binding failed:', clientBind.reason);
@@ -716,6 +790,17 @@ export async function POST(req: NextRequest) {
           .maybeSingle();
         claimed = claim.data;
         if (claim.error || !claimed) {
+          const rotated = await findIdempotentRefreshReplacement(supabase, refreshHash, refresh_token);
+          if (rotated) {
+            logOAuthTokenIssuance({
+              grantType: 'refresh_token',
+              clientId: rotated.client_id,
+              userId: rotated.user_id,
+              tenantId: rotated.tenant_id,
+              tokenId: rotated.id,
+            });
+            return buildRefreshTokenResponse(rotated, expectedResource);
+          }
           return tokenError(
             'invalid_grant',
             'The refresh token is expired, revoked, malformed, or belongs to another client.',
@@ -757,11 +842,13 @@ export async function POST(req: NextRequest) {
       }
 
       const rotatedClientId =
+        clientBind.requestCanonical ??
         (await resolveCanonicalOAuthClientId(
           supabase,
           sessionClientId,
           redirect_uri ? [String(redirect_uri)] : null
-        )) ?? sessionClientId;
+        )) ??
+        sessionClientId;
 
       const rotateRow: Record<string, unknown> = {
         access_token: newAccessToken,

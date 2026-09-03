@@ -172,11 +172,11 @@ function wrapUpstash(client: UpstashRedis): RedisCommands {
       return withCommandTimeout(client.get(key), 'get');
     },
     async set(key, value, options) {
-      if (options?.nx || options?.ex) {
-        return withCommandTimeout(
-          client.set(key, value, { nx: options?.nx, ex: options?.ex }),
-          'set'
-        );
+      if (options?.nx) {
+        return withCommandTimeout(client.set(key, value, { nx: true }), 'set');
+      }
+      if (options?.ex !== undefined) {
+        return withCommandTimeout(client.set(key, value, { ex: options.ex }), 'set');
       }
       return withCommandTimeout(client.set(key, value), 'set');
     },
