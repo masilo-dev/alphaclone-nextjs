@@ -1,11 +1,12 @@
 /** Marketing CTA destinations — single source of truth. */
 
+import { EXECUTION_LAYER } from '@/config/marketingPositioning';
 import { DEFAULT_BOOKING_URL } from '@/lib/marketing/booking';
 
 export const LOGIN_HREF = '/auth/login';
 
 export const TRIAL_HREF =
-  '/auth/login?register=true&type=business&plan=starter';
+  '/auth/login?register=true&type=business&plan=free';
 
 /** @deprecated Use TRIAL_HREF — kept for existing imports */
 export const BUSINESS_SIGNUP_HREF = TRIAL_HREF;
@@ -36,8 +37,8 @@ export const DEMO_HREF_INTERNAL = '/book-demo';
 export const DEMO_HREF = DEMO_HREF_INTERNAL;
 
 export const CTA_LABELS = {
-  primary: 'Start for $15/month',
-  secondary: 'Book a demo',
+  primary: EXECUTION_LAYER.primaryCta,
+  secondary: EXECUTION_LAYER.secondaryCta,
   headerPrimary: 'Start now',
   headerSecondary: 'Book',
   tertiaryLogin: 'Log in',

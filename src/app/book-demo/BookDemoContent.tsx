@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Calendar, CheckCircle2, Clock, ExternalLink } from 'lucide-react';
 import CalComEmbed from '@/components/marketing/system/CalComEmbed';
 import { getBookingConfig, resolvePlatformBookingUrl } from '@/lib/marketing/booking';
+import { MARKETING_PRICING } from '@/config/pricingPlans';
 import { TRIAL_HREF } from '@/lib/marketing/cta';
 
 export default function BookDemoContent() {
@@ -50,7 +51,7 @@ export default function BookDemoContent() {
 
               <div className="hidden sm:grid grid-cols-2 gap-3 mb-6">
                 {[
-                  { label: 'From', value: '$15/mo' },
+                  { label: 'Plans', value: MARKETING_PRICING.startingPriceLine },
                   { label: 'Free trial', value: '14 days' },
                 ].map(({ label, value }) => (
                   <div

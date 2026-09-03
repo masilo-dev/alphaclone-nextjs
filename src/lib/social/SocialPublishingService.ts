@@ -29,6 +29,11 @@ import {
   sanitizeFacebookPayload,
 } from '@/lib/facebook/parseFacebookGraphError';
 import {
+  buildFacebookTextOnlyFallbackMeta,
+  isFacebookMediaAttachmentError,
+  publishFacebookFeedTextOnly,
+} from '@/lib/social/facebookTextOnlyFallback';
+import {
   uploadFacebookPhotoFromBytes,
   uploadFacebookVideoFromBytes,
 } from '@/lib/facebook/facebookMediaUpload';
@@ -521,13 +526,38 @@ export class SocialPublishingService {
             caption: post.caption,
           });
           if (!uploadResult.ok) {
-            return buildFacebookFailureResult(
-              uploadResult.status,
-              uploadResult.body,
-              'Facebook publish failed'
-            );
+            if (isFacebookMediaAttachmentError(uploadResult.status, uploadResult.body)) {
+              const fallbackMeta = buildFacebookTextOnlyFallbackMeta({
+                httpStatus: uploadResult.status,
+                body: uploadResult.body,
+              });
+              const textOnly = await publishFacebookFeedTextOnly({
+                pageId,
+                pageAccessToken: integration.pageAccessToken,
+                caption: post.caption,
+                linkUrl: post.link_url,
+              });
+              if (!textOnly.ok) {
+                return buildFacebookFailureResult(
+                  textOnly.status,
+                  textOnly.body,
+                  'Facebook publish failed after media fallback'
+                );
+              }
+              graphResponse = {
+                ...textOnly.body,
+                alphaclone_media_fallback: fallbackMeta,
+              };
+            } else {
+              return buildFacebookFailureResult(
+                uploadResult.status,
+                uploadResult.body,
+                'Facebook publish failed'
+              );
+            }
+          } else {
+            graphResponse = uploadResult.body;
           }
-          graphResponse = uploadResult.body;
         } else {
           const feedRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/feed`, {
             method: 'POST',

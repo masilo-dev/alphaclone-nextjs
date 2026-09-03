@@ -5,9 +5,11 @@ export default function robots(): MetadataRoute.Robots {
     const baseUrl = SITE_URL;
     const privateRoutes = [
         '/dashboard', '/api/', '/api/mcp', '/api/mcp/', '/mcp', '/mcp/',
-        '/auth/reset-password', '/private-docs/', '/admin/', '/invoice/', '/project/',
+        '/auth/', '/private-docs/', '/admin/', '/invoice/', '/project/',
         '/quote/', '/sign/', '/contract/', '/meet/', '/call/', '/share/', '/billing/',
-        '/account/', '/form/', '/p/', '/bp/', '/portal/',
+        '/account/', '/form/', '/p/', '/bp/', '/portal/', '/alpha/', '/authorize/',
+        '/onboarding/', '/settings/', '/bonnie/', '/data-room/', '/invite/',
+        '/maintenance/', '/search/',
     ];
 
     return {

@@ -8,6 +8,7 @@ import {
 } from '@/lib/quotas/resolveTenantForAiRequest';
 import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
+import { parseImageProviderError } from '@/lib/ai/imageProviderErrors';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -236,18 +237,24 @@ export async function POST(req: NextRequest) {
         }
 
         if (!result || !result.ok) {
-            const errorMessage = lastErrorStatus === 429 
-                ? 'Image generation service is currently overloaded. Please try again in a few minutes.'
-                : 'Image generation failed';
-            
+            const parsed = parseImageProviderError({
+                payload: lastErrorPayload,
+                httpStatus: lastErrorStatus,
+                provider: result?.provider,
+                fallbackMessage: 'Image generation failed',
+            });
+
             return NextResponse.json(
-                { 
-                    error: errorMessage, 
-                    code: lastErrorStatus === 429 ? 'RATE_LIMIT_EXCEEDED' : 'IMAGE_PROVIDER_ERROR',
+                {
+                    error: parsed.message,
+                    code: parsed.code,
+                    provider: parsed.provider || null,
+                    fallback_to_text_only: parsed.fallbackToTextOnly,
+                    retryable: parsed.retryable,
                     details: lastErrorPayload,
-                    status: lastErrorStatus
+                    status: lastErrorStatus,
                 },
-                { status: lastErrorStatus }
+                { status: lastErrorStatus >= 400 && lastErrorStatus < 600 ? lastErrorStatus : 502 }
             );
         }
 

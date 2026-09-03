@@ -7,6 +7,7 @@ import {
     ChevronUp, Globe, Zap, Clock, Star, Terminal, Layers,
     BookOpen, TrendingUp, Lock, Building2
 } from 'lucide-react';
+import { MARKETING_PRICING } from '@/config/pricingPlans';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const PlatformGuide: React.FC = () => {
@@ -36,14 +37,16 @@ Your account is created with the Pro plan on a 14-day free trial. You won't be c
             color: 'from-blue-500 to-indigo-500',
             step: 2,
             title: 'Activate Your Plan',
-            subtitle: 'One simple public price: $15 per month',
-            detail: `After registration, you will see one public plan for the full platform.
+            subtitle: MARKETING_PRICING.startingPriceLine,
+            detail: `After registration, choose the plan that fits your workflow.
 
-**AlphaClone Platform: $15/month**
+**Free** — full platform access with daily usage limits on execution actions.
 
-This includes CRM, deals, projects, tasks, social publishing, messaging, invoicing, documents, and core automations in one workspace.
+**Pro ($45/month)** — higher daily capacity for active teams.
 
-You start with a 14-day free trial and no credit card is required to begin. At the end of trial, you can continue on the same plan.
+**Premium ($80/month)** — unlimited execution subject to provider and safety limits.
+
+You start with a 14-day free trial and no credit card is required to begin. Plan details and limits are on the pricing page.
 
 There is no founder involvement needed to start. Setup is self-serve and guided directly inside the app.`,
             tips: [
@@ -288,8 +291,8 @@ The invited person receives an email with a secure invitation link. When they cl
         },
         {
             icon: Clock,
-            title: 'Get 15+ Hours of Your Week Back',
-            desc: 'Manual invoicing, chasing payments, scheduling back-and-forth, manually logging client conversations — AlphaClone automates or eliminates all of these. Most users reclaim over 15 hours per week that they can redirect to revenue-generating work.',
+            title: 'Reduce repetitive admin work',
+            desc: 'Manual invoicing, payment follow-ups, scheduling back-and-forth, and logging client conversations — AlphaClone automates or streamlines many of these steps so you can focus on revenue-generating work.',
         },
         {
             icon: Globe,
@@ -365,7 +368,7 @@ The invited person receives an email with a secure invitation link. When they cl
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Why AlphaClone Changes How You Run Your Business</h2>
                         <p className="text-slate-400 leading-relaxed mb-10">
-                            Before diving into setup, here's why thousands of business owners made the switch — and what changes the moment you start using a unified Business OS.
+                            Before diving into setup, here is what changes when you move from a scattered tool stack to a unified business workspace.
                         </p>
                         <div className="space-y-4">
                             {whyPoints.map((point, i) => (
@@ -518,7 +521,7 @@ The invited person receives an email with a secure invitation link. When they cl
                             <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
                             <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                         </div>
-                        <p className="mt-6 text-slate-500 text-sm">$15/month after trial · No credit card required to start · Cancel anytime</p>
+                        <p className="mt-6 text-slate-500 text-sm">{MARKETING_PRICING.startingPriceLine} · No credit card required to start · Cancel anytime</p>
                     </div>
                 </section>
             </div>

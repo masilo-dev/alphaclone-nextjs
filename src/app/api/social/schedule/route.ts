@@ -5,6 +5,12 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import { publishLinkedInPost } from '@/lib/linkedin/publishPost';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
+import {
+  buildFacebookTextOnlyFallbackMeta,
+  isFacebookMediaAttachmentError,
+  publishFacebookFeedTextOnly,
+} from '@/lib/social/facebookTextOnlyFallback';
+import { formatFacebookGraphErrorMessage, parseFacebookGraphError } from '@/lib/facebook/parseFacebookGraphError';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { z } from 'zod';
 
@@ -226,10 +232,36 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
     const result = await res.json();
 
     if (!res.ok || result?.error) {
+      if (
+        mediaUrl &&
+        isFacebookMediaAttachmentError(res.status, result)
+      ) {
+        const fallbackMeta = buildFacebookTextOnlyFallbackMeta({
+          httpStatus: res.status,
+          body: result,
+        });
+        const textOnly = await publishFacebookFeedTextOnly({
+          pageId: post.facebook_page_id,
+          pageAccessToken: integration.pageAccessToken,
+          caption: post.caption,
+          linkUrl: post.link_url,
+        });
+        if (textOnly.ok) {
+          await adminClient.from('social_posts').update({
+            facebook_post_id: textOnly.body.id || textOnly.body.post_id || null,
+            metadata: {
+              media_fallback: fallbackMeta,
+              publish_warning: `Image could not be attached (${formatFacebookGraphErrorMessage(parseFacebookGraphError(res.status, result))}). Posted caption-only.`,
+            },
+          }).eq('id', postId);
+          return { ok: true, platform: 'facebook' };
+        }
+      }
+
       return {
         ok: false,
         platform: 'facebook',
-        reason: result?.error?.message || 'Facebook publish failed',
+        reason: formatFacebookGraphErrorMessage(parseFacebookGraphError(res.status, result)),
       };
     }
 

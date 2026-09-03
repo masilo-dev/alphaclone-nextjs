@@ -7,6 +7,12 @@ import {
   extractCompanyPagesFromMetadata,
   getLinkedInIntegrationWithToken,
 } from '@/services/linkedin/linkedinIntegrationService';
+import {
+  buildFacebookTextOnlyFallbackMeta,
+  isFacebookMediaAttachmentError,
+  publishFacebookFeedTextOnly,
+} from '@/lib/social/facebookTextOnlyFallback';
+import { formatFacebookGraphErrorMessage, parseFacebookGraphError } from '@/lib/facebook/parseFacebookGraphError';
 
 async function fetchWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
     let lastError: unknown = null;
@@ -148,27 +154,57 @@ export async function POST(req: NextRequest) {
     if (data.error) {
         console.error('[Facebook Post] Graph API error:', data.error);
 
+        const parsed = parseFacebookGraphError(res.status, data);
+        const graphMessage = formatFacebookGraphErrorMessage(parsed);
+
+        // Media URL failures are not Facebook auth failures — retry caption-only.
+        if (imageUrl && isFacebookMediaAttachmentError(res.status, data)) {
+            const fallbackMeta = buildFacebookTextOnlyFallbackMeta({
+                httpStatus: res.status,
+                body: data,
+            });
+            const textOnly = await publishFacebookFeedTextOnly({
+                pageId,
+                pageAccessToken: token,
+                caption: message,
+                linkUrl: link || null,
+            });
+            if (textOnly.ok) {
+                return NextResponse.json({
+                    success: true,
+                    post_id: (textOnly.body.id as string) || (textOnly.body.post_id as string),
+                    media_fallback: fallbackMeta,
+                    warning: `Facebook could not attach the image (${graphMessage}). Posted caption-only instead.`,
+                });
+            }
+        }
+
         // Provide a helpful message for the specific permissions error (code 200)
-        const message = String(data.error.message || '');
+        const fbMessage = String(data.error.message || '');
         if (
             data.error.code === 200 ||
             data.error.code === 190 ||
-            message.includes('pages_manage_posts') ||
-            message.includes('pages_read_engagement') ||
-            message.includes('impersonating a')
+            fbMessage.includes('pages_manage_posts') ||
+            fbMessage.includes('pages_read_engagement') ||
+            fbMessage.includes('impersonating a')
         ) {
             return NextResponse.json(
                 {
                     error: 'Reconnect Facebook and grant Page publishing permissions.',
                     code: 'FACEBOOK_PERMISSION',
                     action: 'reconnect',
+                    provider_error: graphMessage,
                 },
                 { status: 403 }
             );
         }
 
         return NextResponse.json(
-            { error: 'Failed to post to Facebook', code: 'FACEBOOK_GRAPH_ERROR' },
+            {
+                error: graphMessage,
+                code: 'FACEBOOK_GRAPH_ERROR',
+                provider: 'facebook',
+            },
             { status: 400 }
         );
     }

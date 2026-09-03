@@ -12,6 +12,7 @@ import {
   GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCP_TOOLS } from './toolManifest';
+import { MARKETING_PRICING } from '../../config/pricingPlans';
 import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
 import {
@@ -3644,9 +3645,9 @@ class AlphaCloneMCPServer {
             }
             
             // 3. Solopreneur starting pricing value hook
-            const hasPricing = lower.includes('$15') || lower.includes('trial') || lower.includes('risk-free');
+            const hasPricing = lower.includes('trial') || lower.includes('risk-free') || lower.includes('free plan');
             if (!hasPricing) {
-              finalCaption += '\n\nKickstart your B2B lead pipelines with our zero-risk 14-day trial. Pricing starts at just $15/month.';
+              finalCaption += `\n\nKickstart your B2B lead pipelines with our zero-risk 14-day trial. ${MARKETING_PRICING.startingPriceLine}.`;
             }
           }
 
@@ -7402,71 +7403,69 @@ Return ONLY a JSON array of 60 objects:
           delete a.hd;
           const tenant_id = this.requireTenant(a);
           const userId = this.requireProfileUser(a);
-          const { topic, image_prompt, image_provider = 'openai', provided_image_url, platforms = ['facebook', 'linkedin'], scheduled_at } = a;
+          const { topic, image_prompt, image_provider = 'openai', provided_image_url, platforms = ['facebook', 'linkedin'], scheduled_at, fallback_to_text_only = false } = a;
 
           let imageUrl: string | null = provided_image_url || null;
           let imageStatus = provided_image_url ? 'provided' : 'not_generated';
+          let imageGenerationWarning: Record<string, unknown> | null = null;
 
           // 1. Generate Image if not provided
           if (!imageUrl) {
             if (!image_prompt) throw new Error('image_prompt is required if provided_image_url is omitted');
-            const wantsOpenAi = image_provider !== 'xai';
-            if (wantsOpenAi && !process.env.OPENAI_API_KEY) {
-              result = {
-                content: [{
-                  type: 'text',
-                  text: JSON.stringify({
-                    error: 'OPENAI_BILLING_NOT_CONFIGURED',
-                    message: 'OpenAI image generation is unavailable — OPENAI_API_KEY is missing or OpenAI billing is inactive. Retry with image_provider "xai", pass provided_image_url, or activate OpenAI billing in platform settings.',
-                    action_required: true,
-                  }, null, 2),
-                }],
-              };
-              break;
-            }
-            try {
-              // Try primary provider
-              let img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', image_provider as any);
-              
-              // If primary fails, try the other one
-              if (!img.success || !img.url) {
-                  const altProvider = image_provider === 'openai' ? 'xai' : 'openai';
-                  console.warn(`[MCP] Image Gen failed with ${image_provider}, retrying with ${altProvider}...`, img.error);
-                  img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', altProvider as any);
-              }
+            const { generateSocialImage } = await import('@/lib/ai/generateSocialImage');
+            const img = await generateSocialImage({
+              prompt: String(image_prompt),
+              size: '1024x1024',
+              provider: image_provider === 'xai' ? 'xai' : image_provider === 'openai' ? 'openai' : 'auto',
+            });
 
-              if (!img.success || !img.url) {
-                const billingIssue = String(img.error || '').toLowerCase().includes('billing')
-                  || String(img.error || '').toLowerCase().includes('openai');
-                result = {
-                  content: [{
-                    type: 'text',
-                    text: JSON.stringify({
-                      error: billingIssue ? 'OPENAI_BILLING_LIMIT' : 'IMAGE_GENERATION_FAILED',
-                      message: billingIssue
-                        ? `OpenAI billing limit reached or inactive: ${img.error}. Activate billing, use image_provider "xai", or pass provided_image_url.`
-                        : `Could not generate an image for this post. Both AI image providers failed. Reason: ${img.error || 'Unknown'}. Please retry with a different image_prompt, or provide a provided_image_url instead.`,
-                      action_required: true,
-                    }, null, 2),
-                  }],
+            if (img.ok) {
+              const bytes = Buffer.from(img.base64, 'base64');
+              const storagePath = `generated/${tenant_id}/${userId}/${crypto.randomUUID()}.png`;
+              const { error: storageError } = await supabaseAdmin.storage
+                .from('social-assets')
+                .upload(storagePath, bytes, { contentType: 'image/png', cacheControl: '31536000', upsert: false });
+              if (storageError) {
+                imageStatus = 'storage_failed';
+                imageGenerationWarning = {
+                  code: 'IMAGE_STORAGE_FAILED',
+                  message: storageError.message,
+                  provider: img.provider,
                 };
-                break;
+              } else {
+                const { data: publicData } = supabaseAdmin.storage.from('social-assets').getPublicUrl(storagePath);
+                imageUrl = publicData.publicUrl;
+                imageStatus = 'generated';
               }
-              imageUrl = img.url;
-              imageStatus = 'generated';
-            } catch (imgErr: any) {
-              result = {
-                content: [{
-                  type: 'text',
-                  text: JSON.stringify({
-                    error: 'IMAGE_GENERATION_EXCEPTION',
-                    message: `Image generation threw an error: ${imgErr.message}. Please retry or provide a provided_image_url.`,
-                    action_required: true,
-                  }, null, 2),
-                }],
+            } else {
+              imageStatus = 'generation_failed';
+              imageGenerationWarning = {
+                code: img.error.code,
+                message: img.error.message,
+                provider: img.error.provider || null,
               };
-              break;
             }
+          }
+
+          if (imageGenerationWarning && !fallback_to_text_only) {
+            result = {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: imageGenerationWarning.code,
+                  message: imageGenerationWarning.message,
+                  provider: imageGenerationWarning.provider || null,
+                  post_not_created: true,
+                  next_steps: [
+                    'This is an AI image provider failure — not Facebook or LinkedIn.',
+                    'Ask the user whether to schedule/publish caption-only or retry with another image.',
+                    'Caption-only: call create_social_post without media, or retry with fallback_to_text_only=true after explicit approval.',
+                  ],
+                }, null, 2),
+              }],
+            };
+            break;
           }
 
           // 2. Generate Professional Article (Grok)
@@ -7478,7 +7477,7 @@ Return ONLY a JSON array of 60 objects:
             includeCta: true,
           });
 
-          // 3. Schedule
+          // 3. Schedule (caption-only when image generation failed)
           const publishTime = typeof scheduled_at === 'string' && scheduled_at
             ? scheduled_at
             : new Date(Date.now() + 60 * 60 * 1000).toISOString();
@@ -7487,12 +7486,15 @@ Return ONLY a JSON array of 60 objects:
             user_id: userId,
             caption: multiPass.content,
             platforms: Array.isArray(platforms) ? platforms : ['facebook', 'linkedin'],
-            media_urls: [imageUrl],
+            media_urls: imageUrl ? [imageUrl] : [],
             status: 'scheduled',
             scheduled_at: publishTime,
             metadata: {
               autonomous: true,
               ai_image_prompt: image_prompt,
+              image_status: imageStatus,
+              image_generation_warning: imageGenerationWarning,
+              text_only_fallback: !imageUrl && Boolean(imageGenerationWarning),
               generation: {
                 strategistNotes: multiPass.strategistNotes,
                 reviewerNotes: multiPass.reviewerNotes,
@@ -7511,9 +7513,16 @@ Return ONLY a JSON array of 60 objects:
                 scheduled_at: publishTime,
                 image_url: imageUrl,
                 image_status: imageStatus,
+                image_generation_warning: imageGenerationWarning,
+                fallback: imageGenerationWarning ? 'text_only' : null,
+                warning: imageGenerationWarning
+                  ? `${imageGenerationWarning.message} Post scheduled caption-only because fallback_to_text_only=true.`
+                  : null,
                 content_length: multiPass.content.length,
                 confidence_score: multiPass.confidenceScore,
-                message: `Autonomous content creation complete. Post scheduled for ${publishTime} with ${imageStatus} image.`,
+                message: imageUrl
+                  ? `Autonomous content creation complete. Post scheduled for ${publishTime} with ${imageStatus} image.`
+                  : `Autonomous content creation complete. Post scheduled caption-only for ${publishTime} because image generation failed.`,
               }, null, 2),
             }],
           };

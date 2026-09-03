@@ -1,5 +1,14 @@
 import React, { Suspense } from 'react';
+import type { Metadata } from 'next';
 import HomeClient from '@/components/home/HomeClient';
+import { buildMarketingMetadata } from '@/lib/seo/metadata';
+import { EXECUTION_LAYER } from '@/config/marketingPositioning';
+
+export const metadata: Metadata = buildMarketingMetadata({
+  title: EXECUTION_LAYER.heroHeadline,
+  description: EXECUTION_LAYER.explanatoryLine,
+  pathname: '/',
+});
 
 /**
  * AlphaClone Home Page (Server Component)

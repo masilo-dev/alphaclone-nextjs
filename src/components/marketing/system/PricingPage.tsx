@@ -9,6 +9,7 @@ import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketi
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
 import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from '@/lib/entitlements/planEntitlements';
 import { ConversionBanner } from './ConversionBanner';
+import PromotionMonthBanner from './PromotionMonthBanner';
 import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
 
 const DAILY = `${FREE_DAILY_LIMIT} / day`;
@@ -136,6 +137,7 @@ export default function PricingPage() {
             <div className="mt-8 flex justify-center">
               <MarketingPricingToggle value={billingPeriod} onChange={setBillingPeriod} />
             </div>
+            <PromotionMonthBanner className="mt-10 text-left" alwaysShow />
           </div>
         </MarketingContainer>
       </MarketingSection>

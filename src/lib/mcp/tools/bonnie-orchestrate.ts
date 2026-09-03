@@ -403,6 +403,7 @@ registerTool('bonnie-orchestrate', {
         ? `Approved recipient record IDs: ${args.recipient_ids.join(', ')}.`
         : 'No recipient IDs supplied: prepare drafts and request selection/approval before external outreach.',
       'Required sequence: inspect connected accounts and audience; create distinct platform copy; generate the image with create_post_with_ai_image or upload_media; create social drafts; prepare personalised email drafts; link CRM notes and follow-up tasks; execute only when requested; verify provider outcomes and return receipts.',
+      'If AI image generation fails (billing inactive, rate limit, provider outage), report the real provider error to the user — never blame Facebook/LinkedIn. Do not publish caption-only unless the user explicitly approves; then call create_social_post/publish_social_post without media or retry create_post_with_ai_image with fallback_to_text_only=true.',
       'Never claim generated, uploaded, sent, scheduled, or published without a successful tool receipt. Never send a local filesystem path to a provider.',
     ].join('\n');
 

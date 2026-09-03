@@ -6,6 +6,7 @@ import { Facebook, Linkedin, Twitter } from 'lucide-react';
 import { MarketingContainer } from './LayoutPrimitives';
 import { SOCIAL_PROFILES, formatCopyrightLine } from '@/lib/seo/siteEntity';
 import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
+import { EXECUTION_LAYER } from '@/config/marketingPositioning';
 import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
 
@@ -49,6 +50,9 @@ const COLUMNS = [
       { label: 'Getting started', path: '/guide' },
       { label: 'Blog', path: '/blog' },
       { label: 'Integrations', path: '/ecosystem' },
+      { label: 'Claude & Manus MCP', path: '/claude-manus-integrations' },
+      { label: 'How it works', path: '/how-it-works' },
+      { label: 'Execution session', path: '/execution-session' },
       { label: 'FAQ', path: '/faq' },
     ],
   },
@@ -62,6 +66,9 @@ const COLUMNS = [
       { label: 'Privacy Policy', path: '/privacy-policy' },
       { label: 'Terms of Service', path: '/terms-of-service' },
       { label: 'Security Policy', path: '/security-policy' },
+      { label: 'Privacy Choices', path: '/privacy-choices' },
+      { label: 'Data Deletion', path: '/data-deletion' },
+      { label: 'Reliability', path: '/reliability' },
       { label: 'Platform status', path: '/platform-status' },
     ],
   },
@@ -86,7 +93,7 @@ export default function MarketingFooter() {
               <span className="mkt-brand-word">AlphaClone</span>
             </Link>
             <p className="mkt-footer-blurb">
-              The connected business platform for service businesses.
+              {EXECUTION_LAYER.primaryLine} Business execution layer for service teams.
             </p>
             <div className="mkt-footer-social">
               {SOCIAL_LINKS.map(({ label, href, Icon }) => (

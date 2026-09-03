@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import { MARKETING_PRICING } from '@/config/pricingPlans';
 
 const LLMS_CONTENT = `# AlphaClone Systems
 
-> AlphaClone Systems is an AI-powered business operating system for founders, agencies, consultants, and service firms. It connects CRM, invoicing, contracts, project management, communication, social publishing, and permission-aware AI execution in one workspace. Starter plans begin at $15/month.
+> AlphaClone Systems is an AI-powered business operating system for founders, agencies, consultants, and service firms. It connects CRM, invoicing, contracts, project management, communication, social publishing, and permission-aware AI execution in one workspace. ${MARKETING_PRICING.metaPriceSnippet}
 
 Live platform: https://alphaclonesystems.com
 MCP server: https://alphaclonesystems.com/api/mcp
@@ -132,7 +133,7 @@ OAuth discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-s
 - [Platform Home](https://alphaclonesystems.com/) — Main landing page and product overview
 - [Book a Demo](https://alphaclonesystems.com/book-demo) — Free 30-minute live platform walkthrough (Cal.com scheduling)
 - [About AlphaClone](https://alphaclonesystems.com/about) — Company background and mission
-- [Pricing Plans](https://alphaclonesystems.com/pricing) — Starter, Pro, and Enterprise plan details
+- [Pricing Plans](https://alphaclonesystems.com/pricing) — Free, Pro, and Premium plan details
 - [Services Overview](https://alphaclonesystems.com/services) — Professional services and implementation support
 - [CRM Module](https://alphaclonesystems.com/crm) — CRM and pipeline management feature overview
 - [Lead Management](https://alphaclonesystems.com/lead-management) — AI-powered lead discovery and outreach

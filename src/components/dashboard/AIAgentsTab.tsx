@@ -408,8 +408,8 @@ const AIAgentsTab: React.FC = () => {
             </div>
             <p className="text-xs text-slate-400 mt-1 max-w-xl leading-relaxed">
               {rules.auto_send_enabled 
-                ? 'Sovereign Autopilot Mode is fully engaged. The platform is running 100% autonomously: auto-triggering playbook syncs, scoring messages, routing leads, and auto-dispatching high-confidence outreach. Zero founder involvement required.'
-                : 'Nexus acts as your sovereign automated agent network. It checks messages, prompts leads, drafts social posts, triages calendars, and reconciles payments.'
+                ? 'Autopilot mode is active for approved rules: playbooks sync, messages score, leads route, and high-confidence outreach can dispatch automatically. You can disable auto-send or require approval per rule.'
+                : 'Nexus acts as your automated agent network. It checks messages, prompts leads, drafts social posts, triages calendars, and reconciles payments — with approval gates for high-impact actions.'
               }
             </p>
           </div>
@@ -714,7 +714,7 @@ const AIAgentsTab: React.FC = () => {
               <div className="flex items-center justify-between p-3.5 bg-slate-950 border border-white/5 rounded-2xl">
                 <div>
                   <span className="text-xs font-bold text-white block">Sovereign Autopilot Mode (Auto-Send & Auto-Approve)</span>
-                  <span className="text-[10px] text-slate-500">Enable AI agents to automatically trigger runs, reply to buying signals, and auto-approve high-confidence actions. Zero founder involvement required.</span>
+                  <span className="text-[10px] text-slate-500">Enable AI agents to trigger runs, respond to signals, and auto-approve high-confidence actions you configure. Important client-facing steps can still require your review.</span>
                 </div>
                 <button 
                   onClick={() => handleUpdateRules({ auto_send_enabled: !rules.auto_send_enabled })}

@@ -21,6 +21,9 @@ function entry(
 
 export const MARKETING_SITEMAP: MetadataRoute.Sitemap = [
   entry('', 'weekly', 1),
+  entry('/execution-session', 'monthly', 0.9),
+  entry('/how-it-works', 'monthly', 0.88),
+  entry('/reliability', 'monthly', 0.75),
   entry('/book-demo', 'monthly', 0.95),
   entry('/services', 'monthly', 0.92),
   entry('/pricing', 'monthly', 0.92),

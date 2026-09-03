@@ -145,6 +145,48 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
 export const PRICING_FROM = 45;
 export const PRICING_TO = 80;
 
+/** Reusable marketing copy — import instead of hard-coding prices in pages. */
+export const MARKETING_PRICING = {
+  freePlanName: 'Free',
+  proPlanName: 'Pro',
+  premiumPlanName: 'Premium',
+  paidFromMonthly: PRICING_FROM,
+  paidToMonthly: PRICING_TO,
+  /** Primary CTA label for signup buttons */
+  primaryCtaLabel: 'Start free',
+  /** Short price line for hero sections and comparisons */
+  startingPriceLine: 'Free plan available · Paid plans from $45/month',
+  /** One-line competitor comparison anchor */
+  paidFromPhrase: '$45/month for paid plans',
+  /** Schema.org / meta description snippet */
+  metaPriceSnippet:
+    'Free plan with full module access. Pro from $45/month. Premium from $80/month — unlimited AlphaClone daily execution.*',
+  premiumUnlimitedLine:
+    'Premium: unlimited daily execution on AlphaClone (provider and safety limits still apply).',
+} as const;
+
+/** Build SoftwareApplication offers array for JSON-LD from public plans. */
+export function buildPublicPlanOffers(siteUrl: string) {
+  return PUBLIC_PRICING_PLANS.filter((p) => p.price >= 0).map((plan) => ({
+    '@type': 'Offer' as const,
+    name: `${plan.name} Plan`,
+    price: plan.price.toFixed(2),
+    priceCurrency: 'USD',
+    priceValidUntil: '2027-01-01',
+    priceSpecification: {
+      '@type': 'PriceSpecification' as const,
+      price: plan.price.toFixed(2),
+      priceCurrency: 'USD',
+      valueAddedTaxIncluded: false,
+      billingIncrement: 1,
+      unitCode: 'MON',
+    },
+    description: plan.tagline,
+    url: `${siteUrl}/pricing`,
+    availability: 'https://schema.org/InStock',
+  }));
+}
+
 /** Map legacy checkout plan ids to canonical public ids */
 export function normalizeCheckoutPlanId(planId: string): PublicPlanId | 'starter' | 'enterprise' {
   const p = planId.toLowerCase();

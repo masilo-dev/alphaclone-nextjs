@@ -2,20 +2,21 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { IconType } from "react-icons";
-import { FaFacebook, FaHubspot, FaLinkedin, FaMicrosoft, FaSlack, FaWhatsapp } from "react-icons/fa6";
-import { SiAnthropic, SiBrevo, SiCaldotcom, SiGmail, SiHubspot, SiOpenai, SiQuickbooks, SiResend, SiStripe, SiZapier, SiZoho } from "react-icons/si";
+import { FaLinkedin, FaMicrosoft } from "react-icons/fa6";
+import { SiAnthropic, SiCaldotcom, SiOpenai, SiStripe, SiZoho } from "react-icons/si";
 import { ArrowDown, ArrowRight, Bot, BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, Database, FileCheck2, FileText, LockKeyhole, Mail, MessageSquareText, ReceiptText, Search, Send, ShieldCheck, UserRoundCheck, Users, WalletCards, X, Sparkles } from "lucide-react";
-import { DEMO_HREF, TRIAL_HREF } from "@/lib/marketing/cta";
+import { TRIAL_HREF } from "@/lib/marketing/cta";
+import { EXECUTION_LAYER } from "@/config/marketingPositioning";
 import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
 import { MarketingContainer, MarketingSection } from "./LayoutPrimitives";
 import MarketingShell from "./MarketingShell";
 import { CurvedDotField, HeroDataWaves, SectionAmbientLight } from "./atmosphere";
 import LookInsideAlphaClone from "./LookInsideAlphaClone";
 import AiInterfaceShowcase from "./AiInterfaceShowcase";
-import LifecycleFlowShowcase from "./LifecycleFlowShowcase";
+import LifecycleFlowShowcase from './LifecycleFlowShowcase';
+import { getHomeIntegrationGroups } from '@/lib/marketing/homeIntegrationDisplay';
+import PromotionMonthBanner from './PromotionMonthBanner';
 
-type Integration = { name: string; detail: string; badge: string; icon: IconType | typeof Mail; color: string };
 const executionRows = [
   ["Research prospects", "20 / 20 found", "Done", "done", "09:42"],
   ["Check fit", "Industry · size · web · location", "Done", "done", "09:44"],
@@ -25,32 +26,7 @@ const executionRows = [
   ["Owner approval", "6 actions require review", "Needs approval", "approval", "Review"],
 ] as const;
 
-const integrationGroups: Array<{ title: string; items: Integration[] }> = [
-  { title: "Communication & Email", items: [
-    { name: "Outlook 365", detail: "Inbox sync & email delivery", badge: "OAuth 2.0", icon: FaMicrosoft, color: "#0078d4" },
-    { name: "Google Gmail", detail: "Read & send email threads", badge: "Direct API", icon: SiGmail, color: "#ea4335" },
-    { name: "Zoho Mail", detail: "Mailbox & reply tracking", badge: "2-way sync", icon: SiZoho, color: "#f6c344" },
-    { name: "WhatsApp", detail: "Customer messaging & alerts", badge: "Meta API", icon: FaWhatsapp, color: "#25d366" },
-    { name: "Brevo", detail: "Email outreach & campaigns", badge: "API Key", icon: SiBrevo, color: "#0092ff" },
-    { name: "Resend", detail: "Automated transactional mail", badge: "Realtime", icon: SiResend, color: "#ffffff" },
-  ]},
-  { title: "CRM, Sales & Scheduling", items: [
-    { name: "Zoho CRM", detail: "Contacts, deals & accounts", badge: "Bi-directional", icon: SiZoho, color: "#f6c344" },
-    { name: "LinkedIn", detail: "Profile research & outreach", badge: "Webhook", icon: FaLinkedin, color: "#0a66c2" },
-    { name: "HubSpot", detail: "Pipeline & lead sync", badge: "OAuth 2.0", icon: SiHubspot, color: "#ff7a59" },
-    { name: "Cal.com", detail: "Meeting booking & scheduling", badge: "Realtime", icon: SiCaldotcom, color: "#292524" },
-  ]},
-  { title: "Financials & Payments", items: [
-    { name: "Stripe", detail: "Payments & subscriptions", badge: "Verified", icon: SiStripe, color: "#635bff" },
-    { name: "QuickBooks", detail: "Accounting & ledger sync", badge: "OAuth 2.0", icon: SiQuickbooks, color: "#2ca01c" },
-  ]},
-  { title: "Social & Productivity", items: [
-    { name: "Facebook Pages", detail: "Post publishing & lead forms", badge: "Meta Graph", icon: FaFacebook, color: "#1877f2" },
-    { name: "LinkedIn Pages", detail: "Company updates & stats", badge: "OAuth 2.0", icon: FaLinkedin, color: "#0a66c2" },
-    { name: "Slack", detail: "Internal alerts & notifications", badge: "Bot API", icon: FaSlack, color: "#e01e5a" },
-    { name: "Zapier", detail: "Multi-app trigger automation", badge: "Webhooks", icon: SiZapier, color: "#ff4a00" },
-  ]},
-];
+const integrationGroups = getHomeIntegrationGroups();
 
 function Intro({ eyebrow, title, body, center = false }: { eyebrow?: string; title: string; body?: string; center?: boolean }) {
   return <div className={center ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
@@ -74,15 +50,17 @@ export default function MarketingHomePage() {
       <CurvedDotField />
       <MarketingContainer>
         <div className="mkt-hero-copy mkt-reveal mx-auto max-w-4xl px-2 text-center">
+          <p className="text-[11px] font-black uppercase tracking-[.22em] text-cyan-300 mb-4">{EXECUTION_LAYER.category}</p>
           <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.08] tracking-normal text-white sm:text-5xl md:text-6xl">
-            Run your business from one connected workspace.
+            {EXECUTION_LAYER.heroHeadline}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base md:text-lg">Find customers. Manage relationships. Deliver work. Send invoices. Let Bonnie handle the repetitive work between them.</p>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base md:text-lg">{EXECUTION_LAYER.heroSubhead}</p>
           <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
-            <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">Start for $15/month</PrimaryCTA>
-            <SecondaryCTA href={DEMO_HREF} className="w-full sm:w-auto mkt-btn-large">Book a demo</SecondaryCTA>
+            <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">{EXECUTION_LAYER.primaryCta}</PrimaryCTA>
+            <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large">{EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
           </div>
         </div>
+        <PromotionMonthBanner className="mt-8" />
         <div className="mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]">
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#030a16] p-2 sm:p-3 shadow-2xl shadow-slate-950/40">
             <div className="mb-2 flex items-center justify-between border-b border-white/5 px-3 pb-2 pt-1">
@@ -355,9 +333,11 @@ export default function MarketingHomePage() {
                     <p className="mt-3 truncate text-xs font-bold text-white transition-colors duration-200 group-hover:text-cyan-200">{item.name}</p>
                     <p className="mt-1 text-[10px] leading-4 text-slate-400">{item.detail}</p>
                   </div>
-                  <div className="mt-3 flex items-center gap-1.5 border-t border-white/[.05] pt-2 text-[9px] font-semibold text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"/>
-                    <span>Live Sync Active</span>
+                  <div className="mt-3 flex items-center gap-1.5 border-t border-white/[.05] pt-2 text-[9px] font-semibold">
+                    <span className={`h-1.5 w-1.5 rounded-full ${item.status === 'AVAILABLE' ? 'bg-emerald-400 animate-pulse' : item.status === 'BETA' ? 'bg-amber-400' : 'bg-slate-500'}`}/>
+                    <span className={item.status === 'AVAILABLE' ? 'text-emerald-400' : item.status === 'BETA' ? 'text-amber-300' : 'text-slate-400'}>
+                      {item.status === 'AVAILABLE' ? 'Available' : item.status === 'BETA' ? 'Beta' : item.status === 'COMING_SOON' ? 'Coming soon' : item.badge}
+                    </span>
                   </div>
                 </article>
               ))}
@@ -439,12 +419,12 @@ export default function MarketingHomePage() {
     <MarketingSection atmosphere="cta" className="py-10 sm:py-16 lg:py-20"><MarketingContainer>
       <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-cyan-400/20 bg-[#030c1b] px-5 py-10 text-center shadow-2xl shadow-cyan-950/30 sm:px-10 sm:py-14">
         <div className="absolute inset-x-[15%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent"/>
-        <h2 className="font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">Stop rebuilding your business context in every app.</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">CRM, outreach, communication, projects, documents, invoices and AI execution stay connected around the same customer.</p>
-        <p className="mt-6 font-marketing-heading text-lg font-extrabold text-cyan-200 sm:text-2xl">One customer. One context. One operating system.</p>
+        <h2 className="font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">{EXECUTION_LAYER.problemLine}</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">{EXECUTION_LAYER.explanatoryLine}</p>
+        <p className="mt-6 font-marketing-heading text-lg font-extrabold text-cyan-200 sm:text-2xl">{EXECUTION_LAYER.primaryLine}</p>
         <div className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-          <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">Start for $15/month</PrimaryCTA>
-          <SecondaryCTA href={DEMO_HREF} className="w-full sm:w-auto mkt-btn-large">Book a demo</SecondaryCTA>
+          <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">{EXECUTION_LAYER.primaryCta}</PrimaryCTA>
+          <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large">{EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
         </div>
       </div>
     </MarketingContainer></MarketingSection>

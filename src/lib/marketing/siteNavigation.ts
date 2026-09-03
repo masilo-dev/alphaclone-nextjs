@@ -213,6 +213,18 @@ export const RESOURCES_NAV_GROUP: MarketingNavGroup = {
       icon: BookOpen,
     },
     {
+      label: 'How it works',
+      path: '/how-it-works',
+      description: 'Decide, approve, execute, verify',
+      icon: Workflow,
+    },
+    {
+      label: 'Execution session',
+      path: '/execution-session',
+      description: 'Map one workflow with the team',
+      icon: Compass,
+    },
+    {
       label: 'FAQ',
       path: '/faq',
       description: 'Common purchase questions',
@@ -259,6 +271,12 @@ export const COMPANY_NAV_GROUP: MarketingNavGroup = {
       path: '/compliance',
       description: 'Policies and operating controls',
       icon: FileText,
+    },
+    {
+      label: 'Reliability',
+      path: '/reliability',
+      description: 'Approvals, limits, and recovery',
+      icon: Shield,
     },
     {
       label: 'Platform status',

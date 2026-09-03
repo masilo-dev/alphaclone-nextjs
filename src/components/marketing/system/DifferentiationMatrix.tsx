@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { XCircle, CheckCircle2, Shield, Layers, HelpCircle } from 'lucide-react';
+import { MARKETING_PRICING } from '@/config/pricingPlans';
 import Link from 'next/link';
 
 interface MatrixRow {
@@ -39,7 +40,7 @@ const COMPARISON_ROWS: MatrixRow[] = [
   {
     category: 'Software Cost & Overhead',
     disconnectedWay: '$500 to $800 / month per user across multiple SaaS subscriptions + Zapier integration fees.',
-    alphaCloneWay: 'Starting at $15 / month. Full access to CRM, contracts, projects, billing, video calls, and AI.',
+    alphaCloneWay: `${MARKETING_PRICING.startingPriceLine}. Full access to CRM, contracts, projects, billing, video calls, and AI.`,
   },
 ];
 

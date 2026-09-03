@@ -1,3 +1,5 @@
+import { PRICING_FROM, MARKETING_PRICING } from '@/config/pricingPlans';
+
 export type FaqItem = {
   question: string;
   answer: string;
@@ -67,7 +69,7 @@ export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
   {
     question: 'What tools does AlphaClone replace?',
     answer:
-      'Common stacks include CRM (HubSpot/Salesforce), invoicing (QuickBooks/FreshBooks), contracts (DocuSign), scheduling (Calendly), and email marketing tools — consolidated into one workspace from $15/month.',
+      `Common stacks include CRM (HubSpot/Salesforce), invoicing (QuickBooks/FreshBooks), contracts (DocuSign), scheduling (Calendly), and email marketing tools — consolidated into one workspace. ${MARKETING_PRICING.startingPriceLine}.`,
   },
   {
     question: 'How is AlphaClone different from HubSpot or QuickBooks?',
@@ -87,7 +89,7 @@ export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
   {
     question: 'How does pricing compare to Salesforce?',
     answer:
-      'Salesforce often costs $25+ per user per month. AlphaClone starts at $15/month for the full workspace — flat pricing, not per-seat enterprise tiers.',
+      `Salesforce often costs $25+ per user per month. AlphaClone offers a free plan and paid plans from $${PRICING_FROM}/month — flat workspace pricing, not per-seat enterprise tiers.`,
   },
   {
     question: 'Can I sync HubSpot contacts into AlphaClone?',
@@ -97,7 +99,7 @@ export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
   {
     question: 'Does AlphaClone include email marketing?',
     answer:
-      'Yes. Build campaigns, segments, and sequences with open/click tracking. Advanced automation limits vary by plan — see pricing for Pro and Enterprise.',
+      'Yes. Build campaigns, segments, and sequences with open/click tracking. Advanced automation limits vary by plan — see pricing for Pro and Premium.',
   },
   {
     question: 'What email providers are supported?',

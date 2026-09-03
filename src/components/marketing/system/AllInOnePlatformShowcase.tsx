@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { MARKETING_PRICING } from "@/config/pricingPlans";
 import { AlphaIcon } from "@/components/marketing/icons";
 import type { AlphaIconName } from "@/components/marketing/icons";
 
@@ -65,7 +66,7 @@ const CUSTOMER_SCENARIOS = [
     challenge:
       "Tired of paying $400/mo for HubSpot, DocuSign, Harvest & Buffer separately.",
     solution:
-      "AlphaClone replaces 5 fragmented tools for $15/mo with an AI assistant that handles admin work.",
+      `AlphaClone replaces fragmented tools in one workspace (${MARKETING_PRICING.startingPriceLine}) with an AI assistant that handles admin work.`,
     metric: "Save $4,600+/yr",
   },
   {

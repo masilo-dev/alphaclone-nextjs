@@ -41,7 +41,7 @@ class CrmIntelligenceService {
         weakness: 'Prohibitively high licensing costs, slow deployment cycles, and steep training curve',
         positioning_playbook: [
           'Highlight AlphaClone’s single-day setup and out-of-the-box AI workflows.',
-          'Lead with transparent, flat-rate pricing ($15/mo starter) to target Salesforce’s bloated administration overhead.'
+          'Lead with transparent workspace pricing and a free tier to contrast with Salesforce per-seat overhead.',
         ]
       },
       hubspot: {

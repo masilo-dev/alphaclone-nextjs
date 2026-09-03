@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import LoomVideo from '@/components/ui/LoomVideo';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
+
+const pricingDocLine = `Public plans are ${PUBLIC_PRICING_PLANS.map((p) => `${p.name} ($${p.price}/month)`).join(', ')}. Plan details, usage limits, and trial terms are listed on the pricing page. The 14-day trial does not require a credit card.`;
 
 const sections = [
     'onboarding', 'home', 'crm', 'growth-agent', 'integrations',
@@ -149,7 +152,7 @@ export default function DocsPageContent() {
                                             },
                                             {
                                                 n: 2, title: 'Plan Selection',
-                                                body: 'Public plans are Starter ($15/month), Pro ($45/month), and Enterprise ($80/month). Plan details, usage limits, and trial terms are listed on the pricing page. The 14-day trial does not require a credit card.'
+                                                body: pricingDocLine
                                             },
                                             {
                                                 n: 3, title: 'Business Workspace Setup',

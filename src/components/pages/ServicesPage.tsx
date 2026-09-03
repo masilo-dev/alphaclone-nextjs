@@ -10,6 +10,7 @@ import {
 import AnimateIn from '../common/AnimateIn';
 import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
 import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
+import { MARKETING_PRICING } from '@/config/pricingPlans';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const ServicesPage: React.FC = () => {
@@ -359,7 +360,7 @@ const ServicesPage: React.FC = () => {
                                 <SecondaryCTA className="w-full sm:w-auto">Book a Live Demo</SecondaryCTA>
                             </div>
                             <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-widest">
-                                Starter $15/mo · Pro $45/mo · Enterprise $80/mo · 14-day trial · No card required
+                                {MARKETING_PRICING.startingPriceLine} · 14-day trial · No card required
                             </p>
                         </AnimateIn>
                     </div>

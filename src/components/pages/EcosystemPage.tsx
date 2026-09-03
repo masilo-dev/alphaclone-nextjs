@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare } from 'lucide-react';
 import AnimateIn from '../common/AnimateIn';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import { PUBLIC_INTEGRATIONS } from '@/config/integrations';
 
 const EcosystemPage: React.FC = () => {
     const advantages = [
@@ -59,20 +60,11 @@ const EcosystemPage: React.FC = () => {
         },
     ];
 
-    const integrations = [
-        { name: 'Cal.com', desc: 'Platform demo scheduling', status: 'Available' },
-        { name: 'LinkedIn', desc: 'OAuth, posting, lead forms', status: 'Available' },
-        { name: 'Facebook', desc: 'Pages, posts, lead capture', status: 'Available' },
-        { name: 'DeepSeek API', desc: 'Bonnie planning provider', status: 'Available' },
-        { name: 'Claude API', desc: 'AI reasoning fallback', status: 'Available' },
-        { name: 'OpenAI API', desc: 'Generation and AI fallback', status: 'Available' },
-        { name: 'OpenRouter', desc: 'Optional model routing', status: 'Available' },
-        { name: 'Microsoft 365', desc: 'Outlook, calendar, tasks', status: 'Available' },
-        { name: 'Stripe', desc: 'Payment processing', status: 'Available' },
-        { name: 'WhatsApp', desc: 'Dashboard connection', status: 'Coming soon' },
-        { name: 'Instagram', desc: 'Business publishing/inbox', status: 'Coming soon' },
-        { name: 'Supabase', desc: 'Database, auth, realtime', status: 'Available' },
-    ];
+    const integrations = PUBLIC_INTEGRATIONS.map((item) => ({
+        name: item.name,
+        desc: item.description,
+        status: item.statusLabel,
+    }));
 
     return (
         <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">

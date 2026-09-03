@@ -1,14 +1,16 @@
 /** Single source of truth for outcome-led marketing copy. */
 
+import { MARKETING_PRICING } from '@/config/pricingPlans';
+
 export const OUTCOME_PROMISE = {
   badge: 'Every lead-to-invoice workflow in one place',
   /** Shorter badge for narrow screens — clearer ICP, less wrap under the nav */
   badgeMobile: 'For service businesses & agencies',
-  headline: 'Stop managing tools.',
-  headlineAccent: 'Run your whole client business from one workspace.',
+  headline: 'Your business has tools.',
+  headlineAccent: 'Now give it an execution layer.',
   subhead:
-    'AlphaClone replaces a patchwork of CRM, invoicing, contracts, projects, meetings, and social tools with a single, AI-assisted OS for service businesses.',
-  icp: 'For founders, agencies, and lean teams who want enterprise-grade tracking without enterprise-grade complexity.',
+    'AlphaClone turns your instructions into coordinated action across CRM, billing, projects, and outreach — while you retain control over important decisions.',
+  icp: 'For solo founders and small service teams who coordinate work across disconnected tools.',
 } as const;
 
 export const OUTCOME_HERO_BULLETS = [
@@ -25,7 +27,7 @@ export const OUTCOME_TRUST_POINTS = [
 
 export const OUTCOME_PROOF_STATS = [
   { value: '1', label: 'client record', detail: 'from first lead to paid invoice' },
-  { value: '5+', label: 'tools replaced', detail: 'typical CRM + billing + contracts stack' },
+  { value: '1', label: 'workflow focus', detail: 'start with quote-to-cash or follow-up' },
   { value: '14', label: 'days to test', detail: 'full workflow before you pay' },
   { value: '$0', label: 'card to start', detail: 'cancel anytime' },
 ] as const;
@@ -192,7 +194,7 @@ export const WHO_WE_SERVE_SEGMENTS: WhoWeServeSegment[] = [
     challenge:
       'Per-seat enterprise pricing prices out small teams that still need credible client operations.',
     outcomes: [
-      'Full client workflow from $15/month — no per-seat escalation on Starter',
+      `Full client workflow (${MARKETING_PRICING.startingPriceLine}) — flat workspace pricing`,
       '14-day trial to validate before you commit budget',
       'Same capabilities larger firms pay multiple vendors for',
     ],

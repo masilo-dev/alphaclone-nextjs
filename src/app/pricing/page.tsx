@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: `Pricing | AlphaClone Plans from $${PRICING_FROM}/month`,
     description:
-      'Compare AlphaClone Starter, Pro, and Enterprise plans for a connected business workspace.',
+      'Compare AlphaClone Free, Pro, and Premium plans for a connected business workspace.',
     url: absoluteUrl('/pricing'),
     type: 'website',
   },

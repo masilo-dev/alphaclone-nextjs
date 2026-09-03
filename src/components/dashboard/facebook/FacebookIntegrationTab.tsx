@@ -610,7 +610,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             });
             const data = await res.json();
             if (data.url) setAiGeneratedImageUrl(data.url);
-            else toast.error('Generation failed');
+            else {
+                const detail = data.code === 'IMAGE_PROVIDER_BILLING_INACTIVE'
+                    ? data.error
+                    : data.error || 'Generation failed';
+                toast.error(detail, { duration: 6000 });
+            }
         } catch { toast.error('Generation failed'); }
         finally { setAiImageGenerating(false); }
     };
@@ -695,6 +700,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             const data = await res.json();
             if (data.success) {
                 toast.success('Posted!', { id: toastId });
+                if (data.warning) toast(data.warning, { icon: '⚠️', duration: 7000 });
                 setPostMessage('');
                 clearImage();
                 setActiveTab('posts');

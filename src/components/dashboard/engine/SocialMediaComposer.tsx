@@ -637,7 +637,10 @@ Return only the comment text.`;
                 setAiGeneratedImageUrl(data.url);
                 toast.success('AI image generated!');
             } else {
-                toast.error(data.error || 'Image generation failed');
+                const detail = data.code === 'IMAGE_PROVIDER_BILLING_INACTIVE'
+                    ? data.error
+                    : data.error || 'Image generation failed';
+                toast.error(detail, { duration: 6000 });
             }
         } catch {
             toast.error('Failed to generate image');

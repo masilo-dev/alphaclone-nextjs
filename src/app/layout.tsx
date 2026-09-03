@@ -31,15 +31,16 @@ import PageTransition from "@/components/PageTransition";
 import { WebVitals } from "@/components/common/WebVitals";
 import { SITE_URL } from "@/lib/siteUrl";
 import { buildOrganizationEntitySchema, buildSiteNavigationSchema } from "@/lib/seo/siteEntity";
+import { MARKETING_PRICING, buildPublicPlanOffers, PUBLIC_PRICING_PLANS } from "@/config/pricingPlans";
+import { EXECUTION_LAYER } from "@/config/marketingPositioning";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "AlphaClone — AI Business OS for Founders | $15/month",
+    default: `AlphaClone — ${EXECUTION_LAYER.category}`,
     template: "%s | AlphaClone Systems",
   },
-  description:
-    "Run CRM, invoicing, contracts, social media workflows, and meetings from one AI-assisted business workspace. Starter plans begin at $15 per month.",
+  description: EXECUTION_LAYER.explanatoryLine,
   keywords: [
     "AI business operating system",
     "AlphaClone",
@@ -63,7 +64,7 @@ export const metadata: Metadata = {
     "automated contract generation AI",
     "AI social media scheduler",
     "integrated video meetings for business",
-    "business management software $15",
+    "business management software",
     "founder business software",
     "solopreneur operating system",
     "SaaS for service businesses",
@@ -81,9 +82,8 @@ export const metadata: Metadata = {
       : {},
   },
   openGraph: {
-    title: "AlphaClone — AI Business OS for Founders",
-    description:
-      "CRM, invoicing, contracts, social media workflows, and meetings in one AI-assisted workspace. Starter plans begin at $15 per month.",
+    title: `AlphaClone — ${EXECUTION_LAYER.category}`,
+    description: EXECUTION_LAYER.explanatoryLine,
     type: "website",
     url: SITE_URL,
     siteName: "AlphaClone Systems",
@@ -92,9 +92,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AlphaClone — AI Business OS for Founders",
-    description:
-      "CRM, invoicing, contracts, social media workflows, and meetings in one AI-assisted workspace. Starter plans begin at $15 per month.",
+    title: `AlphaClone — ${EXECUTION_LAYER.category}`,
+    description: EXECUTION_LAYER.explanatoryLine,
     creator: "@AlphaCloneSys",
     images: ["/twitter-image"],
   },
@@ -146,7 +145,7 @@ const organizationSchema = {
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
   description:
-    "AlphaClone Systems consolidates CRM, client management, automated billing, project tracking, contract lifecycle, and social media distribution into one AI-assisted workspace. Starting at $15/month, it reduces administrative overhead for service businesses by unifying fragmented software ecosystems into a single operational backbone.",
+    "AlphaClone Systems consolidates CRM, client management, automated billing, project tracking, contract lifecycle, and social media distribution into one AI-assisted workspace. Free plan available; paid plans from $45/month.",
   featureList: [
     "Unified Client Journey Records",
     "AI-Driven Lead Tracking and CRM Workflows",
@@ -160,22 +159,12 @@ const organizationSchema = {
     "MCP-Compatible AI Agent Tool Integration",
   ],
   offers: {
-    "@type": "Offer",
-    price: "15.00",
+    "@type": "AggregateOffer",
+    lowPrice: "0.00",
+    highPrice: "80.00",
     priceCurrency: "USD",
-    priceValidUntil: "2027-01-01",
-    priceSpecification: {
-      "@type": "PriceSpecification",
-      price: "15.00",
-      priceCurrency: "USD",
-      valueAddedTaxIncluded: false,
-      billingIncrement: 1,
-      unitCode: "MON",
-    },
-    name: "Starter Plan",
-    description: "Full access to CRM, invoicing, project management, contracts, and social media tools. 14-day free trial available.",
-    url: `${SITE_URL}/pricing`,
-    availability: "https://schema.org/InStock",
+    offerCount: PUBLIC_PRICING_PLANS.length,
+    offers: buildPublicPlanOffers(SITE_URL),
   },
   publisher: {
     "@type": "Organization",
