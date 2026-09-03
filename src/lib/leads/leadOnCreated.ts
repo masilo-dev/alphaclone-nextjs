@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { isMissingColumnError } from '@/lib/mcp/schemaCompat';
 
 /**
  * Post-create pipeline: enrich, log first touchpoint, schedule 2-day follow-up.
@@ -37,8 +38,12 @@ export async function onLeadCreated(options: {
       if (enrichmentNote) patch.notes = enrichmentNote;
 
       if (Object.keys(patch).length > 1) {
-        await admin.from('leads').update(patch).eq('id', options.leadId);
-        enriched = true;
+        let updateResult = await admin.from('leads').update(patch).eq('id', options.leadId);
+        if (updateResult.error && isMissingColumnError(updateResult.error)) {
+          const { updated_at: _removed, ...withoutTimestamp } = patch;
+          updateResult = await admin.from('leads').update(withoutTimestamp).eq('id', options.leadId);
+        }
+        if (!updateResult.error) enriched = true;
       }
     }
 

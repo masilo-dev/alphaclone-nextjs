@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { ZohoMailService } from '@/services/zoho/ZohoMailService';
-import { microsoftServerService } from '@/services/server/microsoftServerService';
 
 const testProviderSchema = z.object({
   tenantId: z.string().uuid(),
@@ -35,27 +33,50 @@ export async function POST(request: NextRequest) {
     const subject = parsed.data.subject || 'AlphaClone test email';
     const message =
       parsed.data.message ||
-      'This is a test email to confirm your provider connection is working end-to-end.';
+      'This is a test email to confirm your provider connection and branded layout are working end-to-end.';
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const supabase = createAdminSupabaseClientOrThrow();
 
     if (provider === 'zoho') {
-      const zoho = new ZohoMailService(tenantCtx.user.id, tenantId);
-      await zoho.sendEmail({
-        toAddress: to,
+      const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+      const result = await sendEmailServer({
+        tenantId,
+        userId: tenantCtx.user.id,
+        to,
         subject,
-        content: `<p>${message}</p>`,
+        message,
+        category: 'internal_notification',
+        initiationSource: 'email.providers.test.zoho',
+        preferredProvider: 'zoho',
       });
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error || 'Zoho test send failed', code: result.code || 'PROVIDER_SEND_FAILED' },
+          { status: 502 },
+        );
+      }
       return NextResponse.json({ success: true, provider, message: `Test email sent to ${to}` });
     }
 
     if (provider === 'microsoft') {
-      await microsoftServerService.sendEmail(tenantCtx.user.id, {
-        to: [to],
+      const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+      const result = await sendEmailServer({
+        tenantId,
+        userId: tenantCtx.user.id,
+        to,
         subject,
-        html: `<p>${message}</p>`,
+        message,
+        category: 'internal_notification',
+        initiationSource: 'email.providers.test.microsoft',
+        preferredProvider: 'outlook',
       });
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error || 'Microsoft test send failed', code: result.code || 'PROVIDER_SEND_FAILED' },
+          { status: 502 },
+        );
+      }
       return NextResponse.json({ success: true, provider, message: `Test email sent to ${to}` });
     }
 
@@ -96,6 +117,15 @@ export async function POST(request: NextRequest) {
     }
 
     let response: Response;
+    const { renderEmail } = await import('@/lib/email/renderEmail');
+    const branded = renderEmail({
+      type: 'internal_test',
+      subject,
+      heading: subject,
+      content: message,
+      footerType: 'minimal',
+    });
+
     if (provider === 'sendgrid') {
       response = await fetch('https://api.sendgrid.com/v3/mail/send', {
         method: 'POST',
@@ -107,7 +137,10 @@ export async function POST(request: NextRequest) {
           personalizations: [{ to: [{ email: to }] }],
           from: { email: fromEmail, name: fromName },
           subject,
-          content: [{ type: 'text/html', value: `<p>${message}</p>` }],
+          content: [
+            { type: 'text/plain', value: branded.text },
+            { type: 'text/html', value: branded.html },
+          ],
         }),
       });
     } else if (provider === 'resend') {
@@ -121,7 +154,8 @@ export async function POST(request: NextRequest) {
           from: `${fromName} <${fromEmail}>`,
           to,
           subject,
-          html: `<p>${message}</p>`,
+          html: branded.html,
+          text: branded.text,
         }),
       });
     } else {
@@ -135,7 +169,8 @@ export async function POST(request: NextRequest) {
           sender: { email: fromEmail, name: fromName },
           to: [{ email: to }],
           subject,
-          htmlContent: `<p>${message}</p>`,
+          htmlContent: branded.html,
+          textContent: branded.text,
         }),
       });
     }

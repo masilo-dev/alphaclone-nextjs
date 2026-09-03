@@ -55,6 +55,9 @@ export const MONEY_HUB_ROUTES = new Set([
 ]);
 
 export const MARKETING_HUB_ROUTES = new Set([
+  '/dashboard/marketing',
+  '/dashboard/marketing/outreach',
+  '/dashboard/marketing/delivery',
   '/dashboard/business/campaigns',
   '/dashboard/business/campaigns/zoho',
   '/dashboard/marketing/campaigns',

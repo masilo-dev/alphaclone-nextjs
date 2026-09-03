@@ -259,6 +259,20 @@ export function validateProductionEnv(env = process.env) {
     errors.push("STRIPE_WEBHOOK_SECRET is required when Stripe is configured");
   }
 
+  const emailLogoUrl =
+    env.EMAIL_LOGO_URL?.trim() ||
+    env.NEXT_PUBLIC_EMAIL_LOGO_URL?.trim() ||
+    (appUrl ? `${appUrl.replace(/\/$/, "")}/email-assets/alphaclone-email-logo.png` : "");
+  if (!emailLogoUrl) {
+    errors.push("EMAIL_LOGO_URL is missing (or derive from PUBLIC_APP_ORIGIN + /email-assets/alphaclone-email-logo.png)");
+  } else if (!checkUrl(emailLogoUrl, { https: true, publicProduction: true })) {
+    errors.push("EMAIL_LOGO_URL must be an absolute HTTPS URL on the production domain");
+  } else if (/placeholder|via\.placeholder|logo-email\.png|alphaclone\.tech/i.test(emailLogoUrl)) {
+    errors.push("EMAIL_LOGO_URL must not use placeholder, legacy, or temporary domains");
+  } else {
+    configured["email logo URL"] = env.EMAIL_LOGO_URL?.trim() ? "EMAIL_LOGO_URL" : "derived";
+  }
+
   const oauthProviders = [
     ['Microsoft OAuth', ['AZURE_CLIENT_ID', 'NEXT_PUBLIC_AZURE_CLIENT_ID', 'VITE_AZURE_CLIENT_ID'], ['AZURE_CLIENT_SECRET']],
     ['Zoho OAuth', ['ZOHO_CLIENT_ID', 'NEXT_PUBLIC_ZOHO_CLIENT_ID'], ['ZOHO_CLIENT_SECRET', 'ZOHO_ENCRYPTION_SECRET']],

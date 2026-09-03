@@ -5,6 +5,7 @@ import { buildPaginationMeta, normalizePagination } from '@/lib/mcp/connector/pa
 import { okResult, throwConnectorError } from '@/lib/mcp/connector/response';
 import { getUnifiedContacts } from '@/lib/crm/unifiedContacts';
 import { onLeadCreated } from '@/lib/leads/leadOnCreated';
+import { insertLeadWithSchemaCompat } from '@/lib/leads/insertLeadCompat';
 import { normalizePhoneForStorage } from '@/lib/phone/leadPhone';
 
 defineConnectorTool({
@@ -165,8 +166,8 @@ defineConnectorTool({
 
     const supabase = createSupabaseAdminClient();
     const phone = normalizePhoneForStorage(args.phone);
-    const now = new Date().toISOString();
-    const fullPayload: Record<string, unknown> = {
+
+    const { data, error } = await insertLeadWithSchemaCompat(supabase, {
       tenant_id: args.tenant_id,
       owner_id: ctx.userId,
       business_name: primaryName,
@@ -178,33 +179,12 @@ defineConnectorTool({
       source: args.source || 'mcp_connector',
       notes: args.notes || null,
       linkedin_url: args.linkedin_url || null,
-      status: 'new',
-      stage: 'new',
-      created_at: now,
-      updated_at: now,
-    };
-
-    let { data, error } = await supabase.from('leads').insert(fullPayload).select().single();
-    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
-      const minimal = {
-        tenant_id: args.tenant_id,
-        owner_id: ctx.userId,
-        business_name: primaryName,
-        email: args.email || null,
-        phone: phone || null,
-        industry: args.industry || null,
-        location: args.location || null,
-        source: args.source || 'mcp_connector',
-        notes: args.notes || null,
-        stage: 'new',
-        created_at: now,
-      };
-      ({ data, error } = await supabase.from('leads').insert(minimal).select().single());
-    }
+    });
 
     if (error) throwConnectorError('CREATE_FAILED', error.message);
+    if (!data?.id) throwConnectorError('CREATE_FAILED', 'Lead insert returned no id');
     try {
-      await onLeadCreated({ tenantId: args.tenant_id, leadId: data.id, userId: ctx.userId });
+      await onLeadCreated({ tenantId: args.tenant_id, leadId: String(data.id), userId: ctx.userId });
     } catch (hookErr) {
       console.warn('[create_lead] onLeadCreated:', hookErr);
     }
@@ -294,28 +274,34 @@ defineConnectorTool({
       }
 
       const phone = normalizePhoneForStorage(item.phone);
-      const payload: Record<string, unknown> = {
-        tenant_id: args.tenant_id,
-        owner_id: ctx.userId,
-        business_name: primaryName,
-        contact_name: item.contact_name || null,
-        email: email || null,
-        phone: phone || null,
-        industry: item.industry || null,
-        location: item.location || null,
-        source: item.source || 'mcp_bulk',
-        notes: item.notes || null,
-        linkedin_url: item.linkedin_url || null,
-        status: 'new',
-        stage: 'new',
-        created_at: now,
-        updated_at: now,
-      };
 
-      const { data, error } = await supabase.from('leads').insert(payload).select('id, email, business_name').single();
+      const { data, error } = await insertLeadWithSchemaCompat<{ id: string; email: string | null; business_name: string }>(
+        supabase,
+        {
+          tenant_id: args.tenant_id,
+          owner_id: ctx.userId,
+          business_name: primaryName,
+          contact_name: item.contact_name || null,
+          email: email || null,
+          phone: phone || null,
+          industry: item.industry || null,
+          location: item.location || null,
+          source: item.source || 'mcp_bulk',
+          notes: item.notes || null,
+          linkedin_url: item.linkedin_url || null,
+          created_at: now,
+        },
+        'id, email, business_name',
+      );
       if (error) {
         failed += 1;
         results.push({ status: 'failed', reason: error.message, email });
+        if (!continueOnError) break;
+        continue;
+      }
+      if (!data?.id) {
+        failed += 1;
+        results.push({ status: 'failed', reason: 'Lead insert returned no id', email });
         if (!continueOnError) break;
         continue;
       }
@@ -323,7 +309,7 @@ defineConnectorTool({
       successful += 1;
       results.push({ status: 'created', id: data.id, email: data.email, business_name: data.business_name });
       try {
-        await onLeadCreated({ tenantId: args.tenant_id, leadId: data.id, userId: ctx.userId });
+        await onLeadCreated({ tenantId: args.tenant_id, leadId: String(data.id), userId: ctx.userId });
       } catch {
         /* non-blocking */
       }

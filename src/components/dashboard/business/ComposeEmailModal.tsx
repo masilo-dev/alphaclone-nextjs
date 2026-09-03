@@ -12,7 +12,7 @@ import { integrationsService, IntegrationConfig } from '../../../services/integr
 import { useTenant } from '../../../contexts/TenantContext';
 import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
 import { isValidEmail } from '@/lib/email/isValidEmail';
-import EmailProviderSelector from '@/components/shared/EmailProviderSelector';
+import DeliveryProviderIndicator from '@/components/shared/DeliveryProviderIndicator';
 import {
   normalizeDeliveryProvider,
   resolveAutoProvider,
@@ -740,11 +740,10 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                             <div className="grid grid-cols-1 gap-3">
                                 {providerOptions.some((p) => p.connected) && (
-                                    <EmailProviderSelector
+                                    <DeliveryProviderIndicator
                                         value={deliveryProvider}
                                         onChange={setDeliveryProvider}
                                         providers={providerOptions}
-                                        compact
                                     />
                                 )}
 

@@ -108,7 +108,7 @@ describe('email content builder', () => {
       compliance,
       unsubscribeUrl: 'https://alphaclonesystems.com/api/unsubscribe?token=test',
     });
-    assert.match(rendered.html, /Privacy policy/);
+    assert.match(rendered.html, /Privacy Policy/);
     assert.match(rendered.html, /Unsubscribe/);
     assert.doesNotMatch(rendered.html, /Unsubscribe: https:\/\//);
     assert.match(rendered.text, /Your invoice is ready/);

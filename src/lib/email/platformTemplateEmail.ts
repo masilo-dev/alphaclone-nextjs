@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { renderEmail } from '@/lib/email/renderEmail';
 import { sendWithProviderSdk } from '@/lib/email/providerSdk';
-import { ensureFooter } from '@/lib/email/emailComposition';
+import { isFullEmailDocument } from '@/lib/email/emailComposition';
 
 export const USER_INITIATED_PLATFORM_TEMPLATES = new Set(['Welcome Email']);
 
@@ -96,24 +97,55 @@ async function resolveMailCredentials(
     return { apiKey, fromEmail, provider };
 }
 
+function templateNameToType(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes('welcome')) return 'welcome' as const;
+  if (lower.includes('daily') || lower.includes('brief') || lower.includes('summary') || lower.includes('digest')) {
+    return 'digest' as const;
+  }
+  if (lower.includes('motivation') || lower.includes('stay in touch')) return 'marketing_campaign' as const;
+  return 'system_notification' as const;
+}
+
+function wrapPlatformTemplate(
+  subject: string,
+  html: string,
+  text: string,
+  templateName: string,
+): { html: string; text: string } {
+  if (isFullEmailDocument(html)) {
+    return { html, text };
+  }
+  const bodyHtml = html.trim() || `<p>${text.replace(/\n/g, '<br>')}</p>`;
+  return renderEmail({
+    type: templateNameToType(templateName),
+    subject,
+    heading: subject,
+    content: bodyHtml,
+    contentIsHtml: true,
+    footerType: templateNameToType(templateName) === 'marketing_campaign' ? 'marketing' : 'transactional',
+  });
+}
 async function deliver(
-    provider: 'brevo' | 'sendgrid' | 'resend',
-    apiKey: string,
-    fromEmail: string,
-    to: string,
-    subject: string,
-    html: string,
-    text: string
+  provider: 'brevo' | 'sendgrid' | 'resend',
+  apiKey: string,
+  fromEmail: string,
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+  templateName: string,
 ): Promise<{ ok: boolean; emailId?: string; error?: string }> {
-    const result = await sendWithProviderSdk(provider, {
-        apiKey,
-        fromEmail,
-        fromName: 'AlphaClone Systems',
-        to,
-        subject,
-        html: ensureFooter(html),
-        text: text ? ensureFooter(text) : text,
-    });
+  const wrapped = wrapPlatformTemplate(subject, html, text, templateName);
+  const result = await sendWithProviderSdk(provider, {
+    apiKey,
+    fromEmail,
+    fromName: 'AlphaClone Systems',
+    to,
+    subject,
+    html: wrapped.html,
+    text: wrapped.text,
+  });
 
     return { ok: result.ok, emailId: result.emailId, error: result.error };
 }
@@ -206,7 +238,7 @@ export async function sendPlatformTemplateEmail(
         return { success: false, error: 'Email service not configured' };
     }
 
-    const sent = await deliver(provider, apiKey, fromEmail, to, subject, html, text);
+    const sent = await deliver(provider, apiKey, fromEmail, to, subject, html, text, templateName);
     if (!sent.ok) {
         console.error('[platformTemplateEmail] deliver failed:', sent.error);
         return { success: false, error: 'Delivery failed' };

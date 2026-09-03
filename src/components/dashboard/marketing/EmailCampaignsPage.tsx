@@ -186,7 +186,7 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
   const progress = Math.min(100, Math.round((completed.size / WIZARD_STEPS.length) * 100));
 
   return (
-    <ModuleOverviewChrome moduleId="outreach" activeHref="/dashboard/business/campaigns">
+    <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/business/campaigns">
       <div className="rounded-2xl border border-white/10 bg-[#0c1015]/60 overflow-hidden shadow-[0_8px_40px_-24px_rgba(0,0,0,0.5)]">
         {/* Hero / zero-tech header */}
         <header className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/10">

@@ -20,7 +20,8 @@ export function isMissingColumnError(
     error.code === '42703' ||
     error.code === 'PGRST204' ||
     /column.*does not exist/i.test(error.message || '') ||
-    /could not find the .* column/i.test(error.message || '')
+    /could not find the .* column/i.test(error.message || '') ||
+    /schema cache/i.test(error.message || '')
   );
 }
 

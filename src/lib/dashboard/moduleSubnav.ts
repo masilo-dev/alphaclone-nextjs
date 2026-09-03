@@ -80,11 +80,13 @@ export const MODULE_SUBNAV: Record<ModuleId, SubNavItem[]> = {
     { id: 'contracts', label: 'Contracts', href: '/dashboard/business/contracts' },
   ],
   marketing: [
-    { id: 'overview', label: 'Overview', href: '/dashboard/business/campaigns' },
-    { id: 'email', label: 'Email campaigns', href: '/dashboard/email-campaigns' },
-    { id: 'audiences', label: 'Sequences', href: '/dashboard/marketing/sequences' },
-    { id: 'forms', label: 'Landing forms', href: '/dashboard/business/forms' },
-    { id: 'performance', label: 'Performance', href: '/dashboard/marketing/deliverability' },
+    { id: 'overview', label: 'Overview', href: '/dashboard/marketing' },
+    { id: 'campaigns', label: 'Campaigns', href: '/dashboard/business/campaigns' },
+    { id: 'outreach', label: 'Outreach', href: '/dashboard/marketing/outreach' },
+    { id: 'social', label: 'Social', href: '/dashboard/business/social-command' },
+    { id: 'audience', label: 'Audience', href: '/dashboard/crm/unified-contacts' },
+    { id: 'results', label: 'Results', href: '/dashboard/marketing/deliverability' },
+    { id: 'delivery', label: 'Delivery', href: '/dashboard/marketing/delivery' },
   ],
   social: [
     { id: 'overview', label: 'Overview', href: '/dashboard/business/social' },

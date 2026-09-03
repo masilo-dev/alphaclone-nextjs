@@ -96,6 +96,9 @@ const PagesTab = React.lazy(() => import('@/components/pages/PagesTab'));
 const ContactSubmissionsTab = React.lazy(() => import('../ContactSubmissionsTab'));
 const FormsHub = React.lazy(() => import('./FormsHub'));
 const EmailCampaignsPage = React.lazy(() => import('../marketing/EmailCampaignsPage'));
+const MarketingOverview = React.lazy(() => import('../marketing/MarketingOverview'));
+const MarketingOutreachPage = React.lazy(() => import('../marketing/MarketingOutreachPage'));
+const MarketingDeliveryPage = React.lazy(() => import('../marketing/MarketingDeliveryPage'));
 const FacebookIntegrationTab = React.lazy(() => import('../facebook/FacebookIntegrationTab'));
 const ExpenseTrackerTab = React.lazy(() => import('./ExpenseTrackerTab'));
 const WorkflowDashboard = React.lazy(() => import('../engine/WorkflowDashboard'));
@@ -162,6 +165,7 @@ import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
 import { DashboardRouteTransition } from '../DashboardRouteTransition';
 import { DashboardScrollRegion, dispatchPullRefresh } from '@/components/common/DashboardScrollRegion';
+import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
 
 /** Full-bleed tabs: no outer padding; child manages its own scroll (mail, projects, etc.). Social pages scroll with the main column like CRM. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
@@ -714,6 +718,24 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <PeriodClosePage />
                     </React.Suspense>
                 );
+            case '/dashboard/marketing':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <MarketingOverview />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing/outreach':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
+                        <MarketingOutreachPage />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing/delivery':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <MarketingDeliveryPage />
+                    </React.Suspense>
+                );
             case '/dashboard/marketing/sequences':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
@@ -723,7 +745,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/marketing/deliverability':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <div className="p-4"><DeliverabilityPanel /></div>
+                        <div className="p-4">
+                          <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/marketing/deliverability">
+                            <DeliverabilityPanel />
+                          </ModuleOverviewChrome>
+                        </div>
                     </React.Suspense>
                 );
             case '/dashboard/tasks':
@@ -1021,6 +1047,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/accounting/banking': return t('Banking');
             case '/dashboard/accounting/bills': return t('Bills Payable');
             case '/dashboard/accounting/period-close': return t('Period Close');
+            case '/dashboard/marketing': return t('Marketing');
+            case '/dashboard/marketing/outreach': return t('Outreach');
+            case '/dashboard/marketing/delivery': return t('Delivery');
             case '/dashboard/marketing/sequences': return t('Sequences');
             case '/dashboard/marketing/deliverability': return t('Deliverability');
             case '/dashboard/projects':

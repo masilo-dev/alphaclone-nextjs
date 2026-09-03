@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { extractTenantBranding } from '@/lib/tenantBranding';
 import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
+import { resolveEmailLogoUrl } from '@/lib/email/emailConfig';
 import { SITE_URL, absoluteUrl } from '@/lib/siteUrl';
 import type { BrandIdentity } from '@/lib/compliance/communicationCompliance';
 
@@ -34,7 +35,7 @@ export function buildPlatformEmailBranding(tenantName?: string): TenantEmailBran
     brand: {
       legalCompanyName: COMPANY_LEGAL.legalName,
       tradingName: 'Alphaclone Systems',
-      logoUrl: process.env.NEXT_PUBLIC_EMAIL_LOGO_URL || absoluteUrl('/logo-email.png'),
+      logoUrl: resolveEmailLogoUrl(),
       logoAlt: 'Alphaclone Systems',
       primaryColor: '#0f766e',
       textColor: '#1e293b',
@@ -87,7 +88,7 @@ export async function loadTenantEmailBrandingProfile(
     'Your Business';
 
   const tradingName = readString(extracted.name) || legalName;
-  const logoUrl = readString(brandingSettings.logoUrl) || readString(tenant.logo_url);
+  const logoUrl = resolveEmailLogoUrl();
   const website = readString(brandingSettings.website) || readString(tenant.website_url) || readString(emailSettings.website);
   const supportEmail = readString(emailSettings.supportEmail) || readString(extracted.supportEmail);
   const replyTo = readString(emailSettings.replyTo) || readString(emailSettings.reply_to) || supportEmail;

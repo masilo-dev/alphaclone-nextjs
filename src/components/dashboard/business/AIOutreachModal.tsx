@@ -23,6 +23,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { integrationsService, IntegrationConfig } from '../../../services/integrationsService';
+import { mapWithConcurrency } from '@/lib/concurrency/mapWithConcurrency';
 
 interface AIOutreachModalProps {
     isOpen: boolean;
@@ -55,6 +56,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
     const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>('');
     const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'microsoft'>('microsoft');
+    const [sendProgress, setSendProgress] = useState<{ completed: number; total: number } | null>(null);
+
+    const OUTREACH_SEND_CONCURRENCY = 5;
 
     useEffect(() => {
         if (isOpen) {
@@ -204,14 +208,14 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             }
 
             const drafts = Array.isArray(generationData.emails) ? generationData.emails : [];
-            
-            // Execute all sends in parallel for "all at once" experience
-            const sendPromises = drafts.map(async (draft: any) => {
+            setSendProgress({ completed: 0, total: drafts.length });
+
+            const sendOne = async (draft: Record<string, unknown>) => {
                 const recipient = String(draft.recipientEmail || '').trim();
                 if (!recipient || !recipient.includes('@')) {
                     return {
                         name: String(draft.business_name || 'Unknown Lead'),
-                        status: 'error',
+                        status: 'error' as const,
                         error: 'No recipient email available',
                     };
                 }
@@ -244,25 +248,32 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                     if (!sendResponse.ok || !sendData.success) {
                         return {
                             name: String(draft.business_name || 'Unknown Lead'),
-                            status: 'error',
+                            status: 'error' as const,
                             error: String(sendData.error || 'Outreach failed'),
                         };
-                    } else {
-                        return {
-                            name: String(draft.business_name || 'Unknown Lead'),
-                            status: 'success',
-                        };
                     }
-                } catch (err: any) {
                     return {
                         name: String(draft.business_name || 'Unknown Lead'),
-                        status: 'error',
-                        error: err.message,
+                        status: 'success' as const,
+                    };
+                } catch (err: unknown) {
+                    return {
+                        name: String(draft.business_name || 'Unknown Lead'),
+                        status: 'error' as const,
+                        error: err instanceof Error ? err.message : 'Send failed',
                     };
                 }
+            };
+
+            let completed = 0;
+            const sendResults = await mapWithConcurrency(drafts, OUTREACH_SEND_CONCURRENCY, async (draft) => {
+                const result = await sendOne(draft as Record<string, unknown>);
+                completed += 1;
+                setSendProgress({ completed, total: drafts.length });
+                return result;
             });
 
-            const sendResults = await Promise.all(sendPromises);
+            setSendProgress(null);
             setResults(sendResults);
             toast.success(`Successfully processed ${sendResults.filter((r) => r.status === 'success').length} emails`);
         } catch (err: any) {
@@ -301,8 +312,8 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                             <Sparkles className="w-7 h-7 text-teal-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white uppercase tracking-tighter">AI Bulk Outreach</h2>
-                            <p className="text-xs text-slate-500 font-medium tracking-wide">MULTI-PROVIDER PERSONALIZATION</p>
+                            <h2 className="text-xl font-black text-white uppercase tracking-tighter">Bulk Outreach</h2>
+                            <p className="text-xs text-slate-500 font-medium tracking-wide">PERSONALIZED OUTREACH</p>
                         </div>
                     </div>
                     <button
@@ -532,9 +543,15 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         className="w-full h-16 rounded-[2rem] bg-teal-600 hover:bg-teal-500 text-white font-black text-lg shadow-xl shadow-teal-500/10 disabled:opacity-50 transition-all relative overflow-hidden group border-0"
                                     >
                                         {sending ? (
-                                            <div className="flex items-center gap-3">
-                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                                <span className="text-base">Processing Campaign...</span>
+                                            <div className="flex flex-col items-center gap-1">
+                                                <div className="flex items-center gap-3">
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                    <span className="text-base">
+                                                        {sendProgress
+                                                            ? `Sending ${sendProgress.completed} / ${sendProgress.total}`
+                                                            : 'Preparing...'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="flex items-center justify-center gap-3">
