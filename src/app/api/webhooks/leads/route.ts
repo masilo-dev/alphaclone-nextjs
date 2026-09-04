@@ -86,7 +86,13 @@ export async function POST(req: NextRequest) {
     ? parsed.data.leads
     : [leadSchema.parse(parsed.data)];
   const supabase = createSupabaseAdminClient();
-  const results: Array<{ id?: string; action: 'created' | 'updated' | 'skipped'; error?: string }> = [];
+  const results: Array<{
+    id?: string;
+    action: 'created' | 'updated' | 'skipped';
+    error?: string;
+    matched_existing?: boolean;
+    match_reason?: string | null;
+  }> = [];
 
   for (const rawLead of incoming) {
     const lead = normalizeLead(rawLead);
