@@ -260,7 +260,7 @@ defineConnectorTool({
   module: 'chase-ops',
   name: 'update_chase_policy',
   description: 'Read or update tenant chase policy (persists to agent_chasing_policies).',
-  permission: 'settings:write',
+  permission: 'automation:write',
   rateLimitClass: 'write',
   auditAction: 'update_chase_policy',
   inputSchema: z.object({
