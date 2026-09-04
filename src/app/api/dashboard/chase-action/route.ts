@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId, chaseId, and action are required' }, { status: 400 });
     }
 
-    const user = await requireTenantAccess(tenantId, req);
+    const { user } = await requireTenantAccess(tenantId, req);
+    const actorId = userId || user.id;
 
     if (action === 'snooze') {
       const hours = Number(body.hours || 24);
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
       const result = await transitionChaseState(tenantId, chaseId, {
         state: 'SNOOZED',
         snoozedUntil: until,
-        evidence: { snoozed_by: user.id, until, via: 'dashboard' },
+        evidence: { snoozed_by: actorId, until, via: 'dashboard' },
       });
       if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
       return NextResponse.json({ ok: true, action, snoozed_until: until });
@@ -37,14 +38,14 @@ export async function POST(req: NextRequest) {
       const result = await transitionChaseState(tenantId, chaseId, {
         state: 'CANCELLED',
         terminalOutcome: 'stopped_by_owner',
-        evidence: { stopped_by: user.id, via: 'dashboard' },
+        evidence: { stopped_by: actorId, via: 'dashboard' },
       });
       if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
       return NextResponse.json({ ok: true, action });
     }
 
     if (action === 'approve') {
-      const result = await approveAndExecuteChase(tenantId, chaseId, userId || user.id);
+      const result = await approveAndExecuteChase(tenantId, chaseId, actorId);
       if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
       return NextResponse.json({ ok: true, action, outcome: result.outcome });
     }
