@@ -357,12 +357,53 @@ type BulkEmailArgs = {
 
 type Recipient = { entity_type: 'lead' | 'contact' | 'client'; entity_id: string; name: string; email: string };
 
+const RECIPIENT_TABLE_CONFIG: Record<
+  Recipient['entity_type'],
+  { table: string; select: string }
+> = {
+  lead: {
+    table: 'leads',
+    select: 'id, email, contact_name, business_name, name, decision_maker_name',
+  },
+  contact: {
+    table: 'contacts',
+    select: 'id, email, full_name, first_name, last_name',
+  },
+  client: {
+    table: 'business_clients',
+    select: 'id, email, name',
+  },
+};
+
+function recipientDisplayName(row: Record<string, unknown>, entityType: Recipient['entity_type']): string {
+  switch (entityType) {
+    case 'lead':
+      return String(
+        row.contact_name || row.decision_maker_name || row.name || row.business_name || '',
+      ).trim();
+    case 'contact': {
+      const fullName = String(row.full_name || '').trim();
+      if (fullName) return fullName;
+      return [row.first_name, row.last_name]
+        .map((part) => String(part || '').trim())
+        .filter(Boolean)
+        .join(' ');
+    }
+    case 'client':
+      return String(row.name || '').trim();
+    default: {
+      const _exhaustive: never = entityType;
+      return _exhaustive;
+    }
+  }
+}
+
 async function loadRecipients(args: BulkEmailArgs, tenantId: string): Promise<{ recipients: Recipient[]; skipped: Array<Record<string, string>> }> {
   const supabase = createSupabaseAdminClient();
-  const allGroups: Array<{ type: Recipient['entity_type']; table: string; ids: string[] }> = [
-    { type: 'lead', table: 'leads', ids: optionalUniqueIds(args.lead_ids, 'lead_ids', MAX_EMAIL_RECIPIENTS_PER_BATCH) },
-    { type: 'contact', table: 'contacts', ids: optionalUniqueIds(args.contact_ids, 'contact_ids', MAX_EMAIL_RECIPIENTS_PER_BATCH) },
-    { type: 'client', table: 'business_clients', ids: optionalUniqueIds(args.client_ids, 'client_ids', MAX_EMAIL_RECIPIENTS_PER_BATCH) },
+  const allGroups: Array<{ type: Recipient['entity_type']; ids: string[] }> = [
+    { type: 'lead', ids: optionalUniqueIds(args.lead_ids, 'lead_ids', MAX_EMAIL_RECIPIENTS_PER_BATCH) },
+    { type: 'contact', ids: optionalUniqueIds(args.contact_ids, 'contact_ids', MAX_EMAIL_RECIPIENTS_PER_BATCH) },
+    { type: 'client', ids: optionalUniqueIds(args.client_ids, 'client_ids', MAX_EMAIL_RECIPIENTS_PER_BATCH) },
   ];
   const groups = allGroups.filter((group) => group.ids.length > 0);
 
@@ -375,9 +416,10 @@ async function loadRecipients(args: BulkEmailArgs, tenantId: string): Promise<{ 
   const recipients: Recipient[] = [];
   const skipped: Array<Record<string, string>> = [];
   for (const group of groups) {
+    const config = RECIPIENT_TABLE_CONFIG[group.type];
     const { data, error } = await supabase
-      .from(group.table)
-      .select('id, email, full_name, contact_name, business_name, name')
+      .from(config.table)
+      .select(config.select)
       .eq('tenant_id', tenantId)
       .in('id', group.ids);
     if (error) throw new Error(`Unable to load ${group.type} recipients: ${error.message}`);
@@ -393,7 +435,7 @@ async function loadRecipients(args: BulkEmailArgs, tenantId: string): Promise<{ 
         skipped.push({ entity_type: group.type, entity_id: id, reason: 'missing_or_invalid_email' });
         continue;
       }
-      const name = String(row.full_name || row.contact_name || row.business_name || row.name || email);
+      const name = recipientDisplayName(row, group.type) || email;
       recipients.push({ entity_type: group.type, entity_id: id, name, email });
     }
   }

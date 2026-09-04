@@ -25,6 +25,13 @@ describe('safe bulk MCP operations contract', () => {
     assert.match(source, /idempotency_key is required when dry_run is false/);
   });
 
+  it('loads bulk email recipients with table-specific lead/contact/client columns', () => {
+    const source = readFileSync(helperPath, 'utf8');
+    assert.match(source, /RECIPIENT_TABLE_CONFIG/);
+    assert.match(source, /contact_name, business_name, name, decision_maker_name/);
+    assert.doesNotMatch(source, /full_name, contact_name, business_name, name/);
+  });
+
   it('validates bulk id lists with shared isUuid helper', () => {
     const source = readFileSync(helperPath, 'utf8');
     assert.doesNotMatch(source, /\[0-9a-f-\]\{35\}/);
