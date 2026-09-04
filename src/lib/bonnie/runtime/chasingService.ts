@@ -22,6 +22,16 @@ export const DEFAULT_INVOICE_CHASE_POLICY: ChasingPolicy = chasingPolicySchema.p
   stopOn: ['PAID', 'DISPUTED', 'CANCELLED', 'OPTED_OUT'],
 });
 
+function mergeChaseMetadata(
+  existing: Record<string, unknown> | null | undefined,
+  chasing: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...(existing && typeof existing === 'object' ? existing : {}),
+    chasing,
+  };
+}
+
 export async function startChaseForTask(params: {
   tenantId: string;
   runId: string;
@@ -36,26 +46,49 @@ export async function startChaseForTask(params: {
   });
 
   const admin = createSupabaseAdminClient();
+  const { data: existingTask } = await admin
+    .from('agent_tasks')
+    .select('metadata')
+    .eq('id', params.taskId)
+    .eq('tenant_id', params.tenantId)
+    .maybeSingle();
+
+  const existingMetadata = (existingTask?.metadata as Record<string, unknown>) || {};
+  const chasingState = {
+    policy,
+    attempt: 1,
+    startedAt: new Date().toISOString(),
+  };
+
   await admin
     .from('agent_tasks')
     .update({
-      metadata: {
-        chasing: {
-          policy,
-          attempt: 1,
-          startedAt: new Date().toISOString(),
-        },
-      },
+      metadata: mergeChaseMetadata(existingMetadata, chasingState),
       updated_at: new Date().toISOString(),
     })
     .eq('id', params.taskId)
     .eq('tenant_id', params.tenantId);
 
-  // Wait for payment / reply events
   const eventTypes =
     policy.targetType === 'unpaid_invoice'
-      ? ['invoice_paid', 'email_received', 'payment_failed']
-      : ['email_received'];
+      ? [
+          'invoice_paid',
+          'payment_received',
+          'email_received',
+          'payment_failed',
+          'task_completed',
+          'contract_signed',
+          'quote_accepted',
+          'quote_rejected',
+        ]
+      : [
+          'email_received',
+          'task_completed',
+          'contract_signed',
+          'lead_replied',
+          'quote_accepted',
+          'quote_rejected',
+        ];
 
   for (const eventType of eventTypes) {
     await createEventSubscription({
@@ -67,7 +100,7 @@ export async function startChaseForTask(params: {
       entityId: params.entityId || null,
       matchConditions: { chasing: true, policy: policy.targetType },
       expiresAt: new Date(
-        Date.now() + policy.followUpIntervalHours * policy.maxAttempts * 3600_000
+        Date.now() + policy.followUpIntervalHours * policy.maxAttempts * 3600_000,
       ).toISOString(),
       timeoutBehavior: { action: 'ready', reason: 'chase_follow_up' },
     });
@@ -107,7 +140,9 @@ export async function advanceChaseAfterTimeout(params: {
     .maybeSingle();
 
   if (!task) return { continue: false, escalated: false };
-  const chasing = (task.metadata as any)?.chasing;
+  const chasing = (task.metadata as Record<string, unknown> | null)?.chasing as
+    | Record<string, unknown>
+    | undefined;
   if (!chasing?.policy) return { continue: false, escalated: false };
 
   const policy = chasingPolicySchema.parse(chasing.policy);
@@ -123,32 +158,45 @@ export async function advanceChaseAfterTimeout(params: {
       expectedVersion: task.version,
       patch: {
         structured_output: { terminalOutcome: 'ESCALATED', attempts: attempt - 1 },
-        metadata: { ...((task.metadata as object) || {}), chasing: { ...chasing, attempt, terminal: 'ESCALATED' } },
+        metadata: mergeChaseMetadata(task.metadata as Record<string, unknown>, {
+          ...chasing,
+          attempt,
+          terminal: 'ESCALATED',
+        }),
       },
     });
     return { continue: false, escalated: true };
   }
 
   const escalated = attempt >= policy.escalationAfterAttempts;
-  await admin
-    .from('agent_tasks')
-    .update({
-      metadata: {
-        ...(task.metadata || {}),
-        chasing: { ...chasing, attempt, escalated },
-      },
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', task.id);
+  const nextMetadata = mergeChaseMetadata(task.metadata as Record<string, unknown>, {
+    ...chasing,
+    attempt,
+    escalated,
+  });
 
-  await transitionTask({
+  const transition = await transitionTask({
     tenantId: params.tenantId,
     taskId: task.id,
     to: 'READY',
     trigger: 'chase_follow_up',
     reason: escalated ? 'Escalate follow-up' : 'Scheduled chase follow-up',
     expectedVersion: task.version,
+    patch: {
+      metadata: nextMetadata,
+      worker_id: null,
+      lease_token: null,
+      lease_expires_at: null,
+    },
   });
+
+  if (!transition.ok) {
+    console.warn('[advanceChaseAfterTimeout] version conflict — skipping duplicate advance', {
+      taskId: params.taskId,
+      error: transition.error,
+    });
+    return { continue: false, escalated: false };
+  }
 
   await insertOutboxEvent({
     tenantId: params.tenantId,

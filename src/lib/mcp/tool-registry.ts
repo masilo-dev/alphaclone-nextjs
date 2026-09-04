@@ -335,6 +335,7 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/banking-ops'), './tools/banking-ops');
   loadToolModule(() => require('./tools/contracts-ops'), './tools/contracts-ops');
   loadToolModule(() => require('./tools/workflow-ops'), './tools/workflow-ops');
+  loadToolModule(() => require('./tools/chase-ops'), './tools/chase-ops');
   loadToolModule(() => require('./tools/tickets-ops'), './tools/tickets-ops');
   loadToolModule(() => require('./tools/lead-scraping-ops'), './tools/lead-scraping-ops');
   loadToolModule(() => require('./tools/gap-tools-finance'), './tools/gap-tools-finance');

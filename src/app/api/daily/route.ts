@@ -4,6 +4,7 @@ import { paymentService } from '@/services/paymentService';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { runUserDigestEmails } from '@/lib/email/runUserDigestEmails';
 import { runMorningBriefingEmails } from '@/lib/email/runMorningBriefingEmails';
+import { runChaseMorningBriefEmails, runCriticalChaseAlerts } from '@/lib/email/runChaseOwnerEmails';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
 import { scanNoReplyEmails } from '@/lib/email/noReplyEngine';
@@ -79,6 +80,15 @@ export async function GET(req: NextRequest) {
     } catch (morningErr) {
       console.error('Morning briefing emails:', morningErr);
     }
+
+    let chaseBrief: { sent: number; skipped: number; failed: number } | null = null;
+    let chaseCritical: { sent: number; failed: number } | null = null;
+    try {
+      chaseBrief = await runChaseMorningBriefEmails();
+      chaseCritical = await runCriticalChaseAlerts();
+    } catch (chaseEmailErr) {
+      console.error('Chase owner emails:', chaseEmailErr);
+    }
     console.log(`[Cron] Emails took ${Date.now() - emailStart}ms`);
 
     // 5. Intelligence Snapshots
@@ -126,6 +136,8 @@ export async function GET(req: NextRequest) {
       sla: slaResults,
       digest,
       morning,
+      chaseBrief,
+      chaseCritical,
       intelligence,
       accountDeletions,
       dataDeletionRequests,

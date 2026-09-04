@@ -1,19 +1,61 @@
 import 'server-only';
 
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import {
+    resolveBusinessClientIdForParty,
+    resolvePartyEmail,
+} from '@/lib/contracts/contractCoherenceServer';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
+
+const CONVERTIBLE_STATUSES = new Set(['accepted', 'sent', 'viewed', 'draft']);
+
+function toDateOnly(value: string | null | undefined, fallbackDays = 30): string {
+    if (value) {
+        const slice = value.slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(slice)) return slice;
+    }
+    return new Date(Date.now() + fallbackDays * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+function normalizeCurrencyCode(value: string | null | undefined): string {
+    const code = String(value || 'USD')
+        .trim()
+        .toUpperCase()
+        .slice(0, 3);
+    return code.length === 3 ? code : 'USD';
+}
+
+function mapQuoteItemToInvoiceLine(
+    item: Record<string, unknown>,
+    invoiceId: string,
+    tenantId: string,
+    index: number,
+) {
+    const quantity = Number(item.quantity || 1) || 1;
+    const unitPrice = Number(item.unit_price || 0) || 0;
+    const lineTotal = Number(item.line_total || quantity * unitPrice) || quantity * unitPrice;
+    return {
+        invoice_id: invoiceId,
+        tenant_id: tenantId,
+        description: String(item.product_name || item.description || 'Item'),
+        quantity,
+        unit_price: unitPrice,
+        amount: lineTotal,
+        position: index + 1,
+    };
+}
 
 export async function convertQuoteToInvoice(
     quoteId: string,
     tenantId: string,
-    options?: { autoSend?: boolean; origin?: string }
+    options?: { autoSend?: boolean; origin?: string },
 ): Promise<{ invoiceId: string | null; publicToken: string | null; error: string | null }> {
     const admin = createSupabaseAdminClient();
 
     const { data: quote, error: quoteError } = await admin
         .from('quotes')
-        .select('*, tenant:tenants(name, settings)')
+        .select('*')
         .eq('id', quoteId)
         .eq('tenant_id', tenantId)
         .single();
@@ -29,6 +71,13 @@ export async function convertQuoteToInvoice(
             error: null,
         };
     }
+    if (!CONVERTIBLE_STATUSES.has(String(quote.status))) {
+        return {
+            invoiceId: null,
+            publicToken: null,
+            error: `Quote status "${quote.status}" cannot be converted to an invoice`,
+        };
+    }
 
     const { data: items } = await admin
         .from('quote_items')
@@ -37,33 +86,45 @@ export async function convertQuoteToInvoice(
         .order('item_order', { ascending: true });
 
     const metadata = (quote.metadata || {}) as Record<string, unknown>;
+    const partyId = quote.client_id || quote.contact_id || null;
+    const clientId = await resolveBusinessClientIdForParty(admin, tenantId, partyId);
     const clientEmail =
         (quote as { client_email?: string }).client_email ||
-        (metadata.client_email as string | undefined);
+        (metadata.client_email as string | undefined) ||
+        (await resolvePartyEmail(admin, tenantId, partyId));
 
     const publicToken = crypto.randomUUID();
     const invoiceNum = `INV-${Date.now().toString(36).toUpperCase()}`;
     const total = Number(quote.total_amount || 0);
     const subtotal = Number(quote.subtotal || total);
+    const autoSend = options?.autoSend === true;
+    const invoiceStatus = autoSend ? 'sent' : 'draft';
     const origin = options?.origin || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+    const issueDate = toDateOnly(new Date().toISOString().slice(0, 10));
+    const dueDate = toDateOnly(quote.valid_until);
 
     const { data: inv, error: invError } = await admin
         .from('business_invoices')
         .insert({
             tenant_id: tenantId,
+            client_id: clientId,
+            quote_id: quoteId,
             invoice_number: invoiceNum,
             client_name: quote.name,
             client_email: clientEmail || null,
-            issue_date: new Date().toISOString(),
-            due_date: quote.valid_until || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            status: 'sent',
+            issue_date: issueDate,
+            due_date: dueDate,
+            status: invoiceStatus,
             subtotal,
             tax_rate: Number(quote.tax_percent || 0),
             tax: Number(quote.tax_amount || 0),
             discount_amount: Number(quote.discount_amount || 0),
             total,
-            notes: `Generated from accepted quote ${quote.quote_number}`,
+            currency: quote.currency || 'USD',
+            currency_code: normalizeCurrencyCode(quote.currency),
+            notes: `Generated from quote ${quote.quote_number}`,
             is_public: true,
+            ...(autoSend ? { sent_at: new Date().toISOString() } : {}),
             metadata: {
                 converted_from_quote_id: quoteId,
                 public_token: publicToken,
@@ -77,27 +138,33 @@ export async function convertQuoteToInvoice(
     }
 
     if (items && items.length > 0) {
-        await admin.from('invoice_line_items').insert(
-            items.map((item: Record<string, unknown>, idx: number) => ({
-                invoice_id: inv.id,
-                tenant_id: tenantId,
-                description: item.product_name || item.description || 'Item',
-                quantity: Number(item.quantity || 1),
-                unit_price: Number(item.unit_price || 0),
-                amount: Number(item.line_total || 0),
-                sort_order: idx,
-            }))
+        const { error: lineError } = await admin.from('invoice_line_items').insert(
+            items.map((item: Record<string, unknown>, idx: number) =>
+                mapQuoteItemToInvoiceLine(item, inv.id, tenantId, idx),
+            ),
         );
+        if (lineError) {
+            await admin.from('business_invoices').delete().eq('id', inv.id).eq('tenant_id', tenantId);
+            return { invoiceId: null, publicToken: null, error: lineError.message || 'Failed to create invoice line items' };
+        }
     } else if (total > 0) {
-        await admin.from('invoice_line_items').insert({
-            invoice_id: inv.id,
-            tenant_id: tenantId,
-            description: quote.name || 'Quote total',
-            quantity: 1,
-            unit_price: total,
-            amount: total,
-            sort_order: 0,
-        });
+        const { error: lineError } = await admin.from('invoice_line_items').insert(
+            mapQuoteItemToInvoiceLine(
+                {
+                    product_name: quote.name || 'Quote total',
+                    quantity: 1,
+                    unit_price: total,
+                    line_total: total,
+                },
+                inv.id,
+                tenantId,
+                0,
+            ),
+        );
+        if (lineError) {
+            await admin.from('business_invoices').delete().eq('id', inv.id).eq('tenant_id', tenantId);
+            return { invoiceId: null, publicToken: null, error: lineError.message || 'Failed to create invoice line items' };
+        }
     }
 
     await admin
@@ -115,8 +182,13 @@ export async function convertQuoteToInvoice(
 
     const payUrl = `${origin.replace(/\/$/, '')}/invoice/${inv.id}?token=${publicToken}`;
 
-    if (options?.autoSend !== false && clientEmail) {
-        const tenantName = (quote.tenant as { name?: string } | null)?.name || 'Your provider';
+    if (autoSend && clientEmail) {
+        const { data: tenant } = await admin
+            .from('tenants')
+            .select('name')
+            .eq('id', tenantId)
+            .maybeSingle();
+        const tenantName = tenant?.name || 'Your provider';
         await sendEmailServer({
             tenantId,
             to: clientEmail,

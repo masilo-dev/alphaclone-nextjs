@@ -83,6 +83,22 @@ export async function scanNoReplyEmails(tenantId: string): Promise<NoReplySummar
     const receivedTime = new Date(item.received_at).getTime();
     const daysWaiting = Math.max(1, Math.round((Date.now() - receivedTime) / (1000 * 3600 * 24)));
 
+    const { data: marked } = await supabase
+      .from('communication_slas')
+      .update({
+        status: 'ESCALATED',
+        sla_breached: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', item.id)
+      .eq('tenant_id', tenantId)
+      .eq('status', 'WAITING_ON_CLIENT')
+      .eq('sla_breached', false)
+      .select('id')
+      .maybeSingle();
+
+    if (!marked?.id) continue;
+
     const summaryItem = {
       id: item.id,
       recipientEmail: item.contact_email || 'Unknown',

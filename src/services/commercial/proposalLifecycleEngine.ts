@@ -212,12 +212,30 @@ export class ProposalLifecycleEngine {
     let count = 0;
     if (workflows) {
       for (const wf of workflows) {
-        // Flag follow up task
+        const nextAttempt = Number(wf.follow_up_count || 0) + 1;
+        const sourceKey = `proposal_followup:${wf.id}:${nextAttempt}`;
+
+        const { data: existingTask } = await admin
+          .from('tasks')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .contains('metadata', { autoSourceKey: sourceKey })
+          .maybeSingle();
+
+        if (existingTask?.id) continue;
+
         await admin.from('tasks').insert({
           tenant_id: tenantId,
           title: `Follow up on proposal #${wf.proposal_id.slice(0, 8)}`,
           description: `Proposal sent on ${new Date(wf.created_at).toLocaleDateString()} has received no response after 3 days. Prepare professional follow-up.`,
           status: 'pending',
+          metadata: {
+            autoSourceKey: sourceKey,
+            proposal_workflow_id: wf.id,
+            proposal_id: wf.proposal_id,
+            follow_up_attempt: nextAttempt,
+            source: 'proposal_lifecycle_engine',
+          },
           created_at: new Date().toISOString(),
         });
 

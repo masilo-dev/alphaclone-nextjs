@@ -31,6 +31,15 @@ describe('E2E schema write compatibility', () => {
     assert.doesNotMatch(fn.slice(0, fn.indexOf('return supabase')), /total_amount:/);
   });
 
+  it('convert_quote_to_invoice uses production invoice schema', () => {
+    const source = readFileSync(path.join(root, 'src/lib/quotes/convertQuoteToInvoice.ts'), 'utf8');
+    assert.match(source, /currency_code:/);
+    assert.match(source, /quote_id:/);
+    assert.match(source, /position:/);
+    assert.doesNotMatch(source, /sort_order/);
+    assert.doesNotMatch(source, /total_amount:/);
+  });
+
   it('verify_lead_created registered as direct connector tool', () => {
     const source = readFileSync(path.join(root, 'src/lib/mcp/tools/verification-ops.ts'), 'utf8');
     assert.match(source, /name: 'verify_lead_created'/);

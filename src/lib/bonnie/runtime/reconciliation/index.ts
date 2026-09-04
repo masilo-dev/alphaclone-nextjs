@@ -13,6 +13,9 @@ import { insertOutboxEvent } from '../outboxService';
 import { transitionTask } from '../transitionService';
 import { openIntervention } from '../interventionService';
 import { reconcileAllTenantsExecutionReceipts } from '@/lib/mcp/executionAssurance';
+import { runChaseScanForTenant } from '@/lib/chaser/chaseDetector';
+import { executeDueChasesAllTenants } from '@/lib/chaser/chaseExecutorService';
+import { isChaserGloballyEnabled } from '@/lib/chaser/chaseConfig';
 
 async function logRepair(reconciler: string, repaired: number, details: Record<string, unknown>, tenantId?: string) {
   const admin = createSupabaseAdminClient();
@@ -161,6 +164,25 @@ export async function reconcileExpiredSubscriptions(limit = 40) {
   return { repaired };
 }
 
+export async function reconcileChaseScan(limit = 20) {
+  if (!isChaserGloballyEnabled()) return { detected: 0, tenants: 0 };
+  const admin = createSupabaseAdminClient();
+  const { data: tenants } = await admin.from('tenants').select('id').limit(limit);
+  let detected = 0;
+  for (const t of tenants || []) {
+    const r = await runChaseScanForTenant(t.id);
+    detected += r.detected;
+  }
+  await logRepair('chase_scan', detected, { tenants: tenants?.length ?? 0 });
+  return { detected, tenants: tenants?.length ?? 0 };
+}
+
+export async function reconcileChaseExecution(limit = 20) {
+  const r = await executeDueChasesAllTenants(limit);
+  await logRepair('chase_execution', r.executed, r);
+  return r;
+}
+
 export async function runFullReconciliation() {
   const leases = await reclaimExpiredLeases(40);
   const outbox = await publishOutboxBatch(50);
@@ -172,6 +194,8 @@ export async function runFullReconciliation() {
   const subs = await reconcileExpiredSubscriptions(40);
   const scheduled = await scheduleReadyTasks({ limit: 80 });
   const receipts = await reconcileAllTenantsExecutionReceipts(25);
+  const chaseScan = await reconcileChaseScan(20);
+  const chaseExec = await reconcileChaseExecution(20);
 
   return {
     leases,
@@ -184,5 +208,7 @@ export async function runFullReconciliation() {
     subs,
     scheduled,
     receipts,
+    chaseScan,
+    chaseExec,
   };
 }

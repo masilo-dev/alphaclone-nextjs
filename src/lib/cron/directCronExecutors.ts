@@ -40,7 +40,10 @@ export async function executeScheduledAiTasksDirect(): Promise<{
   return { claimed: tasks.length, succeeded, failed };
 }
 
-export async function executeTaskRemindersDirect(): Promise<{ dueSoon: number; overdue: number }> {
+export async function executeTaskRemindersDirect(): Promise<{ dueSoon: number; overdue: number; chased: number }> {
+  const { isChaserGloballyEnabled, getUniversalChaserPhase } = await import('@/lib/chaser/chaseConfig');
+  const useChaser = isChaserGloballyEnabled() && getUniversalChaserPhase() >= 2;
+
   const admin = createSupabaseAdminClient();
   const todayStr = new Date().toISOString().split('T')[0];
   const tomorrow = new Date();
@@ -65,6 +68,30 @@ export async function executeTaskRemindersDirect(): Promise<{ dueSoon: number; o
       .limit(50),
   ]);
 
+  let chased = 0;
+  if (useChaser) {
+    const { upsertChaseInstance } = await import('@/lib/chaser/chaseInstanceService');
+    const allTasks = [...(dueSoon || []), ...(overdue || [])];
+    for (const task of allTasks) {
+      const r = await upsertChaseInstance({
+        tenantId: task.tenant_id,
+        policyKey: 'task_chaser',
+        entityType: 'task',
+        entityId: task.id,
+        reasonCode: task.due_date && task.due_date < todayStr ? 'overdue' : 'due_soon',
+        assigneeUserId: task.assigned_to,
+        contextSnapshot: { title: task.title, due_date: task.due_date, priority: task.priority },
+      });
+      if (!r.error) chased += 1;
+    }
+    const { executeDueChasesForTenant } = await import('@/lib/chaser/chaseExecutorService');
+    const tenantIds = [...new Set(allTasks.map((t) => t.tenant_id))];
+    for (const tenantId of tenantIds) {
+      await executeDueChasesForTenant(tenantId);
+    }
+    return { dueSoon: dueSoon?.length || 0, overdue: overdue?.length || 0, chased };
+  }
+
   const { sendTaskReminderDirect } = await import('@/lib/cron/taskReminderSender');
 
   const allTasks = [
@@ -76,5 +103,5 @@ export async function executeTaskRemindersDirect(): Promise<{ dueSoon: number; o
     await sendTaskReminderDirect(task, type);
   });
 
-  return { dueSoon: dueSoon?.length || 0, overdue: overdue?.length || 0 };
+  return { dueSoon: dueSoon?.length || 0, overdue: overdue?.length || 0, chased: 0 };
 }

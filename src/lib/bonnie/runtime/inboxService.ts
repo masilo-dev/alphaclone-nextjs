@@ -3,6 +3,7 @@
  */
 
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { resolveChasesForDomainEvent } from '@/lib/chaser/chaseEventBridge';
 import { insertOutboxEvent } from './outboxService';
 import { transitionTask } from './transitionService';
 
@@ -164,6 +165,18 @@ export async function processInboxEvent(eventId: string, tenantId: string): Prom
       processed_at: new Date().toISOString(),
     })
     .eq('id', eventId);
+
+  try {
+    const payload = (event.payload || {}) as Record<string, unknown>;
+    await resolveChasesForDomainEvent({
+      tenantId,
+      eventType: event.event_type,
+      entityId: (event.entity_id as string) || (payload.entity_id as string) || null,
+      entityType: (event.entity_type as string) || (payload.entity_type as string) || null,
+    });
+  } catch (err) {
+    console.warn('[inbox] chase resolution failed:', err);
+  }
 
   return { woken };
 }
