@@ -21,7 +21,9 @@ export function useCrmDashboardSync(tenantId: string | undefined) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'domain_events', filter: `tenant_id=eq.${tenantId}` },
-        (payload) => {
+        (
+          payload: { new?: { event_type?: string } | null },
+        ) => {
           const eventType = String((payload.new as { event_type?: string })?.event_type || '');
           if (
             eventType.startsWith(CRM_EVENT_PREFIX) ||
