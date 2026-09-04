@@ -4,7 +4,7 @@ import { paymentService } from '@/services/paymentService';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { runUserDigestEmails } from '@/lib/email/runUserDigestEmails';
 import { runMorningBriefingEmails } from '@/lib/email/runMorningBriefingEmails';
-import { runChaseMorningBriefEmails, runCriticalChaseAlerts } from '@/lib/email/runChaseOwnerEmails';
+import { runChaseMorningBriefEmails, runCriticalChaseAlerts, runChaseEndOfDayEmails, runChaseWeeklySummaryEmails } from '@/lib/email/runChaseOwnerEmails';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
 import { scanNoReplyEmails } from '@/lib/email/noReplyEngine';
@@ -83,9 +83,15 @@ export async function GET(req: NextRequest) {
 
     let chaseBrief: { sent: number; skipped: number; failed: number } | null = null;
     let chaseCritical: { sent: number; failed: number } | null = null;
+    let chaseEod: { sent: number; failed: number } | null = null;
+    let chaseWeekly: { sent: number; failed: number } | null = null;
     try {
       chaseBrief = await runChaseMorningBriefEmails();
       chaseCritical = await runCriticalChaseAlerts();
+      chaseEod = await runChaseEndOfDayEmails();
+      if (new Date().getUTCDay() === 1) {
+        chaseWeekly = await runChaseWeeklySummaryEmails();
+      }
     } catch (chaseEmailErr) {
       console.error('Chase owner emails:', chaseEmailErr);
     }
@@ -138,6 +144,8 @@ export async function GET(req: NextRequest) {
       morning,
       chaseBrief,
       chaseCritical,
+      chaseEod,
+      chaseWeekly,
       intelligence,
       accountDeletions,
       dataDeletionRequests,

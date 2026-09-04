@@ -102,9 +102,19 @@ describe('Universal Chaser — Phase 1 foundation', () => {
     assert.match(reconcile, /reconcileChaseScan/);
   });
 
-  it('dashboard chase inbox routes registered', () => {
-    assert.ok(fs.existsSync(new URL('../../src/app/api/dashboard/chase-inbox/route.ts', import.meta.url).pathname));
-    assert.ok(fs.existsSync(new URL('../../src/app/api/dashboard/chase-brief/route.ts', import.meta.url).pathname));
+  it('phase 5 legacy delegation and health metrics exist', () => {
+    const config = fs.readFileSync(
+      new URL('../../src/lib/chaser/chaseConfig.ts', import.meta.url),
+      'utf8',
+    );
+    assert.match(config, /shouldDelegateLegacyScannersToChaser/);
+    assert.match(config, /raw === 5/);
+    const legacy = fs.readFileSync(
+      new URL('../../src/lib/chaser/chaseLegacyDelegation.ts', import.meta.url),
+      'utf8',
+    );
+    assert.match(legacy, /delegateLegacyFollowUpAllTenants/);
+    assert.ok(fs.existsSync(new URL('../../src/app/api/dashboard/chase-health/route.ts', import.meta.url).pathname));
   });
 });
 

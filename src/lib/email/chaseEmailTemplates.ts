@@ -158,3 +158,65 @@ export function formatCriticalChaseAlertEmail(params: {
     }),
   };
 }
+
+export function formatEndOfDayBriefEmail(params: {
+  tenantId: string;
+  tenantName: string;
+  ownerEmail: string;
+  unresolvedItems: ChaseInstanceRow[];
+  attemptedToday: number;
+}): { subject: string; html: string } {
+  const subject = `End of day — ${params.unresolvedItems.length} items still open`;
+  const list = params.unresolvedItems
+    .slice(0, 15)
+    .map(
+      (i) =>
+        `<li><strong>${i.policy_key}</strong> — ${i.reason_code || 'open'} (${i.state})</li>`,
+    )
+    .join('');
+  const bodyHtml = `
+    <style>${CHASE_BODY_STYLES}</style>
+    <p>${params.attemptedToday} chase actions attempted today.</p>
+    <p>These items remain unresolved:</p>
+    <ul>${list || '<li>None — good day.</li>'}</ul>
+  `;
+  return {
+    subject,
+    html: buildEmail({
+      subject,
+      bodyHtml,
+      tenantName: params.tenantName,
+      tenantId: params.tenantId,
+      recipientEmail: params.ownerEmail,
+    }),
+  };
+}
+
+export function formatWeeklyAccountabilityEmail(params: {
+  tenantId: string;
+  tenantName: string;
+  ownerEmail: string;
+  opened: number;
+  resolved: number;
+  failedAttempts: number;
+  criticalOpen: number;
+}): { subject: string; html: string } {
+  const subject = `Weekly accountability — ${params.resolved} resolved, ${params.criticalOpen} critical open`;
+  const bodyHtml = `
+    <style>${CHASE_BODY_STYLES}</style>
+    <div class="chase-summary">
+      <p>Opened: ${params.opened} · Resolved: ${params.resolved} · Failed attempts: ${params.failedAttempts}</p>
+      <p>Critical still open: ${params.criticalOpen}</p>
+    </div>
+  `;
+  return {
+    subject,
+    html: buildEmail({
+      subject,
+      bodyHtml,
+      tenantName: params.tenantName,
+      tenantId: params.tenantId,
+      recipientEmail: params.ownerEmail,
+    }),
+  };
+}

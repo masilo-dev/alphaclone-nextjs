@@ -6,6 +6,8 @@ import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
+import { delegateLegacyFollowUpAllTenants } from '@/lib/chaser/chaseLegacyDelegation';
+import { shouldDelegateLegacyScannersToChaser } from '@/lib/chaser/chaseConfig';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +17,11 @@ function trackingToken(invoiceId: string): string {
 }
 
 async function processInvoiceOverdueReminders() {
+        if (shouldDelegateLegacyScannersToChaser()) {
+            const delegated = await delegateLegacyFollowUpAllTenants('invoice_overdue_reminders');
+            return NextResponse.json({ success: true, delegated: true, ...delegated });
+        }
+
         const admin = createSupabaseAdminClient();
         const now = new Date();
         const nowIso = now.toISOString();

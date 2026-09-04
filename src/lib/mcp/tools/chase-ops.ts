@@ -13,6 +13,11 @@ import {
 } from '@/lib/chaser/chaseInstanceService';
 import { buildChaseBrief, runChaseScanForTenant } from '@/lib/chaser/chaseDetector';
 import { getChasePolicy, listChasePolicies } from '@/lib/chaser/policyRegistry';
+import {
+  loadTenantChasePolicyOverride,
+  upsertTenantChasePolicy,
+} from '@/lib/chaser/chaseTenantPolicyService';
+import { getChaseHealthMetrics } from '@/lib/chaser/chaseMetricsService';
 import { CHASE_POLICY_KEYS } from '@/lib/chaser/types';
 
 const policyKeySchema = z.enum(CHASE_POLICY_KEYS);
@@ -233,28 +238,75 @@ defineConnectorTool({
 
 defineConnectorTool({
   module: 'chase-ops',
-  name: 'update_chase_policy',
-  description: 'Read default policy definition (tenant DB overrides planned for Phase 2).',
-  permission: 'settings:read',
+  name: 'get_chase_health',
+  description: 'Operational metrics for Universal Chaser — active, resolved, failures, due now.',
+  permission: 'crm:read',
   rateLimitClass: 'read',
   inputSchema: z.object({
     tenant_id: tenantIdField,
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: { tenant_id: { type: 'string', format: 'uuid' } },
+    required: ['tenant_id'],
+  },
+  handler: async (args) => {
+    const metrics = await getChaseHealthMetrics(args.tenant_id);
+    return okResult('get_chase_health', metrics);
+  },
+});
+
+defineConnectorTool({
+  module: 'chase-ops',
+  name: 'update_chase_policy',
+  description: 'Read or update tenant chase policy (persists to agent_chasing_policies).',
+  permission: 'settings:write',
+  rateLimitClass: 'write',
+  auditAction: 'update_chase_policy',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
     policy_key: policyKeySchema,
+    requires_approval: z.boolean().optional(),
+    max_attempts: z.number().int().min(1).max(50).optional(),
+    follow_up_interval_hours: z.array(z.number().int().positive()).optional(),
+    active: z.boolean().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', format: 'uuid' },
       policy_key: { type: 'string' },
+      requires_approval: { type: 'boolean' },
+      max_attempts: { type: 'integer' },
+      active: { type: 'boolean' },
     },
     required: ['tenant_id', 'policy_key'],
   },
   handler: async (args) => {
-    const policy = getChasePolicy(args.policy_key);
+    const hasWrite =
+      args.requires_approval !== undefined ||
+      args.max_attempts !== undefined ||
+      args.active !== undefined ||
+      args.follow_up_interval_hours !== undefined;
+
+    if (hasWrite) {
+      const result = await upsertTenantChasePolicy({
+        tenantId: args.tenant_id,
+        policyKey: args.policy_key,
+        requiresApproval: args.requires_approval,
+        maxAttempts: args.max_attempts,
+        followUpIntervalHours: args.follow_up_interval_hours,
+        active: args.active,
+      });
+      if (!result.ok) throwConnectorError('update_chase_policy', result.error || 'Update failed');
+    }
+
+    const override = await loadTenantChasePolicyOverride(args.tenant_id, args.policy_key);
+    const defaults = getChasePolicy(args.policy_key);
     return okResult('update_chase_policy', {
-      policy,
+      policy: defaults,
+      tenant_override: override,
       all_policies: listChasePolicies().map((p) => p.key),
-      note: 'Tenant-specific overrides via agent_chasing_policies planned for Phase 2.',
     });
   },
 });

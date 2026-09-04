@@ -16,6 +16,10 @@ import {
 import { getChasePolicy } from '@/lib/chaser/policyRegistry';
 import { verifyChaseStopCondition } from '@/lib/chaser/chaseStopConditions';
 import {
+  loadTenantChasePolicyOverride,
+  mergePolicyWithOverride,
+} from '@/lib/chaser/chaseTenantPolicyService';
+import {
   getChaseInstanceById,
   transitionChaseState,
 } from '@/lib/chaser/chaseInstanceService';
@@ -150,11 +154,15 @@ export async function executeChaseInstance(chase: ChaseInstanceRow): Promise<{
     return { executed: false, outcome: `resolved:${stop.outcome}` };
   }
 
-  const policy = getChasePolicy(chase.policy_key as any);
+  const tenantOverride = await loadTenantChasePolicyOverride(chase.tenant_id, chase.policy_key as any);
+  if (!tenantOverride.active) {
+    return { executed: false, outcome: 'policy_disabled' };
+  }
+  const policy = mergePolicyWithOverride(getChasePolicy(chase.policy_key as any), tenantOverride);
   const mode = resolveEffectiveAutomationMode({
     policyDefault: policy.defaultAutomationMode,
     policyApprovalRequired: policy.approvalRequired,
-    tenantOverride: chase.automation_mode,
+    tenantOverride: tenantOverride.automationMode || chase.automation_mode,
   });
 
   const attemptNumber = chase.attempt_count + 1;
@@ -264,6 +272,33 @@ export async function executeChaseInstance(chase: ChaseInstanceRow): Promise<{
       actionKey: 'automated_invoice_reminder',
       deliveryState: r.ok ? 'sent' : 'failed',
       receipt: { detail: r.detail },
+    });
+  } else if (
+    chase.policy_key === 'quote_proposal_chaser' ||
+    chase.policy_key === 'contract_chaser' ||
+    chase.policy_key === 'lead_chaser'
+  ) {
+    await createInternalOwnerTask(
+      chase,
+      `Follow up: ${policy.label}`,
+      policy.initialAction,
+    );
+    await recordChaseAttempt({
+      tenantId: chase.tenant_id,
+      chaseId: chase.id,
+      attemptNumber,
+      actionKey: 'automated_followup_task',
+      deliveryState: 'sent',
+      receipt: { policy_key: chase.policy_key },
+    });
+  } else if (chase.policy_key === 'social_chaser' || chase.policy_key === 'campaign_chaser') {
+    await createInternalOwnerTask(chase, `${policy.label} action required`, chase.reason_code || 'stalled');
+    await recordChaseAttempt({
+      tenantId: chase.tenant_id,
+      chaseId: chase.id,
+      attemptNumber,
+      actionKey: 'automated_social_campaign_task',
+      deliveryState: 'sent',
     });
   } else {
     const approvalId = await queueApprovalForChase(chase, {
@@ -389,8 +424,9 @@ export async function executeDueChasesAllTenants(limit = 20): Promise<{
   if (getUniversalChaserPhase() < 2) {
     return { tenants: 0, processed: 0, executed: 0 };
   }
+  const effectiveLimit = getUniversalChaserPhase() >= 5 ? 100 : limit;
   const admin = createSupabaseAdminClient();
-  const { data: tenants } = await admin.from('tenants').select('id').limit(limit);
+  const { data: tenants } = await admin.from('tenants').select('id').limit(effectiveLimit);
   let processed = 0;
   let executed = 0;
   for (const t of tenants || []) {

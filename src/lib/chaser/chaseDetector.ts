@@ -213,6 +213,67 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
     else bump('project_chaser', upsert.created);
   }
 
+  const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString();
+  const { data: activeConnections } = await admin
+    .from('social_connections')
+    .select('id, provider, provider_account_name, connection_status')
+    .eq('tenant_id', tenantId)
+    .eq('connection_status', 'active')
+    .limit(20);
+
+  for (const conn of activeConnections || []) {
+    const { data: recentPost } = await admin
+      .from('social_posts')
+      .select('id, published_at, status')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'published')
+      .gte('published_at', twoDaysAgo)
+      .contains('platforms', [conn.provider])
+      .limit(1)
+      .maybeSingle();
+
+    if (recentPost?.id) continue;
+
+    const upsert = await upsertChaseInstance({
+      tenantId,
+      policyKey: 'social_chaser',
+      entityType: 'social_account',
+      entityId: conn.id,
+      reasonCode: 'no_verified_publish',
+      waitingOn: 'social_provider',
+      severity: 'high',
+      lastObservedState: conn.connection_status,
+      contextSnapshot: {
+        provider: conn.provider,
+        account_name: conn.provider_account_name,
+      },
+    });
+    if (upsert.error) result.errors.push(upsert.error);
+    else bump('social_chaser', upsert.created);
+  }
+
+  const { data: staleCampaigns } = await admin
+    .from('email_campaigns')
+    .select('id, name, status, updated_at')
+    .eq('tenant_id', tenantId)
+    .in('status', ['active', 'running', 'scheduled', 'sending'])
+    .lt('updated_at', twoDaysAgo)
+    .limit(25);
+
+  for (const campaign of staleCampaigns || []) {
+    const upsert = await upsertChaseInstance({
+      tenantId,
+      policyKey: 'campaign_chaser',
+      entityType: 'campaign',
+      entityId: campaign.id,
+      reasonCode: 'no_progress',
+      lastObservedState: String(campaign.status),
+      contextSnapshot: { name: campaign.name, updated_at: campaign.updated_at },
+    });
+    if (upsert.error) result.errors.push(upsert.error);
+    else bump('campaign_chaser', upsert.created);
+  }
+
   return result;
 }
 

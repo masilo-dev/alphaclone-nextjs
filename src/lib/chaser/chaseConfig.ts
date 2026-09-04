@@ -1,5 +1,5 @@
 /**
- * Universal Chaser rollout config — phases 1–4 and per-tenant/per-policy flags.
+ * Universal Chaser rollout config — phases 1–5 and per-tenant/per-policy flags.
  */
 
 import 'server-only';
@@ -7,15 +7,21 @@ import 'server-only';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import type { ChaseAutomationMode, ChasePolicyKey } from '@/lib/chaser/types';
 
-export type UniversalChaserPhase = 1 | 2 | 3 | 4;
+export type UniversalChaserPhase = 1 | 2 | 3 | 4 | 5;
 
 export function getUniversalChaserPhase(): UniversalChaserPhase {
   const raw = Number(process.env.UNIVERSAL_CHASER_PHASE || process.env.UNIVERSAL_CHASER_MODE);
-  if (raw === 2 || raw === 3 || raw === 4) return raw;
+  if (raw === 2 || raw === 3 || raw === 4 || raw === 5) return raw;
+  if (process.env.UNIVERSAL_CHASER_MODE === 'consolidated') return 5;
   if (process.env.UNIVERSAL_CHASER_MODE === 'automated') return 4;
   if (process.env.UNIVERSAL_CHASER_MODE === 'approval') return 3;
   if (process.env.UNIVERSAL_CHASER_MODE === 'internal') return 2;
   return 1;
+}
+
+/** Phase 5+: legacy crons delegate detection/execution to canonical chaser. */
+export function shouldDelegateLegacyScannersToChaser(): boolean {
+  return isChaserGloballyEnabled() && getUniversalChaserPhase() >= 5;
 }
 
 export function isChaserGloballyEnabled(): boolean {
@@ -71,7 +77,16 @@ export function resolveEffectiveAutomationMode(params: {
     if (params.tenantOverride === 'automated') return 'approval_required';
     return params.policyApprovalRequired ? 'approval_required' : 'internal';
   }
-  return params.tenantOverride || params.policyDefault;
+  if (phase === 4) {
+    return params.tenantOverride || params.policyDefault;
+  }
+  // Phase 5 — full consolidation: honor tenant override; low-risk internal stays internal;
+  // external policies default to automated when registry allows.
+  if (params.policyDefault === 'internal') return 'internal';
+  if (params.policyApprovalRequired && params.tenantOverride !== 'automated') {
+    return 'approval_required';
+  }
+  return params.tenantOverride || 'automated';
 }
 
 export const CHASER_CONCURRENCY = {
