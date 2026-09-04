@@ -294,3 +294,5 @@ export function ChaseExecutionInbox() {
     </div>
   );
 }
+
+export default ChaseExecutionInbox;
