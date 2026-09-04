@@ -51,7 +51,7 @@ defineConnectorTool({
   name: 'send_project_email',
   description:
     'Send a project summary email with status, due date, tasks, and milestones. Uses the tenant email provider directly.',
-  permission: 'email:write',
+  permission: 'email:send',
   rateLimitClass: 'write',
   auditAction: 'send_project_email',
   inputSchema: z.object({
