@@ -15,15 +15,14 @@ import LookInsideAlphaClone from "./LookInsideAlphaClone";
 import AiInterfaceShowcase from "./AiInterfaceShowcase";
 import LifecycleFlowShowcase from './LifecycleFlowShowcase';
 import { getHomeIntegrationGroups } from '@/lib/marketing/homeIntegrationDisplay';
-import PromotionMonthBanner from './PromotionMonthBanner';
 
 const executionRows = [
-  ["Research prospects", "20 / 20 found", "Done", "done", "09:42"],
+  ["Research prospects", "Example: 20 prospects scored", "Done", "done", "09:42"],
   ["Check fit", "Industry · size · web · location", "Done", "done", "09:44"],
-  ["Create CRM records", "20 records created", "Done", "done", "09:46"],
-  ["Prepare outreach", "14 / 20 drafts prepared", "In progress", "active", "Now"],
-  ["Schedule follow-up", "Waiting for outreach approval", "Queued", "queued", "Next"],
-  ["Owner approval", "6 actions require review", "Needs approval", "approval", "Review"],
+  ["Create CRM records", "Example: records staged for review", "Done", "done", "09:46"],
+  ["Prepare outreach", "Example: drafts awaiting approval", "In progress", "active", "Now"],
+  ["Schedule follow-up", "Queued after approval", "Queued", "queued", "Next"],
+  ["Owner approval", "You approve before anything sends", "Needs approval", "approval", "Review"],
 ] as const;
 
 const integrationGroups = getHomeIntegrationGroups();
@@ -50,17 +49,31 @@ export default function MarketingHomePage() {
       <CurvedDotField />
       <MarketingContainer>
         <div className="mkt-hero-copy mkt-reveal mx-auto max-w-4xl px-2 text-center">
-          <p className="text-[11px] font-black uppercase tracking-[.22em] text-cyan-300 mb-4">{EXECUTION_LAYER.category}</p>
-          <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.08] tracking-normal text-white sm:text-5xl md:text-6xl">
-            {EXECUTION_LAYER.heroHeadline}
+          <p className="mb-4 text-[11px] font-black uppercase tracking-[.22em] text-emerald-400">
+            {EXECUTION_LAYER.category}
+          </p>
+          <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.12] tracking-normal sm:text-5xl md:text-6xl">
+            <span className="text-orange-400">Your business has tools.</span>{' '}
+            <span className="text-white">Now give it an</span>{' '}
+            <span className="text-emerald-400">execution layer.</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base md:text-lg">{EXECUTION_LAYER.heroSubhead}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 sm:text-base md:text-lg">
+            <span className="font-semibold text-cyan-300">AlphaClone</span>
+            <span className="text-slate-300"> turns your instructions into </span>
+            <span className="font-semibold text-emerald-300">coordinated action</span>
+            <span className="text-slate-300"> across connected business systems while you retain </span>
+            <span className="font-semibold text-orange-300">control over important decisions</span>
+            <span className="text-slate-300">.</span>
+          </p>
           <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
-            <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">{EXECUTION_LAYER.primaryCta}</PrimaryCTA>
-            <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large">{EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
+            <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large !bg-emerald-600 hover:!bg-emerald-500">
+              {EXECUTION_LAYER.primaryCta}
+            </PrimaryCTA>
+            <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large !border-orange-400/40 !text-orange-200 hover:!border-orange-300">
+              {EXECUTION_LAYER.secondaryCta}
+            </SecondaryCTA>
           </div>
         </div>
-        <PromotionMonthBanner className="mt-8" />
         <div className="mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]">
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#030a16] p-2 sm:p-3 shadow-2xl shadow-slate-950/40">
             <div className="mb-2 flex items-center justify-between border-b border-white/5 px-3 pb-2 pt-1">
@@ -183,13 +196,14 @@ export default function MarketingHomePage() {
       <div className="overflow-hidden rounded-2xl border border-emerald-400/30 bg-[#020916] shadow-2xl shadow-emerald-950/30">
         <div className="border-b border-white/[.08] bg-slate-900/60 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Active execution</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Example workflow (not live data)</p>
             <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/30">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"/>
               Bonnie Engine Online
             </span>
           </div>
           <blockquote className="mt-2 text-sm font-semibold leading-6 text-white">“Find 20 potential customers in Zimbabwe that fit our target profile and prepare outreach.”</blockquote>
+          <p className="mt-2 text-[10px] text-slate-400">Illustration only — CRM records are created when you run MCP or approve Bonnie actions in your workspace.</p>
         </div>
         <div className="divide-y divide-white/[.06]">
           {executionRows.map((r,i)=>(

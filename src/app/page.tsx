@@ -4,11 +4,15 @@ import HomeClient from '@/components/home/HomeClient';
 import { buildMarketingMetadata } from '@/lib/seo/metadata';
 import { EXECUTION_LAYER } from '@/config/marketingPositioning';
 
-export const metadata: Metadata = buildMarketingMetadata({
-  title: EXECUTION_LAYER.heroHeadline,
-  description: EXECUTION_LAYER.explanatoryLine,
-  pathname: '/',
-});
+export const metadata: Metadata = {
+  ...buildMarketingMetadata({
+    title: EXECUTION_LAYER.heroHeadline,
+    description: EXECUTION_LAYER.explanatoryLine,
+    pathname: '/',
+  }),
+  /** Tab title: logo name only — not the long hero headline. */
+  title: { absolute: 'AlphaClone' },
+};
 
 /**
  * AlphaClone Home Page (Server Component)

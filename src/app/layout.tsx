@@ -37,8 +37,8 @@ import { EXECUTION_LAYER } from "@/config/marketingPositioning";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `AlphaClone — ${EXECUTION_LAYER.category}`,
-    template: "%s | AlphaClone Systems",
+    default: "AlphaClone Systems",
+    template: "%s · AlphaClone",
   },
   description: EXECUTION_LAYER.explanatoryLine,
   keywords: [
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
       : {},
   },
   openGraph: {
-    title: `AlphaClone — ${EXECUTION_LAYER.category}`,
+    title: "AlphaClone Systems",
     description: EXECUTION_LAYER.explanatoryLine,
     type: "website",
     url: SITE_URL,
@@ -92,7 +92,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `AlphaClone — ${EXECUTION_LAYER.category}`,
+    title: "AlphaClone Systems",
     description: EXECUTION_LAYER.explanatoryLine,
     creator: "@AlphaCloneSys",
     images: ["/twitter-image"],
@@ -104,8 +104,13 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/email-assets/alphaclone-email-logo.png", sizes: "256x256", type: "image/png" },
+    ],
     apple: [{ url: "/favicon-192x192.png", sizes: "192x192" }],
+    shortcut: ["/favicon.ico"],
   },
 };
 
