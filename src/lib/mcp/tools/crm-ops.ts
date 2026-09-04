@@ -680,3 +680,75 @@ defineConnectorTool({
     });
   },
 });
+
+defineConnectorTool({
+  module: 'crm-ops',
+  name: 'find_duplicate_clients',
+  description:
+    'Find duplicate client/contact records grouped by normalized email. Use before merge_client_identities.',
+  permission: 'crm:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    email: z.string().email().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      email: { type: 'string', format: 'email', description: 'Optional — limit to one email address' },
+    },
+    required: ['tenant_id'],
+  },
+  handler: async (args) => {
+    const { findDuplicateIdentities } = await import('@/lib/crm/mergeClientIdentity');
+    const groups = await findDuplicateIdentities(args.tenant_id, args.email);
+    return okResult('find_duplicate_clients', {
+      duplicate_groups: groups,
+      group_count: groups.length,
+      total_duplicate_records: groups.reduce((sum, g) => sum + g.records.length, 0),
+    });
+  },
+});
+
+defineConnectorTool({
+  module: 'crm-ops',
+  name: 'merge_client_identities',
+  description:
+    'Merge duplicate client/contact records into a primary identity. Reassigns projects, contracts, invoices, and tasks. Set dry_run=true to preview impact.',
+  permission: 'crm:write',
+  auditAction: 'merge_client_identities',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    primary_id: z.string().uuid(),
+    duplicate_ids: z.array(z.string().uuid()).min(1),
+    dry_run: z.boolean().optional().default(false),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      primary_id: { type: 'string', format: 'uuid', description: 'Canonical record to keep' },
+      duplicate_ids: {
+        type: 'array',
+        items: { type: 'string', format: 'uuid' },
+        description: 'Records to merge into primary',
+      },
+      dry_run: { type: 'boolean', default: false },
+    },
+    required: ['tenant_id', 'primary_id', 'duplicate_ids'],
+  },
+  handler: async (args, ctx) => {
+    const { mergeClientIdentities } = await import('@/lib/crm/mergeClientIdentity');
+    const result = await mergeClientIdentities({
+      tenantId: args.tenant_id,
+      primaryId: args.primary_id,
+      duplicateIds: args.duplicate_ids,
+      userId: ctx.userId,
+      dryRun: args.dry_run,
+    });
+    return okResult('merge_client_identities', {
+      ...result,
+      dry_run: args.dry_run,
+    });
+  },
+});

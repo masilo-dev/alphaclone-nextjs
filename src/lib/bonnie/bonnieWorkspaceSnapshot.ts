@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { countOpenTasks } from '@/lib/crm/canonicalWorkspaceStats';
 
 export type BonnieWorkspaceSnapshot = {
   tenant_id: string;
@@ -58,10 +59,8 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
     countTable('deals', (q) => q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)),
     countTable('contacts', (q) => q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)),
     countTable('business_clients', (q) => q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)),
-    countTable('tasks', (q) =>
-      q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).neq('status', 'completed')
-    ),
-    countTable('invoices', (q) =>
+    countOpenTasks(admin, tenantId),
+    countTable('business_invoices', (q) =>
       q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['sent', 'overdue', 'pending'])
     ),
     countTable('tickets', (q) =>

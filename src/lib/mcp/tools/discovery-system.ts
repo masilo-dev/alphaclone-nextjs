@@ -354,30 +354,21 @@ defineConnectorTool({
   handler: async (_args, ctx) => {
     const supabase = createSupabaseAdminClient();
     const tenantId = ctx.tenantId;
-
-    const [
-      { count: leadCount },
-      { count: dealCount },
-      { count: invoiceCount },
-      { count: taskCount },
-      { count: contactCount },
-    ] = await Promise.all([
-      supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      supabase.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      supabase.from('business_invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-      supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-    ]);
+    const { getCanonicalWorkspaceCounts } = await import('@/lib/crm/canonicalWorkspaceStats');
+    const counts = await getCanonicalWorkspaceCounts(supabase, tenantId);
 
     return okResult('summarize_workspace', {
       tenant_id: tenantId,
       metrics: {
-        leads: leadCount || 0,
-        deals: dealCount || 0,
-        invoices: invoiceCount || 0,
-        open_tasks: taskCount || 0,
-        contacts: contactCount || 0,
+        leads: counts.leads,
+        deals: counts.deals,
+        invoices: counts.unpaid_invoices,
+        open_tasks: counts.open_tasks,
+        active_projects: counts.active_projects,
+        contacts: counts.contacts,
+        clients: counts.clients,
       },
+      stats_source: 'canonical_workspace_stats',
       health_status: 'operational',
       timestamp: new Date().toISOString(),
     });

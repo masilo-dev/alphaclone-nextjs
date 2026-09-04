@@ -636,6 +636,41 @@
   margin-top: 1rem !important;
 }
 
+/* Hero product screenshot — seamless float, no browser chrome */
+.mkt-hero-screenshot {
+  position: relative;
+  z-index: var(--mkt-z-content);
+}
+
+.mkt-hero-screenshot__glow {
+  position: absolute;
+  inset: -6% -4%;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 45%,
+    rgba(24, 199, 200, 0.14),
+    rgba(109, 232, 226, 0.06) 45%,
+    transparent 72%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mkt-hero-screenshot__frame {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: var(--radius-preview);
+  box-shadow: var(--shadow-preview);
+  background: #fff;
+  line-height: 0;
+}
+
+.mkt-hero-screenshot__frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .mkt-trust-notes {
   display: flex;
   flex-wrap: wrap;

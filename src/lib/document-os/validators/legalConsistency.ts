@@ -121,18 +121,21 @@ export function detectDuplicateClauses(clauses: ContractClause[]): ValidationIss
   return issues;
 }
 
+const ALLOWED_PLACEHOLDER_TOKENS = new Set(['[SIGNATURE_BLOCK]']);
+
 export function detectBlankPlaceholders(clauses: ContractClause[]): ValidationIssue[] {
   const placeholder = /\[(?:TODO|TBD|PLACEHOLDER|[A-Z_ ]{3,})\]|\{+[a-zA-Z._]+\}+|_{3,}|\bXXX\b/g;
   const issues: ValidationIssue[] = [];
   for (const clause of clauses) {
-    const matches = clause.body.match(placeholder);
-    if (matches?.length) {
+    const rawMatches = clause.body.match(placeholder) || [];
+    const blocking = [...new Set(rawMatches.filter((m) => !ALLOWED_PLACEHOLDER_TOKENS.has(m.toUpperCase())))];
+    if (blocking.length) {
       issues.push({
         code: 'BLANK_PLACEHOLDER',
         severity: 'blocking',
         field: clause.clause_key,
-        message: `Clause "${clause.title}" contains blank placeholders: ${[...new Set(matches)].join(', ')}`,
-        recommended_fix: 'Fill or remove all placeholders before approval.',
+        message: `Clause "${clause.title}" contains blank placeholders: ${blocking.join(', ')}`,
+        recommended_fix: 'Fill or remove all placeholders before approval. Use [SIGNATURE_BLOCK] for signature lines.',
       });
     }
   }

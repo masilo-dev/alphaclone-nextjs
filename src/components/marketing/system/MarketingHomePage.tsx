@@ -74,23 +74,19 @@ export default function MarketingHomePage() {
             </SecondaryCTA>
           </div>
         </div>
-        <div className="mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]">
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#030a16] p-2 sm:p-3 shadow-2xl shadow-slate-950/40">
-            <div className="mb-2 flex items-center justify-between border-b border-white/5 px-3 pb-2 pt-1">
-              <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-rose-500/70"/>
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500/70"/>
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/70"/>
-              </div>
-              <div className="flex items-center gap-2 rounded-md border border-white/5 bg-slate-900/70 px-3 py-0.5 text-[10px] font-medium text-slate-400">
-                <LockKeyhole className="h-2.5 w-2.5 text-slate-400"/>
-                <span>alphaclone.app</span>
-              </div>
-              <div className="w-10"/>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-white/5 bg-slate-950 select-none">
-              <Image src="/images/alphaclone-all-in-one-mcp-platform.png" alt="AlphaClone all-in-one platform dashboard with connected tools and business workspace" width={1024} height={682} priority draggable={false} sizes="(max-width: 640px) 90vw, (max-width: 1024px) 672px, 880px" className="h-auto w-full max-w-full pointer-events-none select-none" />
-            </div>
+        <div className="mkt-hero-screenshot mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]">
+          <div className="mkt-hero-screenshot__glow" aria-hidden="true" />
+          <div className="mkt-hero-screenshot__frame">
+            <Image
+              src="/images/alphaclone-all-in-one-mcp-platform.png"
+              alt="AlphaClone all-in-one platform dashboard with connected tools and business workspace"
+              width={1024}
+              height={682}
+              priority
+              draggable={false}
+              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 672px, 880px"
+              className="h-auto w-full max-w-full pointer-events-none select-none"
+            />
           </div>
         </div>
       </MarketingContainer>

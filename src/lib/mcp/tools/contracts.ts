@@ -79,7 +79,9 @@ registerTool('contracts', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const { extractContractLegalFields } = await import('@/lib/contracts/extractContractLegalFields');
-    const extracted = extractContractLegalFields(args.content);
+    const { normalizeContractContent } = await import('@/lib/contracts/normalizeContractContent');
+    const normalizedContent = normalizeContractContent(args.content);
+    const extracted = extractContractLegalFields(normalizedContent);
     const governingLaw = args.governing_law || extracted.governing_law;
     const jurisdiction = args.jurisdiction || extracted.jurisdiction || governingLaw;
 
@@ -89,7 +91,7 @@ registerTool('contracts', {
         tenant_id: args.tenant_id,
         client_id: args.client_id || null,
         title: args.title,
-        content: args.content,
+        content: normalizedContent,
         status: args.status,
         type: args.type,
         governing_law: governingLaw,

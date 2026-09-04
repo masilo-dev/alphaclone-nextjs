@@ -199,60 +199,78 @@ export class OperationsService {
    */
   static async getBusinessHealth(tenantId: string) {
     const admin = createSupabaseAdminClient();
+    const {
+      countOpenTasks,
+      countActiveProjects,
+    } = await import('@/lib/crm/canonicalWorkspaceStats');
 
     const [
-      projects,
-      openTasks,
-      blockedTasks,
-      decisions,
-      slas,
-      invoices,
-      failures,
-      blockers,
+      openTasksCount,
+      activeProjectsCount,
+      blockedTasksRes,
+      decisionsRes,
+      slasRes,
+      invoicesRes,
+      failuresRes,
+      blockersRes,
+      projectsRes,
     ] = await Promise.all([
-      admin.from('projects').select('*').eq('tenant_id', tenantId),
-      admin.from('tasks').select('*').eq('tenant_id', tenantId).neq('status', 'completed'),
-      admin.from('tasks').select('*').eq('tenant_id', tenantId).eq('status', 'blocked'),
-      admin.from('decision_records').select('*').eq('tenant_id', tenantId).eq('status', 'proposed'),
+      countOpenTasks(admin, tenantId),
+      countActiveProjects(admin, tenantId),
+      admin.from('tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'blocked'),
+      admin.from('decision_records').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'proposed'),
       admin.from('communication_slas').select('*').eq('tenant_id', tenantId),
-      admin.from('business_invoices').select('*').eq('tenant_id', tenantId),
-      admin.from('failure_records').select('*').eq('tenant_id', tenantId),
+      admin.from('business_invoices').select('total_amount, status').eq('tenant_id', tenantId),
+      admin.from('failure_records').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       admin.from('operational_blockers').select('*').eq('tenant_id', tenantId).eq('status', 'ACTIVE'),
+      admin.from('projects').select('id, status, client_sla_status').eq('tenant_id', tenantId),
     ]);
 
-    const activeProjects = (projects.data || []).filter((p: any) => p.status === 'in_progress' || p.status === 'active');
-    const projectsAtRisk = (projects.data || []).filter((p: any) => p.status === 'at_risk' || p.client_sla_status === 'breached');
-    const totalSlas = (slas.data || []).length;
-    const breachedSlas = (slas.data || []).filter((s: any) => s.sla_breached || (new Date(s.response_deadline_at).getTime() < Date.now() && s.status !== 'CLOSED' && s.status !== 'RESPONDED')).length;
+    const projects = projectsRes.data || [];
+    const projectsAtRisk = projects.filter((p: { status?: string; client_sla_status?: string }) =>
+      p.status === 'at_risk' || p.client_sla_status === 'breached',
+    ).length;
+    const slas = slasRes.data || [];
+    const totalSlas = slas.length;
+    const breachedSlas = slas.filter((s: { sla_breached?: boolean; response_deadline_at?: string; status?: string }) =>
+      s.sla_breached || (new Date(s.response_deadline_at || 0).getTime() < Date.now() && s.status !== 'CLOSED' && s.status !== 'RESPONDED'),
+    ).length;
     const slaCompliancePct = totalSlas > 0 ? Math.round(((totalSlas - breachedSlas) / totalSlas) * 100) : 100;
 
-    const outstandingInvoices = (invoices.data || []).filter((i: any) => i.status === 'sent' || i.status === 'overdue');
-    const outstandingRevenue = outstandingInvoices.reduce((acc: number, curr: any) => acc + (Number(curr.total_amount) || 0), 0);
+    const invoices = invoicesRes.data || [];
+    const outstandingInvoices = invoices.filter((i: { status?: string }) => i.status === 'sent' || i.status === 'overdue');
+    const outstandingRevenue = outstandingInvoices.reduce(
+      (acc: number, curr: { total_amount?: number }) => acc + (Number(curr.total_amount) || 0),
+      0,
+    );
 
-    // Identify primary bottleneck
+    const blockers = blockersRes.data || [];
+    const failuresCount = failuresRes.count || 0;
+
     let primaryBottleneck = 'None detected';
-    if ((blockers.data || []).length > 3) {
-      primaryBottleneck = `${(blockers.data || []).length} active work blockers slowing project execution`;
+    if (blockers.length > 3) {
+      primaryBottleneck = `${blockers.length} active work blockers slowing project execution`;
     } else if (breachedSlas > 0) {
       primaryBottleneck = `${breachedSlas} client communications breaching 24h response SLA`;
     } else if (outstandingInvoices.length > 5) {
       primaryBottleneck = `${outstandingInvoices.length} outstanding invoices awaiting collection`;
-    } else if ((failures.data || []).length > 2) {
-      primaryBottleneck = `${(failures.data || []).length} operational/automation failures logged`;
+    } else if (failuresCount > 2) {
+      primaryBottleneck = `${failuresCount} operational/automation failures logged`;
     }
 
     return {
-      activeProjectsCount: activeProjects.length,
-      projectsAtRiskCount: projectsAtRisk.length,
-      openTasksCount: (openTasks.data || []).length,
-      blockedTasksCount: (blockedTasks.data || []).length,
-      failedTasksCount: (failures.data || []).length,
-      pendingDecisionsCount: (decisions.data || []).length,
+      activeProjectsCount,
+      projectsAtRiskCount: projectsAtRisk,
+      openTasksCount,
+      blockedTasksCount: blockedTasksRes.count || 0,
+      failedTasksCount: failuresCount,
+      pendingDecisionsCount: decisionsRes.count || 0,
       slaCompliancePct,
       outstandingRevenue,
       primaryBottleneck,
-      recentFailures: (failures.data || []).slice(0, 5),
-      activeBlockers: (blockers.data || []).slice(0, 5),
+      stats_source: 'canonical_workspace_stats',
+      recentFailures: [],
+      activeBlockers: blockers.slice(0, 5),
     };
   }
 
