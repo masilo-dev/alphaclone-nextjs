@@ -189,11 +189,17 @@ registerTool('gap-finance', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, client_id: { type: 'string' }, title: { type: 'string' }, total: { type: 'number' }, valid_until: { type: 'string' }, notes: { type: 'string' } }, required: ['title', 'total'] },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase.from('quotes').insert({
-      tenant_id: args.tenant_id, client_id: args.client_id || null, title: args.title,
-      total: args.total, line_items: args.line_items || [], valid_until: args.valid_until || null,
-      notes: args.notes || null, status: 'draft', created_by: ctx.userId, created_at: new Date().toISOString(),
-    }).select().single();
+    const { insertQuoteSchemaCompat } = await import('@/lib/mcp/schemaWriteCompat');
+    const { data, error } = await insertQuoteSchemaCompat(supabase, {
+      tenant_id: args.tenant_id,
+      title: args.title,
+      total: args.total,
+      client_id: args.client_id,
+      line_items: args.line_items as Array<Record<string, unknown>> | undefined,
+      valid_until: args.valid_until,
+      notes: args.notes,
+      created_by: ctx.userId,
+    });
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
   },

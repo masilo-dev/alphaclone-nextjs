@@ -71,32 +71,21 @@ registerTool('invoicing', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const issueDate = new Date().toISOString().slice(0, 10);
-    const dueDate =
-      args.due_date?.slice(0, 10) ||
-      new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const { insertBusinessInvoiceSchemaCompat } = await import('@/lib/mcp/schemaWriteCompat');
 
-    const { data, error } = await supabase
-      .from('business_invoices')
-      .insert({
-        tenant_id: args.tenant_id,
-        client_id: args.client_id,
-        total: args.amount,
-        total_amount: args.amount,
-        subtotal: args.amount,
-        status: args.status,
-        due_date: dueDate,
-        issue_date: issueDate,
-        invoice_number: `INV-${Date.now().toString().slice(-6)}`,
-        bank_name: args.bank_name || null,
-        account_number: args.account_number || null,
-        branch_code: args.branch_code || null,
-        swift_code: args.swift_code || null,
-        payment_reference: args.payment_reference || null,
-        bank_details: args.bank_details || null,
-      })
-      .select()
-      .single();
+    const { data, error } = await insertBusinessInvoiceSchemaCompat(supabase, {
+      tenant_id: args.tenant_id!,
+      client_id: args.client_id,
+      amount: args.amount,
+      status: args.status,
+      due_date: args.due_date,
+      bank_name: args.bank_name,
+      account_number: args.account_number,
+      branch_code: args.branch_code,
+      swift_code: args.swift_code,
+      payment_reference: args.payment_reference,
+      bank_details: args.bank_details,
+    });
 
     if (error) throw error;
 

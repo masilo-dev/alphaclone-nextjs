@@ -10,6 +10,16 @@ export type VerificationResult = {
 };
 
 export async function verifyLeadCreated(tenantId: string, leadId: string): Promise<VerificationResult> {
+  const trimmed = String(leadId || '').trim();
+  if (!trimmed || !/^[0-9a-f-]{36}$/i.test(trimmed)) {
+    return {
+      status: 'failed',
+      retryable: false,
+      message: 'lead_id must be a valid UUID',
+      evidence: { lead_id: leadId },
+    };
+  }
+
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from('leads')

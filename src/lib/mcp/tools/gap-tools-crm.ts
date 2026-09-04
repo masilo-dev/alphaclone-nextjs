@@ -197,15 +197,17 @@ registerTool('gap-crm', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, title: { type: 'string' }, description: { type: 'string' }, due_date: { type: 'string' }, priority: { type: 'string' }, assigned_to: { type: 'string' }, project_id: { type: 'string' }, client_id: { type: 'string' } }, required: ['title'] },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
-    // Deduplication check: if pending task with identical title & tenant exists for client_id/project_id, update it
+    const { insertTaskSchemaCompat, resolveContactIdForClientArg } = await import('@/lib/mcp/schemaWriteCompat');
+
     if (args.title && (args.client_id || args.project_id)) {
+      const contactId = await resolveContactIdForClientArg(supabase, args.tenant_id, args.client_id);
       let q = supabase
         .from('tasks')
-        .select('*')
+        .select('id, title, description, due_date, priority, status')
         .eq('tenant_id', args.tenant_id)
         .eq('title', args.title)
-        .eq('status', 'pending');
-      if (args.client_id) q = q.eq('client_id', args.client_id);
+        .eq('status', 'todo');
+      if (contactId) q = q.eq('related_to_contact', contactId);
       if (args.project_id) q = q.eq('project_id', args.project_id);
       const { data: existing } = await q.maybeSingle();
       if (existing?.id) {
@@ -218,13 +220,23 @@ registerTool('gap-crm', {
             updated_at: new Date().toISOString(),
           })
           .eq('id', existing.id)
-          .select()
+          .select('*')
           .single();
         return { content: [{ type: 'text', text: JSON.stringify({ ...updated, deduplicated: true }, null, 2) }] };
       }
     }
 
-    const { data, error } = await supabase.from('tasks').insert({ tenant_id: args.tenant_id, title: args.title, description: args.description || null, due_date: args.due_date || null, priority: args.priority || 'medium', assigned_to: args.assigned_to || ctx.userId, project_id: args.project_id || null, client_id: args.client_id || null, status: 'todo', created_by: ctx.userId, created_at: new Date().toISOString() }).select().single();
+    const { data, error } = await insertTaskSchemaCompat(supabase, {
+      tenant_id: args.tenant_id,
+      title: args.title,
+      description: args.description,
+      due_date: args.due_date,
+      priority: args.priority,
+      assigned_to: args.assigned_to || ctx.userId,
+      project_id: args.project_id,
+      client_id: args.client_id,
+      created_by: ctx.userId,
+    });
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
   },

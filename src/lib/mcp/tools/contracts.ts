@@ -59,6 +59,8 @@ registerTool('contracts', {
     content: z.string(),
     status: z.string().optional().default('draft'),
     type: z.string().optional().default('service_agreement'),
+    governing_law: z.string().optional(),
+    jurisdiction: z.string().optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -69,11 +71,18 @@ registerTool('contracts', {
       content: { type: 'string', description: 'The complete text / body of the contract' },
       status: { type: 'string', default: 'draft' },
       type: { type: 'string', default: 'service_agreement' },
+      governing_law: { type: 'string' },
+      jurisdiction: { type: 'string' },
     },
     required: ['tenant_id', 'title', 'content'],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+    const { extractContractLegalFields } = await import('@/lib/contracts/extractContractLegalFields');
+    const extracted = extractContractLegalFields(args.content);
+    const governingLaw = args.governing_law || extracted.governing_law;
+    const jurisdiction = args.jurisdiction || extracted.jurisdiction || governingLaw;
+
     const { data, error } = await supabase
       .from('contracts')
       .insert({
@@ -83,6 +92,12 @@ registerTool('contracts', {
         content: args.content,
         status: args.status,
         type: args.type,
+        governing_law: governingLaw,
+        jurisdiction,
+        metadata: {
+          governing_law_extracted: Boolean(extracted.governing_law),
+          jurisdiction_extracted: Boolean(extracted.jurisdiction),
+        },
       })
       .select()
       .single();
