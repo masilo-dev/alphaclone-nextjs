@@ -25,6 +25,12 @@ describe('safe bulk MCP operations contract', () => {
     assert.match(source, /idempotency_key is required when dry_run is false/);
   });
 
+  it('validates bulk id lists with shared isUuid helper', () => {
+    const source = readFileSync(helperPath, 'utf8');
+    assert.doesNotMatch(source, /\[0-9a-f-\]\{35\}/);
+    assert.match(source, /isUuid/);
+  });
+
   it('registers the three public bulk MCP tools in both connector and manifest surfaces', () => {
     const toolSource = readFileSync(toolPath, 'utf8');
     const manifestSource = readFileSync(manifestPath, 'utf8');

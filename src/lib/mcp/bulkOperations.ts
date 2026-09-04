@@ -7,6 +7,7 @@ import { ingestMediaInput } from '@/lib/media/ingestMedia';
 import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
 import { assertLeadStageTransition } from '@/lib/stageProgression';
 import { normalizeLeadPipelineStage } from '@/lib/crmPipelineStages';
+import { isUuid } from '@/lib/tenant/platformTenant';
 
 type RecordType = 'lead' | 'client' | 'contact' | 'invoice' | 'project' | 'task';
 type BulkRecordArgs = {
@@ -65,7 +66,7 @@ function uniqueIds(ids: unknown, label: string, max: number): string[] {
   const normalized = Array.from(new Set(ids.map((id) => String(id || '').trim()).filter(Boolean)));
   if (normalized.length === 0) throw new Error(`${label} must contain at least one item`);
   if (normalized.length > max) throw new Error(`${label} cannot exceed ${max} items per request`);
-  if (normalized.some((id) => !/^[0-9a-f]{8}-[0-9a-f-]{35}$/i.test(id))) {
+  if (normalized.some((id) => !isUuid(id))) {
     throw new Error(`${label} must contain valid UUID values`);
   }
   return normalized;
