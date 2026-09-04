@@ -9,7 +9,12 @@ export async function onLeadCreated(options: {
   userId: string;
   leadId: string;
   businessName?: string;
+  /** When false, skip enrichment/outreach for matched existing identities. */
+  isNewLead?: boolean;
 }): Promise<{ enriched: boolean; followUpScheduled: boolean }> {
+  if (options.isNewLead === false) {
+    return { enriched: false, followUpScheduled: false };
+  }
   const admin = createSupabaseAdminClient();
   let enriched = false;
   let followUpScheduled = false;

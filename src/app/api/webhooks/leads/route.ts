@@ -72,24 +72,6 @@ function normalizeLead(input: LeadInput) {
   };
 }
 
-async function findExistingLead(supabase: ReturnType<typeof createSupabaseAdminClient>, tenantId: string, lead: ReturnType<typeof normalizeLead>) {
-  let query = supabase.from('leads').select('id').eq('tenant_id', tenantId);
-
-  if (lead.external_id) {
-    query = query.eq('external_id', lead.external_id);
-  } else if (lead.email) {
-    query = query.ilike('email', lead.email);
-  } else if (lead.phone) {
-    query = query.eq('phone', lead.phone);
-  } else {
-    query = query.ilike('business_name', lead.business_name || '');
-  }
-
-  const { data, error } = await query.limit(1).maybeSingle();
-  if (error) throw error;
-  return data?.id as string | undefined;
-}
-
 export async function POST(req: NextRequest) {
   if (!verifyWebhookSecret(req)) return unauthorized();
 
@@ -114,26 +96,29 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const existingId = await findExistingLead(supabase, tenantId, lead);
-      if (existingId) {
-        const { data, error } = await supabase
-          .from('leads')
-          .update({ ...lead, updated_at: new Date().toISOString() })
-          .eq('id', existingId)
-          .eq('tenant_id', tenantId)
-          .select('id')
-          .single();
-        if (error) throw error;
-        results.push({ id: data.id, action: 'updated' });
-      } else {
-        const { data, error } = await supabase
-          .from('leads')
-          .insert({ ...lead, tenant_id: tenantId, created_at: new Date().toISOString() })
-          .select('id')
-          .single();
-        if (error) throw error;
-        results.push({ id: data.id, action: 'created' });
-      }
+      const { resolveOrCreateCRMIdentity } = await import('@/lib/crm/resolveOrCreateCRMIdentity');
+      const result = await resolveOrCreateCRMIdentity(
+        {
+          business_name: lead.business_name,
+          contact_name: lead.contact_name,
+          email: lead.email,
+          phone: lead.phone,
+          industry: lead.industry,
+          location: lead.location,
+          notes: lead.notes,
+          external_id: lead.external_id,
+          metadata: lead.metadata as Record<string, unknown>,
+        },
+        tenantId,
+        lead.source || 'lead_webhook',
+        { supabase },
+      );
+      results.push({
+        id: result.lead_id,
+        action: result.created ? 'created' : 'updated',
+        matched_existing: result.matched_existing,
+        match_reason: result.match_reason,
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to sync lead';
       results.push({ action: 'skipped', error: message });

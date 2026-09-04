@@ -37,6 +37,7 @@ import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
 import { usePrefetchDashboardStats } from '@/hooks/useDashboardStats';
+import { useCrmDashboardSync } from '@/hooks/useCrmDashboardSync';
 import { startClientVideoCall } from '@/services/instantMeetingService';
 import { WORKSPACE } from '@/constants/design';
 import SkipToMainContent from '@/components/accessibility/SkipToMainContent';
@@ -221,6 +222,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     );
     const [bootstrappingOrg, setBootstrappingOrg] = useState(false);
     usePrefetchDashboardStats(currentTenant?.id);
+    useCrmDashboardSync(currentTenant?.id);
     const hasBootstrappedRef = useRef(Boolean(propTenant || contextTenant));
     if (currentTenant) {
         hasBootstrappedRef.current = true;

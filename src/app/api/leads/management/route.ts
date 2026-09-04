@@ -439,61 +439,49 @@ async function searchGoogleLeads(businessType: string, location: string, radius:
 async function saveLead(tenantId: string, config: any, supabase: any) {
   try {
     const { leadData, source, metadata } = config;
+    const { resolveOrCreateCRMIdentity } = await import('@/lib/crm/resolveOrCreateCRMIdentity');
+    const result = await resolveOrCreateCRMIdentity(
+      {
+        business_name: leadData.name,
+        email: leadData.email,
+        phone: leadData.phone,
+        location: leadData.address || leadData.location,
+        website: leadData.website,
+        industry: leadData.type || leadData.category,
+        external_id: leadData.id,
+        metadata: {
+          ...(leadData.metadata || {}),
+          ...(metadata || {}),
+          priority: calculateLeadPriority(leadData),
+          estimated_value: estimateLeadValue(leadData),
+        },
+      },
+      tenantId,
+      source,
+      { supabase },
+    );
 
-    // Check if lead already exists
-    const { data: existingLead, error: existingError } = await supabase
-      .from('leads')
-      .select('id')
-      .eq('tenant_id', tenantId)
-      .eq('external_id', leadData.id)
-      .maybeSingle();
-
-    if (existingError) throw existingError;
-
-    if (existingLead) {
-      return { success: false, error: 'Lead already exists' };
+    if (leadData.id) {
+      await supabase
+        .from('lead_search_results')
+        .update({ saved_to_database: true })
+        .eq('tenant_id', tenantId)
+        .eq('lead_external_id', leadData.id);
     }
 
-    // Save lead to database
-    const { data: lead, error } = await supabase
+    const { data: lead } = await supabase
       .from('leads')
-      .insert({
-        tenant_id: tenantId,
-        business_name: leadData.name,
-        email: leadData.email || null,
-        phone: leadData.phone || null,
-        location: leadData.address || leadData.location || null,
-        website: leadData.website || null,
-        industry: leadData.type || leadData.category || null,
-        source: source,
-        status: 'new',
-        stage: 'lead',
-        priority: calculateLeadPriority(leadData),
-        external_id: leadData.id,
-        value: estimateLeadValue(leadData),
-        metadata: {
-          ...leadData.metadata,
-          original_source: source,
-          found_at: leadData.foundAt
-        },
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Update lead search tracking
-    await supabase
-      .from('lead_search_results')
-      .update({ saved_to_database: true })
+      .select('*')
+      .eq('id', result.lead_id)
       .eq('tenant_id', tenantId)
-      .eq('lead_external_id', leadData.id);
+      .single();
 
     return {
       success: true,
       data: lead,
-      message: 'Lead saved successfully'
+      matched_existing: result.matched_existing,
+      match_reason: result.match_reason,
+      message: result.created ? 'Lead saved successfully' : 'Matched existing lead',
     };
   } catch (error: any) {
     return operationFailed('leads/management', error);

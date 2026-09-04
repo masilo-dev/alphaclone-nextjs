@@ -297,82 +297,57 @@ export const leadService = {
     async addLead(lead: Partial<Lead>): Promise<{ lead: Lead | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData, error: authError } = await supabase.auth.getUser();
-
-            if (authError || !userData.user) {
-                const { data: refreshData } = await supabase.auth.refreshSession();
-                if (!refreshData.user) {
-                    return { lead: null, error: 'Authentication session expired. Please refresh the page.' };
-                }
-            }
 
             const intelligence = intelligenceScoringService.scoreLead({
                 industry: lead.industry,
                 email: lead.email,
                 phone: lead.phone,
                 website: lead.website || lead.fb,
-                role: lead.notes
+                role: lead.notes,
             });
 
-            const dbPayload = {
-                tenant_id: tenantId,
-                owner_id: userData.user?.id || (await supabase.auth.getUser()).data.user?.id,
-                business_name: lead.businessName,
-                industry: lead.industry,
-                location: lead.location,
-                phone: lead.phone,
-                email: lead.email,
-                website: lead.website || lead.fb,
-                source: lead.source || 'Manual',
-                stage: lead.stage || 'lead',
-                value: lead.value || 0,
-                notes: lead.notes,
-                outreach_message: lead.outreachMessage,
-                outreach_status: lead.outreachStatus || 'pending',
-                is_verified: lead.isVerified || false,
-                trust_score: lead.trustScore || 0,
-                verification_notes: lead.verificationNotes,
-                outreach_hook: lead.outreachHook,
-                strategy: lead.strategy,
-                tech_stack: lead.techStack || [],
-                pain_points: lead.painPoints || [],
-                value_proposition: lead.valueProposition,
-                latitude: lead.lat,
-                longitude: lead.lng,
-                sdr_insight: lead.sdrInsight,
-                social_links: lead.socialLinks || {},
-                metadata: lead.metadata || {},
-                intelligence_score: intelligence.qualifiedProbability,
-                intelligence_confidence: intelligence.confidence,
-                intelligence_state: intelligence.stateDistribution,
-                intelligence_recommendations: intelligence.recommendations,
-                psychology_profile: intelligence.psychologyProfile
-            };
+            const res = await fetch('/api/crm/leads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    tenantId,
+                    businessName: lead.businessName,
+                    email: lead.email || '',
+                    phone: lead.phone,
+                    industry: lead.industry,
+                    location: lead.location,
+                    website: lead.website || lead.fb,
+                    source: lead.source || 'Manual',
+                    notes: lead.notes,
+                    stage: lead.stage || 'lead',
+                    value: lead.value || 0,
+                    metadata: {
+                        ...(lead.metadata || {}),
+                        outreach_message: lead.outreachMessage,
+                        outreach_status: lead.outreachStatus || 'pending',
+                        intelligence_score: intelligence.qualifiedProbability,
+                        intelligence_confidence: intelligence.confidence,
+                    },
+                }),
+            });
 
-            const { data, error } = await supabase
-                .from('leads')
-                .insert(dbPayload)
-                .select()
-                .single();
-
-            if (error) {
-                console.error('LeadService: Insert error', error);
-                if (error.code === '42501') return { lead: null, error: 'Permission denied. Please refresh.' };
-                throw error;
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { lead: null, error: json.error || `HTTP ${res.status}` };
             }
 
-            const newLead: Lead = normalizeLeadRecord(data);
+            const newLead: Lead = normalizeLeadRecord(json.lead);
 
-            // EMIT AUTOMATION EVENT (client-safe — server emit via API)
             const { requestBusinessEvent } = await import('../lib/automation/request-event');
             await requestBusinessEvent(tenantId, 'lead_created', {
                 leadId: newLead.id,
                 businessName: newLead.businessName,
                 source: newLead.source,
-                stage: newLead.stage
+                stage: newLead.stage,
+                matched_existing: json.matched_existing,
             }).catch(err => console.error('Failed to emit lead_created event:', err));
 
-            // SYNC TO EXTERNAL CRM
             UnifiedCRMService.syncLead(newLead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
             void requestCrmBridgeSync(tenantId, 'lead', newLead.id);
 

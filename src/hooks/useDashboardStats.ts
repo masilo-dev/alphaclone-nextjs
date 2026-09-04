@@ -110,12 +110,30 @@ export function useDashboardStats(
   );
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshNonce, setRefreshNonce] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !tenantId) return;
+    const onInvalidate = (event: Event) => {
+      const detail = (event as CustomEvent<{ tenantId?: string }>).detail;
+      if (!detail?.tenantId || detail.tenantId === tenantId) {
+        try {
+          sessionStorage.removeItem(cacheKey(endpoint, tenantId, period));
+        } catch {
+          /* ignore */
+        }
+        setRefreshNonce((n) => n + 1);
+      }
+    };
+    window.addEventListener('ac:crm-stats-invalidate', onInvalidate);
+    return () => window.removeEventListener('ac:crm-stats-invalidate', onInvalidate);
+  }, [tenantId, endpoint, period]);
 
   useEffect(() => {
     if (!tenantId) return;
 
     const cached = readClientCache(endpoint, tenantId, period);
-    if (cached) {
+    if (cached && refreshNonce === 0) {
       setData(cached);
     }
 
@@ -127,6 +145,7 @@ export function useDashboardStats(
     fetch(statsUrl(endpoint, tenantId, period), {
       signal: controller.signal,
       credentials: 'include',
+      cache: refreshNonce > 0 ? 'no-store' : 'default',
     })
       .then(async (res) => {
         if (!res.ok) {
@@ -156,7 +175,7 @@ export function useDashboardStats(
       cancelled = true;
       controller.abort();
     };
-  }, [tenantId, endpoint, period]);
+  }, [tenantId, endpoint, period, refreshNonce]);
 
   const loading = !data && isValidating;
 

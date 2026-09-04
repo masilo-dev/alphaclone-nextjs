@@ -335,19 +335,46 @@ export async function POST(request: NextRequest) {
                 previouslyContactedEmails = new Set((previousRows || []).map((r: any) => String(r.email).trim().toLowerCase()));
             }
 
-            const rowsToInsert = normalizedContacts
-                .filter((c: any) => {
-                    const normalizedEmail = String(c.email).trim().toLowerCase();
-                    return !existingCampaignEmails.has(normalizedEmail) && !previouslyContactedEmails.has(normalizedEmail);
-                })
-                .map((c) => ({
+            const { checkOutreachEligibility } = await import('@/lib/outreach/checkOutreachEligibility');
+            const skippedReasons: Array<{ email: string; reason: string }> = [];
+            const rowsToInsert: Array<Record<string, unknown>> = [];
+
+            for (const c of normalizedContacts) {
+                const normalizedEmail = String(c.email).trim().toLowerCase();
+                if (existingCampaignEmails.has(normalizedEmail)) {
+                    skippedReasons.push({ email: normalizedEmail, reason: 'already_in_campaign' });
+                    continue;
+                }
+                if (previouslyContactedEmails.has(normalizedEmail)) {
+                    skippedReasons.push({ email: normalizedEmail, reason: 'already_contacted' });
+                    continue;
+                }
+
+                const eligibility = await checkOutreachEligibility(
+                    c.contactId || null,
+                    campaignId,
+                    'email',
+                    {
+                        tenantId,
+                        leadId: c.metadata?.lead_id as string | undefined,
+                        email: normalizedEmail,
+                        supabase: admin,
+                    },
+                );
+                if (!eligibility.eligible) {
+                    skippedReasons.push({ email: normalizedEmail, reason: eligibility.reason || 'invalid_contact' });
+                    continue;
+                }
+
+                rowsToInsert.push({
                     tenant_id: tenantId,
                     campaign_id: campaignId,
                     contact_id: c.contactId,
                     email: String(c.email).trim(),
                     status: 'pending',
-                    metadata: c.metadata || {},
-                }));
+                    metadata: { ...(c.metadata || {}), eligibility_checked_at: new Date().toISOString() },
+                });
+            }
 
             if (rowsToInsert.length > 0) {
                 const { error: insertError } = await admin.from('campaign_recipients').insert(rowsToInsert);
@@ -365,6 +392,7 @@ export async function POST(request: NextRequest) {
                 success: true,
                 added: rowsToInsert.length,
                 skipped: normalizedContacts.length - rowsToInsert.length,
+                skipped_reasons: skippedReasons,
             });
         }
 

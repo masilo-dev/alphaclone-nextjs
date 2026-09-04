@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       rating: lead.rating,
       website: lead.website,
       business_name: lead.business_name,
-      address: lead.address,
+      address: lead.location,
     });
 
     let nexusEnrichment: Record<string, unknown> | null = null;

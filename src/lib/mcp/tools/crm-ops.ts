@@ -4,8 +4,6 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { buildPaginationMeta, normalizePagination } from '@/lib/mcp/connector/pagination';
 import { okResult, throwConnectorError } from '@/lib/mcp/connector/response';
 import { getUnifiedContacts } from '@/lib/crm/unifiedContacts';
-import { onLeadCreated } from '@/lib/leads/leadOnCreated';
-import { insertLeadWithSchemaCompat } from '@/lib/leads/insertLeadCompat';
 import { normalizePhoneForStorage } from '@/lib/phone/leadPhone';
 
 defineConnectorTool({
@@ -164,31 +162,48 @@ defineConnectorTool({
     const primaryName = (args.business_name || args.contact_name || '').trim();
     if (!primaryName) throwConnectorError('VALIDATION_ERROR', 'business_name or contact_name is required');
 
+    const { resolveOrCreateCRMIdentity } = await import('@/lib/crm/resolveOrCreateCRMIdentity');
+    const result = await resolveOrCreateCRMIdentity(
+      {
+        business_name: args.business_name,
+        contact_name: args.contact_name,
+        email: args.email,
+        phone: args.phone,
+        industry: args.industry,
+        location: args.location,
+        notes: args.notes,
+        linkedin_url: args.linkedin_url,
+        owner_id: ctx.userId,
+      },
+      args.tenant_id,
+      args.source || 'mcp_connector',
+      {
+        userId: ctx.userId,
+        idempotencyKey: (args as { idempotency_key?: string }).idempotency_key,
+      },
+    );
+
     const supabase = createSupabaseAdminClient();
-    const phone = normalizePhoneForStorage(args.phone);
+    const { data: lead } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('id', result.lead_id)
+      .eq('tenant_id', args.tenant_id)
+      .single();
 
-    const { data, error } = await insertLeadWithSchemaCompat(supabase, {
-      tenant_id: args.tenant_id,
-      owner_id: ctx.userId,
-      business_name: primaryName,
-      contact_name: args.contact_name || null,
-      email: args.email || null,
-      phone: phone || null,
-      industry: args.industry || null,
-      location: args.location || null,
-      source: args.source || 'mcp_connector',
-      notes: args.notes || null,
-      linkedin_url: args.linkedin_url || null,
-    });
-
-    if (error) throwConnectorError('CREATE_FAILED', error.message);
-    if (!data?.id) throwConnectorError('CREATE_FAILED', 'Lead insert returned no id');
-    try {
-      await onLeadCreated({ tenantId: args.tenant_id, leadId: String(data.id), userId: ctx.userId });
-    } catch (hookErr) {
-      console.warn('[create_lead] onLeadCreated:', hookErr);
-    }
-    return data;
+    return {
+      ...(lead || { id: result.lead_id }),
+      contact_id: result.contact_id,
+      lead_id: result.lead_id,
+      company_id: result.company_id,
+      created: result.created,
+      matched_existing: result.matched_existing,
+      possible_duplicate: result.possible_duplicate,
+      match_reason: result.match_reason,
+      source_added: result.source_added,
+      dashboard_event_emitted: result.dashboard_event_emitted,
+      event_id: result.event_id,
+    };
   },
 });
 
@@ -241,87 +256,98 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const skipDuplicates = args.options?.skip_duplicates !== false;
     const continueOnError = args.options?.continue_on_error !== false;
-    const now = new Date().toISOString();
+    const idempotencyKey = args.options?.idempotency_key;
+    const { resolveOrCreateCRMIdentity } = await import('@/lib/crm/resolveOrCreateCRMIdentity');
     const results: Array<Record<string, unknown>> = [];
     let successful = 0;
     let failed = 0;
     let skipped = 0;
+    let matched = 0;
 
-    const existingEmails = new Set<string>();
-    if (skipDuplicates) {
-      const emails = args.items.map((i) => String(i.email || '').trim().toLowerCase()).filter(Boolean);
-      if (emails.length) {
-        const { data } = await supabase.from('leads').select('email').eq('tenant_id', args.tenant_id).in('email', emails);
-        for (const row of data || []) {
-          if (row.email) existingEmails.add(String(row.email).toLowerCase());
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < args.items.length; i += CHUNK_SIZE) {
+      const chunk = args.items.slice(i, i + CHUNK_SIZE);
+      for (const [offset, item] of chunk.entries()) {
+        const index = i + offset;
+        const primaryName = (item.business_name || item.contact_name || '').trim();
+        if (!primaryName) {
+          failed += 1;
+          results.push({ status: 'failed', reason: 'business_name or contact_name is required' });
+          if (!continueOnError) break;
+          continue;
+        }
+
+        try {
+          const result = await resolveOrCreateCRMIdentity(
+            {
+              business_name: item.business_name,
+              contact_name: item.contact_name,
+              email: item.email,
+              phone: item.phone,
+              industry: item.industry,
+              location: item.location,
+              notes: item.notes,
+              linkedin_url: item.linkedin_url,
+              owner_id: ctx.userId,
+            },
+            args.tenant_id,
+            item.source || 'mcp_bulk',
+            {
+              userId: ctx.userId,
+              idempotencyKey: idempotencyKey ? `${idempotencyKey}:${index}` : null,
+              skipOnLeadCreated: false,
+            },
+          );
+
+          if (result.matched_existing) {
+            if (skipDuplicates) {
+              matched += 1;
+              results.push({
+                status: 'matched',
+                id: result.lead_id,
+                match_reason: result.match_reason,
+                email: item.email,
+                business_name: primaryName,
+              });
+              continue;
+            }
+          }
+
+          successful += 1;
+          results.push({
+            status: result.created ? 'created' : 'matched',
+            id: result.lead_id,
+            created: result.created,
+            matched_existing: result.matched_existing,
+            match_reason: result.match_reason,
+            email: item.email,
+            business_name: primaryName,
+          });
+        } catch (err) {
+          failed += 1;
+          results.push({
+            status: 'failed',
+            reason: err instanceof Error ? err.message : 'create failed',
+            email: item.email,
+          });
+          if (!continueOnError) break;
         }
       }
+      if (!continueOnError && failed > 0) break;
     }
 
-    for (const item of args.items) {
-      const primaryName = (item.business_name || item.contact_name || '').trim();
-      if (!primaryName) {
-        failed += 1;
-        results.push({ status: 'failed', reason: 'business_name or contact_name is required' });
-        if (!continueOnError) break;
-        continue;
-      }
-      const email = String(item.email || '').trim().toLowerCase();
-      if (email && skipDuplicates && existingEmails.has(email)) {
-        skipped += 1;
-        results.push({ status: 'skipped', reason: 'duplicate', email });
-        continue;
-      }
-
-      const phone = normalizePhoneForStorage(item.phone);
-
-      const { data, error } = await insertLeadWithSchemaCompat<{ id: string; email: string | null; business_name: string }>(
-        supabase,
-        {
-          tenant_id: args.tenant_id,
-          owner_id: ctx.userId,
-          business_name: primaryName,
-          contact_name: item.contact_name || null,
-          email: email || null,
-          phone: phone || null,
-          industry: item.industry || null,
-          location: item.location || null,
-          source: item.source || 'mcp_bulk',
-          notes: item.notes || null,
-          linkedin_url: item.linkedin_url || null,
-          created_at: now,
-        },
-        'id, email, business_name',
-      );
-      if (error) {
-        failed += 1;
-        results.push({ status: 'failed', reason: error.message, email });
-        if (!continueOnError) break;
-        continue;
-      }
-      if (!data?.id) {
-        failed += 1;
-        results.push({ status: 'failed', reason: 'Lead insert returned no id', email });
-        if (!continueOnError) break;
-        continue;
-      }
-      if (email) existingEmails.add(email);
-      successful += 1;
-      results.push({ status: 'created', id: data.id, email: data.email, business_name: data.business_name });
-      try {
-        await onLeadCreated({ tenantId: args.tenant_id, leadId: String(data.id), userId: ctx.userId });
-      } catch {
-        /* non-blocking */
-      }
-    }
-
-    return {
-      requested: args.items.length,
-      successful,
-      failed,
-      skipped,
-      results,
-    };
+    return okResult(
+      'create_leads',
+      {
+        successful,
+        failed,
+        skipped,
+        matched,
+        total: args.items.length,
+        results,
+      },
+      { receipt: null },
+    );
   },
 });
 
