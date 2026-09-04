@@ -1,4 +1,4 @@
-import { absoluteUrl, SITE_URL } from '@/lib/siteUrl';
+import { absoluteUrl, publicEmailUrl, resolvePublicHttpsOrigin, isAbsoluteHttpsUrl } from '@/lib/siteUrl';
 
 /** Permanent public path for the official AlphaClone email logo (PNG, under 10KB). */
 export const EMAIL_LOGO_PATH = '/email-assets/alphaclone-email-logo.png';
@@ -30,14 +30,7 @@ export function resolveEmailLogoUrl(): string {
   return absoluteUrl(EMAIL_LOGO_PATH);
 }
 
-export function isAbsoluteHttpsUrl(value: string): boolean {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
+export { isAbsoluteHttpsUrl } from '@/lib/siteUrl';
 
 export type EmailLogoValidationResult = {
   ok: boolean;
@@ -87,11 +80,12 @@ export async function validateEmailLogoUrl(url?: string): Promise<EmailLogoValid
 }
 
 export function getLegalUrls() {
+  const origin = resolvePublicHttpsOrigin();
   return {
-    privacy: `${SITE_URL}/privacy-policy`,
-    terms: `${SITE_URL}/terms-of-service`,
-    preferences: `${SITE_URL}/preferences/email`,
-    privacyRequest: `${SITE_URL}/legal/data-request`,
+    privacy: `${origin}/privacy-policy`,
+    terms: `${origin}/terms-of-service`,
+    preferences: publicEmailUrl('/preferences/email'),
+    privacyRequest: publicEmailUrl('/legal/data-request'),
     website: EMAIL_BRAND_HOME_URL,
   };
 }

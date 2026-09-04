@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { SITE_URL } from '@/lib/siteUrl';
+import { isAbsoluteHttpsUrl, publicEmailUrl } from '@/lib/siteUrl';
 
 const TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
@@ -70,10 +70,35 @@ export function verifyUnsubscribeToken(token: string): { email: string; tenantId
   }
 }
 
+function buildLegacySignedUnsubscribeUrl(email: string, tenantId: string): string {
+  const secret = getUnsubscribeSecret();
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const normalizedTenantId = String(tenantId || '').trim();
+  if (!secret || !normalizedEmail || !normalizedTenantId) return '';
+
+  const sig = crypto.createHmac('sha256', secret).update(`${normalizedTenantId}:${normalizedEmail}`).digest('hex');
+  const params = new URLSearchParams({
+    tenantId: normalizedTenantId,
+    email: normalizedEmail,
+    sig,
+  });
+  return publicEmailUrl(`/api/unsubscribe?${params.toString()}`);
+}
+
+/**
+ * Builds a secure HTTPS unsubscribe URL for email footers and List-Unsubscribe headers.
+ */
 export function buildUnsubscribeUrl(email: string, tenantId: string): string {
   const token = generateUnsubscribeToken(email, tenantId);
-  if (!token) return '';
-  return `${SITE_URL}/api/unsubscribe?token=${encodeURIComponent(token)}`;
+  if (token) {
+    const url = publicEmailUrl(`/api/unsubscribe?token=${encodeURIComponent(token)}`);
+    if (isAbsoluteHttpsUrl(url)) return url;
+  }
+
+  const legacy = buildLegacySignedUnsubscribeUrl(email, tenantId);
+  if (legacy && isAbsoluteHttpsUrl(legacy)) return legacy;
+
+  return publicEmailUrl('/preferences/email');
 }
 
 /** Legacy HMAC link verification (tenantId + email + sig query params) */
@@ -99,4 +124,13 @@ export function verifyEmailUnsubscribeSignature(params: { tenantId: string; emai
 /** @deprecated Use buildUnsubscribeUrl — kept for existing call sites during migration */
 export function buildEmailUnsubscribeUrl(params: { tenantId: string; email: string }) {
   return buildUnsubscribeUrl(params.email, params.tenantId);
+}
+
+export function buildPreferencesUrl(tenantId: string, email: string, token?: string): string {
+  const params = new URLSearchParams({
+    tenant: tenantId,
+    email: email.trim().toLowerCase(),
+  });
+  if (token) params.set('token', token);
+  return publicEmailUrl(`/preferences/email?${params.toString()}`);
 }

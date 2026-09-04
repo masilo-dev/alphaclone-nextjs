@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { addUnsubscribe } from '@/lib/email/unsubscribe';
-import { verifyUnsubscribeToken } from '@/lib/email/unsubscribeToken';
-import { SITE_URL } from '@/lib/siteUrl';
+import {
+  verifyUnsubscribeToken,
+  verifyEmailUnsubscribeSignature,
+  buildPreferencesUrl,
+} from '@/lib/email/unsubscribeToken';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +29,7 @@ async function processUnsubscribe(req: NextRequest, token: string) {
   const verified = verifyUnsubscribeToken(token);
   if (!verified) return null;
 
-  const preferencesUrl = `${SITE_URL}/preferences/email?tenant=${encodeURIComponent(verified.tenantId)}&email=${encodeURIComponent(verified.email)}&token=${encodeURIComponent(token)}`;
+  const preferencesUrl = buildPreferencesUrl(verified.tenantId, verified.email, token);
 
   await addUnsubscribe(verified.email, verified.tenantId, {
     source: 'unsubscribe_link',
@@ -38,46 +41,89 @@ async function processUnsubscribe(req: NextRequest, token: string) {
   return { verified, preferencesUrl };
 }
 
+function resolveLegacyUnsubscribe(req: NextRequest) {
+  const url = new URL(req.url);
+  const tenantId = String(url.searchParams.get('tenantId') || '').trim();
+  const email = String(url.searchParams.get('email') || '').trim().toLowerCase();
+  const sig = String(url.searchParams.get('sig') || '').trim();
+  if (!tenantId || !email || !sig) return null;
+  if (!verifyEmailUnsubscribeSignature({ tenantId, email, sig })) return null;
+  return { email, tenantId };
+}
+
 /** RFC 8058 one-click unsubscribe POST */
 export async function POST(req: NextRequest) {
-  const token = String(new URL(req.url).searchParams.get('token') || req.headers.get('List-Unsubscribe') || '').trim();
-  if (!token) {
+  const url = new URL(req.url);
+  const token = String(url.searchParams.get('token') || req.headers.get('List-Unsubscribe') || '').trim();
+  if (token) {
+    const result = await processUnsubscribe(req, token);
+    if (!result) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+    }
+    return NextResponse.json({ success: true, unsubscribed: true });
+  }
+
+  const legacy = resolveLegacyUnsubscribe(req);
+  if (!legacy) {
     return NextResponse.json({ error: 'Missing token' }, { status: 400 });
   }
 
-  const result = await processUnsubscribe(req, token);
-  if (!result) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
-  }
-
+  await addUnsubscribe(legacy.email, legacy.tenantId, {
+    source: 'unsubscribe_link_legacy',
+    ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
+    userAgent: req.headers.get('user-agent') || undefined,
+  });
   return NextResponse.json({ success: true, unsubscribed: true });
 }
 
 export async function GET(req: NextRequest) {
-  const token = String(new URL(req.url).searchParams.get('token') || '').trim();
-  if (!token) {
-    return new NextResponse(confirmationHtml('Invalid unsubscribe link.'), {
-      status: 400,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
-  }
+  const url = new URL(req.url);
+  const token = String(url.searchParams.get('token') || '').trim();
 
-  try {
-    const result = await processUnsubscribe(req, token);
-    if (!result) {
-      return new NextResponse(confirmationHtml('This unsubscribe link is invalid or has expired.'), {
-        status: 400,
+  if (token) {
+    try {
+      const result = await processUnsubscribe(req, token);
+      if (!result) {
+        return new NextResponse(confirmationHtml('This unsubscribe link is invalid or has expired.'), {
+          status: 400,
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        });
+      }
+      return new NextResponse(confirmationHtml("You've been unsubscribed.", result.preferencesUrl), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    } catch {
+      return new NextResponse(confirmationHtml('We could not process your request. Please try again later.'), {
+        status: 500,
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
       });
     }
-    return new NextResponse(confirmationHtml("You've been unsubscribed.", result.preferencesUrl), {
-      status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
-  } catch {
-    return new NextResponse(confirmationHtml('We could not process your request. Please try again later.'), {
-      status: 500,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
   }
+
+  const legacy = resolveLegacyUnsubscribe(req);
+  if (legacy) {
+    try {
+      await addUnsubscribe(legacy.email, legacy.tenantId, {
+        source: 'unsubscribe_link_legacy',
+        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
+        userAgent: req.headers.get('user-agent') || undefined,
+      });
+      const preferencesUrl = buildPreferencesUrl(legacy.tenantId, legacy.email);
+      return new NextResponse(confirmationHtml("You've been unsubscribed.", preferencesUrl), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    } catch {
+      return new NextResponse(confirmationHtml('We could not process your request. Please try again later.'), {
+        status: 500,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    }
+  }
+
+  return new NextResponse(confirmationHtml('Invalid unsubscribe link.'), {
+    status: 400,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
 }

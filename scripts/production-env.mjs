@@ -273,6 +273,18 @@ export function validateProductionEnv(env = process.env) {
     configured["email logo URL"] = env.EMAIL_LOGO_URL?.trim() ? "EMAIL_LOGO_URL" : "derived";
   }
 
+  const unsubscribeSecret =
+    env.UNSUBSCRIBE_SECRET?.trim() || env.EMAIL_UNSUBSCRIBE_SECRET?.trim() || "";
+  if (!unsubscribeSecret || unsubscribeSecret.length < 32) {
+    errors.push(
+      "UNSUBSCRIBE_SECRET or EMAIL_UNSUBSCRIBE_SECRET is required (32+ chars) for secure HTTPS unsubscribe links",
+    );
+  } else {
+    configured["unsubscribe signing secret"] = env.UNSUBSCRIBE_SECRET?.trim()
+      ? "UNSUBSCRIBE_SECRET"
+      : "EMAIL_UNSUBSCRIBE_SECRET";
+  }
+
   const oauthProviders = [
     ['Microsoft OAuth', ['AZURE_CLIENT_ID', 'NEXT_PUBLIC_AZURE_CLIENT_ID', 'VITE_AZURE_CLIENT_ID'], ['AZURE_CLIENT_SECRET']],
     ['Zoho OAuth', ['ZOHO_CLIENT_ID', 'NEXT_PUBLIC_ZOHO_CLIENT_ID'], ['ZOHO_CLIENT_SECRET', 'ZOHO_ENCRYPTION_SECRET']],

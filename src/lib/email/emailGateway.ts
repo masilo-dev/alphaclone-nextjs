@@ -13,7 +13,7 @@ import {
   type CommunicationClassification,
   type CommunicationPurpose,
 } from '@/lib/compliance/communicationCompliance';
-import { absoluteUrl } from '@/lib/siteUrl';
+import { publicEmailUrl, isAbsoluteHttpsUrl } from '@/lib/siteUrl';
 import type { EmailAttachment } from '@/lib/email/emailAttachment';
 import { recordSuccessfulEmailSend } from '@/lib/email/usageMeteringService';
 
@@ -208,6 +208,19 @@ export async function sendViaEmailGateway(request: EmailGatewayRequest): Promise
     const { buildUnsubscribeUrl } = await import('@/lib/email/unsubscribeToken');
     unsubscribeUrl = buildUnsubscribeUrl(primaryRecipient, request.tenantId);
   }
+  if (request.category === 'marketing' || request.category === 'outreach') {
+    if (!unsubscribeUrl || !isAbsoluteHttpsUrl(unsubscribeUrl)) {
+      return {
+        success: false,
+        tried: [],
+        error: 'A secure HTTPS unsubscribe link is required for marketing and outreach email.',
+        code: 'UNSUBSCRIBE_URL_INVALID',
+        gatewayVersion: GATEWAY_VERSION,
+        templateVersion: request.templateId || 'default',
+        category: request.category,
+      };
+    }
+  }
 
   const compliance = resolveCommunicationCompliance({
     tenantId: request.tenantId,
@@ -226,7 +239,7 @@ export async function sendViaEmailGateway(request: EmailGatewayRequest): Promise
     ],
     unsubscribeUrl,
     preferencesUrl: branding.preferencesUrl,
-    dataRequestUrl: absoluteUrl('/legal/data-request'),
+    dataRequestUrl: publicEmailUrl('/legal/data-request'),
     links: request.cta?.url ? [request.cta.url] : [],
   });
 
@@ -292,7 +305,7 @@ export async function sendViaEmailGateway(request: EmailGatewayRequest): Promise
     compliance,
     unsubscribeUrl,
     preferencesUrl: branding.preferencesUrl,
-    dataRequestUrl: absoluteUrl('/legal/data-request'),
+    dataRequestUrl: publicEmailUrl('/legal/data-request'),
   });
 
   await recordGatewayAudit({
@@ -415,7 +428,7 @@ export async function previewEmailGateway(
       { id: 'privacy', type: 'privacy', version: '1', language: locale.locale, publicUrl: branding.privacyPolicyUrl, status: 'published' },
       { id: 'terms', type: 'terms', version: '1', language: locale.locale, publicUrl: branding.termsUrl, status: 'published' },
     ],
-    unsubscribeUrl: absoluteUrl('/api/unsubscribe'),
+    unsubscribeUrl: publicEmailUrl('/api/unsubscribe'),
     preferencesUrl: branding.preferencesUrl,
   });
 
@@ -442,7 +455,7 @@ export async function previewEmailGateway(
     brand: branding.brand,
     purpose,
     compliance,
-    unsubscribeUrl: absoluteUrl('/api/unsubscribe'),
+    unsubscribeUrl: publicEmailUrl('/api/unsubscribe'),
     preferencesUrl: branding.preferencesUrl,
   });
 
