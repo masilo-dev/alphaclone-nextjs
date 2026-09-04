@@ -127,6 +127,7 @@ import { generateText } from "../services/unifiedAIService";
 import BonnieWidget from "./dashboard/bonnie/BonnieWidget";
 import BonnieFullView from "./dashboard/bonnie/BonnieFullView";
 import ApprovalCenter from "./dashboard/bonnie/ApprovalCenter";
+import { ChaseExecutionInbox } from "./dashboard/bonnie/ChaseExecutionInbox";
 interface ArchitectData {
   techStack: string;
   developmentPrompt: string;
@@ -2053,6 +2054,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       case "/dashboard/bonnie/approvals":
       case "/dashboard/business/bonnie/approvals":
         return <ApprovalCenter />;
+
+      case "/dashboard/bonnie/chases":
+      case "/dashboard/business/bonnie/chases":
+        return <ChaseExecutionInbox />;
 
       case "/dashboard/business/bonnie":
         return (

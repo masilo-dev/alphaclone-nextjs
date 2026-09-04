@@ -42,6 +42,7 @@ import {
   Brain,
   BookOpen,
   ShieldAlert,
+  BellRing,
   CreditCard,
   Monitor,
 } from 'lucide-react';
@@ -114,6 +115,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Contact intake', href: '/dashboard/contact-submissions', icon: Mail },
   { label: 'Bonnie AI', href: '/dashboard/bonnie', icon: Brain },
   { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
+  { label: 'Chase inbox', href: '/dashboard/bonnie/chases', icon: BellRing },
   {
     label: 'Platform insights',
     href: '#',
@@ -239,6 +241,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Bonnie AI', href: '/dashboard/business/bonnie', icon: Brain },
       { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
+      { label: 'Chase inbox', href: '/dashboard/bonnie/chases', icon: BellRing },
       { label: 'Automations', href: '/dashboard/business/workflows', icon: Zap },
       { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
       { label: 'Executive view', href: '/dashboard/executive', icon: BarChart3 },

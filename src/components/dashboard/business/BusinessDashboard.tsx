@@ -121,6 +121,7 @@ const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
 const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
 const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
 const UnifiedActionCenter = React.lazy(() => import('../bonnie/UnifiedActionCenter'));
+const ChaseExecutionInbox = React.lazy(() => import('../bonnie/ChaseExecutionInbox'));
 const AuditTrailPage = React.lazy(() => import('../AuditTrailPage'));
 const SalesForecastTab = React.lazy(() => import('../SalesForecastTab'));
 const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
@@ -983,6 +984,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
 
+            case '/dashboard/bonnie/chases':
+            case '/dashboard/business/bonnie/chases':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <ChaseExecutionInbox />
+                    </React.Suspense>
+                );
+
             case '/dashboard/business/tickets':
                 return (
                     <React.Suspense fallback={<TableSkeleton />}>
@@ -1116,6 +1125,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/bonnie': return t('Bonnie AI Console');
             case '/dashboard/bonnie/approvals':
             case '/dashboard/business/bonnie/approvals': return t('Approvals');
+            case '/dashboard/bonnie/chases':
+            case '/dashboard/business/bonnie/chases': return t('Chase inbox');
             case '/dashboard/business/tickets': return t('Deep-Desk Support');
             case '/dashboard/business/audit': return t('Audit Trail');
             case '/dashboard/accounting': return t('Accounting Dashboard');

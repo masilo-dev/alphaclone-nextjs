@@ -30,6 +30,7 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         '/dashboard/tickets': '/dashboard/business/tickets',
         '/dashboard/billing': '/dashboard/business/billing',
         '/dashboard/bonnie': '/dashboard/business/bonnie',
+        '/dashboard/bonnie/chases': '/dashboard/business/bonnie/chases',
         '/dashboard/security': '/dashboard/business/settings',
         '/dashboard/projects/manage': '/dashboard/business/projects/manage',
         '/dashboard/contracts/manage': '/dashboard/business/contracts/manage',

@@ -193,6 +193,17 @@ export const CANONICAL_ROUTES: CanonicalRouteDefinition[] = [
     breadcrumb: ['Bonnie', 'Approvals'],
   },
   {
+    path: '/dashboard/bonnie/chases',
+    title: 'Chase inbox',
+    section: 'bonnie',
+    roles: ['admin', 'tenant_admin', 'staff'],
+    permissions: [],
+    aliases: ['/dashboard/business/bonnie/chases'],
+    mobileSupported: true,
+    breadcrumb: ['Bonnie', 'Chase inbox'],
+    canonicalComponent: 'ChaseExecutionInbox',
+  },
+  {
     path: '/dashboard/business/calendar',
     title: 'Calendar',
     section: 'schedule',

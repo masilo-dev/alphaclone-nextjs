@@ -260,5 +260,15 @@ export async function executeSocialPublishDurableTask(params: {
     },
   });
 
+  const { reconcileSocialChaseOnPublishReceipt } = await import('@/lib/chaser/chaseSocialReceiptReconciliation');
+  const post = intermediate.post as Record<string, unknown> | undefined;
+  const platforms = (post?.platforms as string[]) || [];
+  await reconcileSocialChaseOnPublishReceipt({
+    tenantId: params.tenantId,
+    postId,
+    provider: platforms[0],
+    providerReference: String(intermediate.providerReference || ''),
+  }).catch(() => undefined);
+
   return { status: 'COMPLETED', result: intermediate as Record<string, unknown> };
 }

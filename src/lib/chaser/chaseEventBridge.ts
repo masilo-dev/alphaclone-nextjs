@@ -16,6 +16,7 @@ const EVENT_TO_RESOLUTION: Record<string, { entityType: string; outcome: string 
   contract_signed: { entityType: 'contract', outcome: 'signed' },
   lead_replied: { entityType: 'lead', outcome: 'replied' },
   email_received: { entityType: 'client', outcome: 'reply' },
+  'social.post.published': { entityType: 'social_account', outcome: 'verified_publish' },
 };
 
 export async function resolveChasesForDomainEvent(params: {

@@ -109,12 +109,55 @@ describe('Universal Chaser — Phase 1 foundation', () => {
     );
     assert.match(config, /shouldDelegateLegacyScannersToChaser/);
     assert.match(config, /raw === 5/);
-    const legacy = fs.readFileSync(
-      new URL('../../src/lib/chaser/chaseLegacyDelegation.ts', import.meta.url),
+    const cron = fs.readFileSync(
+      new URL('../../src/lib/chaser/chaseCronRunner.ts', import.meta.url),
       'utf8',
     );
-    assert.match(legacy, /delegateLegacyFollowUpAllTenants/);
+    assert.match(cron, /runChaseCronJob/);
+    assert.match(cron, /markOverdueInvoicesForTenant/);
+    assert.match(cron, /reconcileSocialChasesForTenant/);
     assert.ok(fs.existsSync(new URL('../../src/app/api/dashboard/chase-health/route.ts', import.meta.url).pathname));
+    assert.ok(fs.existsSync(new URL('../../src/app/api/dashboard/chase-action/route.ts', import.meta.url).pathname));
+    assert.ok(fs.existsSync(new URL('../../src/components/dashboard/bonnie/ChaseExecutionInbox.tsx', import.meta.url).pathname));
+  });
+
+  it('legacy cron routes delegate to chaseCronRunner only', () => {
+    for (const route of [
+      'process-invoice-overdue-reminders',
+      'contract-signature-reminders',
+      'follow-up-escalation',
+    ]) {
+      const src = fs.readFileSync(
+        new URL(`../../src/app/api/cron/${route}/route.ts`, import.meta.url),
+        'utf8',
+      );
+      assert.match(src, /runChaseCronJob/);
+      assert.doesNotMatch(src, /invoiceEmailTemplates/);
+      assert.doesNotMatch(src, /processAutomaticContractSignatureReminders/);
+    }
+  });
+
+  it('social receipt reconciliation resolves chases on publish', () => {
+    const src = fs.readFileSync(
+      new URL('../../src/lib/chaser/chaseSocialReceiptReconciliation.ts', import.meta.url),
+      'utf8',
+    );
+    assert.match(src, /reconcileSocialChaseOnPublishReceipt/);
+    assert.match(src, /verified_publish/);
+    const durable = fs.readFileSync(
+      new URL('../../src/lib/social/socialPublishDurableTask.ts', import.meta.url),
+      'utf8',
+    );
+    assert.match(durable, /reconcileSocialChaseOnPublishReceipt/);
+  });
+
+  it('chase instance upsert handles idempotency race (23505)', () => {
+    const src = fs.readFileSync(
+      new URL('../../src/lib/chaser/chaseInstanceService.ts', import.meta.url),
+      'utf8',
+    );
+    assert.match(src, /error\.code === '23505'/);
+    assert.match(src, /idempotency_key/);
   });
 });
 

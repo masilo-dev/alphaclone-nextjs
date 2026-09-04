@@ -111,6 +111,7 @@ export const MODULE_SUBNAV: Record<ModuleId, SubNavItem[]> = {
   bonnie: [
     { id: 'assistant', label: 'Assistant', href: '/dashboard/business/bonnie' },
     { id: 'approvals', label: 'Approvals', href: '/dashboard/business/bonnie/approvals' },
+    { id: 'chases', label: 'Chase inbox', href: '/dashboard/business/bonnie/chases' },
   ],
   settings: [
     { id: 'overview', label: 'Overview', href: '/dashboard/business/settings' },
