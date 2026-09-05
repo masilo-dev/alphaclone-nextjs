@@ -15,6 +15,7 @@ export type ToolGovernance = {
 export const MCP_TOOL_ALIASES: Readonly<Record<string, string>> = Object.freeze({
   compare_versions: 'compare_document_versions',
   create_post: 'publish_social_post',
+  create_linkedin_post: 'publish_social_post',
   email_send: 'send_email',
   execute_action: 'dispatch_tool',
   get_clients: 'get_contacts',

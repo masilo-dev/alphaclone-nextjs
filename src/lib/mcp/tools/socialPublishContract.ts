@@ -74,16 +74,19 @@ export const publishSocialPostJsonSchema = {
     target: {
       type: 'object',
       description:
-        'Normalized publish destination. Required when multiple identities are connected.',
+        'Optional publish destination envelope. Use when multiple identities are connected on the same platform.',
       properties: {
         integration: { type: 'string', enum: ['facebook', 'linkedin'] },
         identity_type: {
           type: 'string',
           enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+          description:
+            'Disambiguates LinkedIn personal vs organization when multiple LinkedIn identities are connected.',
         },
         identity_id: {
           type: 'string',
-          description: 'Internal identity UUID from get_social_identities',
+          description:
+            'Internal identity UUID from connected_accounts or get_social_identities (not the Facebook page id or LinkedIn org id).',
         },
         resource_type: { type: 'string' },
         resource_id: { type: 'string' },
@@ -92,12 +95,18 @@ export const publishSocialPostJsonSchema = {
     identity_id: {
       type: 'string',
       description:
-        'Internal identity UUID from get_social_identities. Required when multiple identities connected.',
+        'Internal identity UUID from connected_accounts or get_social_identities. Required when multiple identities exist on the requested platform. Not the provider page/org id.',
     },
-    platform: { type: 'string', enum: ['facebook', 'linkedin'] },
+    platform: {
+      type: 'string',
+      enum: ['facebook', 'linkedin'],
+      description: 'Target social platform.',
+    },
     identity_type: {
       type: 'string',
       enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+      description:
+        'Optional when exactly one publishable identity matches this type on the platform; required to disambiguate LinkedIn personal vs organization.',
     },
     caption: { type: 'string' },
     content: { type: 'string', description: 'Alias for caption' },

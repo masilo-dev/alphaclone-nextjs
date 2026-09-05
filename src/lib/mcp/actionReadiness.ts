@@ -110,14 +110,14 @@ export async function resolveMcpActionReadiness(input: {
       requires_identity_selection: requiresIdentitySelection,
       ambiguous_providers: ambiguousProviders,
       identity_candidates: identityCandidates,
-      recommended_tool: requiresIdentitySelection ? 'get_social_identities' : 'publish_social_post',
+      recommended_tool: requiresIdentitySelection ? 'connected_accounts' : 'publish_social_post',
       auto_defaults:
         'When only one Facebook/LinkedIn identity exists, the server auto-selects it for publish_social_post.',
       setup_hint:
         requiresIdentitySelection
-          ? 'Multiple publish destinations are connected — call get_social_identities, then publish_social_post with target.identity_id or identity_id.'
+          ? 'Multiple publish destinations are connected — call connected_accounts or get_social_identities, then publish_social_post with identity_id (internal UUID) or identity_type.'
           : socialMissing.length > 0
-            ? 'Connect Facebook or LinkedIn under Dashboard → Integrations, then call get_social_identities.'
+            ? 'Connect Facebook or LinkedIn under Dashboard → Integrations, then call connected_accounts.'
             : 'Ready — call publish_social_post with caption/content (identity auto-selected when unambiguous).',
       identities: identityCandidates,
     },

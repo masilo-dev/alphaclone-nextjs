@@ -98,7 +98,7 @@ registerTool('social-publishing', {
 registerTool('social-publishing', {
   name: 'get_social_identities',
   description:
-    'List tenant-scoped social identities available for publishing. Never returns tokens. Use identity_id from this list with publish_social_post. Alphaclone never injects a global default page/org.',
+    'List tenant-scoped social identities available for publishing. Never returns tokens. Use identity_id from this list (or connected_accounts) with publish_post / publish_social_post. When multiple LinkedIn identities exist (personal + organization), pass identity_id or identity_type to target the correct destination.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(),
     provider: z.enum(['facebook', 'linkedin', 'instagram', 'x', 'tiktok']).optional(),
@@ -129,6 +129,7 @@ registerTool('social-publishing', {
       identities: identities.map((i) => ({
         identity_id: i.identity_id,
         identity_type: i.identity_type,
+        identity_name: i.display_name,
         provider: i.provider,
         display_name: i.display_name,
         provider_identity_id: i.provider_identity_id,
@@ -863,7 +864,7 @@ registerTool('social-publishing', {
 registerTool('social-publishing', {
   name: 'publish_social_post',
   description:
-    'Publish (or schedule) a social post to a tenant-scoped identity. Prefer identity_id or target.identity_id from get_social_identities. Immediate publish returns provider post ID, live URL, and verification receipt — never ok on DB insert alone. Never accepts access tokens.',
+    'Publish (or schedule) a social post to a tenant-scoped identity. Pass identity_id from connected_accounts or get_social_identities when multiple identities exist (e.g. LinkedIn personal + organization). identity_type alone works when it uniquely matches one publishable identity. Immediate publish returns provider post ID, live URL, and verification receipt.',
   inputSchema: publishSocialPostInputSchema,
   jsonSchema: publishSocialPostJsonSchema,
   handler: async (args, ctx) => {
@@ -875,12 +876,76 @@ registerTool('social-publishing', {
 registerTool('social-publishing', {
   name: 'publish_post',
   description:
-    'Alias of publish_social_post with identical schema. Publish/schedule to Facebook or LinkedIn with explicit identity targeting when multiple accounts are connected.',
+    'Alias of publish_social_post. Publish/schedule to Facebook or LinkedIn. Pass identity_id from connected_accounts when multiple identities are connected; use identity_type to disambiguate LinkedIn personal vs organization.',
   inputSchema: publishSocialPostInputSchema,
   jsonSchema: publishSocialPostJsonSchema,
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
     return handlePublishSocialPost('publish_post', args, { tenantId, userId });
+  },
+});
+
+/** Overrides legacy MCPServer create_linkedin_post — identity-aware canonical publisher. */
+const createLinkedInPostInputSchema = publishSocialPostInputSchema.safeExtend({
+  text: z.string().optional(),
+  post_as: z.enum(['personal', 'company', 'organization', 'all_pages']).optional(),
+});
+
+registerTool('social-publishing', {
+  name: 'create_linkedin_post',
+  description:
+    'Publish to LinkedIn personal profile or organization page. Pass identity_id from connected_accounts when both are connected. Legacy args: text, post_as (personal|company), linkedin_organization_id.',
+  inputSchema: createLinkedInPostInputSchema,
+  jsonSchema: {
+    ...publishSocialPostJsonSchema,
+    properties: {
+      ...publishSocialPostJsonSchema.properties,
+      text: { type: 'string', description: 'Alias for content/caption' },
+      post_as: {
+        type: 'string',
+        enum: ['personal', 'company', 'organization', 'all_pages'],
+        description: 'personal → linkedin_person; company → linkedin_organization (requires linkedin_organization_id or identity_id)',
+      },
+    },
+  },
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
+    const postAs = String(args.post_as || 'personal').toLowerCase();
+    if (postAs === 'all_pages') {
+      return toMcpContent(
+        errorResult(
+          'create_linkedin_post',
+          'TARGET_AMBIGUOUS',
+          'post_as=all_pages is not supported. Call connected_accounts and publish once per identity_id.',
+          { hint: 'Use publish_post with identity_id for each LinkedIn destination.' }
+        )
+      );
+    }
+
+    let identityType = args.identity_type;
+    let identityId = args.identity_id || args.linkedin_organization_id;
+    if (!identityType) {
+      if (postAs === 'company' || postAs === 'organization' || args.linkedin_organization_id) {
+        identityType = 'linkedin_organization';
+      } else {
+        identityType = 'linkedin_person';
+      }
+    }
+
+    const content = args.content || args.caption || args.text || '';
+    return handlePublishSocialPost(
+      'publish_social_post',
+      {
+        ...args,
+        platform: 'linkedin',
+        content,
+        caption: content,
+        identity_type: identityType,
+        identity_id: identityId,
+        publish_now: args.publish_now ?? (args.scheduled_at ? false : true),
+      },
+      { tenantId, userId }
+    );
   },
 });
 

@@ -8,7 +8,7 @@ defineConnectorTool({
   module: 'social-ops',
   name: 'connected_accounts',
   description:
-    'List connected social media accounts for the tenant (Facebook Pages + LinkedIn person/org from dedicated integration tables).',
+    'List connected social media accounts for the tenant (Facebook Pages + LinkedIn personal/org). Each account includes identity_id (internal UUID for publish_post), identity_type, identity_name, and provider_identity_id. When multiple identities exist on a platform, pass identity_id to publish_post.',
   permission: 'social:read',
   inputSchema: z.object({ tenant_id: tenantIdField }),
   jsonSchema: {

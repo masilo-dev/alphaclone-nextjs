@@ -73,7 +73,7 @@ export async function listTenantSocialIdentities(params: {
     if (provider) q = q.eq('provider', provider);
     const { data, error } = await q.order('display_name', { ascending: true });
     if (error) throw new Error(error.message);
-    return (data || []).map((row) => ({
+    const mapped = (data || []).map((row) => ({
       identity_id: row.id,
       connection_id: row.connection_id,
       tenant_id: row.tenant_id,
@@ -89,6 +89,9 @@ export async function listTenantSocialIdentities(params: {
       is_active: row.is_active !== false,
       metadata: row.metadata,
     }));
+    if (mapped.length > 0) return mapped;
+    // Canonical table exists but this tenant is not synced yet — use legacy OAuth tables.
+    return listLegacyIdentities(tenantId, provider, activeOnly);
   }
 
   // Legacy fallback — still tenant-scoped
@@ -249,96 +252,119 @@ async function listLegacyIdentities(
 export function formatIdentityCandidates(identities: StoredSocialIdentity[]) {
   return identities.map((i) => ({
     identity_id: i.identity_id,
+    identity_name: i.display_name,
     display_name: i.display_name,
     provider: i.provider,
     identity_type: i.identity_type,
+    provider_identity_id: i.provider_identity_id,
     can_publish: i.can_publish,
     is_default: i.is_default,
   }));
 }
 
-export async function resolveTenantIdentityForPublish(params: {
-  tenantId: string;
+export type ResolvePublishIdentityParams = {
   identityId?: string | null;
   identityType?: string | null;
   provider?: string | null;
   allowDefault?: boolean;
-}): Promise<StoredSocialIdentity> {
-  const { tenantId, allowDefault = false } = params;
-  const identities = await listTenantSocialIdentities({
-    tenantId,
-    provider: params.provider || undefined,
-    activeOnly: true,
-  });
+};
 
+/**
+ * Pure identity resolution from an in-memory list (used by resolveTenantIdentityForPublish + tests).
+ */
+export function resolvePublishIdentityFromList(
+  identities: StoredSocialIdentity[],
+  params: ResolvePublishIdentityParams
+): StoredSocialIdentity {
+  const { allowDefault = false } = params;
+  const provider = String(params.provider || '').trim().toLowerCase() || null;
+  const identityType = String(params.identityType || '').trim() || null;
+
+  const scoped = provider
+    ? identities.filter((i) => String(i.provider).toLowerCase() === provider)
+    : identities;
+
+  const publishable = scoped.filter((i) => i.can_publish);
+  const availableIdentities = formatIdentityCandidates(publishable);
   const requested = String(params.identityId || '').trim();
 
   if (requested) {
-    // 1) Exact internal identity_id match
-    let match = identities.find((i) => i.identity_id === requested);
+    let match = scoped.find((i) => i.identity_id === requested);
 
-    // 2) Provider identity id match (page id / org id / member id)
     if (!match) {
-      const byProvider = identities.filter(
-        (i) =>
-          i.provider_identity_id === requested ||
-          i.provider_identity_urn === requested ||
-          (params.identityType ? i.identity_type === params.identityType && i.provider_identity_id === requested : false)
+      const byProvider = scoped.filter(
+        (i) => i.provider_identity_id === requested || i.provider_identity_urn === requested
       );
-      if (byProvider.length === 1) {
+
+      if (identityType) {
+        const typed = byProvider.filter((i) => i.identity_type === identityType);
+        if (typed.length === 1) {
+          match = typed[0];
+        } else if (typed.length > 1) {
+          throw new TenantIsolationError(
+            'Ambiguous identity_id — multiple identities match. Pass identity_id from connected_accounts or get_social_identities (internal UUID).',
+            'TARGET_AMBIGUOUS',
+            { available_identities: formatIdentityCandidates(typed) }
+          );
+        }
+      } else if (byProvider.length === 1 && publishable.length === 1) {
+        // Legacy page_id / org id when tenant has exactly one publishable identity
         match = byProvider[0];
       } else if (byProvider.length > 1) {
         throw new TenantIsolationError(
-          'Ambiguous identity_id — multiple identities match. Use get_social_identities and pass the internal identity_id.',
+          'Ambiguous identity_id — multiple identities match. Pass identity_id from connected_accounts or get_social_identities (internal UUID), or add identity_type.',
           'TARGET_AMBIGUOUS',
           { available_identities: formatIdentityCandidates(byProvider) }
+        );
+      } else if (byProvider.length === 1 && publishable.length > 1) {
+        throw new TenantIsolationError(
+          'identity_id must be the internal UUID from connected_accounts or get_social_identities when multiple identities are connected. Alternatively pass identity_type with the provider id.',
+          'IDENTITY_NOT_FOUND',
+          { available_identities: availableIdentities }
         );
       }
     }
 
     if (!match) {
-      // Do not leak whether it exists in another tenant
       if (looksLikeRawProviderIdentityId(requested)) {
         throw new TenantIsolationError(
-          "identity_id must be the Alphaclone identity UUID from get_social_identities, not the provider's raw ID.",
-          'PERMISSION_DENIED'
+          'identity_id must be the internal UUID from connected_accounts or get_social_identities, not the provider page/org id alone when multiple identities exist. Use identity_type with provider_identity_id, or pass the internal identity_id.',
+          'IDENTITY_NOT_FOUND',
+          { available_identities: availableIdentities }
         );
       }
-      throw new TenantIsolationError(
-        'Identity not found for this tenant',
-        'NOT_FOUND'
-      );
+      throw new TenantIsolationError('Identity not found for this tenant', 'IDENTITY_NOT_FOUND', {
+        available_identities: availableIdentities,
+      });
     }
 
-    assertSameTenant(match.tenant_id, tenantId, 'identity');
-    if (params.identityType && match.identity_type !== params.identityType) {
+    if (identityType && match.identity_type !== identityType) {
       throw new TenantIsolationError(
-        `Identity type mismatch: expected ${params.identityType}, got ${match.identity_type}`,
-        'PERMISSION_DENIED'
+        `Identity type mismatch: expected ${identityType}, got ${match.identity_type}`,
+        'PERMISSION_MISSING'
       );
     }
     if (!match.can_publish) {
       throw new TenantIsolationError(
         `Identity ${match.display_name} cannot publish`,
-        'PERMISSION_DENIED'
+        'IDENTITY_NOT_PUBLISHABLE',
+        { identity_id: match.identity_id, identity_type: match.identity_type }
       );
     }
     return match;
   }
 
-  // No identity provided — only auto-select when exactly one publishable, or a tenant default
-  const publishable = identities.filter((i) => i.can_publish);
-  const availableIdentities = formatIdentityCandidates(publishable);
-
-  if (params.identityType) {
-    const typed = publishable.filter((i) => i.identity_type === params.identityType);
+  if (identityType) {
+    const typed = publishable.filter((i) => i.identity_type === identityType);
     if (typed.length === 1) return typed[0];
     if (allowDefault) {
       const def = typed.find((i) => i.is_default);
       if (def) return def;
     }
     throw new TenantIsolationError(
-      `Multiple or zero ${params.identityType} identities — pass identity_id from get_social_identities`,
+      typed.length > 1
+        ? `Multiple ${identityType} identities — pass identity_id from connected_accounts or get_social_identities`
+        : `No publishable ${identityType} identity connected`,
       typed.length > 1 ? 'TARGET_AMBIGUOUS' : 'MISSING_IDENTITY',
       { available_identities: availableIdentities }
     );
@@ -349,11 +375,33 @@ export async function resolveTenantIdentityForPublish(params: {
     const def = publishable.find((i) => i.is_default);
     if (def) return def;
   }
+
+  const platformHint = provider ? ` for ${provider}` : '';
   throw new TenantIsolationError(
-    'identity_id is required when the tenant has multiple social identities. Call get_social_identities.',
+    `identity_id or identity_type is required when the tenant has multiple social identities${platformHint}. Call connected_accounts or get_social_identities.`,
     publishable.length > 1 ? 'TARGET_AMBIGUOUS' : 'MISSING_IDENTITY',
     { available_identities: availableIdentities }
   );
+}
+
+export async function resolveTenantIdentityForPublish(params: {
+  tenantId: string;
+  identityId?: string | null;
+  identityType?: string | null;
+  provider?: string | null;
+  allowDefault?: boolean;
+}): Promise<StoredSocialIdentity> {
+  const { tenantId } = params;
+  await syncTenantSocialIdentitiesFromLegacy(tenantId).catch(() => undefined);
+  const identities = await listTenantSocialIdentities({
+    tenantId,
+    provider: params.provider || undefined,
+    activeOnly: true,
+  });
+
+  const match = resolvePublishIdentityFromList(identities, params);
+  assertSameTenant(match.tenant_id, tenantId, 'identity');
+  return match;
 }
 
 /** Load tenant default identity for a provider (if configured). */

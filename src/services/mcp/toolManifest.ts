@@ -1318,8 +1318,76 @@ export const MCP_TOOLS = [
         publish_now: { type: 'boolean' },
         scheduled_at: { type: 'string' },
         page_id: { type: 'string' },
-        identity_id: { type: 'string' },
+        identity_id: { type: 'string', description: 'Internal UUID from connected_accounts or get_social_identities' },
+        identity_type: {
+          type: 'string',
+          enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+        },
         linkedin_organization_id: { type: 'string' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'publish_post',
+    description:
+      'Publish or schedule a social post to Facebook or LinkedIn. Pass identity_id from connected_accounts when multiple identities exist (LinkedIn personal + organization).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        platform: { type: 'string', enum: ['facebook', 'linkedin'] },
+        content: { type: 'string', description: 'Post caption / text' },
+        caption: { type: 'string', description: 'Alias for content' },
+        identity_id: {
+          type: 'string',
+          description:
+            'Internal identity UUID from connected_accounts or get_social_identities. Required when multiple identities exist on the platform.',
+        },
+        identity_type: {
+          type: 'string',
+          enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+          description: 'Disambiguates LinkedIn personal vs organization when uniquely matched.',
+        },
+        scheduled_at: { type: 'string', format: 'date-time' },
+        media_urls: { type: 'array', items: { type: 'string' } },
+        media_asset_ids: { type: 'array', items: { type: 'string' } },
+        publish_now: { type: 'boolean' },
+        status: {
+          type: 'string',
+          enum: ['execute_now', 'publish_now', 'draft', 'scheduled'],
+        },
+        idempotency_key: { type: 'string' },
+        page_id: { type: 'string', description: 'Legacy Facebook page id alias' },
+        linkedin_organization_id: { type: 'string', description: 'Legacy LinkedIn org id alias' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'publish_social_post',
+    description:
+      'Canonical publish tool — same contract as publish_post. Target a specific social identity via identity_id from connected_accounts.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        platform: { type: 'string', enum: ['facebook', 'linkedin'] },
+        content: { type: 'string' },
+        caption: { type: 'string' },
+        identity_id: { type: 'string' },
+        identity_type: {
+          type: 'string',
+          enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+        },
+        scheduled_at: { type: 'string', format: 'date-time' },
+        media_urls: { type: 'array', items: { type: 'string' } },
+        publish_now: { type: 'boolean' },
+        status: {
+          type: 'string',
+          enum: ['execute_now', 'publish_now', 'draft', 'scheduled'],
+        },
+        idempotency_key: { type: 'string' },
       },
       required: [],
     },

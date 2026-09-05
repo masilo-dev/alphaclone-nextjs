@@ -56,12 +56,19 @@ export type ExecuteMcpWriteResult<TResult> = {
 
 const ERROR_REMEDIATION: Record<string, string> = {
   TARGET_AMBIGUOUS:
-    'Call get_social_identities and pass target.identity_id or identity_id for the intended destination.',
+    'Call connected_accounts or get_social_identities, then pass identity_id (internal UUID) or identity_type to disambiguate LinkedIn personal vs organization.',
   MISSING_IDENTITY:
-    'Call get_social_identities and pass identity_id for the publish destination.',
+    'Call connected_accounts or get_social_identities and pass identity_id for the publish destination.',
+  IDENTITY_NOT_FOUND:
+    'Use identity_id from connected_accounts or get_social_identities — not the raw Facebook page id or LinkedIn org id.',
+  IDENTITY_NOT_PUBLISHABLE:
+    'Choose an identity with can_publish=true or reconnect the integration with publish permissions.',
   AUTH_EXPIRED: 'Reconnect the integration under Dashboard → Integrations, then retry.',
+  OAUTH_EXPIRED: 'Reconnect the integration under Dashboard → Integrations, then retry.',
+  PERMISSION_MISSING: 'Reconnect the integration and grant the required publish scopes.',
   RATE_LIMITED: 'Wait and retry with the same idempotency_key.',
   PROVIDER_REJECTED: 'Review caption, media, and identity permissions; fix validation errors and retry.',
+  PROVIDER_TIMEOUT: 'Retry with the same idempotency_key after a short delay.',
   VALIDATION_FAILED: 'Fix input fields reported in details and retry.',
   RETRYABLE_NETWORK_ERROR: 'Retry with the same idempotency_key after a short delay.',
   PUBLISH_IN_PROGRESS: 'Poll verify_social_post_published or retry after the in-flight publish completes.',

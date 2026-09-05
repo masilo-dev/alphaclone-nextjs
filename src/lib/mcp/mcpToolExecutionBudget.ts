@@ -10,6 +10,7 @@ import { isBackgroundJobHeapBlocked, backgroundJobBlockedReason } from '@/lib/ru
 
 const SYNC_TIMEOUT_MS = Number(process.env.MCP_TOOL_SYNC_TIMEOUT_MS || 15_000);
 const HEAVY_SYNC_TIMEOUT_MS = Number(process.env.MCP_TOOL_HEAVY_SYNC_TIMEOUT_MS || 25_000);
+const SOCIAL_PUBLISH_TIMEOUT_MS = Number(process.env.MCP_TOOL_SOCIAL_PUBLISH_TIMEOUT_MS || 45_000);
 
 const HEAVY_TOOLS = new Set([
   'bulk_update_records',
@@ -20,6 +21,21 @@ const HEAVY_TOOLS = new Set([
   'execute_batch_outreach',
 ]);
 
+const SOCIAL_PUBLISH_TOOLS = new Set([
+  'publish_post',
+  'publish_social_post',
+  'create_linkedin_post',
+  'create_social_post',
+  'create_social_post_with_media',
+  'preflight_social_publish',
+  'publish_facebook_multi_photo',
+  'publish_facebook_photo',
+  'publish_facebook_video',
+  'publish_linkedin_image',
+  'publish_linkedin_document',
+  'upload_social_media',
+]);
+
 const QUEUED_ONLY_TOOLS = new Set([
   'bulk_update_records',
   'send_bulk_email',
@@ -27,11 +43,12 @@ const QUEUED_ONLY_TOOLS = new Set([
 ]);
 
 export function resolveMcpToolTimeoutMs(toolName: string): number {
+  if (SOCIAL_PUBLISH_TOOLS.has(toolName)) return SOCIAL_PUBLISH_TIMEOUT_MS;
   return HEAVY_TOOLS.has(toolName) ? HEAVY_SYNC_TIMEOUT_MS : SYNC_TIMEOUT_MS;
 }
 
 export function isHeavyMcpTool(toolName: string): boolean {
-  return HEAVY_TOOLS.has(toolName);
+  return HEAVY_TOOLS.has(toolName) || SOCIAL_PUBLISH_TOOLS.has(toolName);
 }
 
 export function mustQueueHeavyMcpTool(toolName: string, executing: boolean): boolean {

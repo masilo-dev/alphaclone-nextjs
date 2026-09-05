@@ -6,6 +6,7 @@ import { okResult, errorResult, toMcpContent } from '@/lib/mcp/connector/respons
 import { normalizePublishMediaArgs } from '@/lib/media/normalizePublishMedia';
 import { getSocialPublishingService } from '@/lib/social/SocialPublishingService';
 import { SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } from '@/lib/social/types';
+import { logSocialPublishEvent } from '@/lib/social/socialPublishLog';
 import {
   type PublishSocialPostArgs,
   resolvePublishNow,
@@ -90,6 +91,7 @@ export async function handlePublishSocialPost(
   args: PublishSocialPostArgs,
   ctx: { tenantId?: string; userId?: string }
 ) {
+  const startedAt = Date.now();
   const tenantId = ctx.tenantId || args.tenant_id;
   const userId = ctx.userId;
   if (!tenantId || !userId) {
@@ -109,6 +111,17 @@ export async function handlePublishSocialPost(
     undefined;
   const identityType = args.target?.identity_type || args.identity_type;
   const platformHint = args.target?.integration || args.platform;
+  const correlationId = args.idempotency_key || crypto.randomUUID();
+
+  logSocialPublishEvent({
+    event: 'publish_requested',
+    tool: toolName,
+    tenant_id: tenantId,
+    platform: platformHint,
+    identity_id: identityId,
+    identity_type: identityType,
+    correlation_id: correlationId,
+  });
 
   let stored;
   try {
@@ -121,6 +134,17 @@ export async function handlePublishSocialPost(
     });
   } catch (err) {
     if (err instanceof TenantIsolationError) {
+      logSocialPublishEvent({
+        event: 'publish_identity_rejected',
+        tool: toolName,
+        tenant_id: tenantId,
+        platform: platformHint,
+        identity_id: identityId,
+        identity_type: identityType,
+        correlation_id: correlationId,
+        error_code: err.code,
+        duration_ms: Date.now() - startedAt,
+      });
       return toMcpContent(errorResult(toolName, err.code, err.message, err.details));
     }
     throw err;
@@ -133,6 +157,17 @@ export async function handlePublishSocialPost(
     | 'facebook_page'
     | 'linkedin_person'
     | 'linkedin_organization';
+
+  logSocialPublishEvent({
+    event: 'publish_identity_resolved',
+    tool: toolName,
+    tenant_id: tenantId,
+    platform,
+    identity_id: stored.identity_id,
+    identity_type: resolvedIdentityType,
+    identity_name: stored.display_name,
+    correlation_id: correlationId,
+  });
 
   const ingested = await ingestInlineMedia(args, tenantId, userId);
   const publishNow = resolvePublishNow(args);
@@ -316,6 +351,17 @@ export async function handlePublishSocialPost(
   });
 
   if (!gatewayResult.ok) {
+    logSocialPublishEvent({
+      event: 'publish_failed',
+      tool: toolName,
+      tenant_id: tenantId,
+      platform,
+      identity_id: stored.identity_id,
+      identity_type: resolvedIdentityType,
+      correlation_id: correlationId,
+      error_code: gatewayResult.error?.code,
+      duration_ms: Date.now() - startedAt,
+    });
     return toMcpContent(
       errorResult(
         toolName,
@@ -335,14 +381,38 @@ export async function handlePublishSocialPost(
   const result = gatewayResult.result;
   const receiptPayload = gatewayResult.receipt;
 
+  logSocialPublishEvent({
+    event: 'publish_succeeded',
+    tool: toolName,
+    tenant_id: tenantId,
+    platform,
+    identity_id: stored.identity_id,
+    identity_type: resolvedIdentityType,
+    identity_name: stored.display_name,
+    social_post_id: result?.data?.social_post_id,
+    correlation_id: correlationId,
+    provider_status: result?.data?.status,
+    duration_ms: Date.now() - startedAt,
+  });
+
   return toMcpContent(
     okResult(
       toolName,
       {
         ...result?.data,
-        media_asset_ids: ingested.assetIds,
+        platform,
         identity_id: stored.identity_id,
-        identity_display_name: stored.display_name,
+        identity_type: resolvedIdentityType,
+        identity_name: stored.display_name,
+        provider_post_id: result?.data?.provider_post_id ?? receiptPayload?.provider_reference,
+        live_url: result?.data?.live_url ?? receiptPayload?.live_url,
+        published_at: result?.data?.published_at ?? receiptPayload?.timestamp,
+        verification: receiptPayload?.verification ?? {
+          verified: Boolean(receiptPayload?.verification?.verified),
+          verified_at: receiptPayload?.verification?.verified_at ?? null,
+          correlation_id: correlationId,
+        },
+        media_asset_ids: ingested.assetIds,
         action_id: gatewayResult.actionId,
         audit_log_id: gatewayResult.auditLogId,
       },

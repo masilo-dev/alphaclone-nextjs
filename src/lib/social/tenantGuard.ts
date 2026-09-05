@@ -15,7 +15,13 @@ export class TenantIsolationError extends Error {
       | 'NOT_FOUND'
       | 'PERMISSION_DENIED'
       | 'MISSING_IDENTITY'
-      | 'TARGET_AMBIGUOUS' = 'CROSS_TENANT',
+      | 'TARGET_AMBIGUOUS'
+      | 'IDENTITY_NOT_FOUND'
+      | 'IDENTITY_NOT_PUBLISHABLE'
+      | 'OAUTH_EXPIRED'
+      | 'PERMISSION_MISSING'
+      | 'PROVIDER_REJECTED'
+      | 'PROVIDER_TIMEOUT' = 'CROSS_TENANT',
     public readonly details?: unknown
   ) {
     super(message);

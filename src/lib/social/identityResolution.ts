@@ -193,48 +193,67 @@ export async function listLinkedInIdentities(tenantId: string): Promise<{
 }
 
 export async function listSocialAccounts(tenantId: string) {
-  const [facebook, linkedin] = await Promise.all([
-    listFacebookIdentities(tenantId),
-    listLinkedInIdentities(tenantId),
-  ]);
+  const { listTenantSocialIdentities, syncTenantSocialIdentitiesFromLegacy } = await import(
+    './socialIdentityStore'
+  );
+  await syncTenantSocialIdentitiesFromLegacy(tenantId).catch(() => undefined);
+  const identities = await listTenantSocialIdentities({ tenantId, activeOnly: true });
 
-  const accounts: Array<Record<string, unknown>> = [];
-  for (const page of facebook.pages) {
-    accounts.push({
-      platform: 'facebook',
-      identity_type: 'facebook_page',
-      identity_id: page.page_id,
-      name: page.page_name,
-      connected: page.connected,
-      can_publish: page.can_publish,
-    });
-  }
-  if (linkedin.personal?.person_urn) {
-    accounts.push({
-      platform: 'linkedin',
-      identity_type: 'linkedin_person',
-      identity_id: linkedin.personal.member_id || linkedin.personal.person_urn,
-      name: 'LinkedIn Personal',
-      connected: true,
-      can_publish: linkedin.personal.can_publish,
-    });
-  }
-  for (const org of linkedin.organizations) {
-    accounts.push({
-      platform: 'linkedin',
-      identity_type: 'linkedin_organization',
-      identity_id: org.organization_id,
-      name: org.name,
-      connected: true,
-      can_publish: org.can_publish,
-      role: org.role,
-    });
-  }
+  const accounts = identities.map((i) => ({
+    platform: i.provider,
+    identity_type: i.identity_type,
+    /** Internal Alphaclone UUID — pass this to publish_post / publish_social_post */
+    identity_id: i.identity_id,
+    identity_name: i.display_name,
+    /** Provider-native id (Facebook page id, LinkedIn org id, etc.) — diagnostic only */
+    provider_identity_id: i.provider_identity_id,
+    name: i.display_name,
+    connected: i.is_active,
+    can_publish: i.can_publish,
+    is_default: i.is_default,
+  }));
+
+  const facebookPages = identities
+    .filter((i) => i.provider === 'facebook' && i.identity_type === 'facebook_page')
+    .map((i) => ({
+      page_id: i.provider_identity_id,
+      page_name: i.display_name,
+      identity_id: i.identity_id,
+      connected: i.is_active,
+      can_publish: i.can_publish,
+      can_upload_media: i.can_upload_media,
+      can_read_insights: i.can_read_insights,
+    }));
+
+  const linkedinPerson = identities.find(
+    (i) => i.provider === 'linkedin' && i.identity_type === 'linkedin_person'
+  );
+  const linkedinOrgs = identities.filter(
+    (i) => i.provider === 'linkedin' && i.identity_type === 'linkedin_organization'
+  );
+
+  const personal = linkedinPerson
+    ? {
+        member_id: linkedinPerson.provider_identity_id,
+        person_urn: linkedinPerson.provider_identity_urn,
+        identity_id: linkedinPerson.identity_id,
+        can_publish: linkedinPerson.can_publish,
+      }
+    : null;
+
+  const organizations = linkedinOrgs.map((org) => ({
+    organization_id: org.provider_identity_id,
+    organization_urn: org.provider_identity_urn,
+    identity_id: org.identity_id,
+    name: org.display_name,
+    can_publish: org.can_publish,
+    role: String((org.metadata as Record<string, unknown> | null)?.role || 'ADMINISTRATOR'),
+  }));
 
   return {
     accounts,
-    facebook,
-    linkedin,
+    facebook: { pages: facebookPages },
+    linkedin: { personal, organizations },
   };
 }
 
