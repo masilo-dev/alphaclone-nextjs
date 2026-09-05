@@ -163,7 +163,13 @@ export async function executeSocialPublishDurableTask(params: {
         });
         break;
       }
-      intermediate.post = post;
+      intermediate.postId = postId;
+      intermediate.postStatus = post.status;
+      intermediate.platforms = post.platforms;
+      intermediate.mediaAssetIds = Array.isArray((post.metadata as Record<string, unknown> | null)?.media_asset_ids)
+        ? ((post.metadata as Record<string, unknown>).media_asset_ids as string[])
+        : [];
+      intermediate.mediaUrlCount = Array.isArray(post.media_urls) ? post.media_urls.length : 0;
     }
 
     if (stage === 'publish_provider') {
@@ -261,7 +267,9 @@ export async function executeSocialPublishDurableTask(params: {
   });
 
   const { reconcileSocialChaseOnPublishReceipt } = await import('@/lib/chaser/chaseSocialReceiptReconciliation');
-  const post = intermediate.post as Record<string, unknown> | undefined;
+  const post = intermediate.postId
+    ? { platforms: (intermediate.platforms as string[]) || [] }
+    : undefined;
   const platforms = (post?.platforms as string[]) || [];
   await reconcileSocialChaseOnPublishReceipt({
     tenantId: params.tenantId,

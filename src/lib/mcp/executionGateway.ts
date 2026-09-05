@@ -8,6 +8,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { persistActionReceipt, findReceiptByIdempotency } from '@/lib/mcp/actionReceipts';
 import type { ActionReceipt } from '@/lib/mcp/standardResponse';
 import { processNormalizedTrigger } from '@/lib/bonnie/runtime/triggerGateway';
+import { stripHeavyPayloadFields } from '@/lib/media/stripHeavyPayload';
 
 export type ExecutionTarget = {
   workspace_id: string;
@@ -99,7 +100,7 @@ async function recordExternalAction(params: {
         target: params.target,
         idempotency_key: params.idempotencyKey,
         status: params.status,
-        payload: params.payload,
+        payload: stripHeavyPayloadFields(params.payload),
       })
       .select('id')
       .maybeSingle();

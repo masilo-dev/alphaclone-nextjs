@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { logMediaPipelineStep } from '@/lib/social/mediaPipelineLog';
 import { linkedInFetch, LinkedInApiError } from '@/lib/linkedin/linkedinClient';
 import {
   enqueueSocialPostSync,
@@ -63,6 +64,21 @@ async function registerAndUploadLinkedInMedia(
   const contentType = mediaFetch.headers.get('content-type') || (isVideo ? 'video/mp4' : 'image/jpeg');
   const mediaBuffer = await mediaFetch.arrayBuffer();
 
+  logMediaPipelineStep({
+    step: 'media_received',
+    provider: 'linkedin',
+    mimeType: contentType,
+    sizeBytes: mediaBuffer.byteLength,
+    extra: { media_kind: mediaKind },
+  });
+
+  logMediaPipelineStep({
+    step: 'provider_upload_started',
+    provider: 'linkedin',
+    mimeType: contentType,
+    sizeBytes: mediaBuffer.byteLength,
+  });
+
   const registerRes = await linkedInFetch(
     'https://api.linkedin.com/v2/assets?action=registerUpload',
     accessToken,
@@ -108,6 +124,14 @@ async function registerAndUploadLinkedInMedia(
   if (!uploadRes.ok) {
     throw new Error(`LinkedIn media upload failed (${uploadRes.status})`);
   }
+
+  logMediaPipelineStep({
+    step: 'provider_media_id',
+    provider: 'linkedin',
+    providerMediaId: assetUrn,
+    mimeType: contentType,
+    sizeBytes: mediaBuffer.byteLength,
+  });
 
   return assetUrn;
 }

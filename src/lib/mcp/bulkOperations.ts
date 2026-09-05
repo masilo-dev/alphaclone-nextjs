@@ -301,7 +301,7 @@ export async function executeBulkUploadMedia(args: { files: MediaItem[] }, ctx: 
             : item.content_base64
               ? {
                   type: 'base64' as const,
-                  base64: item.content_base64,
+                  data: item.content_base64,
                   filename,
                   mimeType: item.mime_type || (item.media_type === 'document' ? 'application/pdf' : item.media_type === 'video' ? 'video/mp4' : 'image/png'),
                 }
@@ -399,7 +399,7 @@ function recipientDisplayName(row: Record<string, unknown>, entityType: Recipien
 }
 
 async function loadRecipients(args: BulkEmailArgs, tenantId: string): Promise<{ recipients: Recipient[]; skipped: Array<Record<string, string>> }> {
-  const supabase = createSupabaseAdminClient();
+  const supabase = createSupabaseAdminClient() as any;
   const allGroups: Array<{ type: Recipient['entity_type']; ids: string[] }> = [
     { type: 'lead', ids: optionalUniqueIds(args.lead_ids, 'lead_ids', MAX_EMAIL_RECIPIENTS_PER_BATCH) },
     { type: 'contact', ids: optionalUniqueIds(args.contact_ids, 'contact_ids', MAX_EMAIL_RECIPIENTS_PER_BATCH) },
@@ -423,7 +423,8 @@ async function loadRecipients(args: BulkEmailArgs, tenantId: string): Promise<{ 
       .eq('tenant_id', tenantId)
       .in('id', group.ids);
     if (error) throw new Error(`Unable to load ${group.type} recipients: ${error.message}`);
-    const byId = new Map(((data || []) as Array<Record<string, unknown>>).map((row) => [String(row.id), row]));
+    const rows = (data || []) as unknown as Array<Record<string, unknown>>;
+    const byId = new Map(rows.map((row) => [String(row.id), row]));
     for (const id of group.ids) {
       const row = byId.get(id);
       if (!row) {

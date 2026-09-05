@@ -17,13 +17,24 @@ const SENSITIVE_KEYS = new Set([
   'email_body',
   'oauth',
   'client_secret',
+  'content_base64',
+  'file_base64',
+  'image_base64',
+  'media_base64',
+  'base64',
+  'data_url',
+  'file_content',
+  'binary',
 ]);
 
 export function sanitizeForAudit(value: unknown, depth = 0): unknown {
   if (depth > 6) return '[truncated]';
   if (value == null) return value;
   if (typeof value === 'string') {
-    if (value.length > 500) return `${value.slice(0, 200)}…[redacted ${value.length} chars]`;
+    if (value.startsWith('data:') && value.includes('base64,')) {
+      return `[data-url ~${Math.round((value.length * 3) / 4)} bytes]`;
+    }
+    if (value.length > 500) return `[redacted ${value.length} chars]`;
     return value;
   }
   if (Array.isArray(value)) return value.slice(0, 20).map((v) => sanitizeForAudit(v, depth + 1));

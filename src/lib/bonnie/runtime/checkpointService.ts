@@ -3,6 +3,7 @@
  */
 
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { stripHeavyPayloadFields } from '@/lib/media/stripHeavyPayload';
 
 export async function saveCheckpoint(params: {
   tenantId: string;
@@ -33,8 +34,8 @@ export async function saveCheckpoint(params: {
       attempt_id: params.attemptId,
       sequence,
       completed_stage: params.completedStage,
-      intermediate_output: params.intermediateOutput || {},
-      remaining_work: params.remainingWork || {},
+      intermediate_output: stripHeavyPayloadFields(params.intermediateOutput || {}),
+      remaining_work: stripHeavyPayloadFields(params.remainingWork || {}),
       external_references: params.externalReferences || {},
       cursor_state: params.cursorState || {},
       resume_token: params.resumeToken || `ckpt_${sequence}`,

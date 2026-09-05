@@ -23,6 +23,7 @@ import {
   normalizeIdentityType,
 } from '@/lib/social/identityResolution';
 import { redactSecrets, resolveMediaUrls } from '@/lib/social/mediaUpload';
+import { logMediaPipelineStep } from '@/lib/social/mediaPipelineLog';
 import {
   formatFacebookGraphErrorMessage,
   parseFacebookGraphError,
@@ -129,10 +130,25 @@ async function publishFacebookMediaItem(params: {
   const assetId =
     isBrandedMediaUrl(params.mediaUrl) ? extractMediaAssetIdFromUrl(params.mediaUrl) : null;
   if (assetId) {
+    logMediaPipelineStep({
+      step: 'provider_upload_started',
+      provider: 'facebook',
+      mediaAssetId: assetId,
+      mimeType: params.mediaType,
+    });
     const bytes = await fetchMediaAssetBytes(assetId);
     if (bytes) {
+      logMediaPipelineStep({
+        step: 'media_received',
+        provider: 'facebook',
+        mediaAssetId: assetId,
+        mimeType: bytes.mimeType,
+        sizeBytes: bytes.buffer.length,
+        filename: bytes.filename,
+      });
+      let uploadResult;
       if (isVideo || bytes.mimeType.startsWith('video/')) {
-        return uploadFacebookVideoFromBytes({
+        uploadResult = await uploadFacebookVideoFromBytes({
           pageId: params.pageId,
           pageAccessToken: params.pageAccessToken,
           buffer: bytes.buffer,
@@ -140,19 +156,37 @@ async function publishFacebookMediaItem(params: {
           filename: bytes.filename,
           description: params.caption,
         });
+      } else {
+        uploadResult = await uploadFacebookPhotoFromBytes({
+          pageId: params.pageId,
+          pageAccessToken: params.pageAccessToken,
+          buffer: bytes.buffer,
+          mimeType: bytes.mimeType,
+          filename: bytes.filename,
+          caption: params.caption,
+          published: params.published,
+        });
       }
-      return uploadFacebookPhotoFromBytes({
-        pageId: params.pageId,
-        pageAccessToken: params.pageAccessToken,
-        buffer: bytes.buffer,
-        mimeType: bytes.mimeType,
-        filename: bytes.filename,
-        caption: params.caption,
-        published: params.published,
-      });
+      if (uploadResult.ok && uploadResult.body?.id) {
+        logMediaPipelineStep({
+          step: 'provider_media_id',
+          provider: 'facebook',
+          mediaAssetId: assetId,
+          providerMediaId: String(uploadResult.body.id),
+          mimeType: bytes.mimeType,
+          sizeBytes: bytes.buffer.length,
+        });
+      }
+      return uploadResult;
     }
   }
 
+  logMediaPipelineStep({
+    step: 'provider_upload_started',
+    provider: 'facebook',
+    mimeType: params.mediaType,
+    extra: { via: 'graph_url' },
+  });
   const endpoint = `https://graph.facebook.com/v21.0/${params.pageId}/${isVideo ? 'videos' : 'photos'}`;
   const fbBody: Record<string, string> = {
     access_token: params.pageAccessToken,
@@ -173,6 +207,14 @@ async function publishFacebookMediaItem(params: {
   const body = (await res.json()) as Record<string, unknown>;
   if (!res.ok || body?.error) {
     return { ok: false, status: res.status, body };
+  }
+  if (body?.id) {
+    logMediaPipelineStep({
+      step: 'provider_media_id',
+      provider: 'facebook',
+      providerMediaId: String(body.id),
+      mimeType: params.mediaType,
+    });
   }
   return { ok: true, body };
 }
@@ -1138,6 +1180,20 @@ export class SocialPublishingService {
         idempotencyKey: input.idempotencyKey,
         correlationId,
         aiClient: input.aiClient,
+      });
+
+      logMediaPipelineStep({
+        step: 'post_created',
+        tenantId: input.tenantId,
+        userId: input.userId,
+        postId: record.id,
+        correlationId,
+        provider: identity.platform,
+        extra: {
+          status: initialStatus,
+          media_asset_ids: media.assetIds,
+          media_url_count: media.urls.length,
+        },
       });
 
       // Idempotent replay / in-flight guard

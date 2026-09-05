@@ -6,6 +6,7 @@
 import { createHash } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { buildPublicMediaUrl } from '@/lib/media/mediaPublicUrl';
+import { logMediaPipelineStep } from '@/lib/social/mediaPipelineLog';
 import type { MediaAssetResult } from './types';
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15 MB
@@ -165,18 +166,120 @@ export type UploadSocialMediaInput = {
   altText?: string | null;
 };
 
-export async function uploadSocialMedia(
-  input: UploadSocialMediaInput
-): Promise<MediaAssetResult> {
-  const filename = String(input.filename || '').trim();
-  const declaredMime = normalizeMime(input.mimeType || '');
-  if (!filename) throw new Error('filename is required');
-  if (!declaredMime) throw new Error('mime_type is required');
-  if (!ALLOWED_MIME.has(declaredMime)) {
-    throw new Error(`Unsupported mime_type: ${declaredMime}`);
+export type UploadSocialMediaFromBufferInput = {
+  tenantId: string;
+  userId: string;
+  filename: string;
+  mimeType: string;
+  buffer: Buffer;
+  altText?: string | null;
+  correlationId?: string;
+};
+
+async function persistSocialMediaAsset(params: {
+  tenantId: string;
+  userId: string;
+  filename: string;
+  effectiveMime: string;
+  binary: Buffer;
+  altText?: string | null;
+  assetType: string;
+  ext: string;
+  checksum: string;
+  dims: { width: number | null; height: number | null };
+}): Promise<MediaAssetResult> {
+  const storagePath = `media/${params.tenantId}/${Date.now()}-${params.checksum.slice(0, 12)}.${params.ext}`;
+  const supabase = createSupabaseAdminClient();
+
+  const { error: uploadError } = await supabase.storage.from('public-assets').upload(storagePath, params.binary, {
+    contentType: params.effectiveMime,
+    upsert: false,
+  });
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(storagePath);
+  const publicUrl = urlData.publicUrl;
+  if (!publicUrl || isDataUri(publicUrl)) {
+    throw new Error('Upload succeeded but no provider-fetchable URL was returned');
   }
 
-  const binary = decodeBase64Media(input.contentBase64);
+  const { data: asset, error: assetErr } = await supabase
+    .from('media_assets')
+    .insert({
+      tenant_id: params.tenantId,
+      user_id: params.userId,
+      file_name: params.filename,
+      file_type: params.effectiveMime,
+      asset_type: params.assetType,
+      storage_path: storagePath,
+      public_url: publicUrl,
+      file_size_bytes: params.binary.length,
+      alt_text: params.altText || '',
+      checksum_sha256: params.checksum,
+      width: params.dims.width,
+      height: params.dims.height,
+      tags: ['social-publishing'],
+    })
+    .select('id, public_url, file_name, file_type, file_size_bytes, width, height, alt_text, checksum_sha256')
+    .single();
+
+  if (assetErr && (assetErr.code === '42703' || /column|does not exist/i.test(assetErr.message || ''))) {
+    const fallback = await supabase
+      .from('media_assets')
+      .insert({
+        tenant_id: params.tenantId,
+        user_id: params.userId,
+        file_name: params.filename,
+        file_type: params.effectiveMime,
+        asset_type: params.assetType,
+        storage_path: storagePath,
+        public_url: publicUrl,
+        file_size_bytes: params.binary.length,
+        alt_text: params.altText || '',
+        tags: ['social-publishing'],
+      })
+      .select('id, public_url, file_name, file_type, file_size_bytes, alt_text')
+      .single();
+    if (fallback.error) throw new Error(fallback.error.message);
+    return {
+      media_asset_id: fallback.data.id,
+      public_url: fallback.data.public_url,
+      filename: fallback.data.file_name,
+      mime_type: fallback.data.file_type || params.effectiveMime,
+      size_bytes: fallback.data.file_size_bytes || params.binary.length,
+      width: params.dims.width,
+      height: params.dims.height,
+      checksum: params.checksum,
+      alt_text: fallback.data.alt_text || null,
+    };
+  }
+
+  if (assetErr) throw new Error(assetErr.message);
+
+  return {
+    media_asset_id: asset.id,
+    public_url: asset.public_url,
+    filename: asset.file_name,
+    mime_type: asset.file_type || params.effectiveMime,
+    size_bytes: asset.file_size_bytes || params.binary.length,
+    width: asset.width ?? params.dims.width,
+    height: asset.height ?? params.dims.height,
+    checksum: asset.checksum_sha256 || params.checksum,
+    alt_text: asset.alt_text || null,
+  };
+}
+
+function validateAndPrepareBinary(
+  binary: Buffer,
+  filename: string,
+  declaredMime: string
+): {
+  effectiveMime: string;
+  assetType: string;
+  ext: string;
+  checksum: string;
+  dims: { width: number | null; height: number | null };
+} {
   const maxBytes = declaredMime.startsWith('video/')
     ? MAX_VIDEO_BYTES
     : declaredMime === 'application/pdf'
@@ -192,7 +295,6 @@ export async function uploadSocialMedia(
   }
   const detectedNorm = normalizeMime(detected);
   if (detectedNorm === 'image/svg+xml') assertSafeSvg(binary);
-  // Allow jpeg/jpg alias and mp4/quicktime family mismatches only when both image or both video
   const declaredFamily = declaredMime.split('/')[0];
   const detectedFamily = detectedNorm.split('/')[0];
   if (declaredFamily !== detectedFamily) {
@@ -225,97 +327,85 @@ export async function uploadSocialMedia(
       ? 'png'
       : effectiveMime === 'image/jpeg'
         ? 'jpg'
-          : effectiveMime === 'image/webp'
+        : effectiveMime === 'image/webp'
           ? 'webp'
           : effectiveMime === 'image/svg+xml'
             ? 'svg'
             : effectiveMime === 'application/pdf'
               ? 'pdf'
-          : isVideo
-            ? 'mp4'
-            : 'bin');
+              : isVideo
+                ? 'mp4'
+                : 'bin');
 
-  // Tenant-scoped path — never share across tenants
-  const storagePath = `media/${input.tenantId}/${Date.now()}-${checksum.slice(0, 12)}.${ext}`;
-  const supabase = createSupabaseAdminClient();
+  return { effectiveMime, assetType, ext, checksum, dims };
+}
 
-  const { error: uploadError } = await supabase.storage.from('public-assets').upload(storagePath, binary, {
-    contentType: effectiveMime,
-    upsert: false,
+/** Upload from an in-memory buffer — avoids base64 encode/decode memory duplication. */
+export async function uploadSocialMediaFromBuffer(
+  input: UploadSocialMediaFromBufferInput
+): Promise<MediaAssetResult> {
+  const filename = String(input.filename || '').trim();
+  const declaredMime = normalizeMime(input.mimeType || '');
+  if (!filename) throw new Error('filename is required');
+  if (!declaredMime) throw new Error('mime_type is required');
+  if (!ALLOWED_MIME.has(declaredMime)) {
+    throw new Error(`Unsupported mime_type: ${declaredMime}`);
+  }
+
+  logMediaPipelineStep({
+    step: 'media_received',
+    tenantId: input.tenantId,
+    userId: input.userId,
+    correlationId: input.correlationId,
+    mimeType: declaredMime,
+    sizeBytes: input.buffer.length,
+    filename,
   });
-  if (uploadError) throw new Error(uploadError.message);
 
-  const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(storagePath);
-  const publicUrl = urlData.publicUrl;
-  if (!publicUrl || isDataUri(publicUrl)) {
-    throw new Error('Upload succeeded but no provider-fetchable URL was returned');
+  const prepared = validateAndPrepareBinary(input.buffer, filename, declaredMime);
+  const result = await persistSocialMediaAsset({
+    tenantId: input.tenantId,
+    userId: input.userId,
+    filename,
+    altText: input.altText,
+    binary: input.buffer,
+    ...prepared,
+  });
+
+  logMediaPipelineStep({
+    step: 'media_uploaded',
+    tenantId: input.tenantId,
+    userId: input.userId,
+    correlationId: input.correlationId,
+    mediaAssetId: result.media_asset_id,
+    mimeType: result.mime_type,
+    sizeBytes: result.size_bytes,
+    filename: result.filename,
+  });
+
+  return result;
+}
+
+export async function uploadSocialMedia(
+  input: UploadSocialMediaInput
+): Promise<MediaAssetResult> {
+  const filename = String(input.filename || '').trim();
+  const declaredMime = normalizeMime(input.mimeType || '');
+  if (!filename) throw new Error('filename is required');
+  if (!declaredMime) throw new Error('mime_type is required');
+  if (!ALLOWED_MIME.has(declaredMime)) {
+    throw new Error(`Unsupported mime_type: ${declaredMime}`);
   }
 
-  const { data: asset, error: assetErr } = await supabase
-    .from('media_assets')
-    .insert({
-      tenant_id: input.tenantId,
-      user_id: input.userId,
-      file_name: filename,
-      file_type: effectiveMime,
-      asset_type: assetType,
-      storage_path: storagePath,
-      public_url: publicUrl,
-      file_size_bytes: binary.length,
-      alt_text: input.altText || '',
-      checksum_sha256: checksum,
-      width: dims.width,
-      height: dims.height,
-      tags: ['social-publishing'],
-    })
-    .select('id, public_url, file_name, file_type, file_size_bytes, width, height, alt_text, checksum_sha256')
-    .single();
-
-  // Fallback if checksum/width columns do not exist yet
-  if (assetErr && (assetErr.code === '42703' || /column|does not exist/i.test(assetErr.message || ''))) {
-    const fallback = await supabase
-      .from('media_assets')
-      .insert({
-        tenant_id: input.tenantId,
-        user_id: input.userId,
-        file_name: filename,
-        file_type: effectiveMime,
-        asset_type: assetType,
-        storage_path: storagePath,
-        public_url: publicUrl,
-        file_size_bytes: binary.length,
-        alt_text: input.altText || '',
-        tags: ['social-publishing'],
-      })
-      .select('id, public_url, file_name, file_type, file_size_bytes, alt_text')
-      .single();
-    if (fallback.error) throw new Error(fallback.error.message);
-    return {
-      media_asset_id: fallback.data.id,
-      public_url: fallback.data.public_url,
-      filename: fallback.data.file_name,
-      mime_type: fallback.data.file_type || effectiveMime,
-      size_bytes: fallback.data.file_size_bytes || binary.length,
-      width: dims.width,
-      height: dims.height,
-      checksum,
-      alt_text: fallback.data.alt_text || null,
-    };
-  }
-
-  if (assetErr) throw new Error(assetErr.message);
-
-  return {
-    media_asset_id: asset.id,
-    public_url: asset.public_url,
-    filename: asset.file_name,
-    mime_type: asset.file_type || effectiveMime,
-    size_bytes: asset.file_size_bytes || binary.length,
-    width: asset.width ?? dims.width,
-    height: asset.height ?? dims.height,
-    checksum: asset.checksum_sha256 || checksum,
-    alt_text: asset.alt_text || null,
-  };
+  const binary = decodeBase64Media(input.contentBase64);
+  return uploadSocialMediaFromBuffer({
+    tenantId: input.tenantId,
+    userId: input.userId,
+    filename,
+    mimeType: declaredMime,
+    buffer: binary,
+    altText: input.altText,
+  });
 }
 
 export function rejectLocalAiPaths(value: unknown, field: string = 'media_url'): void {

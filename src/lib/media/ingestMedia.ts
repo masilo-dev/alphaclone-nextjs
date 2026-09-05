@@ -8,6 +8,7 @@ import {
   isDataUri,
   rejectOrExtractDataUri,
   uploadSocialMedia,
+  uploadSocialMediaFromBuffer,
   assertPublicMediaUrl,
 } from '@/lib/social/mediaUpload';
 import { buildPublicMediaUrl } from '@/lib/media/mediaPublicUrl';
@@ -177,16 +178,17 @@ export async function ingestMediaInput(params: {
         });
       }
       const remote = await downloadRemoteUrl(targetUrl);
-      const uploaded = await uploadSocialMedia({
+      const uploaded = await uploadSocialMediaFromBuffer({
         tenantId,
         userId,
         filename: media.filename || remote.filename,
-        mimeType: (remote.mimeType || '').startsWith('image/') ||
+        mimeType:
+          (remote.mimeType || '').startsWith('image/') ||
           (remote.mimeType || '').startsWith('video/') ||
           remote.mimeType === 'application/pdf'
-          ? remote.mimeType
-          : 'image/png',
-        contentBase64: remote.buffer.toString('base64'),
+            ? remote.mimeType
+            : 'image/png',
+        buffer: remote.buffer,
       });
       return toIngested(uploaded);
     }
