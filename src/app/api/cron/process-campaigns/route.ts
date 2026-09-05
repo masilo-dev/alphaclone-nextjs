@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { withCronJob } from '@/lib/cron/withCronJob';
 import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
     const denied = denyIfCronUnauthorized(req);
     if (denied) return denied;
 
+    return withCronJob('process-campaigns', async () => {
     try {
         const now = new Date().toISOString();
         const admin = createSupabaseAdminClient();
@@ -82,4 +84,5 @@ export async function GET(req: NextRequest) {
         console.error('Campaign Processing Error:', err);
         return clientErrorResponse(err, { request: req, scope: 'cron/process-campaigns.GET' });
     }
+    }, { maxDurationMs: 25_000 });
 }

@@ -3,7 +3,7 @@
  * Does not crash the process — callers skip or defer work instead.
  */
 
-const HEAP_REJECT_MB = Number(process.env.BACKGROUND_JOB_HEAP_REJECT_MB || 3072);
+const HEAP_REJECT_MB = Number(process.env.BACKGROUND_JOB_HEAP_REJECT_MB || 2800);
 
 export function resolveBackgroundJobHeapRejectMb(): number {
   return HEAP_REJECT_MB;

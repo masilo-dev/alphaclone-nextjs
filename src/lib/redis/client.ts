@@ -32,7 +32,7 @@ export type RedisCommands = {
 
 const CONNECT_TIMEOUT_MS = Math.max(
   1000,
-  Number(process.env.REDIS_CONNECT_TIMEOUT_MS || 5_000)
+  Number(process.env.REDIS_CONNECT_TIMEOUT_MS || 15_000)
 );
 const COMMAND_TIMEOUT_MS = Math.max(
   500,
@@ -51,7 +51,26 @@ let reconnectAttempt = 0;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 function railwayUrl(): string | null {
-  return ENV.REDIS_URL?.trim() || process.env.REDIS_URL?.trim() || null;
+  const direct = ENV.REDIS_URL?.trim() || process.env.REDIS_URL?.trim();
+  if (direct) return direct;
+
+  const host =
+    process.env.REDISHOST?.trim() ||
+    process.env.REDIS_HOST?.trim() ||
+    process.env.RAILWAY_PRIVATE_DOMAIN?.trim();
+  const port = process.env.REDISPORT?.trim() || process.env.REDIS_PORT?.trim() || '6379';
+  const password =
+    process.env.REDISPASSWORD?.trim() ||
+    process.env.REDIS_PASSWORD?.trim();
+  const user = process.env.REDISUSER?.trim() || 'default';
+  if (host && password) {
+    return `redis://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}`;
+  }
+  return null;
+}
+
+function isRailwayPrivateRedisUrl(url: string): boolean {
+  return /\.railway\.internal\b/i.test(url) || url.includes('RAILWAY_PRIVATE_DOMAIN');
 }
 
 function upstashConfigured(): boolean {
@@ -245,6 +264,18 @@ function scheduleReconnect(): void {
   reconnectTimer.unref?.();
 }
 
+async function connectRailwayClient(client: IORedis): Promise<void> {
+  await Promise.race([
+    client.connect(),
+    new Promise<void>((_, reject) => {
+      setTimeout(
+        () => reject(new Error(`Redis connect timeout after ${CONNECT_TIMEOUT_MS}ms`)),
+        CONNECT_TIMEOUT_MS
+      ).unref?.();
+    }),
+  ]);
+}
+
 async function initRailwayClient(): Promise<IORedis | null> {
   const url = railwayUrl();
   if (!url) return null;
@@ -255,6 +286,8 @@ async function initRailwayClient(): Promise<IORedis | null> {
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
       connectTimeout: CONNECT_TIMEOUT_MS,
+      // Required for Railway private hostnames (redis.railway.internal).
+      family: isRailwayPrivateRedisUrl(url) ? 0 : undefined,
       retryStrategy(times) {
         if (times > 8) return null;
         return Math.min(times * 500, MAX_RECONNECT_DELAY_MS);
@@ -271,7 +304,7 @@ async function initRailwayClient(): Promise<IORedis | null> {
       scheduleReconnect();
     });
 
-    await withCommandTimeout(client.connect(), 'connect');
+    await connectRailwayClient(client);
     reconnectAttempt = 0;
     railwayClient = client;
     logRateLimited('redis:railway:connected', 'info', '[redis] Railway TCP connected');
@@ -323,9 +356,16 @@ async function ensureClient(): Promise<RedisCommands | null> {
         }
 
         wrappedBackend = 'none';
-        if (isProduction() && isRedisRequired()) {
+        if (isProduction() && isRedisRequired() && !isRedisConfigured()) {
           throw new Error(
             'Redis is required but not configured. Set REDIS_URL or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.'
+          );
+        }
+        if (isProduction() && isRedisRequired() && isRedisConfigured()) {
+          logRateLimited(
+            'redis:required-unavailable',
+            'warn',
+            '[redis] REDIS_REQUIRED=true but TCP/REST connection failed; coordination paths will defer'
           );
         }
         warnMissingOnce();
@@ -353,7 +393,7 @@ export const redisEnabled = isRedisConfigured();
 export async function getRedisAsync(options?: {
   requireConfigured?: boolean;
 }): Promise<RedisCommands | null> {
-  const required = options?.requireConfigured === true || (isProduction() && isRedisRequired());
+  const required = options?.requireConfigured === true;
   const client = await ensureClient();
   if (!client && required) {
     throw new Error('Redis is required for this operation but is not available.');
@@ -363,7 +403,7 @@ export async function getRedisAsync(options?: {
 
 /** Sync accessor — triggers init; returns client once warm. Prefer getRedisAsync for locks. */
 export function getRedis(options?: { requireConfigured?: boolean }): RedisCommands | null {
-  const required = options?.requireConfigured === true || (isProduction() && isRedisRequired());
+  const required = options?.requireConfigured === true;
 
   if (!isRedisConfigured()) {
     if (required) {

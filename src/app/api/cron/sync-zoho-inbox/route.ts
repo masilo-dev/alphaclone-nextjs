@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { withCronJob } from '@/lib/cron/withCronJob';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { ZohoAuthExpiredError } from '@/services/zoho/ZohoService';
@@ -82,6 +83,7 @@ export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
   if (denied) return denied;
 
+  return withCronJob('sync-zoho-inbox', async () => {
   const admin = createSupabaseAdminClient();
 
   const { data: integrations, error } = await admin
@@ -110,4 +112,5 @@ export async function GET(req: NextRequest) {
     processed: results.length,
     results,
   });
+  }, { maxDurationMs: 25_000, lockTtlSec: 180 });
 }

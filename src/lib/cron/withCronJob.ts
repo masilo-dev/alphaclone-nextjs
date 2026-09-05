@@ -7,11 +7,33 @@ export type CronJobOptions = {
   lockTtlSec?: number;
   /** Max handler runtime before returning partial result (default 25s). */
   maxDurationMs?: number;
-  /** HTTP status when another instance holds the lock (default 204). */
+  /** HTTP status when another instance holds the lock (default 200). */
   alreadyRunningStatus?: number;
   /** Skip memory pressure guard when true. */
   skipMemoryGuard?: boolean;
 };
+
+function cronSkippedResponse(
+  jobName: string,
+  reason: string,
+  lockReason?: string,
+  status = 200
+): NextResponse {
+  // 204 responses must not include a JSON body (Fetch/Next.js will throw).
+  if (status === 204) {
+    return new NextResponse(null, { status: 204 });
+  }
+  return NextResponse.json(
+    {
+      success: true,
+      skipped: true,
+      reason,
+      lock: lockReason,
+      job: jobName,
+    },
+    { status }
+  );
+}
 
 /**
  * Wrap a cron handler with singleton locking, optional memory guard, and time budget.
@@ -32,16 +54,11 @@ export async function withCronJob<T extends Record<string, unknown>>(
 
   const lock = await acquireCronLock(jobName, options?.lockTtlSec ?? 120);
   if (!lock.acquired) {
-    return NextResponse.json(
-      {
-        success: true,
-        skipped: true,
-        reason: 'already_running',
-        lock: lock.reason,
-        job: jobName,
-      },
-      { status: options?.alreadyRunningStatus ?? 204 }
-    );
+    const status = options?.alreadyRunningStatus ?? 200;
+    if (lock.reason === 'redis_unavailable') {
+      return cronSkippedResponse(jobName, 'redis_unavailable', lock.reason, status);
+    }
+    return cronSkippedResponse(jobName, 'already_running', lock.reason, status);
   }
 
   try {

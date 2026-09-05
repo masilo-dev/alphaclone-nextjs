@@ -19,10 +19,38 @@ function cleanupExpiredLocal(key: string): void {
   }
 }
 
+function allowLocalLockWhenRedisDown(): boolean {
+  return process.env.CRON_LOCAL_LOCK_WHEN_REDIS_DOWN !== 'false';
+}
+
+function acquireLocalCronLock(
+  key: string,
+  ownerId: string,
+  ttlSec: number,
+  store: Map<string, { ownerId: string; expiresAt: number }>
+): CronLockResult {
+  cleanupExpiredLocal(key);
+  const held = store.get(key);
+  if (held && held.expiresAt > Date.now()) {
+    return { acquired: false, reason: 'held' };
+  }
+  store.set(key, { ownerId, expiresAt: Date.now() + ttlSec * 1000 });
+  return {
+    acquired: true,
+    ownerId,
+    release: async () => {
+      const current = store.get(key);
+      if (current?.ownerId === ownerId) {
+        store.delete(key);
+      }
+    },
+  };
+}
+
 /**
  * Acquire a distributed cron singleton lock (Redis SET NX EX).
- * When Redis is configured but unreachable, returns redis_unavailable (no in-process fallback).
- * In-process fallback is only used when Redis is not configured at all (single-replica dev).
+ * When Redis is configured but unreachable, falls back to in-process lock on single replica
+ * unless CRON_LOCAL_LOCK_WHEN_REDIS_DOWN=false.
  */
 export async function acquireCronLock(
   jobName: string,
@@ -33,8 +61,16 @@ export async function acquireCronLock(
 
   if (isRedisConfigured()) {
     try {
-      const redis = await getRedisAsync({ requireConfigured: true });
+      const redis = await getRedisAsync();
       if (!redis) {
+        if (allowLocalLockWhenRedisDown()) {
+          logRateLimited(
+            `cron-lock:fallback:${jobName}`,
+            'warn',
+            `[cron-lock] Redis unavailable for ${jobName}; using in-process lock fallback`
+          );
+          return acquireLocalCronLock(key, ownerId, ttlSec, localLocks);
+        }
         return { acquired: false, reason: 'redis_unavailable' };
       }
 
@@ -70,27 +106,15 @@ export async function acquireCronLock(
         `[cron-lock] Redis unavailable for ${jobName}`,
         err instanceof Error ? err.message : err
       );
+      if (allowLocalLockWhenRedisDown()) {
+        return acquireLocalCronLock(key, ownerId, ttlSec, localLocks);
+      }
       return { acquired: false, reason: 'redis_unavailable' };
     }
   }
 
   // Dev / single-replica fallback when Redis is not configured
-  cleanupExpiredLocal(key);
-  const held = localLocks.get(key);
-  if (held && held.expiresAt > Date.now()) {
-    return { acquired: false, reason: 'held' };
-  }
-  localLocks.set(key, { ownerId, expiresAt: Date.now() + ttlSec * 1000 });
-  return {
-    acquired: true,
-    ownerId,
-    release: async () => {
-      const current = localLocks.get(key);
-      if (current?.ownerId === ownerId) {
-        localLocks.delete(key);
-      }
-    },
-  };
+  return acquireLocalCronLock(key, ownerId, ttlSec, localLocks);
 }
 
 /** Force-clear an expired lock (test / recovery helper). */

@@ -227,25 +227,33 @@ export function validateProductionEnv(env = process.env) {
     configured["credential encryption secret"] = encryptionResolved.source;
   }
 
-  const redisUrl = env.UPSTASH_REDIS_REST_URL?.trim();
-  const redisToken = env.UPSTASH_REDIS_REST_TOKEN?.trim();
-  // Opt-in only. Defaulting Redis-required on NODE_ENV=production blocked Railway
-  // healthchecks when Upstash was unset (process exited before `next start` listened).
+  const redisUrl =
+    env.REDIS_URL?.trim() ||
+    env.CACHE_REDIS_URL?.trim() ||
+    env.STORE_REDIS_URL?.trim();
+  const upstashUrl = env.UPSTASH_REDIS_REST_URL?.trim();
+  const upstashToken = env.UPSTASH_REDIS_REST_TOKEN?.trim();
   const redisRequired =
     env.REDIS_REQUIRED === "true" ||
     env.REDIS_REQUIRED === "1" ||
     env.REQUIRE_REDIS === "true";
   if (redisRequired) {
-    if (!redisUrl || !redisToken) {
-      errors.push(
-        "Redis is required when REDIS_REQUIRED=true (UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN).",
-      );
-    } else if (!checkUrl(redisUrl, { https: true })) {
-      errors.push("UPSTASH_REDIS_REST_URL must be a valid HTTPS URL");
+    if (redisUrl) {
+      configured.Redis = "REDIS_URL";
+    } else if (upstashUrl && upstashToken) {
+      if (!checkUrl(upstashUrl, { https: true })) {
+        errors.push("UPSTASH_REDIS_REST_URL must be a valid HTTPS URL");
+      } else {
+        configured.Redis = "UPSTASH_REDIS_REST_URL";
+      }
     } else {
-      configured.Redis = "UPSTASH_REDIS_REST_URL";
+      errors.push(
+        "Redis is required when REDIS_REQUIRED=true (set REDIS_URL or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN).",
+      );
     }
-  } else if (redisUrl && redisToken) {
+  } else if (redisUrl) {
+    configured.Redis = "REDIS_URL";
+  } else if (upstashUrl && upstashToken) {
     configured.Redis = "UPSTASH_REDIS_REST_URL";
   }
 

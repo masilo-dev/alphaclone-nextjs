@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { withCronJob } from '@/lib/cron/withCronJob';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,7 @@ export async function GET(req: NextRequest) {
     const denied = denyIfCronUnauthorized(req);
     if (denied) return denied;
 
+    return withCronJob('workflows', async () => {
     try {
         console.log('Workflow sweep cron triggered');
 
@@ -49,4 +51,5 @@ export async function GET(req: NextRequest) {
             error: String(error)
         }, { status: 500 });
     }
+    }, { maxDurationMs: 25_000 });
 }
