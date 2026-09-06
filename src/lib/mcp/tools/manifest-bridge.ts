@@ -9,7 +9,7 @@
  */
 
 import { z } from 'zod';
-import { registerTool, hasTool } from '@/lib/mcp/tool-registry';
+import { registerTool, hasTool, MANIFEST_BRIDGE_MODULE } from '@/lib/mcp/tool-registry';
 import { MCP_TOOLS } from '@/services/mcp/toolManifest';
 import { SUPPLEMENTAL_MCP_TOOLS } from '@/lib/mcp/supplementalToolDefinitions';
 import { okResult, toMcpContent } from '@/lib/mcp/connector/response';
@@ -73,7 +73,7 @@ export function registerManifestBridgeTools() {
       (toolDef.inputSchema ?? {}) as Record<string, unknown>
     );
 
-    registerTool('manifest-bridge', {
+    registerTool(MANIFEST_BRIDGE_MODULE, {
       name: toolDef.name,
       description: toolDef.description || '',
       jsonSchema: {
@@ -84,6 +84,9 @@ export function registerManifestBridgeTools() {
       inputSchema: zodSchema,
       handler: async (args: Record<string, unknown>, ctx: { tenantId: string; userId: string }) => {
         // Bridge handler: executes via the canonical MCPServer execution path.
+        // `skipRegistry` is mandatory here: this tool IS the registry entry, so
+        // letting MCPServer consult the registry again would loop back into this
+        // handler indefinitely (see production OOM, Sep 2026).
         let mcpServerError: string | null = null;
         try {
           const { createMCPServer } = await import('@/services/mcp/MCPServer');
@@ -94,7 +97,8 @@ export function registerManifestBridgeTools() {
             toolDef.name,
             { ...args, tenant_id: ctx.tenantId, user_id: ctx.userId },
             crypto.randomUUID(),
-            supabase
+            supabase,
+            { skipRegistry: true }
           );
           if (legacyResult) return legacyResult;
         } catch (err: any) {

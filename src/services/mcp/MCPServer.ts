@@ -1074,7 +1074,15 @@ class AlphaCloneMCPServer {
     name: string,
     args: Record<string, any>,
     traceId: string,
-    supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>
+    supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+    options?: {
+      /**
+       * Skip the tool-registry lookup and go straight to the legacy switch.
+       * Set by the manifest bridge, whose registry entries forward here — without
+       * this the bridge and this method call each other until the heap is gone.
+       */
+      skipRegistry?: boolean;
+    }
   ): Promise<any> {
     const supabase = supabaseAdmin;
 
@@ -1140,9 +1148,13 @@ class AlphaCloneMCPServer {
     let executedViaRegistry = false;
 
     try {
-      const { hasTool, executeTool, initializeRegistry } = await import('@/lib/mcp/tool-registry');
+      const { hasTool, executeTool, initializeRegistry, isBridgedTool } = await import('@/lib/mcp/tool-registry');
       initializeRegistry();
-      if (hasTool(name)) {
+      // Bridged tools are thin forwarders back into this method. Routing them
+      // through the registry again would recurse forever (each hop allocates a
+      // fresh server + Ajv instance), which is exactly the production OOM loop.
+      const routeViaRegistry = !options?.skipRegistry && hasTool(name) && !isBridgedTool(name);
+      if (routeViaRegistry) {
         executedViaRegistry = true;
         const tenantId = this.requireTenant((args || {}) as Record<string, any>);
         const userId = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');

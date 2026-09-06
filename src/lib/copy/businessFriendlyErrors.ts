@@ -95,6 +95,15 @@ export function extractErrorMessage(raw: unknown): string | null {
     }
     if (typeof obj.error === 'string') return obj.error;
     if (typeof obj.message === 'string') return obj.message;
+    if (typeof obj.summary === 'string') return obj.summary;
+    if (typeof obj.reason === 'string') return obj.reason;
+    // Never surface "[object Object]" — keep something a human can read.
+    try {
+      const json = JSON.stringify(raw);
+      return json && json !== '{}' ? json.slice(0, 500) : null;
+    } catch {
+      return null;
+    }
   }
 
   const fallback = String(raw).trim();

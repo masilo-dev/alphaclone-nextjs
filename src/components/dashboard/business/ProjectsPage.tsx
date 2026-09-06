@@ -525,7 +525,7 @@ const ProjectListRow = ({
                 <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Due</span>
                     {project.dueDate ? (
-                        <TaskCountdown dueDate={project.dueDate} showAlarm={true} />
+                        <TaskCountdown dueDate={project.dueDate} showAlarm={true} label={project.name} />
                     ) : (
                         <span className="text-xs text-slate-600 italic">No deadline</span>
                     )}
@@ -580,7 +580,7 @@ const ProjectListRow = ({
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
                 {project.dueDate ? (
                     <div className="scale-90 origin-center bg-slate-950/50 px-2.5 py-1 rounded-full border border-white/5">
-                        <TaskCountdown dueDate={project.dueDate} showAlarm={true} />
+                        <TaskCountdown dueDate={project.dueDate} showAlarm={true} label={project.name} />
                     </div>
                 ) : (
                     <span className="text-xs text-slate-600 italic">No deadline</span>

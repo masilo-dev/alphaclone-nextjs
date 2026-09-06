@@ -262,6 +262,15 @@ const ES: Record<string, string> = {
     contacted: 'contactado',
     qualified: 'calificado',
     disqualified: 'descalificado',
+
+    // Deadlines / task countdown
+    Due: 'Vence',
+    'Due in': 'Vence en',
+    'Overdue by': 'Atrasado por',
+    'Deadline passed on': 'La fecha límite pasó el',
+    'No deadline': 'Sin fecha límite',
+    '{name} is now overdue': '{name} ahora está atrasado',
+    'A deadline was just reached': 'Se acaba de alcanzar una fecha límite',
 };
 
 const PL: Record<string, string> = {
@@ -516,6 +525,15 @@ const PL: Record<string, string> = {
     contacted: 'skontaktowany',
     qualified: 'zakwalifikowany',
     disqualified: 'dyskwalifikowany',
+
+    // Deadlines / task countdown
+    Due: 'Termin',
+    'Due in': 'Termin za',
+    'Overdue by': 'Po terminie o',
+    'Deadline passed on': 'Termin minął',
+    'No deadline': 'Brak terminu',
+    '{name} is now overdue': '{name} jest teraz po terminie',
+    'A deadline was just reached': 'Właśnie minął termin',
 };
 
 export function uiTranslate(lang: SupportedLanguage, text: string): string {
