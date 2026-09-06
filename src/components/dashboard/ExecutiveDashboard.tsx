@@ -88,47 +88,42 @@ export default function ExecutiveDashboard() {
 
   const pageLoading = loading || prefsLoading;
 
-  if (pageLoading || !stats) {
-    return (
-      <div className="p-6 space-y-4 animate-pulse">
-        <div className="h-8 w-64 bg-slate-800 rounded" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array(4).fill(0).map((_, i) => <div key={i} className="h-32 bg-slate-800 rounded-2xl" />)}
-        </div>
-      </div>
-    );
-  }
-
-  const revenueGoalPct = Math.min(100, Math.round((stats.revenue.total / Math.max(goals.revenue, 1)) * 100));
-  const clientGoalPct = Math.min(100, Math.round((stats.users.clients / Math.max(goals.clients, 1)) * 100));
-  const projectGoalPct = Math.min(100, Math.round((stats.projects.active / Math.max(goals.projects, 1)) * 100));
-  const trendValue = Number.isFinite(stats.revenue.trend) ? stats.revenue.trend : null;
+  // Derived numbers tolerate a missing `stats` so every hook below runs on every
+  // render. The loading early-return used to sit above `useMemo`, which changed
+  // the hook count between renders and crashed the page (React #310).
+  const revenueTotal = stats?.revenue.total ?? 0;
+  const clientCount = stats?.users.clients ?? 0;
+  const activeProjects = stats?.projects.active ?? 0;
+  const revenueGoalPct = Math.min(100, Math.round((revenueTotal / Math.max(goals.revenue, 1)) * 100));
+  const clientGoalPct = Math.min(100, Math.round((clientCount / Math.max(goals.clients, 1)) * 100));
+  const projectGoalPct = Math.min(100, Math.round((activeProjects / Math.max(goals.projects, 1)) * 100));
+  const trendValue = stats && Number.isFinite(stats.revenue.trend) ? stats.revenue.trend : null;
 
   const kpis = useMemo(
     () => [
       {
         label: 'Revenue vs Goal',
-        value: `$${stats.revenue.total.toLocaleString()}`,
+        value: `$${revenueTotal.toLocaleString()}`,
         delta: `${revenueGoalPct}% of goal`,
-        deltaDir: (stats.revenue.total >= goals.revenue ? 'up' : 'down') as 'up' | 'down',
+        deltaDir: (revenueTotal >= goals.revenue ? 'up' : 'down') as 'up' | 'down',
         comparisonText: `Goal: $${goals.revenue.toLocaleString()} · last 30 days`,
         icon: DollarSign,
         href: '/dashboard/business/billing',
       },
       {
         label: 'Client Target',
-        value: stats.users.clients,
+        value: clientCount,
         delta: `${clientGoalPct}% of goal`,
-        deltaDir: (stats.users.clients >= goals.clients ? 'up' : 'down') as 'up' | 'down',
+        deltaDir: (clientCount >= goals.clients ? 'up' : 'down') as 'up' | 'down',
         comparisonText: `Target: ${goals.clients}`,
         icon: Users,
         href: '/dashboard/contacts',
       },
       {
         label: 'Active Projects',
-        value: stats.projects.active,
+        value: activeProjects,
         delta: `${projectGoalPct}% of goal`,
-        deltaDir: (stats.projects.active >= goals.projects ? 'up' : 'down') as 'up' | 'down',
+        deltaDir: (activeProjects >= goals.projects ? 'up' : 'down') as 'up' | 'down',
         comparisonText: `Target: ${goals.projects} active projects`,
         icon: Target,
         href: '/dashboard/business/projects',
@@ -146,8 +141,19 @@ export default function ExecutiveDashboard() {
         href: '/dashboard/business/billing',
       },
     ],
-    [stats, goals, revenueGoalPct, clientGoalPct, projectGoalPct, trendValue],
+    [revenueTotal, clientCount, activeProjects, goals, revenueGoalPct, clientGoalPct, projectGoalPct, trendValue],
   );
+
+  if (pageLoading || !stats) {
+    return (
+      <div className="p-6 space-y-4 animate-pulse">
+        <div className="h-8 w-64 bg-slate-800 rounded" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Array(4).fill(0).map((_, i) => <div key={i} className="h-32 bg-slate-800 rounded-2xl" />)}
+        </div>
+      </div>
+    );
+  }
 
   const kpiProgress = [revenueGoalPct, clientGoalPct, projectGoalPct, null];
 

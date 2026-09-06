@@ -226,17 +226,33 @@ export default function WorkflowDashboard() {
     const loadData = useCallback(async () => {
         if (!tenant?.id) return;
         setLoading(true);
+        // `workflow_executions.workflow_id` references `workflows`, not
+        // `workflow_definitions`, so PostgREST rejects an embedded
+        // `workflow_definitions(name)` (400). Resolve names from the definitions
+        // loaded alongside instead.
         const [wfRes, execRes] = await Promise.all([
             supabase.from('workflow_definitions').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase
                 .from('workflow_executions')
-                .select('*, workflow_definitions(name)')
+                .select('*')
                 .eq('tenant_id', tenant.id)
                 .order('created_at', { ascending: false })
                 .limit(50),
         ]);
         if (!wfRes.error) setWorkflows(wfRes.data || []);
-        if (!execRes.error) setExecutions(execRes.data || []);
+        if (!execRes.error) {
+            const nameById = new Map<string, string>(
+                ((wfRes.data || []) as Array<{ id: string; name?: string }>).map((w) => [w.id, w.name || '']),
+            );
+            setExecutions(
+                ((execRes.data || []) as Array<Record<string, any>>).map((ex) => ({
+                    ...ex,
+                    workflow_definitions: nameById.has(ex.workflow_id)
+                        ? { name: nameById.get(ex.workflow_id) || '' }
+                        : ex.workflow_definitions,
+                })) as WorkflowExecution[],
+            );
+        }
         setLoading(false);
     }, [tenant]);
 

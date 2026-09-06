@@ -513,19 +513,35 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     if (!currentTenant?.id) return;
     const from = pageIndex * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    const { data, count } = await supabase
+    // `tasks.related_to_deal` has no foreign key, so PostgREST cannot embed
+    // `deals(...)` here — doing so made the whole request 400 and the task list
+    // render empty. Deal names are resolved with a second lookup below.
+    const { data, count, error } = await supabase
       .from('tasks')
-      .select('*, projects(name), deals:related_to_deal(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)', { count: 'exact' })
+      .select('*, projects(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)', { count: 'exact' })
       .eq('tenant_id', currentTenant.id)
       .is('deleted_at', null)
       .order('due_date', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(from, to);
+    if (error) {
+      console.error('[TasksTab] Failed to load tasks', error);
+    }
 
-    const mapped = ((data as any[]) || []).map((t) => ({
+    const rows = ((data as any[]) || []);
+    const dealIds = Array.from(new Set(rows.map((t) => t.related_to_deal).filter(Boolean))) as string[];
+    const dealNames = new Map<string, string>();
+    if (dealIds.length > 0) {
+      const { data: deals } = await supabase.from('deals').select('id, name').in('id', dealIds);
+      for (const d of (deals as Array<{ id: string; name: string | null }> | null) || []) {
+        if (d.name) dealNames.set(d.id, d.name);
+      }
+    }
+
+    const mapped = rows.map((t) => ({
       ...t,
       project_name: t.projects?.name,
-      deal_name: t.deals?.name,
+      deal_name: t.related_to_deal ? dealNames.get(t.related_to_deal) : undefined,
       contact_name: t.contacts
         ? [t.contacts.first_name, t.contacts.last_name].filter(Boolean).join(' ') || t.contacts.email
         : undefined,
