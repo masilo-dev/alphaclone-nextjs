@@ -6,6 +6,7 @@ import { IntelligentKpiCard } from '@/components/ui/intelligence';
 import type { AlphacloneIconProps } from '@/components/icons/alphaclone';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { PlatformKpiCardModel } from '@/lib/metrics/metricPresentation';
 
 export interface PlatformKpiCardProps extends PlatformKpiCardModel {
@@ -27,6 +28,7 @@ function StateShell({
   icon: ComponentType<{ className?: string }>;
   className?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div
       className={cn(
@@ -36,10 +38,10 @@ function StateShell({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[13px] font-medium text-[var(--ws-text-secondary)] truncate">{label}</p>
+        <p className="text-[13px] font-medium text-[var(--ws-text-secondary)] truncate">{t(label)}</p>
         <Icon className="w-4 h-4 text-[var(--ws-text-muted)] shrink-0" aria-hidden />
       </div>
-      <p className="mt-3 text-sm text-[var(--ws-text-muted)] leading-snug">{message}</p>
+      <p className="mt-3 text-sm text-[var(--ws-text-muted)] leading-snug">{t(message)}</p>
     </div>
   );
 }
@@ -69,6 +71,7 @@ export function PlatformKpiCard({
   className,
   onClick,
 }: PlatformKpiCardProps) {
+  const { t } = useLanguage();
   if (state === 'loading') {
     return (
       <IntelligentKpiCard
@@ -117,7 +120,7 @@ export function PlatformKpiCard({
   return (
     <div
       className={cn('relative', className)}
-      title={description ? `${description}${estimated ? ' (Estimated or delayed.)' : ''}` : undefined}
+      title={description ? `${t(description)}${estimated ? ` (${t('Estimated or delayed.')})` : ''}` : undefined}
     >
       <IntelligentKpiCard
         label={label}
@@ -137,7 +140,7 @@ export function PlatformKpiCard({
       />
       {estimated ? (
         <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wide text-[var(--ws-text-muted)]">
-          Est.
+          {t('Est.')}
         </span>
       ) : null}
     </div>

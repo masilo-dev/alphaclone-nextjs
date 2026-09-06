@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type OverviewChartTab = 'revenue' | 'pipeline' | 'completion';
 
@@ -71,13 +72,14 @@ export function OverviewChartCard({
   loading,
 }: OverviewChartCardProps) {
   const [tab, setTab] = useState<OverviewChartTab>('revenue');
+  const { t } = useLanguage();
   const data =
     tab === 'revenue' ? revenue : tab === 'pipeline' ? pipeline : completion;
 
   return (
     <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5', className)}>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 className={WORKSPACE.typography.sectionTitle}>Business overview</h2>
+        <h2 className={WORKSPACE.typography.sectionTitle}>{t('Business overview')}</h2>
         <div
           className="inline-flex rounded-[10px] bg-[var(--ws-surface-tertiary)] p-1"
           role="tablist"
@@ -97,7 +99,7 @@ export function OverviewChartCard({
                   : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
               )}
             >
-              {item.label}
+              {t(item.label)}
             </button>
           ))}
         </div>

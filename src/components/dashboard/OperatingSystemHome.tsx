@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { format } from 'date-fns';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatLocaleDate } from '@/i18n/languages';
 import { useBonnieApprovals } from '@/hooks/useBonnieApprovals';
 import { useBonnieMorningBrief } from '@/hooks/useBonnieMorningBrief';
 import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
@@ -59,6 +60,7 @@ const DEFAULT_MODULES: ModuleLauncherItem[] = [
 export function OperatingSystemHome() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const { pendingCount } = useBonnieApprovals(currentTenant?.id);
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
@@ -125,10 +127,10 @@ export function OperatingSystemHome() {
   const firstName =
     user?.name?.split(' ')[0] ||
     user?.email?.split('@')[0] ||
-    'there';
-  const businessName = currentTenant?.name || 'your business';
-  const greeting = greetingForHour(new Date().getHours());
-  const todayLabel = format(new Date(), 'EEEE, d MMMM yyyy');
+    t('there');
+  const businessName = currentTenant?.name || t('your business');
+  const greeting = t(greetingForHour(new Date().getHours()));
+  const todayLabel = formatLocaleDate(new Date(), language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   const normalizedStats = useMemo(() => normalizeDashboardStats(stats), [stats]);
 
@@ -157,16 +159,16 @@ export function OperatingSystemHome() {
         reason: flag.label,
         record: flag.detail,
         href: flag.href,
-        actionLabel: flag.kind === 'overdue_invoices' ? 'Collect payment' : flag.kind === 'broken_integrations' ? 'Repair' : 'Review',
+        actionLabel: t(flag.kind === 'overdue_invoices' ? 'Collect payment' : flag.kind === 'broken_integrations' ? 'Repair' : 'Review'),
         severity: flag.severity,
       });
     }
     if (pendingCount > 0) {
       items.unshift({
         id: 'approvals',
-        reason: `${pendingCount} Bonnie action${pendingCount > 1 ? 's' : ''} awaiting confirmation`,
+        reason: `${pendingCount} ${t(pendingCount > 1 ? 'Bonnie actions awaiting confirmation' : 'Bonnie action awaiting confirmation')}`,
         href: '/dashboard/business/bonnie/approvals',
-        actionLabel: 'Review approvals',
+        actionLabel: t('Review approvals'),
         severity: 'high',
       });
     }
@@ -176,7 +178,7 @@ export function OperatingSystemHome() {
         id: `brief-${i}`,
         reason: item,
         href: '/dashboard/business/bonnie',
-        actionLabel: 'Ask Bonnie',
+        actionLabel: t('Ask Bonnie'),
         severity: 'medium',
       });
     });
@@ -184,14 +186,14 @@ export function OperatingSystemHome() {
       items.push({
         id: 'tasks-fallback',
         reason: HUMAN_LABELS.taskBacklog,
-        record: `${openTasks} open task${openTasks !== 1 ? 's' : ''}`,
+        record: `${openTasks} ${t(openTasks !== 1 ? 'open tasks' : 'open task')}`,
         href: '/dashboard/tasks',
-        actionLabel: 'Work tasks',
+        actionLabel: t('Work tasks'),
         severity: 'medium',
       });
     }
     return items;
-  }, [pendingCount, overdueInvoices, openTasks, brief?.attentionItems, decisionVm.attentionFlags]);
+  }, [pendingCount, overdueInvoices, openTasks, brief?.attentionItems, decisionVm.attentionFlags, t]);
 
   const todayItems: TodayItem[] = useMemo(() => {
     const items: TodayItem[] = [];
@@ -201,7 +203,7 @@ export function OperatingSystemHome() {
     meetings.slice(0, 3).forEach((m, i) => {
       items.push({
         id: m.id || `meeting-${i}`,
-        label: m.title || 'Meeting',
+        label: m.title || t('Meeting'),
         meta: m.time,
         href: '/dashboard/business/calendar',
         kind: 'meeting',
@@ -210,10 +212,10 @@ export function OperatingSystemHome() {
     const dueTasks = Array.isArray(stats?.tasksDueToday)
       ? (stats.tasksDueToday as Array<{ id?: string; title?: string }>)
       : [];
-    dueTasks.slice(0, 3).forEach((t, i) => {
+    dueTasks.slice(0, 3).forEach((task, i) => {
       items.push({
-        id: t.id || `task-${i}`,
-        label: t.title || 'Task due today',
+        id: task.id || `task-${i}`,
+        label: task.title || t('Task due today'),
         href: '/dashboard/tasks',
         kind: 'task',
       });
@@ -221,13 +223,13 @@ export function OperatingSystemHome() {
     if (items.length === 0 && openTasks > 0) {
       items.push({
         id: 'open-tasks',
-        label: `${openTasks} open task${openTasks > 1 ? 's' : ''} in progress`,
+        label: `${openTasks} ${t(openTasks > 1 ? 'open tasks in progress' : 'open task in progress')}`,
         href: '/dashboard/tasks',
         kind: 'task',
       });
     }
     return items;
-  }, [stats, openTasks]);
+  }, [stats, openTasks, t]);
 
   const modules: ModuleLauncherItem[] = useMemo(
     () =>
@@ -235,18 +237,18 @@ export function OperatingSystemHome() {
         ...m,
         summary:
           m.id === 'crm'
-            ? `${decisionVm.kpis.activeCustomers.valueFormatted} active`
+            ? `${decisionVm.kpis.activeCustomers.valueFormatted} ${t('active')}`
             : m.id === 'leads'
-              ? `${leads.toLocaleString()} in pipeline · ${decisionVm.kpis.qualifiedLeads.current.toLocaleString()} qualified`
+              ? `${leads.toLocaleString()} ${t('in pipeline')} · ${decisionVm.kpis.qualifiedLeads.current.toLocaleString()} ${t('qualified')}`
               : m.id === 'pipeline'
-                ? `${dealsWon} won · ${formatMoney0(decisionVm.pipelineSummary.weightedValue)} EV`
+                ? `${dealsWon} ${t('won')} · ${formatMoney0(decisionVm.pipelineSummary.weightedValue)} EV`
                 : m.id === 'invoicing'
                   ? money(outstanding)
                   : m.id === 'tasks'
-                    ? `${tasksCompleted} done`
-                    : m.purpose,
+                    ? `${tasksCompleted} ${t('done')}`
+                    : t(m.purpose),
       })),
-    [dealsWon, outstanding, tasksCompleted, decisionVm]
+    [dealsWon, outstanding, tasksCompleted, decisionVm, t]
   );
 
   const revenueSeries = useMemo(() => {
@@ -261,9 +263,9 @@ export function OperatingSystemHome() {
       }));
     }
     return [
-      { label: 'Now', value: revenue, secondary: revenuePrev },
+      { label: t('Now'), value: revenue, secondary: revenuePrev },
     ];
-  }, [stats, revenue, revenuePrev]);
+  }, [stats, revenue, revenuePrev, t]);
 
   const pipelineSeries = useMemo(() => {
     const stages = Array.isArray(stats?.pipelineStages)
@@ -285,8 +287,8 @@ export function OperatingSystemHome() {
     if (series.length) {
       return series.map((p) => ({ label: p.label || '', value: Number(p.value || 0) }));
     }
-    return [{ label: 'Completed', value: tasksCompleted }];
-  }, [stats, tasksCompleted]);
+    return [{ label: t('Completed'), value: tasksCompleted }];
+  }, [stats, tasksCompleted, t]);
 
   const revenueTrend = [revenuePrev * 0.8, revenuePrev, revenuePrev * 0.95, revenue * 0.9, revenue];
   const leadsTrend = [leadsPrev * 0.7, leadsPrev * 0.9, leadsPrev, leads * 0.85, leads];
@@ -393,10 +395,10 @@ export function OperatingSystemHome() {
       <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="os-home">
         <StatePanel
           kind="empty"
-          title="Select a workspace to load your dashboard"
-          description="Choose a workspace from the top bar so AlphaClone can load your KPIs and activity."
+          title={t('Select a workspace to load your dashboard')}
+          description={t('Choose a workspace from the top bar so AlphaClone can load your KPIs and activity.')}
           actions={[
-            { label: 'Open workspace settings', href: '/dashboard/business/settings', primary: true },
+            { label: t('Open workspace settings'), href: '/dashboard/business/settings', primary: true },
           ]}
         />
       </div>
@@ -414,11 +416,11 @@ export function OperatingSystemHome() {
       <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="os-home">
         <StatePanel
           kind={kind}
-          title="Workspace dashboard data is not loading"
+          title={t('Workspace dashboard data is not loading')}
           description={loadError}
           actions={[
-            { label: 'Retry', onClick: () => void retry(), primary: true },
-            { label: 'Open CRM', href: '/dashboard/crm' },
+            { label: t('Retry'), onClick: () => void retry(), primary: true },
+            { label: t('Open CRM'), href: '/dashboard/crm' },
           ]}
         />
       </div>
@@ -435,7 +437,7 @@ export function OperatingSystemHome() {
             {greeting}, {firstName}
           </h1>
           <p className="mt-1.5 text-sm text-[var(--ws-text-secondary)] max-w-2xl">
-            Here is what needs your attention across {businessName} today.
+            {t('Here is what needs your attention across')} {businessName} {t('today.')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -445,13 +447,13 @@ export function OperatingSystemHome() {
             href="/dashboard/business/settings"
             className={WORKSPACE.action.secondary}
           >
-            Customise
+            {t('Customise')}
           </a>
           <a
             href="/dashboard/crm?quickAdd=true"
             className={WORKSPACE.action.secondary}
           >
-            Add contact
+            {t('Add contact')}
           </a>
         </div>
       </header>

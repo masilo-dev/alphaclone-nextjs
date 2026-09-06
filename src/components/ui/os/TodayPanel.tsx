@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface TodayItem {
   id: string;
@@ -26,13 +27,14 @@ const KIND_LABEL: Record<TodayItem['kind'], string> = {
 };
 
 export function TodayPanel({ items, className }: TodayPanelProps) {
+  const { t } = useLanguage();
   return (
     <aside className={cn(WORKSPACE.panel.base, 'p-4 md:p-5', className)}>
-      <h2 className={WORKSPACE.typography.sectionTitle}>Today</h2>
-      <p className="mt-1 text-sm text-[var(--ws-text-muted)]">Meetings, tasks, and deadlines.</p>
+      <h2 className={WORKSPACE.typography.sectionTitle}>{t('Today')}</h2>
+      <p className="mt-1 text-sm text-[var(--ws-text-muted)]">{t('Meetings, tasks, and deadlines.')}</p>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-[var(--ws-text-secondary)]">Your day is clear.</p>
+        <p className="mt-4 text-sm text-[var(--ws-text-secondary)]">{t('Your day is clear.')}</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {items.slice(0, 8).map((item) => (
@@ -50,7 +52,7 @@ export function TodayPanel({ items, className }: TodayPanelProps) {
                   ) : null}
                 </div>
                 <p className="mt-0.5 text-sm font-medium text-[var(--ws-text-primary)] line-clamp-2">
-                  {item.label}
+                  {t(item.label)}
                 </p>
               </Link>
             </li>

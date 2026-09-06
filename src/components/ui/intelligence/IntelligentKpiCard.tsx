@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { buildFullKpiViewModel, type FullKpiViewModel, type KpiStatus } from '@/lib/analytics/kpiMath';
 import { getSemanticStyles, kpiStatusToSeverity, type SemanticSeverity } from '@/lib/analytics/funnelAndPriority';
 import { WORKSPACE } from '@/constants/design';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { AlphacloneIconProps } from '@/components/icons/alphaclone';
 import type { ComponentType } from 'react';
 
@@ -41,6 +42,7 @@ function TrendIcon({ trend }: { trend: FullKpiViewModel['trend'] }) {
 }
 
 function StatusBadge({ status }: { status: KpiStatus }) {
+  const { t } = useLanguage();
   const severity = kpiStatusToSeverity(status);
   const styles = getSemanticStyles(severity);
   const labels: Record<KpiStatus, string> = {
@@ -58,7 +60,7 @@ function StatusBadge({ status }: { status: KpiStatus }) {
       styles.bg, styles.text, styles.border, 'border',
     )}>
       <span className={cn('w-1.5 h-1.5 rounded-full', styles.dot)} />
-      {labels[status]}
+      {t(labels[status])}
     </span>
   );
 }
@@ -149,6 +151,7 @@ export function IntelligentKpiCard({
   compact = false,
 }: IntelligentKpiCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const { t } = useLanguage();
 
   if (loading) {
     return (
@@ -190,7 +193,7 @@ export function IntelligentKpiCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-[13px] font-medium text-[var(--ws-text-secondary)] truncate">{vm.label}</p>
+            <p className="text-[13px] font-medium text-[var(--ws-text-secondary)] truncate">{t(vm.label)}</p>
             <StatusBadge status={vm.status} />
           </div>
           <p
@@ -226,10 +229,10 @@ export function IntelligentKpiCard({
                   <TrendIcon trend={vm.trend} />
                   {vm.formattedDelta}
                 </span>
-                <span className="text-[10.5px] text-[var(--ws-text-muted)]">{vm.referencePeriod}</span>
+                <span className="text-[10.5px] text-[var(--ws-text-muted)]">{vm.referencePeriod ? t(vm.referencePeriod) : null}</span>
               </div>
             ) : (
-              <p className="text-[10.5px] text-[var(--ws-text-muted)]">{vm.referencePeriod}</p>
+              <p className="text-[10.5px] text-[var(--ws-text-muted)]">{vm.referencePeriod ? t(vm.referencePeriod) : null}</p>
             )}
             <PaceReadout vm={vm} />
           </div>

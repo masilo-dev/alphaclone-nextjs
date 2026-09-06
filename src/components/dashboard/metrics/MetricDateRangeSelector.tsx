@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   METRIC_PERIOD_OPTIONS,
   type MetricPeriodPreset,
@@ -22,6 +23,7 @@ export function MetricDateRangeSelector({
   className,
   compact = false,
 }: MetricDateRangeSelectorProps) {
+  const { t } = useLanguage();
   return (
     <div
       className={cn(
@@ -30,7 +32,7 @@ export function MetricDateRangeSelector({
         className,
       )}
       role="group"
-      aria-label="Reporting period"
+      aria-label={t('Reporting period')}
     >
       {METRIC_PERIOD_OPTIONS.map((opt) => {
         const active = opt.id === value;
@@ -47,7 +49,7 @@ export function MetricDateRangeSelector({
             )}
             aria-pressed={active}
           >
-            {opt.label}
+            {t(opt.label)}
           </button>
         );
       })}

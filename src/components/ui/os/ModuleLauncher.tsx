@@ -7,6 +7,7 @@ import { MODULE_IDENTITY } from '@/constants/brand';
 import { getModuleIcon } from '@/components/icons/alphaclone';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface ModuleLauncherItem {
   id: ModuleId;
@@ -27,13 +28,14 @@ export function ModuleLauncher({
   className,
   title = 'Your modules',
 }: ModuleLauncherProps) {
+  const { t } = useLanguage();
   const visible = items.slice(0, 10);
 
   return (
     <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5', className)}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className={WORKSPACE.typography.sectionTitle}>{title}</h2>
-        <span className="text-xs text-[var(--ws-text-muted)]">{visible.length} visible</span>
+        <h2 className={WORKSPACE.typography.sectionTitle}>{t(title)}</h2>
+        <span className="text-xs text-[var(--ws-text-muted)]">{visible.length} {t('visible')}</span>
       </div>
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {visible.map((item) => {
@@ -56,10 +58,10 @@ export function ModuleLauncher({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-[var(--ws-text-primary)]">
-                    {identity.label}
+                    {t(identity.label)}
                   </span>
                   <span className="block text-xs text-[var(--ws-text-muted)] truncate">
-                    {item.summary || item.purpose}
+                    {item.summary || t(item.purpose)}
                   </span>
                 </span>
                 <ChevronRight className="w-4 h-4 text-[var(--ws-text-disabled)] group-hover:text-[var(--ws-text-secondary)] shrink-0" />

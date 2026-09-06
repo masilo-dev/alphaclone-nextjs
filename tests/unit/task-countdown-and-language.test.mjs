@@ -106,4 +106,57 @@ describe('language switching', () => {
     assert.match(es, /septiembre/);
     assert.match(pl, /września/);
   });
+
+  it('translates the whole dashboard shell (sidebar hubs, home screen, KPI cards, date ranges)', async () => {
+    // Every sidebar label passes through t() in Sidebar.tsx, so each one needs a dictionary entry.
+    const navSource = read('../../src/constants.ts');
+    const navLabels = [...navSource.matchAll(/label: '([^']+)'/g)].map((m) => m[1]);
+    // Period presets + comparison labels are rendered by MetricDateRangeSelector / IntelligentKpiCard.
+    const { METRIC_PERIOD_OPTIONS } = await import('../../src/lib/metrics/dateRange.ts');
+    const rangeSource = read('../../src/lib/metrics/dateRange.ts');
+    const comparisonLabels = [...rangeSource.matchAll(/comparisonLabel: '([^']+)'/g)].map((m) => m[1]);
+    const homeStrings = [
+      'Good morning', 'Good afternoon', 'Good evening',
+      'Here is what needs your attention across', 'today.',
+      'Customise', 'Add contact', 'Attention', 'Full OS',
+      'Total revenue', 'New leads', 'Conversion rate', 'Outstanding invoices',
+      'Upcoming meetings', 'Tasks requiring attention', 'Deals won', 'Overdue invoices',
+      'Improving', 'At risk', 'Stagnant', 'New', 'No data available.',
+      'Key metrics', 'Status signals', 'Platform health', 'Needs attention',
+      'Business overview', 'Your modules', 'Today', 'Meetings, tasks, and deadlines.',
+      'Welcome to AlphaClone Systems', 'Take a quick tour', 'Dismiss',
+    ];
+    const all = [...new Set([...navLabels, ...METRIC_PERIOD_OPTIONS.map((o) => o.label), ...comparisonLabels, ...homeStrings])];
+    for (const lang of ['es', 'pl']) {
+      // Loan words / brand names that are legitimately identical in the target language.
+      const sameInTarget = /^(CRM|SMS|WhatsApp|MCP monitor|AI Studio|Bonnie AI|Nexus|Gmail|SEO|Est\.|Tickets|Leads)$/;
+      const untranslated = all.filter((s) => uiTranslate(lang, s) === s && !sameInTarget.test(s));
+      assert.deepEqual(untranslated, [], `${lang} is missing: ${untranslated.join(' | ')}`);
+    }
+  });
+
+  it('wires t() into the shared home-screen components', () => {
+    const files = [
+      '../../src/components/dashboard/OperatingSystemHome.tsx',
+      '../../src/components/dashboard/AttentionFirstDashboard.tsx',
+      '../../src/components/dashboard/PlatformExecutionWelcome.tsx',
+      '../../src/components/dashboard/DashboardHomeLayoutToggle.tsx',
+      '../../src/components/dashboard/metrics/MetricDateRangeSelector.tsx',
+      '../../src/components/dashboard/metrics/ModuleKpiRichSections.tsx',
+      '../../src/components/dashboard/metrics/PlatformKpiCard.tsx',
+      '../../src/components/ui/intelligence/IntelligentKpiCard.tsx',
+      '../../src/components/ui/os/AttentionPanel.tsx',
+      '../../src/components/ui/os/TodayPanel.tsx',
+      '../../src/components/ui/os/OverviewChartCard.tsx',
+      '../../src/components/ui/os/ModuleLauncher.tsx',
+    ];
+    for (const rel of files) {
+      assert.match(read(rel), /useLanguage\(\)/, `${rel} must read the active language`);
+    }
+    // KPI cards translate label + badge + comparison period so every module benefits.
+    const kpi = read('../../src/components/ui/intelligence/IntelligentKpiCard.tsx');
+    assert.match(kpi, /\{t\(vm\.label\)\}/);
+    assert.match(kpi, /\{t\(labels\[status\]\)\}/);
+    assert.match(kpi, /t\(vm\.referencePeriod\)/);
+  });
 });

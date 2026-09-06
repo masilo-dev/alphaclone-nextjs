@@ -11,6 +11,7 @@ import { BreakdownBars } from '@/components/dashboard/BreakdownBars';
 import { StatusDonut } from '@/components/dashboard/StatusDonut';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function metricsToKpiItems(
   metrics: DashboardMetric[],
@@ -64,6 +65,7 @@ export function ModuleKpiRichSections({
   comparisonLabel,
   showPlatformHealth = false,
 }: ModuleKpiRichSectionsProps) {
+  const { t } = useLanguage();
   const primaryKpis = metricsToKpiItems(data.metrics, comparisonLabel);
   const secondaryKpis = metricsToKpiItems(data.metricsRowB ?? [], comparisonLabel);
   const signalKpis = pillsToKpiItems(data.pills ?? [], comparisonLabel);
@@ -81,7 +83,7 @@ export function ModuleKpiRichSections({
       {allKpis.length > 0 ? (
         <PlatformKpiGrid
           className="ac-metric-enter"
-          header={<SectionLabel>Key metrics · {comparisonLabel}</SectionLabel>}
+          header={<SectionLabel>{t('Key metrics')} · {t(comparisonLabel)}</SectionLabel>}
           items={allKpis}
         />
       ) : null}
@@ -89,14 +91,14 @@ export function ModuleKpiRichSections({
       {signalKpis.length > 0 ? (
         <PlatformKpiGrid
           className="ac-metric-enter"
-          header={<SectionLabel>Status signals</SectionLabel>}
+          header={<SectionLabel>{t('Status signals')}</SectionLabel>}
           items={signalKpis}
         />
       ) : null}
 
       {showPlatformHealth && healthItems.length > 0 ? (
         <div className="ac-workspace-panel rounded-lg p-4">
-          <SectionLabel className="mb-3">Platform health</SectionLabel>
+          <SectionLabel className="mb-3">{t('Platform health')}</SectionLabel>
           <div className="flex flex-wrap gap-2">
             {healthItems.map((pill) => (
               <span
@@ -108,9 +110,9 @@ export function ModuleKpiRichSections({
                   style={{ backgroundColor: pill.color }}
                   aria-hidden
                 />
-                <span>{pill.label}</span>
+                <span>{t(pill.label)}</span>
                 <span className="text-slate-500">·</span>
-                <span style={{ color: pill.color }}>{healthStatusLabel(pill.color)}</span>
+                <span style={{ color: pill.color }}>{t(healthStatusLabel(pill.color))}</span>
               </span>
             ))}
           </div>
@@ -120,18 +122,18 @@ export function ModuleKpiRichSections({
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 ac-chart-enter">
         <BreakdownBars
           items={data.breakdown}
-          title={breakdownTitle}
-          subtitle="Share by category in this module"
+          title={t(breakdownTitle)}
+          subtitle={t('Share by category in this module')}
         />
         <StatusDonut
           segments={data.donut}
-          title={donutTitle}
-          subtitle="Current distribution"
+          title={t(donutTitle)}
+          subtitle={t('Current distribution')}
         />
         <ActivityFeed
           items={data.feed}
-          title="Recent activity"
-          subtitle="Latest updates in this module"
+          title={t('Recent activity')}
+          subtitle={t('Latest updates in this module')}
         />
       </div>
     </div>

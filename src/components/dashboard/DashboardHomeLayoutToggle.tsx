@@ -4,6 +4,7 @@ import { LayoutGrid, ListChecks } from 'lucide-react';
 import { useWorkspacePreferences } from '@/hooks/useWorkspacePreferences';
 import type { DashboardHomeLayout } from '@/types/workspacePreferences';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const OPTIONS: {
   id: DashboardHomeLayout;
@@ -32,6 +33,7 @@ interface DashboardHomeLayoutToggleProps {
 /** Per-tenant home layout preference — stored in workspace settings, not localStorage. */
 export function DashboardHomeLayoutToggle({ className }: DashboardHomeLayoutToggleProps) {
   const { dashboardHomeLayout, saveDashboardHomeLayout, loading } = useWorkspacePreferences();
+  const { t } = useLanguage();
 
   return (
     <div
@@ -40,7 +42,7 @@ export function DashboardHomeLayoutToggle({ className }: DashboardHomeLayoutTogg
         className,
       )}
       role="group"
-      aria-label="Dashboard home layout"
+      aria-label={t('Dashboard home layout')}
     >
       {OPTIONS.map((opt) => {
         const Icon = opt.icon;
@@ -50,7 +52,7 @@ export function DashboardHomeLayoutToggle({ className }: DashboardHomeLayoutTogg
             key={opt.id}
             type="button"
             disabled={loading}
-            title={opt.hint}
+            title={t(opt.hint)}
             onClick={() => void saveDashboardHomeLayout(opt.id)}
             className={cn(
               'inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold rounded-[6px] transition-colors',
@@ -60,7 +62,7 @@ export function DashboardHomeLayoutToggle({ className }: DashboardHomeLayoutTogg
             )}
           >
             <Icon className="h-3.5 w-3.5" aria-hidden />
-            {opt.label}
+            {t(opt.label)}
           </button>
         );
       })}

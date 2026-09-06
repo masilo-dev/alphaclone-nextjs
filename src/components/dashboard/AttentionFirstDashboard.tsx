@@ -24,6 +24,7 @@ import {
   isTechnicalJargonText,
 } from '@/lib/copy/businessFriendlyErrors';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { formatCurrency } from '@/lib/format/currency';
 import { DashboardHomeLayoutToggle } from '@/components/dashboard/DashboardHomeLayoutToggle';
 import { WORKSPACE } from '@/constants/design';
@@ -43,10 +44,9 @@ interface BonnieAction {
   timestamp: string;
 }
 
-function greetingForNow(name?: string | null): string {
+function greetingForNow(name: string | null | undefined, t: (s: string) => string): string {
   const hour = new Date().getHours();
-  const part =
-    hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const part = t(hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening');
   const short = (name || '').trim().split(/\s+/)[0];
   return short ? `${part}, ${short}` : part;
 }
@@ -54,6 +54,7 @@ function greetingForNow(name?: string | null): string {
 export function AttentionFirstDashboard() {
   const { currentTenant, getDashboardStats } = useTenant();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { pendingCount } = useBonnieApprovals(currentTenant?.id);
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
@@ -159,7 +160,7 @@ export function AttentionFirstDashboard() {
     ? (stats.recentActivity as Array<{ text?: string; time?: string }>).slice(0, 5)
     : [];
 
-  const greeting = greetingForNow(user?.name || user?.email);
+  const greeting = greetingForNow(user?.name || user?.email, t);
 
   if (loading && !stats) {
     return (
@@ -184,14 +185,14 @@ export function AttentionFirstDashboard() {
       <header className="ac-workspace-panel px-4 py-4 md:px-5 md:py-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="min-w-0">
-            <p className={WORKSPACE.typography.sectionLabel}>Home</p>
+            <p className={WORKSPACE.typography.sectionLabel}>{t('Home')}</p>
             <h2 className="mt-1 text-[1.25rem] md:text-[1.375rem] font-semibold tracking-tight text-[var(--ws-text-primary,#fff)]">
               {greeting}
             </h2>
             <p className="mt-1 text-[13px] text-[var(--ws-text-secondary)] line-clamp-2">
               {currentTenant?.name
-                ? `${currentTenant.name} — focus on what needs you, then let Bonnie handle the rest.`
-                : 'Focus on what needs you, then let Bonnie handle the rest.'}
+                ? `${currentTenant.name} — ${t('focus on what needs you, then let Bonnie handle the rest.')}`
+                : t('Focus on what needs you, then let Bonnie handle the rest.')}
             </p>
           </div>
           <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0">
@@ -201,7 +202,7 @@ export function AttentionFirstDashboard() {
               className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-2 min-h-11 px-4 shrink-0')}
             >
               <Bot className="w-4 h-4" aria-hidden />
-              Ask Bonnie
+              {t('Ask Bonnie')}
             </Link>
           </div>
         </div>
@@ -213,7 +214,7 @@ export function AttentionFirstDashboard() {
           >
             <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-emerald-400" aria-hidden />
-              Money in
+              {t('Money in')}
             </p>
             <p className="mt-1.5 text-[1.375rem] font-semibold tabular-nums tracking-tight text-emerald-400">
               {formatCurrency(revenue)}
@@ -225,7 +226,7 @@ export function AttentionFirstDashboard() {
           >
             <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
               <Receipt className="w-3.5 h-3.5 text-amber-400" aria-hidden />
-              To collect
+              {t('To collect')}
             </p>
             <p className="mt-1.5 text-[1.375rem] font-semibold tabular-nums tracking-tight text-amber-400">
               {formatCurrency(outstanding)}
@@ -253,7 +254,7 @@ export function AttentionFirstDashboard() {
         {attentionItems.length === 0 ? (
           <p className="text-[13px] text-[var(--ws-text-secondary)] flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden />
-            Nothing urgent right now — Bonnie is watching your business.
+            {t('Nothing urgent right now — Bonnie is watching your business.')}
           </p>
         ) : (
           <ul className="space-y-2">
@@ -297,7 +298,7 @@ export function AttentionFirstDashboard() {
           </h3>
           {bonnieActions.length === 0 ? (
             <p className="text-[13px] text-[var(--ws-text-secondary)]">
-              Recent Bonnie actions will show here as your workspace gets active.
+              {t('Recent Bonnie actions will show here as your workspace gets active.')}
             </p>
           ) : (
             <ul className="space-y-2.5">
@@ -316,7 +317,7 @@ export function AttentionFirstDashboard() {
             href="/dashboard/bonnie"
             className="inline-flex mt-4 text-[12px] font-medium text-teal-400 hover:text-teal-300"
           >
-            Open Bonnie
+            {t('Open Bonnie')}
           </Link>
         </section>
 
@@ -326,7 +327,7 @@ export function AttentionFirstDashboard() {
             className={cn(WORKSPACE.typography.panelTitle, 'mb-3 flex items-center gap-2')}
           >
             <Trophy className="w-4 h-4 text-amber-400" aria-hidden />
-            Recent activity
+            {t('Recent activity')}
           </h3>
           {recentActivity.length > 0 ? (
             <ul className="space-y-2.5">
@@ -348,20 +349,20 @@ export function AttentionFirstDashboard() {
             </ul>
           ) : (
             <p className="text-[13px] text-[var(--ws-text-secondary)]">
-              Invoices, deals, and messages will appear here as work moves forward.
+              {t('Invoices, deals, and messages will appear here as work moves forward.')}
             </p>
           )}
           <Link
             href="/dashboard/notifications"
             className="inline-flex mt-4 text-[12px] font-medium text-teal-400 hover:text-teal-300"
           >
-            View all activity
+            {t('View all activity')}
           </Link>
         </section>
       </div>
 
       {/* Compact jump row — not a card grid of equal panels */}
-      <nav aria-label="Quick links" className="flex flex-wrap gap-2">
+      <nav aria-label={t('Quick links')} className="flex flex-wrap gap-2">
         {[
           { label: 'Customers', href: '/dashboard/crm/workspace', icon: Target },
           { label: 'Communication', href: '/dashboard/comms', icon: Mail },
@@ -374,7 +375,7 @@ export function AttentionFirstDashboard() {
             className="inline-flex items-center gap-2 min-h-11 px-3 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-panel)] text-[12px] font-medium text-[var(--ws-text-secondary)] hover:border-teal-500/35 hover:text-[var(--ws-text-primary,#fff)] transition-colors"
           >
             <item.icon className="w-3.5 h-3.5 text-teal-400" aria-hidden />
-            {item.label}
+            {t(item.label)}
           </Link>
         ))}
       </nav>
