@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { usePWA } from '@/contexts/PWAContext';
 import { pwaService } from '@/services/pwaService';
 import { Button } from '@/components/ui/UIComponents';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const DISMISS_KEY = 'ac_pwa_install_dismissed_until';
 /** How long “Not now / Got it / X” stays dismissed. */
@@ -36,6 +37,7 @@ export default function PwaInstallPrompt() {
   const [visible, setVisible] = useState(false);
   const [canNativeInstall, setCanNativeInstall] = useState(false);
   const [installing, setInstalling] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (typeof window === 'undefined' || isLoading || isPWA) return;
@@ -77,7 +79,7 @@ export default function PwaInstallPrompt() {
       window.clearTimeout(timer);
     };
     // Intentionally omit pathname from deps for re-show — session flag gates repeats.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [isLoading, isPWA]);
 
   if (!visible) return null;
@@ -117,11 +119,11 @@ export default function PwaInstallPrompt() {
             <Download className="w-5 h-5" aria-hidden />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-white">Install AlphaClone on this device</p>
+            <p className="text-sm font-bold text-white">{t('Install AlphaClone on this device')}</p>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
               {canNativeInstall
-                ? 'Add the app to your laptop or phone — opens in its own window, no browser toolbar.'
-                : 'Use your browser menu: Install app (Chrome/Edge) or Add to Home Screen on mobile.'}
+                ? t('Add the app to your laptop or phone — opens in its own window, no browser toolbar.')
+                : t('Use your browser menu: Install app (Chrome/Edge) or Add to Home Screen on mobile.')}
             </p>
             <div className="flex flex-wrap gap-2 mt-3">
               {canNativeInstall ? (
@@ -131,7 +133,7 @@ export default function PwaInstallPrompt() {
                   size="sm"
                   className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold"
                 >
-                  {installing ? 'Installing…' : 'Install now'}
+                  {installing ? t('Installing…') : t('Install now')}
                 </Button>
               ) : null}
               <button
@@ -139,7 +141,7 @@ export default function PwaInstallPrompt() {
                 onClick={dismiss}
                 className="text-xs font-semibold px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
               >
-                {canNativeInstall ? 'Not now' : 'Got it'}
+                {canNativeInstall ? t('Not now') : t('Got it')}
               </button>
             </div>
           </div>
@@ -147,7 +149,7 @@ export default function PwaInstallPrompt() {
             type="button"
             onClick={dismiss}
             className="p-1 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 shrink-0"
-            aria-label="Dismiss install prompt"
+            aria-label={t('Dismiss install prompt')}
           >
             <X className="w-4 h-4" />
           </button>

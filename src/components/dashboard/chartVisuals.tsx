@@ -5,6 +5,7 @@ import { BarChart3, ChevronRight } from 'lucide-react';
 import { MODULE_IDENTITY, type ModuleId } from '@/constants/brand';
 import { DASHBOARD_COLORS } from '@/types/dashboardStats';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export function resolveChartAccent(moduleId?: ModuleId | string, fallback: string = DASHBOARD_COLORS.blue) {
   if (moduleId && moduleId in MODULE_IDENTITY) {
@@ -71,6 +72,7 @@ export function RichChartEmptyState({
   onAction?: () => void;
   accentColor?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="flex h-[240px] items-center justify-center">
       <div className="mx-auto max-w-[22rem] text-center">
@@ -84,8 +86,8 @@ export function RichChartEmptyState({
         >
           <BarChart3 className="h-5 w-5" aria-hidden />
         </span>
-        <p className="mt-3 text-sm font-semibold text-white">{title}</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-[var(--ws-text-tertiary)]">{description}</p>
+        <p className="mt-3 text-sm font-semibold text-white">{t(title)}</p>
+        <p className="mt-1 text-[12px] leading-relaxed text-[var(--ws-text-tertiary)]">{t(description)}</p>
         {actionLabel && onAction ? (
           <button
             type="button"
@@ -95,7 +97,7 @@ export function RichChartEmptyState({
             )}
             style={{ borderColor: `color-mix(in srgb, ${accentColor} 28%, transparent)`, color: accentColor }}
           >
-            {actionLabel}
+            {t(actionLabel)}
             <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </button>
         ) : null}

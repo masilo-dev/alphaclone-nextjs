@@ -20,6 +20,7 @@ import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
 import { CHART_COLORS } from '@/constants/brand';
 import { OutreachLifecyclePanel } from '@/components/dashboard/outreach/OutreachLifecyclePanel';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -55,6 +56,7 @@ function DashboardContent({
   const { currentTenant, getDashboardStats } = useTenant();
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
   const { data, loading, isValidating, error } = useDashboardStats(currentTenant?.id, endpoint, preset);
   const [workspaceStats, setWorkspaceStats] = useState<Record<string, unknown> | null>(null);
@@ -160,7 +162,7 @@ function DashboardContent({
     <div className={cn('ac-scroll-full ac-module-section space-y-4', isValidating ? 'opacity-95' : '')}>
       {moduleId === 'overview' && allMetricsZero ? (
         <p className="text-[12px] text-[var(--ws-text-tertiary)] px-0.5">
-          No activity yet — use the checklist above to add your first client.
+          {t('No activity yet — use the checklist above to add your first client.')}
         </p>
       ) : null}
       {overviewNextSteps ? (
@@ -187,15 +189,15 @@ function DashboardContent({
                 <span className={cn(
                   'text-[11px] font-black uppercase tracking-widest',
                   featured ? 'text-teal-300' : 'text-[var(--brand-blue-400)]'
-                )}>{label}</span>
+                )}>{t(label)}</span>
               </div>
-              <h3 className="text-sm font-semibold text-white">{title}</h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{description}</p>
+              <h3 className="text-sm font-semibold text-white">{t(title)}</h3>
+              <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{t(description)}</p>
               <span className={cn(
                 'mt-4 inline-flex items-center gap-1 text-[12px] font-bold',
                 featured ? 'text-teal-300' : 'text-[var(--brand-blue-400)]'
               )}>
-                {cta}
+                {t(cta)}
                 <ChevronRight className="h-3.5 w-3.5" aria-hidden />
               </span>
             </button>
@@ -215,7 +217,7 @@ function DashboardContent({
             onClick={() => router.push(workspaceAction.resolvedHref)}
             className="ac-workspace-action-btn ac-workspace-action-btn--primary text-[11px] min-h-8 px-2.5"
           >
-            {workspaceAction.label}
+            {t(workspaceAction.label)}
             <ChevronRight className="w-3.5 h-3.5" aria-hidden />
           </button>
         ) : null}

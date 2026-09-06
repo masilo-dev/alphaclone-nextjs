@@ -1,6 +1,22 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* `dark:` utilities follow the theme class the app manages on <html>
+   (see applyAcThemeClass), not the OS preference. Without this, a user on a
+   dark OS who picks the light theme still gets dark tab bars, inputs and
+   panels wherever `dark:` classes are used. When neither class is present
+   (before hydration) fall back to the OS preference. */
+@custom-variant dark {
+  &:where(html.dark, html.dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(html:not(.light):not(.dark), html:not(.light):not(.dark) *) {
+      @slot;
+    }
+  }
+}
+
 .ios-scroll {
   -webkit-overflow-scrolling: touch;
 }
@@ -2228,6 +2244,10 @@ html.light .ac-business-root {
    Keep the permanently navy sidebar untouched. */
 html.light .ac-dashboard-main .text-white,
 html.light .ac-business-main .text-white,
+html.light .ac-dashboard-main .text-slate-50,
+html.light .ac-business-main .text-slate-50,
+html.light .ac-dashboard-main .text-slate-100,
+html.light .ac-business-main .text-slate-100,
 html.light .ac-dashboard-main .text-slate-200,
 html.light .ac-business-main .text-slate-200 {
   color: var(--text-primary) !important;
@@ -2261,9 +2281,57 @@ html.light .ac-business-main [class*="bg-slate-800/"] {
   background-color: var(--surface-secondary) !important;
 }
 
+/* Modal / drawer backdrops are also translucent slate. The mapping above turns
+   them into an opaque light sheet, so the page behind a dialog looks blank.
+   Keep them as a dim scrim instead. */
+html.light .ac-dashboard-main .absolute.inset-0[class*="bg-slate-950/"],
+html.light .ac-business-main .absolute.inset-0[class*="bg-slate-950/"],
+html.light .ac-dashboard-main .fixed.inset-0[class*="bg-slate-950/"],
+html.light .ac-business-main .fixed.inset-0[class*="bg-slate-950/"],
+html.light .ac-dashboard-main .absolute.inset-0[class*="bg-slate-900/"],
+html.light .ac-business-main .absolute.inset-0[class*="bg-slate-900/"],
+html.light .ac-dashboard-main .fixed.inset-0[class*="bg-slate-900/"],
+html.light .ac-business-main .fixed.inset-0[class*="bg-slate-900/"] {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+}
+
+/* Quill rich-text editors (compose email, contracts, documents) are themed via
+   arbitrary variants ([&_.ql-editor]:text-white) that the class mappings above
+   cannot see, leaving white text on a white field in light mode. */
+html.light .ql-toolbar.ql-snow {
+  background-color: var(--surface-secondary) !important;
+  border-color: var(--border-default) !important;
+}
+html.light .ql-container.ql-snow {
+  border-color: var(--border-default) !important;
+}
+html.light .ql-editor,
+html.light .ql-editor * {
+  color: var(--text-primary, #0f172a) !important;
+}
+html.light .ql-editor.ql-blank::before {
+  color: #94a3b8 !important;
+}
+html.light .ql-snow .ql-stroke {
+  stroke: #475569 !important;
+}
+html.light .ql-snow .ql-fill {
+  fill: #475569 !important;
+}
+html.light .ql-snow .ql-picker {
+  color: #475569 !important;
+}
+
 html.light .ac-dashboard-main .bg-slate-800,
 html.light .ac-business-main .bg-slate-800 {
   background-color: var(--surface-secondary) !important;
+}
+
+/* Active pills/toggles use slate-700 with white text; text-white becomes dark
+   in light mode, so the fill must lighten too or the label vanishes. */
+html.light .ac-dashboard-main .bg-slate-700,
+html.light .ac-business-main .bg-slate-700 {
+  background-color: #e2e8f0 !important;
 }
 
 /* Hairline borders drawn with white alpha disappear on a light canvas. */
@@ -2275,19 +2343,46 @@ html.light .ac-business-main [class*="divide-white/"] > :not([hidden]) ~ :not([h
 }
 
 /* Crisp Dashboard Loading State (No Blur Bleed) */
+/* Skeleton colours follow the theme: hardcoded slate made every loading
+   block a dark slab on the light dashboard. */
+:root {
+  --ac-skeleton-from: #1e293b;
+  --ac-skeleton-to: #334155;
+  --ac-skeleton-text: #64748b;
+}
+
+html.light {
+  --ac-skeleton-from: #e2e8f0;
+  --ac-skeleton-to: #f1f5f9;
+  --ac-skeleton-text: #94a3b8;
+}
+
 @keyframes ac-skeleton-shimmer {
   0% {
-    background-color: #1e293b;
+    background-color: var(--ac-skeleton-from);
     opacity: 0.65;
   }
   50% {
-    background-color: #334155;
+    background-color: var(--ac-skeleton-to);
     opacity: 1;
   }
   100% {
-    background-color: #1e293b;
+    background-color: var(--ac-skeleton-from);
     opacity: 0.65;
   }
+}
+
+html.light .ac-skeleton-pulse,
+html.light .animate-pulse {
+  color: var(--ac-skeleton-text);
+}
+
+/* Chakra is pinned to dark colour mode and paints every ::placeholder
+   whiteAlpha.400, which is invisible on light fields. */
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1;
 }
 
 .ac-skeleton-pulse,
