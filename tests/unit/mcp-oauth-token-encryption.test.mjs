@@ -50,6 +50,38 @@ describe('credential encryption secret resolution', () => {
     assert.equal(resolved.secret, VALID_ZOHO);
   });
 
+  it('lists every usable secret, canonical first, without duplicates', async () => {
+    process.env.ENCRYPTION_SECRET = VALID_32;
+    process.env.ZOHO_ENCRYPTION_SECRET = VALID_ZOHO;
+    process.env.TOKEN_ENCRYPTION_SECRET = VALID_32; // duplicate value
+    process.env.MCP_ENCRYPTION_KEY = TOO_SHORT;
+
+    const { resolveAllCredentialEncryptionSecrets } = await import(
+      '../../src/lib/integration/credentialEncryptionSecret.ts'
+    );
+    const all = resolveAllCredentialEncryptionSecrets();
+    assert.deepEqual(all.map((c) => c.source), ['ENCRYPTION_SECRET', 'ZOHO_ENCRYPTION_SECRET']);
+  });
+
+  it('decrypts tokens written under a previous/secondary secret (key rotation)', async () => {
+    // Reproduces production Sep 2026: Outlook tokens saved on 24 Aug were
+    // encrypted with ZOHO_ENCRYPTION_SECRET; after ENCRYPTION_SECRET became the
+    // canonical key, decrypt silently failed and Mail said "reconnect".
+    process.env.ZOHO_ENCRYPTION_SECRET = VALID_ZOHO;
+    const crypto = await import('../../src/lib/integration/integrationTokenCrypto.ts');
+    const stored = await crypto.encryptIntegrationToken('0.AXoA-refresh-token-value-1234567890');
+    assert.ok(crypto.isEncryptedToken(stored));
+
+    process.env.ENCRYPTION_SECRET = VALID_32; // new canonical key takes over
+    assert.equal(
+      await crypto.decryptIntegrationToken(stored),
+      '0.AXoA-refresh-token-value-1234567890'
+    );
+
+    delete process.env.ZOHO_ENCRYPTION_SECRET; // old key gone entirely
+    assert.equal(await crypto.decryptIntegrationToken(stored), stored, 'returns ciphertext when unrecoverable');
+  });
+
   it('prefers INTEGRATION_TOKEN_ENCRYPTION_SECRET when valid', async () => {
     process.env.INTEGRATION_TOKEN_ENCRYPTION_SECRET = VALID_32;
     process.env.ENCRYPTION_SECRET = VALID_ZOHO;

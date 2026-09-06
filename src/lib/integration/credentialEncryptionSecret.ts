@@ -34,6 +34,24 @@ export function resolveCredentialEncryptionSecret(): CredentialEncryptionResolut
   return null;
 }
 
+/**
+ * Every usable secret, canonical first, de-duplicated. Decryption should try
+ * all of them: tokens written before a key was added/reordered (e.g. Aug 2026,
+ * when ENCRYPTION_SECRET started winning over ZOHO_ENCRYPTION_SECRET) are
+ * otherwise unreadable and every integration reports "reconnect required".
+ */
+export function resolveAllCredentialEncryptionSecrets(): CredentialEncryptionResolution[] {
+  const seen = new Set<string>();
+  const out: CredentialEncryptionResolution[] = [];
+  for (const name of CREDENTIAL_ENCRYPTION_ENV_CANDIDATES) {
+    const raw = readEnvCandidate(name);
+    if (!raw || raw.length < MIN_CREDENTIAL_ENCRYPTION_SECRET_LENGTH || seen.has(raw)) continue;
+    seen.add(raw);
+    out.push({ secret: raw, source: name });
+  }
+  return out;
+}
+
 export function requireCredentialEncryptionSecret(): CredentialEncryptionResolution {
   const resolved = resolveCredentialEncryptionSecret();
   if (!resolved) {
