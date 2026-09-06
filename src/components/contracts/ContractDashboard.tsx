@@ -537,6 +537,16 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         rememberSignerDetails(form);
         setIsGenerating(true);
         setGeneratedContract('');
+        // A fresh draft has no saved row, no signature and no manual edits.
+        // Reset here, before streaming starts — never after it finishes, or a
+        // signature adopted while the text was still arriving would be wiped.
+        setEditedHtml('');
+        setIsEditing(false);
+        setContractId('');
+        setIsSigned(false);
+        setSignatureName('');
+        setSignatureData('');
+        setPreviewTab('document');
         setStep('preview');
 
         try {
@@ -572,23 +582,15 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 if (doneReading) break;
             }
 
-            const finalHtml = contractToHTML(accumulated);
-            setEditedHtml(finalHtml);
-            setContractId('');
-            setIsSigned(false);
-            setSignatureName('');
-            setSignatureData('');
-            setIsGenerating(false);
-            return;
+            setEditedHtml(contractToHTML(accumulated));
         } catch (err) {
             console.error('Streaming error:', err);
             toast.error('AI Streaming failed, using template...');
             // Fallback: generate from template
-            setGeneratedContract(buildTemplateContract(form, form.contractLength));
-            setContractId('');
-            setIsSigned(false);
-            setSignatureName('');
-            setSignatureData('');
+            const template = buildTemplateContract(form, form.contractLength);
+            setGeneratedContract(template);
+            setEditedHtml(contractToHTML(template));
+        } finally {
             setIsGenerating(false);
         }
     };
@@ -1636,7 +1638,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     {!isSigned && (
                                         <button
                                             onClick={() => setIsEditing(!isEditing)}
-                                            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all ${isEditing ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
+                                            disabled={isGenerating}
+                                            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isEditing ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                                         >
                                             <Edit3 className="w-3.5 h-3.5" /> {isEditing ? 'Save Refinements' : 'Refine Text'}
                                         </button>
@@ -1652,7 +1655,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         </>
                                     )}
                                     {step !== 'saved' && (
-                                        <button onClick={saveContract} disabled={isSaving} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-bold text-white transition-all hover:bg-teal-500 disabled:opacity-60">
+                                        <button
+                                            onClick={saveContract}
+                                            disabled={isSaving || isGenerating}
+                                            title={isGenerating ? 'Wait for the draft to finish writing' : undefined}
+                                            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-bold text-white transition-all hover:bg-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
                                             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                                             Save Contract
                                         </button>
@@ -1688,8 +1696,23 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 />
                             ) : (
                                 <>
+                                    {/* Still streaming: the text below is incomplete, so signing/saving wait. */}
+                                    {isGenerating && (
+                                        <div
+                                            className="bg-slate-900/60 border border-teal-500/20 rounded-2xl p-4 flex items-center gap-3"
+                                            role="status"
+                                            data-testid="contract-generating"
+                                        >
+                                            <Loader2 className="w-5 h-5 text-teal-400 animate-spin flex-shrink-0" />
+                                            <div>
+                                                <p className="text-white font-semibold text-sm">Drafting your contract…</p>
+                                                <p className="text-slate-400 text-xs">The text below is still being written. Signing and saving unlock as soon as it finishes.</p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Signature Panel — shown when not yet signed */}
-                                    {!isSigned && !isEditing && (
+                                    {!isSigned && !isEditing && !isGenerating && (
                                 <div className="bg-gradient-to-br from-teal-900/30 to-slate-900/60 border border-teal-500/30 rounded-2xl p-6">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center">
