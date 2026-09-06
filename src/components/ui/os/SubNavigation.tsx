@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { ModuleId } from '@/constants/brand';
 import { MODULE_IDENTITY } from '@/constants/brand';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface SubNavItem {
   id: string;
@@ -21,10 +22,11 @@ interface SubNavigationProps {
 
 export function SubNavigation({ moduleId, items, activeHref, className }: SubNavigationProps) {
   const identity = MODULE_IDENTITY[moduleId];
+  const { t } = useLanguage();
 
   return (
     <nav
-      aria-label={`${identity.label} sections`}
+      aria-label={`${t(identity.label)} · ${t('Sections')}`}
       className={cn(
         'ac-module-subnav flex gap-1 overflow-x-auto pb-px border-b border-[var(--ws-border)]',
         className
@@ -46,7 +48,7 @@ export function SubNavigation({ moduleId, items, activeHref, className }: SubNav
                 : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
             )}
           >
-            {item.label}
+            {t(item.label)}
             {item.badge != null ? (
               <span className="inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-[var(--ws-surface-tertiary)] px-1 text-[10px] font-semibold text-[var(--ws-text-secondary)]">
                 {item.badge}
