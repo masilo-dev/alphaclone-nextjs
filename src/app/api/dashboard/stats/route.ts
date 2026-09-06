@@ -3,6 +3,7 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { normalizeDashboardStats } from '@/lib/analytics/normalizeDashboardStats';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { LEGACY_PROJECT_STATUS_ENUM_ACTIVE } from '@/lib/crm/canonicalWorkspaceStats';
 import { dashboardStatsService } from '@/services/dashboardStatsService';
 import {
   resolveMetricDateRange,
@@ -94,14 +95,16 @@ async function getStatsFallback(supabase: any, tenantId: string, userId: string)
   ] = await Promise.all([
     safeCount('leads', { tenant_id: tenantId }),
     safeCount('business_clients', { tenant_id: tenantId, is_active: true }),
-    // active projects = not done/cancelled — use .in() to avoid enum empty-string comparison
+    // active projects = in-flight labels of the `project_status` enum. Any label
+    // the enum lacks (e.g. 'planning', 'on_hold') makes Postgres reject the query
+    // and the count silently reads 0.
     (async () => {
       try {
         const { count } = await supabase
           .from('projects')
           .select('id', { count: 'exact', head: true })
           .eq('tenant_id', tenantId)
-          .in('status', ['planning', 'active', 'in_progress', 'on_hold', 'review', 'pending']);
+          .in('status', [...LEGACY_PROJECT_STATUS_ENUM_ACTIVE]);
         return typeof count === 'number' ? count : 0;
       } catch { return 0; }
     })(),

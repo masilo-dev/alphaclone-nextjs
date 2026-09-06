@@ -90,9 +90,16 @@ function safeClear(key: string): void {
 
 // ── DB sync helpers ────────────────────────────────────────────────────────────
 
-async function loadFromDB(tenantId: string): Promise<PersistedMessage[] | null> {
+/**
+ * Load the conversation's messages. Without `conversationId` the API returns the
+ * tenant's *latest* conversation (legacy drawer behaviour) — never use that for a
+ * conversation-scoped panel or old threads leak into new chats.
+ */
+async function loadFromDB(tenantId: string, conversationId?: string | null): Promise<PersistedMessage[] | null> {
   try {
-    const res = await fetch(`/api/bonnie/conversations?tenantId=${encodeURIComponent(tenantId)}`);
+    const params = new URLSearchParams({ tenantId });
+    if (conversationId) params.set('conversationId', conversationId);
+    const res = await fetch(`/api/bonnie/conversations?${params.toString()}`);
     if (!res.ok) return null;
     const data = await res.json();
     if (!data.success || !Array.isArray(data.messages)) return null;
@@ -102,13 +109,17 @@ async function loadFromDB(tenantId: string): Promise<PersistedMessage[] | null> 
   }
 }
 
-async function saveToDBBatch(tenantId: string, messages: PersistedMessage[]): Promise<void> {
+async function saveToDBBatch(
+  tenantId: string,
+  messages: PersistedMessage[],
+  conversationId?: string | null,
+): Promise<void> {
   if (!tenantId || !messages.length) return;
   try {
     await fetch('/api/bonnie/conversations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenantId, messages }),
+      body: JSON.stringify(conversationId ? { tenantId, conversationId, messages } : { tenantId, messages }),
     });
   } catch {
     // fire-and-forget, non-critical
@@ -120,6 +131,8 @@ async function saveToDBBatch(tenantId: string, messages: PersistedMessage[]): Pr
 export type UseBonniePersistenceOptions<T extends PersistedMessage> = {
   tenantId?: string;
   userId?: string;
+  /** Scope DB reads/writes to one conversation (workspace console). */
+  conversationId?: string | null;
   introMessage?: string;
   /** Optional factory for the intro message object */
   introFactory?: () => T;
@@ -138,6 +151,7 @@ export type UseBonniePersistenceReturn<T extends PersistedMessage> = {
 export function useBonniePersistence<T extends PersistedMessage = PersistedMessage>({
   tenantId,
   userId,
+  conversationId = null,
   introMessage,
   introFactory,
 }: UseBonniePersistenceOptions<T>): UseBonniePersistenceReturn<T> {
@@ -187,7 +201,7 @@ export function useBonniePersistence<T extends PersistedMessage = PersistedMessa
 
     let cancelled = false;
     const fetchDB = async () => {
-      const dbMessages = await loadFromDB(tenantId);
+      const dbMessages = await loadFromDB(tenantId, conversationId);
       if (cancelled) return;
 
       if (dbMessages && dbMessages.length > 0) {
@@ -222,7 +236,7 @@ export function useBonniePersistence<T extends PersistedMessage = PersistedMessa
 
     void fetchDB();
     return () => { cancelled = true; };
-  }, [hydrated, tenantId, storageKey, buildIntro]);
+  }, [hydrated, tenantId, conversationId, storageKey, buildIntro]);
 
   // Step 3: Persist to localStorage on every change (debounced)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -242,7 +256,7 @@ export function useBonniePersistence<T extends PersistedMessage = PersistedMessa
     if (tenantId && dbSynced) {
       if (dbDebounceRef.current) clearTimeout(dbDebounceRef.current);
       dbDebounceRef.current = setTimeout(() => {
-        void saveToDBBatch(tenantId, messages.filter((m) => m.id !== 'intro'));
+        void saveToDBBatch(tenantId, messages.filter((m) => m.id !== 'intro'), conversationId);
       }, DB_WRITE_DEBOUNCE_MS);
     }
 
@@ -250,7 +264,7 @@ export function useBonniePersistence<T extends PersistedMessage = PersistedMessa
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (dbDebounceRef.current) clearTimeout(dbDebounceRef.current);
     };
-  }, [messages, storageKey, hydrated, tenantId, dbSynced]);
+  }, [messages, storageKey, hydrated, tenantId, conversationId, dbSynced]);
 
   const clearHistory = useCallback(() => {
     safeClear(storageKey);

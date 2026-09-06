@@ -297,6 +297,7 @@ export default function BonnieChatPanel({
     userId: conversationId
       ? `${storageKey || 'bonnie'}_${conversationId}`
       : storageKey,
+    conversationId,
     introMessage,
   });
 
@@ -832,30 +833,37 @@ export default function BonnieChatPanel({
                 <Zap className="h-3 w-3 text-teal-400" />
                 AI Priority Layer
               </span>
-              <span
-                className={
-                  aiQuota.percentUsed >= 90
-                    ? 'text-rose-400'
-                    : aiQuota.percentUsed >= 75
-                      ? 'text-amber-400'
-                      : 'text-teal-400'
-                }
-              >
-                {aiQuota.remaining.toLocaleString()} / {aiQuota.limit.toLocaleString()} left
-              </span>
+              {aiQuota.limit < 0 ? (
+                // limit -1 = unlimited (trial, legacy access, premium plans)
+                <span className="text-teal-400">Unlimited</span>
+              ) : (
+                <span
+                  className={
+                    aiQuota.percentUsed >= 90
+                      ? 'text-rose-400'
+                      : aiQuota.percentUsed >= 75
+                        ? 'text-amber-400'
+                        : 'text-teal-400'
+                  }
+                >
+                  {Math.max(0, aiQuota.remaining).toLocaleString()} / {aiQuota.limit.toLocaleString()} left
+                </span>
+              )}
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
-              <div
-                className={`h-full rounded-full transition-all ${
-                  aiQuota.percentUsed >= 90
-                    ? 'bg-rose-500'
-                    : aiQuota.percentUsed >= 75
-                      ? 'bg-amber-500'
-                      : 'bg-teal-500'
-                }`}
-                style={{ width: `${Math.min(100, aiQuota.percentUsed)}%` }}
-              />
-            </div>
+            {aiQuota.limit >= 0 ? (
+              <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    aiQuota.percentUsed >= 90
+                      ? 'bg-rose-500'
+                      : aiQuota.percentUsed >= 75
+                        ? 'bg-amber-500'
+                        : 'bg-teal-500'
+                  }`}
+                  style={{ width: `${Math.min(100, aiQuota.percentUsed)}%` }}
+                />
+              </div>
+            ) : null}
           </div>
         )}
         <Link
