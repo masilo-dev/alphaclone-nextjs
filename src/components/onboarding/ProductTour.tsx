@@ -25,6 +25,28 @@ interface ProductTourProps {
 const TARGET_POLL_INTERVAL_MS = 200;
 const TARGET_POLL_MAX_RETRIES = 10;
 
+function isVisibleAnchor(element: HTMLElement): boolean {
+    return element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
+}
+
+/** True when the anchor is taller/wider than the viewport, so a tooltip can't sit next to it. */
+function isOversizedAnchor(element: HTMLElement): boolean {
+    const rect = element.getBoundingClientRect();
+    return rect.height > window.innerHeight || rect.width > window.innerWidth;
+}
+
+/**
+ * The dashboard is a fixed-height app shell that scrolls internally; the
+ * window itself must stay at 0. If anything (Joyride, focus) scrolled it, the
+ * whole shell disappears above the fold and the page looks blank.
+ */
+function resetWindowScroll(): void {
+    if (typeof window === 'undefined') return;
+    if (window.scrollX !== 0 || window.scrollY !== 0) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+}
+
 const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavailable, userRole }) => {
     const { isDark } = useTheme();
     const { t } = useLanguage();
@@ -37,7 +59,12 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
         if (typeof document === 'undefined') return;
         if (isOpen && run) {
             document.documentElement.setAttribute('data-product-tour-active', 'true');
-            return () => document.documentElement.removeAttribute('data-product-tour-active');
+            window.addEventListener('scroll', resetWindowScroll, { passive: true });
+            return () => {
+                document.documentElement.removeAttribute('data-product-tour-active');
+                window.removeEventListener('scroll', resetWindowScroll);
+                resetWindowScroll();
+            };
         }
         document.documentElement.removeAttribute('data-product-tour-active');
     }, [isOpen, run]);
@@ -219,9 +246,13 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
             // "Next", which reads as "the tour did nothing".
             const available: Step[] = steps.flatMap((step) => {
                 if (typeof step.target !== 'string') return [{ ...step, disableBeacon: true }];
-                const target = Array.from(document.querySelectorAll<HTMLElement>(step.target)).find((element) =>
-                    element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
-                return target ? [{ ...step, target, disableBeacon: true }] : [];
+                const target = Array.from(document.querySelectorAll<HTMLElement>(step.target)).find(isVisibleAnchor);
+                if (!target) return [];
+                // Whole-page wrappers (e.g. the 2900px-tall home canvas) can't be
+                // "pointed at": Joyride would park the tooltip thousands of pixels
+                // below the fold. Show those steps as a centred card instead.
+                const placement = isOversizedAnchor(target) ? 'center' : step.placement;
+                return [{ ...step, target, placement, disableBeacon: true }];
             });
 
             if (available.length > 0) {
@@ -242,6 +273,7 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
             // tour would stay "open but invisible" and the button would be dead.
             setMountedSteps([]);
             setRun(false);
+            resetWindowScroll();
             toast(t('The tour is not available on this screen. Open the dashboard home and try again.'), {
                 id: 'product-tour-unavailable',
                 icon: 'ℹ️',
@@ -262,6 +294,7 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
         if (completed.current) return;
         completed.current = true;
         setRun(false);
+        resetWindowScroll();
         void fetch('/api/account/profile', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -295,7 +328,7 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
             showProgress
             showSkipButton
             disableOverlay
-            scrollToFirstStep
+            disableScrolling
             spotlightClicks
             callback={handleJoyrideCallback}
             styles={{

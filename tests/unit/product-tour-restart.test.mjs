@@ -33,8 +33,25 @@ describe('ProductTour can always be (re)started', () => {
 
   it('shows every step tooltip immediately (no beacon-only steps)', () => {
     const matches = tour.match(/disableBeacon: true/g) ?? [];
-    assert.match(tour, /\{ \.\.\.step, target, disableBeacon: true \}/);
+    assert.match(tour, /\{ \.\.\.step, target, placement, disableBeacon: true \}/);
     assert.ok(matches.length >= 2, 'mounted steps must force disableBeacon');
+  });
+
+  it('never scrolls the window (the app shell scrolls internally; window scroll blanks the page)', () => {
+    // Verified live on alphaclonesystems.com: with scrollToFirstStep Joyride
+    // scrolled <html> to 1912px and the whole dashboard vanished above the fold.
+    assert.doesNotMatch(tour, /scrollToFirstStep/);
+    assert.match(tour, /\n\s+disableScrolling\n/);
+    assert.match(tour, /function resetWindowScroll\(\)/);
+    assert.match(tour, /window\.addEventListener\('scroll', resetWindowScroll/);
+    const resets = tour.match(/resetWindowScroll\(\);/g) ?? [];
+    assert.ok(resets.length >= 3, 'must reset scroll on complete, unavailable and unmount');
+  });
+
+  it('turns whole-page anchors into centred cards instead of pointing below the fold', () => {
+    assert.match(tour, /function isOversizedAnchor\(element: HTMLElement\)/);
+    assert.match(tour, /rect\.height > window\.innerHeight \|\| rect\.width > window\.innerWidth/);
+    assert.match(tour, /isOversizedAnchor\(target\) \? 'center' : step\.placement/);
   });
 
   for (const [name, source] of Object.entries(parents)) {
