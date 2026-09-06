@@ -4,6 +4,7 @@ import { BONNIE_CUSTOM_TOOLS } from '@/lib/bonnie/bonnieToolCatalog';
 import { evaluateToolPolicy } from '@/lib/ai/ToolPolicyGate';
 import { resolveBonnieToolSets } from '@/lib/bonnie/resolveBonnieTools';
 import { recordDecision } from '@/services/nexusDecisionLogService';
+import { extractErrorMessage } from '@/lib/copy/businessFriendlyErrors';
 import type { BonnieToolResult } from '@/lib/bonnie/bonnieToolTypes';
 
 const CUSTOM_SET = new Set<string>(BONNIE_CUSTOM_TOOLS);
@@ -21,6 +22,9 @@ function extractToolText(result: { content?: Array<{ text?: string }> }): string
       if (parsed.message) return String(parsed.message);
       const identifier = parsed.name || parsed.title || parsed.text || parsed.id;
       if (identifier) return String(identifier);
+      // Structured MCP errors nest the message under `error` — never "[object Object]".
+      const nested = extractErrorMessage(parsed);
+      return nested || chunk.slice(0, 2000);
     }
     return String(parsed);
   } catch {

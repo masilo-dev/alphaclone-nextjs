@@ -74,3 +74,16 @@ test('extractErrorMessage reads nested MCP error.message', () => {
     "Cannot read properties of undefined (reading 'includes')"
   );
 });
+
+test('extractErrorMessage never yields "[object Object]" for structured payloads', () => {
+  // Shape that produced "[object Object]" entries in nexus_decision_log for
+  // get_tickets / search_clients before the fix.
+  const structured = { ok: false, error: { code: 'PGRST301', details: 'JWT expired' } };
+  const msg = extractErrorMessage(structured);
+  assert.notEqual(msg, '[object Object]');
+  assert.match(msg, /PGRST301/);
+
+  assert.equal(extractErrorMessage({ summary: 'No tickets matched' }), 'No tickets matched');
+  assert.equal(extractErrorMessage({ reason: 'rate limited' }), 'rate limited');
+  assert.equal(extractErrorMessage({}), null);
+});

@@ -19,6 +19,14 @@ import {
 import { extractErrorMessage } from '@/lib/copy/businessFriendlyErrors';
 
 const registry = new Map<string, MCPTool>();
+const toolModules = new Map<string, string>();
+
+/**
+ * Module label used by the manifest bridge. Bridge tools have no handler of
+ * their own — they forward to the legacy MCPServer switch. MCPServer must never
+ * route a bridged tool back into the registry, or the two recurse until OOM.
+ */
+export const MANIFEST_BRIDGE_MODULE = 'manifest-bridge';
 
 function errorTextFromMcpContent(content: unknown): string | undefined {
   if (!Array.isArray(content) || !content[0]) return undefined;
@@ -31,10 +39,21 @@ export function registerTool<T extends z.ZodObject<any>>(
   tool: MCPTool<T>
 ) {
   registry.set(tool.name, tool);
+  toolModules.set(tool.name, moduleName);
 }
 
 export function hasTool(name: string): boolean {
   return registry.has(name);
+}
+
+/** Module label the tool was registered under (undefined when not registered). */
+export function getToolModule(name: string): string | undefined {
+  return toolModules.get(name);
+}
+
+/** True when the tool only exists as a manifest-bridge forwarder to MCPServer. */
+export function isBridgedTool(name: string): boolean {
+  return toolModules.get(name) === MANIFEST_BRIDGE_MODULE;
 }
 
 export function listTools(sanitizeForClient = false) {

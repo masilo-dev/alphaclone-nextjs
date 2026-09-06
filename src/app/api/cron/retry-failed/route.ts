@@ -68,6 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     const retriedCount = [];
+    const abandoned: Array<{ runId: string; reason: string }> = [];
 
     for (const run of failedRuns) {
       const retryCount = Number(run.retries || 0);
@@ -87,8 +88,25 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        const workflow = WORKFLOW_MAP[run.workflow_type];
-        if (!workflow) throw new Error(`Unknown workflow type: ${run.workflow_type}`);
+        const workflow = run.workflow_type ? WORKFLOW_MAP[run.workflow_type] : undefined;
+        if (!workflow) {
+          // Nothing can ever re-run this row (legacy/null workflow_type). Park it
+          // instead of logging the same error every hour forever.
+          const reason = `Unknown workflow type: ${run.workflow_type ?? 'null'}`;
+          await supabase
+            .from('automation_runs')
+            .update({
+              status: 'abandoned',
+              retries: 3,
+              last_error: reason,
+              finished_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', run.id);
+          console.warn(`[Automation] Abandoned run ${run.id}: ${reason}`);
+          abandoned.push({ runId: run.id, reason });
+          continue;
+        }
 
         // Re-start the workflow
         // In a real system, you might want to resume from the last failed step, 
@@ -119,8 +137,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    await logCron('retry-failed', 'success', { retriedCount }, ranAt);
-    return NextResponse.json({ success: true, retried_count: retriedCount.length, results: retriedCount });
+    await logCron('retry-failed', 'success', { retriedCount, abandoned }, ranAt);
+    return NextResponse.json({
+      success: true,
+      retried_count: retriedCount.length,
+      abandoned_count: abandoned.length,
+      results: retriedCount,
+      abandoned,
+    });
 
   } catch (error: any) {
     console.error('[Automation] Retry sweeper failed:', error.message);
