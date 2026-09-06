@@ -272,6 +272,14 @@ const ES: Record<string, string> = {
     '{name} is now overdue': '{name} ahora está atrasado',
     'A deadline was just reached': 'Se acaba de alcanzar una fecha límite',
 
+    // Top bar & mobile nav
+    Bonnie: 'Bonnie',
+    More: 'Más',
+    Search: 'Buscar',
+    'Search anything...': 'Buscar cualquier cosa...',
+    'Open Bonnie AI': 'Abrir Bonnie AI',
+    'flat trend': 'tendencia plana',
+
     // Product tour
     'Platform tour': 'Recorrido de la plataforma',
     Back: 'Atrás',
@@ -753,6 +761,14 @@ const PL: Record<string, string> = {
     'No deadline': 'Brak terminu',
     '{name} is now overdue': '{name} jest teraz po terminie',
     'A deadline was just reached': 'Właśnie minął termin',
+
+    // Top bar & mobile nav
+    Bonnie: 'Bonnie',
+    More: 'Więcej',
+    Search: 'Szukaj',
+    'Search anything...': 'Szukaj czegokolwiek...',
+    'Open Bonnie AI': 'Otwórz Bonnie AI',
+    'flat trend': 'trend płaski',
 
     // Product tour
     'Platform tour': 'Przewodnik po platformie',

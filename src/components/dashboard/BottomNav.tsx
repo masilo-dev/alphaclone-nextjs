@@ -15,6 +15,7 @@ import {
 } from '@/config/responsive/mobileNav';
 import { readPwaPreferences, subscribePwaPreferences } from '@/lib/pwa/pwaPreferences';
 import { usePWA } from '@/contexts/PWAContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import MobileMoreSheet from './responsive/MobileMoreSheet';
 
 interface BottomNavProps {
@@ -48,6 +49,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   const router = useRouter();
   const { isPWA } = usePWA();
+  const { t } = useLanguage();
   const [moreOpen, setMoreOpen] = useState(false);
   const [navPrefs, setNavPrefs] = useState(() => readPwaPreferences());
 
@@ -119,7 +121,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 key={item.moduleId}
                 type="button"
                 onClick={() => handleNavClick(item.href, item.moduleId)}
-                aria-label={item.label}
+                aria-label={t(item.label)}
                 aria-current={!isMore && isActive ? 'page' : undefined}
                 aria-expanded={isMore ? moreOpen : undefined}
                 aria-haspopup={isMore ? 'dialog' : undefined}
@@ -148,7 +150,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                     isActive ? 'text-teal-300 font-semibold' : 'text-[var(--ws-text-tertiary)]'
                   }`}
                 >
-                  {item.label}
+                  {t(item.label)}
                 </span>
               </button>
             );

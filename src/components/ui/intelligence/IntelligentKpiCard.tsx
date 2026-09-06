@@ -227,7 +227,7 @@ export function IntelligentKpiCard({
                   )}
                 >
                   <TrendIcon trend={vm.trend} />
-                  {vm.formattedDelta}
+                  {t(vm.formattedDelta).replace('flat trend', t('flat trend'))}
                 </span>
                 <span className="text-[10.5px] text-[var(--ws-text-muted)]">{vm.referencePeriod ? t(vm.referencePeriod) : null}</span>
               </div>

@@ -5,6 +5,7 @@ import { searchService, SearchResult, SearchFilters } from '../../services/searc
 import { User as UserType } from '../../types';
 import { Card } from '../ui/UIComponents';
 import { useTenant } from '@/contexts/TenantContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface EnhancedGlobalSearchProps {
     user: UserType;
@@ -13,6 +14,7 @@ interface EnhancedGlobalSearchProps {
 
 const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNavigate }) => {
     const { currentTenant } = useTenant();
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -161,9 +163,9 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         className="object-contain"
                     />
                 </div>
-                <span className="hidden text-sm font-medium sm:inline">Search anything...</span>
+                <span className="hidden text-sm font-medium sm:inline">{t('Search anything...')}</span>
                 <kbd className="ml-auto hidden rounded-lg border border-white/5 bg-black/20 px-2 py-0.5 text-xs text-slate-400 sm:inline-block">
-                    Search
+                    {t('Search')}
                 </kbd>
             </button>
         );

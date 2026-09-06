@@ -1326,10 +1326,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             type="button"
                             onClick={() => setActiveTab('/dashboard/business/bonnie')}
                             className="hidden md:inline-flex ac-workspace-action-btn ac-workspace-action-btn--bonnie min-h-9 px-3"
-                            aria-label="Open Bonnie AI"
+                            aria-label={t('Open Bonnie AI')}
                         >
                             <Bot className="h-4 w-4" aria-hidden="true" />
-                            <span className="hidden xl:inline">Ask Bonnie</span>
+                            <span className="hidden xl:inline">{t('Ask Bonnie')}</span>
                         </button>
 
                         <div data-tour="global-search" className="hidden md:block">
