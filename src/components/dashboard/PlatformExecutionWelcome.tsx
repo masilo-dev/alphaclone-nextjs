@@ -74,7 +74,7 @@ export function PlatformExecutionWelcome({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl border border-teal-500/25 bg-gradient-to-br from-teal-500/10 via-slate-900/80 to-slate-950/90 p-4 sm:p-5',
+        'ac-welcome-banner relative overflow-hidden rounded-2xl border border-teal-500/25 p-4 sm:p-5',
         className
       )}
       data-tour="platform-welcome"

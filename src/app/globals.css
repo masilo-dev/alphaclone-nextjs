@@ -2168,12 +2168,50 @@ html.light .ac-backlit-surface::before {
   box-shadow: none;
 }
 
-/* Sidebar remains dark navy in both themes — keep light nav text */
+/* Sidebar remains dark navy in both themes. In light mode the workspace tokens
+   flip to light values (dark text, #EAF3F4 active pill) which made every nav
+   label invisible on navy and the active item white-on-white, so the sidebar
+   re-declares dark-surface tokens for everything rendered inside it. */
+html.light .ac-workspace-sidebar {
+  --ws-hover: rgba(255, 255, 255, 0.07);
+  --ws-active: rgba(15, 159, 143, 0.24);
+  --ws-panel: rgba(255, 255, 255, 0.05);
+  --ws-panel-hover: rgba(255, 255, 255, 0.09);
+  --ws-border: rgba(255, 255, 255, 0.09);
+  --ws-border-strong: rgba(255, 255, 255, 0.16);
+  --ws-text-primary: #F4F7FC;
+  --ws-text-secondary: #C9CFDD;
+  --ws-text-tertiary: #98A1B5;
+  --ws-text-muted: #98A1B5;
+  --ws-text-disabled: #6B7386;
+  color: var(--ws-text-secondary);
+}
+
+html.light .ac-workspace-sidebar .ac-workspace-nav-item,
+html.light .ac-workspace-sidebar .ac-workspace-nav-subitem {
+  color: var(--ws-text-secondary);
+}
+
 html.light .ac-workspace-sidebar .ac-workspace-nav-item:hover,
 html.light .ac-workspace-sidebar .ac-workspace-nav-item--active,
 html.light .ac-workspace-sidebar .ac-workspace-nav-subitem:hover,
 html.light .ac-workspace-sidebar .ac-workspace-nav-subitem--active {
   color: #F4F7FC;
+}
+
+/* Welcome banner: dark gradient in dark mode, paper gradient in light mode. */
+.ac-welcome-banner {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.10), rgba(15, 23, 42, 0.8) 50%, rgba(2, 6, 23, 0.9));
+}
+
+html.light .ac-welcome-banner {
+  background: linear-gradient(135deg, #E4F6F3, #FFFFFF 55%, #F2F5F9);
+  border-color: rgba(15, 159, 143, 0.35);
+}
+
+html.light .ac-welcome-banner .text-teal-300,
+html.light .ac-welcome-banner .text-teal-300\/90 {
+  color: #0F766E !important;
 }
 
 html.light .ac-workspace-tab--active {
@@ -2209,6 +2247,31 @@ html.light .ac-business-main .bg-slate-950,
 html.light .ac-dashboard-main .bg-slate-900,
 html.light .ac-business-main .bg-slate-900 {
   background-color: var(--surface-primary) !important;
+}
+
+/* Translucent slate surfaces (bg-slate-950/30, bg-slate-900/60, bg-slate-800/50 …)
+   are used on ~1,100 dashboard elements. In light mode they render as dark
+   grey blocks under dark text, so map them to a subtle light surface. */
+html.light .ac-dashboard-main [class*="bg-slate-950/"],
+html.light .ac-business-main [class*="bg-slate-950/"],
+html.light .ac-dashboard-main [class*="bg-slate-900/"],
+html.light .ac-business-main [class*="bg-slate-900/"],
+html.light .ac-dashboard-main [class*="bg-slate-800/"],
+html.light .ac-business-main [class*="bg-slate-800/"] {
+  background-color: var(--surface-secondary) !important;
+}
+
+html.light .ac-dashboard-main .bg-slate-800,
+html.light .ac-business-main .bg-slate-800 {
+  background-color: var(--surface-secondary) !important;
+}
+
+/* Hairline borders drawn with white alpha disappear on a light canvas. */
+html.light .ac-dashboard-main [class*="border-white/"],
+html.light .ac-business-main [class*="border-white/"],
+html.light .ac-dashboard-main [class*="divide-white/"] > :not([hidden]) ~ :not([hidden]),
+html.light .ac-business-main [class*="divide-white/"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--border-default) !important;
 }
 
 /* Crisp Dashboard Loading State (No Blur Bleed) */
