@@ -850,7 +850,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   }, [tasks, totalCount]);
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="tasks">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden ac-enterprise-module" data-module="tasks">
       <div className="px-4 pt-3 shrink-0">
         <SubNavigation
           moduleId="tasks"
@@ -953,7 +953,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           </div>
         ) : null}
       >
-      <div ref={listRef} className="flex-1 ac-scroll-full pb-20">
+      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-20" data-testid="tasks-scroll-list">
         {!loading && tasks.length > 0 ? (
           <div className="p-4 space-y-4 border-b border-white/5 bg-slate-900/20">
             {(taskDecision.overdueHigh > 0 || taskDecision.overdue > 0 && taskDecision.highPriority > 0) ? (

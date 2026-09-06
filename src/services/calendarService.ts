@@ -11,7 +11,7 @@ export interface CalendarEvent {
     description?: string;
     start_time: string;
     end_time: string;
-    type: 'meeting' | 'call' | 'reminder' | 'deadline' | 'task' | 'invoice' | 'project' | 'milestone';
+        type: 'meeting' | 'call' | 'reminder' | 'deadline' | 'task' | 'invoice' | 'project' | 'milestone' | 'lead' | 'deal';
     video_room_id?: string;
     attendees?: string[];
     location?: string;
@@ -46,13 +46,14 @@ export const calendarService = {
             .eq('tenant_id', tenantId)
             .or(`user_id.eq.${userId},attendees.cs.{${userId}}`);
 
-        // 2. Tasks Query
+        // 2. Tasks Query — every dated task in the workspace, not only ones assigned to this user
         let tasksQuery = supabase
             .from('tasks')
             .select('*')
             .eq('tenant_id', tenantId)
-            .eq('assigned_to', userId)
-            .neq('status', 'completed');
+            .not('due_date', 'is', null)
+            .neq('status', 'completed')
+            .neq('status', 'cancelled');
 
         // 3. Invoices Query (Unpaid/Due)
         let invoicesQuery = supabase
@@ -75,7 +76,9 @@ export const calendarService = {
             .select('*')
             .eq('tenant_id', tenantId)
             .not('due_date', 'is', null)
-            .neq('status', 'completed');
+            .neq('status', 'Completed')
+            .neq('status', 'done')
+            .neq('status', 'cancelled');
 
         // 6. Milestones Query (Project Milestones)
         let milestonesQuery = supabase
@@ -85,6 +88,19 @@ export const calendarService = {
             .not('due_date', 'is', null)
             .neq('status', 'completed');
 
+        let leadsQuery = supabase
+            .from('leads')
+            .select('id, business_name, contact_name, email, stage, status, owner_id, created_at, updated_at')
+            .eq('tenant_id', tenantId)
+            .in('stage', ['new', 'lead', 'qualified'])
+            .limit(200);
+
+        let dealsQuery = supabase
+            .from('deals')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .not('expected_close_date', 'is', null);
+
         if (startDate) {
             eventsQuery = eventsQuery.gte('start_time', startDate.toISOString());
             tasksQuery = tasksQuery.gte('due_date', startDate.toISOString());
@@ -92,6 +108,7 @@ export const calendarService = {
             contractsQuery = contractsQuery.gte('payment_due_date', startDate.toISOString());
             projectsQuery = projectsQuery.gte('due_date', startDate.toISOString());
             milestonesQuery = milestonesQuery.gte('due_date', startDate.toISOString());
+            dealsQuery = dealsQuery.gte('expected_close_date', startDate.toISOString());
         }
         if (endDate) {
             eventsQuery = eventsQuery.lte('end_time', endDate.toISOString());
@@ -100,15 +117,18 @@ export const calendarService = {
             contractsQuery = contractsQuery.lte('payment_due_date', endDate.toISOString());
             projectsQuery = projectsQuery.lte('due_date', endDate.toISOString());
             milestonesQuery = milestonesQuery.lte('due_date', endDate.toISOString());
+            dealsQuery = dealsQuery.lte('expected_close_date', endDate.toISOString());
         }
 
-        const [eventsRes, tasksRes, invoicesRes, contractsRes, projectsRes, milestonesRes] = await Promise.all([
+        const [eventsRes, tasksRes, invoicesRes, contractsRes, projectsRes, milestonesRes, leadsRes, dealsRes] = await Promise.all([
             eventsQuery.order('start_time', { ascending: true }),
             tasksQuery.order('due_date', { ascending: true }),
             invoicesQuery.order('due_date', { ascending: true }),
             contractsQuery.order('payment_due_date', { ascending: true }),
             projectsQuery.order('due_date', { ascending: true }),
-            milestonesQuery.order('due_date', { ascending: true })
+            milestonesQuery.order('due_date', { ascending: true }),
+            leadsQuery.order('created_at', { ascending: false }),
+            dealsQuery.order('expected_close_date', { ascending: true }),
         ]);
 
         // Map Calendar Events
@@ -121,7 +141,7 @@ export const calendarService = {
 
         // Map Tasks to Events
         const taskEvents: CalendarEvent[] = (tasksRes.data || [])
-            .filter((t: any) => !t.metadata?.is_booking_shadow)
+            .filter((t: any) => !t.metadata?.is_booking_shadow && (t.start_date || t.due_date))
             .map((t: any) => ({
                 id: `task_${t.id}`,
                 user_id: t.assigned_to || userId,
@@ -177,7 +197,9 @@ export const calendarService = {
         }));
 
         // Map Projects to Events
-        const projectEvents: CalendarEvent[] = (projectsRes.data || []).map((p: any) => ({
+        const projectEvents: CalendarEvent[] = (projectsRes.data || [])
+            .filter((p: any) => p.due_date && p.status !== 'Completed' && p.status !== 'done' && p.status !== 'cancelled' && p.current_stage !== 'Closure')
+            .map((p: any) => ({
             id: `project_${p.id}`,
             user_id: p.owner_id || userId,
             title: `Project Deadline: ${p.name}`,
@@ -214,15 +236,58 @@ export const calendarService = {
             updated_at: m.updated_at
         }));
 
+        const leadEvents: CalendarEvent[] = (leadsRes.data || []).map((lead: any) => {
+            const start = lead.updated_at || lead.created_at;
+            return {
+                id: `lead_${lead.id}`,
+                user_id: lead.owner_id || userId,
+                title: `Lead: ${lead.business_name || lead.contact_name || lead.email || 'Untitled'}`,
+                description: `Stage: ${lead.stage || lead.status || 'new'}`,
+                start_time: start,
+                end_time: start,
+                type: 'lead' as const,
+                color: '#14b8a6',
+                is_all_day: true,
+                reminder_minutes: 0,
+                metadata: { leadId: lead.id, stage: lead.stage },
+                related_entity_id: lead.id,
+                related_to_lead: lead.id,
+                created_at: lead.created_at,
+                updated_at: lead.updated_at,
+            };
+        });
+
+        const closedDeal = new Set(['closed_won', 'closed_lost', 'won', 'lost']);
+        const dealEvents: CalendarEvent[] = (dealsRes.data || [])
+            .filter((d: any) => d.expected_close_date && !closedDeal.has(String(d.stage || '').toLowerCase()))
+            .map((d: any) => ({
+                id: `deal_${d.id}`,
+                user_id: d.owner_id || userId,
+                title: `Deal: ${d.name}`,
+                description: d.description || `Stage: ${d.stage}`,
+                start_time: d.expected_close_date,
+                end_time: d.expected_close_date,
+                type: 'deal' as const,
+                color: '#f59e0b',
+                is_all_day: true,
+                reminder_minutes: 0,
+                metadata: { dealId: d.id, stage: d.stage, value: d.value },
+                related_entity_id: d.id,
+                created_at: d.created_at,
+                updated_at: d.updated_at,
+            }));
+
         const nativeSyncedKeys = new Set(
             events
-                .filter((e) => e.related_entity_id && ['task', 'project', 'milestone'].includes(e.type))
+                .filter((e) => e.related_entity_id && ['task', 'project', 'milestone', 'lead', 'deal'].includes(e.type))
                 .map((e) => `${e.type}:${e.related_entity_id}`)
         );
 
         const dedupedTaskEvents = taskEvents.filter((e) => !nativeSyncedKeys.has(`task:${e.related_entity_id}`));
         const dedupedProjectEvents = projectEvents.filter((e) => !nativeSyncedKeys.has(`project:${e.related_entity_id}`));
         const dedupedMilestoneEvents = milestoneEvents.filter((e) => !nativeSyncedKeys.has(`milestone:${e.related_entity_id}`));
+        const dedupedLeadEvents = leadEvents.filter((e) => !nativeSyncedKeys.has(`lead:${e.related_entity_id}`));
+        const dedupedDealEvents = dealEvents.filter((e) => !nativeSyncedKeys.has(`deal:${e.related_entity_id}`));
 
         const combinedEvents = [
             ...events,
@@ -230,13 +295,19 @@ export const calendarService = {
             ...invoiceEvents,
             ...contractEvents,
             ...dedupedProjectEvents,
-            ...dedupedMilestoneEvents
+            ...dedupedMilestoneEvents,
+            ...dedupedLeadEvents,
+            ...dedupedDealEvents,
         ];
-        combinedEvents.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+        combinedEvents.sort((a, b) => {
+            const byDate = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+            if (byDate !== 0) return byDate;
+            return String(a.title).localeCompare(String(b.title));
+        });
 
         return {
             events: combinedEvents,
-            error: eventsRes.error || tasksRes.error || invoicesRes.error || contractsRes.error || projectsRes.error || milestonesRes.error
+            error: eventsRes.error || tasksRes.error || invoicesRes.error || contractsRes.error || projectsRes.error || milestonesRes.error || leadsRes.error || dealsRes.error
         };
     },
 

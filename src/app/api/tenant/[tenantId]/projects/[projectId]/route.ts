@@ -14,6 +14,7 @@ import {
 import {
   notifyProjectClientProgressUpdate,
   notifyProjectClientStageUpdate,
+  notifyProjectFinished,
 } from "@/lib/projects/projectClientNotification";
 import { sendEmailServer } from "@/lib/email/sendEmailServer";
 import { buildCanonicalProjectPortalUrl } from "@/lib/projects/portalLinks";
@@ -233,7 +234,17 @@ export async function PATCH(
       );
     const origin = req.nextUrl.origin;
     const notificationResults: Record<string, unknown> = {};
-    if (typeof project.current_stage === "string" && before.current_stage !== project.current_stage) {
+    const justFinished = willBeComplete && !wasComplete;
+    if (justFinished) {
+      notificationResults.finished = await notifyProjectFinished({
+        admin,
+        projectId,
+        tenantId,
+        origin,
+        ownerId: before.owner_id,
+      });
+    }
+    if (!justFinished && typeof project.current_stage === "string" && before.current_stage !== project.current_stage) {
       notificationResults.stage = await notifyProjectClientStageUpdate({
         admin,
         projectId,
@@ -243,7 +254,7 @@ export async function PATCH(
         origin,
       });
     }
-    if (typeof project.progress === "number" && before.progress !== project.progress) {
+    if (!justFinished && typeof project.progress === "number" && before.progress !== project.progress) {
       notificationResults.progress = await notifyProjectClientProgressUpdate({
         admin,
         projectId,
@@ -259,7 +270,7 @@ export async function PATCH(
       before.status !== project.status ? `Status: ${before.status || "Active"} -> ${project.status || "Active"}` : "",
       before.progress !== project.progress ? `Progress: ${before.progress ?? 0}% -> ${project.progress ?? 0}%` : "",
     ].filter(Boolean);
-    if (changedForOwner.length && before.owner_id) {
+    if (!justFinished && changedForOwner.length && before.owner_id) {
       const { data: ownerProfile } = await admin
         .from("profiles")
         .select("email, name")

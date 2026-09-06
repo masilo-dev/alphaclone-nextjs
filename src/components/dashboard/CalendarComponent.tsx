@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { format, isBefore, addMinutes } from 'date-fns'; // Added addMinutes
-import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard, AlertTriangle, Sparkles } from 'lucide-react';
+import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard, AlertTriangle, Sparkles, Briefcase, Target, TrendingUp } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../ui/UIComponents';
 import { calendarService, CalendarEvent } from '../../services/calendarService';
 import { taskService } from '../../services/taskService'; // Added taskService
@@ -129,7 +129,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             const now = new Date();
             const unhandledPast = fetchedEvents.filter(e => {
                 // Only prompt for real calendar events, not tasks, invoices, etc.
-                if (e.id.startsWith('task_') || e.id.startsWith('inv_') || e.id.startsWith('contract_') || e.id.startsWith('project_') || e.id.startsWith('milestone_')) {
+                if (e.id.startsWith('task_') || e.id.startsWith('inv_') || e.id.startsWith('contract_') || e.id.startsWith('project_') || e.id.startsWith('milestone_') || e.id.startsWith('lead_') || e.id.startsWith('deal_')) {
                     return false;
                 }
                 const endTime = new Date(e.end_time);
@@ -418,6 +418,10 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'reminder': return '#f59e0b'; // Orange
             case 'deadline': return '#ef4444'; // Red
             case 'invoice': return '#ef4444'; // Red (Money Owed)
+            case 'project': return '#8b5cf6';
+            case 'milestone': return '#ec4899';
+            case 'lead': return '#14b8a6';
+            case 'deal': return '#f59e0b';
             case 'suggestion': return '#6366f1'; // Indigo (AI Suggestion)
             default: return '#3b82f6';
         }
@@ -456,6 +460,10 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'deadline': return <Clock className="w-4 h-4" />;
             case 'task': return <CheckSquare className="w-4 h-4" />;
             case 'invoice': return <CreditCard className="w-4 h-4" />;
+            case 'project': return <Briefcase className="w-4 h-4" />;
+            case 'milestone': return <Target className="w-4 h-4" />;
+            case 'lead': return <UsersIcon className="w-4 h-4" />;
+            case 'deal': return <TrendingUp className="w-4 h-4" />;
             default: return <CalendarIcon className="w-4 h-4" />;
         }
     };
@@ -698,6 +706,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     selectMirror={true}
                     dayMaxEvents={3}
                     weekends={true}
+                    eventOrder="title"
                     height="auto"
                     themeSystem="standard"
                 />

@@ -32,7 +32,7 @@ export function ModulePageLayout({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 ac-scroll-full min-h-0',
+        'flex flex-1 flex-col gap-4 min-h-0 overflow-hidden',
         phoneNavSafe && 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0',
         className,
       )}
@@ -42,7 +42,7 @@ export function ModulePageLayout({
         <div className="flex-shrink-0">{toolbar}</div>
       ) : null}
       {stats ? <section className="flex-shrink-0">{stats}</section> : null}
-      <section className="flex-1 min-h-0 ac-scroll-full">{children}</section>
+      <section className="flex-1 min-h-0 overflow-y-auto overscroll-contain">{children}</section>
     </div>
   );
 }

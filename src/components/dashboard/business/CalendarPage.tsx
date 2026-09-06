@@ -27,6 +27,7 @@ import { EmptyStatePlaceholder } from '../../ui/EmptyStatePlaceholder';
 import { EmptyStateFromPreset } from '../../ui/EmptyState';
 import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
+import { isFinishedProject } from '@/lib/projects/projectEnums';
 
 interface CalendarPageProps {
     user: User;
@@ -39,7 +40,7 @@ interface CalendarEvent {
     date: string; // ISO date string
     startTime?: string;
     endTime?: string;
-    source: 'event' | 'task' | 'project' | 'deal' | 'booking' | 'google';
+    source: 'event' | 'task' | 'project' | 'deal' | 'booking' | 'google' | 'lead';
     priority?: string;
     status?: string;
     description?: string;
@@ -80,6 +81,13 @@ const SOURCE_CONFIG = {
         dot: 'bg-amber-500',
         border: 'border-amber-500/30',
     },
+    lead: {
+        label: 'Lead',
+        bg: 'bg-teal-500/15',
+        text: 'text-teal-300',
+        dot: 'bg-teal-500',
+        border: 'border-teal-500/30',
+    },
     event: {
         label: 'Meeting',
         bg: 'bg-sky-500/15',
@@ -106,7 +114,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<Set<CalendarEvent['source']>>(
-        new Set(['event', 'task', 'project', 'booking'])
+        new Set(['event', 'task', 'project', 'deal', 'lead', 'booking'])
     );
     const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
@@ -197,7 +205,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         try {
             const { projects } = await projectService.getProjects(user.id, user.role as any, 200);
             (projects || []).forEach((p: Project) => {
-                if (p.dueDate && p.status !== 'Completed') {
+                if (p.dueDate && !isFinishedProject({ status: p.status, currentStage: p.currentStage })) {
                     unified.push({
                         id: `project-${p.id}`,
                         title: `📁 ${p.name}`,
@@ -226,6 +234,26 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         description: d.description,
                     });
                 }
+            });
+        } catch (_) { /* silent */ }
+
+        // 5b. Open leads (sit on the day they last moved)
+        try {
+            const { data: leads } = await supabase
+                .from('leads')
+                .select('id, business_name, contact_name, email, stage, status, created_at, updated_at')
+                .eq('tenant_id', currentTenant.id)
+                .in('stage', ['new', 'lead', 'qualified'])
+                .limit(200);
+            (leads || []).forEach((lead: any) => {
+                unified.push({
+                    id: `lead-${lead.id}`,
+                    title: `🎯 ${lead.business_name || lead.contact_name || lead.email || 'Lead'}`,
+                    date: lead.updated_at || lead.created_at,
+                    source: 'lead',
+                    status: lead.stage || lead.status,
+                    description: lead.email || undefined,
+                });
             });
         } catch (_) { /* silent */ }
 
@@ -363,10 +391,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     };
 
     const getEventsForDate = (date: Date) => {
-        return filteredEvents.filter(event => {
-            const eventDate = new Date(event.date);
-            return eventDate.toDateString() === date.toDateString();
-        });
+        return filteredEvents
+            .filter(event => {
+                const eventDate = new Date(event.date);
+                return eventDate.toDateString() === date.toDateString();
+            })
+            .sort((a, b) => a.title.localeCompare(b.title));
     };
 
     const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
