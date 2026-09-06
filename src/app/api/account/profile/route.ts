@@ -9,6 +9,7 @@ const schema = z.object({
   phone: z.string().trim().max(50).optional(),
   onboardingRole: z.string().trim().max(100).optional(),
   onboardingCompleted: z.boolean().optional(),
+  walkthrough_completed: z.boolean().optional(),
 }).strict();
 
 export async function PATCH(req: NextRequest) {
@@ -27,6 +28,9 @@ export async function PATCH(req: NextRequest) {
     if (parsed.data.onboardingCompleted !== undefined) {
       updates.onboarding_completed = parsed.data.onboardingCompleted;
       if (parsed.data.onboardingCompleted) updates.onboarding_completed_at = new Date().toISOString();
+    }
+    if (parsed.data.walkthrough_completed !== undefined) {
+      updates.walkthrough_completed = parsed.data.walkthrough_completed;
     }
     const { data, error } = await admin.from('profiles').update(updates).eq('id', user.id).select('id, full_name, company, phone, onboarding_completed, custom_fields').single();
     if (error) throw error;

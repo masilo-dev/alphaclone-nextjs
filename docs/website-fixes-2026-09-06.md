@@ -1,0 +1,15 @@
+# Website fixes and Cloudflare review — 6 September 2026
+
+Changes: use the verified Cal.com demo event rather than the profile URL; wait for Cal's linkReady event, handle linkFailed and timeouts, offer an inline retry, isolate multiple embed instances, and use distinct light colors. Preserve URL tracking parameters and align the demo duration with its current 15-minute event.
+
+Save theme preferences before broadcasting changes, refresh listeners when accounts change, and set native control color scheme. Walkthroughs select visible target elements, scroll to targets, adapt tooltip colors, handle closing and finishing once, and persist completion through a newly accepted authenticated profile field.
+
+Contact notifications remain addressed to bonnie@alphaclonesystems.com with the visitor as reply-to. Website owner notifications no longer depend on tenant send quota. Escape user input in notification HTML, add an audit/idempotency identifier, and distinguish a saved inquiry from an unsuccessful email notification. Failed notifications remain saved; automatic delivery retries are not implemented by this change.
+
+Validation: five focused regression tests pass, covering legacy booking normalization, light palette differences, authenticated walkthrough persistence, successful/failed notification responses, HTML escaping, save-before-send ordering, and notification quota independence. Focused ESLint and git diff whitespace checks pass. Full TypeScript checking exceeded the local 2 GB heap limit; a full build and authenticated dashboard visual verification remain outstanding. The live blank calendar was reproduced; the changed calendar could not be visually verified because the local browser preview timed out.
+
+Cloudflare: alphaclonesystems.com points to Railway through Cloudflare. No Pages deployment for this site exists. HTTPS redirects, Brotli, HTTP/3, and Early Hints are enabled; Rocket Loader is off. No custom page rules or cache rules were found. SSL mode is Full and minimum TLS is 1.0. Recommend minimum TLS 1.2 and Full (strict) after confirming Railway's origin certificate for the custom hostname. Add narrowly scoped immutable static-asset caching only after checking response headers; keep authenticated routes and APIs uncached. Zoho MX and DKIM records exist, with Brevo and Resend sending records; DMARC is currently monitoring-only (p=none). Review sender alignment before strengthening DMARC.
+
+No Cloudflare settings were changed. Railway CLI is signed out, so production environment configuration, deployment, and mailbox receipt were not verified. Confirm BREVO_PLATFORM_API_KEY or BREVO_API_KEY plus a verified BREVO_FROM_EMAIL/EMAIL_FROM in Railway before testing real delivery. Do not paste credentials into the pull request.
+
+References: https://cal.com/help/embedding/embed-events ; https://cal.com/help/embedding/adding-embed ; https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/full-strict/ ; https://developers.cloudflare.com/ssl/edge-certificates/additional-options/minimum-tls/

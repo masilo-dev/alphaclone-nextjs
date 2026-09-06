@@ -74,7 +74,7 @@ const Sidebar = React.memo<SidebarProps>(({
         const onRemote = () => setTheme(readStoredAcTheme(user.id));
         window.addEventListener('ac-theme-changed', onRemote);
         return () => window.removeEventListener('ac-theme-changed', onRemote);
-    }, []);
+    }, [user.id]);
 
     // Auto-expand parent if a child's href matches activeTab
     useEffect(() => {
@@ -99,8 +99,8 @@ const Sidebar = React.memo<SidebarProps>(({
 
     const handleTheme = useCallback((next: AcThemeMode) => {
         setTheme(next);
-        applyAcThemeClass(next);
         persistAcTheme(next, user.id);
+        applyAcThemeClass(next);
         void preferencesService.updateTheme(user.id, next);
     }, [user.id]);
 

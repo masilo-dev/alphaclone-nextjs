@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
 import Joyride, { Step, CallBackProps, STATUS, EVENTS, ACTIONS } from 'react-joyride';
+import { useTheme } from '@/contexts/ThemeContext';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
 
 interface ProductTourProps {
@@ -9,6 +12,8 @@ interface ProductTourProps {
 }
 
 const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole }) => {
+    const { isDark } = useTheme();
+    const completed = useRef(false);
     const [run, setRun] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
     const [mountedSteps, setMountedSteps] = useState<Step[]>([]);
@@ -188,19 +193,24 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
             return;
         }
 
+        completed.current = false;
         let retries = 0;
         const maxRetries = 10;
         let timerId: NodeJS.Timeout;
 
         const checkAndStartTour = () => {
-            const available = steps.filter((step) =>
-                typeof step.target === 'string' ? Boolean(document.querySelector(step.target)) : true
-            );
+            const available = steps.flatMap((step) => {
+                if (typeof step.target !== 'string') return [step];
+                const target = Array.from(document.querySelectorAll<HTMLElement>(step.target)).find((element) =>
+                    element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
+                return target ? [{ ...step, target }] : [];
+            });
+
 
             if (available.length > 0 || retries >= maxRetries) {
-                setMountedSteps(available.length > 0 ? available : steps);
+                setMountedSteps(available);
                 setStepIndex(0);
-                setRun(true);
+                setRun(available.length > 0);
             } else {
                 retries++;
                 timerId = setTimeout(checkAndStartTour, 200);
@@ -214,20 +224,29 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
         };
     }, [isOpen, userRole]);
 
+    const completeTour = () => {
+        if (completed.current) return;
+        completed.current = true;
+        setRun(false);
+        void fetch('/api/account/profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ walkthrough_completed: true }),
+        }).then((response) => {
+            if (!response.ok) throw new Error(`Profile update failed (${response.status})`);
+        }).catch((err) => console.error('ProductTour: save walkthrough status failed', err));
+        onComplete();
+    };
+
     const handleJoyrideCallback = (data: CallBackProps) => {
         const { status, type, action, index } = data;
-
-        if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
-            setRun(false);
-            fetch('/api/account/profile', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ walkthrough_completed: true }),
-            }).catch((err) => console.error('ProductTour: save walkthrough status failed', err));
-            onComplete();
+        if (status === STATUS.FINISHED || status === STATUS.SKIPPED || action === ACTIONS.CLOSE) {
+            completeTour();
         } else if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
             const delta = action === ACTIONS.PREV ? -1 : 1;
-            setStepIndex(index + delta);
+            const nextIndex = Math.max(0, index + delta);
+            if (nextIndex >= mountedSteps.length) completeTour();
+            else setStepIndex(nextIndex);
         }
     };
 
@@ -242,23 +261,23 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
             showProgress
             showSkipButton
             disableOverlay
-            disableScrolling
+            scrollToFirstStep
             spotlightClicks
             callback={handleJoyrideCallback}
             styles={{
                 options: {
                     primaryColor: '#2dd4bf',
-                    textColor: '#ffffff',
-                    backgroundColor: '#0f172a',
+                    textColor: isDark ? '#f8fafc' : '#0f172a',
+                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
                     overlayColor: 'rgba(0, 0, 0, 0.8)',
-                    arrowColor: '#1e293b',
+                    arrowColor: isDark ? '#1e293b' : '#ffffff',
                     zIndex: 10000,
                 },
                 tooltip: {
                     borderRadius: '12px',
                     padding: '20px',
-                    backgroundColor: '#1e293b',
-                    border: '1px solid #334155',
+                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
                 },
                 tooltipContainer: {
                     textAlign: 'left',

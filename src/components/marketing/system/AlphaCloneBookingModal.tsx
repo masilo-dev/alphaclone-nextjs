@@ -90,7 +90,7 @@ export default function AlphaCloneBookingModal() {
             <div className="flex items-center gap-4">
               <span className="inline-flex items-center gap-1.5 font-medium text-slate-300">
                 <Clock className="w-3.5 h-3.5 text-teal-400" />
-                30 minutes
+                Choose a time
               </span>
               <span className="inline-flex items-center gap-1.5 font-medium text-slate-300">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />

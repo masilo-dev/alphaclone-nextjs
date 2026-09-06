@@ -33,12 +33,12 @@ export default function BookDemoContent() {
                 See AlphaClone in <span className="text-teal-400">action.</span>
               </h1>
               <p className="text-base text-slate-400 mb-5 sm:mb-6 leading-relaxed">
-                30 minutes with the team — live product walkthrough, tailored to your business.
+                15 minutes with the team — live product walkthrough, tailored to your business.
               </p>
 
               <ul className="space-y-2.5 mb-5 sm:mb-6">
                 {[
-                  { icon: Clock, text: '30 minutes — no pitch decks' },
+                  { icon: Clock, text: '15 minutes — no pitch decks' },
                   { icon: CheckCircle2, text: 'Demo tailored to your workflow' },
                   { icon: CheckCircle2, text: '14-day trial link on the call' },
                 ].map(({ icon: Icon, text }) => (

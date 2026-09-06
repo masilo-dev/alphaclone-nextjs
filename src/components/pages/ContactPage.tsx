@@ -36,6 +36,7 @@ const ContactPage: React.FC = () => {
   const [turnstileToken, setTurnstileToken] = useState('');
   const [turnstileNonce, setTurnstileNonce] = useState(0);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [notificationSent, setNotificationSent] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
@@ -88,6 +89,7 @@ const ContactPage: React.FC = () => {
 
       if (response.ok && payload?.success) {
         setStatus('success');
+        setNotificationSent(payload.notificationSent !== false);
         setFormData(EMPTY_FORM);
         setTurnstileToken('');
         setTurnstileNonce((n) => n + 1);
@@ -256,9 +258,11 @@ const ContactPage: React.FC = () => {
                 <div className="flex items-start gap-3 text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl mb-6 animate-fadeIn">
                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold">Message sent!</p>
+                    <p className="font-semibold">Inquiry received!</p>
                     <p className="text-sm text-emerald-300/80">
-                      We received your inquiry and will be in touch within 24 hours.
+                      {notificationSent
+                        ? 'We received your inquiry and will be in touch within 24 hours.'
+                        : 'Your inquiry is saved, but the email notification could not be delivered. For an urgent reply, email bonnie@alphaclonesystems.com.'}
                     </p>
                   </div>
                 </div>

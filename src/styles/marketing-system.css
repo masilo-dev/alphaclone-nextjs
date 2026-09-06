@@ -3242,3 +3242,18 @@
     animation: none;
   }
 }
+
+/* Match the embedded scheduler surface to the selected site theme. */
+html.light .cal-embed-shell,
+html.light .cal-embed-host iframe {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+html.light .cal-embed-loading {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+}
+
+html.light .cal-embed-shell .text-white { color: #0f172a; }
+html.light .cal-embed-shell .text-slate-400 { color: #475569; }
+html.light .cal-embed-shell button.text-teal-300 { color: #0f766e; }

@@ -1,3 +1,4 @@
+import { escapeHtml } from '@/lib/email/escapeHtml';
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
 import { contactSchema } from '@/schemas/validation';
@@ -31,7 +32,14 @@ function buildNotificationHtml(params: {
   submissionId: string;
   submittedAt: string;
 }): string {
-  const { name, email, subject, message, company, phone, submissionId, submittedAt } = params;
+  const name = escapeHtml(params.name);
+  const email = escapeHtml(params.email);
+  const subject = escapeHtml(params.subject);
+  const message = escapeHtml(params.message);
+  const company = params.company ? escapeHtml(params.company) : '';
+  const phone = params.phone ? escapeHtml(params.phone) : '';
+  const submissionId = escapeHtml(params.submissionId);
+  const submittedAt = escapeHtml(params.submittedAt);
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><title>New AlphaClone Inquiry</title></head>
@@ -74,7 +82,10 @@ function buildNotificationHtml(params: {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Invalid contact submission' }, { status: 400 });
+    }
 
     // ── 1. Honeypot check (bots fill the hidden `website` field) ──────────────
     if (typeof body.website === 'string' && body.website.trim().length > 0) {
@@ -149,6 +160,7 @@ export async function POST(request: NextRequest) {
     const notificationEmailTenantId =
       tenantId || process.env.DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000000';
 
+    let notificationSent = false;
     try {
       const notificationHtml = buildNotificationHtml({
         name,
@@ -173,12 +185,15 @@ export async function POST(request: NextRequest) {
         html: notificationHtml,
         text: `From: ${name} <${email}>\nCompany: ${company || '—'}\nPhone: ${phone || '—'}\n\n${message}`,
         templateName: 'websiteContact',
+        idempotencyKey: `website-contact:${submission.id}`,
+        initiationSource: 'website.contact',
         fromName: 'AlphaClone Website',
         // Must bypass CRM recipient gate — this is an internal platform notification.
         isPlatformNotification: true,
         skipFooter: true,
       });
 
+      notificationSent = emailResult.success;
       if (!emailResult.success) {
         // Non-blocking: log warning but still return success (submission is saved)
         console.warn(
@@ -199,6 +214,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: "Thank you for reaching out! We'll be in touch within 24 hours.",
         id: submission.id,
+        notificationSent,
       },
       { status: 200 }
     );
