@@ -121,12 +121,12 @@ export function ModuleKpiRichSections({
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 ac-chart-enter">
         <BreakdownBars
-          items={data.breakdown}
+          items={data.breakdown.map((item) => ({ ...item, label: t(item.label) }))}
           title={t(breakdownTitle)}
           subtitle={t('Share by category in this module')}
         />
         <StatusDonut
-          segments={data.donut}
+          segments={data.donut.map((segment) => ({ ...segment, label: t(segment.label) }))}
           title={t(donutTitle)}
           subtitle={t('Current distribution')}
         />

@@ -11,6 +11,7 @@ import { MODULE_ICONS } from '@/components/icons/alphaclone';
 import { cn } from '@/lib/utils';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { HUB_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface HubTab {
   label: string;
@@ -72,6 +73,7 @@ export default function HubShell({
 }: HubShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLanguage();
   const identity = moduleId ? MODULE_IDENTITY[moduleId] : null;
   const accentColor = identity?.primary ?? LEGACY_ACCENT[accent];
   const ModuleIcon = moduleId ? MODULE_ICONS[moduleId] : null;
@@ -119,17 +121,17 @@ export default function HubShell({
             />
           )}
           <div className="min-w-0">
-            <h1 className={WORKSPACE.typography.pageTitle}>{title}</h1>
+            <h1 className={WORKSPACE.typography.pageTitle}>{t(title)}</h1>
             {description ? (
-              <p className="text-[13px] text-[var(--ws-text-muted)] mt-0.5">{description}</p>
+              <p className="text-[13px] text-[var(--ws-text-muted)] mt-0.5">{t(description)}</p>
             ) : null}
           </div>
         </div>
 
         <ModuleJumpSelect
-          options={tabs.map((t) => ({ label: t.label, href: t.href }))}
+          options={tabs.map((tab) => ({ label: t(tab.label), href: tab.href }))}
           currentHref={pathname || undefined}
-          label={`Switch ${title} section`}
+          label={`${t('Switch section')}: ${t(title)}`}
           onNavigate={(href) => router.push(href)}
           className="mt-3 md:hidden"
         />
@@ -137,7 +139,7 @@ export default function HubShell({
         <div
           className="flex gap-0 overflow-x-auto ios-scroll mt-2 -mx-1 px-1 border-b border-[var(--ws-border)]"
           role="tablist"
-          aria-label={`${title} sections`}
+          aria-label={`${t(title)} · ${t('Sections')}`}
         >
           {tabs.map((tab) => {
             const isActive =
@@ -164,7 +166,7 @@ export default function HubShell({
                 }
               >
                 {Icon ? <Icon className="w-3.5 h-3.5" aria-hidden /> : null}
-                {tab.label}
+                {t(tab.label)}
               </Link>
             );
           })}

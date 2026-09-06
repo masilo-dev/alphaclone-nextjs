@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type SettingsCategoryId =
   | 'workspace'
@@ -139,12 +140,13 @@ export function SettingsCategoryNav({
   onSelect,
   className,
 }: SettingsCategoryNavProps) {
+  const { t } = useLanguage();
   return (
-    <section className={cn('space-y-3', className)} aria-label="Settings categories">
+    <section className={cn('space-y-3', className)} aria-label={t('Settings categories')}>
       <div>
-        <h2 className={WORKSPACE.typography.sectionTitle}>Settings</h2>
+        <h2 className={WORKSPACE.typography.sectionTitle}>{t('Settings')}</h2>
         <p className="mt-1 text-sm text-[var(--ws-text-muted)]">
-          Administration organised by area — open a category to manage details.
+          {t('Administration organised by area — open a category to manage details.')}
         </p>
       </div>
       <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
@@ -168,11 +170,11 @@ export function SettingsCategoryNav({
                     <Icon className="w-4 h-4" aria-hidden />
                   </span>
                   <span className="text-sm font-semibold text-[var(--ws-text-primary)]">
-                    {category.label}
+                    {t(category.label)}
                   </span>
                 </span>
                 <span className="mt-1.5 block text-xs text-[var(--ws-text-muted)]">
-                  {category.description}
+                  {t(category.description)}
                 </span>
               </button>
             </li>

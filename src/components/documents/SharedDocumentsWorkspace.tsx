@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FileText, Grid2X2, List, Plus, Search, Upload, X } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { fileUploadService } from '@/services/fileUploadService';
 import { PageHeader } from '@/components/dashboard/responsive/PageHeader';
 import toast from 'react-hot-toast';
@@ -63,6 +64,7 @@ function bytes(value?: number | null) {
 export default function SharedDocumentsWorkspace({ section = '' }: { section?: string }) {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [documents, setDocuments] = useState<DocumentRow[]>([]);
   const [settings, setSettings] = useState<WorkspaceSettings | null>(null);
   const [total, setTotal] = useState(0);
@@ -178,26 +180,26 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
   return (
     <div className="min-h-0">
       <PageHeader
-        moduleLabel="Deliver"
-        title="Documents"
-        description="The shared source of truth for files across your workspace."
-        breadcrumbs={[{ label: sectionLabel }]}
+        moduleLabel={t('Deliver')}
+        title={t('Documents')}
+        description={t('The shared source of truth for files across your workspace.')}
+        breadcrumbs={[{ label: t(sectionLabel) }]}
         primaryAction={{
-          label: 'Upload document',
+          label: t('Upload document'),
           onClick: () => inputRef.current?.click(),
           variant: 'primary',
         }}
-        secondaryActions={[{ label: 'Create document', onClick: () => setCreating(true) }]}
+        secondaryActions={[{ label: t('Create document'), onClick: () => setCreating(true) }]}
       />
       <input
         ref={inputRef}
         type="file"
         className="sr-only"
         onChange={upload}
-        aria-label="Upload document"
+        aria-label={t('Upload document')}
       />
       <nav
-        aria-label="Documents sections"
+        aria-label={t('Documents sections')}
         className="flex gap-1 overflow-x-auto border-b border-[var(--ws-border)] px-3 py-2"
       >
         {NAV.map(([label, key]) => (
@@ -211,24 +213,26 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 : 'text-slate-400 hover:bg-white/5 hover:text-white'
             }`}
           >
-            {label}
+            {t(label)}
           </a>
         ))}
       </nav>
 
       <div className="space-y-4 p-3 md:p-5">
         {activeSection === '' && (
-          <section aria-label="Document metrics" className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-            {[
-              ['Active', metrics.active],
-              ['In review', metrics.review],
-              ['Awaiting approval', metrics.approvals],
-              ['Awaiting signature', metrics.signatures],
-              ['Expiring soon', metrics.expiring],
-              ['Storage', bytes(metrics.storage)],
-            ].map(([label, value]) => (
+          <section aria-label={t('Document metrics')} className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+            {(
+              [
+                ['Active', metrics.active],
+                ['In review', metrics.review],
+                ['Awaiting approval', metrics.approvals],
+                ['Awaiting signature', metrics.signatures],
+                ['Expiring soon', metrics.expiring],
+                ['Storage', bytes(metrics.storage)],
+              ] as Array<[string, string | number]>
+            ).map(([label, value]) => (
               <div key={label} className="ac-workspace-panel rounded-xl p-4">
-                <p className="text-xs text-slate-400">{label}</p>
+                <p className="text-xs text-slate-400">{t(label)}</p>
                 <p className="mt-1 text-xl font-semibold text-white">{value}</p>
               </div>
             ))}
@@ -237,9 +241,9 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
 
         {activeSection === 'settings' && (
           <section className="ac-workspace-panel rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-white">Document workspace settings</h2>
+            <h2 className="text-lg font-semibold text-white">{t('Document workspace settings')}</h2>
             <p className="mt-1 text-sm text-slate-400">
-              Brand identity and retention defaults used by Document OS and the shared catalog.
+              {t('Brand identity and retention defaults used by Document OS and the shared catalog.')}
             </p>
             {loading ? (
               <p className="mt-6 text-sm text-slate-500">Loading settings…</p>
@@ -297,17 +301,17 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
             <div className="flex flex-wrap items-center gap-2">
               <label className="relative min-w-[220px] flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" aria-hidden />
-                <span className="sr-only">Search documents</span>
+                <span className="sr-only">{t('Search documents')}</span>
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search name, number, description…"
+                  placeholder={t('Search name, number, description…')}
                   className="min-h-11 w-full rounded-lg border border-[var(--ws-border)] bg-slate-950/40 pl-9 pr-3 text-sm text-white focus:border-teal-500 focus:outline-none"
                 />
               </label>
               <button
                 onClick={() => setGrid(false)}
-                aria-label="Table view"
+                aria-label={t('Table view')}
                 aria-pressed={!grid}
                 className="min-h-11 min-w-11 rounded-lg border border-[var(--ws-border)] p-3 text-slate-300"
               >
@@ -376,7 +380,7 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 <h2 className="mt-3 font-semibold text-white">No documents found</h2>
                 <p className="mt-1 text-sm text-slate-400">
                   {activeSection
-                    ? `No records in ${sectionLabel.toLowerCase()} yet.`
+                    ? `${t('No records in')} ${t(sectionLabel).toLowerCase()} ${t('yet')}.`
                     : 'Upload a file or create a document draft to get started.'}
                 </p>
               </div>
@@ -401,14 +405,14 @@ export default function SharedDocumentsWorkspace({ section = '' }: { section?: s
                 <table className="w-full min-w-[850px] text-left text-sm">
                   <thead className="bg-white/[0.03] text-xs uppercase text-slate-400">
                     <tr>
-                      <th className="p-3">Name</th>
-                      <th className="p-3">Type</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3">Version</th>
-                      <th className="p-3">Approval</th>
-                      <th className="p-3">Signature</th>
-                      <th className="p-3">Size</th>
-                      <th className="p-3">Updated</th>
+                      <th className="p-3">{t('Name')}</th>
+                      <th className="p-3">{t('Type')}</th>
+                      <th className="p-3">{t('Status')}</th>
+                      <th className="p-3">{t('Version')}</th>
+                      <th className="p-3">{t('Approval')}</th>
+                      <th className="p-3">{t('Signature')}</th>
+                      <th className="p-3">{t('Size')}</th>
+                      <th className="p-3">{t('Updated')}</th>
                     </tr>
                   </thead>
                   <tbody>

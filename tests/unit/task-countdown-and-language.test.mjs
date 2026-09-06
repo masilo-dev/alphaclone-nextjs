@@ -159,4 +159,48 @@ describe('language switching', () => {
     assert.match(kpi, /\{t\(labels\[status\]\)\}/);
     assert.match(kpi, /t\(vm\.referencePeriod\)/);
   });
+
+  it('translates module hubs, execution guides, settings categories and the product tour', async () => {
+    // HubShell renders every hub title / description / tab through t().
+    const hubDir = path.resolve(here, '../../src/components/dashboard/hubs');
+    const { readdirSync } = await import('node:fs');
+    const hubStrings = readdirSync(hubDir)
+      .filter((f) => f.endsWith('.tsx'))
+      .flatMap((f) => {
+        const src = readFileSync(path.join(hubDir, f), 'utf8');
+        return [
+          ...[...src.matchAll(/title="([^"]+)"/g)].map((m) => m[1]),
+          ...[...src.matchAll(/description="([^"]+)"/g)].map((m) => m[1]),
+          ...[...src.matchAll(/label: '([^']+)'/g)].map((m) => m[1]),
+        ];
+      });
+    // ExecutionDecisionGuide renders each step label / title / description through t().
+    const stepsSource = read('../../src/lib/ui/dashboardExecutionSteps.ts');
+    const stepStrings = [...stepsSource.matchAll(/(?:label|title|description): '((?:[^'\\]|\\.)+)'/g)].map((m) => m[1].replace(/\\'/g, "'"));
+    const statusSource = read('../../src/lib/ui/statusSemantics.ts');
+    const statusLabels = [...statusSource.matchAll(/label: '([^']+)'/g)].map((m) => m[1]);
+    const settingsSource = read('../../src/components/dashboard/settings/SettingsCategoryNav.tsx');
+    const settingsStrings = [...settingsSource.matchAll(/(?:label|description): '([^']+)'/g)].map((m) => m[1]);
+    const tourSource = read('../../src/components/onboarding/ProductTour.tsx');
+    const tourStrings = [...tourSource.matchAll(/content: t\('((?:[^'\\]|\\.)+)'\)/g)].map((m) => m[1].replace(/\\'/g, "'"));
+    assert.ok(tourStrings.length >= 20, 'tour steps must be wrapped in t()');
+    assert.match(tourSource, /nextLabelWithProgress: t\(/);
+
+    const all = [...new Set([...hubStrings, ...stepStrings, ...statusLabels, ...settingsStrings, ...tourStrings,
+      'Execution guide', 'Follow the steps in order. Colors mean the same thing across the workspace.'])];
+    const sameInTarget = /^(CRM|SMS|WhatsApp|Teams|Marketplace|Zoho CRM|Bonnie AI|Tickets|Leads|Mail|Marketing|Onboarding|Pipeline|Console|Analytics|Forecast)$/;
+    for (const lang of ['es', 'pl']) {
+      const untranslated = all.filter((s) => uiTranslate(lang, s) === s && !sameInTarget.test(s));
+      assert.deepEqual(untranslated, [], `${lang} is missing: ${untranslated.join(' | ')}`);
+    }
+
+    for (const rel of [
+      '../../src/components/dashboard/hubs/HubShell.tsx',
+      '../../src/components/dashboard/ExecutionDecisionGuide.tsx',
+      '../../src/components/dashboard/settings/SettingsCategoryNav.tsx',
+      '../../src/components/documents/SharedDocumentsWorkspace.tsx',
+    ]) {
+      assert.match(read(rel), /useLanguage\(\)/, `${rel} must read the active language`);
+    }
+  });
 });

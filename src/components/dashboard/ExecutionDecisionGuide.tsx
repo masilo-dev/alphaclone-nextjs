@@ -4,6 +4,7 @@ import React from 'react';
 import { CheckCircle2, ChevronRight, CircleDot, PlayCircle, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEMANTIC_STATUS_STYLES, type SemanticStatus } from '@/lib/ui/statusSemantics';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface ExecutionDecisionStep {
   id: string;
@@ -36,14 +37,15 @@ export function ExecutionDecisionGuide({
   onNavigate,
   className,
 }: ExecutionDecisionGuideProps) {
+  const { t } = useLanguage();
   if (!steps.length) return null;
 
   return (
-    <section className={cn('ac-workspace-panel rounded-lg p-3', className)} aria-label={title}>
+    <section className={cn('ac-workspace-panel rounded-lg p-3', className)} aria-label={t(title)}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-widest text-[var(--brand-blue-400)]">{title}</p>
-          <p className="mt-0.5 text-xs leading-5 text-slate-400">{description}</p>
+          <p className="text-[11px] font-black uppercase tracking-widest text-[var(--brand-blue-400)]">{t(title)}</p>
+          <p className="mt-0.5 text-xs leading-5 text-slate-400">{t(description)}</p>
         </div>
         <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
           {(['success', 'running', 'warning', 'danger'] as SemanticStatus[]).map((status) => {
@@ -51,7 +53,7 @@ export function ExecutionDecisionGuide({
             return (
               <span key={status} className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-1', style.badge)}>
                 <span className={cn('h-1.5 w-1.5 rounded-full', style.dot)} />
-                {style.label}
+                {t(style.label)}
               </span>
             );
           })}
@@ -69,12 +71,12 @@ export function ExecutionDecisionGuide({
                   <span className={cn('flex h-7 w-7 items-center justify-center rounded-full border', style.badge)}>
                     <StepIcon status={status} />
                   </span>
-                  {step.label}
+                  {t(step.label)}
                 </span>
                 {step.href ? <ChevronRight className="h-4 w-4 text-slate-500" aria-hidden /> : null}
               </div>
-              <h3 className="mt-2 text-[13px] font-semibold text-white">{step.title}</h3>
-              <p className="mt-0.5 text-xs leading-5 text-slate-400">{step.description}</p>
+              <h3 className="mt-2 text-[13px] font-semibold text-white">{t(step.title)}</h3>
+              <p className="mt-0.5 text-xs leading-5 text-slate-400">{t(step.description)}</p>
             </>
           );
 

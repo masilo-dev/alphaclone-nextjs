@@ -72,33 +72,33 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
     const adminSteps: Step[] = [
         {
             target: '[data-tour="dashboard-overview"]',
-            content: 'Welcome to your Command Center! Here you can see real-time stats about your business.',
+            content: t('Welcome to your Command Center! Here you can see real-time stats about your business.'),
             placement: 'bottom',
             disableBeacon: true,
         },
         {
             target: '[data-tour="navigation"]',
-            content: 'Use the sidebar to navigate between different sections. All your tools are organized here.',
+            content: t('Use the sidebar to navigate between different sections. All your tools are organized here.'),
             placement: 'right',
         },
         {
             target: '[data-tour="messages"]',
-            content: 'Communicate with clients instantly. Messages sync in real-time across all devices.',
+            content: t('Communicate with clients instantly. Messages sync in real-time across all devices.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="projects"]',
-            content: 'Manage all client projects from here. Track progress, update stages, and collaborate.',
+            content: t('Manage all client projects from here. Track progress, update stages, and collaborate.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="analytics"]',
-            content: 'View detailed analytics and insights. Track revenue, project performance, and team productivity.',
+            content: t('View detailed analytics and insights. Track revenue, project performance, and team productivity.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="global-search"]',
-            content: 'Press ⌘K (or Ctrl+K) to quickly search across projects, messages, and clients.',
+            content: t('Press ⌘K (or Ctrl+K) to quickly search across projects, messages, and clients.'),
             placement: 'bottom',
         },
     ];
@@ -106,23 +106,23 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
     const clientSteps: Step[] = [
         {
             target: '[data-tour="dashboard-overview"]',
-            content: 'Welcome to your dashboard! Track your projects and communicate with your team here.',
+            content: t('Welcome to your dashboard! Track your projects and communicate with your team here.'),
             placement: 'bottom',
             disableBeacon: true,
         },
         {
             target: '[data-tour="my-projects"]',
-            content: 'View all your active projects. See progress, milestones, and updates in real-time.',
+            content: t('View all your active projects. See progress, milestones, and updates in real-time.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="messages"]',
-            content: 'Message your project team anytime. Get instant responses and stay in the loop.',
+            content: t('Message your project team anytime. Get instant responses and stay in the loop.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="submit-request"]',
-            content: 'Submit new project requests here. Describe what you need and we\'ll get started.',
+            content: t('Submit new project requests here. Describe what you need and we\'ll get started.'),
             placement: 'bottom',
         },
     ];
@@ -130,53 +130,53 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
     const tenantAdminSteps: Step[] = [
         {
             target: '[data-tour="platform-welcome"]',
-            content: 'AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.',
+            content: t('AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.'),
             placement: 'bottom',
             disableBeacon: true,
         },
         {
             target: '[data-tour="os-home"]',
-            content: 'Your command center surfaces KPIs, attention items, and modules so you know what to execute today.',
+            content: t('Your command center surfaces KPIs, attention items, and modules so you know what to execute today.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="business-setup-checklist"]',
-            content: 'New here? Follow these three steps first — add a client, invoice, then connect inbox.',
+            content: t('New here? Follow these three steps first — add a client, invoice, then connect inbox.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="business-home"]',
-            content: 'This home screen is your daily starting point — stats, blockers, and quick actions for your workspace.',
+            content: t('This home screen is your daily starting point — stats, blockers, and quick actions for your workspace.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="navigation"]',
-            content: 'Navigation is organized by hub — Sales, Marketing, Money, Insights, and Documents — matching the tabs inside each area.',
+            content: t('Navigation is organized by hub — Sales, Marketing, Money, Insights, and Documents — matching the tabs inside each area.'),
             placement: 'right',
         },
         {
             target: '[data-tour="money-hub-nav"]',
-            content: 'Money Hub groups billing, invoices, accounting, expenses, and cash flow. Open it to manage revenue end-to-end.',
+            content: t('Money Hub groups billing, invoices, accounting, expenses, and cash flow. Open it to manage revenue end-to-end.'),
             placement: 'right',
         },
         {
             target: '[data-tour="global-search"]',
-            content: 'Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.',
+            content: t('Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="business-notifications"]',
-            content: 'Notifications appear here for tickets, form submissions, and team alerts.',
+            content: t('Notifications appear here for tickets, form submissions, and team alerts.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="bonnie-widget"]',
-            content: 'Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.',
+            content: t('Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.'),
             placement: 'left',
         },
         {
             target: '[data-tour="projects-center"]',
-            content: 'Projects is where delivery happens — stages, blockers, tasks, and client visibility in one workspace.',
+            content: t('Projects is where delivery happens — stages, blockers, tasks, and client visibility in one workspace.'),
             placement: 'bottom',
         },
     ];
@@ -184,38 +184,38 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
     const platformOwnerSteps: Step[] = [
         {
             target: '[data-tour="platform-welcome"]',
-            content: 'AlphaClone Systems is the platform for execution — oversee every tenant and service from here.',
+            content: t('AlphaClone Systems is the platform for execution — oversee every tenant and service from here.'),
             placement: 'bottom',
             disableBeacon: true,
         },
         {
             target: '[data-tour="platform-owner-home"]',
-            content: 'Your command center shows platform health, tenant activity, missing keys, and ops signals.',
+            content: t('Your command center shows platform health, tenant activity, missing keys, and ops signals.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="navigation"]',
-            content: 'Use the sidebar to jump between tenants, ops logs, security, subscriptions, and Bonnie AI.',
+            content: t('Use the sidebar to jump between tenants, ops logs, security, subscriptions, and Bonnie AI.'),
             placement: 'right',
         },
         {
             target: '[data-tour="global-search"]',
-            content: 'Press ⌘K or Ctrl+K to search tenants, users, and records across the platform.',
+            content: t('Press ⌘K or Ctrl+K to search tenants, users, and records across the platform.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="business-notifications"]',
-            content: 'Notifications surface tickets, approvals, and platform alerts here.',
+            content: t('Notifications surface tickets, approvals, and platform alerts here.'),
             placement: 'bottom',
         },
         {
             target: '[data-tour="bonnie-widget"]',
-            content: 'Bonnie is your AI operator — run platform checks, approvals, and automations from this assistant.',
+            content: t('Bonnie is your AI operator — run platform checks, approvals, and automations from this assistant.'),
             placement: 'left',
         },
         {
             target: '[data-tour="projects-center"]',
-            content: 'Projects is where tenant delivery happens — stages, blockers, tasks, and client portals.',
+            content: t('Projects is where tenant delivery happens — stages, blockers, tasks, and client portals.'),
             placement: 'bottom',
         },
     ];
@@ -370,6 +370,7 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
                 close: t('Close'),
                 last: t('Finish'),
                 next: t('Next'),
+                nextLabelWithProgress: t('Next (Step {step} of {steps})'),
                 skip: t('Skip Tour'),
             }}
         />
