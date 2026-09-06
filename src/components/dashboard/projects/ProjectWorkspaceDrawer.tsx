@@ -43,16 +43,6 @@ const WORKSPACE_TABS: { id: WorkspaceTab; label: string; icon: React.ComponentTy
 
 const PROJECT_STAGES_ORDER: ProjectStage[] = ['Initiation', 'Planning', 'Execution', 'Review', 'Closure'];
 
-const DEFAULT_MILESTONE_LABELS = [
-  'Kickoff Meeting & Alignment',
-  'Project Scope & Requirements Sign-off',
-  'UI/UX Prototypes & Wireframes Approval',
-  'Core Infrastructure & Database Setup',
-  'First Functional Build Delivery',
-  'User Acceptance Testing (UAT)',
-  'Production Launch & Handover',
-];
-
 export interface ProjectWorkspaceDrawerProps {
   project: BusinessProject;
   tenantId: string;
@@ -142,31 +132,12 @@ export function ProjectWorkspaceDrawer({
       const { milestones: rows } = await milestoneService.getMilestones(project.id);
       if (cancelled) return;
 
-      if (rows.length > 0) {
-        setMilestones(rows.map((m) => ({
-          id: m.id,
-          label: m.name,
-          checked: m.status === 'completed',
-          dueDate: m.dueDate,
-        })));
-      } else {
-        const created: { id: string; label: string; checked: boolean; dueDate?: string }[] = [];
-        for (const label of DEFAULT_MILESTONE_LABELS) {
-          const { milestone } = await milestoneService.createMilestone(project.id, {
-            name: label,
-            status: 'pending',
-          });
-          if (milestone) {
-            created.push({
-              id: milestone.id,
-              label: milestone.name,
-              checked: false,
-              dueDate: milestone.dueDate,
-            });
-          }
-        }
-        if (!cancelled) setMilestones(created);
-      }
+      setMilestones(rows.map((m) => ({
+        id: m.id,
+        label: m.name,
+        checked: m.status === 'completed',
+        dueDate: m.dueDate,
+      })));
       if (!cancelled) {
         await refreshProgress();
         setMilestonesLoading(false);
@@ -511,6 +482,10 @@ export function ProjectWorkspaceDrawer({
               <div className="space-y-2 bg-slate-950/20 rounded-lg p-3 border border-white/5">
                 {milestonesLoading ? (
                   [...Array(4)].map((_, i) => <div key={i} className="h-6 bg-slate-900/60 rounded animate-pulse" />)
+                ) : milestones.length === 0 ? (
+                  <p className="text-sm text-slate-500 py-4 text-center">
+                    No milestones yet. Add them when you want checkpoints — opening a project no longer plants unfinished ones.
+                  </p>
                 ) : (
                   milestones.map((m) => (
                     <div key={m.id} className="flex flex-wrap items-center gap-3 py-1">

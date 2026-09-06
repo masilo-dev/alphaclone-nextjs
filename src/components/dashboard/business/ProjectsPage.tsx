@@ -43,6 +43,7 @@ import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecision
 import { PROJECT_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { ProjectWorkspaceDrawer } from '@/components/dashboard/projects/ProjectWorkspaceDrawer';
 import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
+import { isFinishedProject } from '@/lib/projects/projectEnums';
 
 interface ProjectsPageProps {
     user: User;
@@ -147,9 +148,14 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
         try {
             if (editingProject) {
-                const { error } = await projectService.updateProject(editingProject.id, projectData);
+                const closing = projectData.currentStage === 'Closure';
+                const saved = {
+                    ...projectData,
+                    ...(closing ? { status: 'Completed' as const, progress: 100 } : {}),
+                };
+                const { error } = await projectService.updateProject(editingProject.id, saved);
                 if (!error) {
-                    setProjects(prev => prev.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
+                    setProjects(prev => prev.map(p => p.id === editingProject.id ? { ...p, ...saved } : p));
                     setEditingProject(null);
                     toast.success('Project saved');
                     celebrateWinRitual({
@@ -215,9 +221,18 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             return;
         }
 
-        setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, currentStage: newStage } : p)));
-        setViewingProject((prev) => (prev?.id === projectId ? { ...prev, currentStage: newStage } : prev));
-        toast.success(`Stage updated to ${newStage}`);
+        const finished = newStage === 'Closure';
+        setProjects((prev) => prev.map((p) => (p.id === projectId ? {
+            ...p,
+            currentStage: newStage,
+            ...(finished ? { status: 'Completed' as const, progress: 100 } : {}),
+        } : p)));
+        setViewingProject((prev) => (prev?.id === projectId ? {
+            ...prev,
+            currentStage: newStage,
+            ...(finished ? { status: 'Completed' as const, progress: 100 } : {}),
+        } : prev));
+        toast.success(finished ? 'Project marked finished' : `Stage updated to ${newStage}`);
     }, [currentTenant, user.id]);
 
     const handleDeleteProject = useCallback(async (projectId: string) => {
@@ -425,6 +440,8 @@ const ProjectListRow = ({
     onStageChange: (id: string, stage: ProjectStage) => void,
     onViewDetails: (project: BusinessProject) => void
 }) => {
+    const finished = isFinishedProject(project);
+    const statusLabel = finished ? 'Finished' : project.status.replace('_', ' ');
     return (
         <div 
             onClick={() => onViewDetails(project)}
@@ -506,11 +523,11 @@ const ProjectListRow = ({
             <div className="lg:hidden grid grid-cols-2 gap-3 pt-3 mt-1 border-t border-white/5">
                 <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Status</span>
-                    <span className={`inline-block px-2 py-1 rounded-lg text-xs font-medium border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                    <span className={`inline-block px-2 py-1 rounded-lg text-xs font-medium border ${finished ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                         project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
                             'bg-slate-800 text-slate-400 border-white/5'
                         }`}>
-                        {project.status.replace('_', ' ')}
+                        {statusLabel}
                     </span>
                 </div>
                 <div>
@@ -524,7 +541,9 @@ const ProjectListRow = ({
                 </div>
                 <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Due</span>
-                    {project.dueDate ? (
+                    {finished ? (
+                        <span className="text-xs font-semibold text-emerald-400">Finished</span>
+                    ) : project.dueDate ? (
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} label={project.name} />
                     ) : (
                         <span className="text-xs text-slate-600 italic">No deadline</span>
@@ -557,11 +576,11 @@ const ProjectListRow = ({
 
             {/* Status */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
-                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${finished ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                     project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
                         'bg-slate-800 text-slate-400 border-white/5'
                     }`}>
-                    {project.status.replace('_', ' ')}
+                    {statusLabel}
                 </span>
             </div>
 
@@ -578,7 +597,9 @@ const ProjectListRow = ({
 
             {/* Countdown */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
-                {project.dueDate ? (
+                {finished ? (
+                    <span className="text-xs font-semibold text-emerald-400">Finished</span>
+                ) : project.dueDate ? (
                     <div className="scale-90 origin-center bg-slate-950/50 px-2.5 py-1 rounded-full border border-white/5">
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} label={project.name} />
                     </div>

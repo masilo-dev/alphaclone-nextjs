@@ -992,6 +992,35 @@ a {
   border-radius: 10px;
 }
 
+/* Inbox reading pane: always-visible scrollbar so a long message can be
+   scrolled with the wheel without clicking the message body first. */
+.ac-email-reader-scroll {
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #64748b #1e293b;
+  overscroll-behavior: contain;
+}
+.ac-email-reader-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+.ac-email-reader-scroll::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 8px;
+}
+.ac-email-reader-scroll::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 8px;
+}
+html.light .ac-email-reader-scroll {
+  scrollbar-color: #94a3b8 #e2e8f0;
+}
+html.light .ac-email-reader-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+html.light .ac-email-reader-scroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+}
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { normalizeProjectStage, normalizeProjectStatus } from '@/lib/projects/projectEnums';
+import {
+  finishedProjectWriteFields,
+  isFinishedProject,
+  normalizeProjectStage,
+  normalizeProjectStatus,
+} from '@/lib/projects/projectEnums';
 
 const MAX_BULK_PROJECTS = 200;
 
@@ -42,6 +47,14 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
       const stage = normalizeProjectStage(parsed.data.changes.currentStage);
       if (!stage) return NextResponse.json({ error: `Invalid project stage: ${parsed.data.changes.currentStage}` }, { status: 400 });
       patch.current_stage = stage;
+    }
+    if (
+      isFinishedProject({
+        status: typeof patch.status === 'string' ? String(patch.status) : null,
+        current_stage: typeof patch.current_stage === 'string' ? String(patch.current_stage) : null,
+      })
+    ) {
+      Object.assign(patch, finishedProjectWriteFields());
     }
 
     const admin = createSupabaseAdminClient();

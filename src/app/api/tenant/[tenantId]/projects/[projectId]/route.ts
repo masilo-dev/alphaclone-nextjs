@@ -3,6 +3,11 @@ import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
 import { requireTenantAccess, routeErrorResponse } from "@/lib/apiAuth";
 import {
+  computeProjectProgressPercent,
+  finishedProjectWriteFields,
+  isFinishedProject,
+  isFinishedProjectStage,
+  isFinishedProjectStatus,
   normalizeProjectStage,
   normalizeProjectStatus,
 } from "@/lib/projects/projectEnums";
@@ -171,9 +176,30 @@ export async function PATCH(
         : value;
     }
     if (parsed.data.portalEnabled === false) patch.portal_token = null;
-    const nextStatus = typeof patch.status === "string" ? patch.status.toLowerCase() : null;
-    const wasComplete = String(before.status || "").toLowerCase() === "completed";
-    const willBeComplete = nextStatus === "completed" || nextStatus === "complete";
+    const nextStatus = typeof patch.status === "string" ? patch.status : before.status;
+    const nextStage =
+      typeof patch.current_stage === "string" ? patch.current_stage : before.current_stage;
+    const wasComplete = isFinishedProject({
+      status: before.status,
+      current_stage: before.current_stage,
+    });
+    const willBeComplete = isFinishedProject({
+      status: nextStatus,
+      current_stage: nextStage,
+    });
+    if (willBeComplete) {
+      const finished = finishedProjectWriteFields();
+      if (!isFinishedProjectStatus(typeof patch.status === "string" ? String(patch.status) : before.status)) {
+        patch.status = finished.status;
+      }
+      if (isFinishedProjectStage(String(nextStage))) {
+        patch.current_stage = finished.current_stage;
+      }
+      if (typeof patch.progress !== "number") patch.progress = finished.progress;
+      if (!patch.estimated_completion_date) {
+        patch.estimated_completion_date = finished.estimated_completion_date;
+      }
+    }
     if (willBeComplete && !wasComplete && !before.portal_expires_at) {
       const expires = new Date();
       expires.setDate(expires.getDate() + 14);
@@ -285,7 +311,7 @@ export async function POST(
     const admin = createSupabaseAdminClient();
     const { data: project, error: projectError } = await admin
       .from("projects")
-      .select("id, portal_token")
+      .select("id, portal_token, status, current_stage")
       .eq("id", projectId)
       .eq("tenant_id", tenantId)
       .maybeSingle();
@@ -320,17 +346,27 @@ export async function POST(
     ]);
     if (milestoneError) throw milestoneError;
     if (taskError) throw taskError;
-    const source = milestones?.length ? milestones : tasks || [];
-    const progress = source.length
-      ? Math.round(
-          (source.filter((item: any) => item.status === "completed").length /
-            source.length) *
-            100,
-        )
-      : 0;
+    const progress = computeProjectProgressPercent({
+      status: project.status,
+      current_stage: project.current_stage,
+      milestones,
+      tasks,
+    });
+    const finishedPatch = isFinishedProject({
+      status: project.status,
+      current_stage: project.current_stage,
+    })
+      ? finishedProjectWriteFields()
+      : null;
     const { error } = await admin
       .from("projects")
-      .update({ progress, updated_at: new Date().toISOString() })
+      .update({
+        progress,
+        updated_at: new Date().toISOString(),
+        ...(finishedPatch
+          ? { status: finishedPatch.status, current_stage: finishedPatch.current_stage }
+          : {}),
+      })
       .eq("id", projectId)
       .eq("tenant_id", tenantId);
     if (error) throw error;

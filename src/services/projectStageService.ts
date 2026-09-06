@@ -25,34 +25,34 @@ const PROJECT_STAGES: Record<string, ProjectStage> = {
         name: 'Initiation',
         order: 1,
         requiredFields: ['name', 'description'],
-        nextStages: ['Planning', 'On Hold'],
+        nextStages: ['Planning', 'On Hold', 'Closure'],
         previousStages: [],
     },
     'Planning': {
         name: 'Planning',
         order: 2,
-        requiredFields: ['name', 'description', 'timeline'],
-        nextStages: ['Execution', 'On Hold'],
+        requiredFields: ['name', 'description'],
+        nextStages: ['Execution', 'On Hold', 'Closure'],
         previousStages: ['Initiation'],
     },
     'Execution': {
         name: 'Execution',
         order: 3,
-        requiredFields: ['name', 'description', 'timeline', 'design_files'],
-        nextStages: ['Review', 'Planning', 'On Hold'],
+        requiredFields: ['name', 'description'],
+        nextStages: ['Review', 'Planning', 'On Hold', 'Closure'],
         previousStages: ['Planning'],
     },
     'Review': {
         name: 'Review',
         order: 4,
-        requiredFields: ['name', 'description', 'timeline', 'test_results'],
+        requiredFields: ['name', 'description'],
         nextStages: ['Closure', 'Execution', 'On Hold'],
         previousStages: ['Execution'],
     },
     'Closure': {
         name: 'Closure',
         order: 5,
-        requiredFields: ['name', 'description', 'timeline', 'completion_date'],
+        requiredFields: ['name'],
         nextStages: [],
         previousStages: ['Review'],
     },
@@ -188,8 +188,12 @@ class ProjectStageService {
                 };
             }
 
-            // Update project stage
-            const { error: updateError } = await projectService.updateProject(projectId, { currentStage: newStage as any });
+            // Closure is "mark as finished" — persist Completed/100% so the
+            // list stops saying the project is still open.
+            const { error: updateError } = await projectService.updateProject(projectId, {
+                currentStage: newStage as any,
+                ...(newStage === 'Closure' ? { status: 'Completed' as const, progress: 100 } : {}),
+            });
             if (updateError) return { success: false, error: updateError };
 
             // Log to audit trail

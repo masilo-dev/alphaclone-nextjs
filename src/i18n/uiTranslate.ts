@@ -300,6 +300,10 @@ const ES: Record<string, string> = {
     'Loading conversation…': 'Cargando conversación…',
     'Loading message…': 'Cargando mensaje…',
     'Type your reply…': 'Escribe tu respuesta…',
+    'Write a reply…': 'Escribe una respuesta…',
+    'Hide reply': 'Ocultar respuesta',
+    Suggestions: 'Sugerencias',
+    Finished: 'Terminado',
     'Pick an email from the list': 'Elige un correo de la lista',
     'Read Outlook or Zoho mail here. Compose lets you send via Microsoft, Zoho, Brevo, SendGrid, or Resend — whichever you connected.':
         'Lee aquí tu correo de Outlook o Zoho. Redactar te permite enviar por Microsoft, Zoho, Brevo, SendGrid o Resend, según lo que hayas conectado.',
@@ -1453,6 +1457,10 @@ const PL: Record<string, string> = {
     'Loading conversation…': 'Ładowanie rozmowy…',
     'Loading message…': 'Ładowanie wiadomości…',
     'Type your reply…': 'Wpisz odpowiedź…',
+    'Write a reply…': 'Napisz odpowiedź…',
+    'Hide reply': 'Ukryj odpowiedź',
+    Suggestions: 'Sugestie',
+    Finished: 'Zakończone',
     'Pick an email from the list': 'Wybierz wiadomość z listy',
     'Read Outlook or Zoho mail here. Compose lets you send via Microsoft, Zoho, Brevo, SendGrid, or Resend — whichever you connected.':
         'Czytaj tutaj pocztę z Outlooka lub Zoho. Opcja Napisz pozwala wysyłać przez Microsoft, Zoho, Brevo, SendGrid lub Resend — zależnie od tego, co połączyłeś.',

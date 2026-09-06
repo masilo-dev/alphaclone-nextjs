@@ -260,6 +260,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   const [threadMessages, setThreadMessages] = useState<UnifiedInboxMessage[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
   const [inlineReply, setInlineReply] = useState('');
+  const [replyComposerOpen, setReplyComposerOpen] = useState(false);
   const [sendingReply, setSendingReply] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deliveryProvider, setDeliveryProvider] = useState<DeliveryEmailProvider>('auto');
@@ -459,6 +460,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     setSelectedId(null);
     setThreadMessages([]);
     setInlineReply('');
+    setReplyComposerOpen(false);
     setSearchQuery('');
   };
 
@@ -550,6 +552,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     }
     setSelectedId(email.id);
     setInlineReply('');
+    setReplyComposerOpen(false);
     setThreadMessages([]);
   };
 
@@ -1290,7 +1293,10 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               </div>
 
               {/* ── Lead insight: collapsed/dismissible, not inline above body ── */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-6">
+              <div
+                className="ac-email-reader-scroll flex-1 min-h-0 overflow-y-scroll p-4 md:p-5 space-y-6"
+                data-testid="email-reading-pane"
+              >
                 <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} collapsible />
 
                 {/* ── Attachment Card Grid (if email has attachments) ── */}
@@ -1358,93 +1364,116 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               </div>
 
               {folder !== 'sent' && folder !== 'trash' && (
-                <div className="p-4 border-t border-white/5 shrink-0">
-                  <div className="rounded-xl border border-white/10 bg-slate-950/80 p-3 space-y-3">
-                    {providerOptions.some((p) => p.connected) && (
-                      <EmailProviderSelector
-                        value={deliveryProvider}
-                        onChange={setDeliveryProvider}
-                        providers={providerOptions}
-                        compact
-                      />
-                    )}
-
-                    {/* AI Smart Reply Suggestions */}
-                    {selectedEmail && (
-                      <div className="space-y-1.5 pb-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider flex items-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
-                            AI Quick Reply Suggestions
+                <div className="border-t border-white/5 shrink-0">
+                  {!replyComposerOpen ? (
+                    <div className="px-4 py-2 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setReplyComposerOpen(true)}
+                        disabled={!providerConnected}
+                        className="flex-1 text-left rounded-lg border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-400 hover:text-white hover:border-teal-500/30 disabled:opacity-40"
+                      >
+                        {t('Write a reply…')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openReply(false)}
+                        disabled={!providerConnected}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
+                      >
+                        <Reply className="w-3.5 h-3.5" />
+                        {t('Reply')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-4">
+                      <div className="rounded-xl border border-white/10 bg-slate-950/80 p-3 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                            {provider === 'microsoft' && deliveryProvider === 'microsoft'
+                              ? 'Quick reply via Outlook'
+                              : 'Quick reply — or open full compose to send'}
                           </p>
-                          <span className="text-[9px] text-slate-500">1-click insert</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {getSmartReplyChips(selectedEmail).map((chip) => (
-                            <button
-                              key={chip.id}
-                              type="button"
-                              onClick={() => setInlineReply(chip.prompt)}
-                              className="text-[11px] font-medium px-2.5 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 hover:text-white transition-all shadow-sm flex items-center gap-1"
-                            >
-                              {chip.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                      {provider === 'microsoft' && deliveryProvider === 'microsoft'
-                        ? 'Quick reply via Outlook'
-                        : 'Quick reply — or open full compose to send'}
-                    </p>
-                    <textarea
-                      value={inlineReply}
-                      onChange={(e) => setInlineReply(e.target.value)}
-                      placeholder={t('Type your reply…')}
-                      rows={3}
-                      aria-label="Quick reply message"
-                      className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40 resize-y"
-                    />
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <p className="text-[10px] text-slate-500">
-                        Send via Brevo, SendGrid, Resend, Zoho, or Outlook — pick above or use Reply for full compose.
-                      </p>
-                      <div className="flex gap-2">
-                        {provider === 'microsoft' && deliveryProvider === 'microsoft' && (
                           <button
                             type="button"
-                            onClick={() => handleInlineReply(true)}
-                            disabled={sendingReply || !inlineReply.trim()}
-                            className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40"
+                            onClick={() => setReplyComposerOpen(false)}
+                            className="text-[10px] font-bold uppercase text-slate-500 hover:text-white"
                           >
-                            <ReplyAll className="w-3.5 h-3.5" />
-                            {t('Reply all')}
+                            {t('Hide reply')}
                           </button>
+                        </div>
+                        {providerOptions.some((p) => p.connected) && (
+                          <EmailProviderSelector
+                            value={deliveryProvider}
+                            onChange={setDeliveryProvider}
+                            providers={providerOptions}
+                            compact
+                          />
                         )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (provider === 'microsoft' && deliveryProvider === 'microsoft') {
-                              void handleInlineReply(false);
-                              return;
-                            }
-                            openReply(false, `${inlineReply}${buildReplyQuote(selectedEmail!, dateLocale)}`);
-                          }}
-                          disabled={sendingReply || !inlineReply.trim()}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
-                        >
-                          {sendingReply ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Send className="w-3.5 h-3.5" />
+
+                        {selectedEmail && (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider inline-flex items-center gap-1 mr-1">
+                              <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+                              {t('Suggestions')}
+                            </span>
+                            {getSmartReplyChips(selectedEmail).map((chip) => (
+                              <button
+                                key={chip.id}
+                                type="button"
+                                onClick={() => setInlineReply(chip.prompt)}
+                                className="text-[11px] font-medium px-2.5 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 hover:text-white transition-all"
+                              >
+                                {chip.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        <textarea
+                          value={inlineReply}
+                          onChange={(e) => setInlineReply(e.target.value)}
+                          placeholder={t('Type your reply…')}
+                          rows={3}
+                          aria-label="Quick reply message"
+                          autoFocus
+                          className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40 resize-y"
+                        />
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          {provider === 'microsoft' && deliveryProvider === 'microsoft' && (
+                            <button
+                              type="button"
+                              onClick={() => handleInlineReply(true)}
+                              disabled={sendingReply || !inlineReply.trim()}
+                              className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40"
+                            >
+                              <ReplyAll className="w-3.5 h-3.5" />
+                              {t('Reply all')}
+                            </button>
                           )}
-                          Send
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (provider === 'microsoft' && deliveryProvider === 'microsoft') {
+                                void handleInlineReply(false);
+                                return;
+                              }
+                              openReply(false, `${inlineReply}${buildReplyQuote(selectedEmail!, dateLocale)}`);
+                            }}
+                            disabled={sendingReply || !inlineReply.trim()}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
+                          >
+                            {sendingReply ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Send className="w-3.5 h-3.5" />
+                            )}
+                            Send
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </>

@@ -24,3 +24,16 @@ test('the unified inbox routes own their scroll', () => {
   assert.equal(isEnterpriseFullBleedTab('/dashboard/mail'), true);
   assert.equal(isEnterpriseFullBleedTab('/dashboard/business/contracts/manage'), false);
 });
+
+test('reading a message shows a dedicated scroll pane and keeps reply collapsed', () => {
+  const source = readFileSync(
+    new URL('../../src/components/dashboard/business/UnifiedInboxView.tsx', import.meta.url),
+    'utf8',
+  );
+  assert.match(source, /data-testid="email-reading-pane"/);
+  assert.match(source, /ac-email-reader-scroll/);
+  assert.match(source, /overflow-y-scroll/);
+  assert.match(source, /Write a reply…/);
+  assert.match(source, /replyComposerOpen/);
+  assert.equal(source.includes('AI Quick Reply Suggestions'), false);
+});
