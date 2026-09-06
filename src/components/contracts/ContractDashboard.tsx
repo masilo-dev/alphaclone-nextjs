@@ -30,7 +30,15 @@ import { ContractLifecycleDrawer } from '@/components/contracts/ContractLifecycl
 import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { ContractTemplateLibrary, ContractTemplate } from './ContractTemplateLibrary';
 import { ContractRenewalAlertsPanel } from './ContractRenewalAlertsPanel';
-import { ClientSignatureModal } from './ClientSignatureModal';
+import { SignerProfileModal } from './SignerProfileModal';
+import { JurisdictionFields } from './JurisdictionFields';
+import { contractSignerProfileService } from '../../services/contractSignerProfileService';
+import {
+    EMPTY_SIGNER_PROFILE,
+    applySignerProfileDefaults,
+    type ContractSignerProfile,
+} from '@/lib/contracts/signerProfile';
+import { resolveContractGoverningLaw } from '@/lib/contracts/contractGoverningLaw';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -40,7 +48,6 @@ import {
 } from '../../services/universalServiceCatalog';
 import { generateEmailDraft } from '../../services/unifiedAIService';
 import { contractLifecycleService } from '../../services/contractLifecycleService';
-import { EU_JURISDICTIONS } from '../../config/euJurisdictions';
 
 interface ContractDashboardProps {
     user: UserType;
@@ -150,6 +157,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [aiSuggesting, setAiSuggesting] = useState(false);
     const [signatureModalOpen, setSignatureModalOpen] = useState(false);
+    // Owner's reusable signer profile: provider details, default governing law
+    // and the adopted signature. Pre-fills every new contract.
+    const [signerProfile, setSignerProfile] = useState<ContractSignerProfile>(EMPTY_SIGNER_PROFILE);
     const [generatedContract, setGeneratedContract] = useState('');
     const [contractId, setContractId] = useState<string>('');
     const [savedContracts, setSavedContracts] = useState<any[]>([]);
@@ -360,7 +370,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [sendingContract, setSendingContract] = useState(false);
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
     const [aiSendInstructions, setAiSendInstructions] = useState('');
-    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '', provider: 'auto' as string });
+    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '', provider: 'auto' as string, jurisdiction: '', governingLaw: '' });
     const [resendForSignature, setResendForSignature] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedHtml, setEditedHtml] = useState('');
@@ -426,6 +436,51 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     }, [currentTenant?.id]);
 
+    // Load the saved signer profile once and pre-fill the provider block +
+    // governing law so the owner never retypes them.
+    useEffect(() => {
+        let cancelled = false;
+        contractSignerProfileService.load().then((profile) => {
+            if (cancelled) return;
+            setSignerProfile(profile);
+            setForm((prev) => applySignerProfileDefaults(prev, profile, { tenantFallbackName: currentTenant?.name || '' }));
+        });
+        return () => { cancelled = true; };
+    }, [currentTenant?.name, user.id]);
+
+    const applySignerProfile = (profile: ContractSignerProfile) => {
+        setSignerProfile(profile);
+        setForm((prev) => applySignerProfileDefaults(prev, profile, { tenantFallbackName: currentTenant?.name || '' }));
+    };
+
+    /** Persist the provider block + governing law from the current form (fire-and-forget). */
+    const rememberSignerDetails = (f: ContractForm) => {
+        const patch = {
+            providerName: f.providerName,
+            providerAddress: f.providerAddress,
+            providerEmail: f.providerEmail,
+            providerPhone: f.providerPhone,
+            providerRegistration: f.providerRegistration,
+            jurisdiction: f.jurisdiction,
+            governingLaw: f.governingLaw,
+        };
+        const unchanged = (Object.keys(patch) as (keyof typeof patch)[]).every((key) => (signerProfile[key] || '') === (patch[key] || '').trim());
+        if (unchanged) return;
+        contractSignerProfileService.save(patch).then(setSignerProfile).catch((error) => {
+            console.warn('[contracts] signer details were not remembered', error);
+        });
+    };
+
+    const rememberSignature = async (cleanDataUrl: string, fullName: string) => {
+        try {
+            const saved = await contractSignerProfileService.save({ signature: { dataUrl: cleanDataUrl, fullName } });
+            setSignerProfile(saved);
+            toast.success('Signature saved — next time you can sign with one click.');
+        } catch (error) {
+            toast.error((error as Error).message || 'Signature could not be saved for reuse');
+        }
+    };
+
     useEffect(() => {
         if (!currentTenant?.id) return;
         supabase
@@ -474,7 +529,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         if (!form.clientName.trim()) { toast.error('Client name is required'); return; }
         if (!form.projectName.trim()) { toast.error('Project name is required'); return; }
         if (!form.totalAmount.trim()) { toast.error('Contract value is required'); return; }
+        if (!form.jurisdiction.trim() || !form.governingLaw.trim()) {
+            toast.error('Governing jurisdiction and governing law are required — a contract cannot be sent for signature without them.');
+            return;
+        }
 
+        rememberSignerDetails(form);
         setIsGenerating(true);
         setGeneratedContract('');
         setStep('preview');
@@ -537,25 +597,61 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         if (!currentTenant?.id) return;
         setIsSaving(true);
         try {
-            const { contract, error } = await contractService.createContract({
-                title: `${form.projectName} — ${form.clientName}`,
-                content: isEditing ? editedHtml : (editedHtml || contractToHTML(generatedContract)),
-                client_id: form.clientId || undefined,
-                status: isSigned ? 'sent' : 'draft',
-                payment_amount: parseFloat(form.totalAmount) || 0,
-                admin_signature: isSigned ? signatureData : undefined,
-                admin_signed_at: isSigned ? new Date().toISOString() : undefined,
-                metadata: {
-                    document_theme: documentTheme,
-                    client_name: form.clientName,
-                    client_email: form.clientEmail,
-                },
+            const content = isEditing ? editedHtml : (editedHtml || contractToHTML(generatedContract));
+            const legal = resolveContractGoverningLaw({
+                provided: { governingLaw: form.governingLaw, jurisdiction: form.jurisdiction },
+                content,
             });
-            if (error) throw new Error(String(error));
-            toast.success('Contract saved successfully!');
-            if (contract?.id) setContractId(contract.id);
+            const metadata = {
+                document_theme: documentTheme,
+                client_name: form.clientName,
+                client_email: form.clientEmail,
+                client_address: form.clientAddress,
+                project_name: form.projectName,
+                provider_name: form.providerName,
+                supplier_legal_name: form.providerName,
+                admin_signer_name: isSigned ? signatureName : undefined,
+            };
+            const existing = contractId ? savedContracts.find((c) => c.id === contractId) : undefined;
+            let saved: any;
+            if (existing) {
+                // Re-saving a contract that was opened from the list: update it in
+                // place instead of creating a duplicate row.
+                const { contract, error } = await contractService.updateContract(contractId, {
+                    content,
+                    status: isSigned && existing.status === 'draft' ? 'sent' : undefined,
+                    payment_amount: parseFloat(form.totalAmount) || existing.payment_amount || 0,
+                    admin_signature: isSigned ? signatureData : undefined,
+                    admin_signed_at: isSigned ? (existing.admin_signed_at || new Date().toISOString()) : undefined,
+                    governing_law: legal.governingLaw || undefined,
+                    jurisdiction: legal.jurisdiction || undefined,
+                    metadata: { ...(existing.metadata || {}), ...metadata },
+                });
+                if (error) throw new Error(error.message);
+                saved = contract;
+                setSavedContracts((prev) => prev.map((c) => (c.id === contractId ? { ...c, ...saved } : c)));
+                toast.success('Contract updated');
+            } else {
+                const { contract, error } = await contractService.createContract({
+                    title: `${form.projectName} — ${form.clientName}`,
+                    content,
+                    client_id: form.clientId || undefined,
+                    status: isSigned ? 'sent' : 'draft',
+                    payment_amount: parseFloat(form.totalAmount) || 0,
+                    admin_signature: isSigned ? signatureData : undefined,
+                    admin_signed_at: isSigned ? new Date().toISOString() : undefined,
+                    governing_law: legal.governingLaw || undefined,
+                    jurisdiction: legal.jurisdiction || undefined,
+                    metadata,
+                });
+                if (error) throw new Error(String(error.message || error));
+                saved = contract;
+                toast.success('Contract saved successfully!');
+                if (contract?.id) setContractId(contract.id);
+                setSavedContracts(prev => [contract, ...prev]);
+            }
+            rememberSignerDetails(form);
             showActionNextSteps(isSigned ? 'contract_signed' : 'contract_saved', (path) => router.push(path));
-            setSavedContracts(prev => [contract, ...prev]);
             setStep('saved');
             setIsEditing(false);
         } catch (e: any) {
@@ -617,6 +713,18 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         };
     };
 
+    /**
+     * True when the contract being sent has no governing law on its row and
+     * none can be recovered from its text — the server would reject the send,
+     * so the modal asks for it up front instead.
+     */
+    const sendNeedsGoverningLaw = useMemo(() => {
+        if (!showSendModal || !contractId) return false;
+        const target = savedContracts.find((c) => c.id === contractId);
+        if (!target) return false;
+        return resolveContractGoverningLaw({ row: target, content: target.content }).source === 'none';
+    }, [showSendModal, contractId, savedContracts]);
+
     const openSendContractModal = (options?: { resend?: boolean; contract?: any }) => {
         const targetContract = options?.contract;
         const isResend = Boolean(options?.resend);
@@ -638,6 +746,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 ? `We still need your signature on "${contractTitle}". Until this contract is signed, we cannot move your project forward. Please review and sign using the secure link as soon as possible.`
                 : `Hello${contact.name && contact.name !== 'the client' ? ` ${contact.name}` : ''},\n\nPlease review and sign the attached contract for ${projectLabel || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
             provider: 'auto',
+            jurisdiction: form.jurisdiction || signerProfile.jurisdiction,
+            governingLaw: form.governingLaw || signerProfile.governingLaw,
         });
         setAiSendInstructions(
             isResend
@@ -691,6 +801,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             toast.error('Save the contract first before sending');
             return;
         }
+        if (sendNeedsGoverningLaw && (!sendForm.jurisdiction.trim() || !sendForm.governingLaw.trim())) {
+            toast.error('Pick the governing jurisdiction and law — the contract cannot be sent without them.');
+            return;
+        }
 
         setSendingContract(true);
         try {
@@ -709,6 +823,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         userId: user.id,
                         provider: sendForm.provider !== 'auto' ? sendForm.provider : undefined,
                         resendForSignature,
+                        jurisdiction: sendForm.jurisdiction.trim() || undefined,
+                        governingLaw: sendForm.governingLaw.trim() || undefined,
                     },
                 }),
             });
@@ -716,6 +832,16 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             if (!res.ok || !payload?.success) {
                 throw new Error(payload?.error || 'Failed to send contract');
             }
+            const sentAt = new Date().toISOString();
+            setSavedContracts((prev) => prev.map((c) => (c.id === contractId
+                ? {
+                    ...c,
+                    status: c.status === 'draft' ? 'sent' : c.status,
+                    updated_at: sentAt,
+                    governing_law: c.governing_law || sendForm.governingLaw.trim() || c.governing_law,
+                    jurisdiction: c.jurisdiction || sendForm.jurisdiction.trim() || c.jurisdiction,
+                }
+                : c)));
             toast.success(resendForSignature ? 'Signature request resent' : 'Contract sent successfully');
             setShowSendModal(false);
             setResendForSignature(false);
@@ -919,8 +1045,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         type="button"
                         onClick={() => setSignatureModalOpen(true)}
                         className="flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30 hover:bg-teal-500/30 transition-all flex items-center justify-center gap-1.5"
+                        title="Your saved signature and signer details, reused on every contract"
                     >
-                        <PenTool className="w-3 h-3" /> Execute E-Sign
+                        <PenTool className="w-3 h-3" /> My signature
                     </button>
                 </div>
             </div>
@@ -1080,7 +1207,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     setGeneratedContract(c.content);
                                     setContractId(c.id);
                                     setSignatureData(c.admin_signature || '');
-                                    setSignatureName(c.admin_signature ? 'Administrator' : '');
+                                    setSignatureName(
+                                        c.admin_signature
+                                            ? String(c.metadata?.admin_signer_name || signerProfile.signature?.fullName || signerProfile.providerName || 'Administrator')
+                                            : '',
+                                    );
                                     setIsSigned(!!c.admin_signature);
                                     setDocumentTheme(resolveDocumentThemeId(c.metadata || {}));
 
@@ -1100,6 +1231,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         totalAmount:
                                             prev.totalAmount ||
                                             (c.payment_amount != null ? String(c.payment_amount) : prev.totalAmount),
+                                        jurisdiction: c.jurisdiction || prev.jurisdiction,
+                                        governingLaw: c.governing_law || prev.governingLaw,
                                     }));
 
                                     if (c.document_url) {
@@ -1457,36 +1590,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         <label className={labelCls}>Estimated Completion Date</label>
                                         <input className={inputCls} value={form.endDate} onChange={e => set('endDate', e.target.value)} placeholder="e.g. June 1, 2026" />
                                     </div>
-                                    <div>
-                                        <label className={labelCls}>Governing Jurisdiction</label>
-                                        <select
-                                            className={inputCls}
-                                            value={form.jurisdiction}
-                                            onChange={(e) => {
-                                                const picked = EU_JURISDICTIONS.find((j) => j.label === e.target.value);
-                                                set('jurisdiction', e.target.value);
-                                                if (picked) set('governingLaw', picked.governingLaw);
-                                            }}
-                                        >
-                                            <option value="">— Select EU / EEA jurisdiction —</option>
-                                            {EU_JURISDICTIONS.map((j) => (
-                                                <option key={j.code} value={j.label}>{j.label}</option>
-                                            ))}
-                                            <option value="custom">Other (type below)</option>
-                                        </select>
-                                        {(form.jurisdiction === 'custom' || (form.jurisdiction && !EU_JURISDICTIONS.some((j) => j.label === form.jurisdiction))) && (
-                                            <input
-                                                className={`${inputCls} mt-2`}
-                                                value={form.jurisdiction === 'custom' ? '' : form.jurisdiction}
-                                                onChange={(e) => set('jurisdiction', e.target.value)}
-                                                placeholder="e.g. State of California, USA"
-                                            />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className={labelCls}>Governing Law</label>
-                                        <input className={inputCls} value={form.governingLaw} onChange={e => set('governingLaw', e.target.value)} placeholder="e.g. Laws of the State of California" />
-                                    </div>
+                                    <JurisdictionFields
+                                        jurisdiction={form.jurisdiction}
+                                        governingLaw={form.governingLaw}
+                                        required
+                                        onChange={(next) => setForm((prev) => ({ ...prev, ...next }))}
+                                        hint="Required — the contract cannot be sent for signature without a governing law. Saved to your signer profile for next time."
+                                    />
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Additional Terms (optional)</label>
                                         <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.additionalTerms} onChange={e => set('additionalTerms', e.target.value)} placeholder="Any special clauses, NDA requirements, exclusivity terms, etc." />
@@ -1587,10 +1697,17 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         </div>
                                         <div>
                                             <h3 className="text-white font-bold text-base">Sign to Proceed</h3>
-                                            <p className="text-slate-400 text-sm">Draw your signature and type your name to sign this contract before saving or printing.</p>
+                                            <p className="text-slate-400 text-sm">
+                                                {signerProfile.signature
+                                                    ? 'Apply your saved signature with one click, or draw a new one.'
+                                                    : 'Draw your signature and type your name once — tick "Remember" and future contracts sign with one click.'}
+                                            </p>
                                         </div>
                                     </div>
                                     <SignaturePad
+                                        savedSignature={signerProfile.signature}
+                                        onRememberSignature={rememberSignature}
+                                        initialFullName={signerProfile.signature?.fullName || ''}
                                         onSave={(sig, name) => {
                                             setSignatureData(sig);
                                             setSignatureName(name);
@@ -1987,6 +2104,22 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
                                 />
                             </div>
+                            {sendNeedsGoverningLaw && (
+                                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3" data-testid="send-governing-law">
+                                    <p className="text-sm text-amber-200 font-semibold">This contract has no governing law recorded yet.</p>
+                                    <p className="text-[12px] text-slate-400">
+                                        It cannot be sent for signature without one. Pick it here and it will be recorded on the contract before sending.
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <JurisdictionFields
+                                            jurisdiction={sendForm.jurisdiction}
+                                            governingLaw={sendForm.governingLaw}
+                                            required
+                                            onChange={(next) => setSendForm((prev) => ({ ...prev, ...next }))}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1.5">Send via</label>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -2070,13 +2203,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             )}
             <ContractLifecycleDrawer contractId={lifecycleContractId} tenantId={currentTenant?.id} open={Boolean(lifecycleContractId)} onOpenChange={(open) => !open && setLifecycleContractId(null)} />
             {signatureModalOpen && (
-                <ClientSignatureModal
-                    contractTitle={form.projectName || 'Master Service Agreement'}
-                    clientName={form.clientName || 'Valued Client'}
-                    onSaveSignature={(signatureDataUrl, signerName) => {
-                        toast.success(`E-Signature recorded for ${signerName}! Staging initial deposit invoice...`, { duration: 5000 });
-                        setSignatureModalOpen(false);
-                    }}
+                <SignerProfileModal
+                    profile={signerProfile}
+                    onSaved={applySignerProfile}
                     onClose={() => setSignatureModalOpen(false)}
                 />
             )}

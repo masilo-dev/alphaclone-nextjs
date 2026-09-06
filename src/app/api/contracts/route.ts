@@ -4,6 +4,7 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 import { queueDocumentIntelligence } from '@/lib/documents/fileDocument';
 import { assessContractContentQuality } from '@/lib/documents/contractContentQuality';
+import { resolveContractGoverningLaw } from '@/lib/contracts/contractGoverningLaw';
 
 const CreateContractSchema = z.object({
   title: z.string().trim().min(1).max(300),
@@ -14,6 +15,8 @@ const CreateContractSchema = z.object({
   status: z.enum(['draft', 'pending_approval', 'sent']).optional().default('draft'),
   admin_signature: z.string().max(2_000_000).nullable().optional(),
   admin_signed_at: z.string().datetime().nullable().optional(),
+  governing_law: z.string().trim().max(200).nullable().optional(),
+  jurisdiction: z.string().trim().max(200).nullable().optional(),
   payment_due_date: z.union([z.string().date(), z.string().datetime(), z.null()]).optional(),
   payment_amount: z.coerce.number().min(0).max(1_000_000_000).nullable().optional(),
   payment_status: z.enum(['pending', 'paid', 'overdue', 'waived']).optional().default('pending'),
@@ -29,8 +32,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
     }
 
-    const { tenantId, client_id, project_id, title, content, type, status, metadata, admin_signature, admin_signed_at, payment_due_date, payment_amount, payment_status } = parsed.data;
+    const { tenantId, client_id, project_id, title, content, type, status, metadata, admin_signature, admin_signed_at, payment_due_date, payment_amount, payment_status, governing_law, jurisdiction } = parsed.data;
     const { user, admin } = await requireTenantAccess(tenantId, req);
+
+    // The pre-send legal check reads governing_law/jurisdiction from the row.
+    // Persist what the owner chose, or recover it from the text, so a saved
+    // contract can actually be sent later.
+    const legal = resolveContractGoverningLaw({ provided: { governingLaw: governing_law, jurisdiction }, content });
 
     // 1. Verify party belongs to tenant (unified contact or legacy business client)
     const { data: contact, error: contactError } = client_id ? await admin
@@ -102,6 +110,8 @@ export async function POST(req: NextRequest) {
         signing_token: crypto.randomUUID(),
         admin_signature: admin_signature || null,
         admin_signed_at: admin_signed_at || null,
+        governing_law: legal.governingLaw,
+        jurisdiction: legal.jurisdiction,
         payment_due_date: payment_due_date ? payment_due_date.slice(0, 10) : null,
         payment_amount: payment_amount ?? null,
         payment_status,

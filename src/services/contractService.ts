@@ -22,6 +22,8 @@ export interface Contract {
     payment_amount?: number;
     payment_status?: 'pending' | 'paid' | 'overdue';
     signing_token?: string;
+    governing_law?: string | null;
+    jurisdiction?: string | null;
     metadata?: {
         signer_ip?: string;
         content_hash?: string;
@@ -141,6 +143,18 @@ export const contractService = {
         const response = await fetch('/api/contracts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ...contract }) });
         const payload = await response.json().catch(() => ({}));
         return { contract: response.ok ? payload.data : null, error: response.ok ? null : { message: payload.error || 'Contract could not be created' } };
+    },
+
+    /** Update an existing contract in place (content, owner signature, legal fields, metadata). */
+    async updateContract(
+        contractId: string,
+        updates: Partial<Pick<Contract, 'title' | 'content' | 'status' | 'metadata' | 'admin_signature' | 'admin_signed_at' | 'governing_law' | 'jurisdiction' | 'payment_amount'>>,
+    ) {
+        const tenantId = this.getTenantId();
+        const body = Object.fromEntries(Object.entries({ tenantId, ...updates }).filter(([, value]) => value !== undefined));
+        const response = await fetch(`/api/contracts/${contractId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const payload = await response.json().catch(() => ({}));
+        return { contract: response.ok ? payload.data : null, error: response.ok ? null : { message: payload.error || 'Contract could not be updated' } };
     },
 
     /**

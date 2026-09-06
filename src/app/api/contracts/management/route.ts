@@ -12,6 +12,7 @@ import { randomBytes } from "crypto";
 import { AppUrls } from "@/lib/urls";
 import { validateContract } from "@/lib/documents/documentValidationEngine";
 import { runContractLegalConsistencyCheck } from "@/lib/documents/contractLegalPreflight";
+import { resolveContractGoverningLaw } from "@/lib/contracts/contractGoverningLaw";
 import { assessContractContentQuality } from "@/lib/documents/contractContentQuality";
 import { generateContractFromTemplate } from "@/services/alphacloneContractTemplate";
 import {
@@ -154,6 +155,11 @@ async function createContract(tenantId: string, config: any, supabase: any) {
       );
     }
 
+    const legal = resolveContractGoverningLaw({
+      provided: { governingLaw: terms?.governingLaw ?? terms?.governing_law, jurisdiction: terms?.jurisdiction },
+      content: contractContent,
+    });
+
     // Save contract to database
     const { data: contract, error } = await supabase
       .from("contracts")
@@ -162,6 +168,8 @@ async function createContract(tenantId: string, config: any, supabase: any) {
         title: title || `${type} Agreement`,
         type: type,
         content: contractContent,
+        governing_law: legal.governingLaw,
+        jurisdiction: legal.jurisdiction,
         parties: parties,
         terms: terms,
         duration: duration,
@@ -420,9 +428,30 @@ export async function sendContract(
     const clientEmail =
       String(contract.client_email || metadata.client_email || "").trim() ||
       undefined;
-    const jurisdiction =
-      String(contract.jurisdiction || contract.governing_law || "").trim() ||
-      undefined;
+    // Governing law: prefer what is stored on the row, then what the owner
+    // supplied in the send modal, then what the contract text itself says.
+    // Older contracts were saved without these columns, so recover and persist
+    // them here instead of failing the legal check forever.
+    const legal = resolveContractGoverningLaw({
+      row: contract,
+      provided: { governingLaw: config.governingLaw, jurisdiction: config.jurisdiction },
+      content: contractText,
+    });
+    if (legal.source !== "row" && legal.source !== "none") {
+      const { error: legalPersistError } = await supabase
+        .from("contracts")
+        .update({ governing_law: legal.governingLaw, jurisdiction: legal.jurisdiction, updated_at: new Date().toISOString() })
+        .eq("id", contractId)
+        .eq("tenant_id", tenantId);
+      if (legalPersistError) {
+        console.warn("[contracts/send] could not persist governing law", legalPersistError.message);
+      } else {
+        contract.governing_law = legal.governingLaw;
+        contract.jurisdiction = legal.jurisdiction;
+      }
+    }
+    const jurisdiction = legal.jurisdiction || undefined;
+    const governingLaw = legal.governingLaw || undefined;
 
     const validation = validateContract({
       text: contractText,
@@ -451,8 +480,8 @@ export async function sendContract(
       clientName,
       clientEmail,
       jurisdiction,
-      governingLaw: jurisdiction,
-      supplierLegalName: String(metadata.supplier_legal_name || "").trim() || undefined,
+      governingLaw,
+      supplierLegalName: String(metadata.supplier_legal_name || metadata.provider_name || "").trim() || undefined,
     });
     const mergedFindings = [...validation.findings, ...legalConsistencyFindings];
     const canSend =

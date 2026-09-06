@@ -8,6 +8,11 @@ const UpdateContractSchema = z.object({
   content: z.string().optional(),
   status: z.enum(['draft', 'pending_approval', 'approved', 'sent', 'signed', 'void']).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
+  admin_signature: z.string().max(2_000_000).nullable().optional(),
+  admin_signed_at: z.string().datetime().nullable().optional(),
+  governing_law: z.string().trim().max(200).nullable().optional(),
+  jurisdiction: z.string().trim().max(200).nullable().optional(),
+  payment_amount: z.coerce.number().min(0).max(1_000_000_000).nullable().optional(),
   tenantId: z.string().uuid(),
 });
 const DeleteContractSchema = z.object({ tenantId: z.string().uuid() });
@@ -96,8 +101,9 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       action: 'contract_updated',
       entity_type: 'contract',
       entity_id: id,
-      new_values: updatePayload,
-      old_values: existing,
+      // Signature images are large data URLs — record that they changed, not the bytes.
+      new_values: { ...updatePayload, ...(updatePayload.admin_signature !== undefined ? { admin_signature: updatePayload.admin_signature ? '[signature image]' : null } : {}) },
+      old_values: { ...existing, admin_signature: existing.admin_signature ? '[signature image]' : null, client_signature: existing.client_signature ? '[signature image]' : null },
       created_at: new Date().toISOString()
     });
 

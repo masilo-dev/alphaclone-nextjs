@@ -36,6 +36,10 @@ export function EnterpriseTabWrapper({
 /** Edge-to-edge dashboard routes — same list as BusinessDashboard. Social modules scroll with the main column. */
 export const ENTERPRISE_FULL_BLEED_TABS = new Set([
   '/dashboard/mail',
+  // Unified inbox: the reading pane owns its own scroll. Without full-bleed the
+  // wrapper grows to the email's height inside an overflow-hidden main and the
+  // bottom of long messages can never be reached.
+  '/dashboard/comms',
   '/dashboard/business/projects',
   '/dashboard/business/projects/manage',
   '/dashboard/projects/manage',
