@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { InboxFolder, UnifiedInboxMessage } from '@/types/unifiedInbox';
 import { isAuthErrorMessage, refreshZohoTokenIfNeeded } from '@/lib/email/tokenRefresh';
 import { formatMailFrom } from '@/lib/email/parseEmailHeader';
+import { decodeHtmlEntities } from '@/lib/email/decodeHtmlEntities';
 
 interface ZohoFolderRow {
   folderId: string;
@@ -35,13 +36,14 @@ function mapZohoMessage(row: Record<string, unknown>, folderId: string): Unified
   return {
     id: String(row.messageId || row.id || ''),
     provider: 'zoho',
-    subject: String(row.subject || ''),
+    subject: decodeHtmlEntities(String(row.subject || '')),
     from: formatMailFrom({
       name: String(row.sender || ''),
       address: String(row.fromAddress || row.from || ''),
       raw: String(row.sender || row.fromAddress || row.from || ''),
     }),
-    snippet: String(row.snippet || row.summary || ''),
+    // Zoho returns snippets HTML-escaped (&#39;, &amp;); the list renders text.
+    snippet: decodeHtmlEntities(String(row.snippet || row.summary || '')),
     receivedAt: parseZohoTime(String(row.receivedTime || row.sentDateInGMT || '')),
     zohoFolderId: folderId,
   };

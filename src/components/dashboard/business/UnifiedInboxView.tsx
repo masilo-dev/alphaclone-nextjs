@@ -37,6 +37,23 @@ import {
 import toast from 'react-hot-toast';
 import { classifyEmailFromAddress, type EmailClassification } from '@/lib/email/classifyEmail';
 import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
+
+/**
+ * Email HTML is authored for a white page: senders set inline
+ * `background-color:#fff` on text spans, `color:#222` on paragraphs, etc.
+ * Forcing light text over it produced white-on-white bars in dark mode, so
+ * the message is rendered on its own light "paper" surface (as Gmail and
+ * Outlook do) and the sender's colours are left alone.
+ */
+const FOLDER_LABELS: Record<InboxFolder, string> = {
+  inbox: 'Inbox',
+  sent: 'Sent',
+  drafts: 'Drafts',
+  trash: 'Trash',
+};
+
+export const EMAIL_BODY_SURFACE_CLASS =
+  'prose prose-sm max-w-none bg-white text-slate-900 p-4 rounded-xl border border-white/10 text-sm leading-relaxed overflow-x-auto break-words [&_a]:text-teal-700 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_table]:max-w-full [&_blockquote]:border-slate-300 [&_blockquote]:text-slate-600';
 import { refreshMicrosoftTokenIfNeeded, refreshZohoTokenIfNeeded } from '@/lib/email/tokenRefresh';
 import { useMicrosoftEmails } from '@/hooks/useMicrosoftEmails';
 import { useZohoEmails } from '@/hooks/useZohoEmails';
@@ -93,32 +110,42 @@ function toUnifiedMicrosoft(
   }));
 }
 
-async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: boolean; zoho: boolean }> {
-  const fetchWithTimeout = async <T,>(promise: Promise<T>, timeoutMs = 5000, fallback: T): Promise<T> => {
-    let timer: any;
-    const timeoutPromise = new Promise<T>((resolve) => {
-      timer = setTimeout(() => resolve(fallback), timeoutMs);
+type ProviderStatus = { microsoft: boolean; zoho: boolean; timedOut: boolean };
+
+/**
+ * The Zoho status route performs several Zoho API round-trips, which can take
+ * well over 5s on a cold tenant. A short timeout here used to report a healthy
+ * Zoho account as "not connected" and show the connect wall by mistake, so the
+ * budget is generous and a timeout is surfaced separately from a real "no".
+ */
+const PROVIDER_STATUS_TIMEOUT_MS = 15000;
+
+async function fetchProviderStatus(tenantId?: string): Promise<ProviderStatus> {
+  const TIMED_OUT = Symbol('timed-out');
+  const withTimeout = async <T,>(promise: Promise<T>): Promise<T | typeof TIMED_OUT> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<typeof TIMED_OUT>((resolve) => {
+      timer = setTimeout(() => resolve(TIMED_OUT), PROVIDER_STATUS_TIMEOUT_MS);
     });
-    return Promise.race([
-      promise.finally(() => clearTimeout(timer)),
-      timeoutPromise
-    ]);
+    return Promise.race([promise.finally(() => clearTimeout(timer)), timeout]);
   };
 
   const [microsoft, zoho] = await Promise.all([
-    fetchWithTimeout(microsoftAuthService.isConnected().catch(() => false), 5000, false),
+    withTimeout(microsoftAuthService.isConnected().catch(() => false)),
     tenantId
-      ? fetchWithTimeout(
+      ? withTimeout(
           fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
             .then((r) => r.json().catch(() => ({})))
             .then((d) => Boolean(d.isConnected))
             .catch(() => false),
-          5000,
-          false
         )
       : Promise.resolve(false),
   ]);
-  return { microsoft, zoho };
+  return {
+    microsoft: microsoft === true,
+    zoho: zoho === true,
+    timedOut: microsoft === TIMED_OUT || zoho === TIMED_OUT,
+  };
 }
 
 function buildReplyQuote(email: UnifiedInboxMessage, locale?: Intl.LocalesArgument): string {
@@ -203,7 +230,7 @@ function getSmartReplyChips(email: UnifiedInboxMessage) {
 export default function UnifiedInboxView({ defaultProvider, initialFolder }: UnifiedInboxViewProps) {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const dateLocale = useMemo(() => languageToBcp47(language), [language]);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -215,6 +242,8 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   const [provider, setProvider] = useState<InboxProvider>(initialProvider);
   const [statusChecked, setStatusChecked] = useState(false);
   const [status, setStatus] = useState({ microsoft: false, zoho: false });
+  const [statusTimedOut, setStatusTimedOut] = useState(false);
+  const [statusAttempt, setStatusAttempt] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeDraft, setComposeDraft] = useState<ComposeState>({});
@@ -257,15 +286,20 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
   useEffect(() => {
     let cancelled = false;
+    setStatusChecked(false);
     const safetyTimer = setTimeout(() => {
-      if (!cancelled) setStatusChecked(true);
-    }, 6000);
+      if (!cancelled) {
+        setStatusTimedOut(true);
+        setStatusChecked(true);
+      }
+    }, PROVIDER_STATUS_TIMEOUT_MS + 1000);
 
     (async () => {
       try {
         const next = await fetchProviderStatus(currentTenant?.id);
         if (cancelled) return;
-        setStatus(next);
+        setStatus({ microsoft: next.microsoft, zoho: next.zoho });
+        setStatusTimedOut(next.timedOut && !next.microsoft && !next.zoho);
         const preferred =
           urlProvider === 'zoho' || urlProvider === 'microsoft' ? urlProvider : defaultProvider;
         if (
@@ -289,7 +323,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
       cancelled = true;
       clearTimeout(safetyTimer);
     };
-  }, [defaultProvider, urlProvider, currentTenant?.id]);
+  }, [defaultProvider, urlProvider, currentTenant?.id, statusAttempt]);
 
   useEffect(() => {
     if (!currentTenant?.id) return;
@@ -318,9 +352,13 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   }, [statusChecked, searchParams]);
 
   const active = provider === 'microsoft' ? microsoft : zoho;
-  const anyConnected = status.microsoft || status.zoho;
-  const providerConnected =
-    provider === 'microsoft' ? status.microsoft : status.zoho;
+  // A provider that is returning mail is connected, whatever the (timeout-prone)
+  // status probe said; otherwise Compose/Reply would be disabled while messages
+  // are visibly loading in the list.
+  const microsoftLive = status.microsoft || (microsoft.emails.length > 0 && !microsoft.error);
+  const zohoLive = status.zoho || (zoho.emails.length > 0 && !zoho.error);
+  const anyConnected = microsoftLive || zohoLive;
+  const providerConnected = provider === 'microsoft' ? microsoftLive : zohoLive;
 
   useEffect(() => {
     if (!statusChecked || !anyConnected) return;
@@ -760,7 +798,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     return (
       <div className="ac-workspace-panel rounded-lg p-8 text-center">
         <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
-        <p className="text-sm text-slate-400">Checking your email accounts…</p>
+        <p className="text-sm text-slate-400">{t('Checking your email accounts…')}</p>
       </div>
     );
   }
@@ -769,24 +807,37 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     return (
       <div className="ac-workspace-panel rounded-lg p-8 text-center max-w-lg mx-auto">
         <Mail className="w-10 h-10 text-teal-400 mx-auto mb-4" />
-        <h2 className="text-lg font-bold text-white mb-2">Connect email to see your inbox</h2>
+        <h2 className="text-lg font-bold text-white mb-2">
+          {statusTimedOut ? t('We could not reach your email accounts') : t('Connect email to see your inbox')}
+        </h2>
         <p className="text-sm text-slate-400 mb-6">
-          Link Outlook or Zoho to read mail here. When you send, pick Microsoft, Zoho, Brevo, SendGrid, or Resend — whatever you have connected.
+          {statusTimedOut
+            ? t('The connection check took too long. Your accounts may still be connected — check again before reconnecting.')
+            : t('Link Outlook or Zoho to read mail here. When you send, pick Microsoft, Zoho, Brevo, SendGrid, or Resend — whatever you have connected.')}
         </p>
+        {statusTimedOut ? (
+          <button
+            type="button"
+            onClick={() => setStatusAttempt((n) => n + 1)}
+            className="mb-4 inline-flex items-center justify-center gap-2 rounded-lg border border-teal-500/40 bg-teal-500/10 px-4 py-2 text-sm font-semibold text-teal-200 hover:bg-teal-500/20"
+          >
+            {t('Check again')}
+          </button>
+        ) : null}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             type="button"
             onClick={connectMicrosoft}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold text-white"
           >
-            Connect Microsoft 365
+            {t('Connect Microsoft 365')}
           </button>
           <button
             type="button"
             onClick={connectZoho}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 px-4 py-2 text-sm font-semibold text-white"
           >
-            Connect Zoho Mail
+            {t('Connect Zoho Mail')}
           </button>
         </div>
       </div>
@@ -806,11 +857,11 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               type="button"
               onClick={openNewEmail}
               disabled={!providerConnected}
-              aria-label="Compose new email"
+              aria-label={t('Compose new email')}
               className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-bold text-white shadow-lg shadow-teal-900/25 hover:bg-teal-500 disabled:opacity-40"
             >
               <PenSquare className="h-4 w-4" />
-              Compose
+              {t('Compose')}
             </button>
 
             <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-white/8 bg-slate-900/80 p-1">
@@ -850,7 +901,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                       : 'text-slate-300 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <span>{f}</span>
+                  <span>{t(FOLDER_LABELS[f])}</span>
                   {f === 'inbox' && unreadCount > 0 ? (
                     <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-[10px] font-black text-teal-200">
                       {unreadCount}
@@ -931,7 +982,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search mail (press / to focus)…"
+                  placeholder={t('Search mail (press / to focus)…')}
                   aria-label="Search mail"
                   className="w-full bg-slate-900/80 border border-white/8 rounded-full pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500/40 focus:ring-1 focus:ring-teal-500/20"
                 />
@@ -943,7 +994,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 title="Keyboard Shortcuts (Press ?)"
               >
                 <Keyboard className="w-3 h-3 text-teal-400" />
-                <span className="hidden sm:inline">Shortcuts</span>
+                <span className="hidden sm:inline">{t('Shortcuts')}</span>
               </button>
             </div>
 
@@ -953,11 +1004,11 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             {active.loading ? (
               <div className="p-6 flex flex-col items-center gap-2 text-slate-400">
                 <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
-                <span className="text-xs">Loading {folder}…</span>
+                <span className="text-xs">{t('Loading')} {t(FOLDER_LABELS[folder]).toLowerCase()}…</span>
               </div>
             ) : filteredEmails.length === 0 ? (
               <div className="p-6 text-sm text-slate-500 text-center space-y-2">
-                <p>{providerConnected ? `No messages in ${folder}.` : 'Connect this account first.'}</p>
+                <p>{providerConnected ? `${t('No messages in')} ${t(FOLDER_LABELS[folder]).toLowerCase()}.` : t('Connect this account first.')}</p>
                 {providerConnected && folder !== 'drafts' && (
                   <button type="button" onClick={openNewEmail} className="text-teal-400 text-xs font-semibold underline">
                     Compose a new email
@@ -1157,7 +1208,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     </div>
                     {senderKnown === false && (
                       <div className="mt-1.5 flex items-center gap-2">
-                        <span className="text-[10px] text-amber-400 font-semibold">Unknown sender</span>
+                        <span className="text-[10px] text-amber-400 font-semibold">{t('Unknown sender')}</span>
                         <button
                           type="button"
                           onClick={handleCreateContactFromSender}
@@ -1186,7 +1237,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     title={readerExpanded ? 'Exit full window (Esc)' : 'Full-window reader'}
                   >
                     {readerExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-                    {readerExpanded ? 'Exit full window' : 'Full window'}
+                    {readerExpanded ? t('Exit full window') : t('Full window')}
                   </button>
                   <button
                     type="button"
@@ -1196,7 +1247,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     title="Reply with provider picker"
                   >
                     <Reply className="w-3.5 h-3.5" />
-                    Reply
+                    {t('Reply')}
                   </button>
                   <button
                     type="button"
@@ -1205,7 +1256,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
                   >
                     <ReplyAll className="w-3.5 h-3.5" />
-                    Reply all
+                    {t('Reply all')}
                   </button>
                   <button
                     type="button"
@@ -1214,7 +1265,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
                   >
                     <Forward className="w-3.5 h-3.5" />
-                    Forward
+                    {t('Forward')}
                   </button>
                   <button
                     type="button"
@@ -1223,7 +1274,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 disabled:opacity-40"
                   >
                     {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    Delete
+                    {t('Delete')}
                   </button>
                   {selectedEmail.webLink && (
                     <a
@@ -1274,7 +1325,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 {threadLoading ? (
                   <div className="flex items-center gap-2 text-sm text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading conversation…
+                    {t('Loading conversation…')}
                   </div>
                 ) : displayMessages.length > 1 ? (
                   displayMessages.map((msg) => (
@@ -1286,7 +1337,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                         </span>
                       </div>
                       <div
-                        className="prose prose-invert max-w-none text-slate-100 bg-slate-900/40 p-4 rounded-xl border border-white/5 text-sm leading-relaxed overflow-x-auto [&_*]:!text-slate-100 [&_a]:!text-teal-400 [&_a]:underline [&_p]:!text-slate-200 [&_span]:!text-slate-100 [&_div]:!text-slate-100 [&_td]:!text-slate-200"
+                        className={EMAIL_BODY_SURFACE_CLASS}
                         dangerouslySetInnerHTML={{
                           __html: buildSafeEmailBodyHtml(msg.body, msg.snippet),
                         }}
@@ -1296,11 +1347,11 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 ) : loadingBody && provider === 'zoho' && !selectedEmail.body ? (
                   <div className="flex items-center gap-2 text-sm text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading message…
+                    {t('Loading message…')}
                   </div>
                 ) : (
                   <div
-                    className="prose prose-invert max-w-none text-slate-100 bg-slate-900/40 p-4 rounded-xl border border-white/5 text-sm leading-relaxed overflow-x-auto [&_*]:!text-slate-100 [&_a]:!text-teal-400 [&_a]:underline [&_p]:!text-slate-200 [&_span]:!text-slate-100 [&_div]:!text-slate-100 [&_td]:!text-slate-200"
+                    className={EMAIL_BODY_SURFACE_CLASS}
                     dangerouslySetInnerHTML={{ __html: selectedEmailHtml }}
                   />
                 )}
@@ -1351,7 +1402,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     <textarea
                       value={inlineReply}
                       onChange={(e) => setInlineReply(e.target.value)}
-                      placeholder="Type your reply…"
+                      placeholder={t('Type your reply…')}
                       rows={3}
                       aria-label="Quick reply message"
                       className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40 resize-y"
@@ -1369,7 +1420,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                             className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40"
                           >
                             <ReplyAll className="w-3.5 h-3.5" />
-                            Reply all
+                            {t('Reply all')}
                           </button>
                         )}
                         <button
@@ -1400,9 +1451,9 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-500">
               <Send className="w-12 h-12 text-slate-700 mb-3" />
-              <p className="text-sm font-medium text-slate-400">Pick an email from the list</p>
+              <p className="text-sm font-medium text-slate-400">{t('Pick an email from the list')}</p>
               <p className="text-xs mt-1 max-w-sm">
-                Read Outlook or Zoho mail here. Compose lets you send via Microsoft, Zoho, Brevo, SendGrid, or Resend — whichever you connected.
+                {t('Read Outlook or Zoho mail here. Compose lets you send via Microsoft, Zoho, Brevo, SendGrid, or Resend — whichever you connected.')}
               </p>
               <button
                 type="button"
@@ -1411,7 +1462,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2 text-sm font-semibold text-white"
               >
                 <PenSquare className="w-4 h-4" />
-                Compose
+                {t('Compose')}
               </button>
             </div>
           )}

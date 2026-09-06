@@ -37,20 +37,16 @@ export async function GET(req: NextRequest) {
         let mailReady = false;
         let campaignsReady = false;
         if (health.tokenValid) {
-            try {
-                const zohoMailService = new ZohoMailService(user.id, tenantId);
-                const senderAddresses = await zohoMailService.getSenderAddresses();
-                mailReady = senderAddresses.length > 0;
-            } catch {
-                mailReady = false;
-            }
-
-            try {
-                const zohoCampaignsService = new ZohoCampaignsService(user.id, tenantId);
-                campaignsReady = await zohoCampaignsService.checkCampaignsReady();
-            } catch {
-                campaignsReady = false;
-            }
+            // Independent Zoho round-trips; run them together so the inbox's
+            // connection gate is not waiting on serial network hops.
+            const zohoMailService = new ZohoMailService(user.id, tenantId);
+            const zohoCampaignsService = new ZohoCampaignsService(user.id, tenantId);
+            const [senderRes, campaignsRes] = await Promise.allSettled([
+                zohoMailService.getSenderAddresses(),
+                zohoCampaignsService.checkCampaignsReady(),
+            ]);
+            mailReady = senderRes.status === 'fulfilled' && senderRes.value.length > 0;
+            campaignsReady = campaignsRes.status === 'fulfilled' && campaignsRes.value === true;
         }
 
         return NextResponse.json({
