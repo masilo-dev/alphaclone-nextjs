@@ -97,7 +97,7 @@ export default function DashboardClientPage() {
         }
     }, [user, authLoading, needsMfa, router]);
 
-    // Initialize the session timeout hook (10 min timeout, 2 min warning)
+    // Idle sign-out (default 30 min, 2 min warning; see NEXT_PUBLIC_SESSION_IDLE_TIMEOUT_MINUTES)
     const { showWarning, countdown, extendSession } = useSessionTimeoutWarning(handleLogout);
 
     // Only block with skeleton on the first load — never flash back after the dashboard is interactive.
