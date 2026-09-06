@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useTheme } from '@/contexts/ThemeContext';
 import { Calendar, ExternalLink, AlertCircle } from 'lucide-react';
 import { getCalApi } from '@calcom/embed-react';
 import {
@@ -12,7 +13,6 @@ import {
 
 const Cal = dynamic(() => import('@calcom/embed-react'), { ssr: false });
 
-const EMBED_NAMESPACE = 'alphaclone-booking';
 const READY_TIMEOUT_MS = 12_000;
 
 type CalComEmbedProps = {
@@ -28,6 +28,11 @@ export default function CalComEmbed({
   className = '',
   variant = 'page',
 }: CalComEmbedProps) {
+  const { isDark } = useTheme();
+  const theme = isDark ? 'dark' : 'light';
+  const instanceId = useId().replace(/[^a-zA-Z0-9-]/g, '');
+  const [attempt, setAttempt] = useState(0);
+  const namespace = `alphaclone-booking-${instanceId}-${attempt}-${theme}`;
   const resolvedUrl = resolvePlatformBookingUrl(bookingUrl);
   const calLink = getCalComLink(resolvedUrl);
 
@@ -38,20 +43,38 @@ export default function CalComEmbed({
     setIsReady(false);
     setHasFailed(false);
 
-    const timeout = window.setTimeout(() => setIsReady(true), READY_TIMEOUT_MS);
+    let disposed = false;
+    let api: Awaited<ReturnType<typeof getCalApi>> | undefined;
+    const onReady = () => {
+      if (disposed) return;
+      window.clearTimeout(timeout);
+      setHasFailed(false);
+      setIsReady(true);
+    };
+    const onFailed = () => {
+      if (!disposed) setHasFailed(true);
+    };
+    const timeout = window.setTimeout(onFailed, READY_TIMEOUT_MS);
 
-    (async () => {
+    void (async () => {
       try {
-        const cal = await getCalApi({ namespace: EMBED_NAMESPACE });
-        cal('ui', CAL_EMBED_UI);
-        setIsReady(true);
+        api = await getCalApi({ namespace });
+        if (disposed) return;
+        api('on', { action: 'linkReady', callback: onReady });
+        api('on', { action: 'linkFailed', callback: onFailed });
+        api('ui', { ...CAL_EMBED_UI, theme });
       } catch {
-        setHasFailed(true);
+        onFailed();
       }
     })();
 
-    return () => window.clearTimeout(timeout);
-  }, [calLink]);
+    return () => {
+      disposed = true;
+      window.clearTimeout(timeout);
+      api?.('off', { action: 'linkReady', callback: onReady });
+      api?.('off', { action: 'linkFailed', callback: onFailed });
+    };
+  }, [calLink, namespace, theme]);
 
   const shellClass = [
     'cal-embed-shell',
@@ -71,6 +94,13 @@ export default function CalComEmbed({
           <p className="text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
             The scheduler could not load here. Pick a time on our booking page instead.
           </p>
+          <button
+            type="button"
+            onClick={() => setAttempt((value) => value + 1)}
+            className="mb-4 rounded-xl border border-teal-500 px-6 py-3 text-teal-300"
+          >
+            Retry scheduler
+          </button>
           <a
             href={resolvedUrl}
             target="_blank"
@@ -104,10 +134,11 @@ export default function CalComEmbed({
 
       <div className={`cal-embed-host ${isReady ? 'cal-embed-host--visible' : ''}`}>
         <Cal
-          namespace={EMBED_NAMESPACE}
+          key={`${namespace}-${calLink}`}
+          namespace={namespace}
           calLink={calLink}
           config={{
-            theme: 'dark',
+            theme,
             layout: 'month_view',
             'ui.autoscroll': 'false',
             iframeAttrs: {

@@ -19,6 +19,7 @@ export function applyAcThemeClass(t: AcThemeMode): void {
     const isDark = resolveIsDark(t);
     root.classList.toggle('dark', isDark);
     root.classList.toggle('light', !isDark);
+    root.style.colorScheme = isDark ? 'dark' : 'light';
     try {
         window.dispatchEvent(new CustomEvent('ac-theme-changed', { detail: { mode: t } }));
     } catch {

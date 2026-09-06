@@ -98,8 +98,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         (mode: ThemeMode, opts?: { skipServer?: boolean }) => {
             const acMode = uiModeToAcTheme(mode);
             setThemeModeState(mode);
-            applyAcThemeClass(acMode);
             persistAcTheme(acMode, userId);
+            applyAcThemeClass(acMode);
             setIsDark(resolveIsDark(acMode));
 
             if (userId && !opts?.skipServer) {

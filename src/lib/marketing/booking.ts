@@ -120,7 +120,13 @@ export const CAL_EMBED_UI = {
     },
   },
   cssVarsPerTheme: {
-    light: { ...CAL_EMBED_THEME_VARS },
+    light: { ...CAL_EMBED_THEME_VARS,
+      'cal-text': '#334155', 'cal-text-emphasis': '#0f172a',
+      'cal-text-subtle': '#475569', 'cal-text-muted': '#64748b',
+      'cal-bg': '#ffffff', 'cal-bg-emphasis': '#f1f5f9',
+      'cal-bg-subtle': '#f8fafc', 'cal-bg-muted': '#f1f5f9',
+      'cal-border': '#cbd5e1', 'cal-border-subtle': '#e2e8f0', 'cal-border-muted': '#e2e8f0',
+    },
     dark: { ...CAL_EMBED_THEME_VARS },
   },
 };
@@ -149,7 +155,13 @@ export function getBookingConfig(meetingType?: string): BookingConfig {
 /** Resolve a validated platform marketing booking URL. */
 export function resolvePlatformBookingUrl(url?: string | null): string {
   if (isValidBookingUrl(url)) {
-    return url!.trim();
+    const parsed = new URL(url!.trim());
+    if (parsed.hostname === 'cal.com' && parsed.pathname.replace(/\/+$/, '') === '/alphaclonesystems') {
+      parsed.pathname = '/alphaclonesystems/demo-for-for-alphaclone-systems';
+    }
+    return parsed.toString();
   }
-  return DEFAULT_BOOKING_URL;
+  return isValidBookingUrl(DEFAULT_BOOKING_URL)
+    ? resolvePlatformBookingUrl(DEFAULT_BOOKING_URL)
+    : PLATFORM_BOOKING_URL;
 }

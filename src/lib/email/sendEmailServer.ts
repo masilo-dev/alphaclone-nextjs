@@ -69,7 +69,12 @@ function inferCategory(params: SendEmailServerParams): EmailGatewayCategory {
  */
 export async function sendEmailServer(params: SendEmailServerParams): Promise<SendEmailServerResult> {
   const category = inferCategory(params);
-  const quota = await checkEmailSendQuotaAvailable({
+  // Website inquiries notify the platform owner; a tenant outreach quota must
+  // never prevent this internal notification after the inquiry has been saved.
+  const isWebsiteNotification = params.isPlatformNotification === true
+    && params.templateName === 'websiteContact'
+    && category === 'internal_notification';
+  const quota = isWebsiteNotification ? { allowed: true } : await checkEmailSendQuotaAvailable({
     tenantId: params.tenantId,
     userId: params.userId,
     category,
