@@ -657,12 +657,23 @@ const Dashboard: React.FC<DashboardProps> = ({
     window.setTimeout(() => setShowProductTour(true), 1200);
   }, [user?.id]);
 
+  // Tour could not find anything to point at: close it WITHOUT marking it
+  // completed, so it still auto-starts on the dashboard home later.
+  const dismissUnavailableTour = useCallback(() => setShowProductTour(false), []);
+
+  // Every explicit "Platform tour" press remounts the tour (new key) so it
+  // restarts from step 1 even if a previous run is mid-way or got stuck open.
+  const [tourRunId, setTourRunId] = useState(0);
+  const requestProductTour = useCallback(() => {
+    setTourRunId((id) => id + 1);
+    setShowProductTour(true);
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const onStartTour = () => setShowProductTour(true);
-    window.addEventListener(PLATFORM_TOUR_EVENT, onStartTour);
-    return () => window.removeEventListener(PLATFORM_TOUR_EVENT, onStartTour);
-  }, []);
+    window.addEventListener(PLATFORM_TOUR_EVENT, requestProductTour);
+    return () => window.removeEventListener(PLATFORM_TOUR_EVENT, requestProductTour);
+  }, [requestProductTour]);
 
   // Admin Tool States
   const [contractModalOpen, setContractModalOpen] = useState(false);
@@ -2570,7 +2581,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         unreadMessageCount={unreadMessageCount}
         onLogout={onLogout}
         activeBgTasksCount={activeBgTasksCount}
-        onStartTour={() => setShowProductTour(true)}
+        onStartTour={requestProductTour}
         isVoiceActive={isVoiceActive}
         onToggleVoice={() => setIsVoiceActive(!isVoiceActive)}
         data-tour="navigation"
@@ -2834,8 +2845,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       />
 
       <ProductTour
+        key={tourRunId}
         isOpen={showProductTour}
         onComplete={markTourCompleted}
+        onUnavailable={dismissUnavailableTour}
         userRole={user.role}
       />
       <CelebrationOverlay

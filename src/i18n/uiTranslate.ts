@@ -271,6 +271,16 @@ const ES: Record<string, string> = {
     'No deadline': 'Sin fecha límite',
     '{name} is now overdue': '{name} ahora está atrasado',
     'A deadline was just reached': 'Se acaba de alcanzar una fecha límite',
+
+    // Product tour
+    'Platform tour': 'Recorrido de la plataforma',
+    Back: 'Atrás',
+    Close: 'Cerrar',
+    Finish: 'Finalizar',
+    Next: 'Siguiente',
+    'Skip Tour': 'Omitir recorrido',
+    'The tour is not available on this screen. Open the dashboard home and try again.':
+        'El recorrido no está disponible en esta pantalla. Abre el inicio del panel e inténtalo de nuevo.',
 };
 
 const PL: Record<string, string> = {
@@ -534,6 +544,16 @@ const PL: Record<string, string> = {
     'No deadline': 'Brak terminu',
     '{name} is now overdue': '{name} jest teraz po terminie',
     'A deadline was just reached': 'Właśnie minął termin',
+
+    // Product tour
+    'Platform tour': 'Przewodnik po platformie',
+    Back: 'Wstecz',
+    Close: 'Zamknij',
+    Finish: 'Zakończ',
+    Next: 'Dalej',
+    'Skip Tour': 'Pomiń przewodnik',
+    'The tour is not available on this screen. Open the dashboard home and try again.':
+        'Przewodnik nie jest dostępny na tym ekranie. Otwórz stronę główną pulpitu i spróbuj ponownie.',
 };
 
 export function uiTranslate(lang: SupportedLanguage, text: string): string {

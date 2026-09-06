@@ -341,12 +341,23 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         setShowProductTour(false);
     }, [user?.id]);
 
+    // Tour could not find anything to point at: close it WITHOUT marking it
+    // completed, so it still auto-starts on the dashboard home later.
+    const dismissUnavailableTour = React.useCallback(() => setShowProductTour(false), []);
+
+    // Every explicit "Platform tour" press remounts the tour (new key) so it
+    // restarts from step 1 even if a previous run is mid-way or got stuck open.
+    const [tourRunId, setTourRunId] = useState(0);
+    const requestProductTour = React.useCallback(() => {
+        setTourRunId((id) => id + 1);
+        setShowProductTour(true);
+    }, []);
+
     React.useEffect(() => {
         if (typeof window === 'undefined') return;
-        const onStartTour = () => setShowProductTour(true);
-        window.addEventListener(PLATFORM_TOUR_EVENT, onStartTour);
-        return () => window.removeEventListener(PLATFORM_TOUR_EVENT, onStartTour);
-    }, []);
+        window.addEventListener(PLATFORM_TOUR_EVENT, requestProductTour);
+        return () => window.removeEventListener(PLATFORM_TOUR_EVENT, requestProductTour);
+    }, [requestProductTour]);
 
     // Initialize MS Teams-like Presence
     React.useEffect(() => {
@@ -1226,7 +1237,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 setActiveTab={setActiveTab}
                 unreadMessageCount={unreadMessageCount}
                 onLogout={onLogout}
-                onStartTour={() => setShowProductTour(true)}
+                onStartTour={requestProductTour}
             />
             </div>
 
@@ -1419,8 +1430,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             {showOnboarding ? <OnboardingFlow user={user} onComplete={handleOnboardingComplete} /> : null}
 
             <ProductTour
+                key={tourRunId}
                 isOpen={showProductTour}
                 onComplete={markTourCompleted}
+                onUnavailable={dismissUnavailableTour}
                 userRole="tenant_admin"
             />
 

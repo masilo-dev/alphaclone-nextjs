@@ -2,17 +2,32 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Joyride, { Step, CallBackProps, STATUS, EVENTS, ACTIONS } from 'react-joyride';
+import toast from 'react-hot-toast';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
 
 interface ProductTourProps {
     isOpen: boolean;
+    /** Tour finished, skipped or closed by the user — persist "walkthrough completed". */
     onComplete: () => void;
+    /**
+     * None of the tour targets are on screen (e.g. opened from a page that has
+     * no tour anchors). The parent must flip `isOpen` back to false so the
+     * next press of "Platform tour" can start again. Falls back to
+     * `onComplete` when omitted so the tour can never get stuck open.
+     */
+    onUnavailable?: () => void;
     userRole: string; // 'admin' | 'client' | 'tenant_admin' etc.
 }
 
-const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole }) => {
+/** Wait this long (10 × 200 ms) for lazily rendered anchors before giving up. */
+const TARGET_POLL_INTERVAL_MS = 200;
+const TARGET_POLL_MAX_RETRIES = 10;
+
+const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavailable, userRole }) => {
     const { isDark } = useTheme();
+    const { t } = useLanguage();
     const completed = useRef(false);
     const [run, setRun] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
@@ -195,26 +210,44 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
 
         completed.current = false;
         let retries = 0;
-        const maxRetries = 10;
-        let timerId: NodeJS.Timeout;
+        let timerId: ReturnType<typeof setTimeout> | undefined;
 
         const checkAndStartTour = () => {
-            const available = steps.flatMap((step) => {
-                if (typeof step.target !== 'string') return [step];
+            // Only keep steps whose anchor is actually on screen, and show every
+            // step's tooltip immediately: with a controlled stepIndex, steps
+            // without `disableBeacon` render only a tiny pulsing dot after
+            // "Next", which reads as "the tour did nothing".
+            const available: Step[] = steps.flatMap((step) => {
+                if (typeof step.target !== 'string') return [{ ...step, disableBeacon: true }];
                 const target = Array.from(document.querySelectorAll<HTMLElement>(step.target)).find((element) =>
                     element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden');
-                return target ? [{ ...step, target }] : [];
+                return target ? [{ ...step, target, disableBeacon: true }] : [];
             });
 
-
-            if (available.length > 0 || retries >= maxRetries) {
+            if (available.length > 0) {
                 setMountedSteps(available);
                 setStepIndex(0);
-                setRun(available.length > 0);
-            } else {
-                retries++;
-                timerId = setTimeout(checkAndStartTour, 200);
+                setRun(true);
+                return;
             }
+
+            if (retries < TARGET_POLL_MAX_RETRIES) {
+                retries++;
+                timerId = setTimeout(checkAndStartTour, TARGET_POLL_INTERVAL_MS);
+                return;
+            }
+
+            // Nothing to point at on this screen. Tell the user why and hand
+            // control back to the parent so `isOpen` is reset — otherwise the
+            // tour would stay "open but invisible" and the button would be dead.
+            setMountedSteps([]);
+            setRun(false);
+            toast(t('The tour is not available on this screen. Open the dashboard home and try again.'), {
+                id: 'product-tour-unavailable',
+                icon: 'ℹ️',
+                duration: 6000,
+            });
+            (onUnavailable ?? onComplete)();
         };
 
         checkAndStartTour();
@@ -222,6 +255,7 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
         return () => {
             if (timerId) clearTimeout(timerId);
         };
+        // `steps` is derived from userRole; onComplete/onUnavailable are stable callbacks in the parents.
     }, [isOpen, userRole]);
 
     const completeTour = () => {
@@ -299,11 +333,11 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
                 },
             }}
             locale={{
-                back: 'Back',
-                close: 'Close',
-                last: 'Finish',
-                next: 'Next',
-                skip: 'Skip Tour',
+                back: t('Back'),
+                close: t('Close'),
+                last: t('Finish'),
+                next: t('Next'),
+                skip: t('Skip Tour'),
             }}
         />
     );
