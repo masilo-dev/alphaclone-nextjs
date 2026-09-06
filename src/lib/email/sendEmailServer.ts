@@ -74,12 +74,14 @@ export async function sendEmailServer(params: SendEmailServerParams): Promise<Se
   const isWebsiteNotification = params.isPlatformNotification === true
     && params.templateName === 'websiteContact'
     && category === 'internal_notification';
-  const quota = isWebsiteNotification ? { allowed: true } : await checkEmailSendQuotaAvailable({
-    tenantId: params.tenantId,
-    userId: params.userId,
-    category,
-    isReply: params.isReply,
-  });
+  const quota: Awaited<ReturnType<typeof checkEmailSendQuotaAvailable>> = isWebsiteNotification
+    ? { allowed: true, resource: 'email_transactional' }
+    : await checkEmailSendQuotaAvailable({
+      tenantId: params.tenantId,
+      userId: params.userId,
+      category,
+      isReply: params.isReply,
+    });
   if (!quota.allowed) {
     return {
       success: false,
