@@ -14,13 +14,8 @@ export type BulkJobProgress = {
   requested: number;
   processed: number;
   succeeded: number;
-  sent: number;
   failed: number;
-  skipped: number;
-  pending: number;
   remaining: number;
-  provider_summary: Record<string, { sent: number; failed: number }>;
-  recipient_results: unknown[];
 };
 
 export type BulkJobStatus =
