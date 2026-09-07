@@ -457,10 +457,7 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
     throw new Error('Provide text or html content');
   }
   const dryRun = args.dry_run !== false;
-  if (!dryRun && !args.email_category) {
-    throw new Error('email_category is required for sending; choose marketing or outreach explicitly');
-  }
-  const emailCategory = args.email_category || 'marketing';
+  const emailCategory = args.email_category || 'outreach';
   if (!dryRun && args.confirm_send !== true) {
     throw new Error('Set confirm_send: true after reviewing a dry run before sending bulk email');
   }

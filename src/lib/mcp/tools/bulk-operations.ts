@@ -181,7 +181,7 @@ defineConnectorTool({
     text: z.string().max(100000).optional(),
     html: z.string().max(200000).optional(),
     provider: z.enum(['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid']).optional(),
-    email_category: z.enum(['marketing', 'outreach']).optional().default('marketing'),
+    email_category: z.enum(['marketing', 'outreach']).optional().default('outreach'),
     from_name: z.string().min(1).max(100).optional(),
     dry_run: z.boolean().optional().default(true),
     confirm_send: z.boolean().optional().default(false),
@@ -190,9 +190,6 @@ defineConnectorTool({
     .refine((value) => Boolean(value.lead_ids?.length || value.contact_ids?.length || value.client_ids?.length), {
       message: 'Provide at least one lead_ids, contact_ids, or client_ids collection',
     })
-    .refine((value) => value.dry_run !== false || Boolean(value.email_category), {
-      message: 'email_category is required for sending; choose marketing or outreach explicitly',
-    }),
   jsonSchema: {
     type: 'object',
     properties: {
@@ -203,7 +200,7 @@ defineConnectorTool({
       text: { type: 'string' },
       html: { type: 'string' },
       provider: { type: 'string', enum: ['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'] },
-      email_category: { type: 'string', enum: ['marketing', 'outreach'], default: 'marketing', description: 'Marketing requires recorded consent. Outreach uses the permitted one-to-one outreach policy.' },
+      email_category: { type: 'string', enum: ['marketing', 'outreach'], default: 'outreach', description: 'Defaults to outreach. Marketing requires recorded consent.' },
       from_name: { type: 'string' },
       dry_run: { type: 'boolean', default: true },
       confirm_send: { type: 'boolean', default: false },

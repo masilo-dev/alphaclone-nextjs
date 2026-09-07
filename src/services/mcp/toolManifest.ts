@@ -2493,7 +2493,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_bulk_email',
-    description: 'Safely simulate or send one message to up to 100 unique lead, contact, or client recipients. Dry run is the default; real sends require confirm_send, idempotency_key, and an explicit email_category (marketing or outreach).',
+    description: 'Safely simulate or send one message to up to 100 unique lead, contact, or client recipients. Dry run is the default; bulk sends default to outreach. Set email_category to marketing to require recorded marketing consent.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2509,7 +2509,7 @@ export const MCP_TOOLS = [
         dry_run: { type: 'boolean', description: 'Default true. Returns recipient preview without sending.' },
         confirm_send: { type: 'boolean', description: 'Must be true when dry_run is false.' },
         idempotency_key: { type: 'string', description: 'Required when dry_run is false.' },
-        email_category: { type: 'string', enum: ['marketing', 'outreach'], description: 'Marketing requires recorded consent. Outreach uses the permitted outreach policy. Defaults to marketing.' },
+        email_category: { type: 'string', enum: ['marketing', 'outreach'], description: 'Defaults to outreach. Marketing requires recorded consent.' },
       },
       required: ['subject'],
     },
