@@ -4,6 +4,7 @@ import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { mcpStore } from '@/services/mcp/mcpStore';
 import { evaluateBusinessAIState, summarizeBusinessAIState } from '@/services/mcp/businessAIState';
+import { loadBusinessAttention } from '@/lib/bonnie/businessAttention';
 
 function daysAgo(days: number): string {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -85,6 +86,7 @@ registerTool('solo-owner', {
         .limit(50),
     ]);
 
+    const attention = await loadBusinessAttention(args.tenant_id, 24);
     const invoices = invoiceRes.data || [];
     const openInvoices = invoices.filter((invoice) => ['sent', 'overdue'].includes(String(invoice.status)));
     const draftInvoices = invoices.filter((invoice) => String(invoice.status) === 'draft');
@@ -180,6 +182,9 @@ registerTool('solo-owner', {
             recent_campaigns: (campaignRes.data || []).length,
           },
           next_best_actions: actions.slice(0, 5),
+          what_happened_today: attention.summary,
+          urgent_events: attention.urgent,
+          failures: attention.failures,
           automation_candidates: [
             'auto-draft invoice follow-ups with owner approval',
             'turn new form submissions into lead replies and booking prompts',

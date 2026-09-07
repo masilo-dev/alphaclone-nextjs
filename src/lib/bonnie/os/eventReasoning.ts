@@ -55,7 +55,10 @@ export const BONNIE_EVENT_GOALS: Record<string, (payload?: Record<string, unknow
 };
 
 export function isBonnieReasoningEvent(eventType: string): boolean {
-  return Boolean(BONNIE_EVENT_GOALS[eventType]);
+  if (BONNIE_EVENT_GOALS[eventType]) return true;
+  const underscored = eventType.replace(/\./g, '_');
+  const dotted = eventType.replace(/_/g, '.');
+  return Boolean(BONNIE_EVENT_GOALS[underscored] || BONNIE_EVENT_GOALS[dotted]);
 }
 
 export async function reasonAboutBusinessEvent(params: {
@@ -78,7 +81,10 @@ export async function reasonAboutBusinessEvent(params: {
     console.warn('[eventReasoning] wakeGoalsForEvent failed:', err);
   }
 
-  const goalBuilder = BONNIE_EVENT_GOALS[params.eventType];
+  const goalBuilder =
+    BONNIE_EVENT_GOALS[params.eventType] ||
+    BONNIE_EVENT_GOALS[params.eventType.replace(/\./g, '_')] ||
+    BONNIE_EVENT_GOALS[params.eventType.replace(/_/g, '.')];
   if (!goalBuilder) return null;
 
   return runCognitiveLoop({

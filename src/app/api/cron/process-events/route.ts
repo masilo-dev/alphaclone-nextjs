@@ -25,6 +25,7 @@ import { quantumDealIntelligenceService } from '@/services/intelligence/quantumD
 import { runEnterpriseWorkflowsForTrigger } from '@/lib/crm/crmEnterpriseWorkflowRunner';
 import { syncCrmEntity } from '@/lib/crm/crmBridgeServer';
 import { isBonnieReasoningEvent, reasonAboutBusinessEvent } from '@/lib/bonnie/os/eventReasoning';
+import { dispatcherEventKey } from '@/lib/events/businessEventTaxonomy';
 
 export const dynamic = 'force-dynamic';
 
@@ -127,6 +128,29 @@ export async function GET(request: NextRequest) {
             (meta.last_error ? `: ${meta.last_error}` : '')
         );
         await markProcessed(supabase, event.id, stampAbandoned(event.payload, 'max_attempts'));
+        await supabase
+          .from('business_automation_events')
+          .update({
+            dead_letter: true,
+            last_error: meta.last_error || 'max_attempts',
+            failed_at: new Date().toISOString(),
+            retry_count: meta.attempts,
+          })
+          .eq('id', event.id)
+          .eq('tenant_id', event.tenant_id)
+          .then(() => undefined, () => undefined);
+        const { emitTenantBusinessEvent } = await import('@/lib/notifications/emitTenantBusinessEvent');
+        await emitTenantBusinessEvent({
+          tenantId: event.tenant_id,
+          eventType: 'workflow.failed',
+          source: 'cron',
+          title: 'Automation failed',
+          message: `Event ${event.event_type} was abandoned after ${meta.attempts} attempts${meta.last_error ? `: ${meta.last_error}` : ''}.`,
+          entityType: 'workflow',
+          entityId: event.id,
+          status: 'failed',
+          metadata: { abandoned_event_type: event.event_type, last_error: meta.last_error },
+        }).catch(() => undefined);
         results.push({ eventId: event.id, status: 'abandoned', attempts: meta.attempts, error: meta.last_error });
         continue;
       }
@@ -144,7 +168,7 @@ export async function GET(request: NextRequest) {
         let workflowToStart: any = null;
         let handled = false;
 
-        switch (event.event_type) {
+        switch (dispatcherEventKey(event.event_type)) {
           case 'tenant_created':
             workflowToStart = tenantCreatedWorkflow;
             break;
@@ -334,8 +358,14 @@ export async function GET(request: NextRequest) {
         console.error(`[Automation] Error processing event ${event.id}:`, message);
         await supabase
           .from('business_automation_events')
-          .update({ payload: stampFailure(stampedPayload, message) })
+          .update({
+            payload: stampFailure(stampedPayload, message),
+            last_error: message.slice(0, 500),
+            retry_count: readProcessingMeta(stampedPayload).attempts,
+            next_retry_at: new Date(Date.now() + 5 * 60_000).toISOString(),
+          })
           .eq('id', event.id)
+          .eq('tenant_id', event.tenant_id)
           .then(() => undefined, () => undefined);
         results.push({
           eventId: event.id,
@@ -376,7 +406,9 @@ async function runCrmCoherenceHooks(
   const payload = (event.payload || {}) as Record<string, unknown>;
   const tenantId = event.tenant_id;
 
-  if (event.event_type === 'deal_stage_changed') {
+  const eventKey = dispatcherEventKey(event.event_type);
+
+  if (eventKey === 'deal_stage_changed') {
     const dealId = String(payload.dealId || '');
     if (dealId) {
       await syncCrmEntity(supabase, 'deal', dealId, tenantId).catch((err) => {
@@ -394,7 +426,7 @@ async function runCrmCoherenceHooks(
     return true;
   }
 
-  if (event.event_type === 'lead_created') {
+  if (eventKey === 'lead_created') {
     const leadId = String(payload.leadId || payload.id || '');
     if (leadId) {
       await syncCrmEntity(supabase, 'lead', leadId, tenantId).catch((err) => {
@@ -404,7 +436,7 @@ async function runCrmCoherenceHooks(
     return Boolean(leadId);
   }
 
-  if (event.event_type === 'contract_signed') {
+  if (eventKey === 'contract_signed') {
     const contractId = String(payload.contractId || '');
     if (!contractId) return false;
 

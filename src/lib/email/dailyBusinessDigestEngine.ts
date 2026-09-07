@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { defaultDashboardUrl } from '@/lib/email/platformTemplateEmail';
 import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
+import { renderAlphaCloneEmailLayout } from '@/lib/email/alphaCloneEmailLayouts';
 
 export interface DailyOperationsSummary {
   tenantId: string;
@@ -157,17 +158,10 @@ export async function collectDailyOperationsSummary(
  */
 export function formatDailyOperationsDigestHtml(summary: DailyOperationsSummary): string {
   const dashboardUrl = defaultDashboardUrl();
-
-  return `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 650px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-      <div style="background: #0f172a; padding: 28px; color: #ffffff;">
-        <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #38bdf8;">AlphaClone Daily Operations</h1>
-        <p style="margin: 6px 0 0 0; font-size: 14px; color: #94a3b8;">Workspace: ${escapeHtml(summary.tenantName)}</p>
-      </div>
-
-      <div style="padding: 24px; color: #1e293b;">
-        <h2 style="font-size: 16px; font-weight: 700; color: #0284c7; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 0;">Today</h2>
-        <ul style="padding-left: 20px; font-size: 14px; line-height: 1.8; color: #334155;">
+  const body = `
+        <p>Workspace: ${escapeHtml(summary.tenantName)}</p>
+        <h2>Today</h2>
+        <ul>
           <li><strong>${summary.today.newLeads}</strong> new leads</li>
           <li><strong>${summary.today.qualifiedLeads}</strong> qualified</li>
           <li><strong>${summary.today.newClients}</strong> new client</li>
@@ -178,36 +172,25 @@ export function formatDailyOperationsDigestHtml(summary: DailyOperationsSummary)
           <li><strong>${summary.today.tasksCompleted}</strong> project tasks completed</li>
           <li><strong>$${summary.today.paymentsReceivedAmount.toLocaleString()}</strong> payment received</li>
         </ul>
-
-        <h2 style="font-size: 16px; font-weight: 700; color: #dc2626; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 24px;">Needs Attention</h2>
+        <h2>Needs Attention</h2>
         ${
           summary.needsAttention.details.length > 0
-            ? `<ul style="padding-left: 20px; font-size: 14px; line-height: 1.8; color: #b91c1c;">
-                ${summary.needsAttention.details.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
-              </ul>`
-            : `<p style="font-size: 14px; color: #16a34a;">No critical issues requiring urgent attention.</p>`
+            ? `<ul>${summary.needsAttention.details.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+            : `<p>No critical issues requiring urgent attention.</p>`
         }
-
-        <h2 style="font-size: 16px; font-weight: 700; color: #d97706; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 24px;">Waiting On</h2>
-        <ul style="padding-left: 20px; font-size: 14px; line-height: 1.8; color: #475569;">
-          ${summary.waitingOn.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
-        </ul>
-
-        <h2 style="font-size: 16px; font-weight: 700; color: #4f46e5; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 24px;">Tomorrow</h2>
-        <ul style="padding-left: 20px; font-size: 14px; line-height: 1.8; color: #475569;">
-          ${summary.tomorrow.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
-        </ul>
-
-        <div style="margin-top: 32px; text-align: center;">
-          <a href="${escapeHtml(dashboardUrl)}" style="display: inline-block; padding: 12px 28px; background: #0284c7; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px;">Open AlphaClone OS</a>
-        </div>
-      </div>
-
-      <div style="padding: 16px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #64748b;">
-        AlphaClone Systems Business Operating System · Executive Operations Briefing
-      </div>
-    </div>
+        <h2>Waiting On</h2>
+        <ul>${summary.waitingOn.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+        <h2>Tomorrow</h2>
+        <ul>${summary.tomorrow.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
   `;
+  return renderAlphaCloneEmailLayout({
+    layoutFamily: 'morning_brief',
+    subject: `AlphaClone Daily Operations — ${summary.tenantName}`,
+    headline: 'AlphaClone Daily Operations',
+    bodyHtml: body,
+    ctaLabel: 'Open AlphaClone OS',
+    ctaUrl: dashboardUrl,
+  }).html;
 }
 
 /**

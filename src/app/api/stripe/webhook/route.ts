@@ -6,6 +6,7 @@ import { emailProviderService } from '@/services/EmailProviderService';
 import { invoiceServerService } from '@/services/server/invoiceServerService';
 import { recordInvoicePaymentServer } from '@/lib/invoices/recordInvoicePaymentServer';
 import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
+import { resolveVerifiedWebhookTenant } from '@/lib/events/webhookTenant';
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -138,7 +139,13 @@ export async function POST(req: Request) {
         switch (event.type) {
             case 'checkout.session.completed': {
                 if (session.metadata?.type === 'addon') {
-                    tenantId = session.metadata.tenantId;
+                    const claimedTenantId = session.metadata.tenantId;
+                    const { data: tenant } = await supabaseAdmin.from('tenants').select('id').eq('id', claimedTenantId).maybeSingle();
+                    tenantId = resolveVerifiedWebhookTenant({
+                        mappedTenantId: tenant?.id,
+                        claimedTenantId,
+                        provider: 'stripe',
+                    });
                     const addonType = session.metadata.addonType;
                     if (!tenantId || !addonType || session.payment_status === 'unpaid') throw new Error('Add-on checkout metadata is incomplete');
                     const { error: addonError } = await supabaseAdmin.from('subscription_addons').upsert({
@@ -162,15 +169,19 @@ export async function POST(req: Request) {
                 }
                 if (session.metadata?.type === 'legacy_invoice') {
                     const invoiceId = session.metadata.invoiceId;
-                    tenantId = session.metadata.tenantId;
-                    if (!invoiceId || !tenantId) throw new Error('Legacy invoice checkout metadata is incomplete');
+                    const claimedTenantId = session.metadata.tenantId;
+                    if (!invoiceId || !claimedTenantId) throw new Error('Legacy invoice checkout metadata is incomplete');
                     const { data: existingInvoice, error: fetchError } = await supabaseAdmin
                         .from('business_invoices')
-                        .select('id, total, amount_paid, currency, status')
+                        .select('id, total, amount_paid, currency, status, tenant_id')
                         .eq('id', invoiceId)
-                        .eq('tenant_id', tenantId)
                         .maybeSingle();
                     if (fetchError) throw fetchError;
+                    tenantId = resolveVerifiedWebhookTenant({
+                        mappedTenantId: existingInvoice?.tenant_id,
+                        claimedTenantId,
+                        provider: 'stripe',
+                    });
                     if (existingInvoice && existingInvoice.status !== 'paid') {
                         const amount = Math.max(0, Number(existingInvoice.total || 0) - Number(existingInvoice.amount_paid || 0));
                         const invoice = await recordInvoicePaymentServer(supabaseAdmin, {

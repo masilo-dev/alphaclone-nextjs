@@ -3,9 +3,10 @@ import {
   sendEmailServer,
   type SendEmailServerResult,
 } from "@/lib/email/sendEmailServer";
-import { mapEventTypeToNotificationType } from "@/lib/notifications/notificationType";
+import { insertTenantNotification } from "@/lib/notifications/insertTenantNotification";
 import { buildValidatedPublicUrl } from "@/lib/urls";
 import { escapeHtml } from '@/lib/email/escapeHtml';
+import { renderAlphaCloneEmailLayout } from '@/lib/email/alphaCloneEmailLayouts';
 import webPush from "web-push";
 import {
   getVapidEmail,
@@ -96,21 +97,20 @@ export async function notifyTenantOwners(options: {
       preferences?.push_enabled !== false && eventSetting !== false;
 
     if (inAppEnabled) {
-      const notificationType = mapEventTypeToNotificationType(options.type);
-      const { error } = await admin.from("notifications").insert({
-        user_id: userId,
-        tenant_id: options.tenantId,
-        type: notificationType,
+      const inserted = await insertTenantNotification(admin, {
+        tenantId: options.tenantId,
+        recipientUserId: userId,
+        eventType: options.type,
         title: options.title,
         message: options.message,
-        action_url: options.link || null,
-        read: false,
-        metadata: { event_type: options.type },
+        actionUrl: options.link || null,
+        severity: 'medium',
+        channel: 'in_app',
       });
-      if (error) {
-        console.error("[notifyTenantOwners] in-app notification insert failed:", error.message);
-      } else {
+      if (inserted.created) {
         report.inAppCreated += 1;
+      } else if (inserted.error && inserted.error !== 'duplicate') {
+        console.error("[notifyTenantOwners] in-app notification insert failed:", inserted.error);
       }
     }
 
@@ -176,17 +176,20 @@ export async function notifyTenantOwners(options: {
       const actionUrl = options.link
         ? buildValidatedPublicUrl(options.link)
         : undefined;
+      const branded = renderAlphaCloneEmailLayout({
+        layoutFamily: 'action_required',
+        subject: options.title,
+        headline: options.title,
+        bodyHtml: `<p>${escapeHtml(options.message)}</p>`,
+        ctaLabel: actionUrl ? 'View details' : undefined,
+        ctaUrl: actionUrl,
+      });
       const result: SendEmailServerResult = await sendEmailServer({
         tenantId: options.tenantId,
         to: profile.email,
         subject: options.title,
-        html: `
-                    <div style="font-family:sans-serif;padding:20px;color:#333;">
-                        <h2 style="color:#0d9488;">${escapeHtml(options.title)}</h2>
-                        <p>${escapeHtml(options.message)}</p>
-                        ${actionUrl ? `<p><a href="${escapeHtml(actionUrl)}" style="display:inline-block;padding:10px 16px;border-radius:8px;background:#0d9488;color:#fff;text-decoration:none;">View details</a></p>` : ""}
-                    </div>
-                `,
+        html: branded.html,
+        text: branded.text,
         isPlatformNotification: true,
       }).catch(
         (err): SendEmailServerResult => ({

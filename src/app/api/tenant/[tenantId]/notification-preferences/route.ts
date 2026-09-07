@@ -2,6 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantRole } from '@/lib/apiAuth';
 import { z } from 'zod';
+import {
+  defaultTenantNotificationPolicy,
+  mergeTenantNotificationPolicy,
+  type CategoryChannelPolicy,
+} from '@/lib/notifications/tenantNotificationPolicy';
+import { NOTIFICATION_CATEGORIES } from '@/lib/events/businessEventTaxonomy';
+
+const ChannelSchema = z.object({
+  in_app: z.boolean().optional(),
+  email_owner: z.boolean().optional(),
+  email_assignee: z.boolean().optional(),
+  email_client: z.boolean().optional(),
+  daily_digest: z.boolean().optional(),
+  urgent_only: z.boolean().optional(),
+  disabled: z.boolean().optional(),
+});
 
 const PrefsSchema = z.object({
   email_enabled: z.boolean().optional(),
@@ -10,6 +26,7 @@ const PrefsSchema = z.object({
   quiet_hours_start: z.string().nullable().optional(),
   quiet_hours_end: z.string().nullable().optional(),
   event_types: z.record(z.string(), z.boolean()).optional(),
+  categories: z.record(z.string(), ChannelSchema).optional(),
 });
 
 export async function GET(
@@ -37,9 +54,17 @@ export async function GET(
     .eq('id', user.id)
     .maybeSingle();
 
+  const { data: policyRow } = await admin
+    .from('tenant_notification_policies')
+    .select('categories')
+    .eq('tenant_id', tenantId)
+    .maybeSingle();
+
   return NextResponse.json({
     notification_preferences: data,
     email_preferences: profile?.email_preferences || {},
+    tenant_policy: mergeTenantNotificationPolicy(policyRow?.categories as Record<string, Partial<CategoryChannelPolicy>> | null),
+    categories: NOTIFICATION_CATEGORIES,
   });
 }
 
@@ -48,14 +73,15 @@ export async function PATCH(
   { params }: { params: Promise<{ tenantId: string }> }
 ) {
   const { tenantId } = await params;
-  const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'member']);
+  const { user, membership } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'member']);
   const body = PrefsSchema.parse(await req.json());
 
   const admin = createSupabaseAdminClient();
+  const { categories, ...userPrefs } = body;
   const row = {
     tenant_id: tenantId,
     user_id: user.id,
-    ...body,
+    ...userPrefs,
     updated_at: new Date().toISOString(),
   };
 
@@ -67,6 +93,35 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  let tenantPolicy = defaultTenantNotificationPolicy();
+  if (categories && ['owner', 'admin', 'tenant_admin', 'super_admin'].includes(String(membership.role))) {
+    const { data: existing } = await admin
+      .from('tenant_notification_policies')
+      .select('categories')
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    tenantPolicy = mergeTenantNotificationPolicy({
+      ...(existing?.categories || {}),
+      ...categories,
+    } as Record<string, Partial<CategoryChannelPolicy>>);
+    const { error: policyError } = await admin.from('tenant_notification_policies').upsert({
+      tenant_id: tenantId,
+      categories: tenantPolicy,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    });
+    if (policyError && !/schema cache|column/i.test(policyError.message)) {
+      return NextResponse.json({ error: policyError.message }, { status: 500 });
+    }
+  } else {
+    const { data: policyRow } = await admin
+      .from('tenant_notification_policies')
+      .select('categories')
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    tenantPolicy = mergeTenantNotificationPolicy(policyRow?.categories as Record<string, Partial<CategoryChannelPolicy>> | null);
   }
 
   if (body.email_enabled !== undefined || body.event_types) {
@@ -86,5 +141,5 @@ export async function PATCH(
     await admin.from('profiles').update({ email_preferences: merged }).eq('id', user.id);
   }
 
-  return NextResponse.json({ notification_preferences: data });
+  return NextResponse.json({ notification_preferences: data, tenant_policy: tenantPolicy });
 }

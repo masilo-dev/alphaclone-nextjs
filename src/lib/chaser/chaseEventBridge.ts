@@ -6,18 +6,7 @@ import 'server-only';
 
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { transitionChaseState } from '@/lib/chaser/chaseInstanceService';
-
-const EVENT_TO_RESOLUTION: Record<string, { entityType: string; outcome: string }> = {
-  invoice_paid: { entityType: 'invoice', outcome: 'paid' },
-  payment_received: { entityType: 'invoice', outcome: 'paid' },
-  task_completed: { entityType: 'task', outcome: 'completed' },
-  quote_accepted: { entityType: 'quote', outcome: 'accepted' },
-  quote_rejected: { entityType: 'quote', outcome: 'rejected' },
-  contract_signed: { entityType: 'contract', outcome: 'signed' },
-  lead_replied: { entityType: 'lead', outcome: 'replied' },
-  email_received: { entityType: 'client', outcome: 'reply' },
-  'social.post.published': { entityType: 'social_account', outcome: 'verified_publish' },
-};
+import { chaseStopForEvent, normalizeEventType } from '@/lib/events/businessEventTaxonomy';
 
 export async function resolveChasesForDomainEvent(params: {
   tenantId: string;
@@ -26,7 +15,7 @@ export async function resolveChasesForDomainEvent(params: {
   entityType?: string | null;
   outcome?: string;
 }): Promise<number> {
-  const mapping = EVENT_TO_RESOLUTION[params.eventType];
+  const mapping = chaseStopForEvent(params.eventType) || chaseStopForEvent(normalizeEventType(params.eventType));
   if (!mapping && !params.entityType) return 0;
 
   const admin = createSupabaseAdminClient();
@@ -50,7 +39,7 @@ export async function resolveChasesForDomainEvent(params: {
       state: 'RESOLVED',
       terminalOutcome: params.outcome || mapping?.outcome || params.eventType,
       evidence: {
-        resolved_by_event: params.eventType,
+        resolved_by_event: normalizeEventType(params.eventType),
         entity_id: params.entityId,
         at: new Date().toISOString(),
       },

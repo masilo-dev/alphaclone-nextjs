@@ -40,6 +40,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const [severityFilter, setSeverityFilter] = useState<'all' | 'urgent' | 'high'>('all');
+    const [loadError, setLoadError] = useState<string | null>(null);
     const { isSubscribed, pushSupported, subscribeToPush } = usePushNotifications();
     const [pushBusy, setPushBusy] = useState(false);
     const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
@@ -68,7 +70,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
     const showPushPrompt = pushSupported && pushPermission !== 'denied' && !isSubscribed;
 
     const loadNotifications = useCallback(async () => {
-        const { notifications: loaded } = await notificationService.getNotifications(userId, tenantId);
+        const { notifications: loaded, error } = await notificationService.getNotifications(userId, tenantId);
+        if (error) {
+            setLoadError(error);
+            return;
+        }
+        setLoadError(null);
         if (loaded) setNotifications(loaded);
     }, [userId, tenantId]);
 
@@ -134,9 +141,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
         setUnreadCount(notifications.filter(n => !n.read).length);
     }, [notifications]);
 
-    const filteredNotifications = filter === 'unread'
+    const filteredNotifications = (filter === 'unread'
         ? notifications.filter(n => !n.read)
-        : notifications;
+        : notifications
+    ).filter((n) => {
+        if (severityFilter === 'all') return true;
+        return n.priority === severityFilter || n.priority === 'urgent';
+    });
 
     // Group by date and type
     const groups: Record<string, Record<string, Notification[]>> = {};
@@ -217,7 +228,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             </div>
 
                             {/* Filter Pills */}
-                            <div className="flex gap-2 px-4 py-2 border-b border-white/5 bg-slate-950">
+                            <div className="flex gap-2 px-4 py-2 border-b border-white/5 bg-slate-950 flex-wrap">
                                 {(['all', 'unread'] as const).map(f => (
                                     <button
                                         key={f}
@@ -228,6 +239,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                             }`}
                                     >
                                         {f === 'all' ? 'All' : `Unread (${unreadCount})`}
+                                    </button>
+                                ))}
+                                {(['all', 'urgent'] as const).map(f => (
+                                    <button
+                                        key={`sev-${f}`}
+                                        onClick={() => setSeverityFilter(f)}
+                                        className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all ${severityFilter === f
+                                            ? 'bg-amber-500 text-slate-950'
+                                            : 'text-slate-500 hover:text-slate-300 bg-white/5'
+                                            }`}
+                                    >
+                                        {f === 'all' ? 'Any severity' : 'Urgent'}
                                     </button>
                                 ))}
                             </div>
@@ -254,7 +277,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
 
                             {/* List */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                                {filteredNotifications.length === 0 ? (
+                                {loadError ? (
+                                    <div className="p-6 text-center space-y-3">
+                                        <p className="text-xs text-rose-300">{loadError}</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => void loadNotifications()}
+                                            className="text-xs font-bold text-teal-400 hover:text-teal-300"
+                                        >
+                                            Retry
+                                        </button>
+                                    </div>
+                                ) : filteredNotifications.length === 0 ? (
                                     filter === 'all' ? (
                                         <div className="p-6">
                                             <EmptyStateFromPreset moduleId="notifications" />

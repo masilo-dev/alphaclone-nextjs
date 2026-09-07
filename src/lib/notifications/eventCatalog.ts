@@ -1,4 +1,5 @@
 import type { NotificationLevel } from './businessNotificationEngine';
+import { eventUrgency, normalizeEventType } from '@/lib/events/businessEventTaxonomy';
 
 export type EventPriority = 'P0' | 'P1' | 'P2' | 'P3';
 
@@ -17,6 +18,8 @@ export type TenantBusinessEventInput = {
   projectName?: string;
   status?: 'success' | 'failed' | 'waiting' | 'blocked' | 'at_risk' | 'pending_approval';
   metadata?: Record<string, unknown>;
+  correlationId?: string;
+  communicationIntent?: 'internal' | 'send';
 };
 
 const IMMEDIATE_EMAIL_PATTERNS = [
@@ -59,20 +62,12 @@ const DIGEST_ONLY_PATTERNS = [
 ];
 
 export function classifyEventPriority(eventType: string, status?: string): EventPriority {
-  const type = eventType.toLowerCase();
-  if (type.startsWith('security.') || status === 'failed' && type.includes('payment')) return 'P0';
-  if (
-    type.includes('failed') ||
-    type.includes('overdue') ||
-    type.includes('replied') ||
-    type.includes('booked') ||
-    type.includes('disconnected') ||
-    type.includes('pending_approval')
-  ) {
-    return 'P1';
-  }
+  const type = normalizeEventType(eventType).toLowerCase();
+  if (type.startsWith('security.') || (status === 'failed' && type.includes('payment'))) return 'P0';
+  const urgency = eventUrgency(type, status);
+  if (urgency === 'immediate') return type.startsWith('security.') ? 'P0' : 'P1';
   if (DIGEST_ONLY_PATTERNS.some((p) => p.test(type))) return 'P3';
-  if (IN_APP_PATTERNS.some((p) => p.test(type))) return 'P2';
+  if (urgency === 'in_app' || IN_APP_PATTERNS.some((p) => p.test(type))) return 'P2';
   return 'P3';
 }
 
@@ -86,13 +81,14 @@ export function priorityToNotificationLevel(
 }
 
 export function shouldSendImmediateEmail(eventType: string, priority: EventPriority): boolean {
-  if (priority === 'P0' || priority === 'P1') return true;
-  return IMMEDIATE_EMAIL_PATTERNS.some((p) => p.test(eventType.toLowerCase()));
+  if (priority === 'P0') return true;
+  if (priority === 'P1') return IMMEDIATE_EMAIL_PATTERNS.some((p) => p.test(normalizeEventType(eventType).toLowerCase())) || eventUrgency(eventType) === 'immediate';
+  return IMMEDIATE_EMAIL_PATTERNS.some((p) => p.test(normalizeEventType(eventType).toLowerCase()));
 }
 
-/** When true (default), successful business writes email the workspace owner in plain language. */
+/** Opt-in noisy email for every mutating write. Default is off — use digest + urgent rules. */
 export function shouldNotifyEveryBusinessWrite(): boolean {
-  return process.env.MCP_NOTIFY_EVERY_ACTION !== 'false';
+  return process.env.MCP_NOTIFY_EVERY_ACTION === 'true';
 }
 
 export function shouldEmailForBusinessEvent(
@@ -101,9 +97,9 @@ export function shouldEmailForBusinessEvent(
   source?: TenantBusinessEventInput['source'],
   status?: TenantBusinessEventInput['status'],
 ): boolean {
+  if (status === 'failed') return true;
   if (shouldSendImmediateEmail(eventType, priority)) return true;
   if (!shouldNotifyEveryBusinessWrite()) return false;
-  if (status === 'failed') return true;
 
   const type = eventType.toLowerCase();
   const writeSources = new Set<TenantBusinessEventInput['source']>([

@@ -1,6 +1,7 @@
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { sendWhatsAppMessage } from '@/lib/whatsapp/sendWhatsApp';
 import { createHash } from 'crypto';
+import { shouldStopLeadOutreach } from '@/lib/leads/leadLifecycle';
 
 type Db = any;
 
@@ -218,7 +219,7 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
 
       const resumeAt = quietHoursEnd(sequence.timezone || 'UTC', sequence.quiet_hours || {});
       if (resumeAt) {
-        await db.from('outreach_sequence_enrollments').update({ status: 'waiting', next_step_at: resumeAt, updated_at: new Date().toISOString() }).eq('id', enrollment.id);
+        await db.from('outreach_sequence_enrollments').update({ status: 'waiting', next_step_at: resumeAt, updated_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
         result.skipped++;
         continue;
       }
@@ -229,7 +230,7 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
       if (stepsError) throw stepsError;
       const step = (steps?.[0] || null) as Step | null;
       if (!step) {
-        await db.from('outreach_sequence_enrollments').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', enrollment.id);
+        await db.from('outreach_sequence_enrollments').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
         continue;
       }
       const nextStep = (steps?.[1] || null) as Step | null;
@@ -246,14 +247,14 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
           await db.from('outreach_sequence_enrollments').update({
             status: 'waiting', next_step_at: new Date(Date.now() + 15 * 60_000).toISOString(),
             last_event_type: 'awaiting_approval', updated_at: new Date().toISOString(),
-          }).eq('id', enrollment.id);
+          }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
           result.awaitingApproval++;
           continue;
         }
         await db.from('outreach_sequence_executions').update({
           status: 'completed', verification: { task_created: true, approval_required: true, task_completed: true, completed_at: approvalTask.completed_at || null },
           completed_at: new Date().toISOString(),
-        }).eq('id', awaitingExecution.id);
+        }).eq('tenant_id', enrollment.tenant_id).eq('id', awaitingExecution.id);
         await finishStep(db, enrollment, step, nextStep, 'approved_task_completed', assignment);
         result.completed++;
         continue;
@@ -264,7 +265,7 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
       if (attemptError) throw attemptError;
       attempt = (priorAttempts || 0) + 1;
       if (attempt > 3) {
-        await db.from('outreach_sequence_enrollments').update({ status: 'failed', last_error: 'Retry limit reached', updated_at: new Date().toISOString() }).eq('id', enrollment.id);
+        await db.from('outreach_sequence_enrollments').update({ status: 'failed', last_error: 'Retry limit reached', updated_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
         result.failed++;
         continue;
       }
@@ -274,7 +275,7 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
         .or(`contact_id.eq.${enrollment.contact_id || '00000000-0000-0000-0000-000000000000'},lead_id.eq.${enrollment.lead_id || '00000000-0000-0000-0000-000000000000'}`);
       const eventTypes = (events || []).map((event: { event_type: string }) => event.event_type.toLowerCase());
       if (sequence.stop_on_reply && eventTypes.some((event: string) => replyEvents.includes(event))) {
-        await db.from('outreach_sequence_enrollments').update({ status: 'stopped', last_event_type: 'reply_detected', updated_at: new Date().toISOString() }).eq('id', enrollment.id);
+        await db.from('outreach_sequence_enrollments').update({ status: 'stopped', last_event_type: 'reply_detected', updated_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
         result.skipped++;
         continue;
       }
@@ -284,7 +285,7 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
         .gte('completed_at', new Date(Date.now() - 7 * 86400_000).toISOString());
       if (capError) throw capError;
       if ((recentCount || 0) >= cap) {
-        await db.from('outreach_sequence_enrollments').update({ status: 'waiting', next_step_at: new Date(Date.now() + 24 * 60 * 60_000).toISOString(), updated_at: new Date().toISOString() }).eq('id', enrollment.id);
+        await db.from('outreach_sequence_enrollments').update({ status: 'waiting', next_step_at: new Date(Date.now() + 24 * 60 * 60_000).toISOString(), updated_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
         result.skipped++;
         continue;
       }
@@ -297,8 +298,28 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
       if (executionError) throw executionError;
       executionId = execution.id;
 
+      if (shouldStopLeadOutreach({
+        stage: String(enrollment.metadata?.stage || enrollment.metadata?.status || ''),
+        unsubscribed: Boolean(enrollment.metadata?.unsubscribed),
+        suppressed: Boolean(enrollment.metadata?.suppressed),
+        dnc: Boolean(enrollment.metadata?.dnc),
+        bounced: Boolean(enrollment.metadata?.bounced),
+        paused: String(enrollment.status || '') === 'paused',
+      })) {
+        await db.from('outreach_sequence_enrollments').update({
+          status: 'stopped', last_event_type: 'stop_condition', updated_at: new Date().toISOString(),
+        }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
+        if (executionId) {
+          await db.from('outreach_sequence_executions').update({
+            status: 'skipped', verification: { reason: 'stop_condition' }, completed_at: new Date().toISOString(),
+          }).eq('tenant_id', enrollment.tenant_id).eq('id', executionId);
+        }
+        result.skipped++;
+        continue;
+      }
+
       if (!conditionMatches(step.condition || {}, eventTypes)) {
-        await db.from('outreach_sequence_executions').update({ status: 'skipped', verification: { reason: 'condition_not_met', event_types: eventTypes }, completed_at: new Date().toISOString() }).eq('id', executionId);
+        await db.from('outreach_sequence_executions').update({ status: 'skipped', verification: { reason: 'condition_not_met', event_types: eventTypes }, completed_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', executionId);
         await finishStep(db, enrollment, step, nextStep, 'condition_skipped', assignment);
         result.skipped++;
         continue;
@@ -332,7 +353,7 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
         verification = { provider_accepted: true, receipt_present: Boolean(receipt) };
       } else {
         receipt = await createApprovalTask(db, enrollment, step, template);
-        await db.from('outreach_sequence_executions').update({ status: 'awaiting_approval', provider: 'task', provider_receipt_id: receipt, verification: { task_created: true, approval_required: true }, completed_at: new Date().toISOString() }).eq('id', executionId);
+        await db.from('outreach_sequence_executions').update({ status: 'awaiting_approval', provider: 'task', provider_receipt_id: receipt, verification: { task_created: true, approval_required: true }, completed_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', executionId);
         await db.from('outreach_events').insert({
           tenant_id: enrollment.tenant_id, sequence_id: enrollment.sequence_id, step_id: step.id,
           contact_id: enrollment.contact_id || null, lead_id: enrollment.lead_id || null,
@@ -343,23 +364,23 @@ export async function processSequenceEnrollments(db: Db, limit = 50) {
         await db.from('outreach_sequence_enrollments').update({
           status: 'waiting', next_step_at: new Date(Date.now() + 15 * 60_000).toISOString(),
           last_event_type: 'awaiting_approval', last_error: null, updated_at: new Date().toISOString(),
-        }).eq('id', enrollment.id);
+        }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
         result.awaitingApproval++;
         continue;
       }
 
-      await db.from('outreach_sequence_executions').update({ status: 'completed', provider, provider_receipt_id: receipt || null, verification, completed_at: new Date().toISOString() }).eq('id', executionId);
+      await db.from('outreach_sequence_executions').update({ status: 'completed', provider, provider_receipt_id: receipt || null, verification, completed_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', executionId);
       await finishStep(db, enrollment, step, nextStep, 'sent', assignment);
       result.completed++;
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'Sequence execution failed';
-      if (executionId) await db.from('outreach_sequence_executions').update({ status: 'failed', error: message, completed_at: new Date().toISOString() }).eq('id', executionId);
+      if (executionId) await db.from('outreach_sequence_executions').update({ status: 'failed', error: message, completed_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', executionId);
       await db.from('outreach_sequence_enrollments').update(attempt < 3 ? {
         status: 'waiting',
         next_step_at: new Date(Date.now() + Math.min(60, 5 * 2 ** (attempt - 1)) * 60_000).toISOString(),
         last_error: message,
         updated_at: new Date().toISOString(),
-      } : { status: 'failed', last_error: message, updated_at: new Date().toISOString() }).eq('id', enrollment.id);
+      } : { status: 'failed', last_error: message, updated_at: new Date().toISOString() }).eq('tenant_id', enrollment.tenant_id).eq('id', enrollment.id);
       result.failed++;
     }
   }

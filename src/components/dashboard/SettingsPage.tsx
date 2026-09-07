@@ -37,6 +37,7 @@ import Microsoft365Integration from './business/Microsoft365Integration';
 import MFAEnrollment from './business/MFAEnrollment';
 import DeletedRecordsSection from './settings/DeletedRecordsSection';
 import EmailProviderSettings from './settings/EmailProviderSettings';
+import NotificationCategoryPolicyPanel from './settings/NotificationCategoryPolicyPanel';
 import {
     SettingsCategoryNav,
     SETTINGS_CATEGORIES,
@@ -970,6 +971,15 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         </div>
                     ))}
                 </div>
+                {currentTenant?.id ? (
+                    <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
+                        <div className="p-4 border-b border-white/5">
+                            <h4 className="text-[13px] font-bold text-white">Event categories</h4>
+                            <p className="text-[10px] text-slate-500">Control in-app, owner email, digest, and client email per business event class. Client email never fires on internal updates.</p>
+                        </div>
+                        <NotificationCategoryPolicyPanel tenantId={currentTenant.id} />
+                    </div>
+                ) : null}
             </div>
 
             {/* 5. APPEARANCE GROUP */}

@@ -4,7 +4,8 @@ import { sendUniversalEmail, mapEventTypeToTemplateKey } from '@/lib/email/unive
 import { buildValidatedPublicUrl } from '@/lib/urls';
 import { escapeHtml } from '@/lib/email/escapeHtml';
 import { recordBusinessActivity, type BusinessActivityParams } from '@/lib/audit/businessAuditEngine';
-import { mapEventTypeToNotificationType } from './notificationType';
+import { insertTenantNotification } from './insertTenantNotification';
+import { renderAlphaCloneEmailLayout } from '@/lib/email/alphaCloneEmailLayouts';
 
 export type NotificationLevel = 'level1_record_only' | 'level2_digest' | 'level3_urgent_email';
 
@@ -166,18 +167,19 @@ export async function dispatchBusinessNotification(
 
   // 3. LEVEL 2 & LEVEL 3: In-Platform Notification
   if (target.userId) {
-    const notificationType = mapEventTypeToNotificationType(options.type);
-    const { error: inAppError } = await admin.from('notifications').insert({
-      user_id: target.userId,
-      tenant_id: options.tenantId,
-      type: notificationType,
+    const inserted = await insertTenantNotification(admin, {
+      tenantId: options.tenantId,
+      recipientUserId: target.userId,
+      recipientRole: target.role,
+      entityType: options.relatedRecordType,
+      entityId: options.relatedRecordId,
+      eventType: options.type,
       title: options.title,
       message: options.message,
-      action_url: options.actionUrl || null,
-      read: false,
-      priority: options.level === 'level3_urgent_email' ? 'urgent' : 'medium',
+      severity: options.level === 'level3_urgent_email' ? 'urgent' : 'medium',
+      channel: 'in_app',
+      actionUrl: options.actionUrl || null,
       metadata: {
-        event_type: options.type,
         clientName: options.clientName,
         projectName: options.projectName,
         slaDeadline: options.slaDeadline,
@@ -185,10 +187,10 @@ export async function dispatchBusinessNotification(
       },
     });
 
-    if (!inAppError) {
+    if (inserted.created) {
       result.inAppCreated = true;
-    } else {
-      console.warn('[dispatchBusinessNotification] In-app notification insert error:', inAppError.message);
+    } else if (inserted.error && inserted.error !== 'duplicate') {
+      console.warn('[dispatchBusinessNotification] In-app notification insert error:', inserted.error);
     }
   }
 
@@ -238,36 +240,20 @@ export async function dispatchBusinessNotification(
       ? options.title
       : `AlphaClone Action Required: ${options.title}`;
 
-    const htmlContent = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-        <div style="background: #0f172a; padding: 24px; color: #ffffff;">
-          <h2 style="margin: 0; font-size: 20px; font-weight: 600; color: #38bdf8;">AlphaClone Systems Alert</h2>
-          <p style="margin: 6px 0 0 0; font-size: 14px; color: #94a3b8;">${escapeHtml(options.title)}</p>
-        </div>
-        
-        <div style="padding: 24px; color: #1e293b; line-height: 1.6;">
-          <p style="font-size: 16px; font-weight: 500; margin-top: 0;">${escapeHtml(options.message)}</p>
-          
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0; background: #f8fafc; border-radius: 8px; font-size: 14px;">
-            ${options.clientName ? `<tr><td style="padding: 10px 16px; color: #64748b; font-weight: 500; border-bottom: 1px solid #e2e8f0;">Client:</td><td style="padding: 10px 16px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0;">${escapeHtml(options.clientName)}</td></tr>` : ''}
-            ${options.projectName ? `<tr><td style="padding: 10px 16px; color: #64748b; font-weight: 500; border-bottom: 1px solid #e2e8f0;">Project:</td><td style="padding: 10px 16px; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0;">${escapeHtml(options.projectName)}</td></tr>` : ''}
-            ${options.topic ? `<tr><td style="padding: 10px 16px; color: #64748b; font-weight: 500; border-bottom: 1px solid #e2e8f0;">Topic:</td><td style="padding: 10px 16px; color: #0f172a; border-bottom: 1px solid #e2e8f0;">${escapeHtml(options.topic)}</td></tr>` : ''}
-            ${options.slaDeadline ? `<tr><td style="padding: 10px 16px; color: #64748b; font-weight: 500; border-bottom: 1px solid #e2e8f0;">Response Deadline:</td><td style="padding: 10px 16px; font-weight: 600; color: #dc2626; border-bottom: 1px solid #e2e8f0;">${escapeHtml(options.slaDeadline)}</td></tr>` : ''}
-            ${options.actionRequired ? `<tr><td style="padding: 10px 16px; color: #64748b; font-weight: 500;">Action Required:</td><td style="padding: 10px 16px; font-weight: 600; color: #0284c7;">${escapeHtml(options.actionRequired)}</td></tr>` : ''}
-          </table>
-
-          ${publicActionUrl ? `
-            <div style="margin-top: 24px; text-align: center;">
-              <a href="${escapeHtml(publicActionUrl)}" style="display: inline-block; padding: 12px 24px; background: #0284c7; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px;">View & Respond in AlphaClone</a>
-            </div>
-          ` : ''}
-        </div>
-
-        <div style="padding: 16px 24px; background: #f1f5f9; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #64748b;">
-          This is an automated operational alert from AlphaClone Systems. Routed based on account ownership responsibility.
-        </div>
-      </div>
-    `;
+    const branded = renderAlphaCloneEmailLayout({
+      layoutFamily: options.status === 'failed' ? 'failure' : 'action_required',
+      subject: emailSubject,
+      headline: options.title,
+      bodyHtml: `<p>${escapeHtml(options.message)}</p>`,
+      ctaLabel: publicActionUrl ? 'View in AlphaClone' : undefined,
+      ctaUrl: publicActionUrl,
+      stats: [
+        ...(options.clientName ? [{ label: 'Client', value: options.clientName }] : []),
+        ...(options.projectName ? [{ label: 'Project', value: options.projectName }] : []),
+        ...(options.actionRequired ? [{ label: 'Action', value: options.actionRequired }] : []),
+      ],
+    });
+    const htmlContent = branded.html;
 
     const emailResult = await sendEmailServer({
       tenantId: options.tenantId,

@@ -39,6 +39,9 @@ export const CHASE_POLICY_KEYS = [
   'social_chaser',
   'campaign_chaser',
   'goal_chaser',
+  'booking_chaser',
+  'document_chaser',
+  'integration_chaser',
 ] as const;
 
 export type ChasePolicyKey = (typeof CHASE_POLICY_KEYS)[number];
@@ -56,7 +59,10 @@ export type ChaseEntityType =
   | 'invoice'
   | 'social_account'
   | 'campaign'
-  | 'goal';
+  | 'goal'
+  | 'booking'
+  | 'document'
+  | 'integration';
 
 export type ChaseAutomationMode = 'observe_only' | 'internal' | 'approval_required' | 'automated';
 

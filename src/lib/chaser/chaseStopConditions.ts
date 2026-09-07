@@ -79,5 +79,45 @@ export async function verifyChaseStopCondition(
     if (!isOpenProject(status)) return { stopped: true, outcome: status };
   }
 
+  if (chase.entity_type === 'lead') {
+    const { data } = await admin
+      .from('leads')
+      .select('status, stage')
+      .eq('tenant_id', chase.tenant_id)
+      .eq('id', chase.entity_id)
+      .maybeSingle();
+    const status = String(data?.status || data?.stage || '').toLowerCase();
+    if (['replied', 'converted', 'client', 'unsubscribed', 'lost', 'disqualified', 'closed'].includes(status)) {
+      return { stopped: true, outcome: status };
+    }
+    if (stops.includes(status)) return { stopped: true, outcome: status };
+  }
+
+  if (chase.entity_type === 'campaign') {
+    const { data } = await admin
+      .from('email_campaigns')
+      .select('status')
+      .eq('tenant_id', chase.tenant_id)
+      .eq('id', chase.entity_id)
+      .maybeSingle();
+    const status = String(data?.status || '').toLowerCase();
+    if (['completed', 'paused', 'cancelled', 'canceled', 'failed'].includes(status)) {
+      return { stopped: true, outcome: status };
+    }
+  }
+
+  if (chase.entity_type === 'social_account') {
+    const { data } = await admin
+      .from('social_posts')
+      .select('status')
+      .eq('tenant_id', chase.tenant_id)
+      .eq('id', chase.entity_id)
+      .maybeSingle();
+    const status = String(data?.status || '').toLowerCase();
+    if (['published', 'verified', 'paused', 'disabled'].includes(status)) {
+      return { stopped: true, outcome: status };
+    }
+  }
+
   return { stopped: false };
 }

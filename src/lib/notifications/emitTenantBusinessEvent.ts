@@ -9,6 +9,8 @@ import {
   type TenantBusinessEventInput,
 } from './eventCatalog';
 import { dispatchBusinessNotification } from './businessNotificationEngine';
+import { mergeTenantNotificationPolicy, resolveNotificationChannels } from './tenantNotificationPolicy';
+import { normalizeEventType } from '@/lib/events/businessEventTaxonomy';
 
 function digestWindowKey(date = new Date()): string {
   const hour = date.toISOString().slice(0, 13);
@@ -91,9 +93,10 @@ async function queueForDigest(input: TenantBusinessEventInput, idempotencyKey: s
  * Event → priority → activity log → in-app → email/digest (with idempotency).
  */
 export async function emitTenantBusinessEvent(input: TenantBusinessEventInput) {
-  const priority = classifyEventPriority(input.eventType, input.status);
+  const eventType = normalizeEventType(input.eventType);
+  const priority = classifyEventPriority(eventType, input.status);
   const level = priorityToNotificationLevel(priority, input.status);
-  const idempotencyKey = buildIdempotencyKey(input);
+  const idempotencyKey = buildIdempotencyKey({ ...input, eventType });
 
   const admin = createSupabaseAdminClient();
   const { data: existing } = await admin
@@ -106,16 +109,32 @@ export async function emitTenantBusinessEvent(input: TenantBusinessEventInput) {
     return { skipped: true, reason: 'duplicate', priority, level };
   }
 
-  const emailNow = shouldEmailForBusinessEvent(
-    input.eventType,
-    priority,
-    input.source,
-    input.status,
-  );
+  const { data: policyRow } = await admin
+    .from('tenant_notification_policies')
+    .select('categories')
+    .eq('tenant_id', input.tenantId)
+    .maybeSingle();
+  const policy = mergeTenantNotificationPolicy(policyRow?.categories as Record<string, any> | null);
+  const channels = resolveNotificationChannels({
+    eventType,
+    status: input.status,
+    policy,
+    communicationIntent: input.communicationIntent || (input.metadata?.communication_intent as 'internal' | 'send' | undefined),
+  });
+
+  const emailNow =
+    channels.emailOwner ||
+    shouldEmailForBusinessEvent(eventType, priority, input.source, input.status);
+
+  if (channels.drop && !emailNow) {
+    await queueForDigest({ ...input, eventType }, idempotencyKey);
+    return { skipped: false, reason: 'digest_only', priority, level, idempotencyKey };
+  }
+
   const dispatch = await dispatchBusinessNotification({
     tenantId: input.tenantId,
-    level: emailNow ? 'level3_urgent_email' : level,
-    type: input.eventType,
+    level: emailNow ? 'level3_urgent_email' : channels.inApp ? 'level2_digest' : 'level1_record_only',
+    type: eventType,
     title: input.title,
     message: input.message,
     actionUrl: input.actionUrl,
