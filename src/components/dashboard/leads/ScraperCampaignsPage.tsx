@@ -108,13 +108,26 @@ export default function ScraperCampaignsPage() {
 
   const loadSearches = useCallback(async () => {
     if (!tenant?.id) return;
-    const res = await fetch(`/api/leads/searches?workspaceId=${encodeURIComponent(tenant.id)}`);
+    const res = await fetch(`/api/scraper-campaigns?tenantId=${encodeURIComponent(tenant.id)}`);
     const body = await res.json();
     if (res.ok) {
-      setAvailable(Boolean(body.available ?? true));
-      setAvailabilityNotice(body.notice || null);
-      setSearches(body.searches || []);
-      setSelectedSearch(current => current ? body.searches.find((s: SearchRecord) => s.id === current.id) || current : body.searches[0] || null);
+      setAvailable(true);
+      setAvailabilityNotice(null);
+      const mapped: SearchRecord[] = (body.campaigns || []).map((c: { id: string; name: string; status?: string; location?: { city?: string }; created_at: string }) => ({
+        id: c.id,
+        name: c.name,
+        location: c.location?.city,
+        status: c.status || 'active',
+        progress: c.status === 'active' ? 100 : 40,
+        discovered_count: 0,
+        accepted_count: 0,
+        rejected_count: 0,
+        duplicate_count: 0,
+        error_count: 0,
+        created_at: c.created_at,
+      }));
+      setSearches(mapped);
+      setSelectedSearch((current) => current ? mapped.find((s) => s.id === current.id) || current : mapped[0] || null);
     } else {
       toast.error(body?.error || 'Lead Finder could not be loaded');
     }
@@ -122,10 +135,29 @@ export default function ScraperCampaignsPage() {
 
   const loadResults = useCallback(async () => {
     if (!tenant?.id || !selectedSearch?.id) return;
-    const res = await fetch(`/api/leads/searches/${selectedSearch.id}/results?workspaceId=${encodeURIComponent(tenant.id)}&limit=50`);
+    const res = await fetch('/api/scraper-campaigns/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tenantId: tenant.id, action: 'leads', campaignId: selectedSearch.id }),
+    });
     const body = await res.json();
     if (res.ok) {
-      setCandidates(body.candidates || []);
+      setCandidates((body.leads || []).map((lead: Record<string, unknown>) => ({
+        id: String(lead.id),
+        business_name: String(lead.company || lead.name || ''),
+        contact_name: lead.name ? String(lead.name) : undefined,
+        industry: lead.industry ? String(lead.industry) : undefined,
+        city: lead.address ? String(lead.address) : undefined,
+        website: lead.company_website ? String(lead.company_website) : undefined,
+        public_email: lead.email ? String(lead.email) : undefined,
+        public_phone: lead.phone ? String(lead.phone) : undefined,
+        source_type: String(lead.source || 'directory'),
+        quality_score: Number(lead.score || 0),
+        fit_score: Number(lead.score || 0),
+        verification_status: String(lead.verification_status || 'unverified'),
+        review_status: String(lead.status || 'new'),
+        created_at: String(lead.created_at || ''),
+      })));
     }
   }, [tenant?.id, selectedSearch?.id]);
 
@@ -171,68 +203,81 @@ export default function ScraperCampaignsPage() {
 
   const createSearch = async (event: FormEvent) => {
     event.preventDefault();
-    if (!available) {
-      toast.error(availabilityNotice || 'Lead Finder is not ready for this workspace yet.');
-      return;
-    }
     if (!tenant?.id || (!form.keywords.trim() && !form.location.trim())) {
       toast.error('Add business keywords or a location.');
       return;
     }
     setSubmitting(true);
     try {
-      const res = await fetch('/api/leads/searches', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workspaceId: tenant.id,
-          name: [form.keywords, form.location].filter(Boolean).join(' in ').slice(0, 120),
-          searchType: form.searchType, query: form.keywords,
-          businessKeywords: form.keywords.split(',').map(x => x.trim()).filter(Boolean),
-          location: form.location, country: form.country, city: form.city, region: form.region,
-          industry: form.industry, sources: form.sources, resultLimit: Number(form.resultLimit),
-          requirements: { website: form.website, email: form.email, phone: form.phone, social: form.social },
-          exclusions: {
-            keywords: form.excludedKeywords.split(',').map(x => x.trim()).filter(Boolean),
-            domains: form.excludedDomains.split(',').map(x => x.trim()).filter(Boolean),
-            locations: form.excludedLocations.split(',').map(x => x.trim()).filter(Boolean),
-          }, runNow: true,
-        }),
+      const message = [form.keywords, form.location && `in ${form.location}`].filter(Boolean).join(' ');
+      const intent = {
+        name: message.slice(0, 120) || 'Lead search',
+        niche: form.keywords || form.industry,
+        search_query: message,
+        industry: form.industry ? [form.industry] : [],
+        location: {
+          city: form.city || form.location,
+          country: form.country || undefined,
+          radius_km: 25,
+        },
+        daily_limit: Number(form.resultLimit) || 50,
+        min_score_threshold: 45,
+        sources: form.sources.length ? form.sources : ['website', 'directory'],
+      };
+      const res = await fetch('/api/scraper-campaigns/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: tenant.id, action: 'run', intent }),
       });
       const body = await res.json();
-      if (!res.ok) {
-        if (res.status === 503 && body?.available === false) {
-          setAvailable(false);
-          setAvailabilityNotice(body.notice || body.error || 'Lead Finder is not ready yet.');
-        }
-        throw new Error(body.error || 'Search could not be started');
-      }
-      toast.success('Search queued. You can leave this page while workers continue.');
-      setSelectedSearch(body.search); setActive('Results'); await loadSearches();
+      if (!res.ok) throw new Error(body.error || 'Search could not be started');
+      toast.success(body.leadCount ? `Found ${body.leadCount} contactable leads.` : 'Search running. Only businesses with phone or email will be saved.');
+      setSelectedSearch({
+        id: body.campaignId,
+        name: intent.name,
+        location: form.location,
+        status: body.status || 'running',
+        progress: body.leadCount ? 100 : 40,
+        discovered_count: body.leadCount || 0,
+        accepted_count: 0,
+        rejected_count: 0,
+        duplicate_count: 0,
+        error_count: 0,
+        created_at: new Date().toISOString(),
+      });
+      setActive('Results');
+      await loadSearches();
     } catch (error) { toast.error(error instanceof Error ? error.message : 'Search could not be started'); }
     finally { setSubmitting(false); }
   };
 
   const reviewCandidate = async (candidate: Candidate, decision: 'accepted' | 'rejected') => {
-    if (!tenant?.id) return;
+    if (!tenant?.id || !selectedSearch?.id) return;
     setReviewingCandidateId(candidate.id);
     try {
-      const res = await fetch(`/api/leads/candidates/${encodeURIComponent(candidate.id)}/review`, {
+      const res = await fetch('/api/scraper-campaigns/chat', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workspaceId: tenant.id, decision }),
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          campaignId: selectedSearch.id,
+          action: decision === 'accepted' ? 'save' : 'qualify',
+          leadIds: [candidate.id],
+        }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || 'Candidate review could not be saved');
+      if (!res.ok) throw new Error(body.error || 'Could not update this lead');
       setCandidates((current) => current.map((item) => item.id === candidate.id ? { ...item, review_status: decision } : item));
       if (decision === 'accepted') {
+        toast.success('Saved to CRM');
         propagation.leadAccepted(tenant.id, candidate.id, (path) => router.push(path));
       } else {
-        toast.success('Candidate rejected.');
+        toast.success('Marked qualified for later.');
       }
       await loadSearches();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Candidate review could not be saved');
+      toast.error(error instanceof Error ? error.message : 'Could not update this lead');
     } finally {
       setReviewingCandidateId(null);
     }

@@ -6,7 +6,7 @@
 
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { enrichLeadWebsite, type EnrichmentResult } from '@/lib/scraper/enrichmentPipeline';
-export { hasReachableContact as hasPhoneOrEmail } from '@/lib/scraper/contactGate';
+export { hasPhoneOrEmail, hasReachableContact } from '@/lib/scraper/contactGate';
 
 export type DecisionMaker = {
   name: string;

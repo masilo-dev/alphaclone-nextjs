@@ -6,10 +6,8 @@ import { filterSmbLeads } from '@/lib/scraper/smbLeadFilters';
 import { runLeadStep, type LeadResult } from '@/lib/scraper/freeLeadSearch';
 import type { ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
 import type { GeoPoint } from '@/lib/scraper/freeGeoSources';
-import {
-  enrichBusinessWithDecisionMakers,
-  hasPhoneOrEmail,
-} from '@/lib/scraper/decisionMakerScrape';
+import { enrichBusinessWithDecisionMakers } from '@/lib/scraper/decisionMakerScrape';
+import { hasPhoneOrEmail } from '@/lib/scraper/contactGate';
 import { canUseBrowserScraper } from '@/lib/scraper/browserSerpLeads';
 
 export function formatSearchNiche(intent: ParsedLeadIntent): string {
@@ -555,12 +553,9 @@ export async function runInProcessLeadCampaign(
     });
   });
 
-  // Include enriched leads or raw discovered business listings
-  let withContact = contactReady.filter((l) => hasPhoneOrEmail(l));
-  if (!withContact.length && finalResults.length > 0) {
-    withContact = finalResults;
-  }
-  sourceStats.enriched = withContact.length;
+  const withContact = contactReady.filter((l) => hasPhoneOrEmail(l));
+  sourceStats.enriched = contactReady.length;
+  sourceStats.contactable = withContact.length;
   sourceStats.dropped_no_contact = Math.max(0, finalResults.length - withContact.length);
 
   const candidates = withContact.map((lead) => ({
@@ -637,7 +632,7 @@ export async function runInProcessLeadCampaign(
         ? `Auto-enriched · ${dmTitle || 'decision maker'}: ${dmName} · ${lead.source || 'osm'}`
         : `Auto-enriched contact · ${lead.source || 'osm'} · radius ${radiusKm} km`,
       metadata: {
-        has_contact: true,
+        has_contact: hasPhoneOrEmail(lead),
         category: lead.category || null,
         rating: lead.rating ?? null,
         free_sources: true,
@@ -680,7 +675,7 @@ export async function runInProcessLeadCampaign(
     current_step: 'done',
     progress: 100,
     source_count: finalResults.length,
-    enriched_count: dedupedRows.length,
+    enriched_count: contactReady.filter((l) => hasPhoneOrEmail(l)).length,
     created_count: dedupedRows.length,
     errors: removedCount > 0 ? [{ stage: 'dedupe', message: `${removedCount} duplicate leads skipped` }] : [],
   });
@@ -692,7 +687,7 @@ export async function runInProcessLeadCampaign(
     category: niche,
     status: 'completed',
     sourceCount: finalResults.length,
-    enrichedCount: dedupedRows.length,
+    enrichedCount: contactReady.filter((l) => hasPhoneOrEmail(l)).length,
     createdCount: dedupedRows.length,
     errors: Object.entries(sourceErrors).map(([stage, message]) => ({ stage, message })),
   });

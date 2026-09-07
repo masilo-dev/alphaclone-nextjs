@@ -181,7 +181,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
         title: 'Chase overdue invoices',
         description: 'Find overdue invoices and send payment reminders now.',
         prompt:
-          'Chase overdue invoices now: pull AR aging, group by customer, send payment reminders with nexus_invoice_chasing / send_invoice, update CRM notes, and report what was sent.',
+          'Chase overdue invoices now: find unpaid invoices, group by customer, send payment reminders, update CRM notes, and report what was sent.',
         icon: 'invoice',
       },
       {
@@ -189,7 +189,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
         title: 'Find and qualify leads',
         description: 'Run Lead Finder / scraper discovery and return ranked prospects.',
         prompt:
-          'Find leads for my ideal customer profile: run find_and_qualify_leads (or create_scraper_campaign + run_scraper_campaign), score them, save hot leads to CRM, and list the top results with next outreach steps.',
+          'Find real businesses matching my ideal customer: run Lead Finder, keep only unique rows with a verified phone or email and source evidence, save the best to CRM, and list next outreach steps.',
         icon: 'crm',
       },
       {

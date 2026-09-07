@@ -374,7 +374,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     title: 'Document Uploaded',
                     message: `File "${file.name}" has been uploaded to the Document Hub.`,
                     read: false,
-                    link: '/dashboard/documents'
+                    link: '/dashboard/business/documents'
                 });
                 recordActivity({
                     title: 'Uploaded',

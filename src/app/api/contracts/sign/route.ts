@@ -217,7 +217,11 @@ export async function POST(req: NextRequest) {
                 }).catch((err) => console.error('Contract signer confirmation email failed:', err));
             }
 
-            if (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed') {
+            const executed =
+              updatedContract.status === 'fully_signed' ||
+              updatedContract.lifecycle_status === 'signed' ||
+              updatedContract.lifecycle_status === 'active';
+            if (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed' || executed) {
                 const { onContractSignedSideEffects } = await import('@/services/contractNotificationService');
                 await onContractSignedSideEffects({
                     tenantId: updatedContract.tenant_id,
@@ -229,7 +233,7 @@ export async function POST(req: NextRequest) {
                     createdBy: updatedContract.created_by,
                 }).catch((err) => console.error('Contract signed side effects failed:', err));
             }
-            if (updatedContract.status === 'fully_signed') {
+            if (executed) {
                 const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
                 await emitBusinessEvent(updatedContract.tenant_id, 'contract_signed', {
                     contractId: updatedContract.id,

@@ -517,8 +517,10 @@ registerTool('crm', {
         sales_stage: args.sales_stage || 'lead',
         value: Number(args.value) || 0,
         description: args.notes || null,
-        source: args.source || null,
-        custom_fields: args.metadata || {},
+        custom_fields: {
+          ...(args.metadata && typeof args.metadata === 'object' ? args.metadata : {}),
+          ...(args.source ? { lead_source: args.source } : {}),
+        },
         is_active: true,
       })
       .select('id, name, email')

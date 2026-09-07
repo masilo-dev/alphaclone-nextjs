@@ -295,7 +295,15 @@ async function createDefaultTasksStep(projectId: string, tenantId: string) {
     { project_id: projectId, title: 'Kickoff Meeting', status: 'todo' },
     { project_id: projectId, title: 'Requirements Gathering', status: 'todo' },
   ];
-  await supabase.from('tasks').insert(defaultTasks.map((t) => ({ ...t, tenant_id: tenantId })));
+  const { data: existing } = await supabase
+    .from('tasks')
+    .select('title')
+    .eq('tenant_id', tenantId)
+    .eq('project_id', projectId);
+  const have = new Set((existing || []).map((row) => String(row.title || '')));
+  const toInsert = defaultTasks.filter((task) => !have.has(task.title));
+  if (!toInsert.length) return;
+  await supabase.from('tasks').insert(toInsert.map((t) => ({ ...t, tenant_id: tenantId })));
 }
 
 async function sendWelcomePackageStep(projectId: string, tenantId: string) {

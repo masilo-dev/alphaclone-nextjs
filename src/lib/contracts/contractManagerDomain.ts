@@ -32,6 +32,22 @@ export const VALID_CONTRACT_TRANSITIONS: Readonly<Record<ContractManagerStatus, 
   archived: [],
 };
 
+export function normalizeLegacyContractStatus(status?: string | null): ContractManagerStatus | string {
+  const raw = String(status || '').trim().toLowerCase();
+  const aliases: Record<string, ContractManagerStatus> = {
+    client_signed: 'partially_signed',
+    fully_signed: 'signed',
+    rejected: 'terminated',
+    declined: 'terminated',
+    pending_signature: 'awaiting_signature',
+    pending: 'draft',
+    complete: 'completed',
+  };
+  if (aliases[raw]) return aliases[raw];
+  if (CONTRACT_STATUSES.includes(raw as ContractManagerStatus)) return raw as ContractManagerStatus;
+  return String(status || 'draft');
+}
+
 export function canTransitionContract(from: string, to: string): boolean {
   if (!CONTRACT_STATUSES.includes(from as ContractManagerStatus)) return false;
   if (!CONTRACT_STATUSES.includes(to as ContractManagerStatus)) return false;

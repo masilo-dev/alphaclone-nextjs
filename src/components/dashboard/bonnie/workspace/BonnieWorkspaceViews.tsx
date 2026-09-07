@@ -33,15 +33,18 @@ export type BonnieWorkspaceView =
 
 const VIEWS: Array<{ id: BonnieWorkspaceView; label: string; icon: React.ElementType }> = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
+  { id: 'activity', label: 'Activity', icon: Activity },
+  { id: 'outcomes', label: 'Automations', icon: Target },
+  { id: 'approvals', label: 'Approvals', icon: CheckSquare },
+];
+
+const SECONDARY_VIEWS: Array<{ id: BonnieWorkspaceView; label: string; icon: React.ElementType }> = [
   { id: 'plan', label: 'Plan', icon: ClipboardList },
   { id: 'graph', label: 'Task Graph', icon: GitBranch },
-  { id: 'activity', label: 'Activity', icon: Activity },
-  { id: 'approvals', label: 'Approvals', icon: CheckSquare },
   { id: 'interventions', label: 'Interventions', icon: Inbox },
   { id: 'audit', label: 'Audit', icon: ScrollText },
-  { id: 'results', label: 'Results', icon: CheckSquare },
+  { id: 'results', label: 'Results', icon: BarChart3 },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'outcomes', label: 'Outcomes', icon: Target },
 ];
 
 type Props = {
@@ -256,6 +259,24 @@ export default function BonnieWorkspaceViews({
             >
               <Icon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{label}</span>
+            </button>
+          );
+        })}
+        {SECONDARY_VIEWS.map(({ id, label, icon: Icon }) => {
+          const active = view === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onChangeView(id)}
+              className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition ${
+                active
+                  ? 'bg-slate-700 text-white'
+                  : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900'
+              }`}
+            >
+              <Icon className="h-3 w-3" />
+              <span className="hidden lg:inline">{label}</span>
             </button>
           );
         })}

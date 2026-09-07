@@ -216,7 +216,7 @@ export const contractService = {
 
         CRITICAL STYLING:
         - Output PLAIN TEXT ONLY - NO markdown formatting (no **, ~~, ####, ---, etc.)
-        - DO NOT use placeholders like "__________" or "[INSERT HERE]". Populate with realistic, high-end defaults if specific data is missing.
+        - If a material term is not provided (governing law, jurisdiction, effective date, term, auto-renewal, notice period, payment schedule, liability cap, IP ownership, termination, legal names, currency, amount), write a clearly marked UNRESOLVED: field for operator review. Do not invent commercial or legal facts.
         - Use sophisticated legal terminology (e.g., "Force Majeure", "Governing Law").
         - Ensure the tone is authoritative yet partnership-oriented.
         - Format with clear numbered sections (Section 1.0, 1.1, etc.).

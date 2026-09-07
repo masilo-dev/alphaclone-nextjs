@@ -63,7 +63,7 @@ export async function verifyChaseStopCondition(
       .eq('id', chase.entity_id)
       .maybeSingle();
     const status = String(data?.status || '').toLowerCase();
-    if (['signed', 'declined', 'voided', 'expired', 'cancelled'].includes(status)) {
+    if (['signed', 'fully_signed', 'declined', 'rejected', 'voided', 'expired', 'cancelled', 'terminated', 'completed', 'active'].includes(status)) {
       return { stopped: true, outcome: status };
     }
   }

@@ -2,7 +2,6 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { customer360Service } from '@/services/intelligence/customer360Service';
 import { searchEmailContext } from '@/lib/scraper/emailLeadAutoSearch';
 import { processContent } from '@/services/engine/ProcessingEngine';
-import { callScraperService } from '@/lib/scraper/scraperServiceClient';
 import { parseLeadIntentFromChat } from '@/lib/scraper/parseLeadIntent';
 import { upsertMemory } from '@/services/nexusMemoryService';
 import { qualifyLead, type QualityTier } from '@/lib/leadQualification';
@@ -79,15 +78,8 @@ export async function bonnieRunScraperCampaign(tenantId: string, userId: string,
     .single();
   if (error || !campaign) throw new Error('Campaign not found');
 
-  const scraperRes = await callScraperService('/api/scraper/campaign/run', {
-    method: 'POST',
-    body: { campaign_id: campaignId, tenant_id: tenantId, user_id: userId },
-  });
-  if (!scraperRes.ok) {
-    const text = await scraperRes.text();
-    throw new Error(`Scraper run failed: ${text.slice(0, 200)}`);
-  }
-  const result = await scraperRes.json();
+  const { runCampaignOnPlatform } = await import('@/lib/scraper/scraperPlatform');
+  const result = await runCampaignOnPlatform(tenantId, userId, campaignId);
   return { campaign, ...result };
 }
 

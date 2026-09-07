@@ -109,16 +109,31 @@ defineConnectorTool({
     required: ['contract_id', 'content_markdown'],
   },
   handler: async (args, ctx) => {
-    const version = {
-      id: crypto.randomUUID(),
-      tenant_id: ctx.tenantId,
-      contract_id: args.contract_id,
-      notes: args.version_notes || 'Revision draft',
-      content_markdown: args.content_markdown,
-      created_at: new Date().toISOString(),
-    };
-
-    return okResult('create_contract_version', { version });
+    const supabase = createSupabaseAdminClient();
+    const { data: latest } = await supabase
+      .from('contract_versions')
+      .select('version_number')
+      .eq('tenant_id', ctx.tenantId)
+      .eq('contract_id', args.contract_id)
+      .order('version_number', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const versionNumber = Number(latest?.version_number || 0) + 1;
+    const { data, error } = await supabase
+      .from('contract_versions')
+      .insert({
+        tenant_id: ctx.tenantId,
+        contract_id: args.contract_id,
+        version_number: versionNumber,
+        content: args.content_markdown,
+        change_summary: args.version_notes || 'Revision draft',
+        created_by: ctx.userId,
+        status: 'draft',
+      })
+      .select('id, contract_id, version_number, status, created_at')
+      .single();
+    if (error) throw error;
+    return okResult('create_contract_version', { version: data });
   },
 });
 

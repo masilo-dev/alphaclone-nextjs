@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { callScraperService } from '@/lib/scraper/scraperServiceClient';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -28,25 +26,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
     }
 
-    const scraperRes = await callScraperService('/api/scraper/campaign/run', {
-      method: 'POST',
-      body: {
-        campaign_id: id,
-        tenant_id: tenantId,
-        user_id: user.id,
-      },
-    });
-
-    if (!scraperRes.ok) {
-      const text = await scraperRes.text();
-      return NextResponse.json(
-        { error: `Scraper service error: ${text}` },
-        { status: 502 }
-      );
-    }
-
-    const result = await scraperRes.json();
-    return NextResponse.json({ status: 'started', campaign_id: id, ...result });
+    const { runCampaignOnPlatform } = await import('@/lib/scraper/scraperPlatform');
+    const result = await runCampaignOnPlatform(tenantId, user.id, id);
+    return NextResponse.json({ success: true, campaign, ...result });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to start campaign run');
   }

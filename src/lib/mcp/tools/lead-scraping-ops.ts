@@ -32,21 +32,16 @@ defineConnectorTool({
     required: [],
   },
   handler: async (args, ctx) => {
-    const supabase = createSupabaseAdminClient();
-    let query = supabase.from('leads').select('*').eq('tenant_id', ctx.tenantId);
-    if (args.industry) query = query.ilike('industry', `%${args.industry}%`);
-    if (args.location) query = query.ilike('location', `%${args.location}%`);
-    const { data: existingLeads } = await query.limit(20);
-
+    const { bonnieFindAndQualifyLeads } = await import('@/lib/bonnie/bonnieLeadOps');
+    const result = await bonnieFindAndQualifyLeads(ctx.tenantId, {
+      niche: String(args.industry || args.query || '').trim() || 'local businesses',
+      location: String(args.location || '').trim() || 'United States',
+      min_score: args.min_score != null ? Number(args.min_score) : undefined,
+    });
     return okResult('find_and_qualify_leads', {
-      qualified_count: (existingLeads || []).length,
-      leads: (existingLeads || []).map((l: any) => ({
-        id: l.id,
-        business_name: l.business_name || l.name,
-        email: l.email,
-        qualification_score: 85,
-        status: 'qualified',
-      })),
+      qualified_count: result.qualified_count,
+      leads: result.leads,
+      note: 'Only real directory/source results with phone or email. No fabricated contacts.',
     });
   },
 });
@@ -132,21 +127,18 @@ defineConnectorTool({
     required: [],
   },
   handler: async (args, ctx) => {
-    const supabase = createSupabaseAdminClient();
-    const { data: places } = await supabase
-      .from('free_places')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(args.limit || 20);
-
+    const { bonnieGetScraperLeads } = await import('@/lib/bonnie/bonnieLeadOps');
+    const scraped = await bonnieGetScraperLeads(ctx.tenantId, { limit: args.limit || 20 });
     return okResult('get_scraper_leads', {
-      scraped_leads: (places || []).map((p: any) => ({
+      scraped_leads: scraped.map((p: any) => ({
         id: p.id,
-        business_name: p.title || p.name,
-        address: p.address,
+        business_name: p.company || p.name,
         phone: p.phone,
-        website: p.website,
-        rating: p.rating,
+        email: p.email,
+        website: p.company_website,
+        score: p.score,
+        grade: p.grade,
+        status: p.status,
       })),
     });
   },
