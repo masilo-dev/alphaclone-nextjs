@@ -408,8 +408,18 @@ export class ZohoMailService extends ZohoService {
 
     async searchMessages(query: string): Promise<ZohoMessage[]> {
         const { base } = await this.getMailBase();
-        const data = await this.callZohoAPI(`${base}/messages/search?searchKey=${encodeURIComponent(query)}`);
-        return (data?.data ?? []) as ZohoMessage[];
+        const normalized = String(query || '').trim();
+        if (!normalized) return [];
+        const searchKey = normalized.includes('@') ? `from:${normalized}` : normalized;
+        try {
+            const data = await this.callZohoAPI(`${base}/messages/search?searchKey=${encodeURIComponent(searchKey)}`);
+            return (data?.data ?? []) as ZohoMessage[];
+        } catch (error: any) {
+            // Zoho rejects free-form addresses with 400/Invalid search query.
+            // A search miss is not an application failure for inbox lookup.
+            if (error?.status === 400 || /invalid search query/i.test(String(error?.message || ''))) return [];
+            throw error;
+        }
     }
 
     async deleteMessage(messageId: string, folderId: string) {

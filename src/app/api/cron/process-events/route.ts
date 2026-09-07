@@ -260,7 +260,11 @@ export async function GET(request: NextRequest) {
             break;
           }
           default:
-            console.warn(`[Automation] No workflow mapping for event type: ${event.event_type}`);
+            // Events such as email_sent are audit notifications, not workflow triggers.
+            // They are marked processed by the no-workflow path below.
+            if (process.env.NODE_ENV !== 'production') {
+              console.debug(`[Automation] No workflow mapping for event type: ${event.event_type}`);
+            }
         }
 
         if (!handled) {

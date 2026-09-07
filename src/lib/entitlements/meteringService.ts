@@ -126,6 +126,19 @@ export async function recordSuccessfulUsage(params: {
   }
 
   const admin = createSupabaseAdminClient();
+  // Background jobs may retain a user id after membership has been removed.
+  // Skip metering cleanly in that case; the quota RPC intentionally rejects
+  // non-members and should not turn a successful email/action into an error.
+  const { data: membership, error: membershipError } = await admin
+    .from('tenant_users')
+    .select('user_id')
+    .eq('tenant_id', params.tenantId)
+    .eq('user_id', params.userId)
+    .limit(1)
+    .maybeSingle();
+  if (membershipError || !membership) {
+    return { allowed: true, charged: false, skipped: true, reason: 'Usage skipped: user is not a tenant member' };
+  }
   const { data, error } = await admin.rpc('record_metered_usage_idempotent', {
     p_tenant_id: params.tenantId,
     p_user_id: params.userId,

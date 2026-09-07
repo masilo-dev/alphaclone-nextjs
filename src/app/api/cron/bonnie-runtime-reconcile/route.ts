@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
         success: true,
         skipped: true,
         reason: 'reconciliation_lock_held',
-      }, { status: 204 });
+      });
     }
 
     incrementActiveReconciliation();
