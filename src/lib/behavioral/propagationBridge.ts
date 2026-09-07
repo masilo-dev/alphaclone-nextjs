@@ -1,14 +1,11 @@
 /**
  * Diderot effect: bridge cross-module events to contextual next-step toasts.
- * Uses buildPropagationChain for execution semantics + showActionNextSteps for UI.
+ * Shows UI next steps; execution and receipt persistence stay on the server.
  */
 
 import type { ActionNextStepKey } from '@/components/common/showActionNextSteps';
 import { showActionNextSteps } from '@/components/common/showActionNextSteps';
-import {
-  buildPropagationChain,
-  type CrossModulePropagationEvent,
-} from '@/lib/execution/universalModuleEngine';
+import type { CrossModulePropagationEvent } from '@/lib/execution/universalModuleEngine';
 
 export type NavigateFn = (path: string) => void;
 
@@ -36,8 +33,6 @@ export function emitCrossModulePropagation(
   event: CrossModulePropagationEvent,
   navigate: NavigateFn
 ): void {
-  buildPropagationChain(event);
-
   const key = eventKey(event.sourceModule, event.action);
   const packKey = EVENT_TO_PACK[key];
   if (packKey) {

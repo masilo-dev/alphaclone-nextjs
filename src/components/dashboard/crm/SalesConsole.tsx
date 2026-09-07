@@ -125,7 +125,7 @@ export default function SalesConsole() {
               const ageDays = daysBetween(d.created_at);
               const lastFollowUpDaysAgo = d.last_activity_at
                 ? daysBetween(d.last_activity_at)
-                : null;
+                : undefined;
               return {
                 id,
                 label,
