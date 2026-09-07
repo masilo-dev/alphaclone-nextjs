@@ -53,6 +53,7 @@ export const BONNIE_MCP_SERVER_TOOLS = [
   'get_tasks', 'create_task', 'update_task',
   // Email campaigns — create + publish
   'create_bulk_email_campaign', 'queue_email_campaign_send', 'send_bulk_email_campaign',
+  'get_bulk_job_status',
   'send_batch_outreach',
   // Social publish
   'create_social_post', 'create_post', 'create_linkedin_post', 'create_post_with_ai_image',

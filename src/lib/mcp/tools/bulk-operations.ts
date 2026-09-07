@@ -189,6 +189,9 @@ defineConnectorTool({
   }).refine((value) => Boolean(value.text || value.html), { message: 'Provide text or html content' })
     .refine((value) => Boolean(value.lead_ids?.length || value.contact_ids?.length || value.client_ids?.length), {
       message: 'Provide at least one lead_ids, contact_ids, or client_ids collection',
+    })
+    .refine((value) => value.dry_run !== false || Boolean(value.email_category), {
+      message: 'email_category is required for sending; choose marketing or outreach explicitly',
     }),
   jsonSchema: {
     type: 'object',

@@ -2493,7 +2493,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_bulk_email',
-    description: 'Safely simulate or send one message to up to 100 unique lead, contact, or client recipients. Dry run is the default; sending requires confirm_send and idempotency.',
+    description: 'Safely simulate or send one message to up to 100 unique lead, contact, or client recipients. Dry run is the default; real sends require confirm_send, idempotency_key, and an explicit email_category (marketing or outreach).',
     inputSchema: {
       type: 'object',
       properties: {
