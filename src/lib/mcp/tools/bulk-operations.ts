@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
-import { okResult } from '@/lib/mcp/connector/response';
+import { errorResult, okResult } from '@/lib/mcp/connector/response';
 import {
   executeBulkEmail,
   executeBulkUpdateRecords,
@@ -181,6 +181,7 @@ defineConnectorTool({
     text: z.string().max(100000).optional(),
     html: z.string().max(200000).optional(),
     provider: z.enum(['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid']).optional(),
+    email_category: z.enum(['marketing', 'outreach']).optional().default('marketing'),
     from_name: z.string().min(1).max(100).optional(),
     dry_run: z.boolean().optional().default(true),
     confirm_send: z.boolean().optional().default(false),
@@ -199,6 +200,7 @@ defineConnectorTool({
       text: { type: 'string' },
       html: { type: 'string' },
       provider: { type: 'string', enum: ['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'] },
+      email_category: { type: 'string', enum: ['marketing', 'outreach'], default: 'marketing', description: 'Marketing requires recorded consent. Outreach uses the permitted one-to-one outreach policy.' },
       from_name: { type: 'string' },
       dry_run: { type: 'boolean', default: true },
       confirm_send: { type: 'boolean', default: false },
@@ -212,6 +214,11 @@ defineConnectorTool({
       (args.lead_ids?.length || 0) + (args.contact_ids?.length || 0) + (args.client_ids?.length || 0);
     const useDurableQueue = !dryRun && args.confirm_send === true && recipientCount > 10;
     if (useDurableQueue) {
+      const uniqueRecipientIds = new Set([
+        ...(args.lead_ids || []).map((id) => `lead:${id}`),
+        ...(args.contact_ids || []).map((id) => `contact:${id}`),
+        ...(args.client_ids || []).map((id) => `client:${id}`),
+      ]);
       const { enqueueBulkMcpJob } = await import('@/lib/mcp/bulkJobQueue');
       const job = await enqueueBulkMcpJob({
         tenantId: ctx.tenantId,
@@ -225,11 +232,12 @@ defineConnectorTool({
         status: 'queued',
         job_id: job.jobId,
         requested: job.requested,
+        unique_recipients: uniqueRecipientIds.size,
         execution_mode: 'durable',
         message: 'Bulk email queued (>10 recipients). Poll get_bulk_job_status for progress.',
       });
     }
-    const output = (await executeBulkEmail(args, { tenantId: ctx.tenantId, userId: ctx.userId })) as Record<string, any>;
+      const output = (await executeBulkEmail(args, { tenantId: ctx.tenantId, userId: ctx.userId })) as Record<string, any>;
     return okResult('send_bulk_email', output, {
       receipt: {
         action_id: String(output.action_id),
@@ -272,7 +280,15 @@ defineConnectorTool({
   },
   handler: async (args, ctx) => {
     const { getBulkJobStatus } = await import('@/lib/mcp/bulkJobQueue');
-    const status = await getBulkJobStatus(ctx.tenantId, args.job_id);
-    return okResult('get_bulk_job_status', status);
+    try {
+      const status = await getBulkJobStatus(ctx.tenantId, args.job_id);
+      return okResult('get_bulk_job_status', status);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to load bulk job status';
+      if (message.startsWith('BULK_JOB_NOT_FOUND:')) {
+        return errorResult('get_bulk_job_status', 'BULK_JOB_NOT_FOUND', message.slice('BULK_JOB_NOT_FOUND:'.length).trim());
+      }
+      return errorResult('get_bulk_job_status', 'BULK_JOB_STATUS_LOOKUP_FAILED', message, undefined, { retryable: true });
+    }
   },
 });

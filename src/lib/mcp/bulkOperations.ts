@@ -353,6 +353,7 @@ type BulkEmailArgs = {
   confirm_send?: boolean;
   idempotency_key?: string;
   require_marketing_consent?: boolean;
+  email_category?: 'marketing' | 'outreach';
 };
 
 type Recipient = { entity_type: 'lead' | 'contact' | 'client'; entity_id: string; name: string; email: string };
@@ -456,6 +457,7 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
     throw new Error('Provide text or html content');
   }
   const dryRun = args.dry_run !== false;
+  const emailCategory = args.email_category || 'marketing';
   if (!dryRun && args.confirm_send !== true) {
     throw new Error('Set confirm_send: true after reviewing a dry run before sending bulk email');
   }
@@ -476,9 +478,9 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
       email: r.email,
       id: r.entity_id,
       entityType: r.entity_type,
-      skipConsentCheck: args.require_marketing_consent === false,
+      skipConsentCheck: emailCategory === 'outreach' || args.require_marketing_consent === false,
     })),
-    { requireMarketingConsent: args.require_marketing_consent !== false },
+    { requireMarketingConsent: emailCategory === 'marketing' && args.require_marketing_consent !== false },
   );
 
   const eligibleEmailSet = new Set(preflight.eligibleRecipients.map((r) => r.email));
@@ -513,9 +515,13 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
         });
         return {
           ...recipient,
-          status: sent.success ? 'sent' : 'failed',
+          status: sent.success ? 'provider_accepted' : 'failed',
           provider: sent.provider || null,
           email_id: sent.emailId || null,
+          accepted_at: sent.success ? new Date().toISOString() : null,
+          sent_at: null,
+          failed_at: sent.success ? null : new Date().toISOString(),
+          error_code: sent.success ? null : 'PROVIDER_SEND_FAILED',
           error: sent.success ? null : sent.error || 'send_failed',
         };
       } catch (error) {
@@ -525,12 +531,13 @@ export async function executeBulkEmail(args: BulkEmailArgs, ctx: BatchContext) {
     results.push(...sendResults);
   }
 
-  const sentCount = results.filter((result) => result.status === 'sent').length;
+  const sentCount = results.filter((result) => result.status === 'provider_accepted').length;
   const failedCount = results.filter((result) => result.status === 'failed').length;
   const output: Record<string, unknown> = {
     action_id: actionId,
     dry_run: dryRun,
     execution_mode: dryRun ? 'simulated' : 'direct',
+    email_category: emailCategory,
     requested: preflight.requested + skipped.length,
     eligible: eligibleRecipients.length,
     processed: dryRun ? 0 : results.length,
