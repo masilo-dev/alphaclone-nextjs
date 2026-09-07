@@ -879,8 +879,8 @@ export async function triggerNexusAutomation(
       outreach_context: options.outreachContext || 'Lead Finder chat automation',
       user_id: userId,
     },
-    skipPolicy: true,
-    policySource: 'mcp',
+    skipPolicy: !options.autoSend,
+    policySource: options.autoSend ? 'bonnie' : 'mcp',
   });
 
   return { enrich, campaign };

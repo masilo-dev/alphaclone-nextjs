@@ -79,3 +79,73 @@ describe('Bonnie user language', () => {
     assert.equal(source.includes('find_and_qualify_leads (or create_scraper_campaign'), false);
   });
 });
+
+describe('ToolPolicyGate control model', () => {
+  it('auto-allows MCP only; Bonnie send/bulk/financial still hit the gate', () => {
+    const source = read('../../src/lib/ai/ToolPolicyGate.ts');
+    assert.match(source, /if \(source === 'mcp'\)/);
+    assert.equal(source.includes("source === 'mcp' || source === 'bonnie'"), false);
+    assert.match(source, /nexus_sales_campaign/);
+  });
+});
+
+describe('Contract list buckets', () => {
+  it('maps operational statuses onto All / Draft / Awaiting signature / Active', async () => {
+    const {
+      contractStatusBucket,
+      contractMatchesListFilter,
+      contractStatusLabel,
+      isRenewalWatchStatus,
+    } = await import('../../src/lib/contracts/contractManagerDomain.ts');
+    assert.equal(contractStatusBucket('fully_signed'), 'active');
+    assert.equal(contractStatusBucket('client_signed'), 'awaiting_signature');
+    assert.equal(contractStatusBucket('sent'), 'awaiting_signature');
+    assert.equal(contractStatusLabel('draft'), 'Draft');
+    assert.equal(contractMatchesListFilter('fully_signed', 'active'), true);
+    assert.equal(contractMatchesListFilter('sent', 'draft'), false);
+    assert.equal(isRenewalWatchStatus('fully_signed'), true);
+    assert.equal(isRenewalWatchStatus('rejected'), false);
+  });
+});
+
+describe('LinkedIn verification', () => {
+  it('does not mark LinkedIn published until a GET confirms the URN', () => {
+    const source = read('../../src/lib/social/SocialPublishingService.ts');
+    const publish = source.slice(
+      source.indexOf('async publishToLinkedIn'),
+      source.indexOf('async publishToProvider')
+    );
+    assert.match(publish, /verifyLinkedInUrn/);
+    assert.equal(publish.includes('verified: true'), false);
+    const helpers = read('../../src/lib/social/linkedinPublishHelpers.ts');
+    assert.match(helpers, /export async function confirmLinkedInPublish/);
+    assert.match(helpers, /ugcPosts/);
+  });
+});
+
+describe('Lead Finder workspace', () => {
+  it('exposes contactable/saved metrics and a map view on the canonical page', () => {
+    const source = read('../../src/components/dashboard/leads/ScraperCampaignsPage.tsx');
+    assert.match(source, /contactable:/);
+    assert.match(source, /outreach_ready:/);
+    assert.match(source, /LeadFinderMapPanel/);
+    assert.equal(source.includes('OpenStreetMap: 2 requests/min'), false);
+  });
+});
+
+describe('Signed contract workflow idempotency', () => {
+  it('skips default tasks that already exist on the project', () => {
+    const source = read('../../src/lib/contracts/contractSignedSteps.ts');
+    assert.match(source, /toInsert/);
+    assert.match(source, /!have.has\(task.title\)/);
+    assert.match(source, /eq\('contract_id', contractId\)/);
+  });
+});
+
+describe('create_project client link', () => {
+  it('writes client_id on the canonical insert path', () => {
+    const source = read('../../src/lib/mcp/tools/projects.ts');
+    const create = source.slice(source.indexOf("name: 'create_project'"), source.indexOf("name: 'update_project'"));
+    assert.match(create, /client_id: args.client_id \|\| null/);
+  });
+});

@@ -27,6 +27,12 @@ import {
 } from '@/lib/documents/documentBuilders';
 import type { DocumentThemeId } from '@/lib/documents/renderDocument';
 import { ContractLifecycleDrawer } from '@/components/contracts/ContractLifecycleDrawer';
+import {
+    contractMatchesListFilter,
+    contractStatusBucket,
+    contractStatusLabel,
+    type ContractListFilter,
+} from '@/lib/contracts/contractManagerDomain';
 import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { ContractTemplateLibrary, ContractTemplate } from './ContractTemplateLibrary';
 import { ContractRenewalAlertsPanel } from './ContractRenewalAlertsPanel';
@@ -169,7 +175,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
     const [bulkDeletingContracts, setBulkDeletingContracts] = useState(false);
     const [listQuery, setListQuery] = useState('');
-    const [listStatusFilter, setListStatusFilter] = useState<'all' | 'draft' | 'sent' | 'client_signed' | 'fully_signed' | 'rejected'>('all');
+    const [listStatusFilter, setListStatusFilter] = useState<ContractListFilter>('all');
     const [listSort, setListSort] = useState<'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'value_desc' | 'value_asc'>('newest');
     const [lifecycleContractId, setLifecycleContractId] = useState<string | null>(null);
     
@@ -882,7 +888,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const listContracts = useMemo(() => {
         const q = listQuery.trim().toLowerCase();
         const base = savedContracts.filter((c) => {
-            if (listStatusFilter !== 'all' && c.status !== listStatusFilter) return false;
+            if (!contractMatchesListFilter(c.lifecycle_status || c.status, listStatusFilter)) return false;
             if (!q) return true;
             const contact = resolveContractClientContact(c);
             const hay = [
@@ -1112,10 +1118,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     >
                                         <option value="all">All</option>
                                         <option value="draft">Draft</option>
-                                        <option value="sent">Sent</option>
-                                        <option value="client_signed">Client signed</option>
-                                        <option value="fully_signed">Fully signed</option>
-                                        <option value="rejected">Rejected</option>
+                                        <option value="needs_approval">Needs approval</option>
+                                        <option value="awaiting_signature">Awaiting signature</option>
+                                        <option value="active">Active</option>
+                                        <option value="expiring">Expiring</option>
+                                        <option value="archived">Archived</option>
                                     </select>
                                 </div>
                                 <div>
@@ -1185,13 +1192,15 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             </button>
                         </div>
                     ) : listContracts.map((c: any) => {
+                        const statusBucket = contractStatusBucket(c.lifecycle_status || c.status);
                         const statusBadgeStyles = {
-                            fully_signed: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
-                            client_signed: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-                            sent: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+                            active: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
+                            awaiting_signature: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+                            needs_approval: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+                            expiring: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
                             draft: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
-                            rejected: 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                        }[c.status as string] || 'text-slate-400 bg-slate-500/10 border-slate-500/20';
+                            archived: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+                        }[statusBucket];
 
                         const getExpiry = () => {
                             const date = c.created_at ? new Date(c.created_at) : new Date();
@@ -1291,7 +1300,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         <div className="flex flex-wrap items-center gap-2">
                                             <p className="font-semibold text-white text-sm sm:text-base truncate">{c.title}</p>
                                             <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${statusBadgeStyles}`}>
-                                                {c.status?.replace('_', ' ')}
+                                                {contractStatusLabel(c.lifecycle_status || c.status)}
                                             </span>
                                         </div>
                                         <p className="text-[11px] sm:text-xs text-slate-500">
@@ -1317,7 +1326,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     </div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                                <button type="button" onClick={() => setLifecycleContractId(c.id)} className="w-full sm:w-auto justify-center px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"><Scale className="w-3.5 h-3.5 text-violet-300" /> Lifecycle</button>
+                                <button type="button" onClick={() => setLifecycleContractId(c.id)} className="w-full sm:w-auto justify-center px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"><Scale className="w-3.5 h-3.5 text-violet-300" /> Obligations</button>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1685,6 +1694,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         className={`h-8 px-3 rounded-full text-[11px] font-bold transition-all ${previewTab === 'audit' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                                     >
                                         Audit Trail & Compliance
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLifecycleContractId(contractId)}
+                                        className="h-8 px-3 rounded-full text-[11px] font-bold text-slate-500 hover:text-slate-300"
+                                    >
+                                        Obligations & reminders
                                     </button>
                                 </div>
                             )}
@@ -2311,6 +2327,11 @@ function safeParseFloat(val: any, fallback: number = 0): number {
     return isNaN(parsed) ? fallback : parsed;
 }
 
+function unresolvedField(value: string | undefined, label: string): string {
+    const trimmed = String(value || '').trim();
+    return trimmed ? `${label}: ${trimmed}` : `${label}: UNRESOLVED`;
+}
+
 function buildAIPrompt(f: ContractForm): string {
     const total = safeParseFloat(f.totalAmount, 0);
     const depPercent = safeParseFloat(f.depositPercent, 50);
@@ -2323,24 +2344,24 @@ function buildAIPrompt(f: ContractForm): string {
 ${wordHint}
 
 SERVICE PROVIDER:
-- Name: ${f.providerName}
-- Address: ${f.providerAddress || 'On file with the parties'}
-- Email: ${f.providerEmail}
-- Phone: ${f.providerPhone || 'On file'}
-- Registration: ${f.providerRegistration || 'N/A'}
+- ${unresolvedField(f.providerName, 'Name')}
+- ${unresolvedField(f.providerAddress, 'Address')}
+- ${unresolvedField(f.providerEmail, 'Email')}
+- ${unresolvedField(f.providerPhone, 'Phone')}
+- ${unresolvedField(f.providerRegistration, 'Registration')}
 
 CLIENT:
-- Full Name: ${f.clientName}
-- Company: ${f.clientCompany || 'N/A'}
-- Address: ${f.clientAddress || 'On file with the parties'}
-- Email: ${f.clientEmail || 'On file'}
-- Phone: ${f.clientPhone || 'On file'}
+- ${unresolvedField(f.clientName, 'Full Name')}
+- ${unresolvedField(f.clientCompany, 'Company')}
+- ${unresolvedField(f.clientAddress, 'Address')}
+- ${unresolvedField(f.clientEmail, 'Email')}
+- ${unresolvedField(f.clientPhone, 'Phone')}
 
 PROJECT:
-- Name: ${f.projectName}
-- Type: ${f.projectType}
-- Scope: ${f.projectScope || f.projectType + ' services as mutually agreed'}
-- Deliverables: ${f.deliverables || 'All project deliverables as described in the scope'}
+- ${unresolvedField(f.projectName, 'Name')}
+- ${unresolvedField(f.projectType, 'Type')}
+- ${unresolvedField(f.projectScope, 'Scope')}
+- ${unresolvedField(f.deliverables, 'Deliverables')}
 
 FINANCIAL:
 - Total Value: ${f.currency} ${total.toLocaleString()}
@@ -2352,8 +2373,8 @@ TIMELINE:
 - Completion: ${f.endDate}
 
 LEGAL:
-- Jurisdiction: ${f.jurisdiction || 'the parties\' agreed jurisdiction'}
-- Governing Law: ${f.governingLaw || 'applicable law'}
+- ${unresolvedField(f.jurisdiction, 'Jurisdiction')}
+- ${unresolvedField(f.governingLaw, 'Governing Law')}
 ${f.additionalTerms ? `- Additional Terms: ${f.additionalTerms}` : ''}
 
 STRUCTURE AND SECTIONS:

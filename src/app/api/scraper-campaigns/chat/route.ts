@@ -285,7 +285,7 @@ export async function POST(req: NextRequest) {
       const result = await startLeadOutreachAutomation(tenantId, user.id, leadIds, channel);
       return NextResponse.json({
         success: true,
-        message: `Automation queued: ${channel} outreach via Nexus + event bus (works on Vercel & Railway crons)`,
+        message: `Automation queued: ${channel} outreach (event bus + cron). Send still requires review unless you approved it.`,
         result,
       });
     }

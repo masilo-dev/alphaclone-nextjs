@@ -7,10 +7,11 @@ import { evaluateBusinessAIState } from '@/services/mcp/businessAIState';
 /**
  * ToolPolicyGate — EU AI Act Art. 14 human oversight + ISO 42001 A.4.
  *
- * High-risk tools (send / bulk / financial) queue for approval for playbooks
- * unless the workspace is in autonomous mode. In-app Bonnie and MCP connectors
- * auto-execute authenticated tool calls (no DPA gate) — the user already issued
- * the command in chat / connector.
+ * High-risk tools (send / bulk / financial) queue for approval unless the
+ * workspace is in autonomous mode (and readiness allows it). ChatGPT / Claude
+ * MCP connectors auto-execute authenticated tool calls — the connector user
+ * already issued the command. In-app Bonnie still goes through this gate so
+ * send / bulk / financial actions can be approved in the Approval Center.
  */
 
 export type ToolRiskClass = 'read' | 'draft' | 'send' | 'bulk' | 'financial';
@@ -33,6 +34,7 @@ const SEND_TOOLS = new Set([
   'queue_email_campaign_send',
   'send_campaign',
   'nexus_invoice_chasing',
+  'nexus_sales_campaign',
   'create_linkedin_post',
   'create_social_post',
   'create_social_post_with_media',
@@ -77,7 +79,7 @@ const DRAFT_TOOLS = new Set([
   'generate_outreach_draft',
 ]);
 
-function classifyTool(toolName: string): ToolRiskClass {
+export function classifyToolRisk(toolName: string): ToolRiskClass {
   const name = toolName.toLowerCase();
   if (META_ORCHESTRATION_TOOLS.has(name)) return 'read';
   if (name.startsWith('bulk_') || name.includes('_bulk') || name === 'bulk_update') return 'bulk';
@@ -150,19 +152,17 @@ export async function evaluateToolPolicy(params: {
     workflowId,
     conversationId,
   } = params;
-  const riskClass = classifyTool(toolName);
+  const riskClass = classifyToolRisk(toolName);
 
-  // ChatGPT / Claude MCP connectors AND in-app Bonnie: authenticated user already
-  // issued the command. Auto-execute — do not block on DPA or approval queues.
-  // Playbooks still go through the full policy path below.
-  if (source === 'mcp' || source === 'bonnie') {
+  // ChatGPT / Claude MCP connectors: authenticated connector user already issued
+  // the command. Auto-execute — do not block on DPA or approval queues.
+  // In-app Bonnie continues through the policy path below (reads/drafts still
+  // execute immediately; send / bulk / financial follow workspace mode).
+  if (source === 'mcp') {
     return {
       outcome: 'allow',
       riskClass,
-      reason:
-        source === 'bonnie'
-          ? 'Bonnie auto-executes authenticated in-app tool calls.'
-          : 'MCP connector auto-approves tool execution.',
+      reason: 'MCP connector auto-approves tool execution.',
     };
   }
 

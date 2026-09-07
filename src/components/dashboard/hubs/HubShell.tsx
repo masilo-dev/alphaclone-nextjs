@@ -187,7 +187,7 @@ export default function HubShell({
           isFullHeight ? 'h-full overflow-hidden p-0' : 'ac-scroll-full px-4 py-4 md:py-5'
         )}
       >
-        <BonnieModulePageShell showBonnieDock={false}>
+        <BonnieModulePageShell showBonnieDock={!isFullHeight}>
           {hubSteps?.length && !isFullHeight ? (
             <ExecutionDecisionGuide
               steps={hubSteps}

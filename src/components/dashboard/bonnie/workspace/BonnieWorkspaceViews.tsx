@@ -331,7 +331,7 @@ export default function BonnieWorkspaceViews({
           {!detail?.run && !loading && (
             <p className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-800">
               No durable run selected. Start an objective in Chat or create an invoice collection run
-              with the durable runtime enabled on Railway.
+              with the durable runtime enabled.
             </p>
           )}
 
@@ -727,7 +727,7 @@ export default function BonnieWorkspaceViews({
                   </div>
                   {analytics.executionOutcomes ? (
                     <PlatformKpiGrid
-                      header={<p className="text-[11px] font-black uppercase tracking-widest text-slate-400">MCP execution reliability</p>}
+                      header={<p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Execution reliability</p>}
                       items={[
                         platformKpiFromNumbers({
                           label: 'Receipt completeness',

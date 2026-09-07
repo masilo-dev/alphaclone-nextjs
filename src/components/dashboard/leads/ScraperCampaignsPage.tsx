@@ -11,17 +11,19 @@ import {
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { propagation } from '@/lib/behavioral/propagationBridge';
+import LeadFinderMapPanel from '@/components/dashboard/leads/LeadFinderMapPanel';
 
 type SearchRecord = {
   id: string; name: string; query?: string; location?: string; industry?: string;
   status: string; progress: number; discovered_count: number; accepted_count: number;
   rejected_count: number; duplicate_count: number; error_count: number; created_at: string;
+  contactable_count?: number; contacted_count?: number;
 };
 type Candidate = {
   id: string; business_name: string; contact_name?: string; industry?: string; city?: string;
   country?: string; website?: string; public_email?: string; public_phone?: string;
   source_type: string; quality_score: number; fit_score: number; verification_status: string;
-  review_status: string; created_at: string;
+  review_status: string; created_at: string; lat?: number; lng?: number;
 };
 
 type LeadList = {
@@ -101,9 +103,9 @@ export default function ScraperCampaignsPage() {
   });
   const [form, setForm] = useState({
     keywords: '', location: '', country: '', city: '', region: '', industry: '',
-    searchType: 'businesses_by_location', resultLimit: 50, website: false, email: false,
-    phone: false, social: false, sources: ['openstreetmap', 'website'],
-    excludedKeywords: '', excludedDomains: '', excludedLocations: '',
+    searchType: 'businesses_by_location', resultLimit: 50, website: false, email: true,
+    phone: true, social: false, sources: ['openstreetmap', 'website'],
+    excludedKeywords: '', excludedDomains: '', excludedLocations: '', radiusKm: 25,
   });
 
   const loadSearches = useCallback(async () => {
@@ -113,18 +115,23 @@ export default function ScraperCampaignsPage() {
     if (res.ok) {
       setAvailable(true);
       setAvailabilityNotice(null);
-      const mapped: SearchRecord[] = (body.campaigns || []).map((c: { id: string; name: string; status?: string; location?: { city?: string }; created_at: string }) => ({
+      const mapped: SearchRecord[] = (body.campaigns || []).map((c: {
+        id: string; name: string; status?: string; location?: { city?: string }; created_at: string;
+        discovered_count?: number; accepted_count?: number; contactable_count?: number; contacted_count?: number;
+      }) => ({
         id: c.id,
         name: c.name,
         location: c.location?.city,
         status: c.status || 'active',
-        progress: c.status === 'active' ? 100 : 40,
-        discovered_count: 0,
-        accepted_count: 0,
+        progress: c.status === 'active' || (c.discovered_count || 0) > 0 ? 100 : 40,
+        discovered_count: c.discovered_count || 0,
+        accepted_count: c.accepted_count || 0,
         rejected_count: 0,
         duplicate_count: 0,
         error_count: 0,
         created_at: c.created_at,
+        contactable_count: c.contactable_count || 0,
+        contacted_count: c.contacted_count || 0,
       }));
       setSearches(mapped);
       setSelectedSearch((current) => current ? mapped.find((s) => s.id === current.id) || current : mapped[0] || null);
@@ -154,9 +161,11 @@ export default function ScraperCampaignsPage() {
         source_type: String(lead.source || 'directory'),
         quality_score: Number(lead.score || 0),
         fit_score: Number(lead.score || 0),
-        verification_status: String(lead.verification_status || 'unverified'),
+        verification_status: String(lead.verification_status || (lead.email || lead.phone ? 'contactable' : 'unverified')),
         review_status: String(lead.status || 'new'),
         created_at: String(lead.created_at || ''),
+        lat: lead.lat != null ? Number(lead.lat) : undefined,
+        lng: lead.lng != null ? Number(lead.lng) : undefined,
       })));
     }
   }, [tenant?.id, selectedSearch?.id]);
@@ -218,7 +227,7 @@ export default function ScraperCampaignsPage() {
         location: {
           city: form.city || form.location,
           country: form.country || undefined,
-          radius_km: 25,
+          radius_km: Number(form.radiusKm) || 25,
         },
         daily_limit: Number(form.resultLimit) || 50,
         min_score_threshold: 45,
@@ -350,12 +359,30 @@ export default function ScraperCampaignsPage() {
     toast.success('Lead Finder defaults saved for this workspace');
   };
 
-  const metrics = useMemo(() => ({
-    discovered: selectedSearch?.discovered_count || candidates.length,
-    accepted: selectedSearch?.accepted_count || candidates.filter(x => x.review_status === 'accepted').length,
-    duplicates: selectedSearch?.duplicate_count || 0,
-    verified: candidates.filter(x => !['unverified', 'invalid'].includes(x.verification_status)).length,
-  }), [selectedSearch, candidates]);
+  const metrics = useMemo(() => {
+    const contactable = candidates.filter((c) => Boolean(c.public_email || c.public_phone)).length;
+    const uniqueKeys = new Set(
+      candidates.map((c) =>
+        `${(c.public_email || '').toLowerCase()}|${(c.website || '').toLowerCase()}|${c.business_name.toLowerCase()}`
+      )
+    );
+    const saved = candidates.filter((c) => ['accepted', 'synced'].includes(c.review_status)).length
+      || selectedSearch?.accepted_count
+      || 0;
+    const contacted = candidates.filter((c) => c.review_status === 'contacted').length
+      || selectedSearch?.contacted_count
+      || 0;
+    return {
+      discovered: candidates.length || selectedSearch?.discovered_count || 0,
+      contactable: contactable || selectedSearch?.contactable_count || 0,
+      enriched: candidates.filter((c) => Boolean(c.website) && Boolean(c.public_email || c.public_phone)).length,
+      verified: candidates.filter((x) => !['unverified', 'invalid', ''].includes(x.verification_status)).length,
+      unique: uniqueKeys.size,
+      saved,
+      outreach_ready: candidates.filter((c) => Boolean(c.public_email || c.public_phone) && !['contacted', 'rejected'].includes(c.review_status)).length,
+      contacted,
+    };
+  }, [selectedSearch, candidates]);
 
   return (
     <section className="min-h-full bg-[var(--ws-bg)] text-[var(--ws-text-primary)]" aria-labelledby="lead-finder-title">
@@ -439,9 +466,10 @@ export default function ScraperCampaignsPage() {
                 <label className="text-sm">Excluded keywords<input className={`${fieldClass} mt-1`} value={form.excludedKeywords} onChange={e=>setForm({...form,excludedKeywords:e.target.value})} placeholder="comma separated"/></label>
                 <label className="text-sm">Excluded domains<input className={`${fieldClass} mt-1`} value={form.excludedDomains} onChange={e=>setForm({...form,excludedDomains:e.target.value})} placeholder="comma separated"/></label>
                 <label className="text-sm">Result limit<input type="number" min={1} max={500} className={`${fieldClass} mt-1`} value={form.resultLimit} onChange={e=>setForm({...form,resultLimit:Number(e.target.value)})}/></label>
+                <label className="text-sm">Radius (km)<input type="number" min={1} max={200} className={`${fieldClass} mt-1`} value={form.radiusKm} onChange={e=>setForm({...form,radiusKm:Number(e.target.value)})}/></label>
               </div>}
               <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[var(--ws-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-[var(--ws-text-secondary)]">OpenStreetMap: 2 requests/min · max 500 records/day. Searches persist if you leave.</p>
+                <p className="text-xs text-[var(--ws-text-secondary)]">Only businesses with a public phone or email are saved. Duplicate companies in this workspace are skipped.</p>
                 <button disabled={submitting || !available} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>{submitting ? 'Queuing…' : 'Find businesses'}<ArrowRight size={16}/></button>
               </div>
             </form>
@@ -490,12 +518,26 @@ export default function ScraperCampaignsPage() {
 }
 
 function ResultsPanel({ searches, selected, setSelected, candidates, metrics, reviewingCandidateId, onReview }: { searches: SearchRecord[]; selected: SearchRecord|null; setSelected:(s:SearchRecord)=>void; candidates:Candidate[]; metrics:Record<string,number>; reviewingCandidateId:string|null; onReview:(candidate:Candidate, decision:'accepted'|'rejected')=>void }) {
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const pins = candidates.map((c) => ({
+    business_name: c.business_name,
+    address: c.city,
+    phone: c.public_phone,
+    website: c.website,
+    source: c.source_type,
+    lat: c.lat,
+    lng: c.lng,
+  }));
   return <div className="space-y-4">
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
       <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="text-sm text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p></div>
       {searches.length>0 && <select aria-label="Selected search" className={`${fieldClass} sm:max-w-xs`} value={selected?.id||''} onChange={e=>{const s=searches.find(x=>x.id===e.target.value);if(s)setSelected(s)}}>{searches.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}
     </div>
-    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">{label}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">{label.replace('_',' ')}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
+    <div className="flex gap-2">
+      <button type="button" onClick={() => setView('list')} className={`${buttonClass} ${view === 'list' ? 'bg-teal-500 text-slate-950' : 'border border-[var(--ws-border)] bg-[var(--ws-surface)]'}`}>List</button>
+      <button type="button" onClick={() => setView('map')} className={`${buttonClass} ${view === 'map' ? 'bg-teal-500 text-slate-950' : 'border border-[var(--ws-border)] bg-[var(--ws-surface)]'}`}><MapPin size={16}/>Map</button>
+    </div>
     {selected && ['queued','running'].includes(selected.status) && <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3" role="status"><div className="mb-2 flex justify-between text-xs"><span>Discovery continues in the background</span><span>{selected.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/20"><div className="h-full bg-teal-400 transition-all" style={{width:`${selected.progress}%`}}/></div></div>}
     {!candidates.length && selected && (selected.discovered_count ?? 0) > 0 ? (
       <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center" role="status">
@@ -505,7 +547,9 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
         </p>
       </div>
     ) : null}
-    {candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
+    {view === 'map' ? (
+      <LeadFinderMapPanel leads={pins} emptyHint="Run a search. Pins appear for businesses with public coordinates." />
+    ) : candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
       <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b border-[var(--ws-border)] text-xs uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Source','Quality','Fit','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="text-xs font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3">{c.source_type}</td><td className="px-4 py-3">{c.quality_score}</td><td className="px-4 py-3">{c.fit_score}</td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 text-xs font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
       <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="text-sm text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="text-sm font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 text-sm">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>
     </div> : <ModuleEmpty section="Results"/>}
@@ -713,7 +757,7 @@ function SettingsPanel({
         </div>
       </fieldset>
       <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 text-sm text-[var(--ws-text-secondary)]">
-        OpenStreetMap quota: 2 requests/min · max 500 records/day per workspace. Workers enforce robots rules automatically.
+      Public-source limits are enforced by the search workers. Only phone or email contacts are saved.
       </div>
       <button type="button" onClick={() => onSave(draft)} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>
         Save workspace defaults

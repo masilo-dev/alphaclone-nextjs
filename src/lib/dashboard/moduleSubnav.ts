@@ -20,7 +20,7 @@ export const MODULE_SUBNAV: Record<ModuleId, SubNavItem[]> = {
   ],
   leads: [
     { id: 'overview', label: 'Overview', href: '/dashboard/leads' },
-    { id: 'all', label: 'All leads', href: '/dashboard/leads' },
+    { id: 'finder', label: 'Lead Finder', href: '/dashboard/leads/finder' },
     { id: 'campaigns', label: 'Lead sources', href: '/dashboard/leads/campaigns' },
     { id: 'forms', label: 'Forms', href: '/dashboard/business/forms' },
   ],
@@ -76,8 +76,10 @@ export const MODULE_SUBNAV: Record<ModuleId, SubNavItem[]> = {
   ],
   documents: [
     { id: 'all', label: 'All documents', href: '/dashboard/business/documents' },
-    { id: 'vault', label: 'Vault', href: '/dashboard/business/vault' },
     { id: 'contracts', label: 'Contracts', href: '/dashboard/business/contracts' },
+    { id: 'proposals', label: 'Proposals', href: '/dashboard/business/quotes' },
+    { id: 'invoices', label: 'Invoices', href: '/dashboard/business/billing' },
+    { id: 'client', label: 'Client docs', href: '/dashboard/business/vault' },
   ],
   marketing: [
     { id: 'overview', label: 'Overview', href: '/dashboard/marketing' },
@@ -110,7 +112,7 @@ export const MODULE_SUBNAV: Record<ModuleId, SubNavItem[]> = {
   ],
   bonnie: [
     { id: 'assistant', label: 'Assistant', href: '/dashboard/business/bonnie' },
-    { id: 'approvals', label: 'Approvals', href: '/dashboard/business/bonnie/approvals' },
+    { id: 'approvals', label: 'Approvals', href: '/dashboard/bonnie/approvals' },
     { id: 'chases', label: 'Chase inbox', href: '/dashboard/business/bonnie/chases' },
   ],
   settings: [

@@ -9,6 +9,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 import { publishLinkedInPost } from '@/lib/linkedin/publishPost';
+import { confirmLinkedInPublish } from '@/lib/social/linkedinPublishHelpers';
+import { getLinkedInIntegrationWithToken } from '@/services/linkedin/linkedinIntegrationService';
 import {
   buildFacebookPostUrl,
   confirmFacebookPublish,
@@ -106,6 +108,27 @@ function buildLinkedInPermalink(postUrn: string | null | undefined): string | nu
   if (!postUrn) return null;
   const encoded = encodeURIComponent(postUrn);
   return `https://www.linkedin.com/feed/update/${encoded}`;
+}
+
+async function verifyLinkedInUrn(params: {
+  tenantId: string;
+  userId: string;
+  memberId?: string | null;
+  postUrn: string;
+}): Promise<{ verified: boolean; verifiedAt: string | null }> {
+  const admin = createSupabaseAdminClient();
+  const integration = await getLinkedInIntegrationWithToken(admin, {
+    tenantId: params.tenantId,
+    userId: params.userId,
+    linkedinMemberId: params.memberId || undefined,
+  });
+  if (!integration?.accessToken) {
+    return { verified: false, verifiedAt: null };
+  }
+  return confirmLinkedInPublish({
+    accessToken: integration.accessToken,
+    postUrn: params.postUrn,
+  });
 }
 
 function logPublishEvent(event: Record<string, unknown>): void {
@@ -723,7 +746,7 @@ export class SocialPublishingService {
     const admin = createSupabaseAdminClient();
     const { data: updated } = await admin
       .from('social_posts')
-      .select('linkedin_author_urn, linkedin_organization_id, linkedin_post_urn')
+      .select('linkedin_author_urn, linkedin_organization_id, linkedin_post_urn, tenant_id, user_id, linkedin_member_id')
       .eq('id', postId)
       .maybeSingle();
 
@@ -752,14 +775,23 @@ export class SocialPublishingService {
       published_at: publishedAt,
     });
 
+    const confirmation = updated?.tenant_id && updated?.user_id
+      ? await verifyLinkedInUrn({
+          tenantId: updated.tenant_id,
+          userId: updated.user_id,
+          memberId: updated.linkedin_member_id,
+          postUrn: result.postUrn,
+        })
+      : { verified: false, verifiedAt: null };
+
     return {
       ok: true,
       provider: 'linkedin',
       provider_post_id: result.postUrn,
       live_url: liveUrl,
       published_at: publishedAt,
-      verified: true,
-      verified_at: publishedAt,
+      verified: confirmation.verified,
+      verified_at: confirmation.verifiedAt,
       author_urn: updated?.linkedin_author_urn || identity.author_urn || null,
       organization_id: identity.organization_id || null,
       organization_name: identity.identity_name,
@@ -780,7 +812,7 @@ export class SocialPublishingService {
     const { data: post, error } = await admin
       .from('social_posts')
       .select(
-        'id, tenant_id, user_id, platforms, status, facebook_post_id, linkedin_post_urn, facebook_page_id, linkedin_organization_id, linkedin_author_urn, metadata, error_message'
+        'id, tenant_id, user_id, platforms, status, facebook_post_id, linkedin_post_urn, facebook_page_id, linkedin_organization_id, linkedin_author_urn, linkedin_member_id, metadata, error_message'
       )
       .eq('id', postId)
       .eq('tenant_id', tenantId)
@@ -800,11 +832,31 @@ export class SocialPublishingService {
       };
     }
 
-    if (post.facebook_post_id || post.linkedin_post_urn) {
+    if (post.linkedin_post_urn && !post.facebook_post_id) {
+      const confirmation = await verifyLinkedInUrn({
+        tenantId,
+        userId: String(post.user_id || ''),
+        memberId: post.linkedin_member_id,
+        postUrn: post.linkedin_post_urn,
+      });
+      return {
+        ok: confirmation.verified,
+        provider: 'linkedin',
+        provider_post_id: post.linkedin_post_urn,
+        live_url: buildLinkedInPermalink(post.linkedin_post_urn),
+        published_at: null,
+        verified: confirmation.verified,
+        verified_at: confirmation.verifiedAt,
+        error: confirmation.verified ? undefined : 'LinkedIn GET did not confirm the published URN',
+        error_code: confirmation.verified ? undefined : 'VERIFICATION_FAILED',
+      };
+    }
+
+    if (post.facebook_post_id) {
       return {
         ok: true,
-        provider: post.facebook_post_id ? 'facebook' : 'linkedin',
-        provider_post_id: post.facebook_post_id || post.linkedin_post_urn,
+        provider: 'facebook',
+        provider_post_id: post.facebook_post_id,
         live_url: null,
         published_at: null,
         verified: true,
@@ -858,7 +910,7 @@ export class SocialPublishingService {
     const { data: post, error } = await admin
       .from('social_posts')
       .select(
-        'id, tenant_id, platforms, facebook_page_id, facebook_post_id, linkedin_post_urn, linkedin_author_urn, linkedin_organization_id, live_url, published_at, status, error_message'
+        'id, tenant_id, user_id, platforms, facebook_page_id, facebook_post_id, linkedin_post_urn, linkedin_author_urn, linkedin_organization_id, linkedin_member_id, live_url, published_at, status, error_message'
       )
       .eq('id', params.postId)
       .eq('tenant_id', params.tenantId)
@@ -985,16 +1037,24 @@ export class SocialPublishingService {
           error_code: 'MISSING_PROVIDER_ID',
         };
       }
+      const confirmation = await verifyLinkedInUrn({
+        tenantId: post.tenant_id,
+        userId: post.user_id,
+        memberId: post.linkedin_member_id,
+        postUrn: post.linkedin_post_urn,
+      });
       return {
-        ok: true,
+        ok: confirmation.verified,
         provider: 'linkedin',
         provider_post_id: post.linkedin_post_urn,
         live_url: post.live_url || buildLinkedInPermalink(post.linkedin_post_urn),
         published_at: post.published_at,
-        verified: true,
-        verified_at: new Date().toISOString(),
+        verified: confirmation.verified,
+        verified_at: confirmation.verifiedAt,
         author_urn: post.linkedin_author_urn,
         organization_id: post.linkedin_organization_id,
+        error: confirmation.verified ? undefined : 'LinkedIn GET did not confirm the published URN',
+        error_code: confirmation.verified ? undefined : 'VERIFICATION_FAILED',
       };
     }
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
 import { AlertTriangle, Calendar, RefreshCw, CheckCircle2, Bell, ExternalLink } from 'lucide-react';
+import { isRenewalWatchStatus } from '@/lib/contracts/contractManagerDomain';
 
 type ContractAlert = {
   id: string;
@@ -45,9 +46,8 @@ export function ContractRenewalAlertsPanel({ onOpenContract }: ContractRenewalAl
 
       const { data: contracts, error } = await supabase
         .from('contracts')
-        .select('id, title, client_name, end_date, status')
+        .select('id, title, client_name, end_date, status, lifecycle_status')
         .eq('tenant_id', currentTenant.id)
-        .in('status', ['active', 'signed', 'executed'])
         .not('end_date', 'is', null)
         .gte('end_date', today.toISOString().split('T')[0])
         .lte('end_date', ninetyDaysOut.toISOString().split('T')[0])
@@ -55,7 +55,11 @@ export function ContractRenewalAlertsPanel({ onOpenContract }: ContractRenewalAl
 
       if (error) throw error;
 
-      const parsed: ContractAlert[] = (contracts || []).map((c: any) => {
+      const parsed: ContractAlert[] = (contracts || [])
+        .filter((c: { status?: string; lifecycle_status?: string }) =>
+          isRenewalWatchStatus(c.lifecycle_status || c.status)
+        )
+        .map((c: any) => {
         const endDate = new Date(c.end_date);
         const daysUntilExpiry = Math.max(0, Math.ceil((endDate.getTime() - today.getTime()) / 86_400_000));
         const urgency: ContractAlert['urgency'] =

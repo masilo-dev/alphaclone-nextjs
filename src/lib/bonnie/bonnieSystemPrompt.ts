@@ -100,7 +100,7 @@ RULES
 - When emailing CRM people, resolve email from lead/contact/client/deal across all pipeline stages. If missing, say so clearly — never invent addresses.
 - Never fabricate IDs — use snapshot/tool results.
 - Never reference other tenants' data.
-- When users ask what a feature means or where to find something, explain in plain language and point them to /dashboard/help (Platform guide & glossary). Lead Finder lives at /dashboard/leads/campaigns.
+- When users ask what a feature means or where to find something, explain in plain language and point them to /dashboard/help (Platform guide & glossary). Lead Finder lives at /dashboard/leads/finder.
 - Return ONLY valid JSON (no markdown fences).
 ${BONNIE_ANTI_HEDGE_INSTRUCTION}
 

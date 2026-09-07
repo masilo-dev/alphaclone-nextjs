@@ -402,9 +402,16 @@ async function createWorkflowRecord(params: {
       })
       .select('id')
       .single();
-    if (error || !data?.id) return null;
+    if (error || !data?.id) {
+      console.warn('[bonnie] workflow record not persisted:', error?.message || 'missing id');
+      return null;
+    }
     return data.id as string;
-  } catch {
+  } catch (error) {
+    console.warn(
+      '[bonnie] workflow record not persisted:',
+      error instanceof Error ? error.message : error
+    );
     return null;
   }
 }

@@ -96,6 +96,21 @@ function getFileIcon(fileType: string) {
     return <FileQuestion className="w-5 h-5 text-slate-400" />;
 }
 
+function matchesDocumentBucket(file: HubFile, filter: string): boolean {
+    if (filter === 'all') return true;
+    const name = file.original_filename.toLowerCase();
+    const entity = String(file.entity_type || '').toLowerCase();
+    const type = String(file.file_type || '').toLowerCase();
+    if (filter === 'pdf') return type === 'application/pdf' || name.endsWith('.pdf');
+    if (filter === 'word') return type.includes('word') || type.includes('officedocument') || /\.(doc|docx)$/.test(name);
+    if (filter === 'image') return type.includes('image') || /\.(png|jpe?g|gif|webp|svg)$/.test(name);
+    if (filter === 'contracts') return entity.includes('contract') || name.includes('contract');
+    if (filter === 'proposals') return entity.includes('quote') || entity.includes('proposal') || name.includes('quote') || name.includes('proposal');
+    if (filter === 'invoices') return entity.includes('invoice') || name.includes('invoice');
+    if (filter === 'client') return entity.includes('client') || entity.includes('contact');
+    return true;
+}
+
 function getFileLabel(fileType: string): string {
     if (fileType === 'application/pdf') return 'PDF';
     if (fileType.includes('wordprocessingml') || fileType.includes('msword')) return 'Word';
@@ -756,15 +771,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
     const filteredFiles = files.filter(f => {
         const matchesSearch = f.original_filename.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = documentFilter === 'all'
-            ? true
-            : documentFilter === 'pdf'
-                ? f.file_type === 'application/pdf'
-                : documentFilter === 'word'
-                    ? f.file_type.includes('word') || f.file_type.includes('officedocument')
-                    : documentFilter === 'image'
-                        ? f.file_type.includes('image')
-                        : true;
+        const matchesFilter = matchesDocumentBucket(f, documentFilter);
         return matchesSearch && matchesFilter;
     });
 
@@ -1186,6 +1193,10 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                             className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] pl-10 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                                         >
                                             <option value="all">All files</option>
+                                            <option value="contracts">Contracts</option>
+                                            <option value="proposals">Proposals</option>
+                                            <option value="invoices">Invoices</option>
+                                            <option value="client">Client docs</option>
                                             <option value="pdf">PDFs</option>
                                             <option value="word">Word docs</option>
                                             <option value="image">Images</option>

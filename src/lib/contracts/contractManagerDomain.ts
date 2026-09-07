@@ -32,11 +32,34 @@ export const VALID_CONTRACT_TRANSITIONS: Readonly<Record<ContractManagerStatus, 
   archived: [],
 };
 
+export const CONTRACT_LIST_FILTERS = [
+  'all',
+  'draft',
+  'needs_approval',
+  'awaiting_signature',
+  'active',
+  'expiring',
+  'archived',
+] as const;
+
+export type ContractListFilter = (typeof CONTRACT_LIST_FILTERS)[number];
+
+const CONTRACT_STATUS_BUCKETS: Record<ContractListFilter, readonly string[]> = {
+  all: [],
+  draft: ['request', 'draft', 'internal_review', 'changes_requested'],
+  needs_approval: ['pending_approval', 'approved'],
+  awaiting_signature: ['ready_to_send', 'sent', 'viewed', 'negotiating', 'awaiting_signature', 'partially_signed'],
+  active: ['signed', 'active', 'renewed', 'completed'],
+  expiring: ['expiring', 'renewal_review'],
+  archived: ['suspended', 'terminated', 'expired', 'archived'],
+};
+
 export function normalizeLegacyContractStatus(status?: string | null): ContractManagerStatus | string {
   const raw = String(status || '').trim().toLowerCase();
   const aliases: Record<string, ContractManagerStatus> = {
     client_signed: 'partially_signed',
     fully_signed: 'signed',
+    executed: 'signed',
     rejected: 'terminated',
     declined: 'terminated',
     pending_signature: 'awaiting_signature',
@@ -46,6 +69,37 @@ export function normalizeLegacyContractStatus(status?: string | null): ContractM
   if (aliases[raw]) return aliases[raw];
   if (CONTRACT_STATUSES.includes(raw as ContractManagerStatus)) return raw as ContractManagerStatus;
   return String(status || 'draft');
+}
+
+export function contractStatusBucket(status?: string | null): Exclude<ContractListFilter, 'all'> {
+  const canonical = String(normalizeLegacyContractStatus(status));
+  const buckets = CONTRACT_LIST_FILTERS.filter((filter) => filter !== 'all') as Array<Exclude<ContractListFilter, 'all'>>;
+  for (const bucket of buckets) {
+    if (CONTRACT_STATUS_BUCKETS[bucket].includes(canonical)) return bucket;
+  }
+  return 'draft';
+}
+
+export function contractStatusLabel(status?: string | null): string {
+  const labels: Record<Exclude<ContractListFilter, 'all'>, string> = {
+    draft: 'Draft',
+    needs_approval: 'Needs approval',
+    awaiting_signature: 'Awaiting signature',
+    active: 'Active',
+    expiring: 'Expiring',
+    archived: 'Archived',
+  };
+  return labels[contractStatusBucket(status)];
+}
+
+export function contractMatchesListFilter(status: string | null | undefined, filter: string): boolean {
+  if (filter === 'all') return true;
+  return contractStatusBucket(status) === filter;
+}
+
+export function isRenewalWatchStatus(status?: string | null): boolean {
+  const bucket = contractStatusBucket(status);
+  return bucket === 'active' || bucket === 'expiring';
 }
 
 export function canTransitionContract(from: string, to: string): boolean {
