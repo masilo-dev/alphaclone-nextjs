@@ -44,9 +44,15 @@ function run() {
 
   let errorOccurred = null;
   try {
-    console.log('Running: npx supabase db push -p "Amgseries@22" --yes');
-    const output = execSync('npx supabase db push -p "Amgseries@22" --yes', {
-      stdio: "inherit",
+    const dbPassword = process.env.SUPABASE_DB_PASSWORD;
+    if (!dbPassword) {
+      console.error('Set SUPABASE_DB_PASSWORD. Refusing to use hardcoded credentials.');
+      process.exit(1);
+    }
+    console.log('Running: npx supabase db push --yes');
+    const output = execSync('npx supabase db push --yes', {
+      stdio: 'inherit',
+      env: { ...process.env, SUPABASE_DB_PASSWORD: dbPassword },
     });
     console.log("✅ Push completed successfully!");
   } catch (err) {

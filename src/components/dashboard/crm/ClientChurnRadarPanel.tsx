@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { churnRadarService, ClientHealthRecord } from '@/services/churnRadarService';
+import { ClientHealthRecord } from '@/services/churnRadarService';
 import { ShieldAlert, AlertTriangle, CheckCircle, Activity, ArrowUpRight, RefreshCw, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function ClientChurnRadarPanel() {
-  const [records, setRecords] = useState<ClientHealthRecord[]>(() => churnRadarService.getMockClientHealthRecords());
+  const [records] = useState<ClientHealthRecord[]>([]);
   const [filter, setFilter] = useState<'all' | 'high_risk' | 'moderate' | 'healthy'>('all');
 
   const filteredRecords = records.filter(r => {
@@ -17,10 +17,12 @@ export function ClientChurnRadarPanel() {
   });
 
   const highRiskCount = records.filter(r => r.riskLevel === 'High Churn Risk').length;
-  const avgHealth = Math.round(records.reduce((sum, r) => sum + r.healthScore, 0) / records.length);
+  const avgHealth = records.length
+    ? Math.round(records.reduce((sum, r) => sum + r.healthScore, 0) / records.length)
+    : 0;
 
   const handleActionClick = (record: ClientHealthRecord) => {
-    toast.success(`Action initiated for ${record.company}: "${record.recommendedAction}"`);
+    toast.error(`No live recovery play is connected for ${record.company}. Open the client record to take a real action.`);
   };
 
   return (
@@ -70,6 +72,11 @@ export function ClientChurnRadarPanel() {
       </div>
 
       {/* Grid of Accounts */}
+      {filteredRecords.length === 0 ? (
+        <p className="text-sm text-slate-400">
+          Churn risk is empty until live client activity, invoices, and contract dates are available. No sample accounts are shown.
+        </p>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredRecords.map((r) => {
           const isHigh = r.riskLevel === 'High Churn Risk';
@@ -154,6 +161,7 @@ export function ClientChurnRadarPanel() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

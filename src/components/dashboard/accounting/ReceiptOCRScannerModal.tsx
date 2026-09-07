@@ -34,7 +34,11 @@ export function ReceiptOCRScannerModal({
         setParsedData(parsed);
         toast.success('Receipt scanned & extracted!');
       } catch (err) {
-        toast.error('Failed to parse receipt image');
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : 'Receipt text extraction is not available. Enter the expense manually.'
+        );
       } finally {
         setScanning(false);
       }

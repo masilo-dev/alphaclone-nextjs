@@ -65,7 +65,7 @@ const BusinessPerformanceDashboard: React.FC = () => {
         weightedValue: 0,
       },
       automation: {
-        successRate: 100,
+        successRate: 0,
         totalRuns: 0,
         statusCounts: {
           completed: 0,

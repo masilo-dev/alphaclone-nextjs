@@ -16,6 +16,7 @@ async function navigateViaShell(page, sectionLabel, itemLabel, expectedUrl) {
 }
 
 test.describe("Mobile Production Readiness", () => {
+  test.skip(!process.env.TENANT_EMAIL || !process.env.TENANT_PASSWORD, 'Set TENANT_EMAIL and TENANT_PASSWORD');
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       const userId = "df841125-59ce-4e09-aa2d-5b746ec03d9b";
@@ -27,11 +28,11 @@ test.describe("Mobile Production Readiness", () => {
     await page.goto("/login");
     await page.fill(
       'input[type="email"]',
-      process.env.TENANT_EMAIL || "admin@alphaclone.io",
+      process.env.TENANT_EMAIL || "",
     );
     await page.fill(
       'input[type="password"]',
-      process.env.TENANT_PASSWORD || "Password123!",
+      process.env.TENANT_PASSWORD || "",
     );
     await page.click('button[type="submit"]:has-text("Sign In")');
     await expect(page).toHaveURL(/\/dashboard/);

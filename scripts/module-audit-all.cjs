@@ -1,102 +1,24 @@
 /**
- * Full module-by-module production audit for tenant_admin.
- * Does NOT push. Writes JSON report to /tmp/module-audit-report.json
+ * Tenant-admin module audit against live production.
+ *
+ * Requires TENANT_EMAIL and TENANT_PASSWORD in the environment.
+ * Does not push. Writes JSON to /tmp/module-audit-report.json
+ *
+ * Usage:
+ *   TENANT_EMAIL=... TENANT_PASSWORD=... node scripts/module-audit-all.cjs
  */
 const { chromium, devices } = require('@playwright/test');
 const fs = require('fs');
+const MODULES = require('./tenant-admin-modules.cjs');
 
 const BASE = process.env.BASE_URL || 'https://alphaclonesystems.com';
-const EMAIL = process.env.TENANT_EMAIL || 'sales@alphaclonesystems.com';
-const PASSWORD = process.env.TENANT_PASSWORD || 'Amgseries@22';
-const USER_ID = 'd8fd4aea-2987-4313-90e2-e6600539ec56';
+const EMAIL = process.env.TENANT_EMAIL || process.env.TEST_USER_EMAIL;
+const PASSWORD = process.env.TENANT_PASSWORD || process.env.TEST_USER_PASSWORD;
 
-/** All tenant_admin routes from TENANT_ADMIN_NAV_ITEMS + key aliases */
-const MODULES = [
-  // Core
-  { hub: 'Core', label: 'Workspace home', path: '/dashboard' },
-  { hub: 'Core', label: 'Bonnie AI', path: '/dashboard/business/bonnie' },
-  { hub: 'Core', label: 'Approvals', path: '/dashboard/bonnie/approvals' },
-
-  // Sales Hub
-  { hub: 'Sales Hub', label: 'CRM overview', path: '/dashboard/crm' },
-  { hub: 'Sales Hub', label: 'CRM workspace', path: '/dashboard/crm/workspace' },
-  { hub: 'Sales Hub', label: 'Outreach', path: '/dashboard/outreach' },
-  { hub: 'Sales Hub', label: 'Sales console', path: '/dashboard/crm/console' },
-  { hub: 'Sales Hub', label: 'Leads Board', path: '/dashboard/leads' },
-  { hub: 'Sales Hub', label: 'Deals Pipeline', path: '/dashboard/deals' },
-  { hub: 'Sales Hub', label: 'Contacts', path: '/dashboard/contacts' },
-  { hub: 'Sales Hub', label: 'Accounts', path: '/dashboard/crm/accounts' },
-  { hub: 'Sales Hub', label: 'CRM Reports', path: '/dashboard/crm/reports' },
-  { hub: 'Sales Hub', label: 'Sales Forecast', path: '/dashboard/forecast' },
-  { hub: 'Sales Hub', label: 'Goals & Targets', path: '/dashboard/goals' },
-  { hub: 'Sales Hub', label: 'Annual Planning', path: '/dashboard/planning' },
-  { hub: 'Sales Hub', label: 'Jobs & Queue', path: '/dashboard/jobs' },
-  { hub: 'Sales Hub', label: 'Production Tasks', path: '/dashboard/tasks' },
-  { hub: 'Sales Hub', label: 'Lead Finder', path: '/dashboard/leads/campaigns' },
-  { hub: 'Sales Hub', label: 'Lead Ingestion', path: '/dashboard/business/ingestion' },
-  { hub: 'Sales Hub', label: 'Webhooks', path: '/dashboard/webhooks' },
-
-  // Marketing Hub
-  { hub: 'Marketing Hub', label: 'Email Campaigns', path: '/dashboard/business/campaigns' },
-  { hub: 'Marketing Hub', label: 'Sequences', path: '/dashboard/marketing/sequences' },
-  { hub: 'Marketing Hub', label: 'Deliverability', path: '/dashboard/marketing/deliverability' },
-  { hub: 'Marketing Hub', label: 'Branded Forms', path: '/dashboard/business/forms' },
-  { hub: 'Marketing Hub', label: 'Social overview', path: '/dashboard/business/social' },
-  { hub: 'Marketing Hub', label: 'Compose', path: '/dashboard/business/social/compose' },
-  { hub: 'Marketing Hub', label: 'Schedule', path: '/dashboard/business/social-command' },
-  { hub: 'Marketing Hub', label: 'LinkedIn', path: '/dashboard/business/linkedin' },
-  { hub: 'Marketing Hub', label: 'Facebook', path: '/dashboard/business/facebook' },
-  { hub: 'Marketing Hub', label: 'Instagram', path: '/dashboard/business/instagram' },
-  { hub: 'Marketing Hub', label: 'X (Twitter)', path: '/dashboard/business/x' },
-  { hub: 'Marketing Hub', label: 'SMS Outreach', path: '/dashboard/business/sms' },
-
-  // Money Hub
-  { hub: 'Money Hub', label: 'Accounting', path: '/dashboard/accounting' },
-  { hub: 'Money Hub', label: 'Banking', path: '/dashboard/accounting/banking' },
-  { hub: 'Money Hub', label: 'Bills Payable', path: '/dashboard/accounting/bills' },
-  { hub: 'Money Hub', label: 'Vendors', path: '/dashboard/vendors' },
-  { hub: 'Money Hub', label: 'Period Close', path: '/dashboard/accounting/period-close' },
-  { hub: 'Money Hub', label: 'Billing overview', path: '/dashboard/business/billing' },
-  { hub: 'Money Hub', label: 'Invoices', path: '/dashboard/business/billing/manage' },
-  { hub: 'Money Hub', label: 'Finance & expenses', path: '/dashboard/finance/manage' },
-  { hub: 'Money Hub', label: 'Quotes & Proposals', path: '/dashboard/business/quotes' },
-  { hub: 'Money Hub', label: 'Cash Flow Forecast', path: '/dashboard/business/cash-flow' },
-  { hub: 'Money Hub', label: 'Tax Estimator', path: '/dashboard/business/tax-estimator' },
-
-  // Insights Hub
-  { hub: 'Insights Hub', label: 'Executive Dashboard', path: '/dashboard/executive' },
-  { hub: 'Insights Hub', label: 'Analytics', path: '/dashboard/analytics' },
-  { hub: 'Insights Hub', label: 'Performance', path: '/dashboard/performance' },
-  { hub: 'Insights Hub', label: 'Revenue Reports', path: '/dashboard/business/reports' },
-  { hub: 'Insights Hub', label: 'Reporting', path: '/dashboard/reporting' },
-  { hub: 'Insights Hub', label: 'Notifications', path: '/dashboard/notifications' },
-
-  // Documents Hub
-  { hub: 'Documents Hub', label: 'Document Hub', path: '/dashboard/business/documents' },
-  { hub: 'Documents Hub', label: 'Document Vault', path: '/dashboard/business/vault' },
-  { hub: 'Documents Hub', label: 'Contracts', path: '/dashboard/business/contracts' },
-  { hub: 'Documents Hub', label: 'Contract Manager', path: '/dashboard/business/contracts/manage' },
-  { hub: 'Documents Hub', label: 'Active Projects', path: '/dashboard/business/projects' },
-  { hub: 'Documents Hub', label: 'Project Manager', path: '/dashboard/business/projects/manage' },
-  { hub: 'Documents Hub', label: 'Client Onboarding', path: '/dashboard/business/onboarding' },
-
-  // Channels
-  { hub: 'Channels', label: 'Deep-Desk Tickets', path: '/dashboard/business/tickets' },
-  { hub: 'Channels', label: 'Team Messages', path: '/dashboard/business/messages' },
-  { hub: 'Channels', label: 'Mail', path: '/dashboard/mail' },
-  { hub: 'Channels', label: 'WhatsApp', path: '/dashboard/business/whatsapp' },
-
-  // Schedule & meet
-  { hub: 'Schedule', label: 'Calendar', path: '/dashboard/business/calendar' },
-  { hub: 'Schedule', label: 'Booking Links', path: '/dashboard/business/booking' },
-  { hub: 'Schedule', label: 'MS Teams', path: '/dashboard/business/teams' },
-
-  // Workspace
-  { hub: 'Workspace', label: 'Integration Marketplace', path: '/dashboard/marketplace' },
-  { hub: 'Workspace', label: 'Workflow Builder', path: '/dashboard/business/workflows' },
-  { hub: 'Workspace', label: 'Platform guide', path: '/dashboard/help' },
-  { hub: 'Workspace', label: 'System Settings', path: '/dashboard/business/settings' },
-];
+if (!EMAIL || !PASSWORD) {
+  console.error('Refusing to run: set TENANT_EMAIL and TENANT_PASSWORD (no hardcoded credentials).');
+  process.exit(2);
+}
 
 const FAIL_PATTERNS = [
   /This section could not be loaded/i,
@@ -106,6 +28,13 @@ const FAIL_PATTERNS = [
   /Unhandled Runtime Error/i,
   /Maximum update depth exceeded/i,
   /Minified React error/i,
+  /Internal Server Error/i,
+];
+
+const FAKE_SUCCESS_PATTERNS = [
+  /Action initiated for /i,
+  /Attachment download started/i,
+  /Receipt scanned & extracted/i,
 ];
 
 async function dismiss(page) {
@@ -116,6 +45,58 @@ async function dismiss(page) {
       await page.waitForTimeout(200);
     }
   }
+}
+
+async function probeModule(page, probe) {
+  const notes = [];
+  let functional = 'render-only';
+
+  const search = page.locator('input[type="search"], input[placeholder*="Search" i], input[placeholder*="search" i]').first();
+  if (await search.isVisible().catch(() => false)) {
+    await search.fill('audit');
+    notes.push('search-input-writable');
+    functional = 'action-visible';
+  }
+
+  const action = page.getByRole('button', { name: /^(New |Create |Add |Send |Save |Find |Compose |Upload )/i }).first();
+  if (await action.isVisible().catch(() => false)) {
+    notes.push(`primary-action:${(await action.textContent())?.trim()?.slice(0, 40)}`);
+    functional = 'action-visible';
+  }
+
+  if (probe === 'chat') {
+    const composer = page.locator('textarea, [contenteditable="true"], input[placeholder*="Ask" i], input[placeholder*="Message" i]').first();
+    if (await composer.isVisible().catch(() => false)) {
+      notes.push('composer-visible');
+      functional = 'action-visible';
+    }
+  }
+
+  if (probe === 'calendar') {
+    const grid = page.locator('.fc, [data-testid*="calendar" i], [role="grid"]').first();
+    if (await grid.isVisible().catch(() => false)) {
+      notes.push('calendar-grid-visible');
+      functional = 'action-visible';
+    }
+  }
+
+  if (probe === 'pipeline') {
+    const columns = page.locator('[data-testid*="pipeline" i], [data-kanban], [class*="pipeline"]').first();
+    if (await columns.isVisible().catch(() => false)) {
+      notes.push('pipeline-surface-visible');
+      functional = 'action-visible';
+    }
+  }
+
+  if (probe === 'form') {
+    const field = page.locator('form input, form textarea, form select').first();
+    if (await field.isVisible().catch(() => false)) {
+      notes.push('form-field-visible');
+      functional = 'action-visible';
+    }
+  }
+
+  return { functional, notes };
 }
 
 (async () => {
@@ -142,16 +123,6 @@ async function dismiss(page) {
     }
   });
 
-  // Login
-  await page.addInitScript((userId) => {
-    localStorage.setItem(`welcome_seen_${userId}`, 'true');
-    localStorage.setItem(`onboarding_completed_${userId}`, 'true');
-    localStorage.setItem('onboarding_completed', 'true');
-    localStorage.setItem('ac_cookie_consent', JSON.stringify({
-      essential: true, functional: true, analytics: true, timestamp: new Date().toISOString(),
-    }));
-  }, USER_ID);
-
   await page.goto(`${BASE}/auth/login`, { waitUntil: 'domcontentloaded' });
   await dismiss(page);
   await page.fill('input[type="email"]', EMAIL);
@@ -162,8 +133,7 @@ async function dismiss(page) {
   await dismiss(page);
   console.log('LOGIN OK');
 
-  for (let i = 0; i < MODULES.length; i++) {
-    const mod = MODULES[i];
+  for (const mod of MODULES) {
     consoleErrors = [];
     networkFails = [];
     const start = Date.now();
@@ -172,6 +142,8 @@ async function dismiss(page) {
     let title = null;
     let snippet = '';
     let finalUrl = '';
+    let functional = 'render-only';
+    let probeNotes = [];
 
     try {
       await page.goto(`${BASE}${mod.path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
@@ -196,15 +168,19 @@ async function dismiss(page) {
           issues.push(`UI error text: ${re.source}`);
         }
       }
+      for (const re of FAKE_SUCCESS_PATTERNS) {
+        if (re.test(bodyText)) {
+          status = 'fail';
+          issues.push(`fake-success text: ${re.source}`);
+        }
+      }
 
-      // Blank / nearly empty main
       const mainText = await main.innerText().catch(() => '');
       if (mainVisible && mainText.replace(/\s+/g, '').length < 12) {
         status = 'fail';
         issues.push('main content appears blank/empty');
       }
 
-      // React crash / infinite loop in console
       const criticalConsole = consoleErrors.filter((e) =>
         /Maximum update depth|Minified React error|#185|ChunkLoadError|Hydration|is not defined|Cannot read prop/i.test(e)
       );
@@ -213,16 +189,22 @@ async function dismiss(page) {
         issues.push(`critical console: ${criticalConsole[0].slice(0, 160)}`);
       }
 
-      // 5xx on page-related APIs
       if (networkFails.length) {
         status = 'fail';
         issues.push(`5xx responses: ${networkFails.slice(0, 3).map((f) => `${f.status} ${f.url}`).join(' | ')}`);
       }
 
-      // Redirected away from dashboard unexpectedly
       if (!finalUrl.includes('/dashboard') && !finalUrl.includes('/auth')) {
         status = 'fail';
         issues.push(`unexpected redirect: ${finalUrl}`);
+      }
+
+      const probed = await probeModule(page, mod.probe);
+      functional = probed.functional;
+      probeNotes = probed.notes;
+      if (['form', 'chat', 'calendar', 'pipeline'].includes(mod.probe) && functional === 'render-only') {
+        status = status === 'fail' ? 'fail' : 'partial';
+        issues.push(`critical surface missing for probe=${mod.probe}`);
       }
 
       if (status === 'fail') {
@@ -231,7 +213,7 @@ async function dismiss(page) {
       }
     } catch (err) {
       status = 'fail';
-      issues.push(`navigation/crash: ${err.message.slice(0, 200)}`);
+      issues.push(`navigation/crash: ${String(err.message || err).slice(0, 200)}`);
       finalUrl = page.url();
     }
 
@@ -239,7 +221,10 @@ async function dismiss(page) {
       hub: mod.hub,
       label: mod.label,
       path: mod.path,
+      probe: mod.probe,
       status,
+      functional,
+      probeNotes,
       issues,
       title: title?.trim()?.slice(0, 80) || null,
       finalUrl,
@@ -249,16 +234,17 @@ async function dismiss(page) {
       snippet,
     };
     results.push(row);
-    const mark = status === 'pass' ? '✓' : '✗';
-    console.log(`${mark} [${mod.hub}] ${mod.label} (${mod.path}) ${issues.join('; ') || 'ok'}`);
+    const mark = status === 'pass' ? '✓' : status === 'partial' ? '~' : '✗';
+    console.log(`${mark} [${mod.hub}] ${mod.label} (${mod.path}) ${issues.join('; ') || functional}`);
   }
 
   const failed = results.filter((r) => r.status === 'fail');
+  const partial = results.filter((r) => r.status === 'partial');
   const passed = results.filter((r) => r.status === 'pass');
   const byHub = {};
   for (const r of results) {
-    byHub[r.hub] = byHub[r.hub] || { pass: 0, fail: 0, fails: [] };
-    byHub[r.hub][r.status === 'pass' ? 'pass' : 'fail']++;
+    byHub[r.hub] = byHub[r.hub] || { pass: 0, partial: 0, fail: 0, fails: [] };
+    byHub[r.hub][r.status] += 1;
     if (r.status === 'fail') byHub[r.hub].fails.push({ label: r.label, path: r.path, issues: r.issues });
   }
 
@@ -266,8 +252,8 @@ async function dismiss(page) {
     timestamp: new Date().toISOString(),
     base: BASE,
     account: EMAIL,
-    totals: { modules: results.length, passed: passed.length, failed: failed.length },
-    productionReady: failed.length === 0,
+    totals: { modules: results.length, passed: passed.length, partial: partial.length, failed: failed.length },
+    productionReady: failed.length === 0 && partial.length === 0,
     byHub,
     failures: failed.map((f) => ({
       hub: f.hub, label: f.label, path: f.path, issues: f.issues, title: f.title, consoleErrors: f.consoleErrors, networkFails: f.networkFails,
@@ -279,7 +265,7 @@ async function dismiss(page) {
   console.log('\n=== SUMMARY ===');
   console.log(JSON.stringify(report.totals, null, 2));
   console.log('productionReady:', report.productionReady);
-  console.log('Failures:', failed.length);
   for (const f of failed) console.log(`  - [${f.hub}] ${f.label}: ${f.issues.join('; ')}`);
   await browser.close();
+  process.exit(failed.length ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

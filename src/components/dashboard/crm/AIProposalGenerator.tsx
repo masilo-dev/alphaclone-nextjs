@@ -47,7 +47,7 @@ This proposal remains valid for 30 days. Upon acceptance, an official contract w
 
       setProposalMarkdown(generated);
       setGenerating(false);
-      toast.success('AI Proposal generated successfully!');
+      toast.success('Proposal template filled from the fields you entered.');
     }, 600);
   };
 

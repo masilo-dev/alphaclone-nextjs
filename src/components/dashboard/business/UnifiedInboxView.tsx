@@ -30,8 +30,6 @@ import {
   CheckCircle2,
   Clock,
   Eye,
-  FileText,
-  Download,
   Keyboard,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -1301,30 +1299,14 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
                 {/* ── Attachment Card Grid (if email has attachments) ── */}
                 {selectedEmail?.hasAttachments && (
-                  <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3 space-y-2">
+                  <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                       <Paperclip className="w-3.5 h-3.5 text-teal-400" />
                       Attached Files
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-white/5 hover:border-teal-500/30 transition-all">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-4 h-4 text-teal-400 shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium text-slate-200 truncate">Attachment_Doc.pdf</p>
-                            <p className="text-[10px] text-slate-500">PDF • 1.4 MB</p>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => toast.success('Attachment download started')}
-                          className="p-1 text-slate-400 hover:text-teal-400 transition-colors"
-                          title="Download attachment"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
+                    <p className="mt-2 text-xs text-slate-400">
+                      This message has attachments. Open it in the mail provider to download the original files.
+                    </p>
                   </div>
                 )}
 

@@ -149,3 +149,25 @@ describe('create_project client link', () => {
     assert.match(create, /client_id: args.client_id \|\| null/);
   });
 });
+
+describe('Phase 22 honesty gates', () => {
+  it('module audit has no hardcoded tenant password', () => {
+    const source = read('../../scripts/module-audit-all.cjs');
+    assert.equal(source.includes('Amgseries'), false);
+    assert.match(source, /TENANT_PASSWORD/);
+    assert.match(source, /Refusing to run/);
+  });
+
+  it('receipt OCR does not invent amounts', () => {
+    const source = read('../../src/services/ocrReceiptService.ts');
+    assert.equal(source.includes('Math.random()'), false);
+    assert.match(source, /ReceiptOcrUnavailableError/);
+  });
+
+  it('email-campaigns alias is wired to the campaigns module', () => {
+    const routes = read('../../src/lib/normalizeDashboardRoute.ts');
+    assert.match(routes, /'\/dashboard\/email-campaigns': '\/dashboard\/business\/campaigns'/);
+    const dashboard = read('../../src/components/dashboard/business/BusinessDashboard.tsx');
+    assert.match(dashboard, /case '\/dashboard\/email-campaigns':/);
+  });
+});

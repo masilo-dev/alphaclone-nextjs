@@ -39,7 +39,7 @@ registerTool('gap-contracts', {
   inputSchema: z.object({ tenant_id: tid, document_id: z.string() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, document_id: { type: 'string' } }, required: ['document_id'] },
   handler: async (args) => {
-    return { content: [{ type: 'text', text: JSON.stringify({ document_id: args.document_id, status: 'analyzed', summary: 'Contract standard agreement with standard 30-day payment terms.', extracted_entities: { terms: '30 days', jurisdiction: 'US' } }, null, 2) }] };
+    return { content: [{ type: 'text', text: JSON.stringify({ document_id: args.document_id, status: 'unavailable', reason: 'Document intelligence extraction is not connected. Open the document in Documents to review it.' }, null, 2) }] };
   },
 });
 
@@ -50,7 +50,7 @@ registerTool('gap-strategy', {
   inputSchema: z.object({ tenant_id: tid, focus_area: z.string().optional() }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' } } },
   handler: async (args) => {
-    return { content: [{ type: 'text', text: JSON.stringify({ tenant_id: args.tenant_id, status: 'completed', momentum_score: 85, recommendation: 'Increase outreach volume on high-value B2B accounts.', insights: ['Pipeline velocity is up 15%', 'Customer acquisition cost decreased'] }, null, 2) }] };
+    return { content: [{ type: 'text', text: JSON.stringify({ tenant_id: args.tenant_id, status: 'unavailable', reason: 'Strategic intelligence is not computed from live tenant data yet. Use Analytics and Executive view instead.' }, null, 2) }] };
   },
 });
 
@@ -60,7 +60,7 @@ registerTool('gap-strategy', {
   inputSchema: z.object({ tenant_id: tid }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' } } },
   handler: async (args) => {
-    return { content: [{ type: 'text', text: JSON.stringify({ tenant_id: args.tenant_id, momentum_score: 88, max_score: 100, trend: 'upward', factors: { sales_activity: 90, customer_response_rate: 85, invoice_collection: 89 } }, null, 2) }] };
+    return { content: [{ type: 'text', text: JSON.stringify({ tenant_id: args.tenant_id, status: 'unavailable', reason: 'Momentum score is not computed from live tenant metrics yet.' }, null, 2) }] };
   },
 });
 

@@ -43,6 +43,7 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         '/dashboard/operations-command': '/dashboard/operations',
         '/dashboard/marketing/campaigns': '/dashboard/business/campaigns',
         '/dashboard/campaigns': '/dashboard/business/campaigns',
+        '/dashboard/email-campaigns': '/dashboard/business/campaigns',
         '/dashboard/crm/contacts': '/dashboard/crm/unified-contacts',
         '/dashboard/crm/companies': '/dashboard/crm/accounts',
         '/dashboard/crm/deals': '/dashboard/deals',

@@ -3,8 +3,11 @@ const fs = require("fs");
 const path = require("path");
 
 async function run() {
-  const databaseUrl =
-    "postgresql://postgres.ehekzoioqvtweugemktn:Amgseries%40gmail.com@aws-1-eu-central-1.pooler.supabase.com:6543/postgres";
+  const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+  if (!databaseUrl) {
+    console.error('Set DATABASE_URL or SUPABASE_DB_URL. Refusing to use hardcoded credentials.');
+    process.exit(1);
+  }
 
   console.log("Connecting to database via pooler...");
   const client = new Client({

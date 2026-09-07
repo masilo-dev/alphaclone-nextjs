@@ -12,14 +12,15 @@ test.describe("Finance Integrity & GL Assertions", () => {
   });
 
   test("Revenue reports match invoice balances", async ({ page }) => {
+    test.skip(!process.env.TENANT_EMAIL || !process.env.TENANT_PASSWORD, 'Set TENANT_EMAIL and TENANT_PASSWORD');
     await page.goto("/login");
     await page.fill(
       'input[type="email"]',
-      process.env.TENANT_EMAIL || "admin@alphaclone.io",
+      process.env.TENANT_EMAIL || '',
     );
     await page.fill(
       'input[type="password"]',
-      process.env.TENANT_PASSWORD || "Password123!",
+      process.env.TENANT_PASSWORD || '',
     );
     await page.click('button[type="submit"]:has-text("Sign In")');
 

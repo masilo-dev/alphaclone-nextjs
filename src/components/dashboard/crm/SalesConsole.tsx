@@ -115,8 +115,8 @@ export default function SalesConsole() {
             const stageName = stage.stage;
             const rawDeals = stage.deals || [];
             return rawDeals.map((d: any) => {
-              const id: string = d.id || `${stageName}-${Math.random().toString(36).slice(2, 7)}`;
               const label: string = d.name || d.title || d.summary || `Deal in ${stageName || 'pipeline'}`;
+              const id: string = String(d.id || `${stageName}-${label}`).replace(/\s+/g, '-').toLowerCase();
               const value: number = Number(d.value || d.amount || d.total || fallbackUnit);
               const inlineProb = Number(d.probability);
               const probability: number = d.probability != null && !Number.isNaN(inlineProb)
@@ -125,7 +125,7 @@ export default function SalesConsole() {
               const ageDays = daysBetween(d.created_at);
               const lastFollowUpDaysAgo = d.last_activity_at
                 ? daysBetween(d.last_activity_at)
-                : Math.floor(Math.random() * 10);
+                : null;
               return {
                 id,
                 label,
@@ -162,7 +162,7 @@ export default function SalesConsole() {
 
   const pipelineTotalsVm = useMemo(() => pipelineTotals(deals), [deals]);
   const rankedDeals = useMemo(
-    () => rankAndPrioritizeDeals(deals.length ? deals : buildFallbackDeals(stats.pipelineValue, stats.openDeals)),
+    () => rankAndPrioritizeDeals(deals),
     [deals, stats.pipelineValue, stats.openDeals],
   );
   const pipelineFunnel = useMemo(
@@ -424,35 +424,6 @@ export default function SalesConsole() {
       />
     </div>
   );
-}
-
-function buildFallbackDeals(totalValue: number, openCount: number): ExpectedValueDeal[] {
-  if (totalValue <= 0 || openCount <= 0) return [];
-  const n = Math.min(Math.max(openCount, 3), 8);
-  const avg = totalValue / n;
-  const stages: (keyof typeof STAGE_PROBABILITY)[] = ['lead', 'qualified', 'discovery', 'proposal', 'negotiation', 'contract'];
-  const labels = [
-    'Strategic platform review',
-    'Q4 implementation scope',
-    'Renewal + expansion',
-    'Pilot evaluation',
-    'Enterprise annual',
-    'Mid-market standard',
-    'Consulting bundle',
-    'Tech partnership',
-  ];
-  return Array.from({ length: n }).map((_, i) => {
-    const stage = stages[Math.min(i, stages.length - 1)];
-    return {
-      id: `fallback-${i}`,
-      label: labels[i % labels.length],
-      value: Math.round(avg * (0.4 + (i + 1) * 0.2)),
-      probability: STAGE_PROBABILITY[stage],
-      stage,
-      ageDays: 3 + i * 6,
-      lastFollowUpDaysAgo: i === 0 ? 6 : i === 1 ? 3 : i + 1,
-    };
-  });
 }
 
 function formatMoney(n: number): string {

@@ -819,6 +819,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
             case '/dashboard/business/campaigns':
+            case '/dashboard/email-campaigns':
+            case '/dashboard/campaigns':
+            case '/dashboard/marketing/campaigns':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
                         <EmailCampaignsPage userId={user.id} />
