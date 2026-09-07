@@ -1168,6 +1168,7 @@ export const MCP_TOOLS = [
           type: 'boolean',
           description: 'If true, distribute sends across selected providers based on remaining daily limit.',
         },
+        email_category: { type: 'string', enum: ['marketing', 'outreach'], description: 'Marketing requires recorded consent. Outreach uses the permitted outreach policy. Defaults to marketing.' },
         language_mode: {
           type: 'string',
           enum: ['auto', 'ask', 'en', 'es', 'pl', 'fr', 'de', 'it', 'pt', 'nl'],
@@ -2301,7 +2302,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_bulk_email_campaign',
-    description: 'Batch send transactional emails to client list with dry_run support.',
+    description: 'Batch send marketing emails to a client list through the selected provider (including Zoho). Dry run is the default; marketing consent is enforced.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2311,6 +2312,10 @@ export const MCP_TOOLS = [
         html: { type: 'string' },
         text: { type: 'string' },
         dry_run: { type: 'boolean' },
+        confirm_send: { type: 'boolean', description: 'Must be true when dry_run is false.' },
+        idempotency_key: { type: 'string', description: 'Required when dry_run is false.' },
+        provider: { type: 'string', enum: ['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'] },
+        email_category: { type: 'string', enum: ['marketing', 'outreach'], description: 'Marketing requires recorded consent. Defaults to marketing.' },
       },
       required: ['client_ids', 'subject'],
     },
@@ -2504,6 +2509,7 @@ export const MCP_TOOLS = [
         dry_run: { type: 'boolean', description: 'Default true. Returns recipient preview without sending.' },
         confirm_send: { type: 'boolean', description: 'Must be true when dry_run is false.' },
         idempotency_key: { type: 'string', description: 'Required when dry_run is false.' },
+        email_category: { type: 'string', enum: ['marketing', 'outreach'], description: 'Marketing requires recorded consent. Outreach uses the permitted outreach policy. Defaults to marketing.' },
       },
       required: ['subject'],
     },

@@ -6726,48 +6726,22 @@ class AlphaCloneMCPServer {
           const clientIds = Array.isArray(a.client_ids) ? a.client_ids.map((id) => String(id || '').trim()).filter((id) => isUuidString(id)) : [];
           const subject = String(a.subject || '').trim();
           if (!clientIds.length || !subject) throw new Error('client_ids and subject are required');
-          const { data: clients, error: clientsErr } = await supabaseAdmin
-            .from('business_clients')
-            .select('id,name,email')
-            .eq('tenant_id', tenant_id)
-            .in('id', clientIds);
-          if (clientsErr) throw supabaseErrorToMcpClientError('send_bulk_email_campaign', clientsErr.message);
-          const targets = (clients || []).filter((c: any) => !!c.email);
-          const itemResults: Array<Record<string, unknown>> = dryRun
-            ? targets.map((t: any) => ({ client_id: t.id, email: t.email, status: 'dry_run' }))
-            : [];
-          if (!dryRun) {
-            for (const target of targets) {
-              const sendResult = await sendEmailServer({
-                tenantId: tenant_id,
-                userId: user_id,
-                to: String(target.email),
-                subject,
-                html: a.html ? String(a.html) : undefined,
-                text: a.text ? String(a.text) : undefined,
-                fromName: String(a.from_name || 'AlphaClone Systems'),
-                preferredProvider: a.provider as any,
-                templateName: 'mcpBulkEmail',
-              });
-              if (!sendResult.success) {
-                itemResults.push({ client_id: target.id, email: target.email, status: 'failed', error: sendResult.error || 'send_failed' });
-              } else {
-                itemResults.push({ client_id: target.id, email: target.email, status: 'sent', provider: sendResult.provider, email_id: sendResult.emailId });
-              }
-            }
-          }
+          const output = await executeBulkEmail({
+            client_ids: clientIds,
+            subject,
+            html: a.html ? String(a.html) : undefined,
+            text: a.text ? String(a.text) : undefined,
+            provider: a.provider,
+            from_name: a.from_name,
+            dry_run: dryRun,
+            confirm_send: a.confirm_send,
+            idempotency_key: a.idempotency_key,
+            email_category: a.email_category || 'marketing',
+          }, { tenantId: tenant_id, userId: user_id });
           result = { content: [{ type: 'text', text: JSON.stringify({
             ok: true,
             tool: 'send_bulk_email_campaign',
-            data: {
-              dry_run: dryRun,
-              execution_mode: dryRun ? 'simulated' : 'direct',
-              requested: clientIds.length,
-              processed: itemResults.length,
-              sent: itemResults.filter((item) => item.status === 'sent').length,
-              failed: itemResults.filter((item) => item.status === 'failed').length,
-              items: itemResults,
-            },
+            data: output,
           }, null, 2) }] };
           break;
         }
