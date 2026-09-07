@@ -21,6 +21,7 @@ type Enrollment = {
   phone?: string | null;
   linkedin_url?: string | null;
   current_step_order: number;
+  status?: string | null;
   metadata?: Record<string, unknown> | null;
 };
 
