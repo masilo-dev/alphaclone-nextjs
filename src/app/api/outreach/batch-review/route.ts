@@ -22,6 +22,10 @@ type EligibleRecipient = {
   email: string;
 };
 
+type MarketingConsentRow = {
+  email_address: string | null;
+};
+
 const MAX_BATCH_RECIPIENTS = 120;
 
 function resolveDirectEmail(record: OutreachRecord): string | null {
@@ -111,18 +115,20 @@ export async function POST(request: Request) {
     ];
 
     const candidateEmails = [...new Set(candidates.map(({ record }) => resolveDirectEmail(record)).filter((email): email is string => Boolean(email)))];
-    const { data: consentRows, error: consentError } = candidateEmails.length
-      ? await admin
+    let consentRows: MarketingConsentRow[] = [];
+    if (candidateEmails.length) {
+      const { data, error: consentError } = await admin
         .from('consent_records')
         .select('email_address')
         .eq('tenant_id', tenantId)
         .eq('purpose', 'marketing')
         .eq('channel', 'email')
         .eq('status', 'granted')
-        .in('email_address', candidateEmails)
-      : { data: [], error: null };
-    if (consentError) throw consentError;
-    const consentedEmails = new Set((consentRows || []).map((row) => String(row.email_address || '').trim().toLowerCase()));
+        .in('email_address', candidateEmails);
+      if (consentError) throw consentError;
+      consentRows = (data || []) as MarketingConsentRow[];
+    }
+    const consentedEmails = new Set(consentRows.map((row) => String(row.email_address || '').trim().toLowerCase()));
 
     const preflight = await Promise.all(candidates.map(async ({ record, kind }) => {
       const email = resolveDirectEmail(record);
