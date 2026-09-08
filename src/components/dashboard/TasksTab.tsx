@@ -618,7 +618,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               return;
             }
             setTasks((previous) => [deletedTask, ...previous]);
-            toast.dismiss(toastId);
+            toast.dismiss(toastId.id);
             toast.success('Task restored');
           }}
           className="rounded-md bg-white/15 px-2 py-1 text-xs font-bold text-white hover:bg-white/25"
