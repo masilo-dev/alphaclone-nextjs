@@ -1804,8 +1804,10 @@ html.pwa-standalone .pwa-page-title {
   --ws-canvas: var(--background-app);
   /* Sticky workspace headers must be opaque: form text must never show through. */
   --ws-toolbar: #171A26;
-  --ws-panel: rgba(23, 26, 38, 0.82);
-  --ws-panel-hover: rgba(37, 41, 54, 0.9);
+  /* Panels can carry forms, menus and controls. Keep their reading surface
+     solid so workspace content never competes with text above it. */
+  --ws-panel: #171A26;
+  --ws-panel-hover: #252936;
   --ws-surface-primary: var(--surface-primary);
   --ws-surface-secondary: var(--surface-secondary);
   --ws-surface-tertiary: var(--surface-elevated);

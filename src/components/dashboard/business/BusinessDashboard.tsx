@@ -1350,7 +1350,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 Create
                             </button>
                             {quickCreateOpen ? (
-                                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-1.5 shadow-2xl" role="menu">
+                                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-slate-700 bg-[#171A26] p-1.5 shadow-2xl shadow-black/50" role="menu">
                                     {[
                                         ['Task', '/dashboard/tasks?create=true'],
                                         ['Lead', '/dashboard/crm/workspace?quickAdd=true'],
@@ -1391,7 +1391,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 Today
                             </button>
                             {todayOpen ? (
-                                <section className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-3 shadow-2xl" aria-label="Today’s work">
+                                <section className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-700 bg-[#171A26] p-3 shadow-2xl shadow-black/50" aria-label="Today’s work">
                                     <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Today</p>
                                     <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">Start with work that needs a decision or response.</p>
                                     <div className="mt-2 space-y-1">

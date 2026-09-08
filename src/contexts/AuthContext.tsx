@@ -261,6 +261,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // A PWA can remain suspended for a long time. Refresh its stored session as
+    // soon as it becomes visible so reopening the installed app does not send a
+    // valid returning user back through the sign-in screen.
+    useEffect(() => {
+        if (!user || typeof document === 'undefined') return;
+        const refreshOnReturn = () => {
+            if (document.visibilityState === 'visible') {
+                void supabase.auth.refreshSession().catch(() => undefined);
+            }
+        };
+        document.addEventListener('visibilitychange', refreshOnReturn);
+        return () => document.removeEventListener('visibilitychange', refreshOnReturn);
+    }, [user?.id]);
+
     const signOut = async () => {
         setSafeUser(null);
         setLoading(false);

@@ -82,7 +82,8 @@ export const SESSION_ACTIVITY_EVENTS = ['mousedown', 'keydown', 'scroll', 'wheel
 export const useSessionTimeoutWarning = (
     onLogout: () => void,
     timeoutMs: number = resolveIdleTimeoutMs(),
-    warningMs: number = 2 * 60 * 1000 // 2 minutes before timeout
+    warningMs: number = 2 * 60 * 1000, // 2 minutes before timeout
+    enabled = true,
 ) => {
     const [showWarning, setShowWarning] = useState(false);
     const [lastActivity, setLastActivity] = useState(Date.now());
@@ -99,6 +100,7 @@ export const useSessionTimeoutWarning = (
     }, [resetActivity]);
 
     useEffect(() => {
+        if (!enabled) return;
         // Only add listeners if warning is NOT showing (don't auto-reset if they're just moving mouse over warning)
         const handleActivity = () => {
             if (!showWarning) {
@@ -141,8 +143,7 @@ export const useSessionTimeoutWarning = (
             });
             clearInterval(checkInterval);
         };
-    }, [lastActivity, timeoutMs, warningMs, showWarning, onLogout, resetActivity]);
+    }, [lastActivity, timeoutMs, warningMs, showWarning, onLogout, resetActivity, enabled]);
 
     return { showWarning, countdown, extendSession };
 };
-

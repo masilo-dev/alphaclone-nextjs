@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
 import { SessionTimeoutWarning, useSessionTimeoutWarning } from '@/components/SessionTimeoutWarning';
+import { usePWA } from '@/contexts/PWAContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
@@ -74,6 +75,7 @@ export default function DashboardClientPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
     const { user, loading: authLoading, needsMfa, signOut } = useAuth();
+    const { isPWA } = usePWA();
     const { isLoading: tenantLoading } = useTenant();
     const router = useRouter();
     const hasBootstrappedRef = useRef(false);
@@ -97,8 +99,9 @@ export default function DashboardClientPage() {
         }
     }, [user, authLoading, needsMfa, router]);
 
-    // Idle sign-out (default 30 min, 2 min warning; see NEXT_PUBLIC_SESSION_IDLE_TIMEOUT_MINUTES)
-    const { showWarning, countdown, extendSession } = useSessionTimeoutWarning(handleLogout);
+    // Installed apps retain their persisted Supabase session between visits. The
+    // browser dashboard keeps its 30-minute inactivity protection.
+    const { showWarning, countdown, extendSession } = useSessionTimeoutWarning(handleLogout, undefined, undefined, !isPWA);
 
     // Only block with skeleton on the first load — never flash back after the dashboard is interactive.
     if (!hasBootstrappedRef.current && (authLoading || tenantLoading || !user || needsMfa)) {
