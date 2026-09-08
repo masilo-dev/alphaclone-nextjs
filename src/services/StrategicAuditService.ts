@@ -131,13 +131,22 @@ export const strategicAuditService = {
                 Promise.all([
                     db.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tid),
                     db.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', tid),
-                    db.from('business_invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).not('status', 'eq', 'paid'),
+                    db.from('business_invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tid),
                     db.from('tasks').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).not('status', 'eq', 'completed'),
-                    db.from('social_posts').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'published')
+                    db.from('social_posts').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'published'),
+                    db.from('business_invoices')
+                        .select('total, total_amount, amount_paid, paid_at, updated_at, status')
+                        .eq('tenant_id', tid)
+                        .eq('status', 'paid')
+                        .gte('updated_at', format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd'))
                 ])
             ]);
 
-            const [leadsCount, dealsCount, invoicesCount, tasksCount, postsCount] = countsRes;
+            const [leadsCount, dealsCount, invoicesCount, tasksCount, postsCount, paidInvoicesRes] = countsRes;
+            const monthlyRevenue = (paidInvoicesRes.data || []).reduce((sum: number, invoice: any) => {
+                const amount = invoice.amount_paid ?? invoice.total_amount ?? invoice.total ?? 0;
+                return sum + (Number(amount) || 0);
+            }, 0);
 
             const snapshot: BusinessSnapshot = {
                 summary: {
@@ -146,7 +155,7 @@ export const strategicAuditService = {
                     invoices_total: invoicesCount.count || 0,
                     tasks_total: tasksCount.count || 0,
                     posts_total: postsCount.count || 0,
-                    revenue_monthly_actual: 0,
+                    revenue_monthly_actual: monthlyRevenue,
                     weighted_pipeline_value: (dealsRes.data || []).reduce((sum: number, d: any) => sum + ((d.value || 0) * (d.probability || 0) / 100), 0)
                 },
                 deals: (dealsRes.data || []).map((d: any) => ({
@@ -219,4 +228,3 @@ export const strategicAuditService = {
         }
     }
 };
-

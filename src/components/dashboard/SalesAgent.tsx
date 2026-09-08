@@ -1055,7 +1055,7 @@ const SalesAgent: React.FC = () => {
                     </label>
                     <select
                         id="growth-agent-view"
-                        className="w-full max-w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full max-w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-100 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500"
                         value={activeTab === 'agent' ? 'agent' : 'omni'}
                         onChange={(e) => {
                             const v = e.target.value;
@@ -1068,9 +1068,9 @@ const SalesAgent: React.FC = () => {
                             }
                         }}
                     >
-                        <option value="omni">{t('Lead search')}</option>
-                        <option value="agent">{t('Agent chat')}</option>
-                        <option value="marketplace">{t('Integration marketplace')}</option>
+                        <option className="bg-slate-900 text-slate-100" value="omni">{t('Lead search')}</option>
+                        <option className="bg-slate-900 text-slate-100" value="agent">{t('Agent chat')}</option>
+                        <option className="bg-slate-900 text-slate-100" value="marketplace">{t('Integration marketplace')}</option>
                     </select>
                 </div>
             </div>

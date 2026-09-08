@@ -214,6 +214,7 @@ export class OperationsService {
       failuresRes,
       blockersRes,
       projectsRes,
+      overdueTasksRes,
     ] = await Promise.all([
       countOpenTasks(admin, tenantId),
       countActiveProjects(admin, tenantId),
@@ -224,6 +225,12 @@ export class OperationsService {
       admin.from('failure_records').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
       admin.from('operational_blockers').select('*').eq('tenant_id', tenantId).eq('status', 'ACTIVE'),
       admin.from('projects').select('id, status, client_sla_status').eq('tenant_id', tenantId),
+      admin
+        .from('tasks')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .lt('due_date', new Date().toISOString())
+        .not('status', 'in', '("completed","cancelled")'),
     ]);
 
     const projects = projectsRes.data || [];
@@ -246,9 +253,12 @@ export class OperationsService {
 
     const blockers = blockersRes.data || [];
     const failuresCount = failuresRes.count || 0;
+    const overdueTasksCount = overdueTasksRes.count || 0;
 
     let primaryBottleneck = 'None detected';
-    if (blockers.length > 3) {
+    if (overdueTasksCount > 0) {
+      primaryBottleneck = `${overdueTasksCount} overdue tasks require triage`;
+    } else if (blockers.length > 3) {
       primaryBottleneck = `${blockers.length} active work blockers slowing project execution`;
     } else if (breachedSlas > 0) {
       primaryBottleneck = `${breachedSlas} client communications breaching 24h response SLA`;
@@ -264,6 +274,7 @@ export class OperationsService {
       openTasksCount,
       blockedTasksCount: blockedTasksRes.count || 0,
       failedTasksCount: failuresCount,
+      overdueTasksCount,
       pendingDecisionsCount: decisionsRes.count || 0,
       slaCompliancePct,
       outstandingRevenue,

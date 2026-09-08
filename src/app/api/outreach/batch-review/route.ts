@@ -34,9 +34,9 @@ function resolveDirectEmail(record: OutreachRecord): string | null {
   return typeof match === 'string' ? match.trim().toLowerCase() : null;
 }
 
-function hasRecordedMarketingConsent(record: OutreachRecord): boolean {
+function hasRecordedMarketingConsent(record: OutreachRecord, canonicalConsent = false): boolean {
   const metadata = record.metadata && typeof record.metadata === 'object' ? record.metadata : {};
-  return record.marketing_opt_in === true ||
+  return canonicalConsent || record.marketing_opt_in === true ||
     record.email_opt_in === true ||
     metadata.marketing_opt_in === true ||
     metadata.email_opt_in === true ||
@@ -110,9 +110,23 @@ export async function POST(request: Request) {
       ...((clientResult.data || []) as OutreachRecord[]).map((record) => ({ record, kind: 'client' as const })),
     ];
 
+    const candidateEmails = [...new Set(candidates.map(({ record }) => resolveDirectEmail(record)).filter((email): email is string => Boolean(email)))];
+    const { data: consentRows, error: consentError } = candidateEmails.length
+      ? await admin
+        .from('consent_records')
+        .select('email_address')
+        .eq('tenant_id', tenantId)
+        .eq('purpose', 'marketing')
+        .eq('channel', 'email')
+        .eq('status', 'granted')
+        .in('email_address', candidateEmails)
+      : { data: [], error: null };
+    if (consentError) throw consentError;
+    const consentedEmails = new Set((consentRows || []).map((row) => String(row.email_address || '').trim().toLowerCase()));
+
     const preflight = await Promise.all(candidates.map(async ({ record, kind }) => {
       const email = resolveDirectEmail(record);
-      const consented = hasRecordedMarketingConsent(record);
+      const consented = hasRecordedMarketingConsent(record, Boolean(email && consentedEmails.has(email)));
       const suppressed = email ? await isEmailSuppressed(tenantId, email) : false;
       const name = String(record.business_name || record.name || email || 'Unnamed recipient');
       const reason = !email

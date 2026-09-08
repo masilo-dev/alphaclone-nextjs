@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 
 test('invoice delivery remains unverified until a matching provider webhook arrives', () => {
-  const workflow = read('src/workflows/invoice-lifecycle.ts');
+  const workflow = read('src/lib/invoices/invoiceLifecycleSteps.ts');
   const webhook = read('src/app/api/invoices/[id]/delivery-webhook/route.ts');
   assert.match(workflow, /delivery_status:\s*'PENDING'/);
   assert.doesNotMatch(workflow, /delivery_status:\s*'DELIVERED'/);
@@ -115,7 +115,7 @@ test('contract signing links are identity-bound and advance canonical signer ord
 });
 
 test('signed-contract automation creates canonical delivery, billing, and expiry relationships', () => {
-  const workflow = read('src/workflows/contract-flows.ts');
+  const workflow = read('src/lib/contracts/contractSignedSteps.ts');
   const alerts = read('src/services/revenueLifecycleAlertService.ts');
   assert.match(workflow, /contract_id:\s*contractId/);
   assert.match(workflow, /relationship:\s*'billed_by'/);

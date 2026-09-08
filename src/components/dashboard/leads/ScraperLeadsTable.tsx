@@ -64,7 +64,9 @@ const GRADE_COLORS: Record<string, string> = {
 };
 
 const fieldClass = 'rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface)] px-2 py-1 text-sm text-[var(--ws-text-primary)] outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/50';
-const optionStyle = { backgroundColor: 'Canvas', color: 'CanvasText' };
+// Native select popups do not reliably inherit Tailwind colors.  Explicit
+// colors plus a dark color scheme prevent white-on-white options until hover.
+const optionStyle = { backgroundColor: '#0f172a', color: '#f8fafc' };
 
 function exportCsv(leads: ScraperLead[]) {
   const headers = [
@@ -433,7 +435,7 @@ export default function ScraperLeadsTable({
               <Download className="w-4 h-4" />
             </button>
             <select
-              className={fieldClass}
+              className={`${fieldClass} [color-scheme:dark]`}
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
             >
@@ -562,7 +564,7 @@ export default function ScraperLeadsTable({
               <select
                 value={String(pageSize)}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className={fieldClass}
+                className={`${fieldClass} [color-scheme:dark]`}
                 aria-label="Leads per page"
               >
                 <option value="25" style={optionStyle}>25 / page</option>

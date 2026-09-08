@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getUnifiedMcpToolCount } from '@/lib/mcp/listAllTools';
-import { buildApiHealthReport } from '@/lib/mcp/apiHealthReport';
+import { buildApiHealthReport, deriveApiErrorRate } from '@/lib/mcp/apiHealthReport';
 import { buildPaginationMeta, normalizePagination } from '@/lib/mcp/connector/pagination';
 import { okResult } from '@/lib/mcp/connector/response';
 import { throwConnectorError } from '@/lib/mcp/connector/response';
@@ -54,9 +54,7 @@ defineConnectorTool({
       apiHealth = { error: err instanceof Error ? err.message : String(err) };
     }
 
-    const errorRate = Number(
-      apiHealth?.error_rate ?? (apiHealth?.summary as Record<string, unknown> | undefined)?.error_rate ?? 0
-    );
+    const errorRate = deriveApiErrorRate(apiHealth);
     const dbHealthy = !dbError;
     const catalogHealthy = toolCount >= 500;
     const auditScore = audit?.score ?? null;
@@ -149,14 +147,17 @@ defineConnectorTool({
     }
 
     const mem = process.memoryUsage();
-    const healthy = !dbError;
+    const heapUtilization = mem.heapTotal > 0 ? mem.heapUsed / mem.heapTotal : 0;
+    const memoryStatus = heapUtilization >= 0.95 ? 'unhealthy' : heapUtilization >= 0.85 ? 'degraded' : 'healthy';
+    const healthy = !dbError && memoryStatus !== 'unhealthy';
     return {
       status: healthy ? 'healthy' : 'unhealthy',
       checks: {
         database: { status: dbError ? 'unhealthy' : 'healthy', error: dbError?.message },
         redis: { status: redisOk ? 'healthy' : 'unavailable' },
         runtime: {
-          status: 'healthy',
+          status: memoryStatus,
+          heap_utilization_percent: Math.round(heapUtilization * 100),
           uptime_seconds: Math.round(process.uptime()),
           memory_mb: {
             heap_used: Math.round(mem.heapUsed / 1024 / 1024),
