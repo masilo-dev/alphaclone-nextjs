@@ -547,7 +547,7 @@ export default function AlphaCloneEmailWorkspace() {
       {/* ------------------------------------------------------------- */}
       {/* TOP HEADER: UNIVERSAL SEARCH & SYSTEM ENGINE CONTROL */}
       {/* ------------------------------------------------------------- */}
-      <header className="flex min-h-[68px] items-center justify-between gap-3 overflow-x-auto px-4 py-3 bg-[#0F172A]/90 backdrop-blur-xl border-b border-white/10 shrink-0 z-20 no-scrollbar lg:px-5">
+      <header className="flex min-h-[68px] items-center justify-between gap-3 overflow-x-auto px-4 py-3 bg-[#0F172A] border-b border-white/10 shrink-0 z-20 no-scrollbar lg:px-5">
         
         {/* Left branding & Workspace tab selector */}
         <div className="flex min-w-max items-center gap-4">
@@ -991,7 +991,7 @@ export default function AlphaCloneEmailWorkspace() {
             } w-full border-r border-white/10 bg-[#0B1220] flex-col shrink-0 min-h-0 select-none md:flex md:w-auto`}
           >
             {/* Filter toolbar */}
-            <div className="sticky top-0 z-10 p-3 border-b border-white/10 bg-[#0F172A]/95 backdrop-blur-md flex items-center justify-between gap-2 shrink-0">
+            <div className="sticky top-0 z-10 p-3 border-b border-white/10 bg-[#0F172A] flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-1.5 overflow-x-auto">
                 <button
                   onClick={() => {
@@ -1219,7 +1219,7 @@ export default function AlphaCloneEmailWorkspace() {
               <div className="flex-1 flex flex-col min-h-0">
                 
                 {/* Thread Header */}
-                <div className="sticky top-0 z-10 p-4 border-b border-white/10 bg-[#0F172A]/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0 md:p-5">
+                <div className="sticky top-0 z-10 p-4 border-b border-white/10 bg-[#0F172A] flex flex-wrap items-center justify-between gap-3 shrink-0 md:p-5">
                   <div className="min-w-0 space-y-1">
                     <div className="flex min-w-0 items-center gap-2">
                       <h2 className="truncate text-base font-black text-white">{selectedThread.subject}</h2>
@@ -1700,7 +1700,7 @@ export default function AlphaCloneEmailWorkspace() {
       {/* RICH EMAIL COMPOSER MODAL */}
       {/* ------------------------------------------------------------- */}
       {composerOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1200] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-[#0F172A] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             
             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-slate-900/60">

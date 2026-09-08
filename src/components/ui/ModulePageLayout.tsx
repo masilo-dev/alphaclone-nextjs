@@ -61,7 +61,7 @@ export function ModulePageLayout({
       ) : null}
       {header ? <div className="flex-shrink-0">{header}</div> : null}
       {toolbar ? (
-        <div className="sticky top-0 z-10 -mx-1 flex-shrink-0 bg-[var(--ws-canvas)]/95 px-1 py-1 backdrop-blur-sm">
+        <div className="sticky top-0 z-10 -mx-1 flex-shrink-0 bg-[var(--ws-canvas)] px-1 py-1">
           {toolbar}
         </div>
       ) : null}

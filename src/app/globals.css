@@ -1802,7 +1802,8 @@ html.pwa-standalone .pwa-page-title {
 .ac-business-root {
   --ws-sidebar: #15182A;
   --ws-canvas: var(--background-app);
-  --ws-toolbar: rgba(23, 26, 38, 0.88);
+  /* Sticky workspace headers must be opaque: form text must never show through. */
+  --ws-toolbar: #171A26;
   --ws-panel: rgba(23, 26, 38, 0.82);
   --ws-panel-hover: rgba(37, 41, 54, 0.9);
   --ws-surface-primary: var(--surface-primary);
@@ -1843,7 +1844,7 @@ html.light .ac-business-root {
   /* Sidebar stays deep navy in light mode */
   --ws-sidebar: #212446;
   --ws-canvas: var(--background-app);
-  --ws-toolbar: rgba(255, 255, 255, 0.94);
+  --ws-toolbar: #FFFFFF;
   --ws-panel: var(--surface-primary);
   --ws-panel-hover: var(--surface-hover);
   --ws-surface-primary: var(--surface-primary);
