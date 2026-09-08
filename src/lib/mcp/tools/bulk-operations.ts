@@ -189,7 +189,7 @@ defineConnectorTool({
   }).refine((value) => Boolean(value.text || value.html), { message: 'Provide text or html content' })
     .refine((value) => Boolean(value.lead_ids?.length || value.contact_ids?.length || value.client_ids?.length), {
       message: 'Provide at least one lead_ids, contact_ids, or client_ids collection',
-    })
+    }),
   jsonSchema: {
     type: 'object',
     properties: {
