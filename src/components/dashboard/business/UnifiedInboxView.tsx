@@ -47,6 +47,7 @@ const FOLDER_LABELS: Record<InboxFolder, string> = {
   inbox: 'Inbox',
   sent: 'Sent',
   drafts: 'Drafts',
+  spam: 'Spam',
   trash: 'Trash',
 };
 
@@ -887,7 +888,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             </div>
 
             <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto custom-scrollbar" aria-label="Mail modules">
-              {(['inbox', 'sent', 'drafts', 'trash'] as InboxFolder[]).map((f) => (
+              {(['inbox', 'sent', 'drafts', 'spam', 'trash'] as InboxFolder[]).map((f) => (
                 <button
                   key={f}
                   type="button"

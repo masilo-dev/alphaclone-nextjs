@@ -18,8 +18,10 @@ function resolveFolderId(folders: ZohoFolderRow[], kind: InboxFolder): string {
       ? pick((n) => n.includes('inbox'))
       : kind === 'sent'
         ? pick((n) => n.includes('sent'))
-        : kind === 'drafts'
-          ? pick((n) => n.includes('draft'))
+      : kind === 'drafts'
+        ? pick((n) => n.includes('draft'))
+        : kind === 'spam'
+          ? pick((n) => n.includes('spam') || n.includes('junk'))
           : pick((n) => n.includes('trash') || n.includes('deleted'));
 
   return id || folders[0]?.folderId || '1';

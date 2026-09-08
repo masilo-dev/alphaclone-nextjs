@@ -44,6 +44,7 @@ import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutio
 import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types/moduleExecution';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { DEALS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
+import { usePersistentPreference } from '@/hooks/usePersistentPreference';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -553,13 +554,30 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const [newDeal, setNewDeal] = useState({ name: '', value: '', stage: 'lead' as DealStage, contact_name: '', contact_email: '' });
 
   // View mode states
-  const [viewMode, setViewMode] = useState<'board' | 'list' | 'mobile-stage'>('board');
+  const [viewMode, setViewMode] = usePersistentPreference<'board' | 'list' | 'mobile-stage'>(
+    currentTenant?.id && user.id ? `deal_view_${currentTenant.id}_${user.id}` : null,
+    'board',
+    (value): value is 'board' | 'list' | 'mobile-stage' =>
+      value === 'board' || value === 'list' || value === 'mobile-stage',
+  );
 
   // Table List View Search/Filter/Sort states
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStage, setFilterStage] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'value' | 'created_at'>('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [filterStage, setFilterStage] = usePersistentPreference<string>(
+    currentTenant?.id && user.id ? `deal_stage_filter_${currentTenant.id}_${user.id}` : null,
+    'all',
+    (value): value is string => value === 'all' || STAGES.includes(value as DealStage),
+  );
+  const [sortBy, setSortBy] = usePersistentPreference<'value' | 'created_at'>(
+    currentTenant?.id && user.id ? `deal_sort_by_${currentTenant.id}_${user.id}` : null,
+    'created_at',
+    (value): value is 'value' | 'created_at' => value === 'value' || value === 'created_at',
+  );
+  const [sortOrder, setSortOrder] = usePersistentPreference<'asc' | 'desc'>(
+    currentTenant?.id && user.id ? `deal_sort_order_${currentTenant.id}_${user.id}` : null,
+    'desc',
+    (value): value is 'asc' | 'desc' => value === 'asc' || value === 'desc',
+  );
 
   // Create Deal modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -572,6 +590,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const [savingNewDeal, setSavingNewDeal] = useState(false);
   const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') setShowCreateModal(true);
+  }, [searchParams]);
   const [visibleCount, setVisibleCount] = useState(40);
   const loadMoreDeals = useCallback(() => setVisibleCount((c) => c + 30), []);
   const [selectedDealIds, setSelectedDealIds] = useState<Set<string>>(new Set());

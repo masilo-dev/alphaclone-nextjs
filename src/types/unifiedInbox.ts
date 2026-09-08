@@ -1,6 +1,6 @@
 export type InboxProvider = 'gmail' | 'microsoft' | 'zoho';
 
-export type InboxFolder = 'inbox' | 'sent' | 'drafts' | 'trash';
+export type InboxFolder = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash';
 
 /** Client-side / metadata labels for organizing mail beyond folders. */
 export type InboxLabel =

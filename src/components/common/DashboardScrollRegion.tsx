@@ -43,6 +43,7 @@ export function DashboardScrollRegion({
     return (
       <PullToRefresh
         onRefresh={onRefresh}
+        data-dashboard-scroll-region
         className={`h-full min-h-0 scroll-smooth ${className}`}
       >
         {children}
@@ -52,6 +53,7 @@ export function DashboardScrollRegion({
 
   return (
     <div
+      data-dashboard-scroll-region
       className={`h-full min-h-0 overflow-y-auto overflow-x-hidden scroll-smooth ${className}`}
     >
       {children}

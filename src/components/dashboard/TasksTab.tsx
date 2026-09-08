@@ -38,6 +38,7 @@ import { TASKS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
 import { offlineService } from '@/services/offlineService';
 import { usePullToRefreshListener } from '@/components/common/DashboardScrollRegion';
+import { usePersistentPreference } from '@/hooks/usePersistentPreference';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -500,7 +501,11 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = usePersistentPreference<ViewMode>(
+    currentTenant?.id && user.id ? `task_view_${currentTenant.id}_${user.id}` : null,
+    'list',
+    (value): value is ViewMode => value === 'list' || value === 'board',
+  );
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
@@ -591,12 +596,37 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
 
   const handleDelete = async (id: string) => {
     if (!currentTenant?.id) return;
+    const deletedTask = tasks.find((task) => task.id === id);
     const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id] }),
     });
     if (!response.ok) { toast.error('Task could not be deleted'); return; }
     setTasks(prev => prev.filter(t => t.id !== id));
-    toast.success('Task deleted');
+    toast((toastId) => (
+      <div className="flex items-center gap-3">
+        <span>Task moved to trash</span>
+        <button
+          type="button"
+          onClick={async () => {
+            const restore = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids: [id], restore: true }),
+            });
+            if (!restore.ok || !deletedTask) {
+              toast.error('Task could not be restored');
+              return;
+            }
+            setTasks((previous) => [deletedTask, ...previous]);
+            toast.dismiss(toastId);
+            toast.success('Task restored');
+          }}
+          className="rounded-md bg-white/15 px-2 py-1 text-xs font-bold text-white hover:bg-white/25"
+        >
+          Undo
+        </button>
+      </div>
+    ), { duration: 7000 });
   };
 
   const handleUpdate = async (id: string, changes: Partial<Task>) => {

@@ -398,6 +398,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                     <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Navigate</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
+                                    <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-xs font-black text-slate-400">/</div>
+                                    <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Open search</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
                                     <div className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 text-xs font-black text-slate-400">ENTER</div>
                                     <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">Select</span>
                                 </div>

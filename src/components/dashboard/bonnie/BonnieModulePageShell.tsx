@@ -1,41 +1,27 @@
 'use client';
 
-import React, { createContext, useContext } from 'react';
-import { cn } from '@/lib/utils';
-import BonnieModuleDock from './BonnieModuleDock';
-
-const BonnieDockMountedContext = createContext(false);
+import React from 'react';
 
 type BonnieModulePageShellProps = {
   children: React.ReactNode;
   className?: string;
-  /** When false, render children only (e.g. full-bleed editors). Default true. */
+  /**
+   * Retained for call-site compatibility. Bonnie now lives in its dedicated
+   * sidebar workspace, so module content always receives the full width.
+   */
   showBonnieDock?: boolean;
 };
 
 /**
- * Module pages get a collapsible Bonnie dock so AI help lives inside every workspace.
- * Nested shells skip a second dock when already wrapped by a hub.
+ * Preserves the module-shell API without permanently mounting Bonnie beside
+ * every module. Open Bonnie from Intelligence → Bonnie AI in the sidebar, or
+ * use contextual Ask Bonnie actions where they are useful.
  */
 export function BonnieModulePageShell({
   children,
   className,
-  showBonnieDock = true,
+  showBonnieDock: _showBonnieDock = true,
 }: BonnieModulePageShellProps) {
-  const alreadyMounted = useContext(BonnieDockMountedContext);
-
-  if (!showBonnieDock || alreadyMounted) {
-    return <div className={className}>{children}</div>;
-  }
-
-  return (
-    <BonnieDockMountedContext.Provider value={true}>
-      <div className={cn('flex flex-col xl:flex-row gap-4 min-h-0', className)}>
-        <div className="flex-1 min-w-0 min-h-0">{children}</div>
-        <aside className="w-full xl:w-[360px] xl:max-w-[380px] flex-shrink-0 xl:sticky xl:top-2 xl:self-start">
-          <BonnieModuleDock />
-        </aside>
-      </div>
-    </BonnieDockMountedContext.Provider>
-  );
+  void _showBonnieDock;
+  return <div className={className}>{children}</div>;
 }

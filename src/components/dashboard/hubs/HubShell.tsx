@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { HUB_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ChevronDown, Info, Maximize2, Minimize2 } from 'lucide-react';
 
 export interface HubTab {
   label: string;
@@ -86,26 +87,32 @@ export default function HubShell({
   const hubSteps = moduleId && pathname && !ROUTES_WITH_PAGE_GUIDES.has(pathname)
     ? HUB_EXECUTION_STEPS[moduleId]
     : undefined;
+  const [overviewOpen, setOverviewOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
   return (
     <div
       className={cn(
-        'flex flex-col min-h-0 ac-enterprise-module ac-module-frame',
-        isFullHeight ? 'h-full overflow-hidden' : 'ac-scroll-full'
+        'relative flex flex-col min-h-0 ac-enterprise-module ac-module-frame',
+        isFocused
+          ? 'fixed inset-0 z-[100] h-[100dvh] w-screen overflow-y-auto bg-[var(--ws-canvas)]'
+          : isFullHeight
+            ? 'h-full overflow-hidden'
+            : 'ac-scroll-full'
       )}
       style={{ ['--module-accent' as string]: accentColor }}
       data-module={moduleId}
     >
       <div
         className={cn(
-          'flex-shrink-0 px-4 pt-3 pb-0 ac-workspace-toolbar border-b border-[var(--ws-border)]',
+          'sticky top-0 z-20 flex-shrink-0 bg-[var(--ws-toolbar)] px-4 py-2 ac-workspace-toolbar border-b border-[var(--ws-border)]',
         )}
         {...(dataTour ? { 'data-tour': dataTour } : {})}
       >
         <div className="flex items-center gap-2.5">
           {ModuleIcon ? (
             <span
-              className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] shrink-0"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] shrink-0"
               style={{
                 background: `color-mix(in srgb, ${accentColor} 14%, transparent)`,
                 color: accentColor,
@@ -121,10 +128,35 @@ export default function HubShell({
             />
           )}
           <div className="min-w-0">
-            <h1 className={WORKSPACE.typography.pageTitle}>{t(title)}</h1>
+            <h1 className="text-sm font-bold tracking-tight text-[var(--ws-text-primary)]">{t(title)}</h1>
             {description ? (
-              <p className="text-[13px] text-[var(--ws-text-muted)] mt-0.5">{t(description)}</p>
+              <p className="hidden text-xs text-[var(--ws-text-muted)] lg:block">{t(description)}</p>
             ) : null}
+          </div>
+          <div className="ml-auto flex items-center gap-1.5">
+            {hubSteps?.length ? (
+              <button
+                type="button"
+                onClick={() => setOverviewOpen((open) => !open)}
+                aria-expanded={overviewOpen}
+                aria-controls="module-overview"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-2 text-[11px] font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+              >
+                <Info className="h-3.5 w-3.5" aria-hidden />
+                <span className="hidden sm:inline">{t('Overview')}</span>
+                <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', overviewOpen && 'rotate-180')} aria-hidden />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setIsFocused((focused) => !focused)}
+              aria-pressed={isFocused}
+              aria-label={isFocused ? t('Exit focus mode') : t('Focus this module')}
+              title={isFocused ? t('Exit focus mode') : t('Focus this module')}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+            >
+              {isFocused ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </button>
           </div>
         </div>
 
@@ -133,11 +165,11 @@ export default function HubShell({
           currentHref={pathname || undefined}
           label={`${t('Switch section')}: ${t(title)}`}
           onNavigate={(href) => router.push(href)}
-          className="mt-3 md:hidden"
+          className="mt-2 md:hidden"
         />
 
         <div
-          className="flex gap-0 overflow-x-auto ios-scroll mt-2 -mx-1 px-1 border-b border-[var(--ws-border)]"
+          className="flex gap-0 overflow-x-auto ios-scroll mt-1 -mx-1 px-1"
           role="tablist"
           aria-label={`${t(title)} · ${t('Sections')}`}
         >
@@ -172,29 +204,26 @@ export default function HubShell({
           })}
         </div>
 
-        {hubSteps?.length && isFullHeight ? (
-          <ExecutionDecisionGuide
-            steps={hubSteps}
-            onNavigate={(href) => router.push(href)}
-            className="my-3"
-          />
+        {hubSteps?.length && overviewOpen ? (
+          <div id="module-overview">
+            <ExecutionDecisionGuide
+              title="Module overview"
+              description={description}
+              steps={hubSteps}
+              onNavigate={(href) => router.push(href)}
+              className="mt-2"
+            />
+          </div>
         ) : null}
       </div>
 
       <div
         className={cn(
           'flex-1 min-h-0 ac-safe-bottom',
-          isFullHeight ? 'h-full overflow-hidden p-0' : 'ac-scroll-full px-4 py-4 md:py-5'
+          isFullHeight ? 'h-full overflow-hidden p-0' : 'ac-scroll-full px-4 py-3 md:py-4'
         )}
       >
         <BonnieModulePageShell showBonnieDock={!isFullHeight}>
-          {hubSteps?.length && !isFullHeight ? (
-            <ExecutionDecisionGuide
-              steps={hubSteps}
-              onNavigate={(href) => router.push(href)}
-              className="mb-4"
-            />
-          ) : null}
           {children}
         </BonnieModulePageShell>
       </div>

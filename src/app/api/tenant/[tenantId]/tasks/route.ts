@@ -35,6 +35,7 @@ const updateTaskSchema = z.object({
 const bulkSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(200),
   changes: updateTaskSchema.optional(),
+  restore: z.boolean().optional(),
   idempotencyKey: z.string().uuid().optional(),
 });
 
@@ -99,7 +100,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
     const { tenantId } = await context.params;
     const { user } = await requireTenantAccess(tenantId, req);
     const parsed = bulkSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success || !parsed.data.changes || Object.keys(parsed.data.changes).length === 0) {
+    if (!parsed.success || (!parsed.data.restore && (!parsed.data.changes || Object.keys(parsed.data.changes).length === 0))) {
       return NextResponse.json({ error: 'Invalid task update' }, { status: 400 });
     }
     const admin = createSupabaseAdminClient();
@@ -111,7 +112,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
         return NextResponse.json({ success: true, updated: Number(existing.updated) || parsed.data.ids.length });
       }
     }
-    if (parsed.data.changes.status) {
+    if (!parsed.data.restore && parsed.data.changes?.status) {
       const nextStatus = parsed.data.changes.status;
       const { data: current, error: currentError } = await admin
         .from('tasks')
@@ -131,11 +132,14 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
       }
     }
     const changes = {
-      ...parsed.data.changes,
+      ...(parsed.data.restore ? { deleted_at: null } : parsed.data.changes),
       updated_at: new Date().toISOString(),
-      ...(parsed.data.changes.status === 'completed' ? { completed_at: new Date().toISOString() } : {}),
+      ...(!parsed.data.restore && parsed.data.changes?.status === 'completed' ? { completed_at: new Date().toISOString() } : {}),
     };
-    const { data, error } = await admin.from('tasks').update(changes).eq('tenant_id', tenantId).in('id', parsed.data.ids).is('deleted_at', null).select('id');
+    let updateQuery = admin.from('tasks').update(changes).eq('tenant_id', tenantId).in('id', parsed.data.ids);
+    if (parsed.data.restore) updateQuery = updateQuery.not('deleted_at', 'is', null);
+    else updateQuery = updateQuery.is('deleted_at', null);
+    const { data, error } = await updateQuery.select('id');
     if (error) throw error;
     if ((data || []).length !== parsed.data.ids.length) return NextResponse.json({ error: 'One or more tasks were not found' }, { status: 404 });
 

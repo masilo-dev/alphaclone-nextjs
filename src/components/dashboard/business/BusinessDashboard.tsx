@@ -168,6 +168,7 @@ import MissedCallsNotification from '../MissedCallsNotification';
 import { DashboardRouteTransition } from '../DashboardRouteTransition';
 import { DashboardScrollRegion, dispatchPullRefresh } from '@/components/common/DashboardScrollRegion';
 import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
+import { useDashboardScrollRestoration } from '@/hooks/useDashboardScrollRestoration';
 
 /** Full-bleed tabs: no outer padding; child manages its own scroll (mail, projects, etc.). Social pages scroll with the main column like CRM. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
@@ -214,6 +215,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         () => normalizeBusinessRoute(activeTab, user.role),
         [activeTab, user.role],
     );
+    useDashboardScrollRestoration(route);
     const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats, refreshTenants, error: tenantError } = useTenant();
     const currentTenant = propTenant || contextTenant;
     const tenantBranding = useMemo(() => extractTenantBranding(currentTenant), [currentTenant]);
@@ -231,6 +233,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [activeSection, setActiveSection] = useState('profile');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+    const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+    const [todayOpen, setTodayOpen] = useState(false);
     const [showProductTour, setShowProductTour] = useState(false);
     const [showBusinessWelcome, setShowBusinessWelcome] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
@@ -468,6 +472,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     });
 
     const projects = projectData?.projects || [];
+    const todayItems = [
+        { label: 'Unread messages', count: Number(dashboardStats?.unreadMessages || 0), href: '/dashboard/comms' },
+        { label: 'Open tasks', count: Math.max(0, Number(dashboardStats?.totalTasks || 0) - Number(dashboardStats?.completedTasks || 0)), href: '/dashboard/tasks' },
+        { label: 'Overdue invoices', count: Number(dashboardStats?.overdueInvoices || 0), href: '/dashboard/business/billing/manage' },
+        { label: 'Active projects', count: Number(dashboardStats?.activeProjects || 0), href: '/dashboard/business/projects' },
+    ];
 
     const handlePullRefresh = React.useCallback(async () => {
         await Promise.all([
@@ -1325,6 +1335,84 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         )}
 
                         {/* Create button intentionally removed from header – use BottomNav → More on mobile, or Command Palette on desktop */}
+                        <div className="relative hidden md:block">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setQuickCreateOpen((open) => !open);
+                                    setTodayOpen(false);
+                                }}
+                                aria-expanded={quickCreateOpen}
+                                aria-haspopup="menu"
+                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-teal-400/30 bg-teal-500/10 px-3 text-xs font-bold text-teal-300 transition hover:bg-teal-500/20"
+                            >
+                                <Plus className="h-4 w-4" aria-hidden="true" />
+                                Create
+                            </button>
+                            {quickCreateOpen ? (
+                                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-1.5 shadow-2xl" role="menu">
+                                    {[
+                                        ['Task', '/dashboard/tasks?create=true'],
+                                        ['Lead', '/dashboard/crm/workspace?quickAdd=true'],
+                                        ['Deal', '/dashboard/deals?create=true'],
+                                        ['Quote', '/dashboard/business/quotes?create=true'],
+                                        ['Invoice', '/dashboard/business/billing/manage?create=true'],
+                                        ['Project', '/dashboard/business/projects/manage?create=true'],
+                                        ['Email', '/dashboard/mail?compose=true'],
+                                    ].map(([label, href]) => (
+                                        <button
+                                            key={label}
+                                            type="button"
+                                            role="menuitem"
+                                            onClick={() => {
+                                                setActiveTab(href);
+                                                setQuickCreateOpen(false);
+                                            }}
+                                            className="flex w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+                                        >
+                                            {t(`Create ${label}`)}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+                        </div>
+                        <div className="relative hidden lg:block">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setTodayOpen((open) => !open);
+                                    setQuickCreateOpen(false);
+                                }}
+                                aria-expanded={todayOpen}
+                                aria-haspopup="dialog"
+                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-3 text-xs font-bold text-[var(--ws-text-secondary)] transition hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+                            >
+                                <CheckSquare className="h-4 w-4" aria-hidden="true" />
+                                Today
+                            </button>
+                            {todayOpen ? (
+                                <section className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-3 shadow-2xl" aria-label="Today’s work">
+                                    <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Today</p>
+                                    <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">Start with work that needs a decision or response.</p>
+                                    <div className="mt-2 space-y-1">
+                                        {todayItems.map(({ label, count, href }) => (
+                                            <button
+                                                key={href}
+                                                type="button"
+                                                onClick={() => {
+                                                    setActiveTab(href);
+                                                    setTodayOpen(false);
+                                                }}
+                                                className="flex w-full rounded-lg px-2.5 py-2 text-left text-xs font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+                                            >
+                                                <span>{t(label)}</span>
+                                                <span className="ml-auto rounded-full bg-[var(--ws-hover)] px-2 py-0.5 text-[10px] tabular-nums text-[var(--ws-text-primary)]">{count}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+                            ) : null}
+                        </div>
                         <button
                             type="button"
                             onClick={() => setActiveTab('/dashboard/business/bonnie')}

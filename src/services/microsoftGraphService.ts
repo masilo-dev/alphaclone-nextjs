@@ -392,7 +392,15 @@ export const microsoftGraphService = {
   },
 
   async getFolderMessages(folder: string, limit = 25) {
-    const folderPath = folder === 'sent' ? 'sentitems' : folder === 'trash' ? 'deleteditems' : folder === 'drafts' ? 'drafts' : 'inbox';
+    const folderPath = folder === 'sent'
+      ? 'sentitems'
+      : folder === 'trash'
+        ? 'deleteditems'
+        : folder === 'drafts'
+          ? 'drafts'
+          : folder === 'spam'
+            ? 'junkemail'
+            : 'inbox';
     const data = await graphRequest<{ value: any[] }>(
       `/me/mailFolders/${folderPath}/messages?$top=${limit}&$orderby=receivedDateTime DESC`
     );

@@ -15,7 +15,7 @@ import {
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '@/contexts/TenantContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AiDraftReviewBanner from '@/components/dashboard/inbox/AiDraftReviewBanner';
 import { normalizeDeliveryProvider, resolveAutoProvider, type DeliveryEmailProvider } from '@/lib/email/emailProviderOptions';
@@ -154,6 +154,7 @@ function mapUnifiedToThread(m: Record<string, any>): EmailThread {
 export default function AlphaCloneEmailWorkspace() {
   const { currentTenant: tenant } = useTenant();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Navigation & View States
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('inbox');
@@ -195,6 +196,10 @@ export default function AlphaCloneEmailWorkspace() {
   // Inline reply state
   const [inlineReplyBody, setInlineReplyBody] = useState('');
   const [inlineReplySending, setInlineReplySending] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('compose') === 'true') setComposerOpen(true);
+  }, [searchParams]);
 
   // Derived selected thread
   const selectedThread = useMemo(
@@ -853,6 +858,25 @@ export default function AlphaCloneEmailWorkspace() {
                       <Archive className="w-4 h-4 text-slate-400" />
                       {!sidebarCollapsed && <span>Archive</span>}
                     </div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveFolder('spam')}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all ${
+                      activeFolder === 'spam'
+                        ? 'bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30'
+                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                      {!sidebarCollapsed && <span>Spam</span>}
+                    </div>
+                    {!sidebarCollapsed && folderCounts.spam > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">
+                        {folderCounts.spam}
+                      </span>
+                    )}
                   </button>
 
                   <button

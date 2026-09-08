@@ -20,7 +20,7 @@ const MailTab: React.FC<MailTabProps> = () => {
         </div>
       }
     >
-      <ModulePageLayout className="h-full min-h-0">
+      <ModulePageLayout className="h-full min-h-0" scrollContent={false}>
         <AlphaCloneEmailWorkspace />
       </ModulePageLayout>
     </Suspense>
