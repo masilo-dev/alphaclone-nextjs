@@ -11,7 +11,9 @@ const DEFAULT_PATHS = ['/', '/contact', '/contact-us', '/about', '/about-us', '/
 export function extractPublicEmails(html: string, sourceUrl: string) {
   const $ = load(html);
   const candidates = new Set<string>();
-  $('a[href^="mailto:"]').each((_, el) => candidates.add(($(el).attr('href') || '').slice(7).split('?')[0]));
+  $('a[href^="mailto:"]').each((_, el) => {
+    candidates.add(($(el).attr('href') || '').slice(7).split('?')[0]);
+  });
   const text = `${$.text()} ${$('script[type="application/ld+json"]').text()}`;
   for (const match of text.matchAll(/[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}/gi)) candidates.add(match[0]);
   return [...candidates].map(normalizeEmail).filter((email): email is string => Boolean(email)).map((email) => ({
