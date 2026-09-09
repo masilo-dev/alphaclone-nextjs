@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 type Context = { params: Promise<{ id: string }> };
+type LeadCandidateRow = Record<string, unknown> & { id: string; created_at: string };
+type QualificationSnapshotRow = Record<string, unknown> & { candidate_id: string | null };
 
 function isUnavailableSchema(error: unknown): boolean {
   const candidate = error as { code?: string; message?: string } | null;
@@ -28,17 +30,19 @@ export async function GET(req: NextRequest, context: Context) {
       );
     }
     if (error) throw error;
-    const candidates = data || [];
-    const ids = candidates.map((candidate) => candidate.id);
+    const candidates = (data || []) as LeadCandidateRow[];
+    const ids = candidates.map((candidate: LeadCandidateRow) => candidate.id);
     const { data: snapshots, error: snapshotError } = ids.length
       ? await admin.from('lead_qualification_snapshots').select('*').eq('workspace_id', workspaceId).in('candidate_id', ids)
       : { data: [], error: null };
     // The intelligence migration is additive. Existing results remain readable
     // while it is being applied or its PostgREST schema cache refreshes.
     if (snapshotError && !isUnavailableSchema(snapshotError)) throw snapshotError;
-    const byCandidate = new Map((snapshots || []).map((snapshot) => [snapshot.candidate_id, snapshot]));
+    const byCandidate = new Map(((snapshots || []) as QualificationSnapshotRow[])
+      .filter((snapshot): snapshot is QualificationSnapshotRow & { candidate_id: string } => Boolean(snapshot.candidate_id))
+      .map((snapshot: QualificationSnapshotRow) => [snapshot.candidate_id, snapshot]));
     return NextResponse.json({
-      candidates: candidates.map((candidate) => ({ ...candidate, qualification: byCandidate.get(candidate.id) || null })),
+      candidates: candidates.map((candidate: LeadCandidateRow) => ({ ...candidate, qualification: byCandidate.get(candidate.id) || null })),
       nextCursor: data?.length === limit ? data.at(-1)?.created_at : null,
     });
   } catch (error) { return routeErrorResponse(error, 'Failed to load search results', req); }
