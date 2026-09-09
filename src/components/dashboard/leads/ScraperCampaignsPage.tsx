@@ -9,9 +9,10 @@ import {
   Sparkles, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { propagation } from '@/lib/behavioral/propagationBridge';
 import LeadFinderMapPanel from '@/components/dashboard/leads/LeadFinderMapPanel';
+import LeadFinderChat from '@/components/dashboard/leads/LeadFinderChat';
 
 type SearchRecord = {
   id: string; name: string; query?: string; location?: string; industry?: string;
@@ -24,6 +25,10 @@ type Candidate = {
   country?: string; website?: string; public_email?: string; public_phone?: string;
   source_type: string; quality_score: number; fit_score: number; verification_status: string;
   review_status: string; created_at: string; lat?: number; lng?: number;
+  qualification?: {
+    master_score: number; grade: string; priority_band: string; qualification_reason: string;
+    why_now: string; recommended_action: string; recommended_offer?: { primary_offer?: string | null };
+  } | null;
 };
 
 type LeadList = {
@@ -64,7 +69,7 @@ function writeLeadFinderSettings(workspaceId: string, settings: LeadFinderSettin
   window.localStorage.setItem(`${SETTINGS_KEY}:${workspaceId}`, JSON.stringify(settings));
 }
 
-const nav = ['Discover', 'Results', 'Lists', 'Outreach', 'Activity', 'Settings'] as const;
+const nav = ['Discover', 'Assistant', 'Results', 'Lists', 'Outreach', 'Activity', 'Settings'] as const;
 const presets = [
   ['Restaurants in Harare', 'restaurants', 'Harare'],
   ['Construction companies in Bulawayo', 'construction companies', 'Bulawayo'],
@@ -81,7 +86,13 @@ const buttonClass = 'inline-flex min-h-11 items-center justify-center gap-2 roun
 export default function ScraperCampaignsPage() {
   const tenant = useCurrentTenantSafe();
   const router = useRouter();
-  const [active, setActive] = useState<(typeof nav)[number]>('Discover');
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [active, setActive] = useState<(typeof nav)[number]>(() =>
+    pathname === '/dashboard/sales-agent' || searchParams.get('tab') === 'chat'
+      ? 'Assistant'
+      : 'Discover'
+  );
   const [advanced, setAdvanced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [available, setAvailable] = useState(true);
@@ -110,64 +121,24 @@ export default function ScraperCampaignsPage() {
 
   const loadSearches = useCallback(async () => {
     if (!tenant?.id) return;
-    const res = await fetch(`/api/scraper-campaigns?tenantId=${encodeURIComponent(tenant.id)}`);
+    const res = await fetch(`/api/leads/searches?workspaceId=${encodeURIComponent(tenant.id)}`);
     const body = await res.json();
-    if (res.ok) {
-      setAvailable(true);
-      setAvailabilityNotice(null);
-      const mapped: SearchRecord[] = (body.campaigns || []).map((c: {
-        id: string; name: string; status?: string; location?: { city?: string }; created_at: string;
-        discovered_count?: number; accepted_count?: number; contactable_count?: number; contacted_count?: number;
-      }) => ({
-        id: c.id,
-        name: c.name,
-        location: c.location?.city,
-        status: c.status || 'active',
-        progress: c.status === 'active' || (c.discovered_count || 0) > 0 ? 100 : 40,
-        discovered_count: c.discovered_count || 0,
-        accepted_count: c.accepted_count || 0,
-        rejected_count: 0,
-        duplicate_count: 0,
-        error_count: 0,
-        created_at: c.created_at,
-        contactable_count: c.contactable_count || 0,
-        contacted_count: c.contacted_count || 0,
-      }));
-      setSearches(mapped);
-      setSelectedSearch((current) => current ? mapped.find((s) => s.id === current.id) || current : mapped[0] || null);
-    } else {
-      toast.error(body?.error || 'Lead Finder could not be loaded');
-    }
+    if (!res.ok) { toast.error(body.error || 'Could not load searches'); return; }
+    setAvailable(body.available !== false);
+    setAvailabilityNotice(body.notice || null);
+    const rows = body.searches || [];
+    setSearches(rows);
+    setSelectedSearch(current => current ? rows.find((row: SearchRecord) => row.id === current.id) || current : rows[0] || null);
   }, [tenant?.id]);
 
   const loadResults = useCallback(async () => {
     if (!tenant?.id || !selectedSearch?.id) return;
-    const res = await fetch('/api/scraper-campaigns/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tenantId: tenant.id, action: 'leads', campaignId: selectedSearch.id }),
-    });
+    const res = await fetch(`/api/leads/searches/${selectedSearch.id}/results?workspaceId=${encodeURIComponent(tenant.id)}&limit=100`);
     const body = await res.json();
-    if (res.ok) {
-      setCandidates((body.leads || []).map((lead: Record<string, unknown>) => ({
-        id: String(lead.id),
-        business_name: String(lead.company || lead.name || ''),
-        contact_name: lead.name ? String(lead.name) : undefined,
-        industry: lead.industry ? String(lead.industry) : undefined,
-        city: lead.address ? String(lead.address) : undefined,
-        website: lead.company_website ? String(lead.company_website) : undefined,
-        public_email: lead.email ? String(lead.email) : undefined,
-        public_phone: lead.phone ? String(lead.phone) : undefined,
-        source_type: String(lead.source || 'directory'),
-        quality_score: Number(lead.score || 0),
-        fit_score: Number(lead.score || 0),
-        verification_status: String(lead.verification_status || (lead.email || lead.phone ? 'contactable' : 'unverified')),
-        review_status: String(lead.status || 'new'),
-        created_at: String(lead.created_at || ''),
-        lat: lead.lat != null ? Number(lead.lat) : undefined,
-        lng: lead.lng != null ? Number(lead.lng) : undefined,
-      })));
-    }
+    if (!res.ok) { toast.error(body.error || 'Could not load results'); return; }
+    setCandidates((body.candidates || []).map((row: Candidate & { latitude?: number; longitude?: number }) => ({
+      ...row, lat: row.latitude, lng: row.longitude,
+    })));
   }, [tenant?.id, selectedSearch?.id]);
 
   const loadLists = useCallback(async () => {
@@ -218,42 +189,35 @@ export default function ScraperCampaignsPage() {
     }
     setSubmitting(true);
     try {
-      const message = [form.keywords, form.location && `in ${form.location}`].filter(Boolean).join(' ');
-      const intent = {
-        name: message.slice(0, 120) || 'Lead search',
-        niche: form.keywords || form.industry,
-        search_query: message,
-        industry: form.industry ? [form.industry] : [],
-        location: {
-          city: form.city || form.location,
-          country: form.country || undefined,
-          radius_km: Number(form.radiusKm) || 25,
-        },
-        daily_limit: Number(form.resultLimit) || 50,
-        min_score_threshold: 45,
-        sources: form.sources.length ? form.sources : ['website', 'directory'],
-      };
-      const res = await fetch('/api/scraper-campaigns/chat', {
+      const res = await fetch('/api/leads/searches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId: tenant.id, action: 'run', intent }),
+        body: JSON.stringify({
+          workspaceId: tenant.id,
+          name: [form.keywords, form.location].filter(Boolean).join(' — ').slice(0, 120) || 'Lead search',
+          query: form.keywords,
+          businessKeywords: form.keywords ? [form.keywords] : [],
+          searchType: form.searchType,
+          industry: form.industry,
+          location: form.location,
+          city: form.city,
+          country: form.country,
+          region: form.region,
+          sources: form.sources,
+          resultLimit: Number(form.resultLimit) || 50,
+          requirements: { email: form.email, phone: form.phone, website: form.website, social: form.social },
+          exclusions: {
+            keywords: form.excludedKeywords.split(',').map(value => value.trim()).filter(Boolean),
+            domains: form.excludedDomains.split(',').map(value => value.trim()).filter(Boolean),
+            locations: form.excludedLocations.split(',').map(value => value.trim()).filter(Boolean),
+          },
+          runNow: true,
+        }),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'Search could not be started');
-      toast.success(body.leadCount ? `Found ${body.leadCount} contactable leads.` : 'Search running. Only businesses with phone or email will be saved.');
-      setSelectedSearch({
-        id: body.campaignId,
-        name: intent.name,
-        location: form.location,
-        status: body.status || 'running',
-        progress: body.leadCount ? 100 : 40,
-        discovered_count: body.leadCount || 0,
-        accepted_count: 0,
-        rejected_count: 0,
-        duplicate_count: 0,
-        error_count: 0,
-        created_at: new Date().toISOString(),
-      });
+      if (!res.ok) throw new Error(body.error || 'Search could not be queued');
+      toast.success('Search queued');
+      setSelectedSearch(body.search);
       setActive('Results');
       await loadSearches();
     } catch (error) { toast.error(error instanceof Error ? error.message : 'Search could not be started'); }
@@ -264,15 +228,13 @@ export default function ScraperCampaignsPage() {
     if (!tenant?.id || !selectedSearch?.id) return;
     setReviewingCandidateId(candidate.id);
     try {
-      const res = await fetch('/api/scraper-campaigns/chat', {
+      const res = await fetch(`/api/leads/candidates/${candidate.id}/review`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tenantId: tenant.id,
-          campaignId: selectedSearch.id,
-          action: decision === 'accepted' ? 'save' : 'qualify',
-          leadIds: [candidate.id],
+          workspaceId: tenant.id,
+          decision,
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -282,7 +244,7 @@ export default function ScraperCampaignsPage() {
         toast.success('Saved to CRM');
         propagation.leadAccepted(tenant.id, candidate.id, (path) => router.push(path));
       } else {
-        toast.success('Marked qualified for later.');
+        toast.success('Candidate rejected');
       }
       await loadSearches();
     } catch (error) {
@@ -486,6 +448,12 @@ export default function ScraperCampaignsPage() {
           </div>
         )}
 
+        {active === 'Assistant' && (
+          <div className="min-h-[640px] overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
+            <LeadFinderChat onActivity={() => void loadSearches()} />
+          </div>
+        )}
+
         {active === 'Results' && <ResultsPanel searches={searches} selected={selectedSearch} setSelected={setSelectedSearch} candidates={candidates} metrics={metrics} reviewingCandidateId={reviewingCandidateId} onReview={reviewCandidate} />}
         {active === 'Activity' && <HistoryPanel searches={searches} onOpen={s=>{setSelectedSearch(s);setActive('Results')}} />}
         {active === 'Lists' && (
@@ -550,7 +518,7 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
     {view === 'map' ? (
       <LeadFinderMapPanel leads={pins} emptyHint="Run a search. Pins appear for businesses with public coordinates." />
     ) : candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
-      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b border-[var(--ws-border)] text-xs uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Source','Quality','Fit','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="text-xs font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3">{c.source_type}</td><td className="px-4 py-3">{c.quality_score}</td><td className="px-4 py-3">{c.fit_score}</td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 text-xs font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
+      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b border-[var(--ws-border)] text-xs uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Intelligence','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="text-xs font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-teal-300">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs text-xs text-[var(--ws-text-secondary)]">{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 text-xs font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
       <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="text-sm text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="text-sm font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 text-sm">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>
     </div> : <ModuleEmpty section="Results"/>}
   </div>;

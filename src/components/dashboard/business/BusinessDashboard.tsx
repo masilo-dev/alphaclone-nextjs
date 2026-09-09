@@ -73,7 +73,6 @@ const PwaSettingsScreen = React.lazy(() => import('../../pwa/PwaSettingsScreen')
 const MeetingsPage = React.lazy(() => import('./MeetingsPage'));
 const ReferralsPage = React.lazy(() => import('./ReferralsPage'));
 const BookingTab = React.lazy(() => import('./BookingTab'));
-import SalesAgent from '../SalesAgent';
 const ScraperCampaignsPage = React.lazy(() => import('../leads/ScraperCampaignsPage'));
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
@@ -779,7 +778,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/tasks':
                 return <TasksTab user={user} />;
             case '/dashboard/sales-agent':
-                return <SalesAgent />;
             case '/dashboard/leads/campaigns':
             case '/dashboard/leads/finder':
                 return (
@@ -1142,7 +1140,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/teams': return t('MS Teams');
             case '/dashboard/business/social-command': return t('Social Command Center');
             case '/dashboard/tasks': return t('Tasks');
-            case '/dashboard/sales-agent': return t('AI Growth');
+            case '/dashboard/sales-agent':
             case '/dashboard/leads/campaigns':
             case '/dashboard/leads/finder': return t('Lead Finder');
             case '/dashboard/business/bonnie':

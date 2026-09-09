@@ -1,11 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
-import { sendUniversalEmail, mapEventTypeToTemplateKey } from '@/lib/email/universalEmailEngine';
-import { buildValidatedPublicUrl } from '@/lib/urls';
-import { escapeHtml } from '@/lib/email/escapeHtml';
 import { recordBusinessActivity, type BusinessActivityParams } from '@/lib/audit/businessAuditEngine';
 import { insertTenantNotification } from './insertTenantNotification';
-import { renderAlphaCloneEmailLayout } from '@/lib/email/alphaCloneEmailLayouts';
+import { bufferNotificationDigestEvent } from '@/lib/email/notificationDigestEngine';
 
 export type NotificationLevel = 'level1_record_only' | 'level2_digest' | 'level3_urgent_email';
 
@@ -194,98 +190,35 @@ export async function dispatchBusinessNotification(
     }
   }
 
-  // 4. LEVEL 3: Email + Platform Notification to Responsible Person
+  // 4. Internal business events are digest-only. Level 3 means prominent
+  // in-app placement; only the tightly-scoped immediate exception path may email.
   if (options.level === 'level3_urgent_email' && target.email) {
-    const publicActionUrl = options.actionUrl ? buildValidatedPublicUrl(options.actionUrl) : undefined;
-    const templateKey = mapEventTypeToTemplateKey(options.type);
-    const universalVariables = {
-      first_name: target.email.split('@')[0],
-      client_name: options.clientName || '',
-      business_name: options.projectName || options.clientName || '',
-      cta_url: publicActionUrl || '',
-    };
-
-    if (templateKey) {
-      const universal = await sendUniversalEmail({
-        templateKey,
-        tenantId: options.tenantId,
-        recipientEmail: target.email,
-        userId: target.userId || undefined,
-        recipientType: 'user',
-        entityType: options.relatedRecordType,
-        entityId: options.relatedRecordId,
-        eventType: options.type,
-        variables: {
-          ...universalVariables,
-          lead_count: String(options.technicalDetails?.lead_count || ''),
-          reply_count: String(options.technicalDetails?.reply_count || ''),
-        },
-        ctaUrl: publicActionUrl,
-        stats: options.clientName
-          ? [{ label: 'Client', value: options.clientName }]
-          : undefined,
+    if (target.userId) {
+      const buffered = await bufferNotificationDigestEvent({
+        tenantId: options.tenantId, userId: target.userId, recipientEmail: target.email,
+        eventType: options.type, eventCategory: options.relatedRecordType || 'business',
+        entityType: options.relatedRecordType, entityId: options.relatedRecordId,
+        source: String(options.technicalDetails?.source || 'system'),
+        sourceAction: options.type,
+        severity: options.status === 'failed' || options.status === 'blocked' ? 'error' : options.status === 'at_risk' ? 'warning' : 'info',
+        title: options.title, summary: options.message, metadata: options.technicalDetails,
       });
-
-      if (universal.success) {
-        result.emailSent = true;
-        return result;
-      }
-      if (universal.skipped) {
-        console.warn('[dispatchBusinessNotification] Universal email skipped:', universal.skipReason);
-        return result;
-      }
+      if (buffered.error) result.error = buffered.error.message;
     }
-
-    const emailSubject = options.title.startsWith('AlphaClone') || options.title.startsWith('Client')
-      ? options.title
-      : `AlphaClone Action Required: ${options.title}`;
-
-    const branded = renderAlphaCloneEmailLayout({
-      layoutFamily: options.status === 'failed' ? 'failure' : 'action_required',
-      subject: emailSubject,
-      headline: options.title,
-      bodyHtml: `<p>${escapeHtml(options.message)}</p>`,
-      ctaLabel: publicActionUrl ? 'View in AlphaClone' : undefined,
-      ctaUrl: publicActionUrl,
-      stats: [
-        ...(options.clientName ? [{ label: 'Client', value: options.clientName }] : []),
-        ...(options.projectName ? [{ label: 'Project', value: options.projectName }] : []),
-        ...(options.actionRequired ? [{ label: 'Action', value: options.actionRequired }] : []),
-      ],
-    });
-    const htmlContent = branded.html;
-
-    const emailResult = await sendEmailServer({
-      tenantId: options.tenantId,
-      userId: target.userId || undefined,
-      to: target.email,
-      subject: emailSubject,
-      html: htmlContent,
-      text: `${options.title}\n\n${options.message}\n\nAction Required: ${options.actionRequired || 'Review record'}\nLink: ${publicActionUrl || ''}`,
-      isPlatformNotification: true,
-      templateName: 'business_alert',
-    });
-
-    if (emailResult.success) {
-      result.emailSent = true;
-    } else {
-      result.error = emailResult.error;
-      console.error('[dispatchBusinessNotification] Urgent email failed:', emailResult.error);
-    }
+    return result;
   }
 
   // 5. Check if SLA breach escalation is required (if escalation user provided)
   if (options.status === 'at_risk' && options.escalationUserId) {
     const manager = await resolveResponsibleUserId(options.tenantId, options.escalationUserId);
-    if (manager.email && manager.userId !== target.userId) {
-      await sendEmailServer({
-        tenantId: options.tenantId,
-        userId: manager.userId || undefined,
-        to: manager.email,
-        subject: `[ESCALATION] ${options.title}`,
-        html: `<p><strong>SLA Escalation Alert:</strong> The following operational issue requires attention:</p><p>${escapeHtml(options.message)}</p>`,
-        isPlatformNotification: true,
-      }).catch((err) => console.error('[dispatchBusinessNotification] Escalation email failed:', err));
+    if (manager.email && manager.userId && manager.userId !== target.userId) {
+      await bufferNotificationDigestEvent({
+        tenantId: options.tenantId, userId: manager.userId, recipientEmail: manager.email,
+        eventType: `${options.type}.escalated`, eventCategory: 'escalation',
+        entityType: options.relatedRecordType, entityId: options.relatedRecordId,
+        source: 'system', sourceAction: 'escalate', severity: 'warning',
+        title: `[ESCALATION] ${options.title}`, summary: options.message,
+      });
     }
   }
 

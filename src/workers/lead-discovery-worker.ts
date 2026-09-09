@@ -1,5 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate, buildLeadCandidateDedupeKey } from '@/lib/lead-finder/core';
+import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate, buildLeadCandidateDedupeKey, buildCanonicalBusinessKey, calculateCompositeLeadScore } from '@/lib/lead-finder/core';
+import { crawlPublicWebsite } from '@/lib/lead-finder/websiteCrawler';
+import { loadLeadProviderPolicy } from '@/lib/lead-finder/providerPolicy';
 import { runLeadStep, type LeadResult, type LeadStep } from '@/lib/scraper/freeLeadSearch';
 import type { GeoPoint } from '@/lib/scraper/freeGeoSources';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -48,11 +50,13 @@ function getAdminClient(): SupabaseClient {
 function autoAcceptAndSyncHighQuality(
   rows: Array<Record<string, unknown>>,
   workspaceId: string,
-  ownerId: string
+  ownerId: string,
+  options: { enabled: boolean; threshold: number }
 ): Promise<{ accepted: number; synced: number }> {
+  if (!options.enabled) return Promise.resolve({ accepted: 0, synced: 0 });
   const supabase = getAdminClient();
-  const qualityThreshold = 70;
-  const fitThreshold = 65;
+  const qualityThreshold = options.threshold;
+  const fitThreshold = options.threshold;
   const confidenceMin = 40;
 
   const toAccept: Array<Record<string, unknown>> = [];
@@ -64,8 +68,10 @@ function autoAcceptAndSyncHighQuality(
     const f = typeof row.fit_score === 'number' ? row.fit_score : 0;
     const c = typeof row.confidence_score === 'number' ? row.confidence_score : 0;
     const email = String(row.public_email || '').trim();
-    if ((q >= qualityThreshold || f >= fitThreshold) && c >= confidenceMin && email.includes('@')) {
-      const total = Math.round((q * 0.5) + (f * 0.35) + (c * 0.15));
+    const phone = String(row.public_phone || '').trim();
+    const blocked = ['suppressed', 'unsubscribed', 'customer', 'duplicate', 'known'].includes(String(row.outreach_memory_status || 'new'));
+    if ((q >= qualityThreshold || f >= fitThreshold) && c >= confidenceMin && Boolean(email || phone) && !blocked) {
+      const total = Number(row.final_score || calculateCompositeLeadScore({ fit: f, quality: q, confidence: c, contactability: email && phone ? 100 : 70, freshness: 100, opportunity: Number(row.opportunity_score || 0) }));
       const stage =
         total >= 75 ? 'qualified' :
         total >= 50 ? 'prospect' : 'lead';
@@ -94,16 +100,17 @@ function autoAcceptAndSyncHighQuality(
         location: [row.city, row.country].filter(Boolean).join(', ') || null,
         phone: row.public_phone ? String(row.public_phone) : null,
         email,
+        canonical_business_key: String(row.canonical_business_key || ''),
         website: row.website ? String(row.website) : null,
         source: `Lead Finder:${String(row.source_type || row.search_id || 'discovery')}`,
         stage,
         value: 0,
         notes: notesParts.length ? notesParts.join('\n\n') : null,
         outreach_status: 'pending',
-        is_verified: true,
+        is_verified: false,
         trust_score: Math.max(0, Math.min(100, total)),
         verification_notes:
-          row.verification_status ? `Lead Finder verification: ${String(row.verification_status)}` : null,
+          row.verification_status ? `Public contact status: ${String(row.verification_status)}; deliverability not verified.` : null,
         metadata: {
           lead_candidate_id: String(row.id || ''),
           lead_search_id: row.search_id ? String(row.search_id) : null,
@@ -123,21 +130,22 @@ function autoAcceptAndSyncHighQuality(
   return (async () => {
     const { data: leads, error: leadInsertErr } = await supabase
       .from('leads')
-      .upsert(toLeadInsert, { onConflict: 'tenant_id,email', ignoreDuplicates: true, defaultToNull: false })
-      .select('id,email');
+      .upsert(toLeadInsert, { onConflict: 'tenant_id,canonical_business_key', ignoreDuplicates: true, defaultToNull: false })
+      .select('id,email,canonical_business_key');
     if (leadInsertErr) throw leadInsertErr;
-    const byEmail = new Map<string, string>();
-    for (const l of (leads || []) as Array<{ id: string; email?: string | null }>) {
+    const byEmail = new Map<string, string>(); const byKey = new Map<string, string>();
+    for (const l of (leads || []) as Array<{ id: string; email?: string | null; canonical_business_key?: string | null }>) {
       if (l.email) byEmail.set(String(l.email).toLowerCase(), l.id);
+      if (l.canonical_business_key) byKey.set(l.canonical_business_key, l.id);
     }
     const acceptedRows = toAccept.map(r => {
       const em = String((r as any).public_email || '').toLowerCase();
-      const leadId = byEmail.get(em) || null;
+      const leadId = byEmail.get(em) || byKey.get(String((r as any).canonical_business_key || '')) || null;
       return { ...(r as any), synced_lead_id: leadId };
     });
     const { error: updateErr } = await supabase
       .from('lead_candidates')
-      .upsert(acceptedRows, { onConflict: 'workspace_id,dedupe_key', ignoreDuplicates: false, defaultToNull: false });
+      .upsert(acceptedRows, { onConflict: 'workspace_id,canonical_business_key', ignoreDuplicates: false, defaultToNull: false });
     if (updateErr) throw updateErr;
     return { accepted: acceptedRows.length, synced: leads?.length || 0 };
   })().catch(err => {
@@ -149,9 +157,10 @@ function autoAcceptAndSyncHighQuality(
 async function execute(job: Job) {
   const supabase = getAdminClient();
   const started = Date.now();
-  const { data: search, error } = await supabase.from('lead_searches').select('*').eq('id', job.search_id).single<Search>();
+  const { data: search, error } = await supabase.from('lead_searches').select('*').eq('id', job.search_id).eq('workspace_id', job.workspace_id).single<Search>();
   if (error || !search) throw new Error('SEARCH_NOT_FOUND');
-  await supabase.from('lead_searches').update({ status: 'running', progress: 10, started_at: new Date().toISOString() }).eq('id', search.id);
+  const policy = await loadLeadProviderPolicy(supabase, job.workspace_id);
+  await supabase.from('lead_searches').update({ status: 'running', progress: 10, started_at: new Date().toISOString() }).eq('id', search.id).eq('workspace_id', job.workspace_id);
 
   let step: LeadStep = 'init';
   let partial: LeadResult[] = [];
@@ -171,24 +180,40 @@ async function execute(job: Job) {
       sourceErrors,
       sourceStats,
       searchCenter,
+      resultLimit: search.result_limit || 25,
+      allowHere: !policy.freeOnly && policy.providers.here === true && Boolean(process.env.HERE_API_KEY),
     });
     partial = result.partialResults;
     sourceErrors = result.sourceErrors;
     sourceStats = result.sourceStats;
     searchCenter = result.searchCenter;
-    await supabase.from('lead_searches').update({ progress: Math.min(90, Math.max(15, result.progress)), discovered_count: partial.length }).eq('id', search.id);
+    await supabase.from('lead_searches').update({ progress: Math.min(90, Math.max(15, result.progress)), discovered_count: partial.length }).eq('id', search.id).eq('workspace_id', job.workspace_id);
     if (result.nextStep === 'completed') break;
     step = result.nextStep;
   }
 
   const limit = Math.max(1, search.result_limit || 25);
-  const rows = partial.slice(0, limit).map(lead => {
+  const enriched: Array<{ lead: LeadResult; crawl: Awaited<ReturnType<typeof crawlPublicWebsite>> | null }> = [];
+  for (let index = 0; index < Math.min(partial.length, limit); index += 6) {
+    const batch = await Promise.all(partial.slice(index, index + 6).map(async (lead) => {
+      if (!lead.website || lead.email) return { lead, crawl: null };
+      try { return { lead, crawl: await crawlPublicWebsite(lead.website, { maxPages: 6 }) }; }
+      catch { return { lead, crawl: null }; }
+    }));
+    enriched.push(...batch);
+  }
+  const rows = enriched.map(({ lead, crawl }) => {
+    const publicEmail = normalizeEmail(lead.email) || crawl?.emails[0]?.email || null;
     const candidate = {
-      website: lead.website || null, public_email: normalizeEmail(lead.email), public_phone: normalizePhone(lead.phone, search.country),
+      website: lead.website || null, public_email: publicEmail, public_phone: normalizePhone(lead.phone, search.country),
       address_line_1: lead.address || null, industry: lead.category || search.industry || null,
-      city: search.city || search.location || null, business_name: lead.business_name,
+      city: search.city || null, business_name: lead.business_name,
     };
     const score = scoreCandidate(candidate, search);
+    const contactability = candidate.public_email && candidate.public_phone ? 100 : candidate.public_email || candidate.public_phone ? 70 : 20;
+    const opportunity = crawl?.quality?.opportunity_score || 0;
+    const finalScore = calculateCompositeLeadScore({ fit: score.fitScore, quality: score.qualityScore, confidence: lead.hasContact ? 75 : 45, contactability, freshness: 100, opportunity });
+    const canonicalBusinessKey = buildCanonicalBusinessKey({ email: candidate.public_email, website: candidate.website, phone: candidate.public_phone, sourceExternalId: lead.source_id, businessName: lead.business_name, city: search.city || null, country: search.country || null });
     return {
       workspace_id: job.workspace_id, created_by: job.created_by, search_id: search.id,
       source_type: lead.source, source_url: lead.source_url || lead.website || null,
@@ -197,10 +222,14 @@ async function execute(job: Job) {
       website: candidate.website, domain: normalizeDomain(candidate.website), address_line_1: candidate.address_line_1,
       city: candidate.city, country: search.country || null, latitude: lead.lat, longitude: lead.lng,
       industry: candidate.industry, business_category: lead.category || null, description: lead.snippet,
-      raw_data: lead, normalized_data: { domain: normalizeDomain(candidate.website), email: candidate.public_email, phone: candidate.public_phone },
+      raw_data: { ...lead, crawl_quality: crawl?.quality || null }, normalized_data: { domain: normalizeDomain(candidate.website), email: candidate.public_email, phone: candidate.public_phone },
       confidence_score: lead.hasContact ? 75 : 45, quality_score: score.qualityScore,
-      fit_score: score.fitScore, score_explanation: score.explanation,
-      verification_status: candidate.public_email ? 'format_valid' : 'unverified',
+      fit_score: score.fitScore, contactability_score: contactability, freshness_score: 100, opportunity_score: opportunity, final_score: finalScore,
+      score_explanation: [...score.explanation, ...(crawl?.quality?.problems || []).map((reason) => ({ type: 'website_opportunity', points: 0, reason }))],
+      verification_status: crawl?.emails[0] ? 'publicly_published' : candidate.public_email ? 'format_valid' : 'unknown',
+      field_provenance: crawl?.emails[0] ? { email: { value: crawl.emails[0].email, source: crawl.emails[0].source_url } } : {},
+      source_sightings: [{ source: lead.source, source_external_id: lead.source_id, source_url: lead.source_url, seen_at: new Date().toISOString() }],
+      canonical_business_key: canonicalBusinessKey, outreach_memory_status: 'new', last_seen_at: new Date().toISOString(),
       dedupe_key: buildLeadCandidateDedupeKey({
         source_type: lead.source,
         source_external_id: lead.source_id,
@@ -213,7 +242,7 @@ async function execute(job: Job) {
 
   if (rows.length) {
     const { error: insertError } = await supabase.from('lead_candidates').upsert(rows, {
-      onConflict: 'workspace_id,dedupe_key',
+      onConflict: 'workspace_id,canonical_business_key',
       ignoreDuplicates: true,
     });
     if (insertError) {
@@ -227,10 +256,28 @@ async function execute(job: Job) {
     }
   }
 
+  // Qualification is shared canonical intelligence. A failure here must not
+  // discard discovered businesses; the next enrichment/requalification can retry.
+  try {
+    const keys = rows.map((row) => String(row.canonical_business_key)).filter(Boolean);
+    const { data: savedCandidates, error: candidateError } = await supabase.from('lead_candidates').select('*')
+      .eq('workspace_id', job.workspace_id).in('canonical_business_key', keys);
+    if (candidateError) throw candidateError;
+    const { qualifyCandidate } = await import('@/lib/lead-finder/qualificationEngine');
+    for (const candidate of savedCandidates || []) {
+      await qualifyCandidate(supabase, job.workspace_id, candidate as Record<string, unknown>);
+    }
+  } catch (qualificationError) {
+    console.warn('[lead-discovery-worker] qualification warning:', qualificationError);
+  }
+
   let crmSyncedCount = 0;
   let autoAcceptedCount = 0;
   try {
-    const auto = await autoAcceptAndSyncHighQuality(rows, job.workspace_id, job.created_by);
+    const auto = await autoAcceptAndSyncHighQuality(rows, job.workspace_id, job.created_by, {
+      enabled: policy.autoAccept,
+      threshold: policy.threshold,
+    });
     crmSyncedCount = auto.synced;
     autoAcceptedCount = auto.accepted;
   } catch (err) {
@@ -242,20 +289,20 @@ async function execute(job: Job) {
     status, progress: 100, discovered_count: rows.length, error_count: Object.keys(sourceErrors).length,
     accepted_count: autoAcceptedCount, crm_synced_count: crmSyncedCount,
     completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-  }).eq('id', search.id);
+  }).eq('id', search.id).eq('workspace_id', job.workspace_id);
   await supabase.from('lead_search_jobs').update({
     status: 'completed', progress: 100, records_found: rows.length, records_processed: rows.length,
     records_crm_synced: crmSyncedCount, records_auto_accepted: autoAcceptedCount,
     completed_at: new Date().toISOString(), locked_at: null,
     metadata: { source_errors: sourceErrors, duration_ms: Date.now() - started, auto_accepted: autoAcceptedCount, crm_synced: crmSyncedCount },
-  }).eq('id', job.id);
+  }).eq('id', job.id).eq('workspace_id', job.workspace_id);
 
   // Emit durable runtime outbox event
   try {
     const { insertOutboxEvent } = await import('@/lib/bonnie/runtime/outboxService');
     await insertOutboxEvent({
       tenantId: job.workspace_id,
-      eventType: 'lead_discovery.search.completed',
+      eventType: 'lead.qualified',
       payload: { searchId: search.id, jobId: job.id, discoveredCount: rows.length, crmSyncedCount },
     });
   } catch {}
@@ -270,65 +317,14 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
   // Try RPC claim first
   try {
     const { data, error } = await supabase.rpc('claim_lead_search_jobs', { worker_id: activeWorkerId, claim_limit: claimLimit });
-    if (!error && Array.isArray(data) && data.length > 0) {
+    if (error) throw new Error(`LEAD_JOB_CLAIM_FAILED: ${error.message}`);
+    if (Array.isArray(data) && data.length > 0) {
       jobs = data as Job[];
     }
   } catch (err) {
-    console.warn('[lead-discovery-worker] claim_lead_search_jobs RPC call failed, using direct query fallback:', err);
+    throw err;
   }
 
-  // Fallback: If RPC claimed 0 jobs or threw error, query lead_search_jobs directly
-  if (jobs.length === 0) {
-    try {
-      let query = supabase
-        .from('lead_search_jobs')
-        .select('id, workspace_id, created_by, search_id, attempt_count, max_attempts')
-        .in('status', ['queued', 'pending', 'retrying']);
-
-      if (options?.searchId) {
-        query = query.eq('search_id', options.searchId);
-      }
-
-      let { data: unclaimed, error: selectErr } = await query
-        .order('created_at', { ascending: true })
-        .limit(claimLimit);
-
-      // Fallback query if 'retrying' is not yet in the DB enum (22P02 error)
-      if (selectErr && (selectErr.code === '22P02' || /retrying/i.test(selectErr.message))) {
-        let fallbackQuery = supabase
-          .from('lead_search_jobs')
-          .select('id, workspace_id, created_by, search_id, attempt_count, max_attempts')
-          .in('status', ['queued', 'pending']);
-        if (options?.searchId) {
-          fallbackQuery = fallbackQuery.eq('search_id', options.searchId);
-        }
-        const res = await fallbackQuery
-          .order('created_at', { ascending: true })
-          .limit(claimLimit);
-        unclaimed = res.data;
-        selectErr = res.error;
-      }
-
-      if (!selectErr && unclaimed && unclaimed.length > 0) {
-        const jobIds = unclaimed.map((j) => j.id);
-        const { error: lockErr } = await supabase
-          .from('lead_search_jobs')
-          .update({
-            status: 'running',
-            locked_at: new Date().toISOString(),
-            attempt_count: ((unclaimed[0].attempt_count as number) || 0) + 1,
-            updated_at: new Date().toISOString(),
-          })
-          .in('id', jobIds);
-
-        if (!lockErr) {
-          jobs = unclaimed as Job[];
-        }
-      }
-    } catch (fallbackErr) {
-      console.warn('[lead-discovery-worker] Direct claim fallback error:', fallbackErr);
-    }
-  }
 
   const results: Array<{ jobId: string; ok: boolean; error?: string }> = [];
   for (const job of jobs) {
@@ -345,7 +341,7 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
         next_run_at: new Date(Date.now() + Math.min(30 * 60_000, 2 ** attemptCount * 30_000)).toISOString(),
         error_code: error instanceof Error ? error.message.slice(0, 80) : 'WORKER_ERROR',
         error_message: 'Discovery job failed; retry policy applied.',
-      }).eq('id', job.id);
+      }).eq('id', job.id).eq('workspace_id', job.workspace_id);
 
       if (updateRes.error && (updateRes.error.code === '22P02' || /retrying/i.test(updateRes.error.message)) && retry) {
         await supabase.from('lead_search_jobs').update({
@@ -354,11 +350,11 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
           next_run_at: new Date(Date.now() + Math.min(30 * 60_000, 2 ** attemptCount * 30_000)).toISOString(),
           error_code: error instanceof Error ? error.message.slice(0, 80) : 'WORKER_ERROR',
           error_message: 'Discovery job failed; retry policy applied.',
-        }).eq('id', job.id);
+        }).eq('id', job.id).eq('workspace_id', job.workspace_id);
       }
 
       if (!retry) {
-        await supabase.from('lead_searches').update({ status: 'failed', error_count: 1 }).eq('id', job.search_id);
+        await supabase.from('lead_searches').update({ status: 'failed', error_count: 1 }).eq('id', job.search_id).eq('workspace_id', job.workspace_id);
       }
       results.push({
         jobId: job.id,

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { leadSearchInput } from '@/lib/lead-finder/core';
-import { processLeadDiscoveryBatch } from '@/workers/lead-discovery-worker';
 
 function leadSearchJobSeed(input: {
   workspaceId: string;
@@ -71,13 +70,6 @@ export async function GET(req: NextRequest) {
     }
 
     const searchesList = data || [];
-    // If any searches are queued or stuck in running, trigger background batch discovery to process them
-    if (searchesList.some((s: { status?: string }) => s.status === 'queued' || s.status === 'running')) {
-      void processLeadDiscoveryBatch({ claimLimit: 2 }).catch((err) => {
-        console.warn('[api/leads/searches] Background queue pump warning:', err);
-      });
-    }
-
     return NextResponse.json({ searches: searchesList, available: true });
   } catch (error) {
     return NextResponse.json({
@@ -142,16 +134,10 @@ export async function POST(req: NextRequest) {
       }
       if (jobError) throw jobError;
 
-      // Execute discovery immediately and await the initial processing batch
-      try {
-        await processLeadDiscoveryBatch({ workerId: `api-trigger-${search.id}`, claimLimit: 1, searchId: search.id });
-      } catch (err) {
-        console.warn('[api/leads/searches] Immediate discovery trigger warning:', err);
-      }
     }
 
     // Refetch latest search status after execution
-    const { data: updatedSearch } = await admin.from('lead_searches').select('*').eq('id', search.id).single();
+    const { data: updatedSearch } = await admin.from('lead_searches').select('*').eq('id', search.id).eq('workspace_id', input.workspaceId).single();
 
     await admin.from('lead_audit_logs').insert({
       workspace_id: input.workspaceId, created_by: user.id, actor_id: user.id,

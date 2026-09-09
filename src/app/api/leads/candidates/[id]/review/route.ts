@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
+import { buildCanonicalBusinessKey } from '@/lib/lead-finder/core';
 type Context = { params: Promise<{ id: string }> };
 const inputSchema = z.object({
   workspaceId: z.string().uuid(), decision: z.enum(['accepted', 'rejected']),
@@ -42,12 +43,13 @@ function toLeadInsertFromCandidate(c: Record<string, unknown>, tenantId: string,
     phone: phone,
     email: email,
     website: website,
+    canonical_business_key: String(c.canonical_business_key || buildCanonicalBusinessKey({ email, phone, website, sourceExternalId: c.source_external_id ? String(c.source_external_id) : null, businessName: businessName || 'Discovered business', city: c.city ? String(c.city) : null, country: c.country ? String(c.country) : null })),
     source: `Lead Finder:${String(c.source_type || c.search_id || 'discovery')}`,
     stage,
     value: 0,
     notes: notesParts.length ? notesParts.join('\n\n') : null,
     outreach_status: 'pending',
-    is_verified: Boolean(email || phone || website),
+    is_verified: c.verification_status === 'verified',
     trust_score: Math.max(0, Math.min(100, totalScore)),
     verification_notes:
       c.verification_status ? `Lead Finder verification: ${String(c.verification_status)}` : null,
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest, context: Context) {
       const { data: inserted, error: leadInsertError } = await admin
         .from('leads')
         .upsert(payload, {
-          onConflict: 'tenant_id,email',
+          onConflict: 'tenant_id,canonical_business_key',
           ignoreDuplicates: false,
         })
         .select()

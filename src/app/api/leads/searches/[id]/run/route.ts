@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { processLeadDiscoveryBatch } from '@/workers/lead-discovery-worker';
 
 type Context = { params: Promise<{ id: string }> };
 
@@ -64,10 +63,10 @@ export async function POST(req: NextRequest, context: Context) {
     const { workspaceId } = await req.json();
     const { user, admin } = await requireTenantAccess(workspaceId, req);
     const { data: search } = await admin.from('lead_searches').select('id,status,query,business_keywords,industry,location,city,region,country,source_filters')
-      .eq('workspace_id', workspaceId).eq('id', id).single();
+      .eq('workspace_id', workspaceId).eq('id', id).eq('workspace_id', workspaceId).single();
     if (!search) return NextResponse.json({ error: 'Search not found' }, { status: 404 });
     
-    await admin.from('lead_searches').update({ status: 'queued', progress: 0, cancelled_at: null, updated_at: new Date().toISOString() }).eq('id', id);
+    await admin.from('lead_searches').update({ status: 'queued', progress: 0, cancelled_at: null, updated_at: new Date().toISOString() }).eq('id', id).eq('workspace_id', workspaceId);
     const key = `lead.search.start:${id}:${crypto.randomUUID()}`;
     const { error } = await admin.from('lead_search_jobs').insert(leadSearchJobSeed({
       workspaceId,
@@ -85,11 +84,6 @@ export async function POST(req: NextRequest, context: Context) {
     }
     if (error) throw error;
 
-    try {
-      await processLeadDiscoveryBatch({ workerId: `api-trigger-${id}`, claimLimit: 1, searchId: id });
-    } catch (err) {
-      console.warn('[api/leads/searches/run] Immediate discovery trigger warning:', err);
-    }
 
     const { data: updatedSearch } = await admin.from('lead_searches').select('status,progress,discovered_count').eq('id', id).single();
 

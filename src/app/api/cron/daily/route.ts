@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { contractExpirationService } from '@/services/contractExpirationService';
 import { paymentService } from '@/services/paymentService';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { runUserDigestEmails } from '@/lib/email/runUserDigestEmails';
-import { runMorningBriefingEmails } from '@/lib/email/runMorningBriefingEmails';
-import { runDailyBusinessSummaryEmails } from '@/lib/email/runDailyBusinessSummaryEmails';
-import { runChaseMorningBriefEmails, runCriticalChaseAlerts, runChaseEndOfDayEmails, runChaseWeeklySummaryEmails } from '@/lib/email/runChaseOwnerEmails';
+import { runNotificationDigests } from '@/lib/email/notificationDigestEngine';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
 
@@ -30,40 +27,11 @@ export async function GET(req: NextRequest) {
 
         // 3. Optional daily summary emails
         const emailStart = Date.now();
-        let digest: { attempted: number; sent: number; failed: number } | null = null;
+        let digest: Awaited<ReturnType<typeof runNotificationDigests>> | null = null;
         try {
-            digest = await runUserDigestEmails();
+            digest = await runNotificationDigests();
         } catch (digestErr) {
             console.error('Daily digest emails:', digestErr);
-        }
-
-        let morning: { profilesAttempted: number; emailsSent: number; failed: number } | null = null;
-        try {
-            morning = await runMorningBriefingEmails();
-        } catch (morningErr) {
-            console.error('Morning briefing emails:', morningErr);
-        }
-
-        let businessSummary: { tenantsProcessed: number; emailsSent: number; failed: number } | null = null;
-        try {
-            businessSummary = await runDailyBusinessSummaryEmails();
-        } catch (summaryErr) {
-            console.error('Daily business summary emails:', summaryErr);
-        }
-
-        let chaseBrief: { sent: number; skipped: number; failed: number } | null = null;
-        let chaseCritical: { sent: number; failed: number } | null = null;
-        let chaseEod: { sent: number; failed: number } | null = null;
-        let chaseWeekly: { sent: number; failed: number } | null = null;
-        try {
-            chaseBrief = await runChaseMorningBriefEmails();
-            chaseCritical = await runCriticalChaseAlerts();
-            chaseEod = await runChaseEndOfDayEmails();
-            if (new Date().getUTCDay() === 1) {
-                chaseWeekly = await runChaseWeeklySummaryEmails();
-            }
-        } catch (chaseEmailErr) {
-            console.error('Chase owner emails:', chaseEmailErr);
         }
         console.log(`[Cron] Emails took ${Date.now() - emailStart}ms`);
 
@@ -104,12 +72,6 @@ export async function GET(req: NextRequest) {
             contracts: contractResults,
             billing: billingResults,
             digest,
-            morning,
-            businessSummary,
-            chaseBrief,
-            chaseCritical,
-            chaseEod,
-            chaseWeekly,
             intelligence,
             accountDeletions,
             dataDeletionRequests,

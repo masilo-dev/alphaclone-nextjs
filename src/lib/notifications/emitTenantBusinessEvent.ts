@@ -8,7 +8,8 @@ import {
   shouldEmailForBusinessEvent,
   type TenantBusinessEventInput,
 } from './eventCatalog';
-import { dispatchBusinessNotification } from './businessNotificationEngine';
+import { dispatchBusinessNotification, resolveResponsibleUserId } from './businessNotificationEngine';
+import { bufferNotificationDigestEvent } from '@/lib/email/notificationDigestEngine';
 import { mergeTenantNotificationPolicy, resolveNotificationChannels } from './tenantNotificationPolicy';
 import { normalizeEventType } from '@/lib/events/businessEventTaxonomy';
 
@@ -85,6 +86,25 @@ async function queueForDigest(input: TenantBusinessEventInput, idempotencyKey: s
   );
   if (error) {
     console.warn('[emitTenantBusinessEvent] digest queue failed:', error.message);
+  }
+  const recipient = await resolveResponsibleUserId(input.tenantId, input.userId);
+  if (recipient.userId && recipient.email) {
+    const buffered = await bufferNotificationDigestEvent({
+      tenantId: input.tenantId,
+      userId: recipient.userId,
+      recipientEmail: recipient.email,
+      eventType: input.eventType,
+      eventCategory: input.entityType || (input.source === 'mcp' ? 'mcp' : 'business'),
+      entityType: input.entityType,
+      entityId: input.entityId,
+      source: input.source || 'system',
+      sourceAction: input.eventType,
+      severity: input.status === 'failed' || input.status === 'blocked' ? 'error' : input.status === 'at_risk' ? 'warning' : 'info',
+      title: input.title,
+      summary: input.message,
+      metadata: { ...(input.metadata || {}), event_idempotency_key: idempotencyKey },
+    });
+    if (buffered.error) console.warn('[emitTenantBusinessEvent] canonical digest buffer failed:', buffered.error.message);
   }
 }
 

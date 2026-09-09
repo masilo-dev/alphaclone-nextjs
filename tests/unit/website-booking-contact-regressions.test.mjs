@@ -170,7 +170,7 @@ for (const delivered of [true, false]) {
   });
 }
 
-test("website owner notifications are independent of tenant send quota", async () => {
+test("website owner notifications cannot bypass the internal digest gateway", async () => {
   let sent = 0;
   const sender = load("src/lib/email/sendEmailServer.ts", {
     "@/lib/email/usageMeteringService": {
@@ -194,12 +194,14 @@ test("website owner notifications are independent of tenant send quota", async (
     templateName: "websiteContact",
     isPlatformNotification: true,
   };
-  assert.equal((await sender.sendEmailServer(input)).success, true);
-  assert.equal(sent, 1);
+  const internal = await sender.sendEmailServer(input);
+  assert.equal(internal.success, false);
+  assert.equal(internal.code, "DIGEST_REQUIRED");
+  assert.equal(sent, 0);
   assert.equal(
     (await sender.sendEmailServer({ ...input, isPlatformNotification: false }))
       .code,
     "QUOTA_EXCEEDED",
   );
-  assert.equal(sent, 1);
+  assert.equal(sent, 0);
 });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { runDailyBusinessSummaryEmails } from '@/lib/email/runDailyBusinessSummaryEmails';
+import { runNotificationDigests } from '@/lib/email/notificationDigestEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
     try {
         console.log('[Cron] Triggering Automatic Daily Business Summary Emails');
-        const results = await runDailyBusinessSummaryEmails();
+        const results = await runNotificationDigests({ forceType: 'evening' });
 
         return NextResponse.json({
             success: true,

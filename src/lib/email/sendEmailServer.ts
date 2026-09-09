@@ -36,6 +36,8 @@ export interface SendEmailServerParams {
   relatedRecord?: { type: string; id: string };
   idempotencyKey?: string;
   skipRecipientGate?: boolean;
+  /** Required for internal email. Informational events must be buffered instead. */
+  internalNotificationKind?: 'digest' | 'immediate_exception';
 }
 
 export interface SendEmailServerResult {
@@ -69,6 +71,13 @@ function inferCategory(params: SendEmailServerParams): EmailGatewayCategory {
  */
 export async function sendEmailServer(params: SendEmailServerParams): Promise<SendEmailServerResult> {
   const category = inferCategory(params);
+  if (category === 'internal_notification' && !params.internalNotificationKind) {
+    return {
+      success: false,
+      error: 'Internal notifications are digest-only unless explicitly classified as an immediate exception.',
+      code: 'DIGEST_REQUIRED',
+    };
+  }
   // Website inquiries notify the platform owner; a tenant outreach quota must
   // never prevent this internal notification after the inquiry has been saved.
   const isWebsiteNotification = params.isPlatformNotification === true

@@ -6,6 +6,7 @@ import {
   haversineKm,
   type GeoPoint,
 } from '@/lib/scraper/freeGeoSources';
+import { searxngProvider } from '@/lib/lead-finder/sourceRouter';
 
 export interface LeadResult {
   business_name: string;
@@ -18,7 +19,7 @@ export interface LeadResult {
   address?: string;
   rating?: number;
   category?: string;
-  source: 'here' | 'osm' | 'browser' | 'google' | 'firecrawl' | 'wikidata';
+  source: 'here' | 'osm' | 'browser' | 'google' | 'wikidata' | 'searxng';
   lat?: number;
   lng?: number;
   hasContact: boolean;
@@ -487,6 +488,8 @@ export async function runLeadStep(input: {
   sourceStats: Record<string, number>;
   sourceErrors: Record<string, string>;
   searchCenter?: GeoPoint | null;
+  resultLimit?: number;
+  allowHere?: boolean;
 }): Promise<{
   nextStep: LeadStep | 'completed';
   progress: number;
@@ -503,30 +506,24 @@ export async function runLeadStep(input: {
     google: 0,
     here: 0,
     browser: 0,
-    firecrawl: 0,
     wikidata: 0,
+    searxng: 0,
     ...input.sourceStats,
   };
   const sourceErrors = { ...input.sourceErrors };
   let partial = [...input.partialResults];
   let searchCenter = input.searchCenter ?? null;
+  const targetLimit = Math.max(1, Math.min(input.resultLimit || LEADS_PER_SEARCH, 500));
 
   if (input.step === 'init') {
     try {
-      const [osmRes, wikiRes, ddgRes, firecrawlRes, browserRes] = await Promise.allSettled([
-        fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
-        fetchWikidataLeads(input.niche, input.location, 10),
-        fetchDuckDuckGoLeads(input.niche, input.location, 15),
-        import('@/services/firecrawlService')
-          .then((m) =>
-            m.firecrawlService.searchLeads(
-              `${input.niche} businesses in ${input.location} contact info`,
-              LEADS_PER_SEARCH
-            )
-          )
-          .catch(() => []),
+      const [osmRes, wikiRes, ddgRes, searxRes, browserRes] = await Promise.allSettled([
+        fetchOpenStreetMap(input.niche, input.location, Math.min(targetLimit, 100), input.radiusKm),
+        fetchWikidataLeads(input.niche, input.location, Math.min(targetLimit, 25)),
+        fetchDuckDuckGoLeads(input.niche, input.location, Math.min(targetLimit, 25)),
+        searxngProvider.search({ query: input.niche, location: input.location, resultLimit: Math.min(targetLimit, 50) }),
         input.usePlaywright
-          ? maybeFetchBrowserLeads(input.niche, input.location, LEADS_PER_SEARCH, input.usePlaywright)
+          ? maybeFetchBrowserLeads(input.niche, input.location, Math.min(targetLimit, 50), input.usePlaywright)
           : Promise.resolve([]),
       ]);
 
@@ -552,9 +549,14 @@ export async function runLeadStep(input: {
         sourceStats.browser = (sourceStats.browser || 0) + ddgRes.value.length;
       }
 
-      if (firecrawlRes.status === 'fulfilled' && Array.isArray(firecrawlRes.value) && firecrawlRes.value.length) {
-        partial.push(...enrichWithContactFlag(firecrawlRes.value as LeadResult[]));
-        sourceStats.firecrawl = firecrawlRes.value.length;
+      if (searxRes.status === 'fulfilled' && searxRes.value.businesses.length) {
+        const rows: LeadResult[] = searxRes.value.businesses.map((row) => ({
+          business_name: row.businessName, website: row.website || '', snippet: row.description || 'Public web search result',
+          source_id: row.sourceId || makeTraceableSourceId('searxng', row.sourceUrl || row.businessName), source_url: row.sourceUrl,
+          phone: row.phone, email: row.email, address: [row.city, row.country].filter(Boolean).join(', '), category: row.category || input.niche,
+          source: 'searxng', lat: row.lat, lng: row.lng, hasContact: Boolean(row.phone || row.email || row.website),
+        }));
+        partial.push(...enrichWithContactFlag(rows)); sourceStats.searxng = rows.length;
       }
 
       if (browserRes.status === 'fulfilled') {
@@ -573,8 +575,8 @@ export async function runLeadStep(input: {
     );
     const withHardContact = partial.filter(hasPhoneOrEmailContact);
     // Only short-circuit when we already have enough phone/email leads
-    if (withHardContact.length >= LEADS_PER_SEARCH) {
-      const finalMaybe = withHardContact.slice(0, LEADS_PER_SEARCH);
+    if (withHardContact.length >= targetLimit) {
+      const finalMaybe = withHardContact.slice(0, targetLimit);
       return {
         nextStep: 'completed',
         progress: 100,
@@ -601,13 +603,13 @@ export async function runLeadStep(input: {
   }
 
   if (input.step === 'fallbacks') {
-    const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 8;
+    const need = Math.max(0, targetLimit - partial.length) + 8;
     const tasks: Array<Promise<LeadResult[]>> = [
       fetchFreePlaces(input.niche, input.location, need, input.radiusKm),
     ];
 
     // HERE is optional free-tier key — never required
-    if (process.env.HERE_API_KEY && !process.env.HERE_API_KEY.startsWith('your_')) {
+    if (input.allowHere === true && process.env.HERE_API_KEY && !process.env.HERE_API_KEY.startsWith('your_')) {
       tasks.push(fetchHERE(input.niche, input.location, need, input.radiusKm));
     }
 
@@ -644,9 +646,9 @@ export async function runLeadStep(input: {
   }
 
   if (input.step === 'browser') {
-    if (input.usePlaywright && partial.length < LEADS_PER_SEARCH) {
+    if (input.usePlaywright && partial.length < targetLimit) {
       try {
-        const want = LEADS_PER_SEARCH - partial.length + 5;
+        const want = targetLimit - partial.length + 5;
         const rows = await maybeFetchBrowserLeads(input.niche, input.location, want, input.usePlaywright);
         const verified = rows.filter((r) => hasContactInfo(r));
         partial.push(...enrichWithContactFlag(verified as LeadResult[]));
@@ -672,7 +674,7 @@ export async function runLeadStep(input: {
   const final = dedupeAndSort(
     attachReach(partial.filter(isEnrichableCandidate), searchCenter, input.radiusKm * 1.5),
     input.sortBy || 'reach_asc'
-  ).slice(0, Math.max(LEADS_PER_SEARCH, 40));
+  ).slice(0, Math.max(targetLimit, 40));
 
   return {
     nextStep: 'completed',

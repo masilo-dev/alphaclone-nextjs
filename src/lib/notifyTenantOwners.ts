@@ -1,12 +1,6 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
-import {
-  sendEmailServer,
-  type SendEmailServerResult,
-} from "@/lib/email/sendEmailServer";
+import { bufferNotificationDigestEvent } from '@/lib/email/notificationDigestEngine';
 import { insertTenantNotification } from "@/lib/notifications/insertTenantNotification";
-import { buildValidatedPublicUrl } from "@/lib/urls";
-import { escapeHtml } from '@/lib/email/escapeHtml';
-import { renderAlphaCloneEmailLayout } from '@/lib/email/alphaCloneEmailLayouts';
 import webPush from "web-push";
 import {
   getVapidEmail,
@@ -173,48 +167,24 @@ export async function notifyTenantOwners(options: {
     }
 
     if (emailEnabled && profile?.email) {
-      const actionUrl = options.link
-        ? buildValidatedPublicUrl(options.link)
-        : undefined;
-      const branded = renderAlphaCloneEmailLayout({
-        layoutFamily: 'action_required',
-        subject: options.title,
-        headline: options.title,
-        bodyHtml: `<p>${escapeHtml(options.message)}</p>`,
-        ctaLabel: actionUrl ? 'View details' : undefined,
-        ctaUrl: actionUrl,
-      });
-      const result: SendEmailServerResult = await sendEmailServer({
+      const { error: digestError } = await bufferNotificationDigestEvent({
         tenantId: options.tenantId,
-        to: profile.email,
-        subject: options.title,
-        html: branded.html,
-        text: branded.text,
-        isPlatformNotification: true,
-      }).catch(
-        (err): SendEmailServerResult => ({
-          success: false,
-          error: err instanceof Error ? err.message : String(err),
-        }),
-      );
-
-      const { error: emailDeliveryError } = await admin.from("notification_deliveries").insert({
-        tenant_id: options.tenantId,
-        user_id: userId,
-        channel: "email",
-        event_type: options.type,
-        recipient: profile.email,
-        status: result.success ? "sent" : "failed",
-        provider_message_id: result.emailId || null,
-        error: result.error || null,
+        userId,
+        recipientEmail: profile.email,
+        eventType: options.type,
+        eventCategory: 'owner_notification',
+        source: 'system',
+        sourceAction: options.type,
+        severity: 'info',
+        title: options.title,
+        summary: options.message,
+        metadata: { action_url: options.link || null },
       });
-      if (emailDeliveryError) {
-        console.error("[notifyTenantOwners] email delivery audit insert failed:", emailDeliveryError.message);
-      }
-      if (result.success) report.emailsSent += 1;
-      else {
+      if (digestError) {
         report.emailsFailed += 1;
-        console.error("[notifyTenantOwners] email failed:", result.error);
+        console.error('[notifyTenantOwners] digest buffer failed:', digestError.message);
+      } else {
+        report.emailsSkipped += 1;
       }
     } else {
       report.emailsSkipped += 1;

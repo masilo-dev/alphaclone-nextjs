@@ -147,7 +147,7 @@ const ITEMS: MarketplaceItem[] = [
     features: ['B2B lead prospecting', 'Outreach email drafting', 'Lead-to-deal conversion', 'Task scheduling', 'CRM sync'],
     tags: ['ai', 'sales', 'prospecting', 'outreach'],
     developer: 'AlphaClone',
-    actionUrl: '/dashboard/sales-agent',
+    actionUrl: '/dashboard/leads/finder',
   },
   // ── Integrations ───────────────────────────────────────────────────────────
   {

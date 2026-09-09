@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { callScraperService } from '@/lib/scraper/scraperServiceClient';
 import {
   parseLeadIntentHeuristic,
   parseLeadIntentFromChat,
@@ -22,7 +21,6 @@ import {
   formatSearchLocation,
   formatSearchNiche,
 } from '@/lib/scraper/leadFinderAutomation';
-import { runCampaignOnPlatform } from '@/lib/scraper/scraperPlatform';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
@@ -119,43 +117,49 @@ async function createAndRunCampaign(
     createdCount: 0,
   });
 
-  // Prefer full in-process free search (OSM / Wikidata / DuckDuckGo / Foursquare).
-  // External scraper is optional — never block product UX on it.
-  let leadCount = 0;
-  let mode: 'in-process' | 'external' = 'in-process';
-  try {
-    const platform = await runCampaignOnPlatform(tenantId, userId, campaign.id);
-    leadCount = platform.leadCount;
-    mode = platform.mode;
-  } catch (err) {
-    console.warn('[chat] In-process lead search failed:', err);
-    try {
-      const scraperRes = await callScraperService('/api/scraper/campaign/run', {
-        method: 'POST',
-        body: {
-          campaign_id: campaign.id,
-          tenant_id: tenantId,
-          user_id: userId,
-        },
-      });
-      if (scraperRes.ok) {
-        mode = 'external';
-      }
-    } catch (externalErr) {
-      console.warn('[chat] External scraper also failed:', externalErr);
-    }
-  }
+  // The chat UI is a compatibility surface, not a second scraper. Its legacy
+  // campaign only records the conversation and points at the canonical queue.
+  const searchSources = ['openstreetmap', 'wikidata', 'searxng', 'website'] as const;
+  const { data: search, error: searchError } = await supabase.from('lead_searches').insert({
+    workspace_id: tenantId, created_by: userId, name: safeIntent.name,
+    search_type: 'businesses_by_location', query: safeIntent.search_query || safeIntent.niche || safeIntent.name,
+    business_keywords: [safeIntent.niche, ...safeIntent.industry].filter(Boolean),
+    location: [safeIntent.location?.city, safeIntent.location?.country].filter(Boolean).join(', '),
+    city: safeIntent.location?.city || null, country: safeIntent.location?.country || null,
+    industry: safeIntent.industry[0] || null, source_filters: searchSources,
+    exclusions: { keywords: safeIntent.exclude_keywords, domains: safeIntent.exclude_domains, locations: [] },
+    result_limit: safeIntent.daily_limit, status: 'queued',
+  }).select().single();
+  if (searchError || !search) throw new Error(searchError?.message || 'Failed to queue canonical lead search');
+  const { error: jobError } = await supabase.from('lead_search_jobs').insert({
+    tenant_id: tenantId, user_id: userId, workspace_id: tenantId, created_by: userId, search_id: search.id,
+    niche: safeIntent.niche || safeIntent.name, location: [safeIntent.location?.city, safeIntent.location?.country].filter(Boolean).join(', ') || null,
+    sort_by: 'default', use_playwright: false, job_type: 'lead.search.start', source_type: 'orchestrator',
+    idempotency_key: `chat.lead.search:${search.id}`, metadata: { source: 'chat_assistant', free_only: true },
+  });
+  if (jobError) throw new Error(jobError.message);
+  await supabase.from('scraper_campaigns').update({ canonical_search_id: search.id, status: 'active' }).eq('id', campaign.id).eq('tenant_id', tenantId);
 
   return {
     ...campaign,
-    leadCount,
-    mode,
-    searchStatus: leadCount > 0 ? 'completed' : 'running',
+    leadCount: 0,
+    mode: 'queued',
+    searchStatus: 'queued',
   };
 }
 
 async function fetchCampaignLeads(tenantId: string, campaignId: string, minScore?: number) {
   const supabase = createSupabaseAdminClient();
+  const { data: campaign } = await supabase.from('scraper_campaigns').select('canonical_search_id')
+    .eq('tenant_id', tenantId).eq('id', campaignId).maybeSingle();
+  if (campaign?.canonical_search_id) {
+    let canonical = supabase.from('lead_candidates').select('*').eq('workspace_id', tenantId)
+      .eq('search_id', campaign.canonical_search_id).order('final_score', { ascending: false }).limit(100);
+    if (minScore) canonical = canonical.gte('final_score', minScore);
+    const { data, error } = await canonical;
+    if (error) throw error;
+    return data || [];
+  }
   let query = supabase
     .from('scraper_leads')
     .select('*')
@@ -198,13 +202,12 @@ export async function POST(req: NextRequest) {
     const { user, admin: supabase } = await requireTenantAccess(tenantId);
 
     if (action === 'status' && campaignId) {
-      try {
-        const scraperRes = await callScraperService(`/api/scraper/status/${campaignId}`);
-        if (scraperRes.ok) {
-          return NextResponse.json({ status: await scraperRes.json() });
-        }
-      } catch {
-        // DB fallback
+      const { data: bridge } = await supabase.from('scraper_campaigns').select('canonical_search_id')
+        .eq('tenant_id', tenantId).eq('id', campaignId).maybeSingle();
+      if (bridge?.canonical_search_id) {
+        const { data: canonical } = await supabase.from('lead_searches').select('*')
+          .eq('workspace_id', tenantId).eq('id', bridge.canonical_search_id).maybeSingle();
+        if (canonical) return NextResponse.json({ status: canonical });
       }
       const { data: run } = await supabase
         .from('lead_campaign_runs')
@@ -244,11 +247,12 @@ export async function POST(req: NextRequest) {
     if (action === 'qualify' && campaignId) {
       const leadIds = (body.leadIds as string[]) || [];
       if (!leadIds.length) return NextResponse.json({ error: 'No lead IDs' }, { status: 400 });
-      const { error } = await supabase
-        .from('scraper_leads')
-        .update({ status: 'qualified' })
-        .eq('tenant_id', tenantId)
-        .in('id', leadIds);
+      const { data: bridge } = await supabase.from('scraper_campaigns').select('canonical_search_id')
+        .eq('tenant_id', tenantId).eq('id', campaignId).maybeSingle();
+      const target = bridge?.canonical_search_id
+        ? supabase.from('lead_candidates').update({ review_status: 'reviewing', updated_at: new Date().toISOString() }).eq('workspace_id', tenantId).eq('search_id', bridge.canonical_search_id).in('id', leadIds)
+        : supabase.from('scraper_leads').update({ status: 'qualified' }).eq('tenant_id', tenantId).in('id', leadIds);
+      const { error } = await target;
       if (error) throw error;
       return NextResponse.json({ success: true, qualified: leadIds.length });
     }

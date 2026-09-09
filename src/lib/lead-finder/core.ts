@@ -20,7 +20,7 @@ export const leadSearchInput = z.object({
   industry: z.string().trim().max(120).optional().default(''),
   companySizeMin: z.number().int().min(0).max(1_000_000).nullable().optional(),
   companySizeMax: z.number().int().min(0).max(1_000_000).nullable().optional(),
-  sources: z.array(z.enum(['openstreetmap', 'website', 'public_directory', 'manual'])).min(1).max(4),
+  sources: z.array(z.enum(['openstreetmap', 'wikidata', 'searxng', 'website', 'public_directory', 'manual'])).min(1).max(6),
   requirements: z.object({
     website: z.boolean().default(false), email: z.boolean().default(false),
     phone: z.boolean().default(false), social: z.boolean().default(false),
@@ -46,7 +46,10 @@ export function normalizeDomain(value?: string | null) {
 
 export function normalizeEmail(value?: string | null) {
   const email = value?.normalize('NFKC').trim().toLowerCase();
-  return email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+  if (!email || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i.test(email)) return null;
+  if (/^(example@example\.com|test@test\.com|name@example\.com|user@domain\.com)$/.test(email)) return null;
+  if (/\.(png|jpe?g|gif|svg|webp|ico)@/i.test(email)) return null;
+  return email;
 }
 
 export function normalizePhone(value?: string | null, country?: string | null) {
@@ -68,6 +71,22 @@ export function normalizeCompany(value: string) {
     .replace(/\b(incorporated|inc|limited|ltd|llc|gmbh|plc|pty)\.?$/i, '').trim().toLowerCase();
 }
 
+export function buildCanonicalBusinessKey(input: {
+  email?: string | null; website?: string | null; phone?: string | null;
+  sourceExternalId?: string | null; businessName: string; city?: string | null; country?: string | null;
+}) {
+  const email = normalizeEmail(input.email);
+  if (email) return `email:${email}`;
+  const domain = normalizeDomain(input.website);
+  if (domain) return `domain:${domain}`;
+  const phone = normalizePhone(input.phone, input.country);
+  if (phone) return `phone:${phone}`;
+  const name = normalizeCompany(input.businessName);
+  const place = `${String(input.city || '').trim().toLowerCase()}:${String(input.country || '').trim().toLowerCase()}`;
+  if (name) return `business:${name}:${place}`;
+  return `external:${String(input.sourceExternalId || 'unknown').trim().toLowerCase()}`;
+}
+
 /** Stable dedupe key for lead_candidates upsert (must match DB unique constraint). */
 export function buildLeadCandidateDedupeKey(input: {
   source_type: string;
@@ -76,14 +95,12 @@ export function buildLeadCandidateDedupeKey(input: {
   business_name: string;
   city?: string | null;
 }): string {
-  if (input.source_external_id) {
-    return `${input.source_type}:${input.source_external_id}`;
-  }
   const domain = normalizeDomain(input.website);
-  if (domain) return `${input.source_type}:domain:${domain}`;
+  if (domain) return `domain:${domain}`;
+  if (input.source_external_id) return `external:${input.source_external_id}`;
   const name = normalizeCompany(input.business_name).slice(0, 80);
   const city = (input.city || '').trim().toLowerCase().slice(0, 40);
-  return `${input.source_type}:name:${name}:${city}`;
+  return `business:${name}:${city}`;
 }
 
 export type ScoreCandidate = {
@@ -123,6 +140,17 @@ export function scoreCandidate(candidate: ScoreCandidate, search: {
     fitScore: Math.max(0, Math.min(100, fit.reduce((n, x) => n + x.points, 30))),
     explanation: [...quality.map(x => ({ ...x, type: 'quality' })), ...fit.map(x => ({ ...x, type: 'fit' }))],
   };
+}
+
+export function calculateCompositeLeadScore(input: {
+  fit: number; contactability: number; quality: number; confidence: number; freshness: number; opportunity: number;
+}) {
+  const clamp = (value: number) => Math.max(0, Math.min(100, value));
+  return Math.round(
+    clamp(input.fit) * 0.25 + clamp(input.contactability) * 0.20 +
+    clamp(input.quality) * 0.20 + clamp(input.confidence) * 0.15 +
+    clamp(input.freshness) * 0.10 + clamp(input.opportunity) * 0.10
+  );
 }
 
 export function escapeCsvFormula(value: unknown) {

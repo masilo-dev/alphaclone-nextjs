@@ -28,6 +28,18 @@ export async function GET(req: NextRequest, context: Context) {
       );
     }
     if (error) throw error;
-    return NextResponse.json({ candidates: data || [], nextCursor: data?.length === limit ? data.at(-1)?.created_at : null });
+    const candidates = data || [];
+    const ids = candidates.map((candidate) => candidate.id);
+    const { data: snapshots, error: snapshotError } = ids.length
+      ? await admin.from('lead_qualification_snapshots').select('*').eq('workspace_id', workspaceId).in('candidate_id', ids)
+      : { data: [], error: null };
+    // The intelligence migration is additive. Existing results remain readable
+    // while it is being applied or its PostgREST schema cache refreshes.
+    if (snapshotError && !isUnavailableSchema(snapshotError)) throw snapshotError;
+    const byCandidate = new Map((snapshots || []).map((snapshot) => [snapshot.candidate_id, snapshot]));
+    return NextResponse.json({
+      candidates: candidates.map((candidate) => ({ ...candidate, qualification: byCandidate.get(candidate.id) || null })),
+      nextCursor: data?.length === limit ? data.at(-1)?.created_at : null,
+    });
   } catch (error) { return routeErrorResponse(error, 'Failed to load search results', req); }
 }
