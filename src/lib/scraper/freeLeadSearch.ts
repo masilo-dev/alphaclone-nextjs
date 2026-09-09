@@ -19,7 +19,9 @@ export interface LeadResult {
   address?: string;
   rating?: number;
   category?: string;
-  source: 'here' | 'osm' | 'browser' | 'google' | 'wikidata' | 'searxng';
+  // Paid/legacy adapters may still label their provenance, but the canonical
+  // discovery router never enables them unless tenant policy permits it.
+  source: 'here' | 'osm' | 'browser' | 'google' | 'wikidata' | 'searxng' | 'firecrawl';
   lat?: number;
   lng?: number;
   hasContact: boolean;
