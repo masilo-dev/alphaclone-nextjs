@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         const { data: campaign } = await admin.from('email_campaigns').select('metadata')
           .eq('tenant_id', input.tenantId).eq('id', input.campaignId).maybeSingle();
         await admin.from('email_campaigns').update({ status: 'paused', metadata: { ...(campaign?.metadata || {}), auto_paused: true, health } })
-          .eq('tenant_id', input.tenantId).eq('id', input.campaignId).in('status', ['running','sending','scheduled']);
+          .eq('tenant_id', input.tenantId).eq('id', input.campaignId).in('status', ['sending','scheduled']);
       }
     }
 

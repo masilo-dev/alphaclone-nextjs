@@ -256,7 +256,7 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
     .from('email_campaigns')
     .select('id, name, status, updated_at')
     .eq('tenant_id', tenantId)
-    .in('status', ['active', 'running', 'scheduled', 'sending'])
+    .in('status', ['active', 'scheduled', 'sending'])
     .lt('updated_at', twoDaysAgo)
     .limit(25);
 
