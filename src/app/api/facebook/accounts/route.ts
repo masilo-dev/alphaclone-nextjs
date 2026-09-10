@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
+type FacebookAccount = {
+  id: string;
+  page_id: string;
+  page_name: string | null;
+  is_active: boolean;
+  connected_at: string | null;
+  can_publish?: boolean;
+  can_upload_media?: boolean;
+};
+
+type LegacyFacebookAccount = Omit<FacebookAccount, 'can_publish' | 'can_upload_media'>;
+
 export async function GET(req: NextRequest) {
   const db = await createSupabaseServerClient();
   const { data: { user } } = await db.auth.getUser();
@@ -14,7 +26,8 @@ export async function GET(req: NextRequest) {
     db.from('facebook_integrations').select('id, page_id, page_name, is_active, connected_at').eq('tenant_id', tenantId).eq('is_active', true),
   ]);
   if (identities.error || legacy.error) return NextResponse.json({ error: 'Unable to load Facebook connection state' }, { status: 500 });
-  const pages = new Map((legacy.data || []).map((page) => [page.page_id, page]));
+  const legacyPages = (legacy.data || []) as LegacyFacebookAccount[];
+  const pages = new Map<string, FacebookAccount>(legacyPages.map((page) => [page.page_id, page]));
   for (const identity of identities.data || []) pages.set(identity.provider_identity_id, {
     id: identity.id, page_id: identity.provider_identity_id, page_name: identity.display_name,
     is_active: identity.is_active, connected_at: identity.created_at,
