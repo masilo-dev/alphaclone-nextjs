@@ -5,7 +5,7 @@
 
 import { createHash } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { buildPublicMediaUrl } from '@/lib/media/mediaPublicUrl';
+import { buildPublicMediaUrl, extractMediaAssetIdFromUrl } from '@/lib/media/mediaPublicUrl';
 import { logMediaPipelineStep } from '@/lib/social/mediaPipelineLog';
 import type { MediaAssetResult } from './types';
 
@@ -445,7 +445,12 @@ export async function resolveMediaUrls(params: {
   const assetIds: string[] = [];
   const types: string[] = [];
 
-  const ids = Array.isArray(params.mediaAssetIds) ? params.mediaAssetIds.filter(Boolean) : [];
+  // URLs and IDs are aliases for the same asset, not separate attachments.
+  const rawInputs = [...new Set((params.mediaUrls || []).map((url) => url.trim()).filter(Boolean))];
+  const ids = [...new Set([
+    ...(params.mediaAssetIds || []).map((id) => id.trim().toLowerCase()).filter(Boolean),
+    ...rawInputs.map(extractMediaAssetIdFromUrl).filter((id): id is string => Boolean(id)).map((id) => id.toLowerCase()),
+  ])];
   if (ids.length > 0) {
     const { data, error } = await supabase
       .from('media_assets')
@@ -469,7 +474,7 @@ export async function resolveMediaUrls(params: {
     }
   }
 
-  const rawUrls = Array.isArray(params.mediaUrls) ? params.mediaUrls.filter(Boolean) : [];
+  const rawUrls = rawInputs.filter((url) => !extractMediaAssetIdFromUrl(url));
   rejectLocalAiPaths(rawUrls, 'media_urls');
   for (let i = 0; i < rawUrls.length; i++) {
     const raw = String(rawUrls[i]);
@@ -497,7 +502,10 @@ export async function resolveMediaUrls(params: {
       throw new Error(`Unsupported media_url protocol: ${parsed.protocol}`);
     }
     assertPublicMediaUrl(parsed);
-    urls.push(raw);
+    parsed.hash = '';
+    const normalizedUrl = parsed.href;
+    if (urls.includes(normalizedUrl)) continue;
+    urls.push(normalizedUrl);
     types.push(/\.(mp4|mov|webm|mkv)(\?|$)/i.test(raw) ? 'video' : 'image');
   }
 

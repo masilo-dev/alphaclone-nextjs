@@ -15,19 +15,24 @@ export async function GET(req: NextRequest) {
   if (error || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const pageId = req.nextUrl.searchParams.get('pageId');
-  if (!pageId) return NextResponse.json({ error: 'pageId is required' }, { status: 400 });
+  const tenantId = req.nextUrl.searchParams.get('tenantId');
+  if (!pageId || !tenantId) return NextResponse.json({ error: 'pageId and tenantId are required' }, { status: 400 });
+  const { data: membership } = await supabase.from('tenant_users').select('tenant_id')
+    .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
+  if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const admin = createSupabaseAdminClient();
-  const integration = await getFacebookIntegration(admin, { userId: user.id, pageId });
+  const integration = await getFacebookIntegration(admin, { tenantId, userId: user.id, pageId });
 
   const tokens = integration ? await getFacebookTokens(admin, integration) : { pageAccessToken: null, userAccessToken: null };
   const token = tokens.pageAccessToken || tokens.userAccessToken;
   if (!token) {
     return NextResponse.json({
       success: false,
-      connected: false,
-      error: 'Facebook page not connected or token missing — please reconnect',
-      action: 'reconnect',
+      connected: Boolean(integration?.is_active),
+      error: integration?.is_active
+        ? 'Facebook connected — page profile metrics are unavailable.'
+        : 'Facebook connection is inactive.',
       page: null,
     });
   }

@@ -1,10 +1,11 @@
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { hasStoragePathTraversal } from '@/lib/security/safeRedirect';
-import { isValidMediaAssetId } from '@/lib/media/mediaPublicUrl';
+import { isValidMediaAssetId, buildPublicMediaUrl } from '@/lib/media/mediaPublicUrl';
 import { loadMediaAssetRecord } from '@/lib/media/fetchMediaAssetBytes';
 import { NextResponse } from 'next/server';
 
-const CACHE_MAX_AGE = 3600;
+const CACHE_MAX_AGE = 60;
 const DEFAULT_BUCKET = 'public-assets';
 
 function storagePathFromPublicUrl(publicUrl: string): string | null {
@@ -91,6 +92,22 @@ export async function GET(
     return new NextResponse('Not found', { status: 404 });
   }
 
+  // UUID possession alone is not authorization. Only assets explicitly attached
+  // to a tenant's social publishing record are anonymously provider-fetchable.
+  const admin = createSupabaseAdminClient();
+  const { data: socialUse, error: socialError } = await admin.from('social_posts').select('id')
+    .eq('tenant_id', asset.tenant_id).contains('media_urls', [buildPublicMediaUrl(assetId)]).limit(1);
+  let privatePreview = false;
+  if (socialError || !socialUse?.length) {
+    const auth = await createSupabaseServerClient();
+    const { data: { user } } = await auth.auth.getUser();
+    if (!user) return new NextResponse('Not found', { status: 404 });
+    const { data: membership } = await auth.from('tenant_users').select('tenant_id')
+      .eq('tenant_id', asset.tenant_id).eq('user_id', user.id).maybeSingle();
+    if (!membership) return new NextResponse('Not found', { status: 404 });
+    privatePreview = true;
+  }
+
   const optionalTenant = new URL(request.url).searchParams.get('tenant_id');
   if (optionalTenant && optionalTenant !== asset.tenant_id) {
     return new NextResponse('Not found', { status: 404 });
@@ -100,6 +117,7 @@ export async function GET(
   if (!response) {
     return new NextResponse('Not found', { status: 404 });
   }
+  if (privatePreview) response.headers.set('Cache-Control', 'private, no-store');
   return response;
 }
 

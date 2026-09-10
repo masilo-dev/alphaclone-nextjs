@@ -5,12 +5,6 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import { publishLinkedInPost } from '@/lib/linkedin/publishPost';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
-import {
-  buildFacebookTextOnlyFallbackMeta,
-  isFacebookMediaAttachmentError,
-  publishFacebookFeedTextOnly,
-} from '@/lib/social/facebookTextOnlyFallback';
-import { formatFacebookGraphErrorMessage, parseFacebookGraphError } from '@/lib/facebook/parseFacebookGraphError';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { z } from 'zod';
 
@@ -178,101 +172,18 @@ async function updateSocialPostStatusWithFallback(
 }
 
 async function publishToFacebook(postId: string): Promise<PublishResult> {
-  const adminClient = createSupabaseAdminClient();
-
-  try {
-    const { data: post, error: postError } = await adminClient
-      .from('social_posts')
-      .select('id, tenant_id, facebook_page_id, caption, link_url, media_urls, media_types')
-      .eq('id', postId)
-      .single();
-
-    if (postError || !post) return { ok: false, platform: 'facebook', reason: 'post_not_found' };
-    if (!post.facebook_page_id) {
-      return { ok: false, platform: 'facebook', reason: 'missing_page_id' };
-    }
-
-    const integration = await getFacebookIntegrationWithToken(adminClient, {
-      tenantId: post.tenant_id,
-      pageId: post.facebook_page_id,
-    });
-
-    if (!integration?.pageAccessToken) {
-      return { ok: false, platform: 'facebook', reason: 'integration_missing' };
-    }
-
-    const mediaUrl = Array.isArray(post.media_urls) ? post.media_urls[0] : undefined;
-    const mediaType = Array.isArray(post.media_types) ? String(post.media_types[0] || '').toLowerCase() : '';
-    const isVideo = mediaType === 'video' || (typeof mediaUrl === 'string' && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(mediaUrl));
-    const fbBody: Record<string, string> = {
-      message: post.caption,
-      access_token: integration.pageAccessToken,
-    };
-
-    if (post.link_url) fbBody.link = post.link_url;
-    if (mediaUrl) {
-      if (isVideo) {
-        fbBody.file_url = String(mediaUrl);
-        fbBody.description = post.caption;
-      } else {
-        fbBody.url = String(mediaUrl);
-      }
-    }
-
-    const endpoint = mediaUrl
-      ? `https://graph.facebook.com/v21.0/${post.facebook_page_id}/${isVideo ? 'videos' : 'photos'}`
-      : `https://graph.facebook.com/v21.0/${post.facebook_page_id}/feed`;
-
-    const res = await fetchWithTimeout(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(fbBody),
-    });
-
-    const result = await res.json();
-
-    if (!res.ok || result?.error) {
-      if (
-        mediaUrl &&
-        isFacebookMediaAttachmentError(res.status, result)
-      ) {
-        const fallbackMeta = buildFacebookTextOnlyFallbackMeta({
-          httpStatus: res.status,
-          body: result,
-        });
-        const textOnly = await publishFacebookFeedTextOnly({
-          pageId: post.facebook_page_id,
-          pageAccessToken: integration.pageAccessToken,
-          caption: post.caption,
-          linkUrl: post.link_url,
-        });
-        if (textOnly.ok) {
-          await adminClient.from('social_posts').update({
-            facebook_post_id: textOnly.body.id || textOnly.body.post_id || null,
-            metadata: {
-              media_fallback: fallbackMeta,
-              publish_warning: `Image could not be attached (${formatFacebookGraphErrorMessage(parseFacebookGraphError(res.status, result))}). Posted caption-only.`,
-            },
-          }).eq('id', postId);
-          return { ok: true, platform: 'facebook' };
-        }
-      }
-
-      return {
-        ok: false,
-        platform: 'facebook',
-        reason: formatFacebookGraphErrorMessage(parseFacebookGraphError(res.status, result)),
-      };
-    }
-
-    await adminClient.from('social_posts').update({
-      facebook_post_id: result.id || result.post_id || null,
-    }).eq('id', postId);
-    return { ok: true, platform: 'facebook' };
-  } catch (err) {
-    console.error('[social/schedule] publish job error:', err);
-    return { ok: false, platform: 'facebook', reason: 'Publish job failed' };
+  const admin = createSupabaseAdminClient();
+  const { data: post } = await admin.from('social_posts').select('tenant_id, facebook_page_id').eq('id', postId).single();
+  if (!post?.facebook_page_id) return { ok: false, platform: 'facebook', reason: 'missing_page_id' };
+  const { getSocialPublishingService } = await import('@/lib/social/SocialPublishingService');
+  const service = getSocialPublishingService();
+  const identity = await service.resolveIdentity({ tenantId: post.tenant_id, platform: 'facebook', identityType: 'facebook_page', identityId: post.facebook_page_id });
+  const result = await service.publishToFacebook(postId, identity);
+  if (!result.ok) {
+    const saved = await admin.from('social_posts').update({ error_message: result.error, last_error: result.error, error_code: result.error_code, provider_response: result.provider_response }).eq('id', postId).eq('tenant_id', post.tenant_id);
+    if (saved.error) throw new Error(saved.error.message);
   }
+  return { ok: result.ok && result.verified && Boolean(result.provider_post_id), platform: 'facebook', reason: result.error };
 }
 
 async function publishToLinkedIn(postId: string): Promise<PublishResult> {
@@ -470,6 +381,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, post, publishBlocked: true }, { status: 202 });
       }
       await publishSocialPost(post.id);
+      const { data: published, error: readError } = await supabase.from('social_posts').select('*').eq('id', post.id).eq('tenant_id', tenantId).single();
+      if (readError) throw new Error(readError.message);
+      const success = published.status === 'published' && (!platforms.includes('facebook') || Boolean(published.facebook_post_id && published.live_url));
+      return NextResponse.json({ success, post: published, error: success ? undefined : published.error_message || 'Publishing could not be verified' }, { status: success ? 200 : 422 });
     }
 
     return NextResponse.json({ success: true, post });
@@ -563,7 +478,18 @@ export async function PATCH(req: NextRequest) {
     if (error) return clientErrorResponse(error, { request: req, scope: 'social/schedule.PATCH' });
 
     await publishSocialPost(body.postId);
-    return NextResponse.json({ success: true });
+    const { data: published, error: readError } = await supabase
+      .from('social_posts')
+      .select('status, facebook_post_id, live_url, error_message')
+      .eq('id', body.postId)
+      .eq('tenant_id', body.tenantId)
+      .single();
+    if (readError) return clientErrorResponse(readError, { request: req, scope: 'social/schedule.PATCH' });
+    const success = published.status === 'published' && Boolean(published.facebook_post_id && published.live_url);
+    return NextResponse.json(
+      { success, post: published, error: success ? undefined : published.error_message || 'Publishing could not be verified' },
+      { status: success ? 200 : 422 }
+    );
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'social/schedule.PATCH' });
   }

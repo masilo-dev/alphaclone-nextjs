@@ -75,6 +75,16 @@ test('one image with duplicate aliases dedupes to single media_asset_id', () => 
   assert.equal(normalized.mediaUrls.length, 0);
 });
 
+test('duplicate raw media URLs preserve one deterministic item', () => {
+  const normalized = normalizePublishMediaArgs({
+    media_urls: [
+      'https://cdn.example.com/image.png',
+      'https://cdn.example.com/image.png',
+    ],
+  });
+  assert.deepEqual(normalized.mediaUrls, ['https://cdn.example.com/image.png']);
+});
+
 test('raw supabase URLs are rejected in normalization', () => {
   const normalized = normalizePublishMediaArgs({
     media_urls: [SUPABASE_URL],

@@ -1220,7 +1220,8 @@ defineConnectorTool({
     const finalMediaAssetIds: string[] = [...normalized.mediaAssetIds];
     const finalMediaUrls: string[] = [...normalized.mediaUrls];
 
-    const hasRawMediaInput = Boolean(contentBase64 || args.data_url || sourceUrl);
+    // normalizePublishMediaArgs already resolves URL inputs; do not ingest them a second time.
+    const hasRawMediaInput = Boolean(contentBase64 || args.data_url || (args.url && !args.source_url && !args.media_url));
 
     if (hasRawMediaInput) {
       const { ingestMediaInput } = await import('@/lib/media/ingestMedia');

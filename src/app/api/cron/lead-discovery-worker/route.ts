@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
       try {
         const result = await processLeadDiscoveryBatch({
           workerId: `lead-cron-${process.pid}-${Date.now()}`,
-          claimLimit: 3,
+          claimLimit: 1,
         });
 
         return NextResponse.json({
@@ -34,6 +34,6 @@ export async function GET(req: NextRequest) {
         );
       }
     },
-    { maxDurationMs: 25_000 }
+    { maxDurationMs: 240_000, lockTtlSec: 300 }
   );
 }

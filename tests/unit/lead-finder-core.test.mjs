@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
+  candidateMeetsRequirements,
   escapeCsvFormula, normalizeCompany, normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate,
 } from '../../src/lib/lead-finder/core.ts';
 
@@ -23,6 +24,26 @@ test('lead finder keeps quality and fit scoring explainable and separate', () =>
   assert.ok(score.fitScore >= 80);
   assert.ok(score.explanation.some(item => item.type === 'quality'));
   assert.ok(score.explanation.some(item => item.type === 'fit'));
+});
+
+test('lead finder persists only candidates that satisfy contact requirements', () => {
+  const unreachable = { business_name: 'No Contact Ltd', website: 'https://example.com' };
+  assert.equal(candidateMeetsRequirements(unreachable), false);
+  assert.equal(candidateMeetsRequirements({ ...unreachable, public_email: 'hello@example.com' }), true);
+  assert.equal(
+    candidateMeetsRequirements(
+      { ...unreachable, public_phone: '+41446681800' },
+      { email: true }
+    ),
+    false
+  );
+  assert.equal(
+    candidateMeetsRequirements(
+      { ...unreachable, public_email: 'hello@example.com' },
+      { email: true, website: true }
+    ),
+    true
+  );
 });
 
 test('lead discovery worker can run from production cron without starting an infinite loop', () => {

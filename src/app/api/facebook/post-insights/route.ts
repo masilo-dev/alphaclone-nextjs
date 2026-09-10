@@ -14,13 +14,17 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const pageId = searchParams.get('pageId');
   const postId = searchParams.get('postId');
+  const tenantId = searchParams.get('tenantId');
 
-  if (!pageId || !postId) {
-    return NextResponse.json({ success: false, error: 'pageId and postId are required' }, { status: 400 });
+  if (!pageId || !postId || !tenantId) {
+    return NextResponse.json({ success: false, error: 'tenantId, pageId and postId are required' }, { status: 400 });
   }
+  const { data: membership } = await supabase.from('tenant_users').select('tenant_id')
+    .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
+  if (!membership) return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
 
   const admin = createSupabaseAdminClient();
-  const integration = await getFacebookIntegration(admin, { userId: user.id, pageId });
+  const integration = await getFacebookIntegration(admin, { tenantId, userId: user.id, pageId });
 
   if (integration?.metadata?.no_pages) {
     return NextResponse.json({

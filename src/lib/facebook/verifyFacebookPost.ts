@@ -123,7 +123,9 @@ export function buildFacebookPostUrl(postId: string, pageId?: string | null): st
 }
 
 export function requireGraphPostId(body: Record<string, unknown> | null | undefined): string {
-  const id = body?.id ?? body?.post_id;
+  // /{page}/photos returns both the photo object id and the feed post_id.
+  // The feed post is the canonical publish receipt and produces the live URL.
+  const id = body?.post_id ?? body?.id;
   if (typeof id === 'string' && id.trim()) return id.trim();
   if (typeof id === 'number' && Number.isFinite(id)) return String(id);
   throw new FacebookPublishError(

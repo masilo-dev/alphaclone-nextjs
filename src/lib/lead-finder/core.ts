@@ -153,6 +153,35 @@ export function calculateCompositeLeadScore(input: {
   );
 }
 
+export type LeadContactRequirements = {
+  website?: boolean;
+  email?: boolean;
+  phone?: boolean;
+  social?: boolean;
+};
+
+/** Apply the search contract after enrichment, before a candidate is persisted. */
+export function candidateMeetsRequirements(
+  candidate: ScoreCandidate,
+  requirements: LeadContactRequirements = {}
+): boolean {
+  const email = normalizeEmail(candidate.public_email);
+  const phone = normalizePhone(candidate.public_phone);
+  // Lead Finder never saves an unreachable business. Checked contact fields make
+  // that contact method mandatory; with neither checked, either method is enough.
+  if (requirements.email && !email) return false;
+  if (requirements.phone && !phone) return false;
+  if (!requirements.email && !requirements.phone && !email && !phone) return false;
+  if (requirements.website && !normalizeDomain(candidate.website)) return false;
+  if (
+    requirements.social &&
+    !candidate.facebook_url &&
+    !candidate.linkedin_url &&
+    !candidate.instagram_url
+  ) return false;
+  return true;
+}
+
 export function escapeCsvFormula(value: unknown) {
   const text = String(value ?? '');
   return /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;

@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate, buildLeadCandidateDedupeKey, buildCanonicalBusinessKey, calculateCompositeLeadScore } from '@/lib/lead-finder/core';
+import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate, buildLeadCandidateDedupeKey, buildCanonicalBusinessKey, calculateCompositeLeadScore, candidateMeetsRequirements, type LeadContactRequirements } from '@/lib/lead-finder/core';
 import { crawlPublicWebsite } from '@/lib/lead-finder/websiteCrawler';
 import { loadLeadProviderPolicy } from '@/lib/lead-finder/providerPolicy';
 import { runLeadStep, type LeadResult, type LeadStep } from '@/lib/scraper/freeLeadSearch';
@@ -15,6 +15,7 @@ type Job = { id: string; workspace_id: string; created_by: string; search_id: st
 type Search = {
   id: string; query?: string; location?: string; city?: string; country?: string; industry?: string;
   business_keywords?: string[]; result_limit?: number; exclusions?: { keywords?: string[] };
+  requirements?: LeadContactRequirements;
 };
 
 function getAdminClient(): SupabaseClient {
@@ -238,7 +239,12 @@ async function execute(job: Job) {
         city: candidate.city,
       }),
     };
-  });
+  }).filter((row) => candidateMeetsRequirements({
+    business_name: row.business_name,
+    website: row.website,
+    public_email: row.public_email,
+    public_phone: row.public_phone,
+  }, search.requirements));
 
   if (rows.length) {
     const { error: insertError } = await supabase.from('lead_candidates').upsert(rows, {
@@ -313,6 +319,19 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
   const activeWorkerId = options?.workerId || workerId;
   const claimLimit = Math.max(1, Math.min(options?.claimLimit ?? 3, 10));
   let jobs: Job[] = [];
+
+  // A terminated cron used to leave jobs at `running` forever. Requeue only
+  // expired locks so another worker can safely finish the durable search.
+  const staleBefore = new Date(Date.now() - 15 * 60_000).toISOString();
+  const { data: staleJobs } = await supabase.from('lead_search_jobs')
+    .update({ status: 'retrying', locked_at: null, next_run_at: new Date().toISOString() })
+    .eq('status', 'running').lt('locked_at', staleBefore)
+    .select('search_id,workspace_id');
+  for (const stale of staleJobs || []) {
+    if (!stale.search_id || !stale.workspace_id) continue;
+    await supabase.from('lead_searches').update({ status: 'queued' })
+      .eq('id', stale.search_id).eq('workspace_id', stale.workspace_id).eq('status', 'running');
+  }
 
   // Try RPC claim first
   try {

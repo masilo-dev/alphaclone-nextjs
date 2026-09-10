@@ -27,6 +27,10 @@ describe("Facebook publish verification", () => {
     );
     assert.equal(requireGraphPostId({ id: "123_456" }), "123_456");
     assert.equal(requireGraphPostId({ post_id: "789" }), "789");
+    assert.equal(
+      requireGraphPostId({ id: "photo-123", post_id: "page-1_post-456" }),
+      "page-1_post-456",
+    );
   });
 
   it("buildFacebookPostUrl prefers composite Graph ids", () => {

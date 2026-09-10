@@ -1,3 +1,4 @@
+import { redactSecrets } from '@/lib/social/mediaUpload';
 /**
  * Durable social publish tasks — checkpointed upload → publish → verify pipeline.
  */
@@ -201,7 +202,7 @@ export async function executeSocialPublishDurableTask(params: {
           const classified = classifyRetryableExecutionError(message);
           await admin
             .from('social_posts')
-            .update({ status: 'failed', error_message: message })
+            .update({ status: 'failed', error_message: message, last_error: message, error_code: publishResult.error_code, provider_response: redactSecrets(publishResult.provider_response) })
             .eq('id', postId)
             .eq('tenant_id', params.tenantId);
           return {

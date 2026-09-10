@@ -1,3 +1,4 @@
+import { fetchFacebookImage, validateFacebookImageBytes } from '@/lib/facebook/validateFacebookImage';
 /**
  * SocialPublishingService — single canonical publisher for dashboard, Bonnie,
  * ChatGPT, Claude, Cursor, API routes, cron workers, and MCP tools.
@@ -31,11 +32,6 @@ import {
   parseFacebookGraphError,
   sanitizeFacebookPayload,
 } from '@/lib/facebook/parseFacebookGraphError';
-import {
-  buildFacebookTextOnlyFallbackMeta,
-  isFacebookMediaAttachmentError,
-  publishFacebookFeedTextOnly,
-} from '@/lib/social/facebookTextOnlyFallback';
 import {
   uploadFacebookPhotoFromBytes,
   uploadFacebookVideoFromBytes,
@@ -136,6 +132,7 @@ function logPublishEvent(event: Record<string, unknown>): void {
 }
 
 async function publishFacebookMediaItem(params: {
+  tenantId: string;
   pageId: string;
   pageAccessToken: string;
   mediaUrl: string;
@@ -160,6 +157,7 @@ async function publishFacebookMediaItem(params: {
       mimeType: params.mediaType,
     });
     const bytes = await fetchMediaAssetBytes(assetId);
+    if (!bytes || bytes.tenantId !== params.tenantId) throw new Error('Media asset unavailable for this tenant');
     if (bytes) {
       logMediaPipelineStep({
         step: 'media_received',
@@ -180,6 +178,7 @@ async function publishFacebookMediaItem(params: {
           description: params.caption,
         });
       } else {
+        await validateFacebookImageBytes(bytes.buffer, bytes.mimeType);
         uploadResult = await uploadFacebookPhotoFromBytes({
           pageId: params.pageId,
           pageAccessToken: params.pageAccessToken,
@@ -202,6 +201,11 @@ async function publishFacebookMediaItem(params: {
       }
       return uploadResult;
     }
+  }
+
+  if (!isVideo) {
+    const image = await fetchFacebookImage(params.mediaUrl);
+    return uploadFacebookPhotoFromBytes({ ...params, ...image });
   }
 
   logMediaPipelineStep({
@@ -245,7 +249,8 @@ async function publishFacebookMediaItem(params: {
 function buildFacebookFailureResult(
   httpStatus: number,
   body: unknown,
-  fallbackMessage: string
+  fallbackMessage: string,
+  stage = 'media_upload'
 ): ProviderPublishResult {
   const parsed = parseFacebookGraphError(httpStatus, body);
   logPublishEvent({
@@ -269,6 +274,8 @@ function buildFacebookFailureResult(
     provider_response: {
       ...(sanitizeFacebookPayload(body) as Record<string, unknown>),
       diagnostics: parsed,
+      request_stage: stage,
+      http_status: httpStatus,
     },
   };
 }
@@ -517,14 +524,23 @@ export class SocialPublishingService {
       };
     }
 
-    const mediaUrls = Array.isArray(post.media_urls)
-      ? post.media_urls.filter((u: unknown): u is string => typeof u === 'string' && !!u)
-      : [];
-    const mediaTypes = Array.isArray(post.media_types)
-      ? post.media_types.map((t: unknown) => String(t || '').toLowerCase())
-      : [];
-
+    let stage = 'media_validation';
     try {
+      const media = await resolveMediaUrls({ tenantId: post.tenant_id, userId: '', mediaUrls: post.media_urls || [] });
+      const mediaUrls = media.urls;
+      const mediaTypes = media.types;
+      for (let i = 0; i < mediaUrls.length; i++) {
+        if (mediaTypes[i] === 'video') continue;
+        const assetId = extractMediaAssetIdFromUrl(mediaUrls[i]);
+        if (assetId) {
+          const bytes = await fetchMediaAssetBytes(assetId);
+          if (!bytes || bytes.tenantId !== post.tenant_id) throw new Error('Media asset unavailable for this tenant');
+          await validateFacebookImageBytes(bytes.buffer, bytes.mimeType);
+        } else {
+          await fetchFacebookImage(mediaUrls[i]);
+        }
+      }
+      stage = 'media_upload';
       let graphResponse: Record<string, unknown>;
 
       if (mediaUrls.length > 1) {
@@ -547,6 +563,7 @@ export class SocialPublishingService {
             };
           }
           const uploadResult = await publishFacebookMediaItem({
+            tenantId: post.tenant_id,
             pageId,
             pageAccessToken: integration.pageAccessToken,
             mediaUrl: mediaUrls[i],
@@ -576,7 +593,7 @@ export class SocialPublishingService {
           return buildFacebookFailureResult(
             feedRes.status,
             graphResponse,
-            'Facebook feed publish failed'
+            'Facebook feed publish failed', 'post_create'
           );
         }
       } else {
@@ -584,6 +601,7 @@ export class SocialPublishingService {
         const mediaType = mediaTypes[0] || '';
         if (mediaUrl) {
           const uploadResult = await publishFacebookMediaItem({
+            tenantId: post.tenant_id,
             pageId,
             pageAccessToken: integration.pageAccessToken,
             mediaUrl,
@@ -591,35 +609,7 @@ export class SocialPublishingService {
             caption: post.caption,
           });
           if (!uploadResult.ok) {
-            if (isFacebookMediaAttachmentError(uploadResult.status, uploadResult.body)) {
-              const fallbackMeta = buildFacebookTextOnlyFallbackMeta({
-                httpStatus: uploadResult.status,
-                body: uploadResult.body,
-              });
-              const textOnly = await publishFacebookFeedTextOnly({
-                pageId,
-                pageAccessToken: integration.pageAccessToken,
-                caption: post.caption,
-                linkUrl: post.link_url,
-              });
-              if (!textOnly.ok) {
-                return buildFacebookFailureResult(
-                  textOnly.status,
-                  textOnly.body,
-                  'Facebook publish failed after media fallback'
-                );
-              }
-              graphResponse = {
-                ...textOnly.body,
-                alphaclone_media_fallback: fallbackMeta,
-              };
-            } else {
-              return buildFacebookFailureResult(
-                uploadResult.status,
-                uploadResult.body,
-                'Facebook publish failed'
-              );
-            }
+            return buildFacebookFailureResult(uploadResult.status, uploadResult.body, 'Facebook rejected this media', 'media_upload');
           } else {
             graphResponse = uploadResult.body;
           }
@@ -637,12 +627,13 @@ export class SocialPublishingService {
             return buildFacebookFailureResult(
               feedRes.status,
               graphResponse,
-              'Facebook feed publish failed'
+              'Facebook feed publish failed', 'post_create'
             );
           }
         }
       }
 
+      stage = 'verification';
       const verified = await confirmFacebookPublish({
         graphResponse,
         pageAccessToken: integration.pageAccessToken,
@@ -650,7 +641,7 @@ export class SocialPublishingService {
       });
       const publishedAt = new Date().toISOString();
 
-      await admin
+      const saved = await admin
         .from('social_posts')
         .update({
           facebook_post_id: verified.postId,
@@ -659,7 +650,9 @@ export class SocialPublishingService {
           live_url: verified.postUrl,
           provider_response: redactSecrets(graphResponse),
         })
-        .eq('id', postId);
+        .eq('id', postId)
+        .eq('tenant_id', post.tenant_id);
+      if (saved.error) throw new Error(`Facebook accepted the post but saving failed: ${saved.error.message}`);
 
       return {
         ok: true,
@@ -691,7 +684,8 @@ export class SocialPublishingService {
         verified: false,
         verified_at: null,
         error: message,
-        error_code: code,
+        error_code: stage === 'media_validation' ? 'MEDIA_VALIDATION_FAILED' : code,
+        provider_response: { request_stage: stage, error: { message: redactSecrets(message) } },
       };
     }
   }
@@ -1373,6 +1367,8 @@ export class SocialPublishingService {
           status: failStatus,
           error_message: providerResult.error || 'Provider publish failed',
           last_error: providerResult.error || 'Provider publish failed',
+          error_code: providerResult.error_code,
+          provider_response: redactSecrets(providerResult.provider_response),
         });
         logPublishEvent({
           event: 'social_publish_failed',
@@ -1618,6 +1614,9 @@ export class SocialPublishingService {
         await this.updatePostRecord(post.id, {
           status: failStatus,
           error_message: providerResult.error || 'Retry publish failed',
+          last_error: providerResult.error,
+          error_code: providerResult.error_code,
+          provider_response: redactSecrets(providerResult.provider_response),
         });
         return {
           ok: false,
@@ -1846,6 +1845,8 @@ export class SocialPublishingService {
             status: permanent || attempts >= 5 ? 'failed' : 'scheduled',
             attempt_count: attempts,
             last_error: result.error,
+            error_code: result.error_code,
+            provider_response: redactSecrets(result.provider_response),
             error_message: result.error,
             // Exponential backoff: push scheduled_at forward
             ...(permanent || attempts >= 5

@@ -214,8 +214,6 @@ export async function executeAction(
                 const mediaUrl = config.mediaUrl
                     ? resolveTemplate(String(config.mediaUrl), context.data).trim()
                     : '';
-                const mediaType = String(config.mediaType || '').toLowerCase() === 'video' ? 'video' : 'image';
-
                 const supabase = createSupabaseAdminClient();
 
                 let pageId = String(config.pageId || config.page_id || '').trim();
@@ -238,14 +236,29 @@ export async function executeAction(
                     return { type, status: 'failed', error: 'No connected Facebook Page found' };
                 }
 
-                const { facebookService } = await import('../facebookService');
-                const publishResult = await facebookService.publishPost(
-                    context.tenantId,
-                    pageId,
-                    message,
-                    mediaUrl || undefined,
-                    mediaType
-                );
+                const requestedUserId = String(context.data.user_id || context.data.owner_id || '').trim();
+                const memberQuery = supabase.from('tenant_users').select('user_id').eq('tenant_id', context.tenantId);
+                const { data: member } = requestedUserId
+                    ? await memberQuery.eq('user_id', requestedUserId).maybeSingle()
+                    : await memberQuery.limit(1).maybeSingle();
+                if (!member?.user_id) {
+                    return { type, status: 'failed', error: 'Workflow has no tenant member publish actor' };
+                }
+                const { getSocialPublishingService } = await import('@/lib/social/SocialPublishingService');
+                const publishResult = await getSocialPublishingService().publish({
+                    tenantId: context.tenantId,
+                    userId: member.user_id,
+                    platform: 'facebook',
+                    identityType: 'facebook_page',
+                    identityId: pageId,
+                    caption: message,
+                    mediaUrls: mediaUrl ? [mediaUrl] : [],
+                    publishNow: true,
+                });
+
+                if (!publishResult.ok) {
+                    return { type, status: 'failed', error: publishResult.error?.message || 'Facebook publishing failed' };
+                }
 
                 return {
                     type,
