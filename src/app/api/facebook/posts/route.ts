@@ -5,6 +5,17 @@ import { getSocialPublishingService } from '@/lib/social/SocialPublishingService
 
 export const runtime = 'nodejs';
 
+type SocialPostRow = {
+  id: string;
+  facebook_post_id?: string | null;
+  caption?: string | null;
+  media_types?: string[] | null;
+  media_urls?: string[] | null;
+  live_url?: string | null;
+  created_at: string;
+  [key: string]: unknown;
+};
+
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -49,7 +60,8 @@ export async function GET(req: NextRequest) {
   if (pageId) query = query.eq('facebook_page_id', pageId);
   const { data, error } = await query;
   if (error) return clientErrorResponse(error, { request: req, scope: 'facebook/posts.GET' });
-  const posts = (data || []).slice(0, limit).map((post) => ({
+  const rows = (data || []) as SocialPostRow[];
+  const posts = rows.slice(0, limit).map((post) => ({
     ...post,
     id: post.facebook_post_id || post.id,
     social_post_id: post.id,
@@ -61,7 +73,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     success: true,
     posts,
-    paging: (data || []).length > limit
+    paging: rows.length > limit
       ? { cursors: { after: String(offset + limit) } }
       : null,
   });
