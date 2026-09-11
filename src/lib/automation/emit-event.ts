@@ -94,6 +94,21 @@ export async function emitBusinessEvent(
     insertedId = inserted.data?.id || null;
   }
 
+  // Project automation subscribes to persisted business facts rather than UI state.
+  // Only payment-related facts are handled synchronously here; contract.signed remains
+  // on the existing workflow/durable-runtime path to preserve legacy behavior.
+  if (['payment.received', 'payment_received', 'invoice.paid', 'invoice_paid'].includes(canonicalType)) {
+    const { handleProjectAutomationBusinessEvent } = await import('@/lib/projects/projectAutomationService');
+    await handleProjectAutomationBusinessEvent({
+      tenantId,
+      eventType: canonicalType,
+      payload: envelope.payload,
+      eventId: insertedId,
+    }).catch((err) => {
+      console.warn('[Automation] Project payment bridge failed:', err?.message || err);
+    });
+  }
+
   const { bridgeAutomationEventToTenantNotification } = await import('@/lib/audit/businessEventBridge');
   await bridgeAutomationEventToTenantNotification(tenantId, envelope.event_type, {
     ...envelope.payload,
