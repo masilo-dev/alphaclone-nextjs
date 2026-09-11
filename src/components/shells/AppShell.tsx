@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { usePWA } from '@/contexts/PWAContext';
 import Splash from '@/components/pwa/Splash';
 import CompanionNetworkStatus from '@/components/pwa/CompanionNetworkStatus';
+import CompanionCapabilityBoundary from '@/components/pwa/CompanionCapabilityBoundary';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading, needsMfa } = useAuth();
@@ -68,7 +69,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {children}
+        {isCompanion ? <CompanionCapabilityBoundary>{children}</CompanionCapabilityBoundary> : children}
       </div>
     </div>
   );
