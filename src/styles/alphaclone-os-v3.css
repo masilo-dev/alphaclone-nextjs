@@ -1,0 +1,163 @@
+/* AlphaClone OS v3 — global interaction/material layer.
+   This file intentionally preserves existing AlphaClone brand colours.
+   It improves depth, motion, focus, and shared interaction behavior. */
+
+:root {
+  --ac-v3-surface-canvas: var(--background-app);
+  --ac-v3-surface-content: var(--surface-primary);
+  --ac-v3-surface-elevated: color-mix(in srgb, var(--surface-elevated) 94%, transparent);
+  --ac-v3-surface-floating: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+  --ac-v3-surface-intelligence: color-mix(in srgb, var(--ac-bonnie) 9%, var(--surface-elevated));
+
+  --ac-v3-border-hairline: color-mix(in srgb, var(--border-default) 72%, transparent);
+  --ac-v3-shadow-content: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.035);
+  --ac-v3-shadow-elevated: 0 10px 30px rgb(15 23 42 / 0.09), 0 2px 8px rgb(15 23 42 / 0.05);
+  --ac-v3-shadow-floating: 0 18px 48px rgb(15 23 42 / 0.16), 0 4px 14px rgb(15 23 42 / 0.08);
+
+  --ac-v3-radius-control: 10px;
+  --ac-v3-radius-card: 14px;
+  --ac-v3-radius-panel: 18px;
+  --ac-v3-radius-sheet: 22px;
+
+  --ac-v3-motion-fast: 140ms;
+  --ac-v3-motion-standard: 220ms;
+  --ac-v3-motion-expressive: 340ms;
+  --ac-v3-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ac-v3-ease-responsive: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ac-v3-ease-expressive: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --ac-v3-glass-blur: 22px;
+  --ac-v3-glass-saturate: 1.18;
+}
+
+html.dark {
+  --ac-v3-shadow-content: 0 1px 2px rgb(0 0 0 / 0.24), 0 10px 28px rgb(0 0 0 / 0.16);
+  --ac-v3-shadow-elevated: 0 14px 36px rgb(0 0 0 / 0.30), 0 3px 10px rgb(0 0 0 / 0.20);
+  --ac-v3-shadow-floating: 0 22px 58px rgb(0 0 0 / 0.46), 0 5px 16px rgb(0 0 0 / 0.25);
+}
+
+/* Semantic material levels. Content surfaces stay predominantly solid. */
+.ac-v3-canvas {
+  background: var(--ac-v3-surface-canvas);
+}
+
+.ac-v3-content {
+  background: var(--ac-v3-surface-content);
+  border: 1px solid var(--ac-v3-border-hairline);
+  border-radius: var(--ac-v3-radius-card);
+  box-shadow: var(--ac-v3-shadow-content);
+}
+
+.ac-v3-elevated {
+  background: var(--ac-v3-surface-elevated);
+  border: 1px solid var(--ac-v3-border-hairline);
+  border-radius: var(--ac-v3-radius-panel);
+  box-shadow: var(--ac-v3-shadow-elevated);
+}
+
+.ac-v3-floating,
+.ac-v3-glass {
+  background: var(--ac-v3-surface-floating);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 62%, transparent);
+  border-radius: var(--ac-v3-radius-sheet);
+  box-shadow: var(--ac-v3-shadow-floating);
+  -webkit-backdrop-filter: blur(var(--ac-v3-glass-blur)) saturate(var(--ac-v3-glass-saturate));
+  backdrop-filter: blur(var(--ac-v3-glass-blur)) saturate(var(--ac-v3-glass-saturate));
+}
+
+.ac-v3-intelligence {
+  background: var(--ac-v3-surface-intelligence);
+  border: 1px solid color-mix(in srgb, var(--ac-bonnie) 28%, transparent);
+  border-radius: var(--ac-v3-radius-panel);
+  box-shadow: var(--ac-v3-shadow-elevated);
+}
+
+/* Improve existing canonical workspace primitives globally without changing their colours. */
+.ac-workspace-panel {
+  transition:
+    border-color var(--ac-v3-motion-standard) var(--ac-v3-ease-standard),
+    box-shadow var(--ac-v3-motion-standard) var(--ac-v3-ease-standard),
+    background-color var(--ac-v3-motion-standard) var(--ac-v3-ease-standard);
+}
+
+:is(a, button).ac-workspace-panel,
+.ac-workspace-panel[data-interactive="true"] {
+  will-change: transform;
+  transition:
+    transform var(--ac-v3-motion-standard) var(--ac-v3-ease-responsive),
+    border-color var(--ac-v3-motion-standard) var(--ac-v3-ease-standard),
+    box-shadow var(--ac-v3-motion-standard) var(--ac-v3-ease-standard),
+    background-color var(--ac-v3-motion-standard) var(--ac-v3-ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(a, button).ac-workspace-panel:hover,
+  .ac-workspace-panel[data-interactive="true"]:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ac-v3-shadow-elevated);
+  }
+}
+
+:is(a, button).ac-workspace-panel:active,
+.ac-workspace-panel[data-interactive="true"]:active {
+  transform: translateY(0) scale(0.995);
+}
+
+.ac-workspace-action-btn,
+.ac-workspace-nav-item,
+.ac-workspace-nav-subitem,
+.ac-workspace-tab {
+  transition:
+    color var(--ac-v3-motion-fast) var(--ac-v3-ease-responsive),
+    background-color var(--ac-v3-motion-fast) var(--ac-v3-ease-responsive),
+    border-color var(--ac-v3-motion-fast) var(--ac-v3-ease-responsive),
+    box-shadow var(--ac-v3-motion-fast) var(--ac-v3-ease-responsive),
+    transform var(--ac-v3-motion-fast) var(--ac-v3-ease-responsive);
+}
+
+.ac-workspace-action-btn:active,
+.ac-workspace-nav-item:active,
+.ac-workspace-nav-subitem:active,
+.ac-workspace-tab:active {
+  transform: scale(0.985);
+}
+
+/* Shared floating-control treatment for Bonnie, commands, sheets and contextual navigation. */
+.ac-v3-command-surface,
+.ac-v3-sheet,
+.ac-v3-popover {
+  background: var(--ac-v3-surface-floating);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 62%, transparent);
+  box-shadow: var(--ac-v3-shadow-floating);
+  -webkit-backdrop-filter: blur(var(--ac-v3-glass-blur)) saturate(var(--ac-v3-glass-saturate));
+  backdrop-filter: blur(var(--ac-v3-glass-blur)) saturate(var(--ac-v3-glass-saturate));
+}
+
+/* Strong, brand-consistent accessibility. */
+:where(button, a, input, textarea, select, [role="button"], [role="tab"]):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ac-accent) 72%, white 8%);
+  outline-offset: 2px;
+}
+
+/* Motion must never be required to understand the interface. */
+@media (prefers-reduced-motion: reduce) {
+  .ac-workspace-panel,
+  .ac-workspace-action-btn,
+  .ac-workspace-nav-item,
+  .ac-workspace-nav-subitem,
+  .ac-workspace-tab,
+  .ac-v3-content,
+  .ac-v3-elevated,
+  .ac-v3-floating,
+  .ac-v3-glass,
+  .ac-v3-intelligence,
+  .ac-v3-command-surface,
+  .ac-v3-sheet,
+  .ac-v3-popover {
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transform: none !important;
+  }
+}
