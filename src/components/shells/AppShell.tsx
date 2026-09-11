@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { usePWA } from '@/contexts/PWAContext';
 import Splash from '@/components/pwa/Splash';
+import CompanionNetworkStatus from '@/components/pwa/CompanionNetworkStatus';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading, needsMfa } = useAuth();
@@ -59,6 +60,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       className={`fixed inset-0 flex h-[100dvh] w-screen flex-col overflow-hidden overscroll-none bg-[var(--background-app)] text-[var(--text-primary)] ${isCompanion ? 'ac-companion-shell' : 'ac-installed-desktop-shell'}`}
       data-companion={isCompanion ? 'true' : 'false'}
     >
+      {isCompanion ? <CompanionNetworkStatus /> : null}
       <div
         className="app-viewport ios-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
         style={{
