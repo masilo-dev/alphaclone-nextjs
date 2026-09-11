@@ -1,157 +1,746 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { LayoutGrid, MessageSquare, Settings2, Target, Mail, Phone, Users } from 'lucide-react';
-import LeadFinderProspectsView from './LeadFinderProspectsView';
-import LeadFinderChat from './LeadFinderChat';
-import ScraperCampaignBuilder from './ScraperCampaignBuilder';
-import CampaignRunDashboard from './CampaignRunDashboard';
-import ScraperLeadsTable from './ScraperLeadsTable';
-import LeadFinderSystemPanel from './LeadFinderSystemPanel';
-import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
-import type { LeadFinderStats } from '@/lib/scraper/leadFinderStatsServer';
+import {
+  ArrowRight, Check, Clock3, Database, Download, FileUp, History, ListPlus,
+  Mail, MapPin, Pause, Play, Search, Settings2, SlidersHorizontal,
+  Sparkles, X,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { propagation } from '@/lib/behavioral/propagationBridge';
+import LeadFinderMapPanel from '@/components/dashboard/leads/LeadFinderMapPanel';
+import LeadFinderChat from '@/components/dashboard/leads/LeadFinderChat';
 
-type Tab = 'prospects' | 'chat' | 'campaigns';
+type SearchRecord = {
+  id: string; name: string; query?: string; location?: string; industry?: string;
+  status: string; progress: number; discovered_count: number; accepted_count: number;
+  rejected_count: number; duplicate_count: number; error_count: number; created_at: string;
+  contactable_count?: number; contacted_count?: number;
+};
+type Candidate = {
+  id: string; business_name: string; contact_name?: string; industry?: string; city?: string;
+  country?: string; website?: string; public_email?: string; public_phone?: string;
+  source_type: string; quality_score: number; fit_score: number; verification_status: string;
+  review_status: string; created_at: string; lat?: number; lng?: number;
+  qualification?: {
+    master_score: number; grade: string; priority_band: string; qualification_reason: string;
+    why_now: string; recommended_action: string; recommended_offer?: { primary_offer?: string | null };
+  } | null;
+};
+
+type LeadList = {
+  id: string;
+  name: string;
+  description?: string;
+  colour?: string;
+  lead_count?: number;
+  created_at: string;
+};
+
+type LeadFinderSettings = {
+  defaultResultLimit: number;
+  requireEmail: boolean;
+  requireWebsite: boolean;
+  defaultSources: string[];
+};
+
+const SETTINGS_KEY = 'lead_finder_workspace_settings';
+
+function readLeadFinderSettings(workspaceId: string): LeadFinderSettings {
+  if (typeof window === 'undefined') {
+    return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['openstreetmap', 'website'] };
+  }
+  try {
+    const raw = window.localStorage.getItem(`${SETTINGS_KEY}:${workspaceId}`);
+    if (!raw) {
+      return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['openstreetmap', 'website'] };
+    }
+    return JSON.parse(raw) as LeadFinderSettings;
+  } catch {
+    return { defaultResultLimit: 50, requireEmail: false, requireWebsite: false, defaultSources: ['openstreetmap', 'website'] };
+  }
+}
+
+function writeLeadFinderSettings(workspaceId: string, settings: LeadFinderSettings) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(`${SETTINGS_KEY}:${workspaceId}`, JSON.stringify(settings));
+}
+
+const nav = ['Discover', 'Assistant', 'Results', 'Lists', 'Outreach', 'Activity', 'Settings'] as const;
+const presets = [
+  ['Restaurants in Harare', 'restaurants', 'Harare'],
+  ['Construction companies in Bulawayo', 'construction companies', 'Bulawayo'],
+  ['Marketing agencies in Warsaw', 'marketing agencies', 'Warsaw'],
+  ['Small retailers in Johannesburg', 'small retailers', 'Johannesburg'],
+  ['Local service businesses', 'local services', ''],
+  ['Companies without websites', 'businesses', ''],
+  ['Businesses with public email addresses', 'businesses', ''],
+] as const;
+
+const fieldClass = 'min-h-11 w-full rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface)] px-3 text-sm text-[var(--ws-text-primary)] outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20';
+const buttonClass = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 disabled:cursor-not-allowed disabled:opacity-50';
 
 export default function ScraperCampaignsPage() {
   const tenant = useCurrentTenantSafe();
-  const [tab, setTab] = useState<Tab>('prospects');
-  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [stats, setStats] = useState<LeadFinderStats | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [active, setActive] = useState<(typeof nav)[number]>(() =>
+    pathname === '/dashboard/sales-agent' || searchParams.get('tab') === 'chat'
+      ? 'Assistant'
+      : 'Discover'
+  );
+  const [advanced, setAdvanced] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [available, setAvailable] = useState(true);
+  const [availabilityNotice, setAvailabilityNotice] = useState<string | null>(null);
+  const [searches, setSearches] = useState<SearchRecord[]>([]);
+  const [selectedSearch, setSelectedSearch] = useState<SearchRecord | null>(null);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [reviewingCandidateId, setReviewingCandidateId] = useState<string | null>(null);
+  const [lists, setLists] = useState<LeadList[]>([]);
+  const [listsLoading, setListsLoading] = useState(false);
+  const [creatingList, setCreatingList] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [addingToListId, setAddingToListId] = useState<string | null>(null);
+  const [finderSettings, setFinderSettings] = useState<LeadFinderSettings>({
+    defaultResultLimit: 50,
+    requireEmail: false,
+    requireWebsite: false,
+    defaultSources: ['openstreetmap', 'website'],
+  });
+  const [form, setForm] = useState({
+    keywords: '', location: '', country: '', city: '', region: '', industry: '',
+    searchType: 'businesses_by_location', resultLimit: 50, website: false, email: true,
+    phone: true, social: false, sources: ['openstreetmap', 'website'],
+    excludedKeywords: '', excludedDomains: '', excludedLocations: '', radiusKm: 25,
+  });
 
-  const loadStats = useCallback(async () => {
+  const loadSearches = useCallback(async () => {
     if (!tenant?.id) return;
+    const res = await fetch(`/api/leads/searches?workspaceId=${encodeURIComponent(tenant.id)}`);
+    const body = await res.json();
+    if (!res.ok) { toast.error(body.error || 'Could not load searches'); return; }
+    setAvailable(body.available !== false);
+    setAvailabilityNotice(body.notice || null);
+    const rows = body.searches || [];
+    setSearches(rows);
+    setSelectedSearch(current => current ? rows.find((row: SearchRecord) => row.id === current.id) || current : rows[0] || null);
+  }, [tenant?.id]);
+
+  const loadResults = useCallback(async () => {
+    if (!tenant?.id || !selectedSearch?.id) return;
+    const res = await fetch(`/api/leads/searches/${selectedSearch.id}/results?workspaceId=${encodeURIComponent(tenant.id)}&limit=100`);
+    const body = await res.json();
+    if (!res.ok) { toast.error(body.error || 'Could not load results'); return; }
+    setCandidates((body.candidates || []).map((row: Candidate & { latitude?: number; longitude?: number }) => ({
+      ...row, lat: row.latitude, lng: row.longitude,
+    })));
+  }, [tenant?.id, selectedSearch?.id]);
+
+  const loadLists = useCallback(async () => {
+    if (!tenant?.id) return;
+    setListsLoading(true);
     try {
-      const res = await fetch(`/api/scraper-campaigns/stats?tenantId=${encodeURIComponent(tenant.id)}`);
-      const data = await res.json();
-      if (res.ok) setStats(data.stats);
-    } catch {
-      // Stats row is optional — panel handles its own errors
+      const res = await fetch(`/api/leads/lists?workspaceId=${encodeURIComponent(tenant.id)}`);
+      const body = await res.json();
+      if (res.ok) setLists(body.lists || []);
+      else toast.error(body?.error || 'Could not load lead lists');
+    } finally {
+      setListsLoading(false);
     }
   }, [tenant?.id]);
 
   useEffect(() => {
-    void loadStats();
-  }, [loadStats, refreshKey]);
+    if (!tenant?.id) return;
+    const saved = readLeadFinderSettings(tenant.id);
+    setFinderSettings(saved);
+    setForm((current) => ({
+      ...current,
+      resultLimit: saved.defaultResultLimit,
+      email: saved.requireEmail,
+      website: saved.requireWebsite,
+      sources: saved.defaultSources,
+    }));
+  }, [tenant?.id]);
 
-  const onActivity = useCallback(() => {
-    setRefreshKey((k) => k + 1);
-  }, []);
+  useEffect(() => { if (active === 'Lists') void loadLists(); }, [active, loadLists]);
 
-  const statCards: ModuleStat[] = stats
-    ? [
-        {
-          label: 'Discovered leads',
-          value: stats.leads.total,
-          sub: `${stats.campaigns.active} active campaigns`,
-          Icon: Users,
-          accent: 'teal',
-        },
-        {
-          label: 'With email',
-          value: stats.leads.withEmail,
-          sub: stats.leads.total
-            ? `${Math.round((stats.leads.withEmail / stats.leads.total) * 100)}% contactable`
-            : 'Run a search to populate',
-          Icon: Mail,
-          accent: 'blue',
-        },
-        {
-          label: 'In CRM',
-          value: stats.pipeline.crmSynced,
-          sub: `${stats.pipeline.contacted} contacted`,
-          Icon: Target,
-          accent: 'emerald',
-        },
-        {
-          label: 'With phone',
-          value: stats.leads.withPhone,
-          sub:
-            stats.system.leadSearch === 'in-process'
-              ? 'In-process search on Railway'
-              : 'External scraper service',
-          Icon: Phone,
-          accent: 'purple',
-        },
-      ]
-    : [];
+  useEffect(() => { void loadSearches(); }, [loadSearches]);
+  useEffect(() => { void loadResults(); }, [loadResults]);
+  useEffect(() => {
+    const activeSearch = searches.some(s => ['queued', 'running'].includes(s.status));
+    if (!activeSearch && !selectedSearch?.discovered_count) return;
+    const timer = window.setInterval(() => {
+      void loadSearches();
+      void loadResults();
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [searches, selectedSearch?.discovered_count, loadSearches, loadResults]);
+
+  const createSearch = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!tenant?.id || (!form.keywords.trim() && !form.location.trim())) {
+      toast.error('Add business keywords or a location.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/leads/searches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId: tenant.id,
+          name: [form.keywords, form.location].filter(Boolean).join(' — ').slice(0, 120) || 'Lead search',
+          query: form.keywords,
+          businessKeywords: form.keywords ? [form.keywords] : [],
+          searchType: form.searchType,
+          industry: form.industry,
+          location: form.location,
+          city: form.city,
+          country: form.country,
+          region: form.region,
+          sources: form.sources,
+          resultLimit: Number(form.resultLimit) || 50,
+          requirements: { email: form.email, phone: form.phone, website: form.website, social: form.social },
+          exclusions: {
+            keywords: form.excludedKeywords.split(',').map(value => value.trim()).filter(Boolean),
+            domains: form.excludedDomains.split(',').map(value => value.trim()).filter(Boolean),
+            locations: form.excludedLocations.split(',').map(value => value.trim()).filter(Boolean),
+          },
+          runNow: true,
+        }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Search could not be queued');
+      toast.success('Search queued');
+      setSelectedSearch(body.search);
+      setActive('Results');
+      await loadSearches();
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Search could not be started'); }
+    finally { setSubmitting(false); }
+  };
+
+  const reviewCandidate = async (candidate: Candidate, decision: 'accepted' | 'rejected') => {
+    if (!tenant?.id || !selectedSearch?.id) return;
+    setReviewingCandidateId(candidate.id);
+    try {
+      const res = await fetch(`/api/leads/candidates/${candidate.id}/review`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId: tenant.id,
+          decision,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || 'Could not update this lead');
+      setCandidates((current) => current.map((item) => item.id === candidate.id ? { ...item, review_status: decision } : item));
+      if (decision === 'accepted') {
+        toast.success('Saved to CRM');
+        propagation.leadAccepted(tenant.id, candidate.id, (path) => router.push(path));
+      } else {
+        toast.success('Candidate rejected');
+      }
+      await loadSearches();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not update this lead');
+    } finally {
+      setReviewingCandidateId(null);
+    }
+  };
+
+  const acceptedCandidates = useMemo(
+    () => candidates.filter((candidate) => candidate.review_status === 'accepted'),
+    [candidates],
+  );
+
+  const createList = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!tenant?.id || !newListName.trim()) return;
+    setCreatingList(true);
+    try {
+      const res = await fetch('/api/leads/lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId: tenant.id, name: newListName.trim() }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Could not create list');
+      toast.success('Lead list created');
+      setNewListName('');
+      await loadLists();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not create list');
+    } finally {
+      setCreatingList(false);
+    }
+  };
+
+  const addAcceptedToList = async (listId: string) => {
+    if (!tenant?.id) return;
+    const ids = acceptedCandidates.map((candidate) => candidate.id);
+    if (!ids.length) {
+      toast.error('Accept candidates in Results before adding them to a list.');
+      setActive('Results');
+      return;
+    }
+    setAddingToListId(listId);
+    try {
+      const res = await fetch(`/api/leads/lists/${listId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId: tenant.id, candidateIds: ids }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Could not add leads to list');
+      toast.success(`Added ${body.added} lead${body.added === 1 ? '' : 's'} to list`);
+      await loadLists();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not add leads to list');
+    } finally {
+      setAddingToListId(null);
+    }
+  };
+
+  const saveFinderSettings = (next: LeadFinderSettings) => {
+    if (!tenant?.id) return;
+    setFinderSettings(next);
+    writeLeadFinderSettings(tenant.id, next);
+    setForm((current) => ({
+      ...current,
+      resultLimit: next.defaultResultLimit,
+      email: next.requireEmail,
+      website: next.requireWebsite,
+      sources: next.defaultSources,
+    }));
+    toast.success('Lead Finder defaults saved for this workspace');
+  };
+
+  const metrics = useMemo(() => {
+    const contactable = candidates.filter((c) => Boolean(c.public_email || c.public_phone)).length;
+    const uniqueKeys = new Set(
+      candidates.map((c) =>
+        `${(c.public_email || '').toLowerCase()}|${(c.website || '').toLowerCase()}|${c.business_name.toLowerCase()}`
+      )
+    );
+    const saved = candidates.filter((c) => ['accepted', 'synced'].includes(c.review_status)).length
+      || selectedSearch?.accepted_count
+      || 0;
+    const contacted = candidates.filter((c) => c.review_status === 'contacted').length
+      || selectedSearch?.contacted_count
+      || 0;
+    return {
+      discovered: candidates.length || selectedSearch?.discovered_count || 0,
+      contactable: contactable || selectedSearch?.contactable_count || 0,
+      enriched: candidates.filter((c) => Boolean(c.website) && Boolean(c.public_email || c.public_phone)).length,
+      verified: candidates.filter((x) => !['unverified', 'invalid', ''].includes(x.verification_status)).length,
+      unique: uniqueKeys.size,
+      saved,
+      outreach_ready: candidates.filter((c) => Boolean(c.public_email || c.public_phone) && !['contacted', 'rejected'].includes(c.review_status)).length,
+      contacted,
+    };
+  }, [selectedSearch, candidates]);
 
   return (
-    <div className="relative flex flex-col h-full min-h-0 w-full ac-scroll-full ac-enterprise-module pb-20 md:pb-6">
-      <div className="px-4 md:px-6 pt-4 md:pt-6 space-y-5 flex flex-col flex-1 min-h-0">
-      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Lead Finder</h1>
-          <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-            Apollo-style SMB prospecting with live pipeline analytics. Search by niche and location, qualify leads, sync to CRM, and run outreach.
-          </p>
-        </div>
-        <div className="flex rounded-lg border border-slate-800 overflow-hidden shrink-0">
-          <button
-            type="button"
-            onClick={() => setTab('prospects')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
-              tab === 'prospects' ? 'bg-teal-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            Prospects
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('chat')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
-              tab === 'chat' ? 'bg-teal-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            AI Assist
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('campaigns')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
-              tab === 'campaigns' ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
-            }`}
-          >
-            <Settings2 className="w-4 h-4" />
-            Campaigns
-          </button>
-        </div>
+    <section className="min-h-full bg-[var(--ws-bg)] text-[var(--ws-text-primary)]" aria-labelledby="lead-finder-title">
+      <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-5 lg:px-7">
+        <header className="flex flex-col gap-4 border-b border-[var(--ws-border)] pb-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 id="lead-finder-title" className="text-2xl font-bold tracking-tight">Lead Finder</h1>
+            <p className="mt-1 text-sm text-[var(--ws-text-secondary)]">Find, verify and organize businesses that match your ideal customer.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={() => toast('Import workspace is ready for CSV, XLSX, JSON and pasted rows.') }><FileUp size={16}/>Import</button>
+            <button className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={() => setActive('Activity')}><History size={16}/>Search history</button>
+            <button className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`} onClick={() => setActive('Discover')}><Search size={16}/>New search</button>
+          </div>
+        </header>
+
+        {!available ? (
+          <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="text-sm font-semibold text-amber-200">Lead Finder is still being prepared for this workspace.</p>
+            <p className="mt-1 text-sm text-amber-100/80">
+              {availabilityNotice || 'Database tables for lead search are not available yet. Apply migrations and refresh.'}
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                className={`${buttonClass} border border-amber-500/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15`}
+                onClick={() => void loadSearches()}
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`}
+                onClick={() => setActive('Activity')}
+              >
+                View history
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        <nav className="my-4 flex gap-1 overflow-x-auto border-b border-[var(--ws-border)]" aria-label="Lead Finder sections">
+          {nav.map(item => <button key={item} onClick={() => setActive(item)} aria-current={active === item ? 'page' : undefined}
+            className={`min-h-11 shrink-0 border-b-2 px-3 text-sm font-medium ${active === item ? 'border-teal-400 text-teal-400' : 'border-transparent text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)]'}`}>{item}</button>)}
+        </nav>
+
+        {active === 'Discover' && (
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <form onSubmit={createSearch} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:p-6">
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div><h2 className="text-lg font-semibold">What businesses should we find?</h2><p className="text-sm text-[var(--ws-text-secondary)]">Only permitted public sources are searched. Free sources have responsible quotas.</p></div>
+                <Sparkles className="text-teal-400" aria-hidden="true"/>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="text-sm font-medium">Business type or keywords
+                  <input className={`${fieldClass} mt-1.5`} value={form.keywords} onChange={e => setForm({...form, keywords:e.target.value})} placeholder="e.g. accounting firms" />
+                </label>
+                <label className="text-sm font-medium">Location
+                  <div className="relative mt-1.5"><MapPin className="absolute left-3 top-3 text-[var(--ws-text-secondary)]" size={17}/><input className={`${fieldClass} pl-10`} value={form.location} onChange={e => setForm({...form, location:e.target.value})} placeholder="City, region or country" /></div>
+                </label>
+                <label className="text-sm font-medium">Search mode
+                  <select className={`${fieldClass} mt-1.5`} value={form.searchType} onChange={e => setForm({...form,searchType:e.target.value})}>
+                    <option value="businesses_by_location">Businesses by location</option><option value="businesses_by_keyword">Businesses by keyword</option>
+                    <option value="domain_discovery">Domain discovery</option><option value="website_contact_discovery">Website contact discovery</option>
+                    <option value="public_directory_discovery">Public directory discovery</option><option value="public_social_discovery">Public social profile discovery</option>
+                    <option value="csv_import">CSV import</option><option value="manual">Manual lead entry</option>
+                  </select>
+                </label>
+                <label className="text-sm font-medium">Industry
+                  <input className={`${fieldClass} mt-1.5`} value={form.industry} onChange={e => setForm({...form,industry:e.target.value})} placeholder="Optional industry" />
+                </label>
+              </div>
+              <fieldset className="mt-5"><legend className="text-sm font-semibold">Required public information</legend>
+                <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">{(['website','email','phone','social'] as const).map(key =>
+                  <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 text-sm capitalize"><input type="checkbox" checked={form[key]} onChange={e=>setForm({...form,[key]:e.target.checked})} className="accent-teal-500"/>{key}</label>)}</div>
+              </fieldset>
+              <button type="button" onClick={() => setAdvanced(!advanced)} className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-teal-400"><SlidersHorizontal size={16}/>{advanced ? 'Hide' : 'Show'} advanced filters</button>
+              {advanced && <div className="grid gap-4 border-t border-[var(--ws-border)] pt-4 md:grid-cols-2">
+                <label className="text-sm">Country<input className={`${fieldClass} mt-1`} value={form.country} onChange={e=>setForm({...form,country:e.target.value})}/></label>
+                <label className="text-sm">City or region<input className={`${fieldClass} mt-1`} value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/></label>
+                <label className="text-sm">Excluded keywords<input className={`${fieldClass} mt-1`} value={form.excludedKeywords} onChange={e=>setForm({...form,excludedKeywords:e.target.value})} placeholder="comma separated"/></label>
+                <label className="text-sm">Excluded domains<input className={`${fieldClass} mt-1`} value={form.excludedDomains} onChange={e=>setForm({...form,excludedDomains:e.target.value})} placeholder="comma separated"/></label>
+                <label className="text-sm">Result limit<input type="number" min={1} max={500} className={`${fieldClass} mt-1`} value={form.resultLimit} onChange={e=>setForm({...form,resultLimit:Number(e.target.value)})}/></label>
+                <label className="text-sm">Radius (km)<input type="number" min={1} max={200} className={`${fieldClass} mt-1`} value={form.radiusKm} onChange={e=>setForm({...form,radiusKm:Number(e.target.value)})}/></label>
+              </div>}
+              <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[var(--ws-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-[var(--ws-text-secondary)]">Only businesses with a public phone or email are saved. Duplicate companies in this workspace are skipped.</p>
+                <button disabled={submitting || !available} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>{submitting ? 'Queuing…' : 'Find businesses'}<ArrowRight size={16}/></button>
+              </div>
+            </form>
+            <aside className="space-y-4">
+              <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
+                <h2 className="font-semibold">Search presets</h2><p className="mb-3 text-xs text-[var(--ws-text-secondary)]">Suggestions only—results always come from live public sources.</p>
+                <div className="space-y-1">{presets.map(([label,keywords,location]) => <button key={label} onClick={()=>setForm({...form,keywords,location})} className="flex min-h-11 w-full items-center justify-between rounded-xl px-3 text-left text-sm hover:bg-white/5"><span>{label}</span><ArrowRight size={14}/></button>)}</div>
+              </div>
+              <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
+                <div className="flex items-center gap-2"><Database size={17} className="text-teal-400"/><h2 className="font-semibold">Public-source policy</h2></div>
+                <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">No login bypass, private-profile collection, CAPTCHA evasion or paid lead database is required. Robots rules and source limits are enforced by workers.</p>
+              </div>
+            </aside>
+          </div>
+        )}
+
+        {active === 'Assistant' && (
+          <div className="min-h-[640px] overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
+            <LeadFinderChat onActivity={() => void loadSearches()} />
+          </div>
+        )}
+
+        {active === 'Results' && <ResultsPanel searches={searches} selected={selectedSearch} setSelected={setSelectedSearch} candidates={candidates} metrics={metrics} reviewingCandidateId={reviewingCandidateId} onReview={reviewCandidate} />}
+        {active === 'Activity' && <HistoryPanel searches={searches} onOpen={s=>{setSelectedSearch(s);setActive('Results')}} />}
+        {active === 'Lists' && (
+          <ListsPanel
+            lists={lists}
+            loading={listsLoading}
+            newListName={newListName}
+            setNewListName={setNewListName}
+            creatingList={creatingList}
+            onCreateList={createList}
+            acceptedCount={acceptedCandidates.length}
+            addingToListId={addingToListId}
+            onAddAccepted={addAcceptedToList}
+            onRefresh={() => void loadLists()}
+          />
+        )}
+        {active === 'Outreach' && (
+          <OutreachPanel
+            acceptedCount={acceptedCandidates.length}
+            acceptedWithEmail={acceptedCandidates.filter((candidate) => candidate.public_email).length}
+            selectedSearch={selectedSearch}
+          />
+        )}
+        {active === 'Settings' && (
+          <SettingsPanel settings={finderSettings} onSave={saveFinderSettings} />
+        )}
       </div>
+    </section>
+  );
+}
 
-      {statCards.length > 0 && <ModuleStatCards stats={statCards} />}
+function ResultsPanel({ searches, selected, setSelected, candidates, metrics, reviewingCandidateId, onReview }: { searches: SearchRecord[]; selected: SearchRecord|null; setSelected:(s:SearchRecord)=>void; candidates:Candidate[]; metrics:Record<string,number>; reviewingCandidateId:string|null; onReview:(candidate:Candidate, decision:'accepted'|'rejected')=>void }) {
+  const [view, setView] = useState<'list' | 'map'>('list');
+  const pins = candidates.map((c) => ({
+    business_name: c.business_name,
+    address: c.city,
+    phone: c.public_phone,
+    website: c.website,
+    source: c.source_type,
+    lat: c.lat,
+    lng: c.lng,
+  }));
+  return <div className="space-y-4">
+    <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="text-sm text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p></div>
+      {searches.length>0 && <select aria-label="Selected search" className={`${fieldClass} sm:max-w-xs`} value={selected?.id||''} onChange={e=>{const s=searches.find(x=>x.id===e.target.value);if(s)setSelected(s)}}>{searches.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}
+    </div>
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">{label.replace('_',' ')}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
+    <div className="flex gap-2">
+      <button type="button" onClick={() => setView('list')} className={`${buttonClass} ${view === 'list' ? 'bg-teal-500 text-slate-950' : 'border border-[var(--ws-border)] bg-[var(--ws-surface)]'}`}>List</button>
+      <button type="button" onClick={() => setView('map')} className={`${buttonClass} ${view === 'map' ? 'bg-teal-500 text-slate-950' : 'border border-[var(--ws-border)] bg-[var(--ws-surface)]'}`}><MapPin size={16}/>Map</button>
+    </div>
+    {selected && ['queued','running'].includes(selected.status) && <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3" role="status"><div className="mb-2 flex justify-between text-xs"><span>Discovery continues in the background</span><span>{selected.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/20"><div className="h-full bg-teal-400 transition-all" style={{width:`${selected.progress}%`}}/></div></div>}
+    {!candidates.length && selected && (selected.discovered_count ?? 0) > 0 ? (
+      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center" role="status">
+        <h2 className="font-semibold text-amber-100">Saving {selected.discovered_count} discovered businesses…</h2>
+        <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">
+          Results appear here once the search finishes writing candidates. This page refreshes automatically.
+        </p>
+      </div>
+    ) : null}
+    {view === 'map' ? (
+      <LeadFinderMapPanel leads={pins} emptyHint="Run a search. Pins appear for businesses with public coordinates." />
+    ) : candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
+      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b border-[var(--ws-border)] text-xs uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Intelligence','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="text-xs font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3"><div className="font-semibold text-teal-300">{c.qualification ? `${c.qualification.master_score} · ${c.qualification.grade} · ${c.qualification.priority_band}` : 'Qualifying…'}</div><div className="max-w-xs text-xs text-[var(--ws-text-secondary)]">{c.qualification?.why_now || c.qualification?.qualification_reason || 'Evidence is being assessed.'}</div></td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 text-xs font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
+      <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="text-sm text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="text-sm font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 text-sm">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>
+    </div> : <ModuleEmpty section="Results"/>}
+  </div>;
+}
 
-      {tab === 'prospects' && <LeadFinderProspectsView onActivity={onActivity} />}
+function HistoryPanel({ searches, onOpen }: { searches:SearchRecord[]; onOpen:(s:SearchRecord)=>void }) {
+  return searches.length ? <div className="space-y-2">{searches.map(s=><button key={s.id} onClick={()=>onOpen(s)} className="flex min-h-16 w-full items-center justify-between rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 text-left"><div><p className="font-semibold">{s.name}</p><p className="text-xs text-[var(--ws-text-secondary)]">{new Date(s.created_at).toLocaleString()} · {s.discovered_count} found · {s.error_count} errors</p></div><span className="capitalize">{s.status.replace('_',' ')}</span></button>)}</div> : <ModuleEmpty section="Search history"/>;
+}
 
-      {tab === 'chat' && (
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] gap-4 md:gap-6 flex-1 min-h-0">
-          <LeadFinderChat onActivity={onActivity} />
-          <div className="hidden xl:flex xl:flex-col min-h-0">
-            <LeadFinderSystemPanel />
+function ListsPanel({
+  lists,
+  loading,
+  newListName,
+  setNewListName,
+  creatingList,
+  onCreateList,
+  acceptedCount,
+  addingToListId,
+  onAddAccepted,
+  onRefresh,
+}: {
+  lists: LeadList[];
+  loading: boolean;
+  newListName: string;
+  setNewListName: (value: string) => void;
+  creatingList: boolean;
+  onCreateList: (event: FormEvent) => void;
+  acceptedCount: number;
+  addingToListId: string | null;
+  onAddAccepted: (listId: string) => void;
+  onRefresh: () => void;
+}) {
+  return (
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Lead lists</h2>
+            <p className="text-sm text-[var(--ws-text-secondary)]">Organize accepted candidates before outreach.</p>
           </div>
+          <button type="button" className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={onRefresh}>
+            Refresh
+          </button>
         </div>
-      )}
+        {loading ? (
+          <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-8 text-center text-sm text-[var(--ws-text-secondary)]">Loading lists…</div>
+        ) : lists.length ? (
+          <div className="space-y-2">
+            {lists.map((list) => (
+              <div key={list.id} className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold">{list.name}</p>
+                  <p className="text-xs text-[var(--ws-text-secondary)]">
+                    {list.lead_count || 0} leads · created {new Date(list.created_at).toLocaleDateString()}
+                  </p>
+                  {list.description ? <p className="mt-1 text-sm text-[var(--ws-text-secondary)]">{list.description}</p> : null}
+                </div>
+                <button
+                  type="button"
+                  disabled={addingToListId === list.id}
+                  onClick={() => onAddAccepted(list.id)}
+                  className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}
+                >
+                  <ListPlus size={16} />
+                  {addingToListId === list.id ? 'Adding…' : `Add accepted (${acceptedCount})`}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <ModuleEmpty section="Lists" />
+        )}
+      </div>
+      <aside className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4">
+        <h2 className="font-semibold">Create list</h2>
+        <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">Lists stay in your workspace and can feed outreach batches.</p>
+        <form onSubmit={onCreateList} className="mt-4 space-y-3">
+          <input
+            className={fieldClass}
+            value={newListName}
+            onChange={(event) => setNewListName(event.target.value)}
+            placeholder="e.g. Harare restaurants — March"
+            required
+          />
+          <button disabled={creatingList} className={`${buttonClass} w-full bg-teal-500 text-slate-950 hover:bg-teal-400`}>
+            {creatingList ? 'Creating…' : 'Create list'}
+          </button>
+        </form>
+        <p className="mt-4 text-xs text-[var(--ws-text-secondary)]">
+          {acceptedCount > 0
+            ? `${acceptedCount} accepted candidate${acceptedCount === 1 ? '' : 's'} ready from the current Results view.`
+            : 'Accept candidates in Results, then add them here.'}
+        </p>
+      </aside>
+    </div>
+  );
+}
 
-      {tab === 'campaigns' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ScraperCampaignBuilder onCreated={onActivity} />
-            <CampaignRunDashboard
-              key={refreshKey}
-              selectedCampaignId={selectedCampaignId}
-              onSelectCampaign={setSelectedCampaignId}
-            />
-          </div>
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
-            <ScraperLeadsTable campaignId={selectedCampaignId} showAllWhenNoCampaign />
-            <LeadFinderSystemPanel compact />
-          </div>
+function OutreachPanel({
+  acceptedCount,
+  acceptedWithEmail,
+  selectedSearch,
+}: {
+  acceptedCount: number;
+  acceptedWithEmail: number;
+  selectedSearch: SearchRecord | null;
+}) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-5">
+        <div className="flex items-center gap-2"><Mail size={18} className="text-teal-400" /><h2 className="text-lg font-semibold">Outreach readiness</h2></div>
+        <p className="mt-2 text-sm text-[var(--ws-text-secondary)]">
+          Lead Finder never sends email automatically. Review recipients in Contacts or Outreach before anything is queued.
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-[var(--ws-border)] p-3"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">Accepted</p><p className="mt-1 text-2xl font-bold tabular-nums">{acceptedCount}</p></div>
+          <div className="rounded-xl border border-[var(--ws-border)] p-3"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">With email</p><p className="mt-1 text-2xl font-bold tabular-nums">{acceptedWithEmail}</p></div>
         </div>
-      )}
+        {selectedSearch ? (
+          <p className="mt-4 text-xs text-[var(--ws-text-secondary)]">
+            Current search: <span className="text-[var(--ws-text-primary)]">{selectedSearch.name}</span> · {selectedSearch.accepted_count} accepted total
+          </p>
+        ) : null}
+      </div>
+      <div className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-5 space-y-3">
+        <h2 className="text-lg font-semibold">Launch outreach safely</h2>
+        <p className="text-sm text-[var(--ws-text-secondary)]">Use the existing reviewed batch flow — consent checks, suppression, and audit trail stay enforced.</p>
+        <Link href="/dashboard/contacts" className={`${buttonClass} w-full bg-teal-500 text-slate-950 hover:bg-teal-400`}>
+          Open Contacts batch outreach
+        </Link>
+        <Link href="/dashboard/outreach" className={`${buttonClass} w-full border border-[var(--ws-border)] bg-[var(--ws-surface)]`}>
+          Open Outreach hub
+        </Link>
+        <Link href="/dashboard/leads" className={`${buttonClass} w-full border border-[var(--ws-border)] bg-[var(--ws-surface)]`}>
+          Review CRM pipeline
+        </Link>
       </div>
     </div>
   );
+}
+
+function SettingsPanel({
+  settings,
+  onSave,
+}: {
+  settings: LeadFinderSettings;
+  onSave: (settings: LeadFinderSettings) => void;
+}) {
+  const [draft, setDraft] = useState(settings);
+
+  useEffect(() => {
+    setDraft(settings);
+  }, [settings]);
+
+  return (
+    <div className="max-w-2xl rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-5 space-y-5">
+      <div className="flex items-center gap-2"><Settings2 size={18} className="text-teal-400" /><h2 className="text-lg font-semibold">Lead Finder defaults</h2></div>
+      <p className="text-sm text-[var(--ws-text-secondary)]">Saved per workspace on this device. New searches start with these values.</p>
+      <label className="block text-sm font-medium">
+        Default result limit
+        <input
+          type="number"
+          min={1}
+          max={500}
+          className={`${fieldClass} mt-1.5`}
+          value={draft.defaultResultLimit}
+          onChange={(event) => setDraft({ ...draft, defaultResultLimit: Number(event.target.value) })}
+        />
+      </label>
+      <fieldset>
+        <legend className="text-sm font-semibold">Required public information</legend>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 text-sm">
+            <input type="checkbox" checked={draft.requireEmail} onChange={(event) => setDraft({ ...draft, requireEmail: event.target.checked })} className="accent-teal-500" />
+            Email required
+          </label>
+          <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 text-sm">
+            <input type="checkbox" checked={draft.requireWebsite} onChange={(event) => setDraft({ ...draft, requireWebsite: event.target.checked })} className="accent-teal-500" />
+            Website required
+          </label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className="text-sm font-semibold">Default sources</legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {['openstreetmap', 'website'].map((source) => (
+            <label key={source} className="flex items-center gap-2 rounded-xl border border-[var(--ws-border)] px-3 py-2 text-sm capitalize">
+              <input
+                type="checkbox"
+                checked={draft.defaultSources.includes(source)}
+                onChange={(event) => {
+                  setDraft({
+                    ...draft,
+                    defaultSources: event.target.checked
+                      ? [...draft.defaultSources, source]
+                      : draft.defaultSources.filter((item) => item !== source),
+                  });
+                }}
+                className="accent-teal-500"
+              />
+              {source}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 text-sm text-[var(--ws-text-secondary)]">
+      Public-source limits are enforced by the search workers. Only phone or email contacts are saved.
+      </div>
+      <button type="button" onClick={() => onSave(draft)} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>
+        Save workspace defaults
+      </button>
+    </div>
+  );
+}
+
+function ModuleEmpty({ section }: { section:string }) {
+  const copy:Record<string,[string,string]> = {
+    Results:['No results yet','Run a public-source search, then review candidates here.'],
+    Lists:['No lead lists','Create a list from accepted candidates to organize outreach.'],
+    Outreach:['No outreach campaigns','Connect an existing sender, approve recipients and start with a safe daily limit.'],
+    Settings:['Lead Finder settings','Source controls, quotas, scoring, verification and retention are workspace-scoped.'],
+    'Search history':['No search history','Your completed, running and cancelled searches will appear here.'],
+  }; const [title,body]=copy[section]||[`No ${section.toLowerCase()}`,`Your ${section.toLowerCase()} will appear here.`];
+  return <div className="flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--ws-border)] bg-[var(--ws-surface)] p-8 text-center"><Search className="mb-3 text-[var(--ws-text-secondary)]"/><h2 className="font-semibold">{title}</h2><p className="mt-1 max-w-md text-sm text-[var(--ws-text-secondary)]">{body}</p></div>;
 }

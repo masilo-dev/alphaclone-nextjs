@@ -6,6 +6,16 @@ import { evaluateBusinessAIState } from '@/services/mcp/businessAIState';
 import { notificationService } from '@/services/notificationService';
 import crypto from 'crypto';
 
+/**
+ * ToolPolicyGate — EU AI Act Art. 14 human oversight + ISO 42001 A.4.
+ *
+ * High-risk tools (send / bulk / financial) queue for approval unless the
+ * workspace is in autonomous mode (and readiness allows it). ChatGPT / Claude
+ * MCP connectors auto-execute authenticated tool calls — the connector user
+ * already issued the command. In-app Bonnie still goes through this gate so
+ * send / bulk / financial actions can be approved in the Approval Center.
+ */
+
 export type ToolRiskClass = 'read' | 'draft' | 'send' | 'bulk' | 'financial';
 export type PolicySource = 'bonnie' | 'mcp' | 'playbook';
 export type PolicyOutcome = 'allow' | 'queue_approval' | 'deny';
@@ -27,9 +37,20 @@ const SEND_TOOLS = new Set([
   'queue_email_campaign_send',
   'send_campaign',
   'nexus_invoice_chasing',
+  'nexus_sales_campaign',
   'create_linkedin_post',
   'create_social_post',
+  'create_social_post_with_media',
   'create_post_with_ai_image',
+  'create_post',
+  'publish_social_post',
+  'publish_post',
+  'publish_now',
+  'schedule_social_post',
+  'publish_facebook_reel',
+  'publish_facebook_multi_photo',
+  'reply_to_email',
+  'microsoft_send_email',
 ]);
 
 const META_ORCHESTRATION_TOOLS = new Set([
@@ -38,6 +59,9 @@ const META_ORCHESTRATION_TOOLS = new Set([
   'run_autonomous_scan',
   'run_playbook',
   'trigger_bonnie_dream',
+  'list_pending_approvals',
+  'approve_pending_action',
+  'reject_pending_action',
 ]);
 
 const FINANCIAL_TOOLS = new Set([
@@ -54,58 +78,61 @@ const DRAFT_TOOLS = new Set([
   'draft_email',
   'draft_reply',
   'create_draft',
-]);
-
-const TENANT_INTERNAL_TOOLS = new Set([
-  'draft_reply',
-  'summarize_ticket',
+  'create_email_draft',
   'generate_outreach_draft',
-  'summarize_workspace',
-  'get_account_overview',
-  'find_and_qualify_leads',
-  'parse_lead_criteria',
-  'qualify_crm_leads',
-  'get_scraper_leads',
-  'get_customer_360',
-  'get_integration_health',
-  'get_proactive_brief',
-  'list_scraper_campaigns',
-  'run_scraper_campaign',
-  'create_scraper_campaign',
-  'search_email_lead_context',
-  'ingest_content_to_lead',
-  'get_autonomous_rules',
-  'search_facebook_leads',
-  'run_autonomous_scan',
-  'list_skills',
-  'load_skill',
-  'activate_skill_for_session',
-  ...META_ORCHESTRATION_TOOLS,
 ]);
 
-// Tier 4 High-Risk Tools requiring strict manual confirmation
-const HIGH_RISK_CONFIRM_TOOLS = new Set([
-  'record_payment',
-  'delete_invoice',
-  'delete_client',
-  'delete_lead',
-  'delete_task',
-  'account_deletion',
-  'send_contract_to_client',
-]);
-
-function classifyTool(toolName: string): ToolRiskClass {
+export function classifyToolRisk(toolName: string): ToolRiskClass {
   const name = toolName.toLowerCase();
-  if (TENANT_INTERNAL_TOOLS.has(name)) return 'read';
+  if (META_ORCHESTRATION_TOOLS.has(name)) return 'read';
   if (name.startsWith('bulk_') || name.includes('_bulk') || name === 'bulk_update') return 'bulk';
   if (FINANCIAL_TOOLS.has(name)) return 'financial';
   if (SEND_TOOLS.has(name)) return 'send';
+  if (name.startsWith('publish_') || name.startsWith('send_')) return 'send';
   if (DRAFT_TOOLS.has(name) || name.includes('draft')) return 'draft';
-  if (name.startsWith('get_') || name.startsWith('list_') || name.startsWith('search_') || name.startsWith('fetch_')) {
+  if (
+    name.startsWith('get_') ||
+    name.startsWith('list_') ||
+    name.startsWith('search_') ||
+    name.startsWith('fetch_') ||
+    name.startsWith('find_')
+  ) {
     return 'read';
   }
-  if (name.startsWith('create_') || name.startsWith('update_') || name.startsWith('delete_')) return 'draft';
+  if (name.startsWith('create_') || name.startsWith('update_') || name.startsWith('delete_')) {
+    return 'draft';
+  }
   return 'read';
+}
+
+function modeBlocksExecution(mode: BusinessAIAgentMode, riskClass: ToolRiskClass): boolean {
+  if (riskClass === 'read' || riskClass === 'draft') return false;
+  if (mode === 'observe') return true;
+  return false;
+}
+
+function requiresApproval(
+  mode: BusinessAIAgentMode,
+  riskClass: ToolRiskClass,
+  highRiskRequired: boolean
+): boolean {
+  if (riskClass === 'read') return false;
+  if (riskClass === 'draft') return mode === 'observe';
+  if (mode === 'autonomous' && !highRiskRequired) return false;
+  if (
+    mode === 'autonomous' &&
+    highRiskRequired &&
+    (riskClass === 'send' || riskClass === 'bulk' || riskClass === 'financial')
+  ) {
+    return true;
+  }
+  return (
+    mode === 'draft' ||
+    mode === 'act_with_approval' ||
+    riskClass === 'send' ||
+    riskClass === 'bulk' ||
+    riskClass === 'financial'
+  );
 }
 
 export async function evaluateToolPolicy(params: {
@@ -115,9 +142,33 @@ export async function evaluateToolPolicy(params: {
   source: PolicySource;
   args?: Record<string, unknown>;
   instruction?: string;
+  workflowId?: string;
+  conversationId?: string;
 }): Promise<PolicyDecision> {
-  const { tenantId, userId, toolName, source, args = {}, instruction } = params;
-  const riskClass = classifyTool(toolName);
+  const {
+    tenantId,
+    userId,
+    toolName,
+    source,
+    args = {},
+    instruction,
+    workflowId,
+    conversationId,
+  } = params;
+  const riskClass = classifyToolRisk(toolName);
+
+  // ChatGPT / Claude MCP connectors: authenticated connector user already issued
+  // the command. Auto-execute — do not block on DPA or approval queues.
+  // In-app Bonnie continues through the policy path below (reads/drafts still
+  // execute immediately; send / bulk / financial follow workspace mode).
+  if (source === 'mcp') {
+    return {
+      outcome: 'allow',
+      riskClass,
+      reason: 'MCP connector auto-approves tool execution.',
+    };
+  }
+
   const admin = createSupabaseAdminClient();
 
   // 1. Hourly Idempotency Check
@@ -144,7 +195,11 @@ export async function evaluateToolPolicy(params: {
   }
 
   const [{ data: rulesRow }, aiState] = await Promise.all([
-    admin.from('autonomous_runner_rules').select('high_risk_approval_required, auto_send_enabled').eq('tenant_id', tenantId).maybeSingle(),
+    admin
+      .from('autonomous_runner_rules')
+      .select('high_risk_approval_required, auto_send_enabled')
+      .eq('tenant_id', tenantId)
+      .maybeSingle(),
     mcpStore.getBusinessAIState(tenantId, userId),
   ]);
 
@@ -244,17 +299,31 @@ export async function evaluateToolPolicy(params: {
       risk_level: riskLevel,
       confidence_score: isTier4 ? 50 : 85, // Tier 4 always starts with lower auto-approve confidence so it requires hard confirm
       status: 'pending',
-      reason: `${source.toUpperCase()} requested "${toolName}" (${riskClass}) — Tier ${tier} approval gate triggered.`,
+      source: 'autonomous_runner',
+      workflow_id: workflowId || null,
+      conversation_id: conversationId || null,
+      reason:
+        readinessReason ||
+        `${source.toUpperCase()} requested "${toolName}" (${riskClass}) — approval required by policy.`,
       payload: {
         source,
         tool_name: toolName,
+        tool: toolName,
         args,
         user_id: userId,
         risk_class: riskClass,
         agent_mode: agentMode,
         instruction: instruction || undefined,
-        idempotency_hash: idempotencyHash,
-        tier,
+        workflow_id: workflowId || undefined,
+        conversation_id: conversationId || undefined,
+        preview: {
+          target: String(
+            args.to || args.recipient || args.email || args.phone || args.client_id || ''
+          ).slice(0, 500) || undefined,
+          draft: String(
+            args.body || args.message || args.content || args.text || args.subject || args.html || ''
+          ).slice(0, 2000) || undefined,
+        },
       },
     })
     .select('id')
@@ -272,7 +341,7 @@ export async function evaluateToolPolicy(params: {
   return {
     outcome: 'queue_approval',
     riskClass,
-    reason: `Tier ${tier} action queued for approval (ID: ${approval?.id}).`,
+    reason: `Action queued for approval (ID: ${approval?.id}). Use list_pending_approvals / approve_pending_action or the Approval Center.`,
     approvalId: approval?.id,
   };
 }

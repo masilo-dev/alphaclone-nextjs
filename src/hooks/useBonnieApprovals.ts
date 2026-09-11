@@ -1,47 +1,76 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
+/**
+ * useBonnieApprovals
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Manages Bonnie's pending approval queue with:
+ *  • Initial REST fetch on mount
+ *  • Supabase Realtime subscription for instant updates when DB rows change
+ *  • Fallback polling (every 30s) if Realtime is unavailable
+ *  • Inline arg editing: passes editedArgs directly to the approve route
+ *  • Role-aware error surface for high-risk rejections (403 INSUFFICIENT_ROLE)
+ */
 
-export type BonnieApprovalItem = {
-  id: string;
-  toolName: string;
-  riskLevel: string;
-  reason: string;
-  status: string;
-  createdAt: string;
-  preview: { target?: string; draft?: string };
-  payload: Record<string, unknown>;
-};
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { toast } from 'react-hot-toast';
+import { supabase } from '@/lib/supabase';
+import {
+  fetchBonnieApprovalsShared,
+  getBonnieApprovalsSnapshot,
+  subscribeBonnieApprovals,
+  type BonnieApprovalItem,
+} from '@/lib/client/bonnieApprovalsStore';
+
+export type { BonnieApprovalItem };
 
 export function useBonnieApprovals(tenantId: string | undefined) {
-  const [approvals, setApprovals] = useState<BonnieApprovalItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const snapshot = useSyncExternalStore(
+    subscribeBonnieApprovals,
+    getBonnieApprovalsSnapshot,
+    getBonnieApprovalsSnapshot
+  );
+  const realtimeConnected = useRef(false);
 
   const refresh = useCallback(async () => {
-    if (!tenantId) {
-      setApprovals([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/bonnie/approvals?tenantId=${tenantId}`);
-      const data = await res.json();
-      if (data.success) {
-        setApprovals(data.approvals || []);
-      }
-    } catch {
-      // non-critical
-    } finally {
-      setLoading(false);
-    }
+    if (!tenantId) return;
+    await fetchBonnieApprovalsShared(tenantId, { force: true });
   }, [tenantId]);
 
   useEffect(() => {
-    void refresh();
-    const interval = setInterval(() => void refresh(), 20000);
+    if (!tenantId) return;
+    void fetchBonnieApprovalsShared(tenantId);
+    const interval = setInterval(() => {
+      void fetchBonnieApprovalsShared(tenantId);
+    }, 60_000);
     return () => clearInterval(interval);
-  }, [refresh]);
+  }, [tenantId]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+
+    const channel = supabase
+      .channel(`bonnie-approvals-${tenantId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'autonomous_runner_approvals',
+          filter: `tenant_id=eq.${tenantId}`,
+        },
+        () => {
+          void fetchBonnieApprovalsShared(tenantId, { force: true });
+        }
+      )
+      .subscribe((status: string) => {
+        realtimeConnected.current = status === 'SUBSCRIBED';
+      });
+
+    return () => {
+      void supabase.removeChannel(channel);
+      realtimeConnected.current = false;
+    };
+  }, [tenantId]);
 
   const handleApproval = useCallback(
     async (
@@ -53,24 +82,28 @@ export function useBonnieApprovals(tenantId: string | undefined) {
 
       const toastId = toast.loading(status === 'approved' ? 'Approving action…' : 'Cancelling action…');
       try {
-        if (editedArgs && status === 'approved') {
-          const patchRes = await fetch('/api/bonnie/approvals', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tenantId, approvalId, args: editedArgs }),
-          });
-          if (!patchRes.ok) {
-            const patchData = await patchRes.json();
-            throw new Error(patchData.error || 'Failed to save edits');
-          }
-        }
-
+        // Send editedArgs directly to the approve route (it handles the merge + history internally)
         const res = await fetch('/api/autonomous/approve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tenantId, approvalId, status }),
+          body: JSON.stringify({
+            tenantId,
+            approvalId,
+            status,
+            editedArgs: editedArgs && Object.keys(editedArgs).length > 0 ? editedArgs : undefined,
+          }),
         });
         const data = await res.json();
+
+        // Handle the high-risk role gate (403 INSUFFICIENT_ROLE)
+        if (res.status === 403 && data.code === 'INSUFFICIENT_ROLE') {
+          toast.error(
+            `High-risk approval requires a workspace admin. Your role: ${data.userRole || 'member'}.`,
+            { id: toastId, duration: 6000 }
+          );
+          return { success: false, error: data.error, code: 'INSUFFICIENT_ROLE' };
+        }
+
         if (!data.success) throw new Error(data.error || 'Approval update failed');
 
         const execMsg =
@@ -83,6 +116,7 @@ export function useBonnieApprovals(tenantId: string | undefined) {
                 : 'Action cancelled.';
 
         toast.success(execMsg, { id: toastId });
+        // Realtime will refresh automatically, but trigger a manual refresh too
         await refresh();
         return {
           success: true,
@@ -98,13 +132,17 @@ export function useBonnieApprovals(tenantId: string | undefined) {
     [tenantId, refresh]
   );
 
-  const pendingCount = approvals.filter((a) => a.status === 'pending').length;
+  const pendingCount = snapshot.tenantId === tenantId
+    ? snapshot.approvals.filter((a) => a.status === 'pending').length
+    : 0;
 
   return {
-    approvals,
+    approvals: snapshot.tenantId === tenantId ? snapshot.approvals : [],
     pendingCount,
-    loading,
+    loading: snapshot.tenantId === tenantId ? snapshot.loading : false,
+    error: snapshot.tenantId === tenantId ? snapshot.error : null,
     refresh,
     handleApproval,
+    realtimeConnected: realtimeConnected.current,
   };
 }

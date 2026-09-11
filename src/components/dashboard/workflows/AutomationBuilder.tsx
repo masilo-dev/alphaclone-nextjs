@@ -153,6 +153,61 @@ const starterWorkflowTemplates = [
   },
 ];
 
+type AutomationComplexity = 'quick' | 'recommended' | 'advanced';
+
+const COMPLEXITY_PRESETS: Record<AutomationComplexity, { label: string; description: string; nodes: Node[]; edges: Edge[] }> = {
+  quick: {
+    label: 'Quick',
+    description: 'One trigger and one action — get value in minutes.',
+    nodes: initialNodes,
+    edges: initialEdges,
+  },
+  recommended: {
+    label: 'Recommended',
+    description: 'Trigger plus follow-up — balanced for most founders.',
+    nodes: [
+      ...initialNodes,
+      {
+        id: 'action-1',
+        type: 'actionNode',
+        position: { x: 250, y: 180 },
+        data: { label: 'Send follow-up email', description: 'Nurture the lead after capture', type: 'email' },
+      },
+    ],
+    edges: [{ id: 'e-trigger-action', source: 'trigger-1', target: 'action-1' }],
+  },
+  advanced: {
+    label: 'Advanced',
+    description: 'Multi-step flows with scoring, tasks, and notifications.',
+    nodes: [
+      ...initialNodes,
+      {
+        id: 'action-score',
+        type: 'actionNode',
+        position: { x: 250, y: 180 },
+        data: { label: 'Score lead', description: 'AI fit scoring', type: 'ai' },
+      },
+      {
+        id: 'action-task',
+        type: 'actionNode',
+        position: { x: 250, y: 320 },
+        data: { label: 'Create task', description: 'Assign follow-up', type: 'task' },
+      },
+      {
+        id: 'action-email',
+        type: 'actionNode',
+        position: { x: 250, y: 460 },
+        data: { label: 'Send outreach', description: 'Personalized email', type: 'email' },
+      },
+    ],
+    edges: [
+      { id: 'e1', source: 'trigger-1', target: 'action-score' },
+      { id: 'e2', source: 'action-score', target: 'action-task' },
+      { id: 'e3', source: 'action-task', target: 'action-email' },
+    ],
+  },
+};
+
 export default function AutomationBuilder() {
   const { currentTenant } = useTenant();
   const [userId, setUserId] = useState<string>('');
@@ -169,8 +224,17 @@ export default function AutomationBuilder() {
   const [workflowTemplates, setWorkflowTemplates] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [setupComplexity, setSetupComplexity] = useState<AutomationComplexity>('recommended');
   
   const rfInstance = useRef<any>(null);
+
+  const applyComplexity = (tier: AutomationComplexity) => {
+    setSetupComplexity(tier);
+    const preset = COMPLEXITY_PRESETS[tier];
+    setNodes(preset.nodes);
+    setEdges(preset.edges);
+    toast.success(`${preset.label} automation template loaded`);
+  };
 
   const fetchWorkflows = useCallback(async (uid: string) => {
     if (!uid) return;
@@ -500,7 +564,30 @@ export default function AutomationBuilder() {
                 ))}
             </div>
             
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
+                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                  {(Object.keys(COMPLEXITY_PRESETS) as AutomationComplexity[]).map((tier) => {
+                    const preset = COMPLEXITY_PRESETS[tier];
+                    const active = setupComplexity === tier;
+                    return (
+                      <button
+                        key={tier}
+                        type="button"
+                        onClick={() => applyComplexity(tier)}
+                        title={preset.description}
+                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                          active
+                            ? tier === 'recommended'
+                              ? 'bg-teal-600 text-white shadow-sm'
+                              : 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="hidden md:block text-right min-w-0">
                     <div className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
                     <div className="text-xs text-slate-500 uppercase tracking-widest font-bold">

@@ -145,13 +145,13 @@ Use this checklist before publishing ANY copy: landing pages, emails, ads, socia
 
 Before publishing, rate this piece of copy:
 
-| Score | Meaning | Action |
-| --- | --- | --- |
-| 1-2 | Pure information, fully honest | Publish |
-| 3-4 | Emotional framing of real benefits | Publish |
-| 5-6 | Selective truth, pressure tactics present | Revise |
-| 7-8 | Misleading claims, fake social proof | Do not publish |
-| 9-10 | Fabricated data, outright deception | Legal/brand risk |
+| Score | Meaning                                   | Action           |
+| ----- | ----------------------------------------- | ---------------- |
+| 1-2   | Pure information, fully honest            | Publish          |
+| 3-4   | Emotional framing of real benefits        | Publish          |
+| 5-6   | Selective truth, pressure tactics present | Revise           |
+| 7-8   | Misleading claims, fake social proof      | Do not publish   |
+| 9-10  | Fabricated data, outright deception       | Legal/brand risk |
 
 **Target: all Alphaclone copy scores 1-4.**
 

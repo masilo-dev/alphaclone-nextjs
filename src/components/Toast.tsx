@@ -15,50 +15,19 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const success = (message: string) => {
-        toast.success(message, {
-            duration: 4000,
-            position: 'top-right',
-            style: {
-                background: '#0f172a',
-                color: '#fff',
-                border: '1px solid #14b8a6',
-            },
-        });
+        toast.success(message, { duration: 4000, position: 'top-right' });
     };
 
     const error = (message: string) => {
-        toast.error(message, {
-            duration: 5000,
-            position: 'top-right',
-            style: {
-                background: '#0f172a',
-                color: '#fff',
-                border: '1px solid #ef4444',
-            },
-        });
+        toast.error(message, { duration: 5000, position: 'top-right' });
     };
 
     const info = (message: string) => {
-        toast(message, {
-            duration: 4000,
-            position: 'top-right',
-            style: {
-                background: '#0f172a',
-                color: '#fff',
-                border: '1px solid #3b82f6',
-            },
-        });
+        toast(message, { duration: 4000, position: 'top-right' });
     };
 
     const loading = (message: string) => {
-        return toast.loading(message, {
-            position: 'top-right',
-            style: {
-                background: '#0f172a',
-                color: '#fff',
-                border: '1px solid #64748b',
-            },
-        });
+        return toast.loading(message, { position: 'top-right' });
     };
 
     const dismiss = (toastId?: string) => {
@@ -68,7 +37,28 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (
         <ToastContext.Provider value={{ success, error, info, loading, dismiss }}>
             {children}
-            <Toaster />
+            <Toaster
+                toastOptions={{
+                    className: 'ac-toast',
+                    style: {
+                        background: 'var(--surface-elevated)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: '14px',
+                        padding: '12px 14px',
+                    },
+                    success: {
+                        style: {
+                            border: '1px solid color-mix(in_srgb,var(--success)_40%,var(--border-default))',
+                        },
+                    },
+                    error: {
+                        style: {
+                            border: '1px solid color-mix(in_srgb,var(--danger)_45%,var(--border-default))',
+                        },
+                    },
+                }}
+            />
         </ToastContext.Provider>
     );
 };

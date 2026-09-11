@@ -1,6 +1,7 @@
 import {
     REVENUE_LIFECYCLE_LABELS,
     REVENUE_LIFECYCLE_STEPS,
+    REVENUE_STEP_HREF,
     type RevenueLifecycleStep,
 } from './revenueLifecycle';
 
@@ -31,19 +32,6 @@ const STAGE_RANK: Record<string, number> = {
     negotiation: 4,
     closed_won: 5,
     closed_lost: 0,
-};
-
-const STEP_HREF: Record<RevenueLifecycleStep, string> = {
-    discovered: '/dashboard/leads',
-    qualified: '/dashboard/deals',
-    engaged: '/dashboard/business/messages',
-    proposal_sent: '/dashboard/business/quotes',
-    proposal_accepted: '/dashboard/business/quotes',
-    contract_sent: '/dashboard/business/contracts',
-    contract_signed: '/dashboard/business/contracts',
-    invoice_sent: '/dashboard/business/billing',
-    invoice_paid: '/dashboard/accounting',
-    project_active: '/dashboard/business/projects',
 };
 
 const STEP_NEXT_HINT: Record<RevenueLifecycleStep, string> = {
@@ -148,7 +136,7 @@ export function buildDealRevenueTimeline(ctx: DealRevenueContext): {
             index: index + 1,
             state,
             detail,
-            href: STEP_HREF[step],
+            href: REVENUE_STEP_HREF[step],
         };
     });
 
@@ -160,7 +148,7 @@ export function buildDealRevenueTimeline(ctx: DealRevenueContext): {
             ? null
             : {
                   label: REVENUE_LIFECYCLE_LABELS[currentStep],
-                  href: STEP_HREF[currentStep],
+                  href: REVENUE_STEP_HREF[currentStep],
                   detail: STEP_NEXT_HINT[currentStep],
               };
 

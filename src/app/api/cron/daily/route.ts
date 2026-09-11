@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { contractExpirationService } from '@/services/contractExpirationService';
 import { paymentService } from '@/services/paymentService';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { runUserDigestEmails } from '@/lib/email/runUserDigestEmails';
-import { runMorningBriefingEmails } from '@/lib/email/runMorningBriefingEmails';
+import { runNotificationDigests } from '@/lib/email/notificationDigestEngine';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
 
@@ -28,18 +27,11 @@ export async function GET(req: NextRequest) {
 
         // 3. Optional daily summary emails
         const emailStart = Date.now();
-        let digest: { attempted: number; sent: number; failed: number } | null = null;
+        let digest: Awaited<ReturnType<typeof runNotificationDigests>> | null = null;
         try {
-            digest = await runUserDigestEmails();
+            digest = await runNotificationDigests();
         } catch (digestErr) {
             console.error('Daily digest emails:', digestErr);
-        }
-
-        let morning: { profilesAttempted: number; emailsSent: number; failed: number } | null = null;
-        try {
-            morning = await runMorningBriefingEmails();
-        } catch (morningErr) {
-            console.error('Morning briefing emails:', morningErr);
         }
         console.log(`[Cron] Emails took ${Date.now() - emailStart}ms`);
 
@@ -59,9 +51,16 @@ export async function GET(req: NextRequest) {
 
         const deletionStart = Date.now();
         let accountDeletions: { processed: number; failed: string[] } | null = null;
+        let dataDeletionRequests: {
+            processed: number;
+            scheduled: number;
+            failed: string[];
+        } | null = null;
         try {
             const { accountDeletionService } = await import('@/services/accountDeletionService');
             accountDeletions = await accountDeletionService.processScheduledDeletions();
+            dataDeletionRequests =
+                await accountDeletionService.processVerifiedDataDeletionRequests();
         } catch (deletionErr) {
             console.error('Scheduled account deletions:', deletionErr);
         }
@@ -73,9 +72,9 @@ export async function GET(req: NextRequest) {
             contracts: contractResults,
             billing: billingResults,
             digest,
-            morning,
             intelligence,
             accountDeletions,
+            dataDeletionRequests,
         });
 
     } catch (error) {

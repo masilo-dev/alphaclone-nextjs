@@ -15,8 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'tenant_id is required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
 
     // 1. Fetch last 50 mcp_sessions for the tenant
     const { data: sessions, error: sessErr } = await supabase
@@ -105,7 +104,7 @@ Return ONLY valid JSON with:
             .insert({
               tenant_id: tenantId,
               title: `[AI Self-Evolution] ${update.category || 'Optimization'}: ${update.insight}`,
-              description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop simulation during idle hours.`,
+              description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop analysis during idle hours.`,
               priority: 'medium',
               status: 'todo',
               created_at: new Date().toISOString(),

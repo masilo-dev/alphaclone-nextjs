@@ -9,7 +9,7 @@ import {
 type DraftReminderTier = '24h' | '72h';
 
 function contractLink(contractId: string): string {
-  return `/dashboard/contracts?contract=${contractId}`;
+  return `/dashboard/business/contracts/manage?contract=${encodeURIComponent(contractId)}`;
 }
 
 export async function notifyContractCreated(

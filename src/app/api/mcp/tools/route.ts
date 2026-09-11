@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
-import { createMCPServer } from '@/services/mcp/MCPServer';
+import { validateMCPAuthApp, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
+import { resolveUnifiedCatalogMode } from '@/lib/mcp/ensureOAuthClient';
+import { paginateMcpToolsList } from '@/lib/mcp/toolsListPagination';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,49 @@ async function handleDiscovery(req: NextRequest, method: string) {
 
   try {
     if (method === 'tools/list') {
-      const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
-      return NextResponse.json({ tools: MCP_TOOLS }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
+      const { getUnifiedMcpTools, getCatalogChecksum } = await import('@/lib/mcp/listAllTools');
+      const clientId = auth.client_id || null;
+      const catalogMode = resolveUnifiedCatalogMode(clientId);
+      const tools = await getUnifiedMcpTools({ clientId, catalogMode });
+      const checksum = getCatalogChecksum(tools);
+
+      const rawCursor = req.nextUrl.searchParams.get('cursor');
+      const rawLimit = req.nextUrl.searchParams.get('limit') || req.nextUrl.searchParams.get('pageSize');
+      const pagination = paginateMcpToolsList({
+        tools,
+        catalogMode,
+        clientId,
+        rawCursor,
+        rawLimit,
+      });
+
+      const responsePayload: Record<string, unknown> = {
+        tools: pagination.tools,
+        metadata: {
+          registry_version: '2.0.0',
+          catalog_checksum: checksum,
+          total_tools: tools.length,
+          returned_tools: pagination.tools.length,
+          catalog_mode: catalogMode,
+          offset: pagination.offset,
+          next_cursor: pagination.nextCursor || null,
+        },
+      };
+
+      if (pagination.nextCursor) {
+        responsePayload.nextCursor = pagination.nextCursor;
+      }
+
+      return NextResponse.json(
+        responsePayload,
+        {
+          headers: {
+            ...getMcpCorsHeaders(req),
+            'X-MCP-Version': '2.0.0',
+            'X-Catalog-Checksum': checksum,
+          },
+        }
+      );
     }
 
     if (method === 'resources/list') {

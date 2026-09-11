@@ -28,6 +28,52 @@ function endFromStart(startTime: string, endTime?: string | null, isAllDay?: boo
   return d.toISOString();
 }
 
+function isMissingRelatedEntityColumn(error: { message?: string; code?: string } | null | undefined): boolean {
+  return Boolean(
+    error?.code === '42703' ||
+      error?.message?.includes('related_entity_id') ||
+      error?.message?.includes('calendar_events.type')
+  );
+}
+
+async function findExistingEvent(
+  tenantId: string,
+  entityType: NativeEventType,
+  entityId: string
+): Promise<{ id: string } | null> {
+  const withRelated = await supabase
+    .from('calendar_events')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('type', entityType)
+    .eq('related_entity_id', entityId)
+    .maybeSingle();
+
+  if (!withRelated.error) {
+    return withRelated.data ? { id: withRelated.data.id } : null;
+  }
+
+  if (!isMissingRelatedEntityColumn(withRelated.error)) {
+    console.warn('[nativeCalendarSync] lookup failed:', withRelated.error.message);
+    return null;
+  }
+
+  // Schema without related_entity_id / type: match via metadata sync keys.
+  const metaKey = `alphaclone_${entityType}_id`;
+  const fallback = await supabase
+    .from('calendar_events')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .contains('metadata', { [metaKey]: entityId, sync_source: entityType })
+    .maybeSingle();
+
+  if (fallback.error) {
+    console.warn('[nativeCalendarSync] metadata lookup failed:', fallback.error.message);
+    return null;
+  }
+  return fallback.data ? { id: fallback.data.id } : null;
+}
+
 export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Promise<{ eventId?: string; removed?: boolean }> {
   const {
     tenantId,
@@ -46,35 +92,26 @@ export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Prom
     remove = false,
   } = input;
 
-  const { data: existing } = await supabase
-    .from('calendar_events')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .eq('type', entityType)
-    .eq('related_entity_id', entityId)
-    .maybeSingle();
+  const existing = await findExistingEvent(tenantId, entityType, entityId);
 
   if (remove || !startTime) {
     if (existing?.id) {
       await supabase.from('calendar_events').delete().eq('id', existing.id);
-      return { removed: true };
     }
-    return {};
+    return { removed: true };
   }
 
-  const row = {
+  const baseRow = {
     tenant_id: tenantId,
     user_id: userId,
     title,
     description: description || null,
     start_time: startTime,
     end_time: endFromStart(startTime, endTime, isAllDay),
-    type: entityType,
     color: color || (entityType === 'task' ? '#f59e0b' : entityType === 'milestone' ? '#ec4899' : '#8b5cf6'),
     is_all_day: isAllDay,
     reminder_minutes: reminderMinutes,
     client_id: clientId || null,
-    related_entity_id: entityId,
     metadata: {
       ...metadata,
       sync_source: entityType,
@@ -83,23 +120,50 @@ export async function syncToNativeCalendar(input: NativeCalendarSyncInput): Prom
     updated_at: new Date().toISOString(),
   };
 
+  const fullRow = {
+    ...baseRow,
+    type: entityType,
+    related_entity_id: entityId,
+  };
+
   if (existing?.id) {
-    const { data } = await supabase
+    const withRelated = await supabase
       .from('calendar_events')
-      .update(row)
+      .update(fullRow)
       .eq('id', existing.id)
       .select('id')
       .single();
+
+    if (!withRelated.error) {
+      return { eventId: withRelated.data?.id };
+    }
+
+    if (isMissingRelatedEntityColumn(withRelated.error)) {
+      const { data } = await supabase
+        .from('calendar_events')
+        .update(baseRow)
+        .eq('id', existing.id)
+        .select('id')
+        .single();
+      return { eventId: data?.id };
+    }
+
+    console.warn('[nativeCalendarSync] update failed:', withRelated.error.message);
+    return {};
+  }
+
+  const insertFull = await supabase.from('calendar_events').insert(fullRow).select('id').single();
+  if (!insertFull.error) {
+    return { eventId: insertFull.data?.id };
+  }
+
+  if (isMissingRelatedEntityColumn(insertFull.error)) {
+    const { data } = await supabase.from('calendar_events').insert(baseRow).select('id').single();
     return { eventId: data?.id };
   }
 
-  const { data } = await supabase
-    .from('calendar_events')
-    .insert(row)
-    .select('id')
-    .single();
-
-  return { eventId: data?.id };
+  console.warn('[nativeCalendarSync] insert failed:', insertFull.error.message);
+  return {};
 }
 
 export async function syncTaskToNativeCalendar(

@@ -7,7 +7,9 @@ import {
   type EmailCampaign,
   type CampaignRecipient,
 } from '@/services/emailCampaignService';
-import { StandardStatCard, StandardStatusBadge, resolveStatusVariant, type CardTheme } from '@/components/ui/design-system';
+import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
+import { PlatformKpiGrid } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 
 interface EmailCampaignAnalyticsProps {
   campaign: EmailCampaign;
@@ -75,16 +77,29 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
   }
 
   const statCards = [
-    { label: 'Sent', value: campaign.totalSent, theme: 'blue' as CardTheme, icon: Mail },
-    { label: 'Delivered', value: campaign.totalDelivered, theme: 'emerald' as CardTheme, icon: CheckCircle2 },
-    { label: 'Opened', value: campaign.totalOpened, theme: 'purple' as CardTheme, icon: Eye },
-    { label: 'Clicked', value: campaign.totalClicked, theme: 'amber' as CardTheme, icon: MousePointerClick },
+    platformKpiFromNumbers({ label: 'Sent', current: campaign.totalSent }),
+    platformKpiFromNumbers({ label: 'Delivered', current: campaign.totalDelivered }),
+    platformKpiFromNumbers({ label: 'Opened', current: campaign.totalOpened }),
+    platformKpiFromNumbers({ label: 'Clicked', current: campaign.totalClicked }),
   ];
 
   const rateCards = [
-    { label: 'Open Rate', value: `${(rates?.openRate ?? 0).toFixed(1)}%`, theme: 'purple' as CardTheme },
-    { label: 'Click Rate', value: `${(rates?.clickRate ?? 0).toFixed(1)}%`, theme: 'amber' as CardTheme },
-    { label: 'Bounce Rate', value: `${(rates?.bounceRate ?? 0).toFixed(1)}%`, theme: 'rose' as CardTheme },
+    platformKpiFromNumbers({
+      label: 'Open Rate',
+      current: rates?.openRate ?? 0,
+      isPercentage: true,
+    }),
+    platformKpiFromNumbers({
+      label: 'Click Rate',
+      current: rates?.clickRate ?? 0,
+      isPercentage: true,
+    }),
+    platformKpiFromNumbers({
+      label: 'Bounce Rate',
+      current: rates?.bounceRate ?? 0,
+      isPercentage: true,
+      isBetterHigher: false,
+    }),
   ];
 
   return (
@@ -103,30 +118,9 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {statCards.map((s) => (
-          <StandardStatCard
-            key={s.label}
-            label={s.label}
-            value={s.value.toLocaleString()}
-            themeColor={s.theme}
-            icon={s.icon}
-            interactive={false}
-          />
-        ))}
-      </div>
+      <PlatformKpiGrid items={statCards} skeletonCount={4} />
 
-      <div className="grid grid-cols-3 gap-3">
-        {rateCards.map((s) => (
-          <StandardStatCard
-            key={s.label}
-            label={s.label}
-            value={s.value}
-            themeColor={s.theme}
-            interactive={false}
-          />
-        ))}
-      </div>
+      <PlatformKpiGrid items={rateCards} skeletonCount={3} />
 
       {variantStats && (
         <div className="grid grid-cols-2 gap-3">

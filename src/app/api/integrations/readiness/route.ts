@@ -15,8 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
 
     const facebookPromise = supabase
       .from('facebook_integrations')

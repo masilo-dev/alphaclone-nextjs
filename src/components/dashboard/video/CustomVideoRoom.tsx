@@ -7,7 +7,6 @@ import VideoControls from './VideoControls';
 import { DeviceSettingsModal } from './DeviceSettingsModal';
 import toast from 'react-hot-toast';
 import { MicOff, Maximize2, PhoneOff, Wifi, WifiOff, RefreshCw } from 'lucide-react';
-import { supabase } from '../../../lib/supabase';
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
 import LiveKitStage from './LiveKitStage';
@@ -21,11 +20,14 @@ interface CustomVideoRoomProps {
     showSidebar?: boolean;
     isMinimized?: boolean;
     onToggleMinimize?: () => void;
+    meetingAccessPin?: string;
+    guestName?: string;
+    meetingAccessToken?: string;
 }
 
 // Check if user is admin or tenant admin
 const isUserAdmin = (user: User): boolean => {
-    return user.role === 'admin' || user.role === 'tenant_admin';
+    return ['admin', 'tenant_admin', 'owner', 'super_admin'].includes(user.role);
 };
 
 /**
@@ -42,6 +44,9 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     onLeave,
     isMinimized = false,
     onToggleMinimize,
+    meetingAccessPin,
+    guestName,
+    meetingAccessToken,
 }) => {
     const [resolvedRoomUrl, setResolvedRoomUrl] = useState<string | null>(providedRoomUrl || null);
     const [liveKitSession, setLiveKitSession] = useState<{ url: string; token: string; roomName: string } | null>(null);
@@ -184,7 +189,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ callId }),
+                    body: JSON.stringify({ callId, meetingAccessPin, meetingAccessToken, guestName }),
                 });
 
                 const payload = await response.json().catch(() => ({}));
@@ -199,12 +204,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     roomName: payload.roomName,
                 });
                 setCallStartTime(new Date());
-
-                if (callId && isUserAdmin(user)) {
-                    await dailyService.startVideoCall(callId).catch(err => {
-                        console.error('Failed to mark call as active:', err);
-                    });
-                }
 
                 import('@/services/activityService').then(({ activityService }) => {
                     activityService.logActivity(user.id, 'VIDEO_MEETING_JOINED', {
@@ -225,7 +224,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return () => {
             cancelled = true;
         };
-    }, [preJoinAccepted, liveKitSession, liveKitError, callId, user]);
+    }, [preJoinAccepted, liveKitSession, liveKitError, callId, user, meetingAccessPin, meetingAccessToken, guestName]);
 
     // Legacy room-url join remains disabled; secure meetings are brokered by /api/livekit/token.
     useEffect(() => {
@@ -235,13 +234,13 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
         const joinMeeting = async () => {
             try {
-                const roomName = resolvedRoomUrl.split('/').filter(Boolean).pop();
                 let token: string | undefined;
-                if (roomName) {
+                if (callId) {
                     const { token: fetched } = await dailyService.getMeetingToken(
-                        roomName,
-                        user.name || 'Guest',
-                        isUserAdmin(user)
+                        callId,
+                        guestName || user.name || 'Guest',
+                        meetingAccessPin,
+                        meetingAccessToken,
                     );
                     if (fetched) token = fetched;
                 }
@@ -253,12 +252,6 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 });
 
                 setCallStartTime(new Date());
-
-                if (callId && isUserAdmin(user)) {
-                    await dailyService.startVideoCall(callId).catch(err => {
-                        console.error('Failed to mark call as active:', err);
-                    });
-                }
 
                 toast.success('Joined meeting successfully!');
                 import('@/services/activityService').then(({ activityService }) => {
@@ -279,42 +272,16 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
     // Meeting Start Logic (2 people trigger)
     useEffect(() => {
-        if (!isJoined || !callId || hasMeetingStarted || !isUserAdmin(user)) return;
+        if (!isJoined || !callId || hasMeetingStarted) return;
 
-        // Check if there are at least 2 participants (host + 1 client, or 2 clients if host is there)
-        // Note: The host's presence is verified by isUserAdmin
+        // Let the server determine whether this participant is the host. This also
+        // supports member-role hosts without trusting client-side role labels.
         if (participants.length >= 2) {
             const startActiveMeeting = async () => {
                 setHasMeetingStarted(true);
                 try {
-                    await supabase
-                        .from('video_calls')
-                        .update({
-                            status: 'active', // Ensure it's active
-                            metadata: {
-                                // Keep existing metadata, just add the tracking field
-                                // We'll need to fetch existing metadata to just append the started_at, but we can do it via RPC or we can just fetch first
-                            }
-                        })
-                        .eq('id', callId);
-
-                    // Actually, a safer way to append cleanly in Supabase is fetching current metadata first
-                    const { data: callData } = await supabase
-                        .from('video_calls')
-                        .select('metadata')
-                        .eq('id', callId)
-                        .single();
-
-                    const currentMetadata = callData?.metadata || {};
-                    const meetingStartedAt = Date.now();
-
-                    await supabase
-                        .from('video_calls')
-                        .update({
-                            metadata: { ...currentMetadata, meeting_started_at: meetingStartedAt }
-                        })
-                        .eq('id', callId);
-
+                    const result = await dailyService.startVideoCall(callId);
+                    if (result.error) throw new Error(result.error);
                 } catch (err) {
                     console.error('Failed to set meeting_started_at:', err);
                 }
@@ -437,28 +404,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         if (!confirm('End meeting for all?')) return;
         try {
             if (callId) {
-                await dailyService.endVideoCall(callId, 0);
-
-                // Recycle the PIN upon explicitly ending the meeting
-                const newPin = Math.floor(100000 + Math.random() * 900000).toString();
-                const { data: currentRoom } = await supabase
-                    .from('video_calls')
-                    .select('metadata')
-                    .eq('id', callId)
-                    .single();
-
-                const currentMetadata = currentRoom?.metadata || {};
-
-                await supabase
-                    .from('video_calls')
-                    .update({
-                        metadata: {
-                            ...currentMetadata,
-                            meeting_pin: newPin,
-                            meeting_started_at: null // Reset the start timer
-                        }
-                    })
-                    .eq('id', callId);
+                const result = await dailyService.endVideoCall(callId, 0, true);
+                if (result.error) throw new Error(result.error);
             }
             finalizedRef.current = true;
             await leave();

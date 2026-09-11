@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface HubSpotContact {
     id: string;
@@ -36,6 +36,7 @@ interface HubspotIntegrationProps {
 
 export default function HubspotIntegration({ onClose }: HubspotIntegrationProps) {
     const { user } = useAuth();
+    const { currentTenant } = useTenant();
     const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
     const [contacts, setContacts] = useState<HubSpotContact[]>([]);
     const [isLoadingContacts, setIsLoadingContacts] = useState(false);
@@ -58,26 +59,20 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
     }, [contacts, query]);
 
     useEffect(() => {
-        if (user?.id) {
+        if (user?.id && currentTenant?.id) {
             void checkIntegrationStatus();
         }
-    }, [user?.id]);
+    }, [user?.id, currentTenant?.id]);
 
     const checkIntegrationStatus = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setStatus('loading');
         try {
-            const { data, error } = await supabase
-                .from('integrations')
-                .select('id, enabled')
-                .eq('user_id', user.id)
-                .eq('type', 'hubspot')
-                .maybeSingle();
-
-            if (error) throw error;
-
-            if (data?.enabled) {
+            const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/integrations`, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Integration status unavailable');
+            if (payload.integrations?.some((item: any) => item.integrationId === 'hubspot' && item.status === 'connected')) {
                 setStatus('connected');
                 await fetchContacts();
             } else {
@@ -92,15 +87,16 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
 
     const handleConnect = () => {
         if (!user?.id) return;
-        window.location.href = `/api/auth/hubspot/connect?userId=${user.id}`;
+        if (!currentTenant?.id) return;
+        window.location.href = `/api/auth/hubspot/connect?tenantId=${encodeURIComponent(currentTenant.id)}`;
     };
 
     const fetchContacts = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsLoadingContacts(true);
         try {
-            const response = await fetch(`/api/hubspot/sync?userId=${user.id}`);
+            const response = await fetch(`/api/hubspot/sync?tenantId=${encodeURIComponent(currentTenant.id)}`);
             if (!response.ok) {
                 console.warn('HubSpot API not available, showing empty state');
                 setContacts([]);
@@ -118,14 +114,14 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
     };
 
     const handleSync = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsSyncing(true);
         try {
             const response = await fetch('/api/hubspot/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id })
+                body: JSON.stringify({ tenantId: currentTenant.id })
             });
             const data = await response.json();
 
@@ -144,17 +140,14 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
     };
 
     const handleDeleteIntegration = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsDeletingIntegration(true);
         try {
-            const { error } = await supabase
-                .from('integrations')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('type', 'hubspot');
-
-            if (error) throw error;
+            const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/integrations`, {
+                method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ integrationId: 'hubspot' }),
+            });
+            if (!response.ok) throw new Error('HubSpot could not be disconnected');
 
             setStatus('idle');
             setContacts([]);
@@ -172,7 +165,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
 
         setDeletingContactId(id);
         try {
-            const response = await fetch(`/api/hubspot/delete?userId=${user.id}&contactId=${id}`, {
+            const response = await fetch(`/api/hubspot/delete?tenantId=${encodeURIComponent(currentTenant!.id)}&contactId=${encodeURIComponent(id)}`, {
                 method: 'DELETE'
             });
             const data = await response.json();

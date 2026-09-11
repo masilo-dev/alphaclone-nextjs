@@ -39,22 +39,22 @@ export const TIER_PRICING = {
         annual: 0,
     },
     starter: {
-        monthly: 1500, // $15
-        annual: 14400, // $144/year (20% discount from $180)
-        monthlyPriceId: 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
-        annualPriceId: 'price_1T0PCcCCIq5cPz4HF47biusi',
+        monthly: 2900, // $29
+        annual: 27800, // $278/year
+        monthlyPriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
+        annualPriceId: process.env.STRIPE_STARTER_ANNUAL_PRICE_ID || 'price_1T0PCcCCIq5cPz4HF47biusi',
     },
     pro: {
-        monthly: 4500, // $45
-        annual: 43200, // $432/year (20% discount from $540)
-        monthlyPriceId: 'price_1T0PChCCIq5cPz4HiD85RMtD',
-        annualPriceId: 'price_1T0PChCCIq5cPz4HVpwBieMq',
+        monthly: 5900, // $59
+        annual: 56600, // $566/year
+        monthlyPriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1T0PChCCIq5cPz4HiD85RMtD',
+        annualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID || 'price_1T0PChCCIq5cPz4HVpwBieMq',
     },
     enterprise: {
-        monthly: 8000, // $80
-        annual: 76800, // $768/year (20% discount from $960)
-        monthlyPriceId: 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
-        annualPriceId: 'price_1T0PCqCCIq5cPz4HNiqbW1Sp',
+        monthly: 14900, // $149
+        annual: 143000, // $1430/year
+        monthlyPriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
+        annualPriceId: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID || 'price_1T0PCqCCIq5cPz4HNiqbW1Sp',
     },
 };
 

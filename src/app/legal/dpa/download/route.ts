@@ -21,7 +21,7 @@ const lines = [
   'Documented instructions, confidentiality, security measures, sub-processor controls, assistance with rights requests, and deletion or return on termination.',
   '',
   '5. Sub-processors',
-  'Supabase, Vercel, Anthropic, Stripe, Brevo, Twilio, and Cloudflare.',
+  'Supabase, Railway, Anthropic, Stripe, Brevo, Twilio, and Cloudflare.',
   '',
   '6. Transfers',
   'Data may be transferred to the United States subject to Standard Contractual Clauses where required.',

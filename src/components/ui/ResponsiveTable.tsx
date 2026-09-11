@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-/** Desktop-only table wrapper (hidden below md). */
+/** Desktop-only table wrapper (hidden on phone; tablet may still prefer cards). */
 export function ResponsiveTableDesktop({
   children,
   className = '',
@@ -11,13 +11,13 @@ export function ResponsiveTableDesktop({
   className?: string;
 }) {
   return (
-    <div className={`hidden md:block overflow-x-auto min-w-0 ac-scroll-full ${className}`}>
+    <div className={`hidden lg:block overflow-x-auto min-w-0 ac-scroll-full ${className}`}>
       {children}
     </div>
   );
 }
 
-/** Mobile-only card list (hidden from md up). */
+/** Mobile + tablet card list (hidden from lg up). */
 export function ResponsiveTableMobile({
   children,
   className = '',
@@ -25,7 +25,7 @@ export function ResponsiveTableMobile({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={`md:hidden space-y-3 ${className}`}>{children}</div>;
+  return <div className={`lg:hidden space-y-3 ${className}`}>{children}</div>;
 }
 
 /** Standard mobile data card shell. */

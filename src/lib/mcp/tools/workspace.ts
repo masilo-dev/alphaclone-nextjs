@@ -130,31 +130,26 @@ registerTool('workspace', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+    const { getCanonicalWorkspaceCounts } = await import('@/lib/crm/canonicalWorkspaceStats');
+    const counts = await getCanonicalWorkspaceCounts(supabase, args.tenant_id);
 
-    const [leadsCount, dealsCount, tasksCount, projectsCount, leadsRawCount] = await Promise.all([
-      supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id),
-      supabase.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id),
-      supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id).neq('status', 'completed'),
-      supabase.from('projects').select('*', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id).eq('status', 'active'),
-      supabase
-        .from('leads')
-        .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', args.tenant_id)
-        .not('stage', 'in', '("converted","closed_lost")'),
-    ]);
+    const { count: activeLeads } = await supabase
+      .from('leads')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', args.tenant_id)
+      .not('stage', 'in', '("converted","closed_lost")');
 
-    const activeLeads = leadsRawCount.count ?? leadsCount.count ?? 0;
-    const aggregatorLeads = leadsCount.count || 0;
     const consistencyWarning =
-      aggregatorLeads > 0 && activeLeads > 0 && Math.abs(aggregatorLeads - activeLeads) > aggregatorLeads * 0.25
-        ? `Lead count mismatch: all leads=${aggregatorLeads}, active (excl. converted)=${activeLeads}. Prefer get_leads with pagination for pipeline truth.`
+      counts.leads > 0 && (activeLeads ?? 0) > 0 && Math.abs(counts.leads - (activeLeads ?? 0)) > counts.leads * 0.25
+        ? `Lead count mismatch: all leads=${counts.leads}, active (excl. converted)=${activeLeads}. Prefer get_leads with pagination for pipeline truth.`
         : undefined;
 
     return {
-      active_leads: activeLeads,
-      active_deals: dealsCount.count || 0,
-      pending_tasks: tasksCount.count || 0,
-      active_projects: projectsCount.count || 0,
+      active_leads: activeLeads ?? counts.leads,
+      active_deals: counts.deals,
+      pending_tasks: counts.open_tasks,
+      active_projects: counts.active_projects,
+      stats_source: 'canonical_workspace_stats',
       ...(consistencyWarning ? { consistency_warning: consistencyWarning } : {}),
     };
   },

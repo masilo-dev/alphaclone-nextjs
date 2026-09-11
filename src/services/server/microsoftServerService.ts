@@ -1,5 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import { ENV } from '@/config/env';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import {
   getMicrosoftTokens,
   refreshMicrosoftAccessToken,
@@ -18,7 +17,7 @@ export interface MicrosoftServerConnection {
 }
 
 function createAdminClient() {
-  return createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+  return createSupabaseAdminClient();
 }
 
 async function refreshMicrosoftConnection(connection: MicrosoftServerConnection) {
@@ -127,7 +126,15 @@ export const microsoftServerService = {
 
   async sendEmail(
     userId: string,
-    input: { to: string[]; subject: string; html: string; cc?: string[]; bcc?: string[] }
+    input: {
+      to: string[];
+      subject: string;
+      html: string;
+      cc?: string[];
+      bcc?: string[];
+      replyTo?: string;
+      attachments?: Array<{ filename: string; contentBase64: string; contentType?: string }>;
+    }
   ) {
     await graphRequest(userId, '/me/sendMail', {
       method: 'POST',
@@ -138,6 +145,15 @@ export const microsoftServerService = {
           toRecipients: input.to.map((email) => ({ emailAddress: { address: email } })),
           ccRecipients: (input.cc || []).map((email) => ({ emailAddress: { address: email } })),
           bccRecipients: (input.bcc || []).map((email) => ({ emailAddress: { address: email } })),
+          replyTo: input.replyTo
+            ? [{ emailAddress: { address: input.replyTo } }]
+            : undefined,
+          attachments: (input.attachments || []).map((attachment) => ({
+            '@odata.type': '#microsoft.graph.fileAttachment',
+            name: attachment.filename,
+            contentType: attachment.contentType || 'application/octet-stream',
+            contentBytes: attachment.contentBase64,
+          })),
         },
         saveToSentItems: true,
       }),

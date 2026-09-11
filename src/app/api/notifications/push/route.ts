@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import webPush from 'web-push';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { getVapidEmail, getVapidPrivateKey, getVapidPublicKey } from '@/lib/push/vapidEnv';
 
-const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+const vapidPublicKey = getVapidPublicKey();
+const vapidPrivateKey = getVapidPrivateKey();
 
 const isPlaceholder = (key?: string) => !key || key.includes('your_') || key.length < 20;
 
 if (vapidPublicKey && vapidPrivateKey && !isPlaceholder(vapidPublicKey) && !isPlaceholder(vapidPrivateKey)) {
   try {
-    webPush.setVapidDetails('mailto:support@alphaclonesystems.com', vapidPublicKey, vapidPrivateKey);
+    webPush.setVapidDetails(getVapidEmail(), vapidPublicKey, vapidPrivateKey);
   } catch (err) {
     console.error('Failed to initialize Web Push – invalid keys provided:', err);
   }

@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
 
 type PlaybookStatus = 'idle' | 'running' | 'success' | 'failed' | 'skipped';
 
@@ -172,32 +173,6 @@ const AIAgentsTab: React.FC = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  // Sovereign Autopilot Throttled Auto-Trigger
-  useEffect(() => {
-    if (!currentTenant?.id || loading) return;
-
-    const lastRunKey = `last_auto_sync_${currentTenant.id}`;
-    const lastRunStr = localStorage.getItem(lastRunKey);
-    const now = Date.now();
-    const cooldown = 5 * 60 * 1000; // 5 minutes in ms
-
-    if (!lastRunStr || now - parseInt(lastRunStr, 10) > cooldown) {
-      localStorage.setItem(lastRunKey, now.toString());
-      fetch('/api/autonomous/trigger', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId: currentTenant.id }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            loadData();
-          }
-        })
-        .catch((err) => console.error('[Autopilot] Background auto-sync failed:', err));
-    }
-  }, [currentTenant?.id, loading, loadData]);
 
   // Handle manual trigger run
   const triggerAutonomousRunner = async () => {
@@ -437,7 +412,55 @@ const AIAgentsTab: React.FC = () => {
   }
 
   return (
-    <div className="overflow-y-auto pb-24 space-y-6 px-4 pt-4">
+    <div className="overflow-y-auto pb-24 space-y-4 px-4 pt-4">
+
+      {/* Universal Execution Header */}
+      <UniversalModuleExecutionHeader
+        moduleName="AI Agents & Autonomous Execution"
+        recordTitle="Nexus Playbook Orchestration & Decision Automation"
+        nextActionState={{
+          currentState: rules.enabled
+            ? (rules.auto_send_enabled ? 'SOVEREIGN AUTOPILOT ENGAGED' : `Active — ${runs.length} runs logged`)
+            : 'DISABLED — No autonomous execution',
+          owner: 'AlphaClone Nexus Orchestrator',
+          nextAction: pendingApprovalsCount > 0
+            ? `Review and resolve ${pendingApprovalsCount} pending approval(s)`
+            : 'Trigger Nexus Sync to execute all playbooks',
+          deadline: pendingApprovalsCount > 0 ? 'Action required — approvals blocking pipeline' : 'Continuous / Event-driven',
+          blocker: !rules.enabled
+            ? 'Autonomous execution is disabled'
+            : failures > 0
+              ? `${failures} execution failure(s) detected — check logs`
+              : null,
+          expectedOutcome: 'All playbooks executed successfully — leads scored, deals triaged, invoices escalated',
+          outcomeStatus: failures === 0 && runs.length > 0 ? 'verified' : 'pending',
+          verifiedResult: runs.length > 0
+            ? `${successRate}% success rate across ${runs.length} total runs · ${completedRuns.length} completed`
+            : 'No runs recorded yet — trigger first sync',
+          authorityLevel: rules.auto_send_enabled
+            ? 'automatic'
+            : rules.high_risk_approval_required
+              ? 'approval_required'
+              : 'automatic_logged',
+        }}
+        questions={{
+          whatCameIn: `${runs.length} autonomous execution runs · ${pendingApprovalsCount} actions pending approval · ${PLAYBOOKS.length} active playbooks`,
+          whatDoesItMean: 'Business automation events requiring execution, gate review, or escalation across CRM, billing, and social channels',
+          whatShouldHappen: pendingApprovalsCount > 0
+            ? `Resolve ${pendingApprovalsCount} queued action(s) — approve or reject within SLA`
+            : 'System is healthy — trigger next scheduled sync or wait for event-driven triggers',
+          whoOwnsIt: 'AlphaClone Nexus Orchestrator (Founder Override Available)',
+          canAlphaCloneAct: rules.auto_send_enabled ? 'automatic' : 'approval_required',
+          whatActuallyHappened: `${completedRuns.length} completed runs · ${failures} failures · ${pendingApprovalsCount} held for approval`,
+          didItProduceExpectedOutcome: failures === 0 ? 'YES' : 'PARTIALLY',
+          whatHappensNext: failures > 0
+            ? 'Investigate failed playbook steps in Execution Logs tab'
+            : pendingApprovalsCount > 0
+              ? 'Approve or reject queued actions to continue pipeline flow'
+              : 'Continue monitoring — next trigger will execute automatically',
+        }}
+        onExecuteNextAction={triggerAutonomousRunner}
+      />
 
       {/* Primary Global Action Board */}
       <div className={`bg-gradient-to-r ${rules.auto_send_enabled ? 'from-amber-950/20 via-purple-950/20 to-slate-900 border-amber-500/25' : 'from-purple-900/40 to-slate-900 border-purple-500/10'} border rounded-3xl p-5 relative overflow-hidden`}>
@@ -457,8 +480,8 @@ const AIAgentsTab: React.FC = () => {
             </div>
             <p className="text-xs text-slate-400 mt-1 max-w-xl leading-relaxed">
               {rules.auto_send_enabled 
-                ? 'Sovereign Autopilot Mode is fully engaged. The platform is running 100% autonomously: auto-triggering playbook syncs, scoring messages, routing leads, and auto-dispatching high-confidence outreach. Zero founder involvement required.'
-                : 'Nexus acts as your sovereign automated agent network. It checks messages, prompts leads, drafts social posts, triages calendars, and reconciles payments.'
+                ? 'Autopilot mode is active for approved rules: playbooks sync, messages score, leads route, and high-confidence outreach can dispatch automatically. You can disable auto-send or require approval per rule.'
+                : 'Nexus acts as your automated agent network. It checks messages, prompts leads, drafts social posts, triages calendars, and reconciles payments — with approval gates for high-impact actions.'
               }
             </p>
           </div>
@@ -869,7 +892,7 @@ const AIAgentsTab: React.FC = () => {
               <div className="flex items-center justify-between p-3.5 bg-slate-950 border border-white/5 rounded-2xl">
                 <div>
                   <span className="text-xs font-bold text-white block">Sovereign Autopilot Mode (Auto-Send & Auto-Approve)</span>
-                  <span className="text-[10px] text-slate-500">Enable AI agents to automatically trigger runs, reply to buying signals, and auto-approve high-confidence actions. Zero founder involvement required.</span>
+                  <span className="text-[10px] text-slate-500">Enable AI agents to trigger runs, respond to signals, and auto-approve high-confidence actions you configure. Important client-facing steps can still require your review.</span>
                 </div>
                 <button 
                   onClick={() => handleUpdateRules({ auto_send_enabled: !rules.auto_send_enabled })}
@@ -1109,18 +1132,20 @@ const AIAgentsTab: React.FC = () => {
                 {/* Show recent runs specific to this playbook action */}
                 <div className="space-y-2">
                   <div className="text-[10px] text-slate-500 uppercase font-black tracking-wider px-1">Pipeline Run Log</div>
-                  {runs.filter(r => r.summary?.actions?.some(a => a.key === selectedPlaybook.key)).slice(0, 5).length === 0 ? (
+                  {(Array.isArray(runs) ? runs : []).filter(r => Array.isArray(r.summary?.actions) && r.summary.actions.some(a => a.key === selectedPlaybook.key)).slice(0, 5).length === 0 ? (
                     <div className="text-[11px] text-slate-500 italic p-3 bg-slate-950/40 rounded-xl border border-white/5">
                       No matching executions recorded for this playbook yet.
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {runs
-                        .filter(r => r.summary?.actions?.some(a => a.key === selectedPlaybook.key))
+                      {(Array.isArray(runs) ? runs : [])
+                        .filter(r => Array.isArray(r.summary?.actions) && r.summary.actions.some(a => a.key === selectedPlaybook.key))
                         .slice(0, 5)
                         .map((run) => {
-                          const action = run.summary.actions!.find(a => a.key === selectedPlaybook.key)!;
-                          const actionStyle = STATUS_STYLES[action.status];
+                          const actions = Array.isArray(run.summary?.actions) ? run.summary.actions : [];
+                          const action = actions.find(a => a.key === selectedPlaybook.key);
+                          if (!action) return null;
+                          const actionStyle = STATUS_STYLES[action.status] || STATUS_STYLES.idle;
                           return (
                             <div key={run.id} className="p-3 bg-slate-950 rounded-2xl border border-white/5 flex flex-col gap-2">
                               <div className="flex justify-between items-center text-[10px]">

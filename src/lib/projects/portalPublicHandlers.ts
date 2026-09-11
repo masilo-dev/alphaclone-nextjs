@@ -48,16 +48,36 @@ export async function loadPublicPortalContext(
 }
 
 export async function loadPublicPortalPayload(admin: SupabaseClient, project: PortalProjectRow) {
-  const { data: milestones } = await admin
-    .from('project_milestones')
-    .select('id, name, status, due_date, description, order_index')
-    .eq('project_id', project.id)
-    .order('order_index', { ascending: true })
-    .order('created_at', { ascending: true });
+  const [{ data: milestones }, { data: invoices }] = await Promise.all([
+    admin
+      .from('project_milestones')
+      .select('id, name, status, due_date, description, order_index')
+      .eq('project_id', project.id)
+      .order('order_index', { ascending: true })
+      .order('created_at', { ascending: true }),
+    admin
+      .from('business_invoices')
+      .select('id, invoice_number, status, total, amount_paid, balance_due, currency, currency_code, due_date, paid_at')
+      .eq('tenant_id', project.tenant_id)
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false }),
+  ]);
 
   return {
     projectId: project.id,
     project: toPublicProjectView(project),
     milestones: milestones || [],
+    invoices: (invoices || []).map((invoice: any) => ({
+      id: invoice.id,
+      invoiceNumber: invoice.invoice_number,
+      status: invoice.status,
+      total: Number(invoice.total || 0),
+      amountPaid: Number(invoice.amount_paid || 0),
+      balanceDue: Number(invoice.balance_due ?? Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0))),
+      currency: invoice.currency || invoice.currency_code || 'USD',
+      dueDate: invoice.due_date,
+      paidAt: invoice.paid_at,
+      isPaid: String(invoice.status || '').toLowerCase() === 'paid' || Number(invoice.balance_due || 0) <= 0,
+    })),
   };
 }

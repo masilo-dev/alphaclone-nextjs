@@ -148,7 +148,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
 
     const reconnectUrl = (() => {
         const params = new URLSearchParams();
-        if (userIdProp) params.set('state', userIdProp);
+        if (currentTenant?.id) params.set('tenantId', currentTenant.id);
         if (configuredRegion) params.set('region', configuredRegion);
         const query = params.toString();
         return query ? `/api/auth/zoho/connect?${query}` : '/api/auth/zoho/connect';
@@ -169,7 +169,8 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     useEffect(() => {
         const verifyZohoMailReady = async () => {
             try {
-                const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
+                if (!currentTenant?.id) return;
+                const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(currentTenant.id)}`, { credentials: 'include' });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) return;
                 if (typeof data?.configuredRegion === 'string' && data.configuredRegion) setConfiguredRegion(data.configuredRegion);
@@ -185,7 +186,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
             }
         };
         verifyZohoMailReady();
-    }, []);
+    }, [currentTenant?.id]);
 
     const categorizeEmail = (message: Message): 'urgent' | 'follow-up' | 'newsletter' | 'spam' | 'normal' => {
         const subject = (message.subject || '').toLowerCase();
@@ -218,7 +219,11 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     }, [messages, categoryFilter, searchTerm]);
 
     const zohoFetch = async (url: string, options?: RequestInit): Promise<any> => {
-        const targetUrl = userIdProp ? `${url}${url.includes('?') ? '&' : '?'}userId=${encodeURIComponent(userIdProp)}` : url;
+        if (!currentTenant?.id) {
+            setError('Select a workspace to use Zoho Mail.');
+            return null;
+        }
+        const targetUrl = `${url}${url.includes('?') ? '&' : '?'}tenantId=${encodeURIComponent(currentTenant.id)}`;
         const res = await fetch(targetUrl, { credentials: 'include', ...options });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -229,7 +234,7 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         return data;
     };
 
-    useEffect(() => { fetchFolders(); }, []);
+    useEffect(() => { if (currentTenant?.id) fetchFolders(); }, [currentTenant?.id]);
     useEffect(() => { if (selectedFolder) fetchMessages(selectedFolder); }, [selectedFolder]);
 
     const fetchFolders = async () => {
@@ -263,10 +268,11 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
         try {
             const data = await zohoFetch(`/api/zoho/mail?action=content&messageId=${id}&folderId=${selectedFolder}`);
             if (data) {
-                setMessageCache(prev => ({ ...prev, [id]: data }));
-                setMessageContent(data);
+                const completeMessage = { ...selectedMessageMeta, ...data, messageId: id };
+                setMessageCache(prev => ({ ...prev, [id]: completeMessage }));
+                setMessageContent(completeMessage);
                 setSelectedMessage(id);
-                summarizeMessage(id, data);
+                summarizeMessage(id, completeMessage);
             }
         } finally { setLoading(false); }
     };
@@ -364,7 +370,8 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
     const handleDelete = async (messageId: string) => {
         try {
             const targetUrl = `/api/zoho/mail?messageId=${messageId}&folderId=${selectedFolder}`;
-            const finalUrl = userIdProp ? `${targetUrl}&userId=${encodeURIComponent(userIdProp)}` : targetUrl;
+            if (!currentTenant?.id) throw new Error('Select a workspace first');
+            const finalUrl = `${targetUrl}&tenantId=${encodeURIComponent(currentTenant.id)}`;
             const res = await fetch(finalUrl, { method: 'DELETE', credentials: 'include' });
             if (res.ok) {
                 toast.success('Deleted');
@@ -742,7 +749,11 @@ export default function ZohoMailView({ userId: userIdProp }: ZohoMailViewProps) 
                                                     {messageContent.attachments.map((att: any, idx: number) => (
                                                         <button
                                                             key={idx}
-                                                            onClick={() => toast.success(`Opening ${att.fileName}`)}
+                                                            onClick={() => {
+                                                                if (!att.attachmentId || !currentTenant?.id) return toast.error('Attachment is unavailable');
+                                                                const url = `/api/zoho/mail?action=attachment&tenantId=${encodeURIComponent(currentTenant.id)}&folderId=${encodeURIComponent(selectedFolder)}&messageId=${encodeURIComponent(messageContent.messageId)}&attachmentId=${encodeURIComponent(att.attachmentId)}&fileName=${encodeURIComponent(att.fileName || 'attachment')}`;
+                                                                window.location.assign(url);
+                                                            }}
                                                             className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-[13px] text-white hover:bg-white/10 shrink-0"
                                                         >
                                                             <FileText size={14} className="text-teal-400" />

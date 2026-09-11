@@ -1,20 +1,12 @@
-'use client';
-
-import React from 'react';
-import PublicNavigation from '@/components/PublicNavigation';
-import MarketingFooter from '@/components/landing/MarketingFooter';
+import type { ReactNode } from 'react';
+import MarketingShell from '@/components/marketing/system/MarketingShell';
 
 type MarketingLandingShellProps = {
-  children: React.ReactNode;
+  children: ReactNode;
+  className?: string;
 };
 
 /** Shared nav + footer shell for indexable product landing pages. */
-export default function MarketingLandingShell({ children }: MarketingLandingShellProps) {
-  return (
-    <div className="marketing-theme min-h-screen">
-      <PublicNavigation onLoginClick={() => {}} />
-      <div className="pt-20">{children}</div>
-      <MarketingFooter />
-    </div>
-  );
+export default function MarketingLandingShell({ children, className }: MarketingLandingShellProps) {
+  return <MarketingShell className={className}>{children}</MarketingShell>;
 }

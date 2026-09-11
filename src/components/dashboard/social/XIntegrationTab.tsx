@@ -59,7 +59,9 @@ export default function XIntegrationTab() {
       }
       setCreditsDepleted(false);
       if (!res.ok || !payload.success) {
-        throw new Error(payload.error || 'Failed to load posts');
+        setTweets([]);
+        toast.error(payload.error || 'Failed to load posts');
+        return;
       }
       const items = payload.data?.data || [];
       setTweets(

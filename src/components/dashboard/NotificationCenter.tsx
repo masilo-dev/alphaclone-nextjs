@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Bell, X, Check, Trash2, ExternalLink,
     MessageCircle, FolderOpen, CreditCard, Settings, AlertTriangle, BellOff, Smartphone
 } from 'lucide-react';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
+import toast from 'react-hot-toast';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 
 interface NotificationCenterProps {
@@ -15,6 +18,7 @@ interface NotificationCenterProps {
 }
 
 import { notificationService, type Notification } from '../../services/dashboardService';
+import { pwaService } from '../../services/pwaService';
 
 const TYPE_CONFIG: Record<string, { Icon: any; color: string; bg: string; label: string }> = {
     message: { Icon: MessageCircle, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', label: 'Message' },
@@ -36,6 +40,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const [severityFilter, setSeverityFilter] = useState<'all' | 'urgent' | 'high'>('all');
+    const [loadError, setLoadError] = useState<string | null>(null);
     const { isSubscribed, pushSupported, subscribeToPush } = usePushNotifications();
     const [pushBusy, setPushBusy] = useState(false);
     const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
@@ -64,24 +70,44 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
     const showPushPrompt = pushSupported && pushPermission !== 'denied' && !isSubscribed;
 
     const loadNotifications = useCallback(async () => {
-        const { notifications: loaded } = await notificationService.getNotifications(userId, tenantId);
+        const { notifications: loaded, error } = await notificationService.getNotifications(userId, tenantId);
+        if (error) {
+            setLoadError(error);
+            return;
+        }
+        setLoadError(null);
         if (loaded) setNotifications(loaded);
     }, [userId, tenantId]);
 
     const handleMarkAsRead = useCallback(async (id: string) => {
+        const previous = notifications;
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-        await notificationService.markAsRead(id);
-    }, []);
+        const { error } = await notificationService.markAsRead(id);
+        if (error) {
+            setNotifications(previous);
+            toast.error(error);
+        }
+    }, [notifications]);
 
     const handleMarkAllAsRead = useCallback(async () => {
+        const previous = notifications;
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        await notificationService.markAllAsRead(userId, tenantId);
-    }, [userId, tenantId]);
+        const { error } = await notificationService.markAllAsRead(userId, tenantId);
+        if (error) {
+            setNotifications(previous);
+            toast.error(error);
+        }
+    }, [notifications, userId, tenantId]);
 
     const handleDelete = useCallback(async (id: string) => {
+        const previous = notifications;
         setNotifications(prev => prev.filter(n => n.id !== id));
-        await notificationService.deleteNotification(id);
-    }, []);
+        const { error } = await notificationService.deleteNotification(id);
+        if (error) {
+            setNotifications(previous);
+            toast.error(error);
+        }
+    }, [notifications]);
 
     useEffect(() => {
         if (!userId) return;
@@ -89,18 +115,39 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
 
         const unsubscribe = notificationService.subscribeToNotifications(userId, tenantId, (newNotif: Notification) => {
             setNotifications(prev => [newNotif, ...prev]);
+
+            // Also push to native OS notifications if permissions are granted
+            // (so users on other tabs / PWA standalone still see it instantly)
+            try {
+                const isPwaOrFocused =
+                    (typeof document !== 'undefined' && document.visibilityState === 'visible')
+                        ? false
+                        : pwaService.isRunningAsPWA() || (typeof document !== 'undefined' && document.visibilityState !== 'visible');
+                if (isPwaOrFocused || newNotif.priority === 'high' || newNotif.priority === 'urgent') {
+                    pwaService.showNotification(newNotif.title, {
+                        body: newNotif.message || undefined,
+                        tag: newNotif.id,
+                        requireInteraction: newNotif.priority === 'urgent',
+                        data: newNotif.link ? { url: newNotif.link } : undefined,
+                    });
+                }
+            } catch { /* noop — failing to show a native push is not fatal */ }
         });
 
         return () => { unsubscribe(); };
-    }, [userId, loadNotifications]);
+    }, [userId, tenantId, loadNotifications]);
 
     useEffect(() => {
         setUnreadCount(notifications.filter(n => !n.read).length);
     }, [notifications]);
 
-    const filteredNotifications = filter === 'unread'
+    const filteredNotifications = (filter === 'unread'
         ? notifications.filter(n => !n.read)
-        : notifications;
+        : notifications
+    ).filter((n) => {
+        if (severityFilter === 'all') return true;
+        return n.priority === severityFilter || n.priority === 'urgent';
+    });
 
     // Group by date and type
     const groups: Record<string, Record<string, Notification[]>> = {};
@@ -135,31 +182,33 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                 </AnimatePresence>
             </button>
 
-            {/* Backdrop */}
-            <AnimatePresence>
-                {isOpen && (
+            {/* Backdrop + panel portaled so dashboard overflow-hidden does not clip the dropdown */}
+            {typeof document !== 'undefined' && createPortal(
+                <AnimatePresence>
+                    {isOpen ? (
                     <>
                         <motion.div
+                            key="notif-backdrop"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-[1px]"
+                            className="fixed inset-0 z-[1190] bg-slate-950/30 backdrop-blur-[2px]"
                             onClick={() => setIsOpen(false)}
                         />
 
-                        {/* Panel */}
                         <motion.div
+                            key="notif-panel"
                             initial={{ opacity: 0, y: -8, scale: 0.97 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -8, scale: 0.97 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
-                            className="absolute right-0 mt-2 w-[22rem] sm:w-96 max-h-[75vh] sm:max-h-[600px] bg-slate-950 border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-50 flex flex-col overflow-hidden"
+                            className="fixed top-[calc(env(safe-area-inset-top,0px)+3.25rem)] right-3 sm:right-4 w-[min(100vw-1.5rem,22rem)] sm:w-96 max-h-[min(75dvh,600px)] bg-[var(--surface-elevated)] dark:bg-slate-950 border border-[var(--border-default)] dark:border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-[1200] flex flex-col overflow-hidden"
                         >
                             {/* Header */}
-                            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-slate-900 to-slate-950">
+                            <div className="p-4 border-b border-[var(--border-default)] flex items-center justify-between bg-[var(--surface-secondary)] dark:bg-gradient-to-r dark:from-slate-900 dark:to-slate-950">
                                 <div>
-                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Notifications</h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
+                                    <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Notifications</h3>
+                                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
                                         {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
                                     </p>
                                 </div>
@@ -179,7 +228,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             </div>
 
                             {/* Filter Pills */}
-                            <div className="flex gap-2 px-4 py-2 border-b border-white/5 bg-slate-950">
+                            <div className="flex gap-2 px-4 py-2 border-b border-white/5 bg-slate-950 flex-wrap">
                                 {(['all', 'unread'] as const).map(f => (
                                     <button
                                         key={f}
@@ -190,6 +239,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                                             }`}
                                     >
                                         {f === 'all' ? 'All' : `Unread (${unreadCount})`}
+                                    </button>
+                                ))}
+                                {(['all', 'urgent'] as const).map(f => (
+                                    <button
+                                        key={`sev-${f}`}
+                                        onClick={() => setSeverityFilter(f)}
+                                        className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest transition-all ${severityFilter === f
+                                            ? 'bg-amber-500 text-slate-950'
+                                            : 'text-slate-500 hover:text-slate-300 bg-white/5'
+                                            }`}
+                                    >
+                                        {f === 'all' ? 'Any severity' : 'Urgent'}
                                     </button>
                                 ))}
                             </div>
@@ -216,13 +277,30 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
 
                             {/* List */}
                             <div className="flex-1 overflow-y-auto custom-scrollbar">
-                                {filteredNotifications.length === 0 ? (
+                                {loadError ? (
+                                    <div className="p-6 text-center space-y-3">
+                                        <p className="text-xs text-rose-300">{loadError}</p>
+                                        <button
+                                            type="button"
+                                            onClick={() => void loadNotifications()}
+                                            className="text-xs font-bold text-teal-400 hover:text-teal-300"
+                                        >
+                                            Retry
+                                        </button>
+                                    </div>
+                                ) : filteredNotifications.length === 0 ? (
+                                    filter === 'all' ? (
+                                        <div className="p-6">
+                                            <EmptyStateFromPreset moduleId="notifications" />
+                                        </div>
+                                    ) : (
                                     <div className="py-16 flex flex-col items-center justify-center text-slate-600">
                                         <BellOff className="w-10 h-10 mb-3 opacity-40" />
                                         <p className="text-xs font-bold uppercase tracking-widest">
                                             {filter === 'unread' ? 'All caught up!' : 'No notifications'}
                                         </p>
                                     </div>
+                                    )
                                 ) : (
                                     dateOrder.map(dateGroup => {
                                         const typeGroups = groups[dateGroup];
@@ -323,8 +401,10 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
                             )}
                         </motion.div>
                     </>
-                )}
-            </AnimatePresence>
+                    ) : null}
+                </AnimatePresence>,
+                document.body,
+            )}
         </div>
     );
 };

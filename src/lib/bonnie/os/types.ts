@@ -1,0 +1,346 @@
+/**
+ * Bonnie Agentic Business Operating System — shared types.
+ * Bonnie is the intelligence that runs AlphaClone Systems.
+ */
+
+export type CognitiveStageName =
+  | 'observe'
+  | 'understand'
+  | 'reason'
+  | 'plan'
+  | 'simulate'
+  | 'evaluate_risk'
+  | 'choose_strategy'
+  | 'choose_agents'
+  | 'choose_tools'
+  | 'execute'
+  | 'verify'
+  | 'reflect'
+  | 'learn'
+  | 'update_memory'
+  | 'improve'
+  | 'continue_monitoring';
+
+export type CognitiveStageStatus = 'pending' | 'running' | 'completed' | 'skipped' | 'failed';
+
+export type CognitiveTriggerType =
+  | 'instruction'
+  | 'event'
+  | 'cron'
+  | 'approval_resume'
+  | 'continuous';
+
+export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export type BusinessOutputAttribution =
+  | 'direct'
+  | 'influenced'
+  | 'estimated'
+  | 'unknown';
+
+export type BusinessMetricEstimate = {
+  value: number;
+  currency?: string;
+  unit?: 'money' | 'hours' | 'count' | 'percent';
+  attribution?: BusinessOutputAttribution;
+  confidence?: number;
+  source?: string;
+};
+
+export type ExpectedValueInput = {
+  potentialValue?: number | null;
+  probability?: number | null;
+  executionCost?: number | null;
+  riskAdjustment?: number | null;
+  currency?: string;
+};
+
+export type ExpectedValueResult = {
+  status: 'calculated' | 'insufficient_data';
+  expectedValue: number | null;
+  potentialValue: number | null;
+  probability: number | null;
+  executionCost: number;
+  riskAdjustment: number;
+  currency: string;
+  explanation: string;
+};
+
+export type ExecutionActionStatus =
+  | 'suggested'
+  | 'awaiting_approval'
+  | 'approved'
+  | 'executing'
+  | 'completed'
+  | 'failed'
+  | 'partially_completed'
+  | 'cancelled'
+  | 'rolled_back';
+
+export type VerificationStatus =
+  | 'not_started'
+  | 'pending'
+  | 'verified'
+  | 'failed'
+  | 'not_verifiable';
+
+export type AgentPermissionLevel =
+  | 'read'
+  | 'prepare'
+  | 'write'
+  | 'send'
+  | 'financial'
+  | 'admin';
+
+export type AgentAuthorityRule = {
+  permission: AgentPermissionLevel;
+  allowed: boolean;
+  requiresApproval?: boolean;
+  maxSpend?: number;
+  maxDiscountPercent?: number;
+  reason?: string;
+};
+
+export type BusinessExecutionAction = {
+  id: string;
+  title: string;
+  objective: string;
+  agentId?: string;
+  toolName?: string;
+  permissionLevel: AgentPermissionLevel;
+  riskLevel: RiskLevel;
+  estimatedCost?: BusinessMetricEstimate;
+  expectedOutcome?: string;
+  expectedValue?: ExpectedValueResult;
+  requiredApproval: boolean;
+  status: ExecutionActionStatus;
+  verificationStatus: VerificationStatus;
+  actualOutcome?: string;
+  evidence?: unknown[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type BusinessPrioritySignal = {
+  id: string;
+  title: string;
+  action: string;
+  potentialValue?: number | null;
+  probability?: number | null;
+  urgency?: number;
+  effort?: number;
+  risk?: RiskLevel;
+  strategicRelevance?: number;
+  customerImportance?: number;
+  executionCost?: number | null;
+  riskAdjustment?: number | null;
+  currency?: string;
+  requiresApproval?: boolean;
+  evidence?: string[];
+};
+
+export type BusinessPriorityRecommendation = BusinessPrioritySignal & {
+  expectedValue: ExpectedValueResult;
+  priorityScore: number;
+  recommended:
+    | 'execute'
+    | 'prepare_for_approval'
+    | 'wait_for_evidence'
+    | 'monitor';
+  reason: string;
+};
+
+export type BusinessOutputSummary = {
+  revenueInfluenced?: BusinessMetricEstimate;
+  revenueRecovered?: BusinessMetricEstimate;
+  pipelineInfluenced?: BusinessMetricEstimate;
+  manualTimeAvoided?: BusinessMetricEstimate;
+  executionCost?: BusinessMetricEstimate;
+  successfulActions: number;
+  failedActions: number;
+  humanInterventions: number;
+  estimatedNetValue?: BusinessMetricEstimate;
+};
+
+export type RequiresDecisionItem = {
+  id: string;
+  title: string;
+  reason: string;
+  value?: BusinessMetricEstimate;
+  recommendedAction: string;
+  riskLevel: RiskLevel;
+  approvalRequired: boolean;
+};
+
+export type ManagementByExceptionBrief = {
+  headline: string;
+  decisions: RequiresDecisionItem[];
+  routineActionsHandled: number;
+  output: BusinessOutputSummary;
+};
+
+export type MemoryScope = 'organization' | 'user' | 'department' | 'short_term' | 'long_term';
+
+export type DepartmentId =
+  | 'executive'
+  | 'operations'
+  | 'sales'
+  | 'crm'
+  | 'marketing'
+  | 'social'
+  | 'finance'
+  | 'accounting'
+  | 'research'
+  | 'communications'
+  | 'calendar'
+  | 'documents'
+  | 'contracts'
+  | 'customer_success'
+  | 'support'
+  | 'compliance'
+  | 'security'
+  | 'reporting'
+  | 'workflow'
+  | 'automation'
+  | 'knowledge'
+  | 'supervision'
+  | 'audit'
+  | 'memory'
+  | 'evaluation'
+  | 'integration'
+  | 'notification'
+  | 'monitoring';
+
+export type ExecutionMode =
+  | 'ask_only'
+  | 'plan_only'
+  | 'approval_required'
+  | 'semi_autonomous'
+  | 'fully_autonomous';
+
+export type AgentHealthStatus = 'healthy' | 'degraded' | 'offline' | 'unknown';
+
+export type BonnieAgentDefinition = {
+  id: string;
+  name: string;
+  department: DepartmentId;
+  role: string;
+  instructions: string;
+  tools: string[];
+  keywords: string[];
+  writeAllowed?: boolean;
+  priority?: number;
+  /** Declared capabilities for Executive routing */
+  capabilities?: string[];
+  /** Supported execution modes for this agent's write actions */
+  supportedModes?: ExecutionMode[];
+  /** Relative confidence prior for routing (0-1) */
+  confidencePrior?: number;
+  /** Supported actions surfaced to the Executive / UI */
+  supportedActions?: string[];
+  /** Required platform tools beyond `tools` (integrations, queues, etc.) */
+  requiredTools?: string[];
+  /** Live health for registry status APIs */
+  healthStatus?: AgentHealthStatus;
+};
+
+export type SupervisorDecision = {
+  primaryAgentIds: string[];
+  collaboratorAgentIds: string[];
+  shouldStop: boolean;
+  requiresApproval: boolean;
+  shouldRetryStrategy: boolean;
+  shouldUpdateMemory: boolean;
+  shouldPromoteWorkflow: boolean;
+  reasoning: string;
+  confidence: number;
+  strategy: string;
+  riskLevel: RiskLevel;
+};
+
+export type CognitiveStageRecord = {
+  name: CognitiveStageName;
+  status: CognitiveStageStatus;
+  startedAt?: string;
+  completedAt?: string;
+  summary?: string;
+  evidence?: unknown[];
+  confidence?: number;
+  durationMs?: number;
+};
+
+export type CognitiveRunInput = {
+  tenantId: string;
+  userId?: string;
+  goal: string;
+  triggerType?: CognitiveTriggerType;
+  triggerRef?: string;
+  eventType?: string;
+  eventPayload?: Record<string, unknown>;
+  executeActions?: boolean;
+  workflowId?: string;
+  /** Persist/attach to an existing goal when chasing */
+  goalId?: string;
+  conversationId?: string;
+};
+
+export type CognitiveRunResult = {
+  runId: string | null;
+  status: 'completed' | 'awaiting_approval' | 'failed' | 'running';
+  stages: CognitiveStageRecord[];
+  selectedAgents: BonnieAgentDefinition[];
+  selectedTools: string[];
+  supervisor: SupervisorDecision;
+  strategy: Record<string, unknown>;
+  riskAssessment: Record<string, unknown>;
+  confidence: number;
+  evidence: unknown[];
+  outcome: Record<string, unknown>;
+  reflectionId?: string | null;
+  twinSnapshotId?: string | null;
+  goalId?: string | null;
+};
+
+export type KnowledgeNodeInput = {
+  entityType: string;
+  entityId: string;
+  label: string;
+  properties?: Record<string, unknown>;
+  confidence?: number;
+};
+
+export type KnowledgeEdgeInput = {
+  fromEntityType: string;
+  fromEntityId: string;
+  toEntityType: string;
+  toEntityId: string;
+  relation: string;
+  properties?: Record<string, unknown>;
+  confidence?: number;
+};
+
+export type DigitalTwinSnapshot = {
+  kpis: Record<string, number | string | null>;
+  departments: Record<string, { status: string; signals: string[] }>;
+  risks: Array<{ level: RiskLevel; title: string; evidence?: string }>;
+  opportunities: Array<{ title: string; confidence: number }>;
+  entityCounts: Record<string, number>;
+  observedAt: string;
+};
+
+export type ReflectionResult = {
+  whatWorked: string[];
+  whatFailed: string[];
+  lessons: string[];
+  memoryUpdates: Array<{
+    scope: MemoryScope;
+    category: string;
+    key: string;
+    value: Record<string, unknown>;
+    confidence?: number;
+    department?: string;
+  }>;
+  workflowReuseCandidate: boolean;
+  improvementActions: string[];
+  confidence: number;
+};

@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
             .eq('token', token);
 
         await admin.from('contract_audit_trail').insert({
+            tenant_id: contract.tenant_id,
             contract_id: contract.id,
             action: 'contract_declined',
             actor_role: signingToken.signer_role,

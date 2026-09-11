@@ -10,6 +10,11 @@ import {
   normalizeDeliveryProvider,
   type DeliveryEmailProvider,
 } from '@/lib/email/emailProviderOptions';
+import {
+  EMAIL_AUTO_REPLY_MODE_LABELS,
+  normalizeEmailAutoReplyMode,
+  type EmailAutoReplyMode,
+} from '@/lib/email/autoReplySettings';
 import Link from 'next/link';
 
 export default function EmailProviderSettings() {
@@ -17,6 +22,7 @@ export default function EmailProviderSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [defaultProvider, setDefaultProvider] = useState<DeliveryEmailProvider>('auto');
+  const [autoReplyMode, setAutoReplyMode] = useState<EmailAutoReplyMode>('draft_only');
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [providers, setProviders] = useState<
     Array<{ id: DeliveryEmailProvider; label: string; connected: boolean; native?: boolean; campaigns?: boolean }>
@@ -30,6 +36,7 @@ export default function EmailProviderSettings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load');
       setDefaultProvider(normalizeDeliveryProvider(data.defaultProvider));
+      setAutoReplyMode(normalizeEmailAutoReplyMode(data.autoReplyMode));
       setProviders(data.connectedProviders || []);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to load email settings');
@@ -49,12 +56,16 @@ export default function EmailProviderSettings() {
       const res = await fetch('/api/settings/email-provider', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId: currentTenant.id, defaultProvider }),
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          defaultProvider,
+          autoReplyMode,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Save failed');
       setSavedAt(data.savedAt || new Date().toISOString());
-      toast.success(`Default provider: ${DELIVERY_PROVIDER_LABELS[defaultProvider]}`);
+      toast.success('Email settings saved');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -96,6 +107,36 @@ export default function EmailProviderSettings() {
         providers={providers}
         showAuto
       />
+
+      <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
+        <p className="text-xs font-bold text-violet-300">AI email auto-reply</p>
+        <p className="text-[11px] text-slate-400 leading-relaxed">
+          When Zoho receives a qualified lead email, Bonnie can draft a reply. Default is{' '}
+          <strong className="text-slate-300">draft only</strong> — nothing sends until you review.
+        </p>
+        <div className="flex flex-col gap-2">
+          {(Object.keys(EMAIL_AUTO_REPLY_MODE_LABELS) as EmailAutoReplyMode[]).map((mode) => (
+            <label
+              key={mode}
+              className={`flex items-start gap-2 rounded-lg border px-3 py-2 cursor-pointer ${
+                autoReplyMode === mode
+                  ? 'border-violet-500/40 bg-violet-500/10'
+                  : 'border-white/10 hover:border-white/20'
+              }`}
+            >
+              <input
+                type="radio"
+                name="autoReplyMode"
+                value={mode}
+                checked={autoReplyMode === mode}
+                onChange={() => setAutoReplyMode(mode)}
+                className="mt-1"
+              />
+              <span className="text-xs text-slate-300">{EMAIL_AUTO_REPLY_MODE_LABELS[mode]}</span>
+            </label>
+          ))}
+        </div>
+      </div>
 
       <div className="flex items-center justify-between gap-3 pt-2">
         <div>

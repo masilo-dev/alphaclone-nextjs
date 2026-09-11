@@ -73,7 +73,7 @@ export function VideoMeetingsAndMcpSetup() {
         <div>
           <h2 className="text-sm font-semibold text-white">Video meetings and MCP</h2>
           <p className="text-xs text-slate-500">
-            Microsoft Teams is the live meeting provider when M365 is connected. Daily.co and LiveKit are coming soon.
+            Use built-in Daily.co rooms, LiveKit infrastructure, Microsoft Teams, or Zoom according to your connected provider.
           </p>
         </div>
       </div>
@@ -86,9 +86,6 @@ export function VideoMeetingsAndMcpSetup() {
         >
           <span className="text-sm font-medium text-slate-200 flex items-center gap-2">
             Built-in video (Daily.co / LiveKit)
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
-              Coming soon
-            </span>
           </span>
           {openDaily ? (
             <ChevronUp className="w-4 h-4 text-slate-500" />
@@ -106,10 +103,10 @@ export function VideoMeetingsAndMcpSetup() {
             >
               <div className="px-4 pb-4 text-xs text-slate-400 space-y-2 leading-relaxed">
                 <p>
-                  Native AlphaClone video rooms via Daily.co and LiveKit are on the roadmap. They are not enabled in production yet.
+                  Native AlphaClone rooms use the configured Daily.co or LiveKit provider and are created from the Meetings module.
                 </p>
                 <p className="text-teal-300/90">
-                  <strong className="text-teal-200">Use Microsoft Teams today:</strong> connect Microsoft 365 under Settings → Integrations, then schedule or join meetings from the Meetings module. Teams links show a &quot;Using Teams&quot; badge.
+                  <strong className="text-teal-200">Provider choice:</strong> connect Microsoft 365 for Teams links, or use the built-in provider configured for your workspace.
                 </p>
                 <p className="text-slate-500">
                   Technical reference: <code className="text-slate-400">src/VIDEO_ARCHITECTURE.md</code>

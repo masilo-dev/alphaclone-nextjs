@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { resolveEnrollmentContactId } from '@/lib/crm/resolveEnrollmentContactId';
 import crypto from 'crypto';
 
 // 1. create_email_sequence
@@ -95,13 +96,22 @@ registerTool('outreach', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+    const canonicalContactId = await resolveEnrollmentContactId(
+      supabase,
+      args.tenant_id,
+      args.contact_id
+    );
 
-    // Verify contact belongs to tenant
+    if (!canonicalContactId) {
+      throw new Error('Contact not found or does not belong to this tenant.');
+    }
+
     const { data: contact, error: contactError } = await supabase
-      .from('crm_contacts')
+      .from('contacts')
       .select('id')
-      .eq('id', args.contact_id)
+      .eq('id', canonicalContactId)
       .eq('tenant_id', args.tenant_id)
+      .is('deleted_at', null)
       .single();
 
     if (contactError || !contact) {
@@ -111,8 +121,9 @@ registerTool('outreach', {
     const { data, error } = await supabase
       .from('email_sequence_enrollments')
       .insert({
-        contact_id: args.contact_id,
+        contact_id: canonicalContactId,
         sequence_id: args.sequence_id,
+        tenant_id: args.tenant_id,
         status: 'active',
         current_step: 0,
       })

@@ -1,6 +1,6 @@
-# Enterprise UI — Hybrid Design System (v1)
+# Enterprise UI — Hybrid Design System (v2 / Alphaclone OS)
 
-AlphaClone uses **enterprise structural patterns** with the **existing brand palette** (teal, dark slate, violet accents). This is not the Office-style light theme from the original enterprise spec.
+Alphaclone uses **enterprise structural patterns** with the **Alphaclone OS brand** (blue primary, violet Bonnie, navy sidebar, light `#F5F7FB` / dark `#0C1220` surfaces). See `docs/ALPHACLONE_OS_DESIGN_SYSTEM.md` for the complete token and icon system.
 
 ## Principles
 
@@ -25,7 +25,7 @@ import {
   invoiceStatusVariant,
   quoteStatusVariant,
   ENTERPRISE,
-} from '@/components/ui/enterprise';
+} from "@/components/ui/enterprise";
 ```
 
 ## New dashboard modules checklist
@@ -39,17 +39,17 @@ import {
 
 ## Migrated modules (v1)
 
-| Module | Table | Drawer | StatusBadge |
-|--------|-------|--------|-------------|
-| Tasks | list + infinite scroll | create + detail | — |
-| Deals | list + infinite scroll | create + detail | stage |
-| Quotes | EnterpriseDataTable | create + edit + detail | status |
-| Finance | EnterpriseDataTable (invoices) | expense + invoice detail | invoice/expense |
-| Contact Submissions | EnterpriseDataTable | detail | inbox |
-| CRM | responsive table | create + qualify | — |
-| DeepDesk | split pane | create ticket | — |
-| Admin Users | EnterpriseDataTable | — | user status |
-| Document Vault | table | upload | — |
+| Module              | Table                          | Drawer                   | StatusBadge     |
+| ------------------- | ------------------------------ | ------------------------ | --------------- |
+| Tasks               | list + infinite scroll         | create + detail          | —               |
+| Deals               | list + infinite scroll         | create + detail          | stage           |
+| Quotes              | EnterpriseDataTable            | create + edit + detail   | status          |
+| Finance             | EnterpriseDataTable (invoices) | expense + invoice detail | invoice/expense |
+| Contact Submissions | EnterpriseDataTable            | detail                   | inbox           |
+| CRM                 | responsive table               | create + qualify         | —               |
+| DeepDesk            | Chakra split pane              | create ticket            | status/priority |
+| Admin Users         | EnterpriseDataTable            | —                        | user status     |
+| Document Vault      | table                          | upload                   | —               |
 
 ## Tokens
 

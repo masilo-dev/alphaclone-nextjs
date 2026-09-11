@@ -7,6 +7,8 @@ import { hubspotService } from '@/services/hubspotService';
 import { ZohoCRMService } from '@/services/zoho/ZohoCRMService';
 import { ZohoAuthExpiredError } from '@/services/zoho/ZohoService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { requireTenantRole } from '@/lib/apiAuth';
+import { resolveActiveTenantForUser } from '@/lib/tenant/platformTenant';
 
 export async function POST(req: Request) {
     const supabase = await createSupabaseServerClient();
@@ -17,7 +19,14 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { deal, lead, entityType } = await req.json();
+        const { deal, lead, entityType, tenantId: bodyTenantId } = await req.json();
+        const requestedTenantId =
+            String(bodyTenantId || '').trim() || req.headers.get('x-tenant-id')?.trim() || null;
+        const { tenantId } = await resolveActiveTenantForUser({
+            userId: user.id,
+            hintedTenantId: requestedTenantId,
+        });
+        await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
         const userId = user.id;
 
         // Use Admin client to fetch integrations securely
@@ -26,6 +35,7 @@ export async function POST(req: Request) {
             .from('integrations')
             .select('*')
             .eq('user_id', userId)
+            .eq('tenant_id', tenantId)
             .eq('enabled', true);
 
         if (error || !integrations) {
@@ -40,8 +50,8 @@ export async function POST(req: Request) {
             try {
                 const res =
                     entityType === 'deal' || deal
-                        ? await hubspotService.syncDealToHubSpot(userId, deal)
-                        : await hubspotService.syncLeadToHubSpot(userId, lead);
+                        ? await hubspotService.syncDealToHubSpot(userId, tenantId, deal)
+                        : await hubspotService.syncLeadToHubSpot(userId, tenantId, lead);
                 results.push({
                     provider: 'hubspot',
                     status: res?.success === false && 'skipped' in res && res.skipped ? 'skipped' : 'success',
@@ -57,7 +67,7 @@ export async function POST(req: Request) {
         const zoho = integrations.find((i: any) => i.type === 'zoho');
         if (zoho) {
             try {
-                const zohoCRM = new ZohoCRMService(userId);
+                const zohoCRM = new ZohoCRMService(userId, tenantId);
                 let res;
                 // entityType was already destructured from req.json() above
                 if (entityType === 'lead' || lead) {

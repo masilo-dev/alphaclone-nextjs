@@ -3,6 +3,7 @@ export type PlatformGlobalSettings = {
     platformName?: string;
     supportEmail?: string;
     platformUrl?: string;
+    logoUrl?: string;
   };
   security?: {
     enforce2faTenantAdmins?: boolean;
@@ -52,4 +53,6 @@ export type PlatformEnvStatus = {
   outlook: boolean;
   gmail: boolean;
   deepseek: boolean;
+  turnstile: boolean;
+  webPush: boolean;
 };

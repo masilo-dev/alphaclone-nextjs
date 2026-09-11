@@ -14,7 +14,7 @@ type TableName =
   | 'business_invoices' | 'quotes'
   | 'email_campaigns' | 'campaign_recipients'
   | 'social_posts' | 'messages'
-  | 'contracts' | 'support_tickets' | 'notifications';
+  | 'contracts' | 'tickets' | 'notifications';
 
 interface SyncOptions {
   table: TableName;

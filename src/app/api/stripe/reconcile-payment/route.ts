@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { recordInvoicePaymentServer } from '@/lib/invoices/recordInvoicePaymentServer';
 import Stripe from 'stripe';
 
 export const dynamic = 'force-dynamic';
@@ -20,28 +22,34 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'paymentIntentId required' }, { status: 400 });
         }
 
-        // Fetch the actual payment from Stripe
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
         const reconciled = paymentIntent.status === 'succeeded';
-        const amount = paymentIntent.amount / 100; // Convert cents to dollars
+        const amount = paymentIntent.amount / 100;
 
-        // If reconciled and we have an invoice, update it
         if (reconciled && invoiceId) {
-            const { data: invoice } = await supabase
+            const admin = createSupabaseAdminClient();
+            const { data: invoice } = await admin
                 .from('business_invoices')
-                .select('id, status, tenant_id')
+                .select('id, status, tenant_id, total, amount_paid, invoice_number')
                 .eq('id', invoiceId)
                 .maybeSingle();
 
             if (invoice && invoice.status !== 'paid') {
-                await supabase
-                    .from('business_invoices')
-                    .update({ status: 'paid', updated_at: new Date().toISOString() })
-                    .eq('id', invoiceId);
+                const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
+                const paymentAmount = remaining > 0 ? Math.min(amount, remaining) : amount;
 
-                // Record in stripe_payments if not already there
-                await supabase.from('stripe_payments').upsert({
+                await recordInvoicePaymentServer(admin, {
+                    tenantId: invoice.tenant_id,
+                    invoiceId: invoice.id,
+                    amount: paymentAmount,
+                    idempotencyKey: `stripe:${paymentIntentId}`,
+                    source: 'stripe',
+                    externalReference: paymentIntentId,
+                    actorUserId: user.id,
+                });
+
+                await admin.from('stripe_payments').upsert({
                     stripe_payment_intent_id: paymentIntentId,
                     tenant_id: invoice.tenant_id,
                     amount_cents: paymentIntent.amount,

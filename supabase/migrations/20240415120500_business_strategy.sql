@@ -29,7 +29,18 @@ CREATE POLICY "Tenant users can manage their strategy"
         )
     );
 
--- Add AI Storage Bucket support metadata to generated_assets
--- This is just for tracking, the actual file will be in Supabase Storage
-ALTER TABLE generated_assets ADD COLUMN IF NOT EXISTS storage_path TEXT;
-ALTER TABLE generated_assets ADD COLUMN IF NOT EXISTS bucket_id TEXT DEFAULT 'social-assets';
+-- AI assets are created here because this is the first active migration that references them.
+CREATE TABLE IF NOT EXISTS public.generated_assets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    asset_type VARCHAR(50) NOT NULL CHECK (asset_type IN ('logo', 'image', 'content')),
+    prompt TEXT NOT NULL,
+    url TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    storage_path TEXT,
+    bucket_id TEXT DEFAULT 'social-assets',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_generated_assets_user ON public.generated_assets(user_id);
+CREATE INDEX IF NOT EXISTS idx_generated_assets_created ON public.generated_assets(created_at DESC);

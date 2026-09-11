@@ -39,7 +39,7 @@ export async function GET(
 
     const { data: invoice } = await admin
       .from('business_invoices')
-      .select('id, tenant_id, status, view_count')
+      .select('id, tenant_id, status, lifecycle_status, view_count')
       .eq('id', invoiceId)
       .single();
 
@@ -69,10 +69,19 @@ export async function GET(
 
     if (invoice.status === 'sent') {
       updatePayload.status = 'viewed';
+      updatePayload.lifecycle_status = 'viewed';
       updatePayload.viewed_at = now;
     }
 
     await admin.from('business_invoices').update(updatePayload).eq('id', invoiceId);
+
+    if (invoice.status === 'sent') {
+      await admin.from('invoice_lifecycle_events').insert({
+        tenant_id: invoice.tenant_id, invoice_id: invoiceId, event_type: 'status_viewed',
+        from_status: invoice.lifecycle_status || invoice.status, to_status: 'viewed', source: 'email_tracking_pixel',
+        evidence: { ip_address: ip, user_agent: userAgent, source: 'email_pixel' },
+      });
+    }
 
     await logInvoiceEvent({
       invoiceId,

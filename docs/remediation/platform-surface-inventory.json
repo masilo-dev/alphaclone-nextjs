@@ -1,0 +1,112 @@
+[
+  {
+    "name": "Home (Attention-First)",
+    "route": "/dashboard",
+    "file": "src/components/dashboard/AttentionFirstDashboard.tsx",
+    "roleAccess": ["*"],
+    "tenantScoped": true,
+    "dataSources": ["getDashboardStats", "/api/bonnie/outcomes", "useBonnieApprovals"],
+    "primaryActions": ["review attention items", "open money", "quick navigate"],
+    "sharedComponents": ["WORKSPACE panels"],
+    "productionStatus": "canonical"
+  },
+  {
+    "name": "BusinessHomeDashboard (orphaned)",
+    "file": "src/components/dashboard/BusinessHomeDashboard.tsx",
+    "roleAccess": [],
+    "tenantScoped": true,
+    "dataSources": [],
+    "primaryActions": [],
+    "sharedComponents": ["AttentionFirstDashboard"],
+    "duplicateOf": "AttentionFirstDashboard",
+    "productionStatus": "orphaned"
+  },
+  {
+    "name": "EngagingDashboard (orphaned)",
+    "file": "src/components/dashboard/business/EngagingDashboard.tsx",
+    "roleAccess": [],
+    "tenantScoped": true,
+    "dataSources": [],
+    "primaryActions": [],
+    "sharedComponents": ["AttentionFirstDashboard"],
+    "duplicateOf": "AttentionFirstDashboard",
+    "productionStatus": "orphaned"
+  },
+  {
+    "name": "Invoices (canonical)",
+    "route": "/dashboard/business/billing/manage",
+    "file": "src/components/dashboard/business/EnhancedBillingPage.tsx",
+    "roleAccess": ["admin", "tenant_admin", "staff", "client"],
+    "tenantScoped": true,
+    "dataSources": ["business_invoices"],
+    "primaryActions": ["create invoice", "send", "filter"],
+    "sharedComponents": ["EnhancedBillingPage"],
+    "productionStatus": "canonical"
+  },
+  {
+    "name": "Finance manage alias",
+    "route": "/dashboard/finance/manage",
+    "file": "src/components/Dashboard.tsx",
+    "roleAccess": ["admin", "client"],
+    "tenantScoped": true,
+    "dataSources": ["EnhancedBillingPage"],
+    "primaryActions": [],
+    "sharedComponents": ["EnhancedBillingPage"],
+    "duplicateOf": "/dashboard/business/billing/manage",
+    "productionStatus": "alias"
+  },
+  {
+    "name": "Analytics (canonical)",
+    "route": "/dashboard/analytics",
+    "file": "src/components/dashboard/AnalyticsTab.tsx",
+    "roleAccess": ["admin", "tenant_admin"],
+    "tenantScoped": true,
+    "dataSources": ["analyticsService"],
+    "primaryActions": ["change period", "open reports"],
+    "sharedComponents": ["StandardStatCard", "StandardLineChart"],
+    "productionStatus": "canonical"
+  },
+  {
+    "name": "AnalyticsDashboard (orphaned)",
+    "file": "src/components/dashboard/AnalyticsDashboard.tsx",
+    "roleAccess": [],
+    "tenantScoped": true,
+    "dataSources": [],
+    "primaryActions": [],
+    "sharedComponents": ["AnalyticsTab"],
+    "duplicateOf": "AnalyticsTab",
+    "productionStatus": "orphaned"
+  },
+  {
+    "name": "CRM Reports",
+    "route": "/dashboard/crm/reports",
+    "file": "src/components/dashboard/crm/CRMReportsTab.tsx",
+    "roleAccess": ["admin", "tenant_admin", "staff"],
+    "tenantScoped": true,
+    "dataSources": ["dealService", "leadService"],
+    "primaryActions": ["export report"],
+    "sharedComponents": ["StandardStatCard"],
+    "productionStatus": "canonical"
+  },
+  {
+    "name": "Cash Flow Statement",
+    "route": "/dashboard/accounting",
+    "file": "src/components/dashboard/accounting/CashFlowStatement.tsx",
+    "roleAccess": ["admin", "tenant_admin"],
+    "tenantScoped": true,
+    "dataSources": ["generalLedgerService", "operationalAccountingService"],
+    "primaryActions": [],
+    "sharedComponents": [],
+    "productionStatus": "canonical"
+  },
+  {
+    "name": "Mobile Dashboard",
+    "file": "mobile/src/screens/DashboardScreen.tsx",
+    "roleAccess": ["authenticated"],
+    "tenantScoped": true,
+    "dataSources": ["getDashboardStats"],
+    "primaryActions": ["Projects", "CRM", "Finance", "Settings"],
+    "sharedComponents": ["StatCard", "DashboardCard"],
+    "productionStatus": "canonical"
+  }
+]

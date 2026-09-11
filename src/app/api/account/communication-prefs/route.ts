@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { getRequestCountry } from '@/lib/server/requestGeo';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,8 +42,21 @@ function normalizePrefs(input: any) {
 export async function GET(req: NextRequest) {
   try {
     const { admin, user } = await getAuthedClient(req);
-    const { data, error } = await admin.from('profiles').select('communication_prefs, gdpr_consent_date, gdpr_consent_ip').eq('id', user.id).maybeSingle();
-    if (error) throw error;
+    let data: any = null;
+    try {
+      const res = await admin.from('profiles').select('communication_prefs, gdpr_consent_date, gdpr_consent_ip').eq('id', user.id).maybeSingle();
+      if (res.error) throw res.error;
+      data = res.data;
+    } catch (e: any) {
+      // Fallback if top-level consent columns are missing from table schema
+      const res = await admin.from('profiles').select('*').eq('id', user.id).maybeSingle();
+      data = res.data;
+      if (data) {
+        data.communication_prefs = data.communication_prefs ?? data.custom_fields?.communication_prefs;
+        data.gdpr_consent_date = data.gdpr_consent_date ?? data.custom_fields?.gdpr_consent_date;
+        data.gdpr_consent_ip = data.gdpr_consent_ip ?? data.custom_fields?.gdpr_consent_ip;
+      }
+    }
     if (!data) {
       return NextResponse.json({
         communicationPrefs: normalizePrefs(null),
@@ -68,7 +82,7 @@ export async function POST(req: NextRequest) {
     const payload = await req.json().catch(() => ({}));
     const communicationPrefs = normalizePrefs(payload.communicationPrefs || payload);
     const headers = req.headers;
-    const country = headers.get('x-vercel-ip-country') || '';
+    const country = getRequestCountry(headers);
     const isEuUk = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'UK'].includes(country);
     const acceptedLegal = payload.acceptedLegal !== false;
     const euConsent = Boolean(payload.euConsent);
@@ -105,7 +119,7 @@ export async function POST(req: NextRequest) {
     }
 
     const profileName = String(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
-    const { error } = await admin.from('profiles').upsert(
+    let upsertResult = await admin.from('profiles').upsert(
       {
         id: user.id,
         email: user.email,
@@ -115,7 +129,31 @@ export async function POST(req: NextRequest) {
       },
       { onConflict: 'id' }
     );
-    if (error) throw error;
+
+    if (upsertResult.error && (upsertResult.error.code === '42703' || upsertResult.error.message?.includes('column'))) {
+      // Fallback: Store consent and communication prefs inside custom_fields
+      const existing = await admin.from('profiles').select('custom_fields').eq('id', user.id).maybeSingle();
+      const currentCustom = (existing.data?.custom_fields && typeof existing.data.custom_fields === 'object') ? existing.data.custom_fields : {};
+      const updatedCustom = {
+        ...currentCustom,
+        communication_prefs: updatePayload.communication_prefs,
+        gdpr_consent_date: updatePayload.gdpr_consent_date,
+        gdpr_consent_ip: updatePayload.gdpr_consent_ip,
+      };
+
+      upsertResult = await admin.from('profiles').upsert(
+        {
+          id: user.id,
+          email: user.email,
+          name: profileName,
+          role: 'tenant_admin',
+          custom_fields: updatedCustom,
+        },
+        { onConflict: 'id' }
+      );
+    }
+
+    if (upsertResult.error) throw upsertResult.error;
 
     return NextResponse.json({ success: true, communicationPrefs: updatePayload.communication_prefs });
   } catch (error) {

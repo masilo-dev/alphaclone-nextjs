@@ -1,22 +1,30 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ensureFooter, normalizeEmailSubject, buildAttachmentNoticeHtml, insertBeforeEmailFooter } from '@/lib/email/emailComposition';
-import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
+import { isUnsubscribed } from '@/lib/email/unsubscribe';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { logEmailSend } from '@/lib/emailLogger';
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
+import { resolveAllConnectedEmailProviders } from '@/lib/email/providerIntegrationResolver';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 import sanitizeHtml from 'sanitize-html';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
+import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
+import { toUnifiedEmailProvider } from '@/lib/email/unifiedEmailDomain';
+import {
+  type EmailAttachment,
+  normalizeEmailAttachments,
+} from '@/lib/email/emailAttachment';
 
-export type OutboundEmailProvider = 'zoho' | 'brevo' | 'sendgrid' | 'resend';
+export type { EmailAttachment } from '@/lib/email/emailAttachment';
 
-export interface EmailAttachment {
-  filename: string;
-  content: string;
-  content_type?: string;
-  contentType?: string;
-}
+export type OutboundEmailProvider =
+  | 'zoho'
+  | 'brevo'
+  | 'sendgrid'
+  | 'resend'
+  | 'outlook'
+  | 'gmail';
 
 export interface EmailPayload {
   to: string | string[];
@@ -37,11 +45,14 @@ export interface EmailPayload {
   skipRecipientGate?: boolean;
   /** Skip Bonnie v2.0 outbound language sanitization (platform/system mail) */
   skipBonnieQualityCheck?: boolean;
+  /** Non-sensitive business context retained with the canonical email audit record. */
+  auditMetadata?: Record<string, unknown>;
 }
 
 export interface SendEmailResult {
   success: boolean;
   emailId?: string;
+  canonicalMessageId?: string;
   provider?: string;
   tried: Array<{ provider: string; error?: string }>;
   error?: string;
@@ -49,172 +60,20 @@ export interface SendEmailResult {
   code?: string;
 }
 
-type ProviderConfig = {
-  provider: OutboundEmailProvider;
-  apiKey: string;
-  fromEmail?: string;
-  fromName?: string;
-  ownerUserId?: string | null;
-};
-
-const DEFAULT_PROVIDER_ORDER: OutboundEmailProvider[] = ['zoho', 'brevo', 'sendgrid', 'resend'];
-
-function normalizeProvider(value: unknown): OutboundEmailProvider | null {
+function normalizePreferredProvider(value: unknown): OutboundEmailProvider | undefined {
   const provider = String(value || '').trim().toLowerCase();
-  if (provider === 'zoho' || provider === 'brevo' || provider === 'sendgrid' || provider === 'resend') return provider;
-  return null;
-}
-
-function readConfigString(config: Record<string, unknown>, keys: string[]): string {
-  for (const key of keys) {
-    const value = String(config[key] || '').trim();
-    if (value) return value;
+  if (provider === 'microsoft' || provider === 'microsoft365') return 'outlook';
+  if (
+    provider === 'zoho' ||
+    provider === 'brevo' ||
+    provider === 'sendgrid' ||
+    provider === 'resend' ||
+    provider === 'outlook' ||
+    provider === 'gmail'
+  ) {
+    return provider;
   }
-  return '';
-}
-
-function getProviderOrder(settings: Record<string, any>, preferredProvider?: OutboundEmailProvider): OutboundEmailProvider[] {
-  const emailSettings = settings.email || settings.email_provider || settings.emailProviders || {};
-  const configuredOrder = Array.isArray(emailSettings.provider_order || emailSettings.providerOrder)
-    ? (emailSettings.provider_order || emailSettings.providerOrder).map(normalizeProvider).filter(Boolean)
-    : [];
-  const defaultProvider = normalizeProvider(emailSettings.default_provider || emailSettings.defaultProvider);
-  const order = [
-    preferredProvider,
-    defaultProvider,
-    ...configuredOrder,
-    ...DEFAULT_PROVIDER_ORDER,
-  ].filter(Boolean) as OutboundEmailProvider[];
-  return [...new Set(order)];
-}
-
-function envProviderConfig(provider: OutboundEmailProvider): ProviderConfig | null {
-  if (provider === 'brevo') {
-    const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY || process.env.SENDINBLUE_API_KEY || '';
-    if (!apiKey) return null;
-    return {
-      provider,
-      apiKey,
-      fromEmail: process.env.BREVO_FROM_EMAIL || process.env.EMAIL_FROM || undefined,
-      fromName: process.env.BREVO_FROM_NAME || undefined,
-    };
-  }
-  if (provider === 'sendgrid') {
-    if (!process.env.SENDGRID_API_KEY) return null;
-    return {
-      provider,
-      apiKey: process.env.SENDGRID_API_KEY,
-      fromEmail: process.env.SENDGRID_FROM_EMAIL || process.env.EMAIL_FROM || undefined,
-      fromName: process.env.SENDGRID_FROM_NAME || undefined,
-    };
-  }
-  if (provider === 'resend') {
-    if (!process.env.RESEND_API_KEY) return null;
-    return {
-      provider,
-      apiKey: process.env.RESEND_API_KEY,
-      fromEmail: process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || undefined,
-      fromName: process.env.RESEND_FROM_NAME || undefined,
-    };
-  }
-  return null;
-}
-
-async function resolveProviderConfigs(params: {
-  tenantId: string;
-  preferredUserId?: string | null;
-  preferredProvider?: OutboundEmailProvider;
-  fallbackToEnv?: boolean;
-  forcePlatform?: boolean;
-}): Promise<ProviderConfig[]> {
-  const supabase = createSupabaseAdminClient();
-  const { data: tenant } = await supabase
-    .from('tenants')
-    .select('created_by, settings')
-    .eq('id', params.tenantId)
-    .maybeSingle();
-
-  const { data: business } = await supabase
-    .from('business_settings')
-    .select('settings')
-    .eq('tenant_id', params.tenantId)
-    .maybeSingle();
-
-  const mergedSettings = {
-    ...(tenant?.settings || {}),
-    ...(business?.settings || {}),
-  };
-
-  const emailSettings = mergedSettings.email || mergedSettings.email_provider || mergedSettings.emailProviders || {};
-  const defaultProvider = normalizeProvider(emailSettings.default_provider || emailSettings.defaultProvider);
-
-  const order = getProviderOrder(mergedSettings, params.preferredProvider || defaultProvider || undefined);
-  let lookupUserId = params.preferredUserId || tenant?.created_by || null;
-
-  if (!lookupUserId) {
-    const { data: membership } = await supabase
-      .from('tenant_users')
-      .select('user_id')
-      .eq('tenant_id', params.tenantId)
-      .in('role', ['admin', 'tenant_admin'])
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    lookupUserId = membership?.user_id || null;
-  }
-
-  const integrationRows: Array<{ type: string; config: Record<string, unknown>; user_id?: string | null }> = [];
-  if (lookupUserId) {
-    const { data } = await supabase
-      .from('integrations')
-      .select('type, config, user_id')
-      .eq('user_id', lookupUserId)
-      .eq('enabled', true)
-      .in('type', order);
-    integrationRows.push(...((data || []) as typeof integrationRows));
-  }
-
-  const { data: tenantIntegrations } = await supabase
-    .from('integrations')
-    .select('type, config, user_id')
-    .eq('tenant_id', params.tenantId)
-    .eq('enabled', true)
-    .in('type', order)
-    .order('updated_at', { ascending: false });
-  integrationRows.push(...((tenantIntegrations || []) as typeof integrationRows));
-
-  const resolved: ProviderConfig[] = [];
-  
-  const hasConfiguredProvider = !!defaultProvider;
-  const hasIntegrations = integrationRows.length > 0;
-  const allowEnvFallback = params.forcePlatform || (params.fallbackToEnv !== false && !hasConfiguredProvider && !hasIntegrations);
-
-  for (const provider of order) {
-    const row = integrationRows.find((item) => item.type === provider);
-    if (row) {
-      const config = row.config || {};
-      const apiKey = readConfigString(config, ['apiKey', 'api_key', 'key']);
-      const requiresKey = provider === 'brevo' || provider === 'sendgrid' || provider === 'resend';
-      if (!requiresKey || apiKey) {
-        resolved.push({
-          provider,
-          apiKey,
-          fromEmail: readConfigString(config, ['fromEmail', 'from_email', 'email']) || undefined,
-          fromName: readConfigString(config, ['fromName', 'from_name']) || undefined,
-          ownerUserId: row.user_id || lookupUserId,
-        });
-      }
-    }
-
-    if (allowEnvFallback) {
-      const envConfig = envProviderConfig(provider);
-      if (envConfig) resolved.push(envConfig);
-    }
-  }
-
-  return resolved.filter((config, index, all) =>
-    all.findIndex((item) => item.provider === config.provider && item.apiKey === config.apiKey && item.ownerUserId === config.ownerUserId) === index
-  );
+  return undefined;
 }
 
 export async function sendEmail(
@@ -249,8 +108,11 @@ export async function sendEmail(
     // Build a per-recipient signed unsubscribe link (single-recipient sends, e.g. campaigns/outreach).
     // Falls back gracefully inside ensureFooter when unavailable.
     const singleRecipient = recipients.length === 1 ? String(recipients[0] || '').trim() : '';
-    const unsubscribeUrl = payload.listUnsubscribeUrl
-      || (singleRecipient ? buildUnsubscribeUrl(singleRecipient, tenantId) : '');
+    let unsubscribeUrl = payload.listUnsubscribeUrl || '';
+    if (!unsubscribeUrl && singleRecipient) {
+      const { buildUnsubscribeUrl } = await import('@/lib/email/unsubscribeToken');
+      unsubscribeUrl = buildUnsubscribeUrl(singleRecipient, tenantId);
+    }
 
     const normalizedSubject = normalizeEmailSubject(payload.subject);
     const shouldAppendFooter = !payload.skipFooter;
@@ -273,11 +135,11 @@ export async function sendEmail(
     let normalizedHtml = sanitizedHtmlSource
       ? (shouldAppendFooter
         ? ensureFooter(sanitizeHtml(htmlToSanitize, {
-          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'br', 'p', 'div', 'span']),
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }), { unsubscribeUrl })
         : sanitizeHtml(htmlToSanitize, {
-          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'br', 'p', 'div', 'span']),
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }))
       : undefined;
@@ -298,10 +160,10 @@ export async function sendEmail(
       normalizedText = insertBeforeEmailFooter(normalizedText, attachmentLines);
     }
 
-    const configs = await resolveProviderConfigs({
+    const configs = await resolveAllConnectedEmailProviders({
       tenantId,
       preferredUserId: payload.userId || null,
-      preferredProvider,
+      preferredProvider: normalizePreferredProvider(preferredProvider),
       fallbackToEnv: true,
       forcePlatform: Boolean(payload.isPlatformNotification),
     });
@@ -322,15 +184,56 @@ export async function sendEmail(
         text: normalizedText,
         replyTo: payload.reply_to || payload.replyTo,
         listUnsubscribeUrl: unsubscribeUrl || payload.listUnsubscribeUrl,
-        attachments: payload.attachments?.map((attachment) => ({
-          filename: attachment.filename,
-          content: attachment.content,
-          contentType: attachment.content_type || attachment.contentType || 'application/octet-stream',
-        })),
+        attachments: normalizeEmailAttachments(payload.attachments),
         userId: config.ownerUserId || payload.userId,
+        tenantId,
       });
 
       if (providerResult.ok) {
+        const providerMessageId = providerResult.emailId || emailId;
+        let canonicalMessageId: string;
+        try {
+          canonicalMessageId = await persistCanonicalOutboundEmail({
+            supabase,
+            tenantId,
+            userId: config.ownerUserId || payload.userId || null,
+            provider: toUnifiedEmailProvider(config.provider),
+            providerMessageId,
+            fromEmail,
+            recipients,
+            replyTo: payload.reply_to || payload.replyTo,
+            subject: normalizedSubject,
+            html: normalizedHtml,
+            text: normalizedText,
+            hasAttachments: attachmentNames.length > 0,
+            metadata: payload.auditMetadata,
+          });
+        } catch (persistenceError) {
+          const persistenceMessage = persistenceError instanceof Error
+            ? persistenceError.message
+            : 'Canonical email persistence failed';
+          await logEmailSend({
+            tenantId,
+            userId: config.ownerUserId || payload.userId || null,
+            provider: toUnifiedEmailProvider(config.provider),
+            toEmail: recipients.join(', '),
+            subject: normalizedSubject,
+            templateName: payload.templateName,
+            status: 'failed',
+            error: `Provider accepted the message, but ${persistenceMessage}`,
+            emailId: providerMessageId,
+            metadata: { ...payload.auditMetadata, providerAccepted: true },
+          });
+          return {
+            success: false,
+            emailId: providerMessageId,
+            provider: toUnifiedEmailProvider(config.provider),
+            tried: [...tried, { provider: config.provider, error: persistenceMessage }],
+            error: 'Provider accepted the email, but AlphaClone could not save the canonical communication record.',
+            errorDetails: persistenceError,
+            code: 'LOCAL_EMAIL_PERSISTENCE_FAILED',
+          };
+        }
         await logEmailSend({
           tenantId,
           userId: config.ownerUserId || payload.userId || null,
@@ -339,11 +242,13 @@ export async function sendEmail(
           subject: normalizedSubject,
           templateName: payload.templateName,
           status: 'sent',
-          emailId: providerResult.emailId || emailId,
+          emailId: providerMessageId,
+          metadata: { ...payload.auditMetadata, canonicalMessageId },
         });
         return {
           success: true,
-          emailId: providerResult.emailId || emailId,
+          emailId: providerMessageId,
+          canonicalMessageId,
           provider: config.provider,
           tried: [...tried, { provider: config.provider }],
         };
@@ -359,6 +264,7 @@ export async function sendEmail(
         templateName: payload.templateName,
         status: 'failed',
         error: providerResult.error,
+        metadata: payload.auditMetadata,
       });
     }
 

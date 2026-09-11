@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import AboutPage from '@/components/pages/AboutPage';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
 import { absoluteUrl } from '@/lib/siteUrl';
 
@@ -43,7 +44,9 @@ export default function Page() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
-            <AboutPage />
+            <MarketingLandingShell>
+                <AboutPage />
+            </MarketingLandingShell>
         </>
     );
 }

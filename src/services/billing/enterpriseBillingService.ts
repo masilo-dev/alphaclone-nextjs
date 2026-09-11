@@ -225,32 +225,6 @@ export const enterpriseBillingService = {
     },
 
     /**
-     * Generate PDF invoice (would use a PDF library in production)
-     */
-    async generatePDFInvoice(invoiceId: string): Promise<Buffer | null> {
-        try {
-            // Get invoice data
-            const { data: invoice } = await supabase
-                .from('invoices')
-                .select('*, tenants(*), profiles(*)')
-                .eq('id', invoiceId)
-                .single();
-
-            if (!invoice) throw new Error('Invoice not found');
-
-            // In production, use a PDF library like pdfkit or puppeteer
-            // For now, return a placeholder
-            console.log('Generate PDF for invoice:', invoice.invoice_number);
-
-            // Would generate actual PDF here
-            return null;
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            return null;
-        }
-    },
-
-    /**
      * Create payment plan for large invoices
      */
     async createPaymentPlan(
@@ -259,14 +233,14 @@ export const enterpriseBillingService = {
     ): Promise<{ success: boolean; plan?: any; error?: string }> {
         try {
             const { data: invoice } = await supabase
-                .from('invoices')
-                .select('amount, due_date')
+                .from('business_invoices')
+                .select('total, due_date')
                 .eq('id', invoiceId)
                 .single();
 
             if (!invoice) throw new Error('Invoice not found');
 
-            const installmentAmount = Math.round(invoice.amount / installments);
+            const installmentAmount = Math.round(Number(invoice.total) / installments);
             const plan = [];
 
             for (let i = 0; i < installments; i++) {

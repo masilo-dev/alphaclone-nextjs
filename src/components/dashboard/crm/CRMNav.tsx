@@ -1,12 +1,16 @@
 'use client';
 
 import React from 'react';
-import { SalesWorkspaceTabs } from '../hubs/SalesWorkspaceTabs';
+import { SubNavigation } from '@/components/ui/os';
+import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 
 export function CRMNav({ pathname }: { pathname: string }) {
   return (
-    <nav aria-label="Sales workspace sections" className="mb-3 rounded-2xl border border-slate-800 bg-slate-900/80 p-1.5">
-      <SalesWorkspaceTabs pathname={pathname} compact className="m-0 px-0 pb-0" />
-    </nav>
+    <SubNavigation
+      moduleId="crm"
+      items={getModuleSubnav('crm')}
+      activeHref={pathname}
+      className="mb-1"
+    />
   );
 }

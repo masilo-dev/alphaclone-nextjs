@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { WORKSPACE } from '@/constants/design';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   type ModuleDashboardId,
   resolveModuleActions,
@@ -24,6 +25,7 @@ export function ModuleDashboardActions({
   defaultCollapsed = true,
 }: ModuleDashboardActionsProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [expanded, setExpanded] = useState(!defaultCollapsed);
   const { title, purpose, playbook, chartNote, actions } = resolveModuleActions(moduleId, userRole);
 
@@ -39,12 +41,12 @@ export function ModuleDashboardActions({
       <section className="ac-workspace-callout px-4 py-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
-            <p className={WORKSPACE.typography.sectionLabel}>What to do next</p>
-            <h2 className="text-[15px] font-semibold text-white mt-0.5 truncate">{title}</h2>
+            <p className={WORKSPACE.typography.sectionLabel}>{t('What to do next')}</p>
+            <h2 className="text-[15px] font-semibold text-white mt-0.5 truncate">{t(title)}</h2>
             {!expanded ? (
-              <p className="text-[12px] text-[var(--ws-text-tertiary)] mt-1 line-clamp-1">{purpose}</p>
+              <p className="text-[12px] text-[var(--ws-text-tertiary)] mt-1 line-clamp-1">{t(purpose)}</p>
             ) : (
-              <p className="text-[13px] text-[var(--ws-text-secondary)] mt-2 max-w-3xl leading-relaxed">{purpose}</p>
+              <p className="text-[13px] text-[var(--ws-text-secondary)] mt-2 max-w-3xl leading-relaxed">{t(purpose)}</p>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -55,7 +57,7 @@ export function ModuleDashboardActions({
                 className="ac-workspace-action-btn ac-workspace-action-btn--primary min-h-9 px-3"
               >
                 <primary.icon className="w-4 h-4" />
-                {primary.label}
+                {t(primary.label)}
               </button>
             ) : null}
             <button
@@ -64,7 +66,7 @@ export function ModuleDashboardActions({
               className="ac-workspace-action-btn min-h-9 px-3"
               aria-expanded={expanded}
             >
-              {expanded ? 'Less' : 'Workflow'}
+              {expanded ? t('Less') : t('Workflow')}
               <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
             </button>
           </div>
@@ -73,14 +75,14 @@ export function ModuleDashboardActions({
         {expanded ? (
           <>
             <div className="mt-4 ac-workspace-panel p-4">
-              <p className={WORKSPACE.typography.sectionLabel}>Your workflow</p>
+              <p className={WORKSPACE.typography.sectionLabel}>{t('Your workflow')}</p>
               <ol className="space-y-2 mt-3">
                 {playbook.map((step, index) => (
                   <li key={step} className="flex gap-3 text-[13px] text-[var(--ws-text-secondary)] leading-relaxed">
                     <span className="shrink-0 w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center bg-[var(--ws-active)] text-teal-300">
                       {index + 1}
                     </span>
-                    <span className="pt-0.5">{step}</span>
+                    <span className="pt-0.5">{t(step)}</span>
                   </li>
                 ))}
               </ol>
@@ -97,7 +99,7 @@ export function ModuleDashboardActions({
                   <div className="flex items-center gap-2.5">
                     <action.icon className="w-4 h-4 text-teal-400 shrink-0" />
                     <span className="text-[12px] font-semibold text-white group-hover:text-teal-300 truncate">
-                      {action.label}
+                      {t(action.label)}
                     </span>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500 ml-auto shrink-0" />
                   </div>

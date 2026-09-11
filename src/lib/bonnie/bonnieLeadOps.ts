@@ -101,7 +101,8 @@ export async function bonnieFindAndQualifyLeads(
       const lead = mapPlaceToLead(place);
       return { ...lead, qualification: qualifyLead(lead, niche) };
     })
-    .filter((lead) => passesCriteria(lead, minScore, tiers, excludeKeywords));
+    .filter((lead) => passesCriteria(lead, minScore, tiers, excludeKeywords))
+    .filter((lead) => Boolean(lead.phone) || Boolean(lead.email));
 
   let savedToCrm = 0;
   if (criteria.save_to_crm && qualified.length > 0) {
@@ -220,7 +221,7 @@ export async function bonnieGetScraperLeads(
   const admin = createSupabaseAdminClient();
   let query = admin
     .from('scraper_leads')
-    .select('id, business_name, email, phone, website, score, grade, status, campaign_id')
+    .select('id, name, company, email, phone, company_website, score, grade, status, campaign_id')
     .eq('tenant_id', tenantId)
     .order('score', { ascending: false })
     .limit(Math.min(opts.limit ?? 50, 100));

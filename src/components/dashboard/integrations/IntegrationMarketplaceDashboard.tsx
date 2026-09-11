@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useIntegrations } from '../../../hooks/useIntegrations';
 import { TenantIntegration } from '../../../services/integrationService';
+import { useRouter } from 'next/navigation';
 
 // Category display config — purely presentational, not data
 const CATEGORY_META: Record<string, { label: string; icon: React.ComponentType<any>; color: string }> = {
@@ -36,8 +37,6 @@ function StatusBadge({ status }: { status: string }) {
   switch (status) {
     case 'connected':   return <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-xs rounded-full border border-green-500/20">Connected</span>;
     case 'available':   return <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs rounded-full border border-blue-500/20">Available</span>;
-    case 'disabled':    return <span className="px-2 py-0.5 bg-slate-500/10 text-slate-400 text-xs rounded-full border border-slate-700">Disabled</span>;
-    case 'coming_soon': return <span className="px-2 py-0.5 bg-purple-500/10 text-purple-400 text-xs rounded-full border border-purple-500/20">Coming Soon</span>;
     default:            return null;
   }
 }
@@ -47,14 +46,15 @@ function IntegrationCard({
   connecting,
   onConnect,
   onDisconnect,
+  onManage,
 }: {
   integration: TenantIntegration;
   connecting: string | null;
   onConnect: (id: string) => void;
   onDisconnect: (id: string) => void;
+  onManage: (id: string) => void;
 }) {
   const isConnected = integration.status === 'connected';
-  const isDisabled  = integration.status === 'disabled' || integration.status === 'coming_soon';
   const isBusy      = connecting === integration.id;
 
   return (
@@ -111,7 +111,7 @@ function IntegrationCard({
               {isBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5 mr-1" />}
               Disconnect
             </Button>
-            <Button size="sm" variant="outline" className="flex-1 text-xs">
+            <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => onManage(integration.id)}>
               <Settings className="w-3.5 h-3.5 mr-1" /> Settings
             </Button>
           </>
@@ -119,16 +119,14 @@ function IntegrationCard({
           <Button
             size="sm"
             className="flex-1 text-xs"
-            disabled={isDisabled || isBusy}
-            onClick={() => !isDisabled && onConnect(integration.id)}
+            disabled={isBusy}
+            onClick={() => onConnect(integration.id)}
           >
             {isBusy
               ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-              : isDisabled
-                ? null
-                : <ArrowRight className="w-3.5 h-3.5 mr-1" />
+              : <ArrowRight className="w-3.5 h-3.5 mr-1" />
             }
-            {integration.status === 'coming_soon' ? 'Coming Soon' : 'Connect'}
+            Connect
           </Button>
         )}
       </div>
@@ -137,10 +135,17 @@ function IntegrationCard({
 }
 
 export function IntegrationMarketplaceDashboard() {
+  const router = useRouter();
   const { integrations, loading, connecting, connect, disconnect } = useIntegrations();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showConnectedOnly, setShowConnectedOnly] = useState(false);
+  const manage = (id: string) => {
+    if (id === 'claude-mcp' || id === 'manus-mcp') return router.push(`/dashboard/marketplace?mcp=${id === 'manus-mcp' ? 'manus' : 'claude'}`);
+    if (id === 'chatgpt-mcp') return router.push('/dashboard/marketplace?mcp=chatgpt');
+    if (id === 'stripe') return router.push('/dashboard/business/settings?tab=billing');
+    router.push(`/dashboard/business/settings?tab=integrations&provider=${encodeURIComponent(id)}`);
+  };
 
   const categories = useMemo(
     () => Object.entries(CATEGORY_META).map(([id, meta]) => ({ id, ...meta })),
@@ -236,6 +241,7 @@ export function IntegrationMarketplaceDashboard() {
             connecting={connecting}
             onConnect={connect}
             onDisconnect={disconnect}
+            onManage={manage}
           />
         ))}
       </div>

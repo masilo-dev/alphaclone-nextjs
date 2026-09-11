@@ -1,3 +1,4 @@
+import './projects-v2-intelligence';
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';

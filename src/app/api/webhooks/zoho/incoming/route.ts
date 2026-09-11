@@ -44,13 +44,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const userId = channelId.replace('user-', '');
-        if (!userId) {
+        const [prefix, tenantId, userId] = String(channelId).split(':');
+        if (prefix !== 'zoho' || !tenantId || !userId) {
             return NextResponse.json({ error: 'Invalid channelId' }, { status: 400 });
         }
 
         // Initialize service for this user
-        const zohoService = new ZohoMailService(userId);
+        const zohoService = new ZohoMailService(userId, tenantId);
         
         // Triage the email (this will schedule the reply via QStash if qualified)
         await zohoService.triageIncomingEmail(messageId, folderId);

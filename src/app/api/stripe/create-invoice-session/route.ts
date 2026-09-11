@@ -3,14 +3,16 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { z } from 'zod';
 
 export async function POST(req: Request) {
     try {
-        const { invoiceId, publicToken, successUrl, cancelUrl } = await req.json();
-
-        if (!invoiceId) {
-            return NextResponse.json({ error: 'Missing invoiceId' }, { status: 400 });
-        }
+        const { invoiceId, publicToken, successUrl, cancelUrl } = z.object({
+            invoiceId: z.string().uuid(),
+            publicToken: z.string().min(16).max(300).optional(),
+            successUrl: z.string().url().optional(),
+            cancelUrl: z.string().url().optional(),
+        }).parse(await req.json());
 
         const supabaseAdmin = createSupabaseAdminClient();
         const authClient = await createSupabaseServerClient();
@@ -32,12 +34,20 @@ export async function POST(req: Request) {
             publicToken &&
             metadata.public_token === publicToken;
 
-        if (!user && !isPublicAccess) {
+        let isTenantMember = false;
+        if (user) {
+            const { data: membership } = await supabaseAdmin.from('tenant_users').select('user_id').eq('tenant_id', invoice.tenant_id).eq('user_id', user.id).maybeSingle();
+            isTenantMember = Boolean(membership);
+        }
+        if (!isTenantMember && !isPublicAccess) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         if (invoice.status === 'paid') {
             return NextResponse.json({ error: 'Invoice already paid' }, { status: 409 });
+        }
+        if (!['sent', 'viewed', 'overdue'].includes(invoice.status)) {
+            return NextResponse.json({ error: 'Invoice is not payable' }, { status: 409 });
         }
 
         const { data: tenantData } = await supabaseAdmin
@@ -50,15 +60,16 @@ export async function POST(req: Request) {
             ? tenantData.stripe_connect_id
             : null;
 
-        const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || '';
+        const origin = new URL(req.url).origin;
         const tokenQuery = publicToken ? `&token=${publicToken}` : '';
+        const safeReturn = (value: string | undefined, fallback: string) => value && new URL(value).origin === origin ? value : fallback;
 
         const sessionOptions: any = {
             payment_method_types: ['card'],
             line_items: [
                 {
                     price_data: {
-                        currency: 'usd',
+                        currency: String(invoice.currency || 'usd').toLowerCase(),
                         product_data: {
                             name: `Invoice #${invoice.invoice_number}`,
                             description: `Payment for services - ${invoice.tenant?.name || 'Business'}`,
@@ -69,8 +80,8 @@ export async function POST(req: Request) {
                 },
             ],
             mode: 'payment',
-            success_url: successUrl || `${origin}/invoice/${invoiceId}?payment=success${tokenQuery}`,
-            cancel_url: cancelUrl || `${origin}/invoice/${invoiceId}?payment=cancelled${tokenQuery}`,
+            success_url: safeReturn(successUrl, `${origin}/invoice/${invoiceId}?payment=success${tokenQuery}`),
+            cancel_url: safeReturn(cancelUrl, `${origin}/invoice/${invoiceId}?payment=cancelled${tokenQuery}`),
             metadata: {
                 invoiceId: invoice.id,
                 tenantId: invoice.tenant_id,

@@ -1,7 +1,6 @@
-import { start } from 'workflow/api';
+import { queueContractLifecycle } from '@/lib/contracts/durableContractRouter';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { generateText } from '@/services/unifiedAIService';
-import { contractLifecycleWorkflow } from './contract-lifecycle';
 
 /**
  * Deal Stage Changed Workflow
@@ -24,7 +23,7 @@ export async function dealStageChangedWorkflow({ tenantId, payload }: { tenantId
 
   const contract = await createContractDraftStep(dealId, tenantId);
   if (contract?.id) {
-    await start(contractLifecycleWorkflow, [{ contractId: contract.id, tenantId }]);
+    await queueContractLifecycle({ contractId: contract.id, tenantId });
   }
   await notifyOwnerStep(dealId, tenantId);
 }

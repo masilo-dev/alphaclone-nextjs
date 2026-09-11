@@ -48,7 +48,8 @@ interface FacebookPage {
     page_name: string;
     is_active: boolean;
     connected_at: string;
-    page_access_token?: string | null;
+    can_publish?: boolean;
+    can_upload_media?: boolean;
     metadata?: Record<string, any> | null;
 }
 
@@ -240,7 +241,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [aiGenerating, setAiGenerating] = useState(false);
 
     const isConnected = pages.length > 0;
-    const hasPublishablePage = pages.some((p) => !!p.page_access_token && !p.metadata?.no_pages);
+    const hasPublishablePage = pages.some((p) => p.can_publish !== false && !p.metadata?.no_pages);
 
     const getInitials = (name: string) => {
         if (!name) return '??';
@@ -273,19 +274,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             ? supabase.from('messenger_conversations').select('id, is_read').eq('tenant_id', tenantId)
             : Promise.resolve({ data: [] as { id: string; is_read: boolean }[], error: null });
 
-        const pagesQueryBase = supabase
-            .from('facebook_integrations')
-            .select('id,page_id,page_name,is_active,connected_at,page_access_token,metadata')
-            .eq('user_id', user.id)
-            .eq('is_active', true);
-
-        const pagesQuery = tenantId ? pagesQueryBase.eq('tenant_id', tenantId) : pagesQueryBase;
-
-        const [leadsRes, convRes] = await Promise.all([leadsQuery, convQuery]);
-        let pagesRes = await pagesQuery;
-        if (pagesRes.error && tenantId && /tenant_id/i.test(pagesRes.error.message)) {
-            pagesRes = await pagesQueryBase;
-        }
+        const [leadsRes, convRes, pagesRes] = await Promise.all([
+            leadsQuery, convQuery,
+            fetch(`/api/facebook/accounts?tenantId=${encodeURIComponent(tenantId || '')}`)
+                .then(async (res) => { const body = await res.json(); return { data: body.pages || [], error: res.ok ? null : { message: body.error || 'Unable to load Facebook accounts' } }; })
+                .catch(() => ({ data: [], error: { message: 'Unable to load Facebook accounts' } })),
+        ]);
 
         if (pagesRes.error) {
             console.error('[Facebook] facebook_integrations select:', pagesRes.error);
@@ -295,7 +289,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             setIntegrationLoadError(null);
             const rows = pagesRes.data || [];
             setPages(rows);
-            const preferred = rows.find((r: FacebookPage) => !!r.page_access_token && !r.metadata?.no_pages) || rows[0];
+            const preferred = rows.find((r: FacebookPage) => r.can_publish !== false && !r.metadata?.no_pages) || rows[0];
             if (preferred) setSelectedPageId(preferred.page_id);
         }
         if (!leadsRes.error) setLeads(leadsRes.data || []);
@@ -311,7 +305,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         if (!pageId) return;
         setActivityLoading(true);
         try {
-            const res = await fetch(`/api/facebook/activity?pageId=${pageId}`);
+            const res = await fetch(`/api/facebook/activity?tenantId=${encodeURIComponent(tenant?.id || '')}&pageId=${pageId}`);
             if (res.status === 401 || res.status === 403) {
                 setReconnectRequired(true);
                 toast.error('Facebook session expired. Please re-connect.');
@@ -324,7 +318,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         } finally {
             setActivityLoading(false);
         }
-    }, []);
+    }, [tenant?.id]);
 
     const fetchPagePosts = useCallback(async (pageId: string, after?: string | null) => {
         if (!pageId) return;
@@ -339,17 +333,20 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         }
         try {
             const cursorQs = after ? `&after=${encodeURIComponent(after)}` : '';
-            const res = await fetch(`/api/facebook/posts?pageId=${pageId}&limit=20${cursorQs}`);
-            if (res.status === 401 || res.status === 403) {
-                setReconnectRequired(true);
-                toast.error('Facebook access denied. Re-authentication required.');
+            const res = await fetch(`/api/facebook/posts?tenantId=${encodeURIComponent(tenant?.id || '')}&pageId=${pageId}&limit=20${cursorQs}`);
+            if (res.status === 401) {
+                toast.error('Your AlphaClone session expired. Please sign in again.');
+                return;
+            }
+            if (res.status === 403) {
+                toast.error('You do not have access to this workspace.');
                 return;
             }
             const data = await res.json();
             if (data.posts) {
                 setPagePosts((prev) => (isAppend ? [...prev, ...data.posts] : data.posts));
             }
-            const next = data.paging?.cursors?.next || null;
+            const next = data.paging?.cursors?.after || null;
             setPostsNextCursor(typeof next === 'string' ? next : null);
             setReconnectRequired(false);
         } catch (err) {
@@ -358,7 +355,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             setPostsLoading(false);
             setLoadingMorePosts(false);
         }
-    }, []);
+    }, [tenant?.id]);
 
     const loadPostComments = useCallback(async (postId: string) => {
         if (!selectedPageId) {
@@ -371,7 +368,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
         try {
             const res = await fetch(
-                `/api/facebook/comments?pageId=${encodeURIComponent(selectedPageId)}&postId=${encodeURIComponent(postId)}&limit=50`
+                `/api/facebook/comments?tenantId=${encodeURIComponent(tenant?.id || '')}&pageId=${encodeURIComponent(selectedPageId)}&postId=${encodeURIComponent(postId)}&limit=50`
             );
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -393,7 +390,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         } finally {
             setCommentsLoadingByPost((prev) => ({ ...prev, [postId]: false }));
         }
-    }, [selectedPageId]);
+    }, [selectedPageId, tenant?.id]);
 
     const loadPostInsights = useCallback(
         async (postId: string) => {
@@ -401,7 +398,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             setInsightsByPost((prev) => ({ ...prev, [postId]: { ...prev[postId], loading: true } }));
             try {
                 const res = await fetch(
-                    `/api/facebook/post-insights?pageId=${encodeURIComponent(selectedPageId)}&postId=${encodeURIComponent(postId)}`
+                    `/api/facebook/post-insights?tenantId=${encodeURIComponent(tenant?.id || '')}&pageId=${encodeURIComponent(selectedPageId)}&postId=${encodeURIComponent(postId)}`
                 );
                 const data = await res.json();
                 if (!res.ok || !data.success) {
@@ -422,13 +419,13 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                 }));
             }
         },
-        [selectedPageId]
+        [selectedPageId, tenant?.id]
     );
 
     const loadPageCapabilities = useCallback(async (pageId: string) => {
         if (!pageId) return;
         try {
-            const res = await fetch(`/api/facebook/capabilities?pageId=${encodeURIComponent(pageId)}`);
+            const res = await fetch(`/api/facebook/capabilities?tenantId=${encodeURIComponent(tenant?.id || '')}&pageId=${encodeURIComponent(pageId)}`);
             const data = await res.json();
             if (res.ok && data.success) {
                 setCapabilitiesByPage((prev) => ({ ...prev, [pageId]: data }));
@@ -436,17 +433,20 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         } catch (err) {
             console.error('[Facebook] Failed to load capabilities:', err);
         }
-    }, []);
+    }, [tenant?.id]);
 
     const loadPageInfo = useCallback(async (pageId: string) => {
         if (!pageId) return;
         setPageInfoLoadingByPage((prev) => ({ ...prev, [pageId]: true }));
         setPageInfoErrorByPage((prev) => ({ ...prev, [pageId]: '' }));
         try {
-            const res = await fetch(`/api/facebook/page-info?pageId=${encodeURIComponent(pageId)}`);
-            if (res.status === 401 || res.status === 403) {
-                setReconnectRequired(true);
-                setPageInfoErrorByPage((prev) => ({ ...prev, [pageId]: 'Re-authentication required' }));
+            const res = await fetch(`/api/facebook/page-info?tenantId=${encodeURIComponent(tenant?.id || '')}&pageId=${encodeURIComponent(pageId)}`);
+            if (res.status === 401) {
+                setPageInfoErrorByPage((prev) => ({ ...prev, [pageId]: 'AlphaClone session expired' }));
+                return;
+            }
+            if (res.status === 403) {
+                setPageInfoErrorByPage((prev) => ({ ...prev, [pageId]: 'Workspace access denied' }));
                 return;
             }
             const data = await res.json();
@@ -461,7 +461,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         } finally {
             setPageInfoLoadingByPage((prev) => ({ ...prev, [pageId]: false }));
         }
-    }, []);
+    }, [tenant?.id]);
 
     const deleteFacebookPost = useCallback(async (postId: string) => {
         if (!selectedPageId || !postId) return;
@@ -471,7 +471,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             const res = await fetch('/api/facebook/post/delete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pageId: selectedPageId, postId }),
+                body: JSON.stringify({ tenantId: tenant?.id, pageId: selectedPageId, postId }),
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
@@ -487,7 +487,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         } finally {
             setDeletingPostById((prev) => ({ ...prev, [postId]: false }));
         }
-    }, [selectedPageId]);
+    }, [selectedPageId, tenant?.id]);
 
     const loadScheduleQueue = useCallback(async () => {
         if (!tenant?.id) return;
@@ -580,15 +580,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     const handleDisconnect = async (pageId: string) => {
         if (!confirm('Disconnect this Facebook Page?')) return;
-        const { error } = await supabase
-            .from('facebook_integrations')
-            .update({ is_active: false })
-            .eq('page_id', pageId)
-            .eq('user_id', user?.id);
-        if (!error) {
+        const response = await fetch('/api/facebook/disconnect', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: tenant?.id, pageId }) });
+        if (response.ok) {
             toast.success('Page disconnected');
             loadData();
-        }
+        } else toast.error('Page could not be disconnected');
     };
 
     const clearImage = () => {
@@ -614,7 +610,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             });
             const data = await res.json();
             if (data.url) setAiGeneratedImageUrl(data.url);
-            else toast.error('Generation failed');
+            else {
+                const detail = data.code === 'IMAGE_PROVIDER_BILLING_INACTIVE'
+                    ? data.error
+                    : data.error || 'Generation failed';
+                toast.error(detail, { duration: 6000 });
+            }
         } catch { toast.error('Generation failed'); }
         finally { setAiImageGenerating(false); }
     };
@@ -658,47 +659,23 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         try {
             let res: Response;
             if (postImageFile) {
-                let publicUrl = '';
-                // First upload to Supabase storage directly from the client to avoid Vercel's 4.5MB request limit
-                try {
-                    const ext = postImageFile.name.split('.').pop() || 'bin';
-                    const storagePath = `media/${tenant?.id || 'public'}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
-                    
-                    const { error: uploadError } = await supabase.storage
-                        .from('public-assets')
-                        .upload(storagePath, postImageFile, {
-                            contentType: postImageFile.type,
-                            upsert: false,
-                        });
-                    
-                    if (uploadError) throw uploadError;
-                    
-                    const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(storagePath);
-                    publicUrl = urlData.publicUrl;
-                } catch (storageErr) {
-                    console.warn('[Facebook Upload] Direct storage upload failed, trying API fallback:', storageErr);
-                }
-
                 const form = new FormData();
+                form.append('tenantId', tenant?.id || '');
                 form.append('pageId', selectedPageId);
                 form.append('message', postMessage);
-                if (publicUrl) {
-                    form.append('fileUrl', publicUrl);
-                    form.append('fileType', postImageFile.type);
-                } else {
-                    form.append('file', postImageFile);
-                }
+                form.append('file', postImageFile);
                 res = await fetch('/api/facebook/upload-photo', { method: 'POST', body: form });
             } else {
                 res = await fetch('/api/facebook/post', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pageId: selectedPageId, message: postMessage, link: postLink || undefined, imageUrl: postImageUrl || undefined }),
+                    body: JSON.stringify({ tenantId: tenant?.id, pageId: selectedPageId, message: postMessage, link: postLink || undefined, imageUrl: postImageUrl || undefined }),
                 });
             }
             const data = await res.json();
             if (data.success) {
                 toast.success('Posted!', { id: toastId });
+                if (data.warning) toast(data.warning, { icon: '⚠️', duration: 7000 });
                 setPostMessage('');
                 clearImage();
                 setActiveTab('posts');
@@ -733,6 +710,24 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             }
         } catch { toast.error('Failed', { id: toastId }); }
         finally { setPosting(false); }
+    };
+
+    const retryPost = async (postId: string) => {
+        if (!tenant?.id) return;
+        const toastId = toast.loading('Retrying Facebook post...');
+        try {
+            const res = await fetch('/api/social/schedule', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ postId, tenantId: tenant.id, action: 'publish_now' }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || 'Retry failed');
+            toast.success('Facebook post published.', { id: toastId });
+            await fetchPagePosts(selectedPageId);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Retry failed', { id: toastId });
+        }
     };
 
     const handleAiGeneratePost = async () => {
@@ -1098,6 +1093,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </div>
                                     )}
 
+                                    {selectedPageId && <div className="mb-4 text-sm text-gray-300">
+                                        <p>Facebook — Connected</p>
+                                        <p>Page: {pages.find((page) => page.page_id === selectedPageId)?.page_name}</p>
+                                        <p>Publishing: {pages.find((page) => page.page_id === selectedPageId)?.can_publish === true ? 'Available' : 'Check permissions'}</p>
+                                        <p>Media Upload: {pages.find((page) => page.page_id === selectedPageId)?.can_upload_media === true ? 'Available' : 'Check permissions'}</p>
+                                    </div>}
                                     {selectedPageId && capabilitiesByPage[selectedPageId] && (
                                         <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
                                             <div className="mb-3 flex items-center justify-between gap-3">
@@ -1274,7 +1275,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                     {post.created_time ? new Date(post.created_time).toLocaleString() : 'Recent'}
                                                                 </p>
                                                                 <p className="mt-2 whitespace-pre-wrap text-sm text-gray-200">
-                                                                    {post.message || post.story || 'Post published without text.'}
+                                                                    {post.message || post.story || 'No caption.'}
                                                                 </p>
                                                             </div>
                                                             {duplicateMap[(post.message || '').trim()] > 1 && (
@@ -1284,6 +1285,16 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                             )}
                                                         </div>
 
+                                                        <div className="mb-3 space-y-1 text-xs text-gray-300">
+                                                            <p className={post.status === 'failed' ? 'text-rose-300' : ''}>{post.status === 'failed' ? 'Failed — Facebook publishing failed' : post.status}</p>
+                                                            {post.scheduled_at && <p>Scheduled: {new Date(post.scheduled_at).toLocaleString()}</p>}
+                                                            {post.published_at && <p>Published: {new Date(post.published_at).toLocaleString()}</p>}
+                                                            {post.facebook_post_id && <p>Facebook post ID: {post.facebook_post_id}</p>}
+                                                            {post.attempt_count > 0 && <p>Publish attempts: {post.attempt_count}</p>}
+                                                            {(post.error_message || post.last_error) && <p className="text-rose-300">{post.error_message || post.last_error}</p>}
+                                                            {post.provider_response && <details><summary className="cursor-pointer">View error / provider details</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap">{JSON.stringify(post.provider_response, null, 2)}</pre></details>}
+                                                        </div>
+                                                        {post.media_types?.[0] === 'video' && post.media_urls?.[0] && <video controls src={post.media_urls[0]} className="mb-3 max-h-72 w-full rounded-2xl" />}
                                                         {post.full_picture && (
                                                             <img src={post.full_picture} alt="" className="mb-3 max-h-72 w-full rounded-2xl object-cover" />
                                                         )}
@@ -1299,12 +1310,14 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                 Shares {post.shares?.count ?? 0}
                                                             </div>
                                                             <button
+                                                                disabled={!post.facebook_post_id}
                                                                 onClick={() => loadPostComments(post.id)}
                                                                 className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white"
                                                             >
                                                                 Comments
                                                             </button>
                                                             <button
+                                                                disabled={!post.facebook_post_id}
                                                                 onClick={() => loadPostInsights(post.id)}
                                                                 className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase text-white"
                                                             >
@@ -1320,9 +1333,17 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                                                     Open Post
                                                                 </a>
                                                             )}
+                                                            {post.status === 'failed' && post.social_post_id && (
+                                                                <button
+                                                                    onClick={() => retryPost(post.social_post_id)}
+                                                                    className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs font-black uppercase text-amber-200"
+                                                                >
+                                                                    Retry
+                                                                </button>
+                                                            )}
                                                             <button
                                                                 onClick={() => deleteFacebookPost(post.id)}
-                                                                disabled={!!deletingPostById[post.id]}
+                                                                disabled={!post.facebook_post_id || !!deletingPostById[post.id]}
                                                                 className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs font-black uppercase text-rose-200 disabled:opacity-50"
                                                             >
                                                                 <Trash2 className="mr-1 inline h-3 w-3" />

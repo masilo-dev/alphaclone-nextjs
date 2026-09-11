@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext'; // Assuming context exists
 import { Save, Plus, Trash2, Clock, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -38,12 +37,10 @@ export default function AvailabilityEditor() {
 
     const loadSchedule = async () => {
         try {
-            const { data, error } = await supabase
-                .from('availability_schedules')
-                .select('*')
-                .eq('tenant_id', currentTenant?.id)
-                .order('is_default', { ascending: false }) // Prioritize default
-                .single();
+            const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant?.id || '')}/availability`, { credentials: 'include' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Availability could not be loaded');
+            const data = payload.availability;
 
             if (data) {
                 setScheduleId(data.id);
@@ -91,30 +88,10 @@ export default function AvailabilityEditor() {
                 }
             });
 
-            if (scheduleId) {
-                // Update
-                const { error } = await supabase
-                    .from('availability_schedules')
-                    .update({
-                        schedule_json: scheduleJson,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', scheduleId);
-                if (error) throw error;
-            } else {
-                // Insert
-                const { error } = await supabase
-                    .from('availability_schedules')
-                    .insert({
-                        tenant_id: currentTenant.id,
-                        name: 'Default Hours',
-                        is_default: true,
-                        schedule_json: scheduleJson
-                    });
-                if (error) throw error;
-                // Reload to get ID
-                loadSchedule();
-            }
+            const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/availability`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ schedule: scheduleJson }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Availability could not be saved');
+            setScheduleId(payload.availability?.id || scheduleId);
 
             toast.success('Availability Updated!', { id: toastId });
         } catch (err) {
@@ -144,7 +121,12 @@ export default function AvailabilityEditor() {
         });
     };
 
-    /* ... Add/Remove slot logic omitted for brevity, keeping simple mon-fri 9-5 editor first ... */
+    const addSlot = (day: string) => setWeekSchedule(prev => ({ ...prev, [day]: { ...prev[day], active: true, slots: [...prev[day].slots, { start: '09:00', end: '17:00' }] } }));
+
+    const removeSlot = (day: string, index: number) => setWeekSchedule(prev => {
+        const slots = prev[day].slots.filter((_, slotIndex) => slotIndex !== index);
+        return { ...prev, [day]: { ...prev[day], active: slots.length > 0, slots } };
+    });
 
     if (loading) return <div className="text-slate-500 animate-pulse">Loading schedule...</div>;
 
@@ -202,9 +184,12 @@ export default function AvailabilityEditor() {
                                                     onChange={e => updateSlot(dayKey, idx, 'end', e.target.value)}
                                                     className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-teal-500 outline-none"
                                                 />
-                                                {/* Hidden remove button for later */}
+                                                <button type="button" onClick={() => removeSlot(dayKey, idx)} className="p-2 text-slate-500 hover:text-rose-400" aria-label={`Remove ${DAY_LABELS[dayKey]} time slot`}>
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         ))}
+                                        {day.slots.length < 8 && <button type="button" onClick={() => addSlot(dayKey)} className="self-start text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add hours</button>}
                                     </div>
                                 ) : (
                                     <span className="text-sm text-slate-600 font-medium italic">Unavailable</span>

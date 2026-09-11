@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { ShieldAlert, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
-import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
+import { PlatformKpiGrid } from '@/components/dashboard/metrics';
+import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
 
 export default function DeliverabilityPanel() {
   const { currentTenant } = useTenant();
@@ -44,7 +45,27 @@ export default function DeliverabilityPanel() {
     );
   }
 
-  const bounceRate = stats.sent ? ((stats.bounced / stats.sent) * 100).toFixed(2) : '0.00';
+  const bounceRate = stats.sent ? ((stats.bounced / stats.sent) * 100) : 0;
+
+  const kpiItems = [
+    platformKpiFromNumbers({ label: 'Total sent', current: stats.sent }),
+    platformKpiFromNumbers({
+      label: 'Bounce rate',
+      current: bounceRate,
+      isPercentage: true,
+      isBetterHigher: false,
+    }),
+    platformKpiFromNumbers({
+      label: 'Unsubscribes',
+      current: stats.unsubscribed,
+      isBetterHigher: false,
+    }),
+    platformKpiFromNumbers({
+      label: 'Suppressed',
+      current: stats.suppressed,
+      isBetterHigher: false,
+    }),
+  ];
 
   return (
     <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-4">
@@ -52,23 +73,8 @@ export default function DeliverabilityPanel() {
         <ShieldAlert className="w-5 h-5 text-teal-400" />
         <h3 className="text-sm font-bold text-white">Deliverability</h3>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          { label: 'Total sent', value: stats.sent, theme: 'teal' as CardTheme },
-          { label: 'Bounce rate', value: `${bounceRate}%`, theme: 'rose' as CardTheme },
-          { label: 'Unsubscribes', value: stats.unsubscribed, theme: 'orange' as CardTheme },
-          { label: 'Suppressed', value: stats.suppressed, theme: 'purple' as CardTheme },
-        ].map((s) => (
-          <StandardStatCard
-            key={s.label}
-            label={s.label}
-            value={s.value}
-            themeColor={s.theme}
-            interactive={false}
-          />
-        ))}
-      </div>
-      {Number(bounceRate) > 2 && (
+      <PlatformKpiGrid items={kpiItems} skeletonCount={4} />
+      {bounceRate > 2 && (
         <p className="text-xs text-amber-400">Bounce rate above 2% — review list hygiene and sender domain.</p>
       )}
     </div>

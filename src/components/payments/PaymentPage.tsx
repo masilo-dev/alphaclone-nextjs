@@ -68,7 +68,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
     }, [selectedInvoice, loadData]);
 
     const startCreateInvoice = useCallback(() => {
-        window.location.href = '/dashboard/invoices';
+        window.location.href = '/dashboard/business/invoices';
     }, []);
 
     if (loading) {

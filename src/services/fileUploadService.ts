@@ -197,6 +197,62 @@ class FileUploadService {
     /**
      * Upload a file from a binary buffer (used by MCP/Server-side)
      */
+    /**
+     * Upload via authenticated Next.js API (service role after membership check).
+     * Returns null when the request cannot be attempted (e.g. no window / SSR).
+     */
+    private async uploadViaServerApi(
+        file: File,
+        tenantId: string,
+        entityType?: string,
+        entityId?: string,
+        metadata?: { tags?: string[]; category?: string; aiSummary?: string }
+    ): Promise<FileUploadResult | null> {
+        if (typeof window === 'undefined' || typeof fetch !== 'function') {
+            return null;
+        }
+
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            if (entityType) form.append('entityType', entityType);
+            if (entityId) form.append('entityId', entityId);
+            if (metadata?.category) form.append('category', metadata.category);
+            if (metadata?.aiSummary) form.append('aiSummary', metadata.aiSummary);
+            if (metadata?.tags?.length) form.append('tags', JSON.stringify(metadata.tags));
+
+            const response = await fetch(`/api/tenant/${tenantId}/files`, {
+                method: 'POST',
+                body: form,
+                credentials: 'include',
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                console.error('Server upload failed:', response.status, payload);
+                return {
+                    success: false,
+                    error:
+                        (typeof payload?.error === 'string' && payload.error) ||
+                        'Failed to upload file to storage',
+                };
+            }
+
+            return {
+                success: true,
+                fileId: payload.fileId,
+                url: payload.url || payload.proxiedUrl,
+                proxiedUrl: payload.proxiedUrl || payload.url,
+            };
+        } catch (error) {
+            console.error('Server upload exception:', error);
+            return {
+                success: false,
+                error: 'Failed to upload file to storage',
+            };
+        }
+    }
+
     async uploadFileFromBuffer(
         buffer: Buffer,
         filename: string,
@@ -235,14 +291,30 @@ class FileUploadService {
                 };
             }
 
-            // 3. Generate storage path
+            // 3. Generate storage path — tenant-prefixed (never global / user-only)
             const timestamp = Date.now();
-            const randomString = Math.random().toString(36).substring(7);
-            const extension = filename.split('.').pop();
-            const storagePath = `${userId}/${timestamp}-${randomString}.${extension}`;
+            const randomString = crypto.randomUUID();
+            const extension = filename.split('.').pop() || 'bin';
+            const { tenantStoragePath } = await import('@/lib/tenant/platformTenant');
+            const storagePath = tenantStoragePath(
+                tenantId,
+                'uploads',
+                userId,
+                `${timestamp}-${randomString}.${extension}`
+            );
 
-            // 4. Upload to Storage
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            // 4. Upload to Storage (prefer service role on server to avoid Storage RLS blocks)
+            let storageClient = supabase;
+            try {
+                if (typeof window === 'undefined') {
+                    const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                    storageClient = createSupabaseAdminClient();
+                }
+            } catch {
+                storageClient = supabase;
+            }
+
+            const { data: uploadData, error: uploadError } = await storageClient.storage
                 .from('uploads')
                 .upload(storagePath, buffer, {
                     contentType: mimeType,
@@ -251,11 +323,17 @@ class FileUploadService {
 
             if (uploadError) {
                 console.error('Buffer upload error:', uploadError);
-                return { success: false, error: 'Failed to upload file to storage' };
+                const msg = String(uploadError.message || '');
+                return {
+                    success: false,
+                    error: msg.toLowerCase().includes('row-level security')
+                        ? 'Upload blocked by storage security policy'
+                        : 'Failed to upload file to storage',
+                };
             }
 
             // 5. Record in Database
-            const { data: fileRecord, error: dbError } = await supabase
+            const { data: fileRecord, error: dbError } = await storageClient
                 .from('file_uploads')
                 .insert({
                     user_id: userId,
@@ -278,7 +356,7 @@ class FileUploadService {
 
             if (dbError) {
                 console.error('Database error after buffer upload:', dbError);
-                await supabase.storage.from('uploads').remove([storagePath]);
+                await storageClient.storage.from('uploads').remove([storagePath]);
                 return { success: false, error: 'Failed to record upload in database' };
             }
 
@@ -318,8 +396,11 @@ class FileUploadService {
                 finalUserId = user.id;
             }
 
-            // Get tenant
+            // Get tenant — required for multi-tenant isolation
             const finalTenantId = explicitTenantId || tenantService.getCurrentTenantId();
+            if (!finalTenantId) {
+                return { success: false, error: 'Active workspace required for uploads' };
+            }
 
             // Check per-user storage limit
             const currentUsage = await this.getUserStorageUsage(finalUserId as string);
@@ -331,13 +412,55 @@ class FileUploadService {
                 };
             }
 
-            // Generate unique filename
-            const timestamp = Date.now();
-            const randomString = Math.random().toString(36).substring(7);
-            const extension = file.name.split('.').pop();
-            const filename = `${finalUserId as string}/${timestamp}-${randomString}.${extension}`;
+            // Prefer server upload (service role after membership check) so Storage RLS
+            // cannot block document hub / vault uploads from the browser.
+            const serverResult = await this.uploadViaServerApi(
+                file,
+                finalTenantId,
+                entityType,
+                entityId,
+                metadata
+            );
+            if (serverResult) {
+                if (!serverResult.success) {
+                    return serverResult;
+                }
 
-            // Upload to Supabase Storage
+                await activityService.logActivity(finalUserId as string, 'Document Uploaded', {
+                    fileId: serverResult.fileId,
+                    filename: file.name,
+                    entityType,
+                }, finalTenantId || undefined);
+
+                auditLoggingService.logAction(
+                    'file_uploaded',
+                    'file_upload',
+                    serverResult.fileId || 'unknown',
+                    undefined,
+                    {
+                        filename: file.name,
+                        size: file.size,
+                        type: file.type,
+                        entityType,
+                        entityId,
+                    }
+                ).catch(err => console.error('Failed to log audit:', err));
+
+                return serverResult;
+            }
+
+            // Fallback: direct browser → Supabase Storage (requires uploads RLS policies)
+            const timestamp = Date.now();
+            const randomString = crypto.randomUUID();
+            const extension = file.name.split('.').pop();
+            const { tenantStoragePath } = await import('@/lib/tenant/platformTenant');
+            const filename = tenantStoragePath(
+                finalTenantId,
+                'uploads',
+                finalUserId as string,
+                `${timestamp}-${randomString}.${extension}`
+            );
+
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('uploads')
                 .upload(filename, file, {
@@ -347,14 +470,17 @@ class FileUploadService {
 
             if (uploadError) {
                 console.error('Upload error:', uploadError);
-                return { success: false, error: 'Failed to upload file to storage' };
+                const msg = String(uploadError.message || '');
+                return {
+                    success: false,
+                    error: msg.toLowerCase().includes('row-level security')
+                        ? 'Upload blocked by storage security policy. Ask an admin to apply the uploads RLS migration, or retry after deploy.'
+                        : 'Failed to upload file to storage',
+                };
             }
 
-            // Get public URL
             const publicUrl = this.getProxiedUrl('uploads', filename);
-            const urlData = { publicUrl };
 
-            // Record upload in database
             const { data: fileRecord, error: dbError } = await supabase
                 .from('file_uploads')
                 .insert({
@@ -377,19 +503,16 @@ class FileUploadService {
 
             if (dbError) {
                 console.error('Database error:', dbError);
-                // File uploaded but not recorded - should clean up
                 await supabase.storage.from('uploads').remove([filename]);
                 return { success: false, error: 'Failed to record upload in database' };
             }
 
-            // Log activity
             await activityService.logActivity(finalUserId as string, 'Document Uploaded', {
                 fileId: fileRecord.id,
                 filename: file.name,
                 entityType,
             }, finalTenantId || undefined);
 
-            // Audit log
             auditLoggingService.logAction(
                 'file_uploaded',
                 'file_upload',
@@ -404,7 +527,6 @@ class FileUploadService {
                 }
             ).catch(err => console.error('Failed to log audit:', err));
 
-            // Background task: Perform actual scanning here if implemented
             supabase
                 .from('file_uploads')
                 .update({ scan_status: 'clean' })
@@ -414,7 +536,7 @@ class FileUploadService {
             return {
                 success: true,
                 fileId: fileRecord.id,
-                url: urlData.publicUrl,
+                url: publicUrl,
                 proxiedUrl: this.getProxiedUrl('uploads', filename),
             };
         } catch (error) {
@@ -454,25 +576,11 @@ class FileUploadService {
      */
     async deleteFile(fileId: string): Promise<{ success: boolean; error?: string }> {
         try {
-            // Soft delete in database
-            const { error: dbError } = await supabase
-                .from('file_uploads')
-                .update({ deleted_at: new Date().toISOString() })
-                .eq('id', fileId);
-
-            if (dbError) {
-                return { success: false, error: 'Failed to move file to trash' };
-            }
-
-            // Audit log
-            auditLoggingService.logAction(
-                'file_soft_deleted',
-                'file_upload',
-                fileId,
-                undefined,
-                undefined
-            ).catch(err => console.error('Failed to log audit:', err));
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { success: false, error: 'No active workspace' };
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'soft_delete', fileId }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return { success: false, error: payload.error || 'Failed to move file to trash' };
             return { success: true };
         } catch (error) {
             console.error('File delete error:', error);
@@ -485,15 +593,11 @@ class FileUploadService {
      */
     async restoreFile(fileId: string): Promise<{ success: boolean; error?: string }> {
         try {
-            const { error: dbError } = await supabase
-                .from('file_uploads')
-                .update({ deleted_at: null })
-                .eq('id', fileId);
-
-            if (dbError) {
-                return { success: false, error: 'Failed to restore file' };
-            }
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { success: false, error: 'No active workspace' };
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'restore', fileId }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return { success: false, error: payload.error || 'Failed to restore file' };
             return { success: true };
         } catch (error) {
             console.error('File restore error:', error);
@@ -506,36 +610,11 @@ class FileUploadService {
      */
     async permanentDeleteFile(fileId: string): Promise<{ success: boolean; error?: string }> {
         try {
-            // Get file record
-            const { data: fileRecord, error: fetchError } = await supabase
-                .from('file_uploads')
-                .select('*')
-                .eq('id', fileId)
-                .single();
-
-            if (fetchError || !fileRecord) {
-                return { success: false, error: 'File not found' };
-            }
-
-            // Delete from storage
-            const { error: storageError } = await supabase.storage
-                .from('uploads')
-                .remove([fileRecord.storage_path]);
-
-            if (storageError) {
-                console.error('Storage delete error:', storageError);
-            }
-
-            // Delete from database
-            const { error: dbError } = await supabase
-                .from('file_uploads')
-                .delete()
-                .eq('id', fileId);
-
-            if (dbError) {
-                return { success: false, error: 'Failed to delete file record' };
-            }
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { success: false, error: 'No active workspace' };
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files?fileId=${encodeURIComponent(fileId)}`, { method: 'DELETE', credentials: 'include' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return { success: false, error: payload.error || 'Failed to permanently delete file' };
             return { success: true };
         } catch (error) {
             console.error('Permanent delete error:', error);
@@ -646,29 +725,9 @@ class FileUploadService {
      * Permanently delete all trashed files for a tenant
      */
     async emptyTrash(tenantId: string) {
-        // First get all trashed files to remove from storage
-        const { data: trashedFiles } = await supabase
-            .from('file_uploads')
-            .select('storage_path')
-            .eq('tenant_id', tenantId)
-            .not('deleted_at', 'is', null);
-
-        // Remove from storage
-        if (trashedFiles && trashedFiles.length > 0) {
-            const paths = trashedFiles.map((f: { storage_path: string }) => f.storage_path).filter(Boolean);
-            if (paths.length > 0) {
-                await supabase.storage.from('uploads').remove(paths);
-            }
-        }
-
-        // Delete records from database
-        const { error } = await supabase
-            .from('file_uploads')
-            .delete()
-            .eq('tenant_id', tenantId)
-            .not('deleted_at', 'is', null);
-
-        return { error };
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files`, { method: 'DELETE', credentials: 'include' });
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? null : payload.error || 'Trash could not be emptied' };
     }
 }
 

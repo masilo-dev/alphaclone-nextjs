@@ -14,14 +14,31 @@ const DEFAULT_READ_TOOLS = new Set([
   'get_revenue_summary', 'get_accounts_receivable_aging', 'get_linkedin_posts',
   'get_scheduled_posts', 'get_project_details', 'trust_ledger',
   'qualify_crm_leads', 'get_scraper_leads', 'find_and_qualify_leads',
+  'list_pending_approvals',
 ]);
 
+import { selectAgentsForGoal } from '@/lib/bonnie/os/supervisor';
+import { toOrchestratorSubagents } from '@/lib/bonnie/os/agentRegistry';
+
+/** @deprecated Prefer DEPARTMENT_AGENTS via Supervisor — kept for backward compatibility */
 export const SPECIALIST_SUBAGENTS = [
   {
     name: 'CRM Specialist',
     role: 'crm_analyst',
-    instructions: 'Audit contacts, leads, deals pipeline health. Flag stale deals and missing follow-ups.',
-    tools: ['get_contacts', 'get_leads', 'get_deals', 'get_pipeline_summary', 'recommend_next_steps'],
+    instructions: 'Audit contacts, leads, deals pipeline health across discovered→qualified→proposal→negotiation. Flag stale deals and missing follow-ups. Prefer records that have emails for outreach.',
+    tools: ['get_contacts', 'get_leads', 'get_deals', 'get_pipeline_summary', 'recommend_next_steps', 'qualify_crm_leads'],
+  },
+  {
+    name: 'Sales Specialist',
+    role: 'sales_analyst',
+    instructions: 'Push pipeline revenue: deals, quotes, follow-ups, and next best actions to close.',
+    tools: ['get_deals', 'get_pipeline_summary', 'predict_deal_win_probability', 'get_leads', 'recommend_next_steps'],
+  },
+  {
+    name: 'Marketing Specialist',
+    role: 'marketing_analyst',
+    instructions: 'Review campaigns, outreach sequences, and channel readiness. Suggest concrete send/publish next steps.',
+    tools: ['campaign_brief', 'campaign_diagnose', 'get_social_accounts', 'get_scheduled_posts', 'solo_owner_operator_brief'],
   },
   {
     name: 'Finance Specialist',
@@ -30,18 +47,32 @@ export const SPECIALIST_SUBAGENTS = [
     tools: ['get_invoices', 'accounting_snapshot', 'get_revenue_summary', 'get_accounts_receivable_aging'],
   },
   {
+    name: 'Social Specialist',
+    role: 'social_analyst',
+    instructions: 'Prepare social content plans. When posts are queued for approval, list_pending_approvals and approve_pending_action via MCP instead of asking the user to open the dashboard.',
+    tools: ['get_social_accounts', 'get_linkedin_posts', 'get_scheduled_posts', 'list_pending_approvals'],
+  },
+  {
     name: 'Leads Specialist',
     role: 'leads_analyst',
-    instructions: 'Assess lead pipeline quality, scraper inventory, and qualification opportunities.',
+    instructions: 'Assess lead pipeline quality, scraper inventory, and qualification opportunities. Ensure outreach targets have emails.',
     tools: ['get_leads', 'qualify_crm_leads', 'get_scraper_leads', 'find_and_qualify_leads'],
   },
 ] as const;
 
 function mergeSubagents(
   userSubagents: Array<{ name: string; role: string; instructions: string; tools?: string[]; write_allowed?: boolean }>,
-  useSpecialists: boolean
+  useSpecialists: boolean,
+  task?: string
 ) {
   if (!useSpecialists || userSubagents.length > 0) return userSubagents;
+  // Supervisor selects best department agents for this task (falls back to classic trio)
+  try {
+    const selected = selectAgentsForGoal(task || 'audit business health', { maxAgents: 4 });
+    if (selected.length) return toOrchestratorSubagents(selected);
+  } catch {
+    // fall through
+  }
   return SPECIALIST_SUBAGENTS.map((s) => ({ ...s, tools: [...s.tools] }));
 }
 
@@ -202,7 +233,7 @@ registerTool('bonnie-orchestrate', {
     if (runInsertError) throw new Error(`Failed to create orchestration run: ${runInsertError.message}`);
     const runId = runRow.id;
 
-    const subagents = mergeSubagents(args.subagents || [], args.use_specialist_subagents !== false);
+    const subagents = mergeSubagents(args.subagents || [], args.use_specialist_subagents !== false, args.task);
     if (!subagents.length) {
       throw new Error('At least one subagent is required (or enable use_specialist_subagents).');
     }
@@ -317,5 +348,72 @@ registerTool('bonnie-orchestrate', {
     return {
       content: [{ type: 'text', text: JSON.stringify({ history: data || [] }, null, 2) }],
     };
+  },
+});
+
+registerTool('bonnie-orchestrate', {
+  name: 'run_growth_lifecycle',
+  description:
+    'Run one auditable lead-to-customer growth lifecycle from a plain-English objective: inspect the audience, generate and permanently store campaign media, prepare platform-specific social content, create personalised email outreach, connect CRM follow-ups, execute permitted steps, pause for required approvals, and return receipts.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    user_id: z.string().uuid().optional(),
+    objective: z.string().min(10),
+    audience: z.string().optional(),
+    image_prompt: z.string().optional(),
+    platforms: z.array(z.enum(['facebook', 'linkedin', 'instagram'])).optional(),
+    recipient_ids: z.array(z.string().uuid()).max(100).optional(),
+    execute_actions: z.boolean().optional().default(false),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      objective: { type: 'string', description: 'Business outcome, offer, and desired call to action.' },
+      audience: { type: 'string', description: 'Target customer profile or CRM segment.' },
+      image_prompt: { type: 'string', description: 'Optional creative direction for the campaign image.' },
+      platforms: {
+        type: 'array',
+        items: { type: 'string', enum: ['facebook', 'linkedin', 'instagram'] },
+      },
+      recipient_ids: {
+        type: 'array',
+        items: { type: 'string', format: 'uuid' },
+        description: 'Optional approved CRM lead/contact IDs. Never invent recipients.',
+      },
+      execute_actions: {
+        type: 'boolean',
+        default: false,
+        description: 'False prepares drafts and an approval-ready plan. True executes permitted steps and pauses at approval gates.',
+      },
+    },
+    required: ['objective'],
+  },
+  handler: async (args, ctx) => {
+    const tenantId = args.tenant_id || ctx.tenantId;
+    const userId = args.user_id || ctx.userId;
+    if (!tenantId || !userId) throw new Error('Authenticated workspace and user are required');
+
+    const task = [
+      'Run the Alphaclone growth lifecycle as one traceable operation.',
+      `Objective: ${args.objective}`,
+      args.audience ? `Audience: ${args.audience}` : 'Audience: inspect CRM and identify only suitable, consent-safe records.',
+      args.image_prompt ? `Image direction: ${args.image_prompt}` : 'Image direction: create a calm, premium, brand-appropriate campaign visual.',
+      `Platforms: ${(args.platforms || ['facebook', 'linkedin']).join(', ')}.`,
+      args.recipient_ids?.length
+        ? `Approved recipient record IDs: ${args.recipient_ids.join(', ')}.`
+        : 'No recipient IDs supplied: prepare drafts and request selection/approval before external outreach.',
+      'Required sequence: inspect connected accounts and audience; create distinct platform copy; generate the image with create_post_with_ai_image or upload_media; create social drafts; prepare personalised email drafts; link CRM notes and follow-up tasks; execute only when requested; verify provider outcomes and return receipts.',
+      'If AI image generation fails (billing inactive, rate limit, provider outage), report the real provider error to the user — never blame Facebook/LinkedIn. Do not publish caption-only unless the user explicitly approves; then call create_social_post/publish_social_post without media or retry create_post_with_ai_image with fallback_to_text_only=true.',
+      'Never claim generated, uploaded, sent, scheduled, or published without a successful tool receipt. Never send a local filesystem path to a provider.',
+    ].join('\n');
+
+    const { executeTool } = await import('../tool-registry');
+    return executeTool(tenantId, userId, 'orchestrate_task', {
+      tenant_id: tenantId,
+      user_id: userId,
+      task,
+      execute_actions: args.execute_actions === true,
+      use_specialist_subagents: true,
+    });
   },
 });

@@ -32,9 +32,7 @@ export async function GET(req: NextRequest) {
     const tenantId = searchParams.get('tenantId');
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
 
-    await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
     const { data, error } = await supabase
         .from('twilio_integrations')
         .select('id, account_sid, phone_number, is_active, created_at')
@@ -113,9 +111,7 @@ export async function DELETE(req: NextRequest) {
     const tenantId = searchParams.get('tenantId');
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
 
-    await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
     const { error } = await supabase
         .from('twilio_integrations')
         .delete()

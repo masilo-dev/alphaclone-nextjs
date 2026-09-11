@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { countOpenTasks } from '@/lib/crm/canonicalWorkspaceStats';
 
 export type BonnieWorkspaceSnapshot = {
   tenant_id: string;
@@ -29,7 +30,7 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
 
   async function countTable(
     table: string,
-    build: (q: ReturnType<typeof admin.from>) => ReturnType<ReturnType<typeof admin.from>['select']>
+    build: (q: any) => any
   ): Promise<number> {
     try {
       const { count, error } = await build(admin.from(table));
@@ -58,14 +59,13 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
     countTable('deals', (q) => q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)),
     countTable('contacts', (q) => q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)),
     countTable('business_clients', (q) => q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)),
-    countTable('tasks', (q) =>
-      q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).neq('status', 'completed')
-    ),
-    countTable('invoices', (q) =>
+    countOpenTasks(admin, tenantId),
+    countTable('business_invoices', (q) =>
       q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['sent', 'overdue', 'pending'])
     ),
-    countTable('support_tickets', (q) =>
-      q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'open')
+    countTable('tickets', (q) =>
+      q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)
+        .in('status', ['new', 'open', 'in_progress', 'waiting_on_business', 'escalated', 'reopened'])
     ),
     countTable('contracts', (q) =>
       q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)
