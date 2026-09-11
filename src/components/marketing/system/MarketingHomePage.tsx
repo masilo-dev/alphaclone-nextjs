@@ -29,7 +29,7 @@ const integrationGroups = getHomeIntegrationGroups();
 
 function Intro({ eyebrow, title, body, center = false }: { eyebrow?: string; title: string; body?: string; center?: boolean }) {
   return <div className={center ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
-    {eyebrow && <p className="text-[11px] font-black uppercase tracking-[.22em] text-cyan-300">{eyebrow}</p>}
+    {eyebrow && <p className="text-[11px] font-black uppercase tracking-[.22em] text-[var(--brand-primary-hover)]">{eyebrow}</p>}
     <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-[1.08] text-white sm:text-4xl lg:text-[44px]">{title}</h2>
     {body && <p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">{body}</p>}
   </div>;
@@ -49,27 +49,27 @@ export default function MarketingHomePage() {
       <CurvedDotField />
       <MarketingContainer>
         <div className="mkt-hero-copy mkt-reveal mx-auto max-w-4xl px-2 text-center">
-          <p className="mb-4 text-[11px] font-black uppercase tracking-[.22em] text-emerald-400">
+          <p className="mb-4 text-[11px] font-black uppercase tracking-[.22em] text-[var(--brand-primary-hover)]">
             {EXECUTION_LAYER.category}
           </p>
           <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.12] tracking-normal sm:text-5xl md:text-6xl">
-            <span className="text-orange-400">Your business has tools.</span>{' '}
+            <span className="text-[var(--brand-primary-hover)]">Your business has tools.</span>{' '}
             <span className="text-white">Now give it an</span>{' '}
-            <span className="text-emerald-400">execution layer.</span>
+            <span className="text-[var(--brand-violet)]">execution layer.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 sm:text-base md:text-lg">
-            <span className="font-semibold text-cyan-300">AlphaClone</span>
+            <span className="font-semibold text-[var(--brand-primary-hover)]">AlphaClone</span>
             <span className="text-slate-300"> turns your instructions into </span>
-            <span className="font-semibold text-emerald-300">coordinated action</span>
+            <span className="font-semibold text-[var(--brand-primary-hover)]">coordinated action</span>
             <span className="text-slate-300"> across connected business systems while you retain </span>
-            <span className="font-semibold text-orange-300">control over important decisions</span>
+            <span className="font-semibold text-[var(--brand-violet)]">control over important decisions</span>
             <span className="text-slate-300">.</span>
           </p>
           <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
-            <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large !bg-emerald-600 hover:!bg-emerald-500">
+            <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">
               {EXECUTION_LAYER.primaryCta}
             </PrimaryCTA>
-            <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large !border-orange-400/40 !text-orange-200 hover:!border-orange-300">
+            <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large">
               {EXECUTION_LAYER.secondaryCta}
             </SecondaryCTA>
           </div>

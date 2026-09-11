@@ -11,12 +11,12 @@
   --background-muted: rgba(31, 41, 53, 0.54);
 
   /* Brand */
-  --brand-primary: #18c7c8;
-  --brand-primary-hover: #22d9d5;
-  --brand-primary-active: #11aeb3;
-  --brand-secondary: #1688d8;
-  --brand-violet: #7357e8;
-  --brand-cyan-soft: #6de8e2;
+  --brand-primary: #356af4;
+  --brand-primary-hover: #5f8fff;
+  --brand-primary-active: #2553dd;
+  --brand-secondary: #4199a4;
+  --brand-violet: #8950f5;
+  --brand-cyan-soft: #bed3ff;
 
   /* Text */
   --text-primary: #ffffff;
@@ -27,7 +27,7 @@
   /* Borders */
   --border-subtle: rgba(183, 204, 231, 0.12);
   --border-default: rgba(183, 204, 231, 0.2);
-  --border-strong: rgba(109, 232, 226, 0.38);
+  --border-strong: rgba(95, 143, 255, 0.38);
 
   /* States */
   --success: #23c995;
@@ -36,9 +36,9 @@
   --info: #4faaf5;
 
   /* Illumination */
-  --glow-primary: rgba(24, 199, 200, 0.16);
-  --glow-blue: rgba(22, 136, 216, 0.12);
-  --glow-violet: rgba(122, 75, 224, 0.1);
+  --glow-primary: rgba(53, 106, 244, 0.14);
+  --glow-blue: rgba(95, 143, 255, 0.1);
+  --glow-violet: rgba(137, 80, 245, 0.08);
 
   /* Product preview (light UI) */
   --preview-bg: #f7f9fc;
@@ -59,9 +59,9 @@
     0 1px 0 rgba(255, 255, 255, 0.03) inset,
     0 18px 46px rgba(0, 4, 18, 0.2);
   --shadow-preview:
-    0 0 0 1px rgba(109, 232, 226, 0.25),
-    0 28px 90px rgba(0, 5, 24, 0.58),
-    0 0 80px rgba(24, 199, 200, 0.08);
+    0 0 0 1px rgba(95, 143, 255, 0.22),
+    0 28px 90px rgba(0, 5, 24, 0.48),
+    0 0 64px rgba(53, 106, 244, 0.07);
 
   /* Shared interaction and atmospheric motion */
   --motion-instant: 100ms;
@@ -99,10 +99,10 @@
   --icon-container-lg: 44px;
   --icon-container-display: 56px;
   --icon-muted: rgba(184, 196, 216, 0.76);
-  --icon-primary: #18c7c8;
-  --icon-secondary: #1688d8;
-  --icon-accent: #7357e8;
-  --icon-active: #6de8e2;
+  --icon-primary: #356af4;
+  --icon-secondary: #4199a4;
+  --icon-accent: #8950f5;
+  --icon-active: #bed3ff;
 
   --space-section-y: clamp(2.5rem, 4.5vw, 4rem);
   --space-section-x: clamp(1.125rem, 3vw, 3rem);
@@ -120,7 +120,7 @@
   --marketing-accent: var(--brand-primary);
   --marketing-accent-hover: var(--brand-primary-hover);
   --marketing-accent-deep: var(--brand-primary-active);
-  --marketing-accent-soft: rgba(24, 199, 200, 0.12);
+  --marketing-accent-soft: rgba(53, 106, 244, 0.12);
   --marketing-focus: var(--brand-cyan-soft);
   --marketing-success: var(--success);
   --marketing-warning: var(--warning);
@@ -227,10 +227,9 @@
 }
 
 .mkt-surface {
-  background: var(--background-card);
+  background: rgba(19, 26, 35, 0.88);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
-  backdrop-filter: blur(14px);
 }
 
 .mkt-surface-elevated {
@@ -247,8 +246,8 @@
   align-items: center;
   gap: 0.5rem;
   border-radius: 9999px;
-  border: 1px solid rgba(24, 199, 200, 0.35);
-  background: rgba(24, 199, 200, 0.1);
+  border: 1px solid rgba(95, 143, 255, 0.35);
+  background: rgba(53, 106, 244, 0.1);
   color: var(--brand-cyan-soft);
   font-size: 0.7rem;
   font-weight: 650;

@@ -190,12 +190,12 @@ html.dark {
 .marketing-theme {
   --background: #020D1A;
   --foreground: #f8fafc;
-  --marketing-primary: #06b6d4;
-  --marketing-accent: #14b8a6;
+  --marketing-primary: #356af4;
+  --marketing-accent: #8950f5;
   --marketing-radius: 0.75rem;
-  --shadow-luxury-sm: 0 0 30px -18px rgba(34, 211, 238, 0.15);
-  --shadow-luxury-md: 0 0 60px -24px rgba(34, 211, 238, 0.22);
-  --shadow-luxury-lg: 0 0 80px -20px rgba(6, 182, 212, 0.25);
+  --shadow-luxury-sm: 0 12px 30px -18px rgba(53, 106, 244, 0.22);
+  --shadow-luxury-md: 0 24px 60px -24px rgba(53, 106, 244, 0.28);
+  --shadow-luxury-lg: 0 34px 80px -28px rgba(137, 80, 245, 0.3);
   color: var(--foreground);
 }
 
@@ -279,8 +279,8 @@ html.dark {
   transform: translate(-50%, -50%);
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(0, 255, 255, 0.15) 0%, rgba(0, 255, 255, 0) 70%);
-  /* Teal glow */
+  background: radial-gradient(circle, rgba(53, 106, 244, 0.16) 0%, rgba(53, 106, 244, 0) 70%);
+  /* AlphaClone blue glow */
   filter: blur(100px);
   z-index: -1;
   pointer-events: none;
@@ -1134,7 +1134,7 @@ body {
   animation: moving-border 3s linear infinite;
 }
 
-/* Hero accent text — teal brand gradient (2 stops) */
+/* Hero accent text — AlphaClone blue gradient (2 stops) */
 .hero-metallic-text {
   background: linear-gradient(135deg, var(--ac-accent-deep) 0%, var(--ac-accent-hover) 100%);
   -webkit-background-clip: text;
@@ -1143,18 +1143,18 @@ body {
   color: transparent;
 }
 
-/* Primary CTA — teal brand */
+/* Primary CTA — AlphaClone blue brand */
 .cta-primary {
   background: linear-gradient(135deg, var(--ac-accent) 0%, var(--ac-accent-deep) 100%);
-  color: #020617;
+  color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 0 20px rgba(20, 184, 166, 0.25);
+  box-shadow: 0 12px 26px rgba(53, 106, 244, 0.24);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cta-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 0 28px rgba(45, 212, 191, 0.35);
+  box-shadow: 0 16px 34px rgba(53, 106, 244, 0.32);
 }
 
 /* Activation & Founder Utilities */
@@ -2462,20 +2462,20 @@ html.light textarea::placeholder {
   /* Keep html font-size standard (1rem = 16px) so PWA shells, drawers, and grids do not shrink */
   
   body {
-    font-size: 13px;
-    line-height: 1.45;
+    font-size: 16px;
+    line-height: 1.5;
   }
 
-  /* Target text elements inside cards and body content for 11px-12px density */
+  /* Preserve readable mobile typography; metadata utilities may remain smaller. */
   p, li, td, th, label, figcaption, blockquote, .text-xs, .text-sm {
-    font-size: 11.5px;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 1.5;
   }
 
   .marketing-theme p,
   .ac-dashboard-root p,
   .ac-business-root p {
-    font-size: 11.5px;
+    font-size: 14px;
   }
 
   /* Compact phone headings for better vertical fit */
@@ -2518,17 +2518,17 @@ html.light textarea::placeholder {
   .mkt-btn-secondary,
   .mkt-btn-large,
   .ac-workspace-action-btn {
-    font-size: 12px !important;
+    font-size: 14px !important;
     font-weight: 750 !important;
     padding: 0.5rem 0.9rem !important;
-    min-height: 2.35rem !important;
-    border-radius: 8px !important;
+    min-height: 2.75rem !important;
+    border-radius: 10px !important;
   }
 
   .mkt-btn-primary {
-    background: linear-gradient(135deg, #22d9d5 0%, #18c7c8 100%) !important;
-    color: #041027 !important;
-    box-shadow: 0 4px 14px rgba(24, 199, 200, 0.35) !important;
+    background: linear-gradient(135deg, #5f8fff 0%, #356af4 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(53, 106, 244, 0.28) !important;
   }
 
   .mkt-btn-primary:active {
