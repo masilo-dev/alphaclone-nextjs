@@ -6,6 +6,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { OperatingSystemHome } from '../OperatingSystemHome';
 import { AttentionFirstDashboard } from '../AttentionFirstDashboard';
 import { useWorkspacePreferences } from '@/hooks/useWorkspacePreferences';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 import { OverviewDashboard } from '../views/ModuleDashboardView';
 import { PlatformAdvantageHome } from '../platform-advantage/PlatformAdvantageHome';
 import { IntegratedIntelligencePanel } from '../IntegratedIntelligencePanel';
@@ -21,21 +22,25 @@ interface BusinessHomeProps {
 }
 
 /**
- * Alphaclone OS home — KPIs, attention, overview charts, modules, Today, Bonnie.
- * Deeper platform context stays behind progressive disclosure.
+ * Alphaclone OS home. Installed mobile/tablet PWA intentionally uses the
+ * attention-first business briefing only; desktop keeps the complete OS home.
  */
 const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   const { currentTenant, getDashboardStats } = useTenant();
+  const device = useDeviceExperience();
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(() => isSetupChecklistDismissed(user.id));
   const [showMoreContext, setShowMoreContext] = useState(false);
   const { dashboardHomeLayout, loading: prefsLoading } = useWorkspacePreferences();
 
-  const homeLayout = prefsLoading ? 'operating_system' : dashboardHomeLayout;
+  const isCompanion = device.isInstalledMobileCompanion;
+  const homeLayout = isCompanion ? 'attention_first' : prefsLoading ? 'operating_system' : dashboardHomeLayout;
 
   useEffect(() => {
-    if (!currentTenant?.id || !user.id) return;
+    // Companion Home delegates its summary fetch to AttentionFirstDashboard and
+    // deliberately avoids the extra desktop setup/context request path.
+    if (isCompanion || !currentTenant?.id || !user.id) return;
     let active = true;
     void getDashboardStats(currentTenant.id, user.id).then((result) => {
       if (!active) return;
@@ -45,10 +50,17 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     return () => {
       active = false;
     };
-  }, [currentTenant?.id, user.id, getDashboardStats]);
+  }, [currentTenant?.id, user.id, getDashboardStats, isCompanion]);
 
-  const showSetup =
-    !dismissed && !statsError && stats !== null && isNewWorkspaceStats(stats);
+  if (isCompanion) {
+    return (
+      <div className="ac-companion-home ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home" data-experience="companion">
+        <AttentionFirstDashboard />
+      </div>
+    );
+  }
+
+  const showSetup = !dismissed && !statsError && stats !== null && isNewWorkspaceStats(stats);
 
   return (
     <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
@@ -62,11 +74,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
         />
       ) : null}
 
-      {homeLayout === 'attention_first' ? (
-        <AttentionFirstDashboard />
-      ) : (
-        <OperatingSystemHome />
-      )}
+      {homeLayout === 'attention_first' ? <AttentionFirstDashboard /> : <OperatingSystemHome />}
 
       <div className="flex justify-center pt-1">
         <button
