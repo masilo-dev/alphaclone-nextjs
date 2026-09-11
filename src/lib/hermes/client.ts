@@ -41,7 +41,11 @@ export async function dispatchHermesTask(input: HermesTaskInput): Promise<Hermes
   if (config.localMode && !config.url) {
     const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
     const { createInitialGraphForObjective } = await import('@/lib/bonnie/runtime/plannerService');
+    const { scheduleReadyTasks } = await import('@/lib/bonnie/runtime/schedulerService');
+    const { publishOutboxBatch } = await import('@/lib/bonnie/runtime/outboxService');
+    const { processClaimableTasks } = await import('@/lib/bonnie/runtime/workerService');
     const admin = createSupabaseAdminClient();
+
     const { data: run, error } = await admin
       .from('agent_runs')
       .select('id, tenant_id, correlation_id, metadata')
@@ -84,6 +88,25 @@ export async function dispatchHermesTask(input: HermesTaskInput): Promise<Hermes
       .eq('tenant_id', input.tenantId)
       .eq('id', input.taskId);
 
+    // Hermes local mode used to stop here at "planning" and depend entirely on
+    // external cron/worker deployment. Kick the canonical Bonnie durable runtime
+    // once so delegation from chat actually starts. The durable worker retains
+    // all existing idempotency, approval, lease and verification semantics.
+    let worker: HermesDispatchResult['worker'] | undefined;
+    try {
+      await scheduleReadyTasks({ tenantId: input.tenantId, runId: input.taskId, limit: 20 });
+      await publishOutboxBatch(20);
+      const firstTick = await processClaimableTasks(4);
+      worker = {
+        processed: firstTick.processed,
+        completed: firstTick.completed,
+        waiting: firstTick.waiting,
+        failed: firstTick.failed,
+      };
+    } catch (kickErr) {
+      console.warn('[Hermes] local runtime kick failed; durable worker can retry:', kickErr);
+    }
+
     return {
       dispatched: true,
       status: 'local_queued',
@@ -91,7 +114,10 @@ export async function dispatchHermesTask(input: HermesTaskInput): Promise<Hermes
       runId: input.taskId,
       goalId: null,
       graphId: graph.graphId,
-      message: 'Hermes local runtime queued the task in this app',
+      worker,
+      message: worker && worker.processed > 0
+        ? `Hermes local runtime started ${worker.processed} task(s)`
+        : 'Hermes local runtime queued the task; the durable worker will continue it',
     };
   }
 
