@@ -59,8 +59,43 @@ export const PWA_COMPANION_CAPABILITIES: Record<CompanionModuleId, CompanionCapa
   advanced_configuration: { level: 'DESKTOP', quickActions: [], desktopReason: 'Advanced configuration is available on desktop.' },
 };
 
+const ROUTE_CAPABILITY_MAP: Array<{ prefixes: string[]; moduleId: CompanionModuleId }> = [
+  { moduleId: 'bonnie', prefixes: ['/dashboard/bonnie', '/dashboard/business/bonnie'] },
+  { moduleId: 'notifications', prefixes: ['/dashboard/notifications'] },
+  { moduleId: 'calendar', prefixes: ['/dashboard/calendar', '/dashboard/business/calendar', '/dashboard/business/meetings'] },
+  { moduleId: 'tasks', prefixes: ['/dashboard/tasks', '/dashboard/business/tasks'] },
+  { moduleId: 'projects', prefixes: ['/dashboard/projects', '/dashboard/business/projects'] },
+  { moduleId: 'leads', prefixes: ['/dashboard/leads'] },
+  { moduleId: 'crm', prefixes: ['/dashboard/crm', '/dashboard/contacts', '/dashboard/clients', '/dashboard/business/clients'] },
+  { moduleId: 'invoices', prefixes: ['/dashboard/invoices', '/dashboard/business/billing/manage'] },
+  { moduleId: 'quotes', prefixes: ['/dashboard/quotes', '/dashboard/business/quotes'] },
+  { moduleId: 'contracts', prefixes: ['/dashboard/contracts', '/dashboard/business/contracts'] },
+  { moduleId: 'social', prefixes: ['/dashboard/social', '/dashboard/business/social'] },
+  { moduleId: 'documents', prefixes: ['/dashboard/documents', '/dashboard/business/documents', '/dashboard/submit'] },
+  { moduleId: 'marketing', prefixes: ['/dashboard/email-campaigns', '/dashboard/business/campaigns', '/dashboard/marketing'] },
+  { moduleId: 'money', prefixes: ['/dashboard/finance', '/dashboard/business/billing', '/dashboard/accounting', '/dashboard/business/expenses'] },
+  { moduleId: 'reporting', prefixes: ['/dashboard/reporting', '/dashboard/reports', '/dashboard/business/reports', '/dashboard/analytics'] },
+  { moduleId: 'goals', prefixes: ['/dashboard/goals', '/dashboard/planning'] },
+  { moduleId: 'nexus', prefixes: ['/dashboard/automations', '/dashboard/marketplace', '/dashboard/business/workflows'] },
+  { moduleId: 'control', prefixes: ['/dashboard/business/logs', '/dashboard/business/control', '/dashboard/system'] },
+  { moduleId: 'settings', prefixes: ['/dashboard/settings', '/dashboard/business/settings'] },
+  { moduleId: 'admin', prefixes: ['/admin', '/super-admin', '/dashboard/admin'] },
+  { moduleId: 'home', prefixes: ['/dashboard'] },
+];
+
 export function getCompanionCapability(moduleId: CompanionModuleId): CompanionCapability {
   return PWA_COMPANION_CAPABILITIES[moduleId];
+}
+
+export function resolveCompanionModule(pathname: string): CompanionModuleId {
+  const match = ROUTE_CAPABILITY_MAP.find(({ prefixes }) =>
+    prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)),
+  );
+  return match?.moduleId ?? 'advanced_configuration';
+}
+
+export function getCompanionCapabilityForPath(pathname: string): CompanionCapability {
+  return getCompanionCapability(resolveCompanionModule(pathname));
 }
 
 export function isDesktopFirst(moduleId: CompanionModuleId): boolean {
