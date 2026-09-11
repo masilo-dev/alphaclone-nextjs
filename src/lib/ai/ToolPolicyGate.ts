@@ -243,7 +243,7 @@ export async function evaluateToolPolicy(params: {
       })
       .catch(() => {});
 
-  if (agentMode === 'autonomous' && riskClass !== 'read') {
+  if (effectiveAgentMode === 'autonomous' && riskClass !== 'read') {
     const evaluation = evaluateBusinessAIState(aiState, {
       requires_external_action: riskClass === 'send' || riskClass === 'bulk',
       requires_financial_action: riskClass === 'financial',

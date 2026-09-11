@@ -4702,18 +4702,9 @@ class AlphaCloneMCPServer {
 
           result = { content: [{ type: 'text', text: JSON.stringify({
             status: 'sent',
-            message: `Invoice ${invoice.invoice_number} sent successfully.`,
-            sent_to: to,
-            invoice_number: invoice.invoice_number,
-            amount,
-            provider_used: dispatch.provider,
-            email_id: dispatch.emailId,
-            pdf_url: pdfUrl,
-            attachment: {
-              filename: `Invoice_${invoice.invoice_number}.pdf`,
-              content_type: 'application/pdf',
-              base64: pdfBase64,
-            },
+            message: `Invoice lifecycle started successfully via background workflow.`,
+            invoice_id,
+            runId
           }, null, 2) }] };
           break;
         }
