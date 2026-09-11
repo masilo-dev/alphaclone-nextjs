@@ -37,18 +37,18 @@ export function RichChartTooltip({
   if (!active || !payload?.length) return null;
 
   return (
-    <div className="min-w-[150px] rounded-lg border border-white/10 bg-slate-950/95 p-3 shadow-2xl shadow-black/30 backdrop-blur">
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p>
-      <div className="mt-2 space-y-1.5">
+    <div className="ac-workspace-panel min-w-[150px] space-y-2 p-3 shadow-xl">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)]">{label}</p>
+      <div className="space-y-1.5">
         {payload.map((item) => {
           const name = item.dataKey === 'value2' || item.name === 'value2' ? 'Collected' : dual ? 'Invoiced' : 'Total';
           return (
             <div key={`${item.dataKey || item.name}-${item.color}`} className="flex items-center justify-between gap-4">
-              <span className="inline-flex items-center gap-2 text-[12px] font-medium text-slate-300">
+              <span className="inline-flex items-center gap-2 text-[12px] font-medium text-[var(--ws-text-secondary)]">
                 <span className="h-2 w-2 rounded-full" style={{ background: item.color || DASHBOARD_COLORS.blue }} />
                 {name}
               </span>
-              <span className="text-[13px] font-black tabular-nums text-white">
+              <span className="text-[13px] font-semibold tabular-nums text-[var(--ws-text-primary)]">
                 {formatChartValue(Number(item.value || 0), valuePrefix)}
               </span>
             </div>
@@ -77,7 +77,7 @@ export function RichChartEmptyState({
     <div className="flex h-[240px] items-center justify-center">
       <div className="mx-auto max-w-[22rem] text-center">
         <span
-          className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg border"
+          className="mx-auto flex h-11 w-11 items-center justify-center rounded-[var(--ws-radius-control,8px)] border"
           style={{
             color: accentColor,
             borderColor: `color-mix(in srgb, ${accentColor} 28%, transparent)`,
@@ -86,14 +86,14 @@ export function RichChartEmptyState({
         >
           <BarChart3 className="h-5 w-5" aria-hidden />
         </span>
-        <p className="mt-3 text-sm font-semibold text-white">{t(title)}</p>
+        <p className="mt-3 text-sm font-semibold text-[var(--ws-text-primary)]">{t(title)}</p>
         <p className="mt-1 text-[12px] leading-relaxed text-[var(--ws-text-tertiary)]">{t(description)}</p>
         {actionLabel && onAction ? (
           <button
             type="button"
             onClick={onAction}
             className={cn(
-              'mt-4 inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-3 text-[12px] font-bold transition-colors hover:bg-white/[0.04]',
+              'mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--ws-radius-control,8px)] border px-3 text-[12px] font-semibold transition-colors hover:bg-[var(--ws-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
             )}
             style={{ borderColor: `color-mix(in srgb, ${accentColor} 28%, transparent)`, color: accentColor }}
           >
