@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { gmailServerService } from '@/services/server/gmailServerService';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 
 export async function POST(req: NextRequest) {
     try {
@@ -12,71 +13,29 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
         }
 
-        const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
-        
-        let message: string;
-        
-        if (attachments && attachments.length > 0) {
-            // Create multipart message with attachments
-            const boundary = `boundary_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-            const messageParts = [
-                `To: ${to}`,
-                cc ? `Cc: ${cc}` : null,
-                bcc ? `Bcc: ${bcc}` : null,
-                `Subject: ${utf8Subject}`,
-                `MIME-Version: 1.0`,
-                `Content-Type: multipart/mixed; boundary="${boundary}"`,
-                '',
-                `--${boundary}`,
-                `Content-Type: text/plain; charset="UTF-8"`,
-                `Content-Transfer-Encoding: 7bit`,
-                '',
-                messageBody,
-            ].filter(Boolean);
-
-            // Add each attachment
-            for (const att of attachments) {
-                messageParts.push(
-                    `--${boundary}`,
-                    `Content-Type: ${att.mimeType || 'application/octet-stream'}; name="${att.filename}"`,
-                    `Content-Disposition: attachment; filename="${att.filename}"`,
-                    `Content-Transfer-Encoding: base64`,
-                    '',
-                    att.data,
-                );
-            }
-
-            messageParts.push(`--${boundary}--`);
-            message = messageParts.join('\n');
-        } else {
-            // Simple text message
-            const messageParts = [
-                `To: ${to}`,
-                cc ? `Cc: ${cc}` : null,
-                bcc ? `Bcc: ${bcc}` : null,
-                `Subject: ${utf8Subject}`,
-                `Content-Type: text/plain; charset="UTF-8"`,
-                '',
-                messageBody,
-            ].filter(Boolean);
-            message = messageParts.join('\n');
+        const { user } = await requireAuthenticatedUser();
+        if (user.id !== userId) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        const encodedMessage = Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-        const payload: any = { raw: encodedMessage };
-        if (threadId) {
-            payload.threadId = threadId;
-        }
-
-        const data = await gmailServerService.proxyRequest(userId, 'messages/send', {
-            method: 'POST',
-            body: JSON.stringify(payload),
+        const data = await gmailServerService.sendEmail(userId, {
+            to,
+            subject,
+            messageBody,
+            threadId,
+            cc,
+            bcc,
+            attachments: attachments?.map((att: any) => ({
+                filename: att.filename,
+                content: att.data, // Expected to be base64
+                contentType: att.mimeType,
+            })),
         });
 
         return NextResponse.json(data);
     } catch (err: any) {
-        console.error('Gmail Send Proxy Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return routeErrorResponse(err, 'Failed to send message');
     }
 }
+
+

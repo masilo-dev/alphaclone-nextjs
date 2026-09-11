@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import CalendlyEmbed from '../../booking/CalendlyEmbed';
 import { Card } from '@/components/ui/UIComponents';
-import { Calendar, Settings, AlertCircle, Clock, ExternalLink, RefreshCw, User } from 'lucide-react';
+import { Calendar, Settings, AlertCircle, Clock, ExternalLink, RefreshCw, User, CalendarCheck, CalendarDays } from 'lucide-react';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { toast } from 'react-hot-toast';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { BOOKING_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
 const BookingTab: React.FC = () => {
     const { currentTenant } = useTenant();
@@ -66,29 +69,52 @@ const BookingTab: React.FC = () => {
         }
     };
 
+    const bookingStats = useMemo<ModuleStat[]>(() => {
+        const now = new Date();
+        const upcoming = scheduledEvents.filter((e: { start_time?: string }) => e.start_time && new Date(e.start_time) >= now);
+        const thisWeekEnd = new Date(now); thisWeekEnd.setDate(thisWeekEnd.getDate() + 7);
+        const thisWeek = scheduledEvents.filter((e: { start_time?: string }) => {
+            if (!e.start_time) return false;
+            const d = new Date(e.start_time);
+            return d >= now && d <= thisWeekEnd;
+        });
+        return [
+            { label: 'Upcoming', value: upcoming.length, sub: 'Future appointments', Icon: CalendarCheck, accent: 'teal' },
+            { label: 'This Week', value: thisWeek.length, sub: 'Next 7 days', Icon: CalendarDays, accent: 'blue' },
+            { label: 'Synced Total', value: scheduledEvents.length, sub: 'From Calendly', Icon: Clock, accent: 'purple' },
+            { label: 'Status', value: isEnabled ? 'Live' : 'Off', sub: 'Calendly connection', Icon: Calendar, accent: isEnabled ? 'emerald' : 'amber' },
+        ];
+    }, [scheduledEvents, isEnabled]);
+
     if (!isEnabled || !calendlyUrl) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
-                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                    <Calendar className="w-10 h-10 text-slate-500" />
+            <div className="space-y-5 pb-20 ac-scroll-full ac-enterprise-module">
+                <ExecutionDecisionGuide
+                    steps={BOOKING_EXECUTION_STEPS}
+                    onNavigate={(href) => { window.location.href = href; }}
+                />
+                <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in-up">
+                    <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                        <Calendar className="w-10 h-10 text-slate-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Booking Not Connected</h3>
+                    <p className="text-slate-400 max-w-md mb-8">
+                        Connect Calendly or native booking in settings. Cal.com connection is coming soon.
+                    </p>
+                    <button
+                        onClick={() => window.location.href = '/dashboard/business/settings'}
+                        className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                    >
+                        <Settings className="w-4 h-4" />
+                        Go to Settings
+                    </button>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Calendly Not Connected</h3>
-                <p className="text-slate-400 max-w-md mb-8">
-                    Connect your Calendly account in settings to enable the embedded booking view and schedule sync.
-                </p>
-                <button
-                    onClick={() => window.location.href = '/dashboard/business/settings'}
-                    className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
-                >
-                    <Settings className="w-4 h-4" />
-                    Go to Settings
-                </button>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-6 pb-20 ac-scroll-full ac-enterprise-module">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -113,6 +139,13 @@ const BookingTab: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            <ExecutionDecisionGuide
+                steps={BOOKING_EXECUTION_STEPS}
+                onNavigate={(href) => { window.location.href = href; }}
+            />
+
+            <ModuleStatCards stats={bookingStats} hub="calendar" />
 
             {activeView === 'schedule' ? (
                 <div className="space-y-4">
@@ -182,7 +215,7 @@ const BookingTab: React.FC = () => {
                                                         <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 group-hover:scale-110 transition-transform">
                                                             <Calendar className="w-5 h-5" />
                                                         </div>
-                                                        <span className="text-[10px] font-bold px-2 py-1 bg-slate-800 text-slate-400 rounded-lg border border-slate-700">
+                                                        <span className="text-xs font-bold px-2 py-1 bg-slate-800 text-slate-400 rounded-lg border border-slate-700">
                                                             Scheduled
                                                         </span>
                                                     </div>
@@ -220,7 +253,7 @@ const BookingTab: React.FC = () => {
                                                             {invitee.reschedule_url && (
                                                                 <button
                                                                     onClick={() => window.open(invitee.reschedule_url, '_blank')}
-                                                                    className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
+                                                                    className="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
                                                                 >
                                                                     Reschedule
                                                                 </button>
@@ -228,7 +261,7 @@ const BookingTab: React.FC = () => {
                                                             {invitee.cancel_url && (
                                                                 <button
                                                                     onClick={() => window.open(invitee.cancel_url, '_blank')}
-                                                                    className="flex-1 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
+                                                                    className="flex-1 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wide rounded-lg transition-colors text-center"
                                                                 >
                                                                     Cancel
                                                                 </button>
@@ -241,11 +274,11 @@ const BookingTab: React.FC = () => {
                                                             <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center">
                                                                 <User className="w-3 h-3 text-slate-500" />
                                                             </div>
-                                                            <span className="text-[10px] text-slate-400">1 Invitee</span>
+                                                            <span className="text-xs text-slate-400">1 Invitee</span>
                                                         </div>
                                                         <button
                                                             onClick={() => window.location.href = '/dashboard/business/calendar'}
-                                                            className="text-[10px] font-bold text-teal-400 hover:underline"
+                                                            className="text-xs font-bold text-teal-400 hover:underline"
                                                         >
                                                             View in Calendar
                                                         </button>
@@ -259,7 +292,7 @@ const BookingTab: React.FC = () => {
                                 <div className="flex flex-col items-center justify-center py-16 bg-slate-900/20 border border-slate-800 border-dashed rounded-3xl">
                                     <Calendar className="w-10 h-10 text-slate-700 mb-4" />
                                     <p className="text-slate-500 font-medium text-sm">No upcoming appointments found.</p>
-                                    <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-widest">Bookings sync automatically</p>
+                                    <p className="text-xs text-slate-600 mt-1 uppercase tracking-widest">Bookings sync automatically</p>
                                 </div>
                             )}
                         </>
@@ -279,7 +312,7 @@ const BookingTab: React.FC = () => {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => window.open('https://calendly.com/app', '_blank')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-black uppercase tracking-wider rounded-lg transition-all"
                             >
                                 <ExternalLink className="w-3 h-3" />
                                 Open Calendly Admin
@@ -289,7 +322,7 @@ const BookingTab: React.FC = () => {
                                     navigator.clipboard.writeText(calendlyUrl);
                                     toast.success('Link copied!');
                                 }}
-                                className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all"
+                                className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 text-xs font-black uppercase tracking-wider rounded-lg transition-all"
                             >
                                 Copy Link
                             </button>

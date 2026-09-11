@@ -172,12 +172,12 @@ This single file contains ALL Week 3 + Week 4 database changes:
 
 1. **Backup First:**
    ```
-   https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/database/backups
+   https://supabase.com/dashboard/project/<your-project-ref>/database/backups
    ```
 
 2. **Open SQL Editor:**
    ```
-   https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql/new
+   https://supabase.com/dashboard/project/<your-project-ref>/sql/new
    ```
 
 3. **Copy & Run:**

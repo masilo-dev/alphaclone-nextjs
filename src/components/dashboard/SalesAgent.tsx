@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck, Globe } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -8,8 +11,8 @@ import { fileImportService } from '../../services/fileImportService';
 import LeadDetailModal from './leads/LeadDetailModal';
 import { Button, Input, Card, Modal } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
-import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { AerialLeadNavigator } from './leads/AerialLeadNavigator';
@@ -18,6 +21,10 @@ import { LeadAuditReport } from './leads/LeadAuditReport';
 import OmniLeadFinder from '../leads/OmniLeadFinder';
 import KanbanBoard from './crm/KanbanBoard';
 import AutomationBuilder from './workflows/AutomationBuilder';
+import { launchFunnelService } from '@/services/launchFunnelService';
+import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
+import { BonnieModulePageShell } from './bonnie/BonnieModulePageShell';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface ParsedContact {
     name?: string;
@@ -29,10 +36,31 @@ interface ParsedContact {
 }
 
 const SalesAgent: React.FC = () => {
+    const { currentTenant } = useTenant();
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
-    const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni' | 'kanban' | 'automation'>('omni'); // Set default to omni
-    const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
+    const router = useRouter();
+    const { t } = useLanguage();
+    const searchParams = useSearchParams();
+    // Map URL ?tab= param to internal tab names
+    const getInitialTab = (): 'leads' | 'agent' | 'omni' | 'kanban' | 'automation' => {
+        const tab = searchParams?.get('tab');
+        if (tab === 'chat') return 'agent';
+        if (tab === 'leads' || tab === 'omni') return 'omni';
+        return 'omni';
+    };
+    const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni' | 'kanban' | 'automation'>(getInitialTab);
+
+    useEffect(() => {
+        const tab = searchParams?.get('tab');
+        if (tab === 'finder') {
+            router.replace('/dashboard/leads/campaigns');
+            return;
+        }
+        if (tab === 'leads' || tab === 'omni') setActiveTab('omni');
+        else if (tab === 'chat' || tab === 'agent') setActiveTab('agent');
+    }, [searchParams, router]);
+    const [searchCriteria, setSearchCriteria] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
     
     // Validate that required functions are available
@@ -99,8 +127,7 @@ const SalesAgent: React.FC = () => {
             setShowManualModal(false);
             setManualLead({ businessName: '', email: '', phone: '', industry: '', location: '', value: '' });
 
-            // Auto-process manual lead too? User said "ALL generated leads", but let's stick to AI ones for now unless specified.
-            // Actually, for consistency, let's keep manual separate unless requested.
+            // Manual entries stay in lead status so a human can verify them before conversion.
             loadLeads();
         }
     };
@@ -171,20 +198,12 @@ const SalesAgent: React.FC = () => {
 
             // 7. Sync to HubSpot (NEW)
             try {
-                const { supabase } = await import('../../lib/supabase');
-                const { data: hubspotIntegration } = await supabase
-                    .from('integrations')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .eq('type', 'hubspot')
-                    .maybeSingle();
-
-                if (hubspotIntegration && hubspotIntegration.enabled) {
+                if (currentTenant?.id) {
                     console.log(`[SalesAgent] HubSpot connected, syncing lead ${lead.businessName}...`);
                     await fetch('/api/hubspot/sync', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId, leads: [lead] })
+                        body: JSON.stringify({ tenantId: currentTenant.id, leads: [lead] })
                     });
                 }
             } catch (hsErr) {
@@ -289,18 +308,18 @@ const SalesAgent: React.FC = () => {
 
     // Chat State
     const [messages, setMessages] = useState([
-        { id: 1, sender: 'agent', text: 'Hello. I can help you find leads, draft outreach messages, and prepare CRM follow-up. Assisted workflows are available now; fully autonomous execution is still in beta.' }
+        { id: 1, sender: 'agent', text: 'Hello. I can find and qualify leads, draft outreach, save CRM follow-up, and dispatch durable Alpha missions for longer-running work.' }
     ]);
     const [inputText, setInputText] = useState('');
     const [pendingSearch, setPendingSearch] = useState<{ industry: string, location: string, filters?: string } | null>(null);
 
     const handleSearch = async () => {
         // Validate inputs
-        if (!searchParams.industry.trim()) {
+        if (!searchCriteria.industry.trim()) {
             toast.error('Please enter a target industry');
             return;
         }
-        if (!searchParams.location.trim()) {
+        if (!searchCriteria.location.trim()) {
             toast.error('Please enter a location');
             return;
         }
@@ -335,7 +354,7 @@ const SalesAgent: React.FC = () => {
     };
 
     const handleVisualSearch = async () => {
-        if (!searchParams.industry || !searchParams.location) {
+        if (!searchCriteria.industry || !searchCriteria.location) {
             toast.error('Please enter both industry and location for AI lead search');
             return;
         }
@@ -352,9 +371,9 @@ const SalesAgent: React.FC = () => {
         }
 
         setIsSearching(true);
-        const taskName = `AI Senior SDR & Data Scientist Lead Search for ${searchParams.industry} in ${searchParams.location}`;
+        const taskName = `AI Senior SDR & Data Scientist Lead Search for ${searchCriteria.industry} in ${searchCriteria.location}`;
 
-        setVisualSearchParams({ industry: searchParams.industry, location: searchParams.location });
+        setVisualSearchParams({ industry: searchCriteria.industry, location: searchCriteria.location });
         setIsVisualSearchActive(true);
 
         startTask(
@@ -369,14 +388,14 @@ const SalesAgent: React.FC = () => {
                 }
                 
                 // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
-                const res = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
+                const res = await generateLeads(searchCriteria.industry, searchCriteria.location, '', 'tenant');
 
                 if (res && res.leads && res.leads.length > 0) {
                     console.log(`✅ Generated ${res.leads.length} leads, saving to database...`);
 
                     // 2. Perform Audit
                     if (res.rawMapsData && res.rawMapsData.length > 0) {
-                        const audit = auditService.performLeadAudit(res.leads, res.rawMapsData, searchParams.industry);
+                        const audit = auditService.performLeadAudit(res.leads, res.rawMapsData, searchCriteria.industry);
                         setAuditResult(audit);
                         setShowAudit(true);
                     }
@@ -434,11 +453,15 @@ const SalesAgent: React.FC = () => {
                     }
                     return { count, processed };
                 } else {
-                    throw new Error("No leads found. AI can make mistakes or have region-specific limitations. Try being more direct with your search or adjusting the criteria.");
+                    throw new Error("No matching leads for this search. Try a clearer niche, a broader location, or fewer filters.");
                 }
             },
             (result) => {
-                toast.success(`🎉 Added ${result.count} leads, created ${result.processed} clients & draft quotes!`, { duration: 5000 });
+                toast.success(`Added ${result.count} leads, created ${result.processed} clients and draft quotes.`, { duration: 5000 });
+                if (result.count > 0) {
+                    void launchFunnelService.completeStep('first_lead_found');
+                    userLearningPreferencesService.recordLeadSearch(searchCriteria.industry, searchCriteria.location);
+                }
                 loadLeads();
                 setIsVisualSearchActive(false);
             }
@@ -631,6 +654,7 @@ const SalesAgent: React.FC = () => {
             if (dealError) throw new Error(dealError);
 
             toast.success(`✅ Deal "${name}" created!`, { id: 'create_deal' });
+            void launchFunnelService.completeStep('first_deal_created', user.id);
             loadLeads();
         } catch (error: any) {
             toast.error('Failed to create deal: ' + error.message, { id: 'create_deal' });
@@ -785,7 +809,7 @@ const SalesAgent: React.FC = () => {
             if (commands.search) {
                 const { industry, location, filters } = commands.search;
                 if (industry && location) {
-                    toast.success(`🤖 Intent detected: Searching for ${industry}...`);
+                    toast.success(`Intent detected: searching for ${industry}...`);
                     handleAutoSearch(industry, location, filters);
                 }
             }
@@ -798,7 +822,7 @@ const SalesAgent: React.FC = () => {
                 );
 
                 if (matchingLead) {
-                    toast.success(`🔬 Researching "${businessName}"...`);
+                    toast.success(`Researching "${businessName}"...`);
                     handleEnrich(matchingLead.id);
                 } else {
                     setMessages(prev => [...prev, {
@@ -903,11 +927,15 @@ const SalesAgent: React.FC = () => {
 
                     return { count, processed, industry, location };
                 } else {
-                    throw new Error("No leads found. Try different criteria.");
+                    throw new Error("No matching leads for this search. Try a broader niche or location.");
                 }
             },
             (result) => {
-                toast.success(`🎉 Process complete! Created ${result.processed} draft quotes ready for review.`, { duration: 5000 });
+                toast.success(`Process complete. Created ${result.processed} draft quotes ready for review.`, { duration: 5000 });
+                if (result.count > 0) {
+                    void launchFunnelService.completeStep('first_lead_found');
+                    userLearningPreferencesService.recordLeadSearch(result.industry, result.location);
+                }
                 loadLeads();
 
                 setMessages(prev => [...prev, {
@@ -925,7 +953,7 @@ const SalesAgent: React.FC = () => {
 
     // New Function: Process Pending Leads
     const handleProcessPendingLeads = async () => {
-        const toastId = toast.loading('🔍 Scanning for pending leads...');
+        const toastId = toast.loading('Scanning for pending leads...');
         try {
             const { leads: allLeads, error } = await leadService.getLeads();
             if (error) throw new Error(error);
@@ -937,7 +965,7 @@ const SalesAgent: React.FC = () => {
                 return;
             }
 
-            toast.loading(`⚡ Found ${pendingLeads.length} pending leads. Processing...`, { id: toastId });
+            toast.loading(`Found ${pendingLeads.length} pending leads. Processing...`, { id: toastId });
 
             const { supabase } = await import('../../lib/supabase');
             const { data: { user } } = await supabase.auth.getUser();
@@ -981,34 +1009,75 @@ const SalesAgent: React.FC = () => {
     };
 
     return (
-        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col p-8 overflow-y-auto custom-scrollbar">
+        <BonnieModulePageShell showBonnieDock={false}>
+        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col px-4 py-4 sm:px-6 sm:py-6 lg:p-8 overflow-y-auto custom-scrollbar min-w-0">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
                 <div className="min-w-0">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 flex items-center gap-2 sm:gap-3">
                         <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-teal-400 flex-shrink-0" />
-                        <span className="truncate">Growth Agent</span>
+                        <span className="truncate">{t('Growth Agent')}</span>
                     </h2>
                 </div>
-                <div className="flex flex-wrap bg-slate-800 p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
+                <div className="hidden md:flex flex-wrap bg-slate-800 p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
                     <button
+                        type="button"
                         onClick={() => setActiveTab('omni')}
                         className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
                         <Globe className="w-3.5 h-3.5" />
-                        AlphaClone System Lead
+                        {t('AlphaClone System Lead')}
                     </button>
                     <button
+                        type="button"
                         onClick={() => setActiveTab('agent')}
                         className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
-                        Agent Chat
+                        {t('Agent Chat')}
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('automation')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        {t('Automation')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/dashboard/deals')}
+                        className="px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap text-slate-400 hover:text-white"
+                    >
+                        {t('Pipeline')}
+                    </button>
+                </div>
+                <div className="md:hidden w-full min-w-0">
+                    <label htmlFor="growth-agent-view" className="sr-only">
+                        {t('Select Growth Agent mode')}
+                    </label>
+                    <select
+                        id="growth-agent-view"
+                        className="w-full max-w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-100 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        value={activeTab === 'agent' ? 'agent' : 'omni'}
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === 'marketplace') {
+                                router.push('/dashboard/marketplace');
+                                return;
+                            }
+                            if (v === 'omni' || v === 'agent') {
+                                setActiveTab(v);
+                            }
+                        }}
+                    >
+                        <option className="bg-slate-900 text-slate-100" value="omni">{t('Lead search')}</option>
+                        <option className="bg-slate-900 text-slate-100" value="agent">{t('Agent chat')}</option>
+                        <option className="bg-slate-900 text-slate-100" value="marketplace">{t('Integration marketplace')}</option>
+                    </select>
                 </div>
             </div>
 
-            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-2 text-[10px] uppercase tracking-widest font-bold text-slate-500 flex items-center gap-2">
+            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-2 text-xs uppercase tracking-widest font-bold text-slate-500 flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-                Finding Leads & Autonomous SDR System Active
+                {t('Finding Leads & Autonomous SDR System Active')}
             </div>
             {/* Aerial View - Mini Widget during search or navigation - Hidden as per user request to eliminate map visuals */}
             {/* 
@@ -1017,8 +1086,8 @@ const SalesAgent: React.FC = () => {
                     <AerialLeadNavigator
                         leads={leads}
                         isSearching={isVisualSearchActive}
-                        searchTopic={visualSearchParams.industry || searchParams.industry}
-                        searchLocation={visualSearchParams.location || searchParams.location}
+                        searchTopic={visualSearchParams.industry || searchCriteria.industry}
+                        searchLocation={visualSearchParams.location || searchCriteria.location}
                     />
                 </div>
             )}
@@ -1026,7 +1095,11 @@ const SalesAgent: React.FC = () => {
 
 
 
-            {activeTab === 'omni' ? (
+            {activeTab === 'automation' ? (
+                <div className="flex-1 bg-transparent w-full p-4">
+                    <AutomationBuilder />
+                </div>
+            ) : activeTab === 'omni' ? (
                 <div className="flex-1 bg-transparent w-full">
                     <OmniLeadFinder />
                 </div>
@@ -1087,7 +1160,7 @@ const SalesAgent: React.FC = () => {
                                     <Button variant="outline" size="sm" onClick={() => setPendingSearch(null)}>Cancel</Button>
                                     <Button size="sm" className="bg-teal-600 hover:bg-teal-500" onClick={() => {
                                         if (!pendingSearch) return;
-                                        setSearchParams({
+                                        setSearchCriteria({
                                             industry: pendingSearch.industry,
                                             location: pendingSearch.location
                                         });
@@ -1205,6 +1278,7 @@ const SalesAgent: React.FC = () => {
                 />
             )}
         </div>
+        </BonnieModulePageShell>
     );
 };
 

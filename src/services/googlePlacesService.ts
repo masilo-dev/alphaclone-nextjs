@@ -1,82 +1,74 @@
 /**
- * Google Places Service
- * Handles interaction with Google Places API (New) for searching businesses.
+ * Google Places API (New) + Geocoding for lead discovery.
+ * DISABLED: System transitioned to HERE Maps and OSM.
  */
 
 interface PlaceResult {
-    id: string;
-    displayName?: { text: string };
-    formattedAddress?: string;
-    nationalPhoneNumber?: string;
-    websiteUri?: string;
-    businessStatus?: string;
-    types?: string[];
-    location?: { latitude: number; longitude: number };
+  id?: string;
+  displayName?: { text: string };
+  formattedAddress?: string;
+  nationalPhoneNumber?: string;
+  websiteUri?: string;
+  businessStatus?: string;
+  types?: string[];
+  location?: { latitude: number; longitude: number };
+  rating?: number;
+  userRatingCount?: number;
+  googleMapsUri?: string;
 }
 
-export const googlePlacesService = {
-    /**
-     * Search for places using Google Places Text Search (New)
-     * @param query Search query (e.g. "Construction companies in Harare")
-     * @param apiKey Google Places API Key
-     */
-    async searchPlaces(query: string, apiKey: string): Promise<{ places: any[]; rawResults?: any[]; error: string | null }> {
-        if (!apiKey) {
-            return { places: [], error: 'API Key is missing' };
-        }
-
-        try {
-            const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Goog-Api-Key': apiKey,
-                    'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.businessStatus,places.types,places.location'
-                },
-                body: JSON.stringify({
-                    textQuery: query,
-                    maxResultCount: 10 // Start with 10 for safety/quota
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                console.error('Google Places API Error:', errData);
-                throw new Error(errData.error?.message || 'Failed to fetch from Google Places');
-            }
-
-            const data = await response.json();
-
-            if (!data.places || data.places.length === 0) {
-                return { places: [], rawResults: [], error: null };
-            }
-
-            // Map to our internal Lead format
-            const mappedPlaces = data.places.map((place: PlaceResult) => ({
-                businessName: place.displayName?.text || 'Unknown Business',
-                location: place.formattedAddress || 'Unknown Location',
-                phone: place.nationalPhoneNumber || '',
-                website: place.websiteUri || '',
-                industry: humanizeType(place.types?.[0] || ''),
-                lat: place.location?.latitude,
-                lng: place.location?.longitude,
-                source: 'Google Maps'
-            }));
-
-            return { places: mappedPlaces, rawResults: data.places, error: null };
-
-        } catch (error) {
-            console.error('Search Places Exception:', error);
-            return { places: [], error: error instanceof Error ? error.message : 'Unknown error' };
-        }
-    }
+export type MappedPlaceLead = {
+  placeId: string;
+  businessName: string;
+  formattedAddress: string;
+  phone: string;
+  website: string;
+  industry: string;
+  lat?: number;
+  lng?: number;
+  rating?: number;
+  userRatingCount?: number;
+  googleMapsUri?: string;
+  source: 'Google Maps';
+  countryCode?: string;
 };
 
-// Helper to make "consultant_contractor" -> "Consultant Contractor"
-function humanizeType(type: string): string {
-    if (!type) return 'Business';
-    return type
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-}
+export const googlePlacesService = {
+  /**
+   * Search for places using Google Places Text Search (New).
+   * DISABLED: System transitioned to HERE Maps and OSM.
+   */
+  async searchPlaces(
+    _query: string,
+    _apiKey: string,
+    _options?: { maxResultCount?: number }
+  ): Promise<{ places: MappedPlaceLead[]; rawResults?: PlaceResult[]; error: string | null }> {
+    return { 
+      places: [], 
+      error: 'Google Places API is disabled. System is now powered by HERE Maps and OpenStreetMap (SOM).' 
+    };
+  },
+
+  /**
+   * Geocode the location, then run Text Search with optional circular bias.
+   * DISABLED: System transitioned to HERE Maps and OSM.
+   */
+  async searchPlacesForLeads(
+    _niche: string,
+    _location: string,
+    _apiKey: string,
+    _options?: { radiusKm?: number; maxResults?: number }
+  ): Promise<{
+    places: MappedPlaceLead[];
+    locationValidated: boolean;
+    formattedLocation?: string;
+    geocodeError?: string | null;
+    error: string | null;
+  }> {
+    return {
+      places: [],
+      locationValidated: false,
+      error: 'Google Places API is disabled. System is now powered by HERE Maps and OpenStreetMap (SOM).',
+    };
+  },
+};

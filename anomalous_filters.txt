@@ -1,0 +1,5 @@
+src/components/KeyboardShortcuts.tsx:61: const filteredShortcuts = shortcuts.filter(
+src/components/dashboard/KPICards.tsx:69: const activeDeals = safeDeals.filter(
+src/components/dashboard/PortfolioShowcase.tsx:43: const portfolioProjects = isAdmin ? projects : projects.filter(
+src/components/dashboard/video/CustomVideoRoom.tsx:110: renderTimestampsRef.current = renderTimestampsRef.current.filter(
+src/contexts/AuthContext.tsx:35: const keys = Object.keys(localStorage).filter(

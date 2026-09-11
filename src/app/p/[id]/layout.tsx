@@ -8,6 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (!project) {
         return {
             title: 'Project Not Found | AlphaClone Systems',
+            robots: { index: false, follow: false },
         };
     }
 
@@ -18,6 +19,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return {
         title: `${projectName} | Mission Control | AlphaClone Systems`,
         description: `Real-time status for ${projectName}. Current Phase: ${stage}. Status: ${status}. Unified project intelligence powered by AlphaClone Systems.`,
+        // Client project pages must never be indexed as AlphaClone marketing content
+        robots: { index: false, follow: false },
         openGraph: {
             title: `${projectName} | AlphaClone Mission Control`,
             description: `Transparent project execution and real-time updates for ${projectName}.`,

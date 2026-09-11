@@ -1,120 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
+import { z } from 'zod';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { sendEmail } from '@/lib/email/sendEmail';
+import { resolveEmailAttachmentsFromFileIds } from '@/lib/files/resolveEmailAttachments';
 
-/**
- * POST /api/email/send
- * Send a single email via SendGrid (prioritized) or Resend (fallback)
- * Uses per-account credentials from the 'integrations' table.
- */
+const sendEmailSchema = z.object({
+  tenantId: z.string().uuid(),
+  to: z.string().email(),
+  subject: z.string().min(1),
+  body_html: z.string().min(1).optional(),
+  html: z.string().min(1).optional(),
+  threadId: z.string().optional(),
+  contactId: z.string().uuid().optional(),
+  clientId: z.string().uuid().optional(),
+  provider: z.enum(['auto', 'zoho', 'gmail', 'brevo', 'sendgrid', 'resend']).optional(),
+  document_file_ids: z.array(z.string().uuid()).optional(),
+  skipRecipientGate: z.boolean().optional(),
+  isPlatformNotification: z.boolean().optional(),
+}).refine((data) => Boolean(data.body_html?.trim() || data.html?.trim()), {
+  message: 'body_html or html is required',
+  path: ['body_html'],
+});
+
 export async function POST(req: NextRequest) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const supabase = createSupabaseAdminClient();
-
-    try {
-        const payload = await req.json();
-        const { to, subject, html, text, from, fromName, tenantId, userId, replyTo } = payload;
-
-        if (!to || !subject || (!html && !text)) {
-            return NextResponse.json({ error: 'to, subject, and content are required' }, { status: 400 });
-        }
-
-        // 1. Resolve Email Credentials
-        let apiKey = process.env.SENDGRID_API_KEY;
-        let fromEmail = from || process.env.SENDGRID_FROM_EMAIL || 'onboarding@alphacone.io';
-        let provider: 'sendgrid' | 'resend' = 'sendgrid';
-
-        if (tenantId || userId) {
-            let lookupId = userId;
-            if (!lookupId && tenantId) {
-                const { data: tenant } = await supabase
-                    .from('tenants')
-                    .select('created_by')
-                    .eq('id', tenantId)
-                    .single();
-                lookupId = tenant?.created_by;
-            }
-
-            if (lookupId) {
-                const { data: integration } = await supabase
-                    .from('integrations')
-                    .select('config, enabled')
-                    .eq('user_id', lookupId)
-                    .eq('type', 'sendgrid')
-                    .eq('enabled', true)
-                    .maybeSingle();
-
-                if (integration?.config) {
-                    apiKey = integration.config.apiKey || apiKey;
-                    fromEmail = from || integration.config.fromEmail || fromEmail;
-                } else {
-                    // Fallback to Resend if no SendGrid is configured
-                    apiKey = process.env.RESEND_API_KEY;
-                    provider = 'resend';
-                }
-            }
-        }
-
-        if (!apiKey) {
-            return NextResponse.json({ success: false, error: 'Email service not configured for this account' }, { status: 503 });
-        }
-
-        // 2. Execute Send
-        if (provider === 'sendgrid') {
-            const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                },
-                body: JSON.stringify({
-                    personalizations: [{ to: [{ email: to }] }],
-                    from: { email: fromEmail, name: fromName || 'AlphaClone Systems' },
-                    subject: subject,
-                    content: [
-                        { type: 'text/plain', value: text || '' },
-                        { type: 'text/html', value: html || '' }
-                    ].filter(c => c.value),
-                    reply_to: replyTo ? { email: replyTo } : undefined
-                }),
-            });
-
-            if (response.ok) {
-                return NextResponse.json({ success: true, provider: 'sendgrid' });
-            } else {
-                const errData = await response.json();
-                return NextResponse.json({ success: false, error: errData.errors?.[0]?.message || 'SendGrid failed' }, { status: response.status });
-            }
-        } else {
-            // Legacy Resend Fallback
-            const response = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                },
-                body: JSON.stringify({
-                    from: fromEmail,
-                    to: to,
-                    subject: subject,
-                    html: html,
-                    text: text,
-                    reply_to: replyTo
-                }),
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                return NextResponse.json({ success: true, id: data.id, provider: 'resend' });
-            } else {
-                return NextResponse.json({ success: false, error: data.message || 'Resend failed' }, { status: response.status });
-            }
-        }
-
-    } catch (error) {
-        console.error('Error in /api/email/send:', error);
-        return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  try {
+    const body = await req.json();
+    const parsed = sendEmailSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() },
+        { status: 422 }
+      );
     }
+
+    const { tenantId, to, subject, contactId, clientId, threadId, provider, document_file_ids, skipRecipientGate, isPlatformNotification } = parsed.data;
+    const body_html = (parsed.data.body_html || parsed.data.html || '').trim();
+    const { user } = await requireTenantAccess(tenantId);
+
+    const preferredProvider = provider && provider !== 'auto' ? provider as any : undefined;
+    const attachments = document_file_ids?.length
+      ? await resolveEmailAttachmentsFromFileIds(tenantId, document_file_ids)
+      : undefined;
+    const result = await sendEmail(tenantId, {
+      to,
+      subject,
+      html: body_html,
+      userId: user.id,
+      attachments,
+      skipRecipientGate: skipRecipientGate ?? Boolean(document_file_ids?.length),
+      isPlatformNotification: isPlatformNotification ?? false,
+      auditMetadata: {
+        source: 'api/email/send',
+        ...(contactId ? { contactId } : {}),
+        ...(clientId ? { clientId } : {}),
+        ...(threadId ? { threadId } : {}),
+        ...(document_file_ids?.length ? { documentFileCount: document_file_ids.length } : {}),
+      },
+    }, preferredProvider);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || 'Failed to send email', code: result.code || 'SEND_FAILED', tried: result.tried },
+        { status: result.code === 'CONFIG_MISSING' || result.code === 'VALIDATION_ERROR' ? 400 : 503 }
+      );
+    }
+
+
+    return NextResponse.json({ success: true, provider: result.provider, emailId: result.emailId });
+  } catch (error) {
+    return routeErrorResponse(error, 'Failed to send email', req);
+  }
 }

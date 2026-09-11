@@ -13,33 +13,33 @@ import Image from 'next/image';
 const BrandingSettings = () => {
     const { currentTenant, refreshTenants } = useTenant();
     const [loading, setLoading] = useState(false);
+    const settingsBranding = (currentTenant?.settings?.branding || {}) as Record<string, unknown>;
 
     // Form State
-    const [branding, setBranding] = useState<any>(currentTenant?.settings?.branding || {
-        primaryColor: currentTenant?.brand_color_primary || '#0d9488',
-        secondaryColor: currentTenant?.brand_color_secondary || '#0f172a',
-        logo_url: currentTenant?.logo_url || '',
-        legal_name: currentTenant?.legal_name || '',
-        tax_id: currentTenant?.tax_id || '',
-        address: currentTenant?.business_address || ''
+    const [branding, setBranding] = useState<any>({
+        brand_color_primary: currentTenant?.brand_color_primary || String(settingsBranding.brand_color_primary || settingsBranding.primaryColor || '#0d9488'),
+        brand_color_secondary: currentTenant?.brand_color_secondary || String(settingsBranding.brand_color_secondary || settingsBranding.secondaryColor || '#0f172a'),
+        logo_url: currentTenant?.logo_url || String(settingsBranding.logo_url || settingsBranding.logo || ''),
+        legal_name: currentTenant?.legal_name || String(settingsBranding.legal_name || ''),
+        tax_id: currentTenant?.tax_id || String(settingsBranding.tax_id || ''),
+        business_address: currentTenant?.business_address || String(settingsBranding.business_address || settingsBranding.address || '')
     });
 
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-    // Load initial data - This useEffect is now redundant due to direct useState initialization
-    // useEffect(() => {
-    //     if (currentTenant) {
-    //         setBranding({
-    //             legal_name: currentTenant.legal_name || currentTenant.name || '',
-    //             tax_id: currentTenant.tax_id || '',
-    //             business_address: currentTenant.business_address || '',
-    //             brand_color_primary: currentTenant.brand_color_primary || '#0f172a',
-    //             brand_color_secondary: currentTenant.brand_color_secondary || '#14b8a6',
-    //             logo_url: currentTenant.logo_url || ''
-    //         });
-    //     }
-    // }, [currentTenant]);
+    useEffect(() => {
+        if (!currentTenant) return;
+        const nextBranding = (currentTenant.settings?.branding || {}) as Record<string, unknown>;
+        setBranding({
+            brand_color_primary: currentTenant.brand_color_primary || String(nextBranding.brand_color_primary || nextBranding.primaryColor || '#0d9488'),
+            brand_color_secondary: currentTenant.brand_color_secondary || String(nextBranding.brand_color_secondary || nextBranding.secondaryColor || '#0f172a'),
+            logo_url: currentTenant.logo_url || String(nextBranding.logo_url || nextBranding.logo || ''),
+            legal_name: currentTenant.legal_name || String(nextBranding.legal_name || ''),
+            tax_id: currentTenant.tax_id || String(nextBranding.tax_id || ''),
+            business_address: currentTenant.business_address || String(nextBranding.business_address || nextBranding.address || ''),
+        });
+    }, [currentTenant]);
 
     // Handle Logo Upload
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,9 +68,9 @@ const BrandingSettings = () => {
             await tenantService.updateTenant(currentTenant.id, {
                 legal_name: branding.legal_name,
                 tax_id: branding.tax_id,
-                business_address: branding.address, // Changed to branding.address
-                brand_color_primary: branding.primaryColor, // Changed to branding.primaryColor
-                brand_color_secondary: branding.secondaryColor, // Changed to branding.secondaryColor
+                business_address: branding.business_address,
+                brand_color_primary: branding.brand_color_primary,
+                brand_color_secondary: branding.brand_color_secondary,
                 logo_url: branding.logo_url
             });
             await refreshTenants();
@@ -189,7 +189,7 @@ const BrandingSettings = () => {
                                 disabled={!!currentTenant?.legal_name}
                             />
                             {currentTenant?.legal_name && (
-                                <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1 italic">
+                                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1 italic">
                                     <Building className="w-3 h-3" /> Business identity is locked. Contact support to change.
                                 </p>
                             )}
@@ -227,7 +227,7 @@ const BrandingSettings = () => {
             {/* Live Preview */}
             <div className="sticky top-6 h-fit">
                 <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Document Preview</h3>
-                <div className="bg-white rounded-lg shadow-xl overflow-hidden aspect-[210/297] w-full max-w-md mx-auto relative text-slate-900 text-[10px] leading-relaxed">
+                <div className="bg-white rounded-lg shadow-xl overflow-hidden aspect-[210/297] w-full max-w-md mx-auto relative text-slate-900 text-xs leading-relaxed">
                     {/* Header Background */}
                     <div className="h-4 w-full" style={{ backgroundColor: branding.brand_color_primary }}></div>
 
@@ -263,20 +263,25 @@ const BrandingSettings = () => {
                         {/* Separator */}
                         <div className="h-0.5 w-full mb-6 opacity-20" style={{ backgroundColor: branding.brand_color_secondary }}></div>
 
-                        {/* Mock Content */}
-                        <div className="space-y-4 opacity-50 blur-[0.5px]">
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="bg-slate-100 h-20 rounded"></div>
-                                <div className="bg-slate-100 h-20 rounded"></div>
+                        <div className="space-y-3 text-xs text-slate-600 border border-dashed border-slate-200 rounded-lg p-4 bg-white/80">
+                            <p className="text-xs uppercase tracking-wide text-slate-400 font-semibold">Sample line items (preview only)</p>
+                            <div className="flex justify-between border-b border-slate-100 pb-2">
+                                <span>Service description</span>
+                                <span className="font-mono">0.00</span>
                             </div>
-                            <div className="bg-slate-100 h-8 rounded w-full mt-8"></div>
-                            <div className="bg-slate-100 h-8 rounded w-full"></div>
-                            <div className="bg-slate-100 h-8 rounded w-full"></div>
+                            <div className="flex justify-between border-b border-slate-100 pb-2">
+                                <span>Subtotal</span>
+                                <span className="font-mono">0.00</span>
+                            </div>
+                            <div className="flex justify-between font-medium text-slate-800">
+                                <span>Total due</span>
+                                <span className="font-mono">0.00</span>
+                            </div>
                         </div>
 
                         {/* Footer Preview */}
                         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100 bg-slate-50">
-                            <div className="text-center text-[8px] text-slate-400">
+                            <div className="text-center text-xs text-slate-400">
                                 {branding.legal_name} • {branding.tax_id && `Tax ID: ${branding.tax_id}`}
                                 <div className="mt-1 font-medium text-slate-300">Generated by AlphaClone Systems</div>
                             </div>
@@ -289,3 +294,4 @@ const BrandingSettings = () => {
 };
 
 export default BrandingSettings;
+

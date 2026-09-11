@@ -1,19 +1,22 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { supabase } from '../../../lib/supabase';
 import { jsPDF } from 'jspdf';
-import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2 } from 'lucide-react';
+import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2, CheckCircle2, XCircle } from 'lucide-react';
 import { googleDriveService } from '../../../services/googleDriveService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SignaturePad } from '../../../components/contracts/SignaturePad';
 import { contractService } from '../../../services/contractService';
+import { esignatureComplianceService } from '../../../services/esignatureComplianceService';
 import toast, { Toaster } from 'react-hot-toast';
+import AIOutputDisclaimer from '../../../components/ai/AIOutputDisclaimer';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { buildContractDocumentInput } from '@/lib/documents/documentBuilders';
 
 export default function PublicContractPage() {
     const params = useParams();
-    const id = params.id as string;
+    const signingToken = params?.id as string;
     const { user } = useAuth();
 
     const [contract, setContract] = useState<any>(null);
@@ -22,33 +25,68 @@ export default function PublicContractPage() {
     const [signed, setSigned] = useState(false);
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [legalName, setLegalName] = useState<string>('');
+    const [signerEmail, setSignerEmail] = useState<string>('');
+    const [consentAccepted, setConsentAccepted] = useState(false);
+    const [declining, setDeclining] = useState(false);
+    const [declined, setDeclined] = useState(false);
+    const [declineNote, setDeclineNote] = useState('');
+    const [showDeclineForm, setShowDeclineForm] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (id) {
+        if (signingToken) {
             loadContract();
         }
-    }, [id]);
+    }, [signingToken]);
 
     const loadContract = async () => {
         try {
-            // Public fetch - RLS must allow reading by ID or this needs an Edge Function
-            // For now, assuming table has public read policy OR we use an API route.
-            const { data, error } = await supabase
-                .from('contracts')
-                .select('*, tenant:tenants(name)')
-                .eq('id', id)
-                .single();
-
-            if (error) throw error;
-            setContract(data);
-            if (data.status === 'fully_signed' || data.status === 'client_signed') {
+            const response = await fetch(`/api/contracts/sign?token=${encodeURIComponent(signingToken)}`, {
+                method: 'GET',
+                cache: 'no-store',
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload?.contract) {
+                throw new Error(payload?.error || 'Contract not found');
+            }
+            setLoadError(null);
+            setContract(payload.contract);
+            setSignerEmail(payload?.signer?.email || '');
+            if (payload.contract.status === 'fully_signed' || payload.contract.status === 'client_signed') {
                 setSigned(true);
+            }
+            if (payload.contract.status === 'rejected') {
+                setDeclined(true);
             }
         } catch (error) {
             console.error('Error loading contract:', error);
-            toast.error('Contract not found or access denied.');
+            const message = error instanceof Error ? error.message : 'Contract not found or access denied.';
+            setLoadError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDecline = async () => {
+        setDeclining(true);
+        try {
+            const response = await fetch('/api/contracts/respond', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: signingToken, action: 'decline', note: declineNote.trim() }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.success) {
+                throw new Error(payload.error || 'Failed to decline contract');
+            }
+            setDeclined(true);
+            setShowDeclineForm(false);
+            toast.success('Contract declined — the sender has been notified.');
+        } catch (error: any) {
+            toast.error(error.message || 'Unable to decline contract');
+        } finally {
+            setDeclining(false);
         }
     };
 
@@ -57,13 +95,26 @@ export default function PublicContractPage() {
             toast.error('Please sign the contract');
             return;
         }
+        if (!legalName.trim()) {
+            toast.error('Legal name is required');
+            return;
+        }
+        if (!signerEmail.trim() || !signerEmail.includes('@')) {
+            toast.error('Valid signer email is required');
+            return;
+        }
+        if (!consentAccepted) {
+            toast.error('You must accept the Electronic Signature Disclosure');
+            return;
+        }
 
         setSigning(true);
         try {
-            const { contract: updated, error } = await contractService.signContract(id, 'client', signatureData, {
+            const { contract: updated, error } = await contractService.signContract(signingToken, 'client', signatureData, {
                 id: 'public',
-                name: legalName,
-                email: 'public@client.com',
+                name: legalName.trim(),
+                email: signerEmail.trim().toLowerCase(),
+                consentGiven: true,
             });
 
             if (error) throw error;
@@ -77,7 +128,7 @@ export default function PublicContractPage() {
 
         } catch (error) {
             console.error('Signing error:', error);
-            toast.error('Failed to save signature');
+            toast.error(error instanceof Error ? error.message : 'Failed to save signature');
         } finally {
             setSigning(false);
         }
@@ -85,6 +136,7 @@ export default function PublicContractPage() {
 
     const generateAndDownloadPDF = (contractData: any, signature: string) => {
         const doc = new jsPDF();
+        const pageHeight = doc.internal.pageSize.height;
 
         // Use a better header
         doc.setFillColor(15, 23, 42); // slate-900
@@ -104,15 +156,40 @@ export default function PublicContractPage() {
         let y = 60;
         doc.setTextColor(15, 23, 42);
         doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
 
-        const splitText = doc.splitTextToSize(contractData.content || '', 170);
-        splitText.forEach((line: string) => {
-            if (y > 275) {
+        const content = contractService.prepareContractContentForPdf(contractData.content || '');
+        const lines = content.split('\n');
+
+        lines.forEach((line) => {
+            if (y > pageHeight - 30) {
                 doc.addPage();
                 y = 20;
             }
-            doc.text(line, 20, y);
-            y += 6;
+
+            if (line.trim().startsWith('#')) {
+                const headerText = line.replace(/^#+\s*/, '');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                const split = doc.splitTextToSize(headerText, 170);
+                doc.text(split, 20, y);
+                y += split.length * 7 + 2;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(11);
+            } else if (line.trim() === '') {
+                y += 5;
+            } else {
+                const cleanLine = line.replace(/\*\*/g, '');
+                const split = doc.splitTextToSize(cleanLine, 170);
+                split.forEach((textLine: string) => {
+                    if (y > pageHeight - 30) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(textLine, 20, y);
+                    y += 6;
+                });
+            }
         });
 
         // Signatures
@@ -179,7 +256,22 @@ export default function PublicContractPage() {
     }
 
     if (!contract) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">Contract not found</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
+                <div className="max-w-md w-full text-center bg-slate-900 border border-slate-800 rounded-2xl p-8">
+                    <h1 className="text-2xl font-bold text-red-400 mb-3">Contract Not Found</h1>
+                    <p className="text-slate-400 mb-6">
+                        {loadError || 'This signing link is invalid, expired, or has already been used.'}
+                    </p>
+                    <a
+                        href="/"
+                        className="inline-flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 font-semibold text-slate-950 hover:bg-teal-400"
+                    >
+                        Return Home
+                    </a>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -206,17 +298,51 @@ export default function PublicContractPage() {
                 </div>
 
                 {/* Content */}
-                <div className="p-8 max-w-none prose prose-invert prose-slate print-content">
-                    <div className="whitespace-pre-wrap font-serif leading-relaxed text-slate-300">
-                        {contract.content}
-                    </div>
+                <div className="p-6 bg-slate-950/40 border-y border-slate-800">
+                    <AIOutputDisclaimer type="contract" />
+                </div>
+                <div className="p-4 sm:p-6 bg-slate-950/20 border-y border-slate-800 print-content">
+                    <DocumentPreview
+                        className="!mb-0"
+                        hideLabel
+                        input={buildContractDocumentInput(
+                            contract,
+                            contract.tenant,
+                            { name: contract.metadata?.client_name, email: signerEmail || contract.metadata?.client_email }
+                        )}
+                    />
                 </div>
 
                 {/* Signature Section */}
-                {!signed ? (
+                {declined ? (
+                    <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20">
+                            <XCircle className="w-5 h-5" />
+                            <span className="font-bold text-sm">Contract Declined</span>
+                        </div>
+                    </div>
+                ) : !signed ? (
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800">
+                        {/* ESIGN Disclosure */}
+                        <div className="mb-8 p-6 bg-slate-900 border border-slate-700 rounded-xl">
+                            <div
+                                className="text-xs text-slate-400 overflow-y-auto max-h-48 mb-4 esign-disclosure-content"
+                                dangerouslySetInnerHTML={{ __html: esignatureComplianceService.ESIGN_DISCLOSURE }}
+                            />
+                            <div className="flex items-start gap-3 p-4 bg-teal-500/5 border border-teal-500/20 rounded-lg cursor-pointer hover:bg-teal-500/10 transition-colors"
+                                 onClick={() => setConsentAccepted(!consentAccepted)}>
+                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${consentAccepted ? 'bg-teal-500 border-teal-500' : 'border-slate-500 bg-transparent'}`}>
+                                    {consentAccepted && <CheckCircle className="w-3.5 h-3.5 text-slate-950" />}
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-white">I agree to the Electronic Signature Disclosure</p>
+                                    <p className="text-xs text-slate-400 mt-1">I consent to use electronic signatures for this transaction and agree to be legally bound by the terms of this document.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <label className="block text-sm font-bold text-white mb-4 uppercase tracking-wider">Sign Below to Accept</label>
-                        <div className="overflow-hidden bg-white rounded-xl">
+                        <div className={`overflow-hidden bg-white rounded-xl transition-opacity ${!consentAccepted ? 'opacity-50 grayscale pointer-events-none' : 'opacity-100'}`}>
                             <SignaturePad
                                 onSave={(data, fullName) => {
                                     setSignatureData(data);
@@ -228,22 +354,86 @@ export default function PublicContractPage() {
                                 }}
                             />
                         </div>
+                        <div className="mt-4">
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Signer Email</label>
+                            <input
+                                type="email"
+                                value={signerEmail}
+                                onChange={(e) => setSignerEmail(e.target.value)}
+                                placeholder="name@company.com"
+                                disabled={!consentAccepted}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-500/40 disabled:opacity-50"
+                            />
+                            <p className="text-[11px] text-slate-500 mt-2">Use the same email that received this signing link.</p>
+                        </div>
                         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 text-xs">
                             <span className="text-slate-500 flex items-center gap-1">
                                 <ShieldCheck className="w-3 h-3" /> Secure 256-bit SSL Cryptography Applied
                             </span>
-                            <p className="text-slate-500">Draw your signature in the box above.</p>
+                            <p className="text-slate-500">{consentAccepted ? 'Draw your signature in the box above.' : 'Accept disclosure above to enable signature.'}</p>
                         </div>
                         <button
-                            onClick={handleSign}
-                            disabled={signing || !signatureData}
-                            className={`w-full mt-6 py-4 font-bold text-lg rounded-xl transition-all flex items-center justify-center gap-2 ${signatureData && !signing
-                                ? 'bg-teal-500 hover:bg-teal-400 text-slate-900 active:scale-[0.99]'
-                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                }`}
+                            onClick={() => {
+                                if (!signatureData) {
+                                    toast.error('Please click "Confirm Signature" above first');
+                                    return;
+                                }
+                                handleSign();
+                            }}
+                            disabled={signing || !consentAccepted}
+                            className={`flex-1 w-full mt-6 py-4 px-6 rounded-xl font-bold text-white shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${
+                                signing || !consentAccepted
+                                    ? 'bg-slate-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 hover:scale-[1.02] active:scale-95'
+                            }`}
                         >
-                            {signing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Contract'}
+                            {signing ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <CheckCircle2 className="w-5 h-5" />
+                            )}
+                            {!signatureData ? 'Confirm Signature First' : (signing ? 'Signing...' : 'Sign Contract')}
                         </button>
+
+                        <div className="mt-6 pt-6 border-t border-slate-800">
+                            {!showDeclineForm ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeclineForm(true)}
+                                    className="text-sm text-slate-500 hover:text-red-400 transition-colors"
+                                >
+                                    Decline this contract instead
+                                </button>
+                            ) : (
+                                <div className="space-y-3">
+                                    <label className="block text-sm font-medium text-slate-300">Reason for declining (optional)</label>
+                                    <textarea
+                                        value={declineNote}
+                                        onChange={(e) => setDeclineNote(e.target.value)}
+                                        placeholder="Let us know why you're declining..."
+                                        className="w-full h-20 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white resize-none"
+                                    />
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleDecline}
+                                            disabled={declining}
+                                            className="flex-1 py-3 px-4 bg-slate-800 hover:bg-red-900/40 border border-red-500/30 rounded-xl font-bold text-red-400 flex items-center justify-center gap-2 disabled:opacity-50"
+                                        >
+                                            {declining ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                                            Confirm Decline
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDeclineForm(false)}
+                                            className="px-4 py-3 text-slate-500 hover:text-white text-sm"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ) : (
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">
@@ -277,4 +467,32 @@ export default function PublicContractPage() {
             </div>
         </div>
     );
+}
+
+function contractToStyledHtml(text: string): string {
+    if (!text) return '';
+
+    // If it looks like HTML (starts with a tag), trust it but wrap it in a styled container
+    const isHtml = /<[a-z][\s\S]*>/i.test(text);
+
+    if (isHtml) {
+        return `<div class="contract-content" style="font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.75; color:#0f172a;">${text}</div>`;
+    }
+
+    // Otherwise, treat as markdown-ish text
+    const escaped = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const formatted = escaped
+        .replace(/^# (.+)$/gm, '<h1 style="font-size:28px; text-align:center; text-transform:uppercase; letter-spacing:1px; margin:0 0 18px; font-weight:700; color:#020617;">$1</h1>')
+        .replace(/^## (.+)$/gm, '<h2 style="font-size:17px; text-transform:uppercase; border-bottom:1px solid #cbd5e1; padding-bottom:6px; margin:26px 0 14px; font-weight:700; color:#0f172a;">$1</h2>')
+        .replace(/^### (.+)$/gm, '<h3 style="font-size:15px; margin:16px 0 8px; font-weight:700; color:#0f172a;">$1</h3>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight:700; color:#020617;">$1</strong>')
+        .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid #cbd5e1;margin:20px 0;" />')
+        .replace(/\n\n/g, '</p><p style="margin:0 0 12px; text-align:justify;">')
+        .replace(/\n/g, '<br/>');
+
+    return `<div class="contract-content" style="font-family:'Times New Roman', Georgia, serif; font-size:15px; line-height:1.75; color:#0f172a;"><p style="margin:0 0 12px; text-align:justify;">${formatted}</p></div>`;
 }

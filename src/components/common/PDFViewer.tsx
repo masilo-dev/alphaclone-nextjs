@@ -30,9 +30,16 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const objectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     loadPDF();
+    return () => {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+    };
   }, [fileUrl]);
 
   const loadPDF = async () => {
@@ -40,6 +47,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
     setError(null);
 
     try {
+      if (objectUrlRef.current) {
+        URL.revokeObjectURL(objectUrlRef.current);
+        objectUrlRef.current = null;
+      }
+
       // Validate URL
       if (!fileUrl || !isValidUrl(fileUrl)) {
         throw new Error('Invalid PDF URL provided');
@@ -68,19 +80,17 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
       
       // Create object URL for the blob
       const objectUrl = URL.createObjectURL(blob);
+      objectUrlRef.current = objectUrl;
       
       // Set up iframe with proper sandboxing
       if (iframeRef.current) {
         iframeRef.current.src = objectUrl;
         iframeRef.current.onload = () => {
           setIsLoading(false);
-          // Clean up object URL after iframe loads
-          URL.revokeObjectURL(objectUrl);
         };
         iframeRef.current.onerror = () => {
           setError('Failed to load PDF in viewer');
           setIsLoading(false);
-          URL.revokeObjectURL(objectUrl);
         };
       }
 

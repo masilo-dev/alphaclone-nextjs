@@ -114,7 +114,7 @@ export function UpgradePrompt({
     const pricing = subscriptionService.getPricing(suggestedTier, billingCycle);
     const savings = subscriptionService.calculateAnnualSavings(suggestedTier);
     const features = TIER_FEATURES[suggestedTier as keyof typeof TIER_FEATURES] || [];
-    const message = FEATURE_MESSAGES[triggerFeature as keyof typeof FEATURE_MESSAGES] || 'Upgrade to unlock more';
+    const message = FEATURE_MESSAGES[triggerFeature as keyof typeof FEATURE_MESSAGES] || 'You have reached this plan limit';
 
     // Banner style
     if (promptType === 'banner') {
@@ -125,7 +125,7 @@ export function UpgradePrompt({
                         <div className="flex items-center flex-1">
                             <Zap className="h-5 w-5 mr-2" />
                             <p className="font-medium">
-                                {message} • <span className="font-bold">Upgrade to {suggestedTier}</span> and get 20% off annual plans!
+                                {message} • <span className="font-bold">Upgrade to {suggestedTier}</span> for more workspace capacity.
                             </p>
                         </div>
                         <div className="flex items-center space-x-3 mt-2 sm:mt-0">
@@ -164,7 +164,7 @@ export function UpgradePrompt({
                         <span className="font-semibold">{message}</span>
                     </div>
                     <p className="text-sm text-gray-600">
-                        Upgrade to <strong>{suggestedTier}</strong> for more capacity and features.
+                        Upgrade to <strong>{suggestedTier}</strong> for more seats, storage, requests, or contract capacity.
                     </p>
                 </div>
                 <button
@@ -191,9 +191,9 @@ export function UpgradePrompt({
                     </button>
                     <div className="flex items-center mb-2">
                         <Zap className="h-8 w-8 mr-3" />
-                        <h2 className="text-2xl font-bold">Unlock More Power</h2>
+                        <h2 className="text-2xl font-bold">Add capacity for this workflow</h2>
                     </div>
-                    <p className="text-blue-100">{message}. Upgrade to keep growing!</p>
+                    <p className="text-blue-100">{message}. Upgrade if you need more seats, storage, AI requests, or contract capacity.</p>
                 </div>
 
                 {/* Content */}

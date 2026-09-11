@@ -154,7 +154,7 @@ The platform has been thoroughly audited and is production-ready. All critical i
 
 ### Required Variables (✅ ALL CONFIGURED)
 ```env
-VITE_SUPABASE_URL=https://ehekzoiogvtweugeinktn.supabase.co
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=***
 VITE_LIVEKIT_URL=wss://alphaclone-systems-6klanimr.livekit.cloud
 VITE_LIVEKIT_API_KEY=***

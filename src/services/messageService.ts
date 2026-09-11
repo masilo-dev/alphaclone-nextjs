@@ -4,6 +4,31 @@ import { messageSchema } from '../schemas/validation';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
 import { linkValidator } from '../utils/linkValidator';
+import { routeAIRequest } from '@/services/aiRouter';
+import { buildBusinessReplyPrompt } from '@/lib/ai/businessContext';
+
+function isExpectedRealtimeCloseError(error: unknown): boolean {
+    if (!error) return false;
+    const msg = error instanceof Error ? error.message : String(error);
+    return msg.includes('WebSocket is closed before the connection is established');
+}
+
+function isUnknownChannelRealtimeError(error?: Error): boolean {
+    if (!error) return false;
+    const msg = String(error.message || '').toLowerCase();
+    return msg.includes('unknown channel error') || msg.includes('channel error');
+}
+
+async function safeRemoveRealtimeChannel(channel: any): Promise<void> {
+    if (!channel) return;
+    try {
+        await supabase.removeChannel(channel);
+    } catch (error) {
+        if (!isExpectedRealtimeCloseError(error)) {
+            console.warn('[Realtime] Failed to remove channel:', error);
+        }
+    }
+}
 
 export const messageService = {
     /**
@@ -306,6 +331,33 @@ export const messageService = {
                 group_id: data.group_id
             };
 
+            // Fan out to the recipient off-platform (web push + email + in-app bell)
+            // so they're notified even when the app is closed. Skip self-messages.
+            if (validated.recipientId && validated.recipientId !== senderId) {
+                const preview = validated.text.length > 140
+                    ? `${validated.text.substring(0, 140)}…`
+                    : validated.text;
+                try {
+                    const notifyRes = await fetch('/api/notifications/dispatch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: validated.recipientId,
+                            tenantId,
+                            type: 'message',
+                            title: `New message from ${senderName}`,
+                            message: preview,
+                            link: '/dashboard/business/messages',
+                        }),
+                    });
+                    if (!notifyRes.ok) {
+                        console.warn('[messageService] notification dispatch failed:', notifyRes.status);
+                    }
+                } catch (err) {
+                    console.warn('[messageService] notification dispatch error:', err);
+                }
+            }
+
             return { message, error: null };
         } catch (err) {
             return { message: null, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -379,18 +431,25 @@ export const messageService = {
                 if (status === 'SUBSCRIBED') {
                     console.log(`✅ [Realtime] Subscribed to messages (INSERT + UPDATE) for ${tenantId}`);
                 } else if (status === 'CHANNEL_ERROR') {
-                    console.error('❌ [Realtime] Failed to subscribe to messages:', err?.message || 'Unknown channel error');
-                    console.error('Subscription details:', { tenantId, channelName, error: err });
+                    if (isUnknownChannelRealtimeError(err)) {
+                        console.warn('[Realtime] Messages channel unavailable. Continuing without live updates.');
+                    } else {
+                        console.warn('[Realtime] Messages subscription failed. Continuing without live updates.', {
+                            tenantId,
+                            channelName,
+                            error: err?.message || 'Unknown channel error',
+                        });
+                    }
                     // Potential mismatch between server and client bindings often manifests here
                 } else if (status === 'CLOSED') {
                     console.info('[Realtime] Message subscription closed. Reconnecting logic handled by Supabase SDK.');
                 } else if (status === 'TIMED_OUT') {
-                    console.error('❌ [Realtime] Message subscription timed out - check network or database load.');
+                    console.warn('[Realtime] Message subscription timed out. Live updates may be delayed.');
                 }
             });
 
         return () => {
-            supabase.removeChannel(channel);
+            void safeRemoveRealtimeChannel(channel);
         };
     },
 
@@ -545,7 +604,7 @@ export const messageService = {
     async uploadAttachment(file: File): Promise<{ url: string; id: string; type: 'image' | 'file'; name: string; error: string | null }> {
         try {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+            const fileName = `${crypto.randomUUID()}_${Date.now()}.${fileExt}`;
             const filePath = `${fileName}`;
 
             const { error } = await supabase.storage
@@ -689,7 +748,7 @@ export const messageService = {
      */
     unsubscribeFromMessages(channel: any) {
         if (channel) {
-            supabase.removeChannel(channel);
+            void safeRemoveRealtimeChannel(channel);
         }
     },
 
@@ -704,19 +763,22 @@ export const messageService = {
         senderName: string
     ): Promise<{ autoReply: ChatMessage | null; error: string | null }> {
         try {
-            // Import dynamically
-            const { generateText } = await import('./unifiedAIService');
+            const prompt = buildBusinessReplyPrompt({
+                sender: { name: senderName },
+                recipient: { name: 'AlphaClone team' },
+                message: message.text,
+                channel: 'chat',
+                context: 'Draft a concise customer-facing reply from the business. Keep the tone professional, helpful, and specific to the message content.',
+            });
 
-            // 1. Generate text
-            const prompt = `You are an AI assistant for a professional digital agency.
-            A client named ${senderName} sent this message: "${message.text}".
-            Draft a polite, professional, and concise reply.
-            If the message is a greeting, reply warmly.
-            If it's a specific question, acknowledge it and say the team will review it.
-            Keep it under 3 sentences.`;
+            const response = await routeAIRequest({
+                prompt,
+                systemPrompt: 'You are an AI assistant for a professional digital agency. Keep replies short, helpful, and human.',
+                maxTokens: 256,
+                temperature: 0.4,
+            });
 
-            const { text: replyText } = await generateText(prompt, 256, 'claude-3-5-sonnet-20241022');
-
+            const replyText = response.content.trim();
             if (!replyText) return { autoReply: null, error: 'Failed to generate reply' };
 
             // 2. Send the message as 'model' (AI Agent)
@@ -746,16 +808,21 @@ export const messageService = {
         senderName: string
     ): Promise<{ reply: string | null; error: string | null }> {
         try {
-            // Import dynamically to avoid circular dependencies if any
-            const { generateText } = await import('./unifiedAIService');
+            const prompt = buildBusinessReplyPrompt({
+                sender: { name: senderName },
+                recipient: { name: 'AlphaClone team' },
+                message: incomingText,
+                channel: 'chat',
+                context: 'Draft the reply as a short, polished business response. Keep it under 3 sentences unless more detail is required.',
+            });
 
-            const prompt = `You are an AI assistant for a professional digital agency.
-            A client named ${senderName} sent this message: "${incomingText}".
-            Draft a polite, professional, and concise reply. 
-            Keep it under 3 sentences.`;
-
-            const { text: reply } = await generateText(prompt, 256, 'claude-3-5-sonnet-20241022');
-            return { reply, error: null };
+            const response = await routeAIRequest({
+                prompt,
+                systemPrompt: 'You are an AI assistant for a professional digital agency. Keep replies short, helpful, and human.',
+                maxTokens: 256,
+                temperature: 0.4,
+            });
+            return { reply: response.content.trim() || null, error: null };
         } catch (err) {
             return { reply: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }

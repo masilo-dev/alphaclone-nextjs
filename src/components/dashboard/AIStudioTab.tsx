@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 import { Card, Button, Input, Modal } from '../ui/UIComponents';
 import { User } from '../../types';
 import { aiGenerationService } from '../../services/aiGenerationService';
@@ -7,6 +8,10 @@ import { rateLimitService } from '../../services/rateLimitService';
 import { CLAUDE_MODELS } from '../../config/aiModels';
 import { Sparkles, Image as ImageIcon, FileText, Loader2, Download, Trash2, Eye, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+    fetchDashboardPreferences,
+    mergeDashboardPreferences,
+} from '@/services/userDashboardPreferencesService';
 
 interface AIStudioTabProps {
     user: User;
@@ -52,44 +57,64 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
         isOpen: false
     });
 
-    // Conversation memory (localStorage-based)
-    const [conversationHistory, setConversationHistory] = useState<Array<{ type: 'user' | 'ai'; content: string; timestamp: number }>>([]);
+    const [conversationHistory, setConversationHistory] = useState<
+        Array<{ type: 'user' | 'ai'; content: string; timestamp: number }>
+    >([]);
+    const [aiConversationReady, setAiConversationReady] = useState(false);
+    const conversationHistoryRef = useRef(conversationHistory);
+    conversationHistoryRef.current = conversationHistory;
 
     useEffect(() => {
         loadRemainingGenerations();
         loadHistory();
-        loadConversationHistory();
     }, []);
 
-    const loadConversationHistory = () => {
-        try {
-            const saved = localStorage.getItem(`ai_conversation_${user.id}`);
-            if (saved) {
-                setConversationHistory(JSON.parse(saved));
-            }
-        } catch (err) {
-            console.error('Failed to load conversation history:', err);
+    useEffect(() => {
+        if (!user.id) {
+            setAiConversationReady(true);
+            return;
         }
-    };
+        let cancelled = false;
+        setAiConversationReady(false);
+        (async () => {
+            const prefs = await fetchDashboardPreferences(user.id);
+            if (cancelled) return;
+            if (prefs.aiConversation?.length) {
+                setConversationHistory(prefs.aiConversation.slice(-50));
+            } else {
+                setConversationHistory([]);
+            }
+            setAiConversationReady(true);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [user.id]);
+
+    useEffect(() => {
+        if (!user.id || !aiConversationReady) return;
+        const t = window.setTimeout(() => {
+            void mergeDashboardPreferences(user.id, {
+                aiConversation: conversationHistoryRef.current.slice(-50),
+            });
+        }, 500);
+        return () => window.clearTimeout(t);
+    }, [conversationHistory, user.id, aiConversationReady]);
 
     const saveConversationHistory = (newEntry: { type: 'user' | 'ai'; content: string; timestamp: number }) => {
-        const updated = [...conversationHistory, newEntry];
-        setConversationHistory(updated);
-        try {
-            localStorage.setItem(`ai_conversation_${user.id}`, JSON.stringify(updated));
-        } catch (err) {
-            console.error('Failed to save conversation history:', err);
-        }
+        setConversationHistory((prev) => [...prev, newEntry].slice(-50));
     };
 
-    const clearConversationHistory = () => {
+    const clearConversationHistory = async () => {
         setConversationHistory([]);
-        try {
-            localStorage.removeItem(`ai_conversation_${user.id}`);
-            toast.success('Conversation history cleared');
-        } catch (err) {
-            console.error('Failed to clear conversation history:', err);
+        if (user.id) {
+            const { ok, error } = await mergeDashboardPreferences(user.id, { aiConversation: [] });
+            if (!ok && error) {
+                toast.error('Could not clear synced history');
+                return;
+            }
         }
+        toast.success('Conversation history cleared');
     };
 
     const loadRemainingGenerations = async () => {
@@ -402,7 +427,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="text-[10px] text-slate-500 mt-1">
+                                <p className="text-xs text-slate-500 mt-1">
                                     {CLAUDE_MODELS.find(m => m.id === selectedModel)?.description}
                                 </p>
                             </div>
@@ -434,6 +459,9 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                             <div className="text-sm font-semibold text-teal-400 mb-4">Generated Result</div>
                             {activeTab === 'content' ? (
                                 <div className="prose prose-invert max-w-none">
+                                    <div className="mb-3">
+                                        <AIOutputDisclaimer type={contentType === 'email' ? 'email' : contentType === 'social' ? 'social' : 'generic'} />
+                                    </div>
                                     <pre className="whitespace-pre-wrap text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-4 rounded-lg">
                                         {generatedResult}
                                     </pre>

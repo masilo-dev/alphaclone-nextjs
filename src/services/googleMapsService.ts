@@ -1,6 +1,6 @@
 /**
  * Google Maps Service
- * Handles Geocoding, Address Validation, and 3D Maps utilities.
+ * Compatibility facade backed by HERE Maps with OpenStreetMap fallback.
  */
 
 export interface LatLng {
@@ -12,65 +12,31 @@ export const googleMapsService = {
     /**
      * Geocode an address to LatLng
      */
-    async geocode(address: string, apiKey: string): Promise<LatLng | null> {
-        if (!apiKey) return null;
-        try {
-            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
-            const response = await fetch(url);
-            const data = await response.json();
-
-            if (data.status === 'OK' && data.results.length > 0) {
-                return data.results[0].geometry.location;
-            }
-            return null;
-        } catch (error) {
-            console.error('Geocoding error:', error);
-            return null;
-        }
+    async geocode(address: string, _apiKey?: string): Promise<LatLng | null> {
+        const result = await this.validateAddress(address);
+        return result.valid && result.location ? result.location : null;
     },
 
     /**
      * Validate an address using Google Address Validation API
+     * DISABLED: System transitioned to HERE Maps and OSM.
      */
-    async validateAddress(address: string, apiKey: string) {
-        if (!apiKey) return { valid: false, error: 'API Key missing' };
+    async validateAddress(address: string, _apiKey?: string) {
         try {
-            const response = await fetch(`https://addressvalidation.googleapis.com/v1:validateAddress?key=${apiKey}`, {
+            const response = await fetch('/api/location/validate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    address: {
-                        addressLines: [address]
-                    }
-                })
+                body: JSON.stringify({ address }),
             });
-
-            if (!response.ok) throw new Error('Validation failed');
-            const data = await response.json();
-
+            const payload = await response.json().catch(() => ({}));
             return {
-                valid: data.result?.verdict?.addressComplete || false,
-                formattedAddress: data.result?.address?.formattedAddress,
-                location: data.result?.geocode?.location,
-                metadata: data.result?.metadata
+                valid: Boolean(response.ok && payload.valid),
+                formattedAddress: payload.formattedAddress as string | undefined,
+                location: payload.location as { lat: number; lng: number } | undefined,
+                error: response.ok ? undefined : payload.error || 'Address could not be validated',
             };
         } catch (error) {
-            console.error('Address validation error:', error);
-            return { valid: false, error: 'Request failed' };
+            return { valid: false, error: error instanceof Error ? error.message : 'Address validation failed' };
         }
     },
-
-    /**
-     * Get Street View metadata check
-     */
-    async hasStreetView(lat: number, lng: number, apiKey: string): Promise<boolean> {
-        try {
-            const url = `https://maps.googleapis.com/maps/api/streetview/metadata?location=${lat},${lng}&key=${apiKey}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            return data.status === 'OK';
-        } catch {
-            return false;
-        }
-    }
 };

@@ -1,43 +1,185 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { start } from 'workflow/api';
+import { leadFindingWorkflow } from '@/workflows/lead-finding';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
+import { freePlacesService } from '@/services/freePlacesService';
+import { fetchSerpLeadsViaBrowser, hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
+import { leadsManagementSchema } from '@/schemas/validation';
+import { getFacebookIntegration, getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
+import { z } from 'zod';
+import { normalizePlatformRole } from '@/lib/platformAdmin';
 
 export async function POST(req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   try {
-    const { tenantId, action, config } = await req.json();
+    const payload = await req.json();
+    const parsed = leadsManagementSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
+    }
+    const { tenantId, action, config } = parsed.data;
 
-    if (!tenantId || !action) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    const access = await requireTenantAccess(tenantId, req);
+    const supabase = access.admin;
+    const role = normalizePlatformRole(access.membership.role);
+
+    const isReadOnly = action === 'get_leads';
+    const isAdminAction =
+      action === 'find_leads' ||
+      action === 'delete_lead' ||
+      action === 'convert_lead';
+
+    if (!isReadOnly && ['client', 'visitor'].includes(role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (isAdminAction && !['owner', 'admin', 'tenant_admin', 'super_admin'].includes(role)) {
+      return NextResponse.json({ error: 'Insufficient workspace permissions' }, { status: 403 });
     }
 
-    const supabase = createSupabaseAdminClient();
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const validated = validateActionConfig(action, config);
+    if (!validated.success) {
+      return NextResponse.json({ error: 'Validation failed', details: validated.error.flatten() }, { status: 400 });
+    }
+    const validatedConfig = validated.data;
+
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
     switch (action) {
       case 'find_leads':
-        return NextResponse.json(await findLeads(tenantId, config, supabase));
+        return NextResponse.json(await findLeads(tenantId, validatedConfig, supabase));
       case 'save_lead':
-        return NextResponse.json(await saveLead(tenantId, config, supabase));
+        return NextResponse.json(await saveLead(tenantId, validatedConfig, supabase));
       case 'update_lead':
-        return NextResponse.json(await updateLead(tenantId, config, supabase));
+        return NextResponse.json(await updateLead(tenantId, validatedConfig, supabase));
       case 'get_leads':
-        return NextResponse.json(await getLeads(tenantId, config, supabase));
+        return NextResponse.json(await getLeads(tenantId, validatedConfig, supabase));
       case 'convert_lead':
-        return NextResponse.json(await convertLead(tenantId, config, supabase));
+        return NextResponse.json(await convertLead(tenantId, validatedConfig, supabase));
       case 'delete_lead':
-        return NextResponse.json(await deleteLead(tenantId, config, supabase));
+        return NextResponse.json(await deleteLead(tenantId, validatedConfig, supabase));
       case 'bulk_actions':
-        return NextResponse.json(await bulkLeadsActions(tenantId, config, supabase));
+        if (!['owner', 'admin', 'tenant_admin', 'super_admin', 'member'].includes(role)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+        return NextResponse.json(await bulkLeadsActions(tenantId, validatedConfig, supabase, role));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Lead management error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return routeErrorResponse(error, undefined, req);
   }
+}
+
+const leadIdSchema = z.string().uuid();
+
+const findLeadsSchema = z.object({
+  location: z.string().trim().min(1).max(200),
+  businessType: z.string().trim().min(1).max(200),
+  radius: z.coerce.number().min(1).max(50).optional().default(5),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  sources: z.array(z.enum(['all', 'openstreetmap', 'facebook', 'linkedin', 'google'])).optional().default(['all']),
+  filters: z.record(z.string(), z.unknown()).optional().default({}),
+});
+
+const saveLeadSchema = z.object({
+  leadData: z.object({
+    id: z.string().trim().min(1).max(500),
+    name: z.string().trim().min(1).max(500),
+    email: z.string().trim().email().max(320).optional().nullable(),
+    phone: z.string().trim().max(100).optional().nullable(),
+    address: z.string().trim().max(500).optional().nullable(),
+    location: z.string().trim().max(500).optional().nullable(),
+    website: z.string().trim().max(2000).optional().nullable(),
+    type: z.string().trim().max(200).optional().nullable(),
+    category: z.string().trim().max(200).optional().nullable(),
+    metadata: z.record(z.string(), z.unknown()).optional().default({}),
+    foundAt: z.string().optional(),
+  }),
+  source: z.string().trim().min(1).max(200),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+const updateLeadSchema = z.object({
+  leadId: leadIdSchema,
+  updates: z.record(z.string(), z.unknown()).default({}),
+});
+
+const getLeadsSchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(20),
+  status: z.string().trim().max(80).optional(),
+  source: z.string().trim().max(120).optional(),
+  priority: z.string().trim().max(80).optional(),
+  dateRange: z
+    .object({
+      start: z.string().min(1),
+      end: z.string().min(1),
+    })
+    .optional(),
+  search: z.string().trim().max(200).optional(),
+});
+
+const convertLeadSchema = z.object({
+  leadId: leadIdSchema,
+  conversionType: z.string().trim().max(80).optional(),
+  dealData: z
+    .object({
+      name: z.string().trim().max(500).optional(),
+      value: z.coerce.number().min(0).optional(),
+      stage: z.string().trim().max(80).optional(),
+      expectedCloseDate: z.string().optional(),
+      probability: z.coerce.number().min(0).max(100).optional(),
+    })
+    .optional(),
+});
+
+const deleteLeadSchema = z.object({
+  leadId: leadIdSchema,
+});
+
+const bulkActionsSchema = z
+  .object({
+    leadIds: z.array(leadIdSchema).min(1).max(200),
+    action: z.enum(['update_status', 'update_priority', 'assign_to_user', 'add_tag', 'delete']),
+    data: z.record(z.string(), z.unknown()).default({}),
+  })
+  .superRefine((value, ctx) => {
+    if (value.action === 'update_status') {
+      if (typeof value.data.status !== 'string' || !String(value.data.status).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'status is required' });
+      }
+    }
+    if (value.action === 'update_priority') {
+      if (typeof value.data.priority !== 'string' || !String(value.data.priority).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'priority is required' });
+      }
+    }
+    if (value.action === 'assign_to_user') {
+      if (typeof value.data.userId !== 'string' || !String(value.data.userId).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'userId is required' });
+      }
+    }
+    if (value.action === 'add_tag') {
+      if (typeof value.data.tag !== 'string' || !String(value.data.tag).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'tag is required' });
+      }
+    }
+  });
+
+function validateActionConfig(action: string, config: unknown) {
+  if (action === 'find_leads') return findLeadsSchema.safeParse(config);
+  if (action === 'save_lead') return saveLeadSchema.safeParse(config);
+  if (action === 'update_lead') return updateLeadSchema.safeParse(config);
+  if (action === 'get_leads') return getLeadsSchema.safeParse(config);
+  if (action === 'convert_lead') return convertLeadSchema.safeParse(config);
+  if (action === 'delete_lead') return deleteLeadSchema.safeParse(config);
+  if (action === 'bulk_actions') return bulkActionsSchema.safeParse(config);
+  return z.record(z.string(), z.unknown()).safeParse(config);
 }
 
 async function findLeads(tenantId: string, config: any, supabase: any) {
@@ -80,6 +222,8 @@ async function findLeads(tenantId: string, config: any, supabase: any) {
     // Save search results to database for tracking
     await saveLeadSearchResults(tenantId, uniqueLeads, config, supabase);
 
+    const { runId } = await start(leadFindingWorkflow, [{ query: businessType, location, tenantId }]);
+
     return {
       success: true,
       data: {
@@ -87,12 +231,13 @@ async function findLeads(tenantId: string, config: any, supabase: any) {
         total: uniqueLeads.length,
         sources: sources,
         location: location,
-        searchTime: new Date().toISOString()
+        searchTime: new Date().toISOString(),
+        runId
       },
       message: `Found ${uniqueLeads.length} leads`
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -158,24 +303,21 @@ async function searchOpenStreetMapLeads(location: string, businessType: string, 
 
 async function searchFacebookLeads(tenantId: string, businessType: string, limit: number, filters: any, supabase: any) {
   try {
-    // Get Facebook integration
-    const { data: integration } = await supabase
-      .from('facebook_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .single();
+    const integration = await getFacebookIntegration(supabase, { tenantId });
 
     if (!integration) {
       return [];
     }
 
+    const tokens = await getFacebookTokens(supabase, integration);
     const leads = [];
+    const token = tokens.userAccessToken || tokens.pageAccessToken;
+    if (!token) return [];
 
     // Search for Facebook pages related to business type
     const searchQuery = `${businessType} business`;
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/search?type=page&q=${encodeURIComponent(searchQuery)}&limit=${limit}&access_token=${integration.page_access_token}`
+      `https://graph.facebook.com/v21.0/search?type=page&q=${encodeURIComponent(searchQuery)}&limit=${limit}&fields=id,name,category,category_list,location,website,phone,fan_count,verified,talking_about_count,cover,rating&access_token=${encodeURIComponent(token)}`
     );
 
     const data = await response.json();
@@ -218,29 +360,33 @@ async function searchFacebookLeads(tenantId: string, businessType: string, limit
 
 async function searchLinkedInLeads(businessType: string, location: string, limit: number, filters: any) {
   try {
-    // Note: LinkedIn API requires special access
-    // This is a mock implementation
-    const leads = [
-      {
-        id: 'li_1',
-        name: 'Sample Business',
-        source: 'linkedin',
-        type: 'company',
-        location: location,
-        industry: businessType,
-        employees: '11-50',
-        website: 'https://example.com',
-        description: 'Sample business description',
-        metadata: {
-          companyId: '12345',
-          founded: '2010',
-          headquarters: location
-        },
-        foundAt: new Date().toISOString()
-      }
-    ];
+    if (!hasRemoteBrowserConfigured()) {
+      return [];
+    }
 
-    return leads.filter(lead => passesFilters(lead, filters));
+    const rows = await fetchSerpLeadsViaBrowser(businessType, location, Math.min(Math.max(limit, 5), 20), {
+      searchQuery: `${businessType} ${location} site:linkedin.com/company`,
+    });
+
+    const leads = rows.map((row, index) => ({
+      id: `li_${index + 1}_${Buffer.from(`${row.business_name}:${row.website}`).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}`,
+      name: row.business_name,
+      source: 'linkedin',
+      type: 'company_profile',
+      location: row.address || location,
+      industry: businessType,
+      website: row.website || null,
+      phone: row.phone || null,
+      email: row.email || null,
+      description: row.snippet || 'Public company profile discovered from LinkedIn search.',
+      metadata: {
+        publicProfileUrl: row.website || null,
+        contact_discovery_method: 'public_search',
+      },
+      foundAt: new Date().toISOString()
+    }));
+
+    return leads.filter((lead) => passesFilters(lead, filters));
   } catch (error) {
     console.error('LinkedIn search error:', error);
     return [];
@@ -249,32 +395,43 @@ async function searchLinkedInLeads(businessType: string, location: string, limit
 
 async function searchGoogleLeads(businessType: string, location: string, radius: number, limit: number, filters: any) {
   try {
-    // Note: Google Places API requires API key
-    // This is a mock implementation
-    const leads = [
-      {
-        id: 'google_1',
-        name: 'Google Found Business',
-        source: 'google',
-        type: 'place',
-        location: location,
-        address: '123 Main St',
-        phone: '+1234567890',
-        rating: 4.5,
-        reviews: 125,
-        website: 'https://example.com',
-        metadata: {
-          placeId: 'ChIJ...',
-          photos: [],
-          openingHours: 'Mo-Fr 09:00-17:00'
-        },
-        foundAt: new Date().toISOString()
-      }
-    ];
+    const result = await freePlacesService.searchPlacesForLeads(businessType, location, undefined, {
+      radiusKm: Math.min(Math.max(radius || 15, 2), 50),
+      maxResults: Math.min(Math.max(limit, 5), 20),
+    });
 
-    return leads.filter(lead => passesFilters(lead, filters));
+    if (result.error && result.places.length === 0) {
+      console.warn('[leads/management] Free places:', result.error);
+      return [];
+    }
+
+    const leads = result.places.map((p) => ({
+      id: `place_${p.placeId}`,
+      name: p.businessName,
+      source: p.source || 'free_places',
+      type: 'place',
+      location: p.formattedAddress || location,
+      address: p.formattedAddress,
+      phone: p.phone || null,
+      website: p.website || null,
+      rating: p.rating ?? null,
+      reviews: p.userRatingCount ?? null,
+      metadata: {
+        placeId: p.placeId,
+        googleMapsUri: p.googleMapsUri,
+        industry: p.industry,
+        lat: p.lat,
+        lng: p.lng,
+        location_validated: result.locationValidated,
+        formatted_location: result.formattedLocation,
+        geocode_warning: result.geocodeError,
+      },
+      foundAt: new Date().toISOString(),
+    }));
+
+    return leads.filter((lead) => passesFilters(lead, filters));
   } catch (error) {
-    console.error('Google search error:', error);
+    console.error('Free places search error:', error);
     return [];
   }
 }
@@ -282,61 +439,52 @@ async function searchGoogleLeads(businessType: string, location: string, radius:
 async function saveLead(tenantId: string, config: any, supabase: any) {
   try {
     const { leadData, source, metadata } = config;
+    const { resolveOrCreateCRMIdentity } = await import('@/lib/crm/resolveOrCreateCRMIdentity');
+    const result = await resolveOrCreateCRMIdentity(
+      {
+        business_name: leadData.name,
+        email: leadData.email,
+        phone: leadData.phone,
+        location: leadData.address || leadData.location,
+        website: leadData.website,
+        industry: leadData.type || leadData.category,
+        external_id: leadData.id,
+        metadata: {
+          ...(leadData.metadata || {}),
+          ...(metadata || {}),
+          priority: calculateLeadPriority(leadData),
+          estimated_value: estimateLeadValue(leadData),
+        },
+      },
+      tenantId,
+      source,
+      { supabase },
+    );
 
-    // Check if lead already exists
-    const { data: existingLead } = await supabase
-      .from('leads')
-      .select('id')
-      .eq('tenant_id', tenantId)
-      .eq('external_id', leadData.id)
-      .single();
-
-    if (existingLead) {
-      return { success: false, error: 'Lead already exists' };
+    if (leadData.id) {
+      await supabase
+        .from('lead_search_results')
+        .update({ saved_to_database: true })
+        .eq('tenant_id', tenantId)
+        .eq('lead_external_id', leadData.id);
     }
 
-    // Save lead to database
-    const { data: lead, error } = await supabase
+    const { data: lead } = await supabase
       .from('leads')
-      .insert({
-        tenant_id: tenantId,
-        external_id: leadData.id,
-        name: leadData.name,
-        email: leadData.email || null,
-        phone: leadData.phone || null,
-        address: leadData.address || leadData.location || null,
-        website: leadData.website || null,
-        business_type: leadData.type || leadData.category || null,
-        source: source,
-        status: 'new',
-        priority: calculateLeadPriority(leadData),
-        value: estimateLeadValue(leadData),
-        metadata: {
-          ...leadData.metadata,
-          original_source: source,
-          found_at: leadData.foundAt
-        },
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Update lead search tracking
-    await supabase
-      .from('lead_search_results')
-      .update({ saved_to_database: true })
+      .select('*')
+      .eq('id', result.lead_id)
       .eq('tenant_id', tenantId)
-      .eq('lead_external_id', leadData.id);
+      .single();
 
     return {
       success: true,
       data: lead,
-      message: 'Lead saved successfully'
+      matched_existing: result.matched_existing,
+      match_reason: result.match_reason,
+      message: result.created ? 'Lead saved successfully' : 'Matched existing lead',
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -347,7 +495,11 @@ async function updateLead(tenantId: string, config: any, supabase: any) {
     const { data: lead, error } = await supabase
       .from('leads')
       .update({
-        ...updates,
+        ...(updates.name ? { business_name: updates.name } : {}),
+        ...(updates.status ? { status: updates.status, stage: updates.status } : {}),
+        ...(updates.address ? { location: updates.address } : {}),
+        ...(updates.priority ? { priority: updates.priority } : {}),
+        ...Object.fromEntries(Object.entries(updates).filter(([key]) => !['name', 'status', 'address', 'priority'].includes(key))),
         updated_at: new Date().toISOString()
       })
       .eq('id', leadId)
@@ -363,7 +515,7 @@ async function updateLead(tenantId: string, config: any, supabase: any) {
       message: 'Lead updated successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -385,7 +537,7 @@ async function getLeads(tenantId: string, config: any, supabase: any) {
       .eq('tenant_id', tenantId);
 
     if (status) {
-      query = query.eq('status', status);
+      query = query.eq('stage', status);
     }
 
     if (source) {
@@ -401,7 +553,7 @@ async function getLeads(tenantId: string, config: any, supabase: any) {
     }
 
     if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+      query = query.or(`business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
     }
 
     const { data: leads, error, count } = await query
@@ -423,7 +575,7 @@ async function getLeads(tenantId: string, config: any, supabase: any) {
       }
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -431,20 +583,38 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
   try {
     const { leadId, conversionType, dealData } = config;
 
-    // Update lead status
-    const { data: lead, error: leadError } = await supabase
+    const { data: leadBefore, error: leadLookupError } = await supabase
       .from('leads')
-      .update({
-        status: 'converted',
-        converted_at: new Date().toISOString(),
-        conversion_type: conversionType
-      })
+      .select('id, tenant_id, business_name, value, email')
       .eq('id', leadId)
       .eq('tenant_id', tenantId)
-      .select()
+      .maybeSingle();
+
+    if (leadLookupError) throw leadLookupError;
+    if (!leadBefore) return { success: false, error: 'Lead not found' };
+
+    const { data: conversion, error: conversionError } = await supabase.rpc('convert_lead_to_contact', {
+      lead_id: leadId,
+      create_company: false,
+      company_name: null,
+      contact_name_override: null,
+    });
+
+    if (conversionError) throw conversionError;
+
+    const conversionPayload =
+      typeof conversion === 'string'
+        ? JSON.parse(conversion)
+        : (conversion || {});
+
+    const { data: lead, error: refreshedLeadError } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('id', leadId)
+      .eq('tenant_id', tenantId)
       .single();
 
-    if (leadError) throw leadError;
+    if (refreshedLeadError) throw refreshedLeadError;
 
     // Create deal if dealData provided
     if (dealData) {
@@ -452,13 +622,18 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
         .from('deals')
         .insert({
           tenant_id: tenantId,
-          lead_id: leadId,
-          name: dealData.name || `Deal from ${lead.name}`,
-          value: dealData.value || lead.value || 0,
-          stage: dealData.stage || 'initial',
-          status: 'active',
+          name: dealData.name || `Deal from ${leadBefore.business_name}`,
+          value: dealData.value || leadBefore.value || 0,
+          stage: dealData.stage || 'lead',
           expected_close_date: dealData.expectedCloseDate,
           probability: dealData.probability || 50,
+          contact_id: conversionPayload.contact_id || null,
+          metadata: {
+            source: 'lead_conversion',
+            conversion_type: conversionType || null,
+            original_lead_id: leadId,
+            business_client_id: conversionPayload.client_id || null,
+          },
           created_at: new Date().toISOString()
         })
         .select()
@@ -468,18 +643,18 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
 
       return {
         success: true,
-        data: { lead, deal },
+        data: { lead, deal, conversion: conversionPayload },
         message: 'Lead converted to deal successfully'
       };
     }
 
     return {
       success: true,
-      data: lead,
+      data: { lead, conversion: conversionPayload },
       message: 'Lead converted successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -487,12 +662,18 @@ async function deleteLead(tenantId: string, config: any, supabase: any) {
   try {
     const { leadId } = config;
 
-    const { error } = await supabase
-      .from('leads')
-      .delete()
-      .eq('id', leadId)
-      .eq('tenant_id', tenantId);
+    try {
+      const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: leadId });
+      if (error) throw error;
+      if (data && typeof data === 'object' && data.ok === true) {
+        return { success: true, message: 'Lead deleted successfully' };
+      }
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      if (!/function|does not exist|delete_tenant_lead/i.test(msg)) throw err;
+    }
 
+    const { error } = await supabase.from('leads').delete().eq('id', leadId).eq('tenant_id', tenantId);
     if (error) throw error;
 
     return {
@@ -500,17 +681,28 @@ async function deleteLead(tenantId: string, config: any, supabase: any) {
       message: 'Lead deleted successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
-async function bulkLeadsActions(tenantId: string, config: any, supabase: any) {
+async function bulkLeadsActions(tenantId: string, config: any, supabase: any, role: string) {
   try {
     const { leadIds, action, data } = config;
 
-    const results = [];
+    if (!Array.isArray(leadIds)) {
+      return { success: false, error: 'leadIds must be an array' };
+    }
+    if (leadIds.length > 200) {
+      return { success: false, error: 'Too many leads selected' };
+    }
+    if ((action === 'delete' || action === 'assign_to_user') && !['owner', 'admin', 'tenant_admin', 'super_admin'].includes(role)) {
+      return { success: false, error: 'Insufficient workspace permissions' };
+    }
 
-    for (const leadId of leadIds) {
+    const results = [];
+    const uniqueIds: string[] = Array.from(new Set(leadIds.map((value: unknown) => String(value).trim()).filter(Boolean)));
+
+    for (const leadId of uniqueIds) {
       try {
         let result;
 
@@ -524,9 +716,15 @@ async function bulkLeadsActions(tenantId: string, config: any, supabase: any) {
           case 'assign_to_user':
             result = await updateLead(tenantId, { leadId, updates: { assigned_to: data.userId } }, supabase);
             break;
-          case 'add_tag':
-            result = await addLeadTag(tenantId, leadId, data.tag, supabase);
+          case 'add_tag': {
+            const tag: string = typeof (data as any)?.tag === 'string' ? String((data as any).tag).trim() : '';
+            if (!tag) {
+              result = { success: false, error: 'Tag is required' };
+              break;
+            }
+            result = await addLeadTag(tenantId, leadId, tag, supabase);
             break;
+          }
           case 'delete':
             result = await deleteLead(tenantId, { leadId }, supabase);
             break;
@@ -535,18 +733,19 @@ async function bulkLeadsActions(tenantId: string, config: any, supabase: any) {
         }
 
         results.push({ leadId, result });
-      } catch (error: any) {
-        results.push({ leadId, success: false, error: error.message });
+      } catch (error: unknown) {
+        console.error('[leads/management.bulk]', leadId, error);
+        results.push({ leadId, success: false, error: OPERATION_FAILED_MESSAGE });
       }
     }
 
     return {
       success: true,
       data: results,
-      message: `Bulk action completed for ${leadIds.length} leads`
+      message: `Bulk action completed for ${uniqueIds.length} leads`
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }
 
@@ -732,6 +931,6 @@ async function addLeadTag(tenantId: string, leadId: string, tag: string, supabas
 
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('leads/management', error);
   }
 }

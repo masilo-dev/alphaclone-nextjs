@@ -100,7 +100,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                             >
                                 {!msg.isLocal && (
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mr-2 border border-slate-700 mt-0.5 shadow-sm">
-                                        <span className="text-white text-[10px] font-bold">
+                                        <span className="text-white text-xs font-bold">
                                             {(msg.userName?.[0] || 'G').toUpperCase()}
                                         </span>
                                     </div>
@@ -123,7 +123,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                                     </div>
 
                                     {showsTime && (
-                                        <p className="text-[10px] text-slate-500 mt-1 mx-1 font-medium">
+                                        <p className="text-xs text-slate-500 mt-1 mx-1 font-medium">
                                             {msg.timestamp.toLocaleTimeString([], {
                                                 hour: '2-digit',
                                                 minute: '2-digit'
@@ -161,10 +161,11 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
                         <Send className="w-4 h-4 ml-0.5" />
                     </button>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-2 text-center">Press <kbd className="bg-slate-800 px-1 py-0.5 rounded border border-slate-700">Enter</kbd> to send</p>
+                <p className="text-xs text-slate-500 mt-2 text-center">Press <kbd className="bg-slate-800 px-1 py-0.5 rounded border border-slate-700">Enter</kbd> to send</p>
             </div>
         </div>
     );
 };
 
 export default MeetingChat;
+

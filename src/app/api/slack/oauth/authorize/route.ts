@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +13,7 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
+    const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
 
     if (!process.env.SLACK_CLIENT_ID || !process.env.SLACK_REDIRECT_URI) {
       return NextResponse.json(
@@ -18,6 +21,14 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    const admin = createSupabaseAdminClient();
+    const { data: stateRow, error: stateError } = await admin.from('oauth_states').insert({
+      user_id: user.id,
+      tenant_id: tenantId,
+      metadata: { provider: 'slack' },
+    }).select('id').single();
+    if (stateError || !stateRow?.id) throw stateError || new Error('OAuth state could not be created');
 
     // Build Slack OAuth URL
     const authUrl = new URL('https://slack.com/oauth/v2/authorize');
@@ -36,7 +47,10 @@ export async function GET(request: NextRequest) {
     ].join(','));
     
     authUrl.searchParams.set('redirect_uri', process.env.SLACK_REDIRECT_URI);
-    authUrl.searchParams.set('state', tenantId);
+    authUrl.searchParams.set(
+      'state',
+      stateRow.id,
+    );
     authUrl.searchParams.set('user_scope', [
       'channels:read',
       'users:read',
@@ -47,9 +61,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('[Slack OAuth] Authorization error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate authorization URL' },
-      { status: 500 }
-    );
+    return routeErrorResponse(error, 'Slack authorization could not be started', request);
   }
 }

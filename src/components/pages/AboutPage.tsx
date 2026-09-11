@@ -1,31 +1,20 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import {
-    Globe, ArrowRight, Building2, Clock, CircuitBoard, Sparkles, Zap, Shield
+    Globe, Clock, CircuitBoard, Sparkles
 } from 'lucide-react';
-import { Button } from '../ui/UIComponents';
-import PublicNavigation from '../PublicNavigation';
-import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
-import MarketingFooter from '../landing/MarketingFooter';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const AboutPage: React.FC = () => {
-    const [, setIsLoginOpen] = React.useState(false);
-
     const stats = [
-        { label: 'Businesses Served', value: '500+', sub: 'and growing every week' },
-        { label: 'Tools Replaced Per Client', value: '8+', sub: 'on average' },
-        { label: 'Monthly SaaS Costs Saved', value: '$280', sub: 'per client, on average' },
-        { label: 'Hours Saved Per Week', value: '15+', sub: 'per business owner' },
-        { label: 'Customer Satisfaction', value: '97%', sub: 'based on support surveys' },
-        { label: 'Uptime Guarantee', value: '99.9%', sub: 'SLA for all plans' },
+        { label: 'Core Workflows', value: 'CRM', sub: 'pipeline and contacts' },
+        { label: 'Revenue Workflow', value: 'Billing', sub: 'quotes, invoices, payments' },
+        { label: 'Legal Workflow', value: 'Contracts', sub: 'drafts, approvals, signatures' },
+        { label: 'Delivery Workflow', value: 'Projects', sub: 'tasks, milestones, ownership' },
+        { label: 'Communication Workflow', value: 'Comms', sub: 'email, meetings, updates' },
+        { label: 'Operating Layer', value: 'OS', sub: 'one backbone for daily work' },
     ];
 
     const timeline = [
@@ -53,7 +42,7 @@ const AboutPage: React.FC = () => {
 
     const values = [
         {
-            title: 'Obsessed with Real Business Outcomes',
+            title: 'Focused on real business outcomes',
             desc: "We do not measure success by feature count. We measure it by whether the product makes a business more organized, more profitable, and easier to run.",
         },
         {
@@ -102,15 +91,8 @@ const AboutPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen page-network-bg text-white">
-            {/* Persistent full-page animated network background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
-            <div className="pt-20 relative overflow-hidden">
+        <div className="marketing-theme min-h-screen page-network-bg text-white">
+            <div className="relative overflow-hidden">
                 <section className="relative min-h-[50vh] flex flex-col items-center justify-center pt-24 pb-20">
                     
                     <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -135,11 +117,11 @@ const AboutPage: React.FC = () => {
                 </section>
 
                 <section className="py-16 bg-transparent relative z-10">
-                    <div className="max-w-6xl mx-auto px-4">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 min-w-0">
+                        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
                             {stats.map((stat, idx) => (
                                 <AnimateIn key={idx} type="stagger" index={idx}>
-                                    <div className="text-center p-8 glass-card rounded-2xl border-white/[0.03] transition-all hover:scale-[1.02]">
+                                    <div className="text-center p-4 sm:p-6 md:p-8 glass-card rounded-2xl border-white/[0.03] transition-all hover:scale-[1.02]">
                                         <div className="text-4xl font-black text-teal-400 mb-2 tracking-tighter">{stat.value}</div>
                                         <div className="font-bold text-white text-sm mb-1 uppercase tracking-wider">{stat.label}</div>
                                         <div className="text-slate-500 text-xs font-medium">{stat.sub}</div>
@@ -181,7 +163,7 @@ const AboutPage: React.FC = () => {
                                     { title: 'Enterprise-Grade Security', desc: 'Isolated databases, encrypted communications, and explicit access rules come as standard.' }
                                 ].map((item, i) => (
                                     <AnimateIn key={i} type="stagger" index={i}>
-                                        <div className="p-8 rounded-3xl glass-card border-white/[0.04] relative group">
+                                        <div className="p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl glass-card border-white/[0.04] relative group">
                                             <div className="absolute -top-3 -left-3 w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center border border-teal-500/20 backdrop-blur-xl group-hover:bg-teal-500 group-hover:text-slate-950 transition-all">
                                                 <div className="text-xs font-black tracking-tighter">0{i + 1}</div>
                                             </div>
@@ -205,7 +187,7 @@ const AboutPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {whySection.map((point, i) => (
                                 <AnimateIn key={i} type="fadeUp" delay={i * 0.07}>
-                                    <div className="p-8 rounded-2xl glass-card border-white/[0.03] h-full">
+                                    <div className="p-4 sm:p-6 md:p-8 rounded-2xl glass-card border-white/[0.03] h-full">
                                         <div className="border-l-4 border-teal-500/50 pl-6 h-full flex flex-col justify-center">
                                             <h3 className="text-xl font-black text-white mb-4 tracking-tight">{point.headline}</h3>
                                             <p className="text-slate-400 leading-relaxed font-normal">{point.body}</p>
@@ -300,22 +282,11 @@ const AboutPage: React.FC = () => {
                                 <span className="hero-metallic-text">Business Operations?</span>
                             </h2>
                             <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                                Join 500+ high-performance teams running smarter on AlphaClone. Deploy your Unified Business OS in under 60 seconds.
+                                Start a 14-day trial and build your Unified Business OS before you pay.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-6">
-                                <Link href="/register">
-                                    <Button className="bg-teal-500 text-slate-950 text-xl px-12 py-5 h-auto rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">Start Your OS</span>
-                                    </Button>
-                                </Link>
-                                <Link href="/pricing">
-                                    <Button variant="outline" className="text-xl px-12 py-5 h-auto rounded-2xl button-fill-hover">
-                                        <span className="relative z-10 flex items-center">
-                                            View Plans
-                                            <ArrowRight className="w-5 h-5 ml-3" />
-                                        </span>
-                                    </Button>
-                                </Link>
+                                <PrimaryCTA className="w-full sm:w-auto">Start Your OS</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                             <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-[0.2em]">
                                 14-Day Free Trial • No Credit Card • Zero Friction
@@ -324,7 +295,6 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
             </div>
-            <MarketingFooter />
         </div>
     );
 };

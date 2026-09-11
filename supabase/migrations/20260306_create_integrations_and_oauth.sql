@@ -24,18 +24,22 @@ CREATE TABLE IF NOT EXISTS public.integrations (
 -- Add RLS policies for integrations
 ALTER TABLE public.integrations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their own integrations" ON public.integrations;
 CREATE POLICY "Users can view their own integrations"
     ON public.integrations FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own integrations" ON public.integrations;
 CREATE POLICY "Users can insert their own integrations"
     ON public.integrations FOR INSERT
     WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own integrations" ON public.integrations;
 CREATE POLICY "Users can update their own integrations"
     ON public.integrations FOR UPDATE
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own integrations" ON public.integrations;
 CREATE POLICY "Users can delete their own integrations"
     ON public.integrations FOR DELETE
     USING (auth.uid() = user_id);
@@ -49,6 +53,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_integrations_updated_at_trigger ON public.integrations;
 CREATE TRIGGER update_integrations_updated_at_trigger
     BEFORE UPDATE ON public.integrations
     FOR EACH ROW
@@ -58,6 +63,7 @@ CREATE TRIGGER update_integrations_updated_at_trigger
 ALTER TABLE public.oauth_states ENABLE ROW LEVEL SECURITY;
 
 -- Allow users to read/delete their own state, insert their own state, but service role does the actual verification bypassing RLS mostly
+DROP POLICY IF EXISTS "Users can manage their own oauth states" ON public.oauth_states;
 CREATE POLICY "Users can manage their own oauth states"
     ON public.oauth_states FOR ALL
     USING (auth.uid() = user_id);

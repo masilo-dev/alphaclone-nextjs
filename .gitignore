@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -48,6 +49,7 @@ public/sw.js
 public/sw.js.map
 public/workbox-*.js
 public/workbox-*.js.map
+public/pdfjs/
 
 # Credentials and secrets
 creds-output.txt
@@ -96,3 +98,32 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Scratch and temporary files
+/scratch/
+.aider*
+
+# workflow library generates a root /app dir at runtime; must not be committed
+/app/
+
+# Explicit secret files — NEVER commit
+.env.local
+.env
+.env.production
+.env.development
+.env*.local
+*.pem
+/.swc
+# MCP audit scratch scripts
+scratch_audit.ts
+scratch_contract_tests.ts
+scratch_detail_missing.ts
+scratch_group_missing.ts
+scratch_mcp_server.ts
+scratch_test_bridge.ts
+scratch_test_progressive.ts
+scratch_tool_matrix.ts
+
+# Railway CLI config
+.railway
+

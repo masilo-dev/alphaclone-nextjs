@@ -86,12 +86,29 @@ export async function POST(req: NextRequest) {
             }, { status: 503 });
         }
 
+        if (tenantId) {
+            const { data: optOut } = await supabase
+                .from('sms_opt_outs')
+                .select('id')
+                .eq('tenant_id', tenantId)
+                .eq('phone_number', toNormalized)
+                .maybeSingle();
+            if (optOut) {
+                return NextResponse.json({ error: 'Recipient has opted out of SMS (STOP)' }, { status: 400 });
+            }
+        }
+
+        const baseMessage = String(message || '').trim();
+        const withStopNotice = /(^|\s)stop(\s|$)/i.test(baseMessage)
+            ? baseMessage
+            : `${baseMessage}\n\nReply STOP to unsubscribe.`;
+
         // 2. Call Twilio REST API
         const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
         const params = new URLSearchParams({
             To:   toNormalized,
             From: fromNormalized,
-            Body: message,
+            Body: withStopNotice,
         });
 
         const twilioRes = await fetch(twilioUrl, {
@@ -106,6 +123,7 @@ export async function POST(req: NextRequest) {
         const twilioData = await twilioRes.json();
 
         if (!twilioRes.ok || twilioData.code) {
+            console.error('[sms/send] Twilio error:', twilioData);
             // Log failed message
             if (tenantId) {
                 await supabase.from('sms_messages').insert({
@@ -114,17 +132,20 @@ export async function POST(req: NextRequest) {
                     lead_id: leadId || null,
                     from_number: fromNormalized,
                     to_number: toNormalized,
-                    body: message,
+                    body: withStopNotice,
                     status: 'failed',
                     twilio_sid: twilioData.sid || null,
-                    error_message: twilioData.message || 'Twilio error',
+                    error_message: 'Twilio send failed',
                 });
             }
-            return NextResponse.json({
-                success: false,
-                error: twilioData.message || 'Twilio send failed',
-                code: twilioData.code,
-            }, { status: 400 });
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: 'SMS could not be sent. Verify your Twilio configuration.',
+                    code: twilioData.code ?? 'TWILIO_ERROR',
+                },
+                { status: 400 }
+            );
         }
 
         // 3. Log successful message
@@ -135,7 +156,7 @@ export async function POST(req: NextRequest) {
                 lead_id: leadId || null,
                 from_number: fromNormalized,
                 to_number: toNormalized,
-                body: message,
+                body: withStopNotice,
                 status: 'sent',
                 twilio_sid: twilioData.sid,
                 sent_at: new Date().toISOString(),

@@ -1,4 +1,5 @@
 import { tenantFortress } from './fortressLayer';
+import { redis, isRedisConfigured } from '@/lib/redis';
 
 export type MemoryStore = 'shortTerm' | 'longTerm' | 'episodic';
 
@@ -11,34 +12,71 @@ export interface MemoryEntry {
     timestamp: Date;
 }
 
+/**
+ * MemorySystem
+ * Hierarchical Memory: Redis for Short-term, Postgres + Vector for Long/Episodic.
+ * Uses Upstash Redis for multi-region serverless persistence.
+ */
 class MemorySystem {
-    // Hierarchical Memory: Redis for Short, Postgres + Vector for Long/Episodic
-    // For now, using in-memory mock until DB schemas are established
-    private cache: Map<string, MemoryEntry[]> = new Map();
+    private MEMORY_TTL = 60 * 60 * 24; // 24 hours for short-term memory
 
     async store(entry: MemoryEntry, store: MemoryStore = 'shortTerm') {
-        const key = tenantFortress.getIsolatedKey(entry.tenantId, store);
-        const entries = this.cache.get(key) || [];
-        entries.push(entry);
-        this.cache.set(key, entries);
+        const key = tenantFortress.getIsolatedKey(entry.tenantId, `mem:${store}`);
+        
+        if (isRedisConfigured()) {
+            try {
+                // Store in Redis list (Short-term context)
+                await redis.rpush(key, JSON.stringify(entry));
+                // Set expiry if it's short-term
+                if (store === 'shortTerm') {
+                    await redis.expire(key, this.MEMORY_TTL);
+                }
+            } catch (error) {
+                console.error('[MemorySystem] Redis store failed:', error);
+            }
+        }
         
         console.log(`MEMORY_FORTRESS [${store.toUpperCase()}]: Pattern isolated for ${entry.tenantId}`);
     }
 
     async recall(tenantId: string, query: string, store: MemoryStore = 'longTerm'): Promise<MemoryEntry[]> {
-        const key = tenantFortress.getIsolatedKey(tenantId, store);
-        const data = this.cache.get(key) || [];
-        return tenantFortress.sanitizeResponse(tenantId, data);
+        const key = tenantFortress.getIsolatedKey(tenantId, `mem:${store}`);
+        
+        if (isRedisConfigured()) {
+            try {
+                const data = await redis.lrange(key, 0, -1);
+                const parsed = (data as string[]).map(d => JSON.parse(d));
+                return tenantFortress.sanitizeResponse(tenantId, parsed);
+            } catch (error) {
+                console.error('[MemorySystem] Redis recall failed:', error);
+                return [];
+            }
+        }
+        
+        return [];
     }
 
     async getPatterns(tenantId: string): Promise<any[]> {
-        const key = tenantFortress.getIsolatedKey(tenantId, 'longTerm');
-        const data = (this.cache.get(key) || [])
-            .filter(e => e.success)
-            .map(e => e.content);
+        const key = tenantFortress.getIsolatedKey(tenantId, 'mem:shortTerm');
         
-        return tenantFortress.sanitizeResponse(tenantId, data);
+        if (isRedisConfigured()) {
+            try {
+                const data = await redis.lrange(key, 0, -1);
+                const parsed = (data as string[]).map(d => JSON.parse(d));
+                const patterns = parsed
+                    .filter(e => e.success)
+                    .map(e => e.content);
+                
+                return tenantFortress.sanitizeResponse(tenantId, patterns);
+            } catch (error) {
+                console.error('[MemorySystem] Redis patterns failed:', error);
+                return [];
+            }
+        }
+        
+        return [];
     }
 }
 
 export const memorySystem = new MemorySystem();
+

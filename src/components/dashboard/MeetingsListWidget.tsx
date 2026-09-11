@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Button } from '../ui/UIComponents';
 import { dailyService, VideoCall } from '../../services/dailyService';
+import MeetingProviderBadge from './common/MeetingProviderBadge';
 import { User } from '../../types';
 import { Video, Calendar, Clock, CheckCircle, X, AlertCircle, Users, Copy, Check, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -78,9 +79,13 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
             return { hours: 999, canCancel: true, message: 'Can cancel anytime' };
         }
 
-        // This is a simplified calculation. In production, you'd fetch the calendar event's start_time
-        // For now, we'll use created_at as a proxy
-        const hoursUntil = 999; // Placeholder
+        // Use scheduled_at when available; otherwise allow cancellation by policy default.
+        const startMs = call.scheduled_at
+            ? new Date(call.scheduled_at).getTime()
+            : call.created_at
+                ? new Date(call.created_at).getTime()
+                : Date.now();
+        const hoursUntil = (startMs - Date.now()) / (1000 * 60 * 60);
         const canCancel = hoursUntil >= call.cancellation_policy_hours || user.role === 'admin';
         const message = user.role === 'admin'
             ? 'Admin can cancel anytime'
@@ -140,7 +145,8 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                                         <h4 className="font-bold text-white text-base sm:text-lg truncate">{m.title}</h4>
-                                        <span className="px-2 py-0.5 rounded text-[10px] sm:text-xs bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse uppercase tracking-wider">
+                                        <MeetingProviderBadge meeting={m} />
+                                        <span className="px-2 py-0.5 rounded text-xs sm:text-xs bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse uppercase tracking-wider">
                                             LIVE
                                         </span>
                                     </div>
@@ -179,7 +185,10 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
                                     <div className={`w-2 h-2 rounded-full ${m.status === 'ended' ? 'bg-green-500' : 'bg-red-500'
                                         }`}></div>
                                     <div>
-                                        <p className="text-sm text-slate-300">{m.title}</p>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <p className="text-sm text-slate-300">{m.title}</p>
+                                            <MeetingProviderBadge meeting={m} />
+                                        </div>
                                         <p className="text-xs text-slate-500">
                                             {m.ended_at && new Date(m.ended_at).toLocaleString()}
                                             {m.duration_seconds && ` • ${Math.round(m.duration_seconds / 60)} minutes`}
@@ -202,3 +211,4 @@ const MeetingsListWidget: React.FC<Props> = ({ user, onJoin }) => {
 };
 
 export default MeetingsListWidget;
+

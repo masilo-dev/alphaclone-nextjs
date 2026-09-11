@@ -1,18 +1,21 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     Image as ImageIcon, Video, Send, Calendar, Clock, X, Plus, Hash,
     Upload, Loader2, CheckCircle2, Facebook, Globe, Trash2, Eye, Scissors,
-    RefreshCw, Link2, Sparkles, Play, Film, AlertTriangle, ExternalLink,
-    Mic, MicOff, Wand2
+    RefreshCw, Link2, Sparkles, Play, Film, AlertTriangle, ExternalLink, Linkedin,
+    Mic, MicOff, Wand2, Twitter
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { launchFunnelService } from '@/services/launchFunnelService';
+import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
 import VideoEditor from '../../video/VideoEditor';
 import { cn, cleanAIJSONResponse } from '../../../lib/utils';
 import toast from 'react-hot-toast';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 
 interface MediaAsset {
     id: string;
@@ -38,13 +41,39 @@ interface SocialPost {
     scheduled_at: string | null;
     published_at: string | null;
     facebook_post_id: string | null;
+    linkedin_post_urn: string | null;
     error_message: string | null;
     created_at: string;
 }
 
+type TopicDirection = 'same' | 'change';
+
 interface FacebookPage {
     page_id: string;
     page_name: string;
+}
+
+interface LinkedInIntegration {
+    linkedin_member_id: string;
+    linkedin_person_urn: string;
+    scopes: string[] | null;
+    is_active: boolean;
+}
+
+function normalizeScopes(raw: unknown): string[] {
+    if (Array.isArray(raw)) {
+        return raw
+            .flatMap((value) => String(value).split(/[,\s]+/))
+            .map((value) => value.trim().toLowerCase())
+            .filter(Boolean);
+    }
+    if (typeof raw === 'string') {
+        return raw
+            .split(/[,\s]+/)
+            .map((value) => value.trim().toLowerCase())
+            .filter(Boolean);
+    }
+    return [];
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -57,6 +86,9 @@ const STATUS_STYLE: Record<string, string> = {
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
     facebook: <Facebook className="w-3.5 h-3.5" />,
+    linkedin: <Linkedin className="w-3.5 h-3.5" />,
+    twitter: <Twitter className="w-3.5 h-3.5" />,
+    x: <Twitter className="w-3.5 h-3.5" />,
     platform: <Globe className="w-3.5 h-3.5" />,
 };
 
@@ -68,6 +100,9 @@ export default function SocialMediaComposer() {
     const [posts, setPosts] = useState<SocialPost[]>([]);
     const [mediaAssets, setMediaAssets] = useState<MediaAsset[]>([]);
     const [fbPages, setFbPages] = useState<FacebookPage[]>([]);
+    const [linkedinIntegrations, setLinkedinIntegrations] = useState<LinkedInIntegration[]>([]);
+    const [xIntegration, setXIntegration] = useState<any>(null);
+    const [selectedLinkedInMemberId, setSelectedLinkedInMemberId] = useState('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'compose' | 'posts' | 'media'>('compose');
 
@@ -88,7 +123,10 @@ export default function SocialMediaComposer() {
     const [showAiPanel, setShowAiPanel] = useState(false);
     const [aiTopic, setAiTopic] = useState('');
     const [aiTone, setAiTone] = useState<'professional' | 'casual' | 'engaging' | 'promotional'>('engaging');
+    const [aiContentType, setAiContentType] = useState<'caption' | 'facebook_200_words' | 'linkedin_article'>('caption');
     const [aiGenerating, setAiGenerating] = useState(false);
+    const [topicDirection, setTopicDirection] = useState<TopicDirection | null>(null);
+    const [retryingPostId, setRetryingPostId] = useState<string | null>(null);
 
     // Upload state
     const [uploading, setUploading] = useState(false);
@@ -107,14 +145,58 @@ export default function SocialMediaComposer() {
 
     // Video Editing state
     const [editingAsset, setEditingAsset] = useState<MediaAsset | null>(null);
+    const [linkedinCommentByPost, setLinkedinCommentByPost] = useState<Record<string, string>>({});
+    const [linkedinReactionByPost, setLinkedinReactionByPost] = useState<Record<string, string>>({});
+    const [linkedinActionLoading, setLinkedinActionLoading] = useState<Record<string, boolean>>({});
+    const [facebookCommentByPost, setFacebookCommentByPost] = useState<Record<string, string>>({});
+    const [facebookActionLoading, setFacebookActionLoading] = useState<Record<string, boolean>>({});
+    const [aiQuickReplyLoading, setAiQuickReplyLoading] = useState<Record<string, boolean>>({});
+    const selectedLinkedInIntegration = linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId) || null;
+    const selectedLinkedInScopes = normalizeScopes(selectedLinkedInIntegration?.scopes || []);
+    const hasSelectedLinkedInWriteScope = selectedLinkedInScopes.includes('w_member_social');
+    const isSelectedLinkedInActive = !!selectedLinkedInIntegration?.is_active;
+    const recentTopicWindowDays = 5;
+
+    const recentPosts = useMemo(() => {
+        const cutoffMs = Date.now() - recentTopicWindowDays * 24 * 60 * 60 * 1000;
+        return posts.filter((post) => {
+            const createdAtMs = new Date(post.created_at).getTime();
+            return Number.isFinite(createdAtMs) && createdAtMs >= cutoffMs;
+        });
+    }, [posts]);
+
+    const recentTopicHints = useMemo(() => {
+        const normalized = new Set<string>();
+        for (const post of recentPosts) {
+            const text = String(post.caption || '').replace(/\s+/g, ' ').trim();
+            if (!text) continue;
+            const hashMatches = Array.from(text.matchAll(/#([a-zA-Z0-9_]+)/g)).map((m) => m[1].toLowerCase());
+            for (const tag of hashMatches) {
+                if (tag.length >= 3) normalized.add(`#${tag}`);
+                if (normalized.size >= 6) break;
+            }
+            if (normalized.size >= 6) break;
+            const sentence = text.split(/[.!?]/)[0]?.trim() || text.slice(0, 90).trim();
+            if (sentence.length >= 15) normalized.add(sentence.slice(0, 70));
+            if (normalized.size >= 6) break;
+        }
+        return Array.from(normalized).slice(0, 6);
+    }, [recentPosts]);
 
     const loadData = useCallback(async () => {
         if (!tenant?.id || !user) return;
         setLoading(true);
-        const [postsRes, mediaRes, pagesRes] = await Promise.all([
+        const [postsRes, mediaRes, pagesRes, linkedinRes, xRes] = await Promise.all([
             supabase.from('social_posts').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(50),
             supabase.from('media_assets').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user.id).eq('is_active', true),
+            supabase
+                .from('linkedin_integrations')
+                .select('linkedin_member_id,linkedin_person_urn,scopes,is_active')
+                .eq('tenant_id', tenant.id)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false }),
+            supabase.from('x_integrations').select('id, x_username, x_user_id').eq('tenant_id', tenant.id).single(),
         ]);
         if (!postsRes.error) setPosts(postsRes.data || []);
         if (!mediaRes.error) setMediaAssets(mediaRes.data || []);
@@ -122,10 +204,29 @@ export default function SocialMediaComposer() {
             setFbPages(pagesRes.data || []);
             if (pagesRes.data?.[0]) setSelectedPageId(pagesRes.data[0].page_id);
         }
+        if (!linkedinRes.error) {
+            const rows = (linkedinRes.data || []) as LinkedInIntegration[];
+            setLinkedinIntegrations(rows);
+            if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
+        }
+        if (!xRes.error) {
+            setXIntegration(xRes.data || null);
+        }
+        const hasIntegration = (pagesRes.data || []).length > 0 || (linkedinRes.data || []).length > 0;
+        if (hasIntegration && user?.id) {
+            void launchFunnelService.completeStep('integration_connected', user.id, tenant?.id, {
+                source: 'social_media_composer_load',
+            });
+        }
         setLoading(false);
-    }, [tenant?.id, user]);
+    }, [tenant?.id, user, selectedLinkedInMemberId]);
 
-    useEffect(() => { loadData(); }, [loadData]);
+    useEffect(() => {
+        void import('@/services/authService').then(({ authService }) => {
+            authService.consumeLinkedInConnectStatusFromUrl();
+        });
+        loadData();
+    }, [loadData]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -178,6 +279,9 @@ export default function SocialMediaComposer() {
         if (!caption.trim()) return toast.error('Caption is required');
         if (platforms.length === 0) return toast.error('Select at least one platform');
         if (!publishNow && !scheduledAt) return toast.error('Choose "Post Now" or set a schedule date');
+        if (platforms.includes('linkedin') && (!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope)) {
+            return toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+        }
 
         setSubmitting(true);
         const toastId = toast.loading(publishNow ? 'Publishing...' : 'Scheduling post...');
@@ -196,13 +300,24 @@ export default function SocialMediaComposer() {
                 link_url: linkUrl || undefined,
                 hashtags,
                 scheduled_at: publishNow ? undefined : scheduledAt || undefined,
+                publish_now: publishNow,
                 facebook_page_id: platforms.includes('facebook') ? selectedPageId : undefined,
+                linkedin_member_id: platforms.includes('linkedin') ? (selectedLinkedInMemberId || undefined) : undefined,
             }),
         });
         const data = await res.json();
 
         if (data.success) {
-            toast.success(publishNow ? 'Post sent!' : 'Post scheduled!', { id: toastId });
+            toast.success(
+                data.publishBlocked ? 'Saved (publishing disabled)' : publishNow ? 'Post sent!' : 'Post scheduled!',
+                { id: toastId }
+            );
+            userLearningPreferencesService.recordSocialPost(finalCaption, aiTone);
+            if (!publishNow) {
+                await launchFunnelService.completeStep('first_post_scheduled', user?.id, tenant?.id, {
+                    source: 'social_composer',
+                });
+            }
             setCaption('');
             setHashtags([]);
             setHashtagInput('');
@@ -220,16 +335,201 @@ export default function SocialMediaComposer() {
 
     const handleDeletePost = async (id: string) => {
         if (!confirm('Delete this post?')) return;
-        await supabase.from('social_posts').delete().eq('id', id);
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(tenant.id)}&postId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!response.ok) { toast.error('Post could not be deleted'); return; }
         setPosts(prev => prev.filter(p => p.id !== id));
         toast.success('Deleted');
     };
 
     const handleDeleteMedia = async (asset: MediaAsset) => {
         if (!confirm('Delete this media asset?')) return;
-        await supabase.from('media_assets').delete().eq('id', asset.id);
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/social/media/upload?tenantId=${encodeURIComponent(tenant.id)}&assetId=${encodeURIComponent(asset.id)}`, { method: 'DELETE' });
+        if (!response.ok) { toast.error('Media asset could not be deleted'); return; }
         setMediaAssets(prev => prev.filter(a => a.id !== asset.id));
         toast.success('Deleted');
+    };
+
+    const handleConnectLinkedIn = async () => {
+        try {
+            const { authService } = await import('@/services/authService');
+            const { error } = await authService.connectLinkedInIntegration('/dashboard/business/social', tenant?.id);
+            if (error) toast.error(error);
+        } catch {
+            toast.error('Failed to start LinkedIn connection');
+        }
+    };
+
+    const handleDisconnectLinkedIn = async () => {
+        if (!tenant?.id || !selectedLinkedInMemberId) return;
+        if (!confirm('Disconnect selected LinkedIn account from this workspace?')) return;
+        try {
+            const res = await fetch('/api/auth/linkedin/disconnect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: tenant.id,
+                    linkedinMemberId: selectedLinkedInMemberId,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to disconnect LinkedIn');
+                return;
+            }
+            toast.success('LinkedIn disconnected');
+            setSelectedLinkedInMemberId('');
+            await loadData();
+        } catch {
+            toast.error('Failed to disconnect LinkedIn');
+        }
+    };
+
+    const handleLinkedInComment = async (post: SocialPost) => {
+        if (!tenant?.id || !post.linkedin_post_urn) return;
+        if (!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope) {
+            toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+            return;
+        }
+        const text = (linkedinCommentByPost[post.id] || '').trim();
+        if (!text) {
+            toast.error('Write a comment first');
+            return;
+        }
+        setLinkedinActionLoading((prev) => ({ ...prev, [`comment-${post.id}`]: true }));
+        try {
+            const res = await fetch('/api/linkedin/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: tenant.id,
+                    postUrn: post.linkedin_post_urn,
+                    text,
+                    linkedinMemberId: selectedLinkedInMemberId || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to comment on LinkedIn');
+                return;
+            }
+            setLinkedinCommentByPost((prev) => ({ ...prev, [post.id]: '' }));
+            toast.success('LinkedIn comment posted');
+        } catch {
+            toast.error('Failed to comment on LinkedIn');
+        } finally {
+            setLinkedinActionLoading((prev) => ({ ...prev, [`comment-${post.id}`]: false }));
+        }
+    };
+
+    const handleLinkedInReaction = async (post: SocialPost) => {
+        if (!tenant?.id || !post.linkedin_post_urn) return;
+        if (!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope) {
+            toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
+            return;
+        }
+        const reactionType = linkedinReactionByPost[post.id] || 'LIKE';
+        setLinkedinActionLoading((prev) => ({ ...prev, [`reaction-${post.id}`]: true }));
+        try {
+            const res = await fetch('/api/linkedin/reaction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: tenant.id,
+                    postUrn: post.linkedin_post_urn,
+                    reactionType,
+                    linkedinMemberId: selectedLinkedInMemberId || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to react on LinkedIn');
+                return;
+            }
+            toast.success('LinkedIn reaction sent');
+        } catch {
+            toast.error('Failed to react on LinkedIn');
+        } finally {
+            setLinkedinActionLoading((prev) => ({ ...prev, [`reaction-${post.id}`]: false }));
+        }
+    };
+
+    const handleFacebookComment = async (post: SocialPost) => {
+        if (!post.facebook_post_id) return;
+        if (!selectedPageId) {
+            toast.error('Select a Facebook page first in Compose tab');
+            return;
+        }
+        const text = (facebookCommentByPost[post.id] || '').trim();
+        if (!text) {
+            toast.error('Write a Facebook comment first');
+            return;
+        }
+        setFacebookActionLoading((prev) => ({ ...prev, [post.id]: true }));
+        try {
+            const res = await fetch('/api/facebook/comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pageId: selectedPageId,
+                    postId: post.facebook_post_id,
+                    message: text,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Failed to post Facebook comment');
+                return;
+            }
+            setFacebookCommentByPost((prev) => ({ ...prev, [post.id]: '' }));
+            toast.success('Facebook comment posted');
+        } catch {
+            toast.error('Failed to post Facebook comment');
+        } finally {
+            setFacebookActionLoading((prev) => ({ ...prev, [post.id]: false }));
+        }
+    };
+
+    const generateQuickReply = async (post: SocialPost, target: 'linkedin' | 'facebook') => {
+        const key = `${target}-${post.id}`;
+        setAiQuickReplyLoading((prev) => ({ ...prev, [key]: true }));
+        try {
+            const contextText = (post.caption || '').slice(0, 1200);
+            const prompt = `Write one short ${target === 'linkedin' ? 'LinkedIn' : 'Facebook'} comment. Tone: witty, friendly, light humor, business-safe. Max 220 characters.
+
+Post context:
+${contextText}
+
+Return only the comment text.`;
+            const res = await fetch('/api/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt,
+                    model: 'grok-2-latest',
+                    temperature: 0.95,
+                    maxTokens: 120,
+                    tenantId: tenant?.id || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.text) {
+                toast.error(data.error || 'Failed to generate AI quick reply');
+                return;
+            }
+            const text = String(data.text).trim();
+            if (target === 'linkedin') {
+                setLinkedinCommentByPost((prev) => ({ ...prev, [post.id]: text }));
+            } else {
+                setFacebookCommentByPost((prev) => ({ ...prev, [post.id]: text }));
+            }
+            toast.success('AI quick reply ready');
+        } catch {
+            toast.error('Failed to generate AI quick reply');
+        } finally {
+            setAiQuickReplyLoading((prev) => ({ ...prev, [key]: false }));
+        }
     };
 
     const handleSaveEditedVideo = async (blob: Blob) => {
@@ -310,7 +610,7 @@ export default function SocialMediaComposer() {
 
         recognitionRef.current = recognition;
         recognition.start();
-        toast('🎙 Listening... speak your caption', { duration: 2000 });
+        toast('Listening... speak your caption', { duration: 2000 });
     };
 
     /**
@@ -325,14 +625,22 @@ export default function SocialMediaComposer() {
             const res = await fetch('/api/ai/image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: aiImagePrompt, size: aiImageSize }),
+                body: JSON.stringify({
+                    prompt: aiImagePrompt,
+                    size: aiImageSize,
+                    provider: 'grok',
+                    tenantId: tenant?.id || undefined,
+                }),
             });
             const data = await res.json();
             if (data.url) {
                 setAiGeneratedImageUrl(data.url);
                 toast.success('AI image generated!');
             } else {
-                toast.error(data.error || 'Image generation failed');
+                const detail = data.code === 'IMAGE_PROVIDER_BILLING_INACTIVE'
+                    ? data.error
+                    : data.error || 'Image generation failed';
+                toast.error(detail, { duration: 6000 });
             }
         } catch {
             toast.error('Failed to generate image');
@@ -379,16 +687,41 @@ export default function SocialMediaComposer() {
 
     const generateWithAI = async () => {
         if (!aiTopic.trim()) return toast.error('Describe your post topic first');
+        if (recentPosts.length > 0 && !topicDirection) {
+            return toast.error('Choose whether to keep the same topic or change topic first.');
+        }
         setAiGenerating(true);
         try {
             const businessName = (tenant as any)?.name || 'our business';
+            const socialHints = userLearningPreferencesService.getSocialHints();
+            const learnedSnippets =
+                socialHints?.recentCaptions?.length && socialHints.recentCaptions.length > 0
+                    ? ` Prior voice samples from this workspace (paraphrase, do not copy): ${socialHints.recentCaptions
+                          .slice(0, 3)
+                          .map((s) => s.slice(0, 120))
+                          .join(' | ')}.`
+                    : '';
+            const recentContext = recentTopicHints.length > 0
+                ? `Recent topics from the last ${recentTopicWindowDays} days: ${recentTopicHints.join(' | ')}.${learnedSnippets}`
+                : `No reliable recent topic hints found.${learnedSnippets}`;
+            const directionInstruction =
+                topicDirection === 'same'
+                    ? 'Continue with a similar topic direction and keep continuity with recent posts while avoiding exact duplicates.'
+                    : topicDirection === 'change'
+                        ? 'Change topic direction from recent posts and propose a fresh angle that is clearly different.'
+                        : 'No topic direction preference provided.';
+            const promptByType: Record<typeof aiContentType, string> = {
+                caption: `Write a ${aiTone} social media post caption for ${businessName} about: "${aiTopic}". ${recentContext} ${directionInstruction} Also suggest 5-7 relevant hashtags. Format your response as JSON: {"caption": "...", "hashtags": ["tag1", "tag2", ...]}. Caption should be 150-300 chars. Do not include hashtags in the caption itself.`,
+                facebook_200_words: `Write a ${aiTone} Facebook business post for ${businessName} about: "${aiTopic}". ${recentContext} ${directionInstruction} The post must be approximately 200 words (between 180 and 220 words). Keep it clear, engaging, and practical. Include a subtle call-to-action at the end. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3"]}.`,
+                linkedin_article: `Write a ${aiTone} LinkedIn article draft for ${businessName} about: "${aiTopic}". ${recentContext} ${directionInstruction} Length 500-800 words with: a strong headline, short introduction, 3-5 section headings, actionable insights, and a concise conclusion with CTA. Return ONLY JSON: {"caption":"...","hashtags":["tag1","tag2","tag3","tag4","tag5"]}.`,
+            };
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write a ${aiTone} social media post caption for ${businessName} about: "${aiTopic}". Also suggest 5-7 relevant hashtags. Format your response as JSON: {"caption": "...", "hashtags": ["tag1", "tag2", ...]}. Caption should be 150-300 chars. Do not include hashtags in the caption itself.`,
+                    prompt: promptByType[aiContentType],
                     systemPrompt: 'You are an expert social media manager. Write engaging, platform-native content. Return ONLY valid JSON with no markdown or code blocks.',
-                    maxTokens: 400,
+                    maxTokens: aiContentType === 'linkedin_article' ? 1400 : 500,
                     temperature: 0.8,
                 }),
             });
@@ -408,7 +741,7 @@ export default function SocialMediaComposer() {
                             return newTags;
                         });
                     }
-                    toast.success('AI generated caption + hashtags!');
+                    toast.success(aiContentType === 'linkedin_article' ? 'AI generated LinkedIn article draft' : 'AI generated post + hashtags');
                     setShowAiPanel(false);
                     setAiTopic('');
                 } catch (err) {
@@ -427,6 +760,40 @@ export default function SocialMediaComposer() {
         }
     };
 
+    const handleRetryPost = async (post: SocialPost) => {
+        if (!tenant?.id) return;
+        setRetryingPostId(post.id);
+        const toastId = toast.loading('Retrying publish...');
+        try {
+            const res = await fetch('/api/social/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: tenant.id,
+                    caption: post.caption,
+                    platforms: post.platforms || [],
+                    media_urls: post.media_urls || [],
+                    media_types: post.media_types || [],
+                    hashtags: post.hashtags || [],
+                    scheduled_at: undefined,
+                    facebook_page_id: selectedPageId || undefined,
+                    linkedin_member_id: selectedLinkedInMemberId || undefined,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                toast.error(data.error || 'Retry failed', { id: toastId });
+                return;
+            }
+            toast.success('Retry queued successfully', { id: toastId });
+            await loadData();
+        } catch {
+            toast.error('Retry failed', { id: toastId });
+        } finally {
+            setRetryingPostId(null);
+        }
+    };
+
     const charCount = caption.length;
     const fbCharLimit = 63206;
     const charWarning = charCount > 2000;
@@ -438,16 +805,34 @@ export default function SocialMediaComposer() {
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-24 ac-safe-bottom">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-white">Social Media Composer</h2>
                     <p className="text-sm text-slate-400">Create, schedule and publish posts with images & video</p>
                 </div>
-                <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white">
-                    <RefreshCw className="w-3 h-3" /> Refresh
-                </button>
+                <div className="flex gap-2">
+                    <button 
+                        onClick={async () => {
+                            toast.loading('Nexus: Auditing content design...', { id: 'nexus-social' });
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId: tenant?.id, mode: 'nexus_system_action', systemKey: 'design_audit' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-social' });
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-xl text-xs font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        Nexus Audit
+                    </button>
+                    <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white">
+                        <RefreshCw className="w-3 h-3" /> Refresh
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -465,6 +850,30 @@ export default function SocialMediaComposer() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main composer */}
                     <div className="lg:col-span-2 space-y-4">
+                        {posts.some((p) => p.status === 'failed') && (
+                            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+                                <p className="text-xs font-semibold text-amber-300 mb-2">
+                                    Some posts failed to publish. Review the error and retry.
+                                </p>
+                                <div className="space-y-2">
+                                    {posts.filter((p) => p.status === 'failed').slice(0, 2).map((post) => (
+                                        <div key={post.id} className="flex items-start justify-between gap-3 rounded-lg bg-slate-900/40 p-2">
+                                            <div>
+                                                <p className="text-xs text-slate-200 line-clamp-2">{post.caption}</p>
+                                                <p className="text-[11px] text-rose-300 mt-1">{post.error_message || 'Unknown publish error'}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleRetryPost(post)}
+                                                disabled={retryingPostId === post.id}
+                                                className="shrink-0 rounded-lg border border-amber-500/40 px-2.5 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/20 disabled:opacity-50"
+                                            >
+                                                {retryingPostId === post.id ? 'Retrying...' : 'Retry'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         {/* Caption */}
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
@@ -514,13 +923,70 @@ export default function SocialMediaComposer() {
                                             </button>
                                         ))}
                                     </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                        {[
+                                            { id: 'caption', label: 'Caption' },
+                                            { id: 'facebook_200_words', label: 'Facebook 200 words' },
+                                            { id: 'linkedin_article', label: 'LinkedIn article' },
+                                        ].map((item) => (
+                                            <button
+                                                key={item.id}
+                                                onClick={() => setAiContentType(item.id as typeof aiContentType)}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                    aiContentType === item.id ? 'bg-teal-500 text-slate-950' : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+                                                }`}
+                                            >
+                                                {item.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {recentPosts.length > 0 && (
+                                        <div className="space-y-2 rounded-lg border border-violet-500/20 bg-slate-900/40 p-2.5">
+                                            <p className="text-xs text-violet-200">
+                                                Recent posts found in the last {recentTopicWindowDays} days: {recentPosts.length}
+                                            </p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                <button
+                                                    onClick={() => setTopicDirection('same')}
+                                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                        topicDirection === 'same'
+                                                            ? 'bg-violet-500 text-white'
+                                                            : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-white'
+                                                    }`}
+                                                >
+                                                    Keep same topic flow
+                                                </button>
+                                                <button
+                                                    onClick={() => setTopicDirection('change')}
+                                                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                                                        topicDirection === 'change'
+                                                            ? 'bg-teal-500 text-slate-950'
+                                                            : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-white'
+                                                    }`}
+                                                >
+                                                    Change topic
+                                                </button>
+                                            </div>
+                                            {recentTopicHints.length > 0 && (
+                                                <p className="text-[11px] text-slate-400">
+                                                    Recent topic hints: {recentTopicHints.slice(0, 3).join(' | ')}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                     <button
                                         onClick={generateWithAI}
-                                        disabled={aiGenerating || !aiTopic.trim()}
+                                        disabled={aiGenerating || !aiTopic.trim() || (recentPosts.length > 0 && !topicDirection)}
                                         className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-colors"
                                     >
                                         {aiGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                                        {aiGenerating ? 'Generating...' : 'Generate Caption + Hashtags'}
+                                        {aiGenerating
+                                            ? 'Generating...'
+                                            : aiContentType === 'linkedin_article'
+                                                ? 'Generate LinkedIn Article'
+                                                : aiContentType === 'facebook_200_words'
+                                                    ? 'Generate Facebook 200-word Post'
+                                                    : 'Generate Caption + Hashtags'}
                                     </button>
                                 </div>
                             )}
@@ -528,9 +994,9 @@ export default function SocialMediaComposer() {
                             <textarea
                                 value={caption}
                                 onChange={e => setCaption(e.target.value)}
-                                rows={6}
+                                rows={8}
                                 placeholder="Write your post caption here, or use AI Write above..."
-                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none text-sm"
+                                className="w-full min-h-[180px] px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-base text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-y"
                             />
                             <p className={`text-xs text-right mt-1 ${charWarning ? 'text-amber-400' : 'text-slate-600'}`}>
                                 {charCount.toLocaleString()} chars
@@ -575,7 +1041,7 @@ export default function SocialMediaComposer() {
                                     <div className="flex items-center gap-2">
                                         <Wand2 className="w-4 h-4 text-indigo-400" />
                                         <p className="text-xs font-semibold text-indigo-300">AI Image Generator (DALL-E 3)</p>
-                                        <span className="ml-auto text-[10px] text-slate-500 italic">Images are temporary unless attached</span>
+                                        <span className="ml-auto text-xs text-slate-500 italic">Images are temporary unless attached</span>
                                     </div>
 
                                     <textarea
@@ -763,6 +1229,8 @@ export default function SocialMediaComposer() {
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Platforms</p>
                             {[
                                 { id: 'facebook', label: 'Facebook Page', icon: <Facebook className="w-4 h-4 text-blue-400" /> },
+                                { id: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="w-4 h-4 text-sky-400" /> },
+                                { id: 'twitter', label: 'X (Twitter)', icon: <Twitter className="w-4 h-4 text-[#1DA1F2]" /> },
                                 { id: 'platform', label: 'AlphaClone Platform', icon: <Globe className="w-4 h-4 text-teal-400" /> },
                             ].map(p => (
                                 <label key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 cursor-pointer mb-1">
@@ -772,6 +1240,29 @@ export default function SocialMediaComposer() {
                                     <span className="text-sm text-slate-300">{p.label}</span>
                                 </label>
                             ))}
+
+                            {platforms.includes('twitter') && !xIntegration && (
+                                <div className="mt-3 space-y-2">
+                                    <p className="text-xs text-amber-400 flex items-center gap-1">
+                                        <AlertTriangle className="w-3 h-3" /> Connect X Account first
+                                    </p>
+                                    <button
+                                        onClick={() => window.location.href = '/api/auth/x'}
+                                        className="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 text-[#1DA1F2] hover:bg-[#1DA1F2]/30 transition-colors"
+                                    >
+                                        Connect X
+                                    </button>
+                                </div>
+                            )}
+
+                            {platforms.includes('twitter') && xIntegration && (
+                                <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-emerald-400 font-bold">X Connected</span>
+                                        <span className="text-xs text-slate-400">@{xIntegration.x_username}</span>
+                                    </div>
+                                </div>
+                            )}
 
                             {platforms.includes('facebook') && fbPages.length > 0 && (
                                 <div className="mt-3">
@@ -788,21 +1279,96 @@ export default function SocialMediaComposer() {
                                     <AlertTriangle className="w-3 h-3" /> Connect Facebook first
                                 </p>
                             )}
+
+                            {platforms.includes('linkedin') && linkedinIntegrations.length === 0 && (
+                                <div className="mt-3 space-y-2">
+                                    <p className="text-xs text-amber-400 flex items-center gap-1">
+                                        <AlertTriangle className="w-3 h-3" /> Connect LinkedIn first
+                                    </p>
+                                    <button
+                                        onClick={handleConnectLinkedIn}
+                                        className="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
+                                    >
+                                        Connect LinkedIn
+                                    </button>
+                                </div>
+                            )}
+
+                            {platforms.includes('linkedin') && linkedinIntegrations.length > 0 && (
+                                <div className="mt-3 rounded-lg border border-sky-500/20 bg-sky-500/5 p-2.5">
+                                    <p className="text-xs font-semibold text-sky-300 mb-2">LinkedIn Scopes</p>
+                                    <label className="text-xs text-slate-500 mb-1 block">LinkedIn Account</label>
+                                    <select
+                                        value={selectedLinkedInMemberId}
+                                        onChange={(e) => setSelectedLinkedInMemberId(e.target.value)}
+                                        className="w-full px-3 py-2 mb-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-sky-500"
+                                    >
+                                        {linkedinIntegrations.map((row) => (
+                                            <option key={row.linkedin_member_id} value={row.linkedin_member_id}>
+                                                {row.linkedin_member_id}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {selectedLinkedInMemberId && (
+                                        <p className="text-[11px] text-sky-300 mb-2">Active account: {selectedLinkedInMemberId}</p>
+                                    )}
+                                    {!isSelectedLinkedInActive && (
+                                        <p className="text-xs text-amber-300 mb-2">
+                                            Selected account is inactive. Reconnect to activate.
+                                        </p>
+                                    )}
+                                    <button
+                                        onClick={handleConnectLinkedIn}
+                                        className="w-full mb-2 px-3 py-2 text-xs font-semibold rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 transition-colors"
+                                    >
+                                        Reconnect LinkedIn With Write Scope
+                                    </button>
+                                    <button
+                                        onClick={handleDisconnectLinkedIn}
+                                        className="w-full mb-2 px-3 py-2 text-xs font-semibold rounded-lg bg-red-600/15 border border-red-500/30 text-red-300 hover:bg-red-600/25 transition-colors"
+                                    >
+                                        Disconnect LinkedIn
+                                    </button>
+                                    {(!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope) && (
+                                        <p className="text-xs text-amber-300 mb-2">
+                                            Missing write scope `w_member_social`. Reconnect and approve posting permissions.
+                                        </p>
+                                    )}
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {(linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).length > 0 ? (
+                                            (linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || []).map((scope) => (
+                                                <span key={scope} className="text-xs px-2 py-0.5 rounded-full border border-slate-600 bg-slate-800 text-slate-300">
+                                                    {scope}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-xs text-slate-400">No scopes reported by provider metadata.</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Schedule */}
                         <div className="bg-slate-900/50 border border-slate-700 rounded-2xl p-4">
                             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Schedule</p>
+                            <div className="mb-3">
+                                <AIOutputDisclaimer type="social" />
+                            </div>
                             <input type="datetime-local" value={scheduledAt} onChange={e => setScheduledAt(e.target.value)}
                                 className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-teal-500 text-sm mb-3" />
 
                             <div className="flex flex-col gap-2">
-                                <button onClick={() => handleSubmit(true)} disabled={submitting}
+                                <button
+                                    onClick={() => handleSubmit(true)}
+                                    disabled={submitting || (platforms.includes('linkedin') && (!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope))}
                                     className="flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white rounded-xl font-semibold text-sm transition-colors">
                                     {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     Post Now
                                 </button>
-                                <button onClick={() => handleSubmit(false)} disabled={submitting || !scheduledAt}
+                                <button
+                                    onClick={() => handleSubmit(false)}
+                                    disabled={submitting || !scheduledAt || (platforms.includes('linkedin') && (!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope))}
                                     className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600/30 hover:bg-blue-600/50 disabled:opacity-40 border border-blue-500/30 text-blue-400 rounded-xl font-semibold text-sm transition-colors">
                                     <Calendar className="w-4 h-4" />
                                     Schedule Post
@@ -868,10 +1434,86 @@ export default function SocialMediaComposer() {
                                         <p className="text-xs text-red-400 mt-1 flex items-center gap-1"><AlertTriangle className="w-3 h-3" />{post.error_message}</p>
                                     )}
                                     {post.facebook_post_id && (
-                                        <a href={`https://facebook.com/${post.facebook_post_id}`} target="_blank" rel="noopener noreferrer"
-                                            className="text-xs text-blue-400 hover:underline mt-1 flex items-center gap-1">
-                                            <ExternalLink className="w-3 h-3" /> View on Facebook
-                                        </a>
+                                        <div className="mt-2 space-y-2">
+                                            <a href={`https://facebook.com/${post.facebook_post_id}`} target="_blank" rel="noopener noreferrer"
+                                                className="text-xs text-blue-400 hover:underline flex items-center gap-1">
+                                                <ExternalLink className="w-3 h-3" /> View on Facebook
+                                            </a>
+                                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
+                                                <input
+                                                    value={facebookCommentByPost[post.id] || ''}
+                                                    onChange={(e) => setFacebookCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                                    placeholder="Write a Facebook comment..."
+                                                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                                                />
+                                                <button
+                                                    onClick={() => handleFacebookComment(post)}
+                                                    disabled={!!facebookActionLoading[post.id]}
+                                                    className="px-3 py-2 text-xs rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 hover:bg-blue-600/30 disabled:opacity-50"
+                                                >
+                                                    {facebookActionLoading[post.id] ? 'Posting...' : 'Comment'}
+                                                </button>
+                                                <button
+                                                    onClick={() => generateQuickReply(post, 'facebook')}
+                                                    disabled={!!aiQuickReplyLoading[`facebook-${post.id}`]}
+                                                    className="px-3 py-2 text-xs rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                >
+                                                    {aiQuickReplyLoading[`facebook-${post.id}`] ? 'Generating...' : 'AI Quick Reply'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {post.linkedin_post_urn && (
+                                        <div className="mt-2 space-y-2">
+                                            <a
+                                                href={`https://www.linkedin.com/feed/update/${encodeURIComponent(post.linkedin_post_urn)}/`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-sky-400 hover:underline flex items-center gap-1"
+                                            >
+                                                <ExternalLink className="w-3 h-3" /> View on LinkedIn
+                                            </a>
+                                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2">
+                                                <input
+                                                    value={linkedinCommentByPost[post.id] || ''}
+                                                    onChange={(e) => setLinkedinCommentByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                                    placeholder="Write a LinkedIn comment..."
+                                                    className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                                                />
+                                                <button
+                                                    onClick={() => handleLinkedInComment(post)}
+                                                    disabled={!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope || !!linkedinActionLoading[`comment-${post.id}`]}
+                                                    className="px-3 py-2 text-xs rounded-lg bg-sky-600/20 border border-sky-500/30 text-sky-300 hover:bg-sky-600/30 disabled:opacity-50"
+                                                >
+                                                    {linkedinActionLoading[`comment-${post.id}`] ? 'Posting...' : 'Comment'}
+                                                </button>
+                                                <button
+                                                    onClick={() => generateQuickReply(post, 'linkedin')}
+                                                    disabled={!!aiQuickReplyLoading[`linkedin-${post.id}`]}
+                                                    className="px-3 py-2 text-xs rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 hover:bg-violet-600/30 disabled:opacity-50"
+                                                >
+                                                    {aiQuickReplyLoading[`linkedin-${post.id}`] ? 'Generating...' : 'AI Quick Reply'}
+                                                </button>
+                                                <div className="flex gap-2">
+                                                    <select
+                                                        value={linkedinReactionByPost[post.id] || 'LIKE'}
+                                                        onChange={(e) => setLinkedinReactionByPost((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                                                        className="px-2 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-sky-500"
+                                                    >
+                                                        {['LIKE', 'PRAISE', 'APPRECIATION', 'EMPATHY', 'INTEREST', 'MAYBE'].map((value) => (
+                                                            <option key={value} value={value}>{value}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        onClick={() => handleLinkedInReaction(post)}
+                                                        disabled={!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope || !!linkedinActionLoading[`reaction-${post.id}`]}
+                                                        className="px-3 py-2 text-xs rounded-lg bg-slate-700 border border-slate-600 text-slate-200 hover:bg-slate-600 disabled:opacity-50"
+                                                    >
+                                                        {linkedinActionLoading[`reaction-${post.id}`] ? 'Sending...' : 'React'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -944,7 +1586,7 @@ export default function SocialMediaComposer() {
 
             {/* Video Editor Modal */}
             {editingAsset && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+                <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
                     <div className="w-full max-w-4xl max-h-[90vh]">
                         <VideoEditor 
                             source={editingAsset.public_url}

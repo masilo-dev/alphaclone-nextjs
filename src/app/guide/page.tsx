@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import PlatformGuide from '@/components/pages/PlatformGuide';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
-    title: 'Platform Guide & Onboarding | How to Set Up AlphaClone in 30 Minutes',
+    title: 'Platform Guide & Onboarding | Set Up AlphaClone Step by Step',
     description: 'Complete onboarding guide for AlphaClone Business OS. Step-by-step setup from account creation to your first AI lead campaign — including Gmail, Calendly, CRM, invoicing, and team setup. No technical knowledge required.',
     keywords: [
         'AlphaClone setup guide', 'how to set up business software', 'CRM onboarding tutorial',
@@ -10,14 +11,14 @@ export const metadata: Metadata = {
         'how to use AlphaClone', 'business software tutorial', 'onboarding guide', 'getting started with AlphaClone',
         'small business software setup', 'AI business platform tutorial',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/guide' },
-    openGraph: {
+    alternates: { canonical: 'https://alphaclonesystems.com/guide' },
+    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'Platform Guide & Onboarding | AlphaClone Systems',
-        description: 'Set up your entire business OS in under 30 minutes. Step-by-step guide for CRM, invoicing, AI growth agent, Gmail, Calendly, and team management.',
-        url: 'https://alphaclone.tech/guide',
+        description: 'Set up your business OS step by step. Follow the guide for CRM, invoicing, AI growth agent, Gmail, Calendly, and team management.',
+        url: 'https://alphaclonesystems.com/guide',
         type: 'article',
     },
-    twitter: {
+    twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
         title: 'Platform Guide & Onboarding | AlphaClone Systems',
         description: 'Complete setup guide — from account creation to your first AI lead campaign. No tech knowledge needed.',
@@ -28,8 +29,8 @@ const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclone.tech' },
-        { '@type': 'ListItem', position: 2, name: 'Guide', item: 'https://alphaclone.tech/guide' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclonesystems.com' },
+        { '@type': 'ListItem', position: 2, name: 'Guide', item: 'https://alphaclonesystems.com/guide' },
     ],
 };
 
@@ -42,7 +43,7 @@ const faqSchema = {
             name: 'How long does it take to set up AlphaClone?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Most users complete their full AlphaClone setup — including workspace configuration, Gmail connection, CRM import, and first invoice — in under 30 minutes. The AI Growth Agent can be activated with a single button click after initial setup.',
+                text: 'The guide walks through workspace setup, Gmail connection, CRM import, and your first invoice. The AI Growth Agent can be activated after initial setup.',
             },
         },
         {
@@ -58,7 +59,7 @@ const faqSchema = {
             name: 'How do I connect Gmail to AlphaClone?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'Go to Settings → Gmail Integration and click "Connect Google Account." You\'ll be redirected to a standard Google OAuth screen where you authorize AlphaClone to read and send emails on your behalf. The connection takes under 60 seconds.',
+                text: 'Go to Settings → Gmail Integration and click "Connect Google Account." You\'ll be redirected to a standard Google OAuth screen where you authorize AlphaClone to read and send emails on your behalf.',
             },
         },
         {
@@ -99,7 +100,9 @@ export default function Page() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
-            <PlatformGuide />
+            <MarketingLandingShell>
+                <PlatformGuide />
+            </MarketingLandingShell>
         </>
     );
 }

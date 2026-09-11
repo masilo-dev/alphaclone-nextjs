@@ -11,22 +11,26 @@ DROP POLICY IF EXISTS "Users can update own calendar tokens" ON google_calendar_
 DROP POLICY IF EXISTS "Users can delete own calendar tokens" ON google_calendar_tokens;
 
 -- Create comprehensive RLS policies
+DROP POLICY IF EXISTS "Users can view own calendar tokens" ON google_calendar_tokens;
 CREATE POLICY "Users can view own calendar tokens"
 ON google_calendar_tokens
 FOR SELECT
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own calendar tokens" ON google_calendar_tokens;
 CREATE POLICY "Users can insert own calendar tokens"
 ON google_calendar_tokens
 FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own calendar tokens" ON google_calendar_tokens;
 CREATE POLICY "Users can update own calendar tokens"
 ON google_calendar_tokens
 FOR UPDATE
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own calendar tokens" ON google_calendar_tokens;
 CREATE POLICY "Users can delete own calendar tokens"
 ON google_calendar_tokens
 FOR DELETE

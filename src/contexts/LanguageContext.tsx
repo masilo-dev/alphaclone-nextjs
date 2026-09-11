@@ -1,79 +1,106 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { LANGUAGES, LANGUAGE_STORAGE_KEY, type SupportedLanguage } from '@/i18n/languages';
+import { uiTranslate } from '@/i18n/uiTranslate';
+import { readUserPrefKey, writeUserPrefKey } from '@/lib/scopedUserPrefs';
+import { preferencesService } from '@/services/dashboardService';
 
-// ── Supported languages ────────────────────────────────────────────────────
-export type SupportedLanguage = 'en' | 'es' | 'pl';
+export type { SupportedLanguage };
+export { LANGUAGES, LANGUAGE_STORAGE_KEY };
 
-export const LANGUAGES: { code: SupportedLanguage; label: string; flag: string; nativeName: string }[] = [
-    { code: 'en', label: 'English', flag: '🇬🇧', nativeName: 'English' },
-    { code: 'es', label: 'Spanish', flag: '🇪🇸', nativeName: 'Español' },
-    { code: 'pl', label: 'Polish', flag: '🇵🇱', nativeName: 'Polski' },
-];
-
-export const LANGUAGE_STORAGE_KEY = 'ac-language';
-
-// ── Context shape ──────────────────────────────────────────────────────────
 interface LanguageContextType {
     language: SupportedLanguage;
-    setLanguage: (lang: SupportedLanguage) => void;
+    setLanguage: (lang: SupportedLanguage, opts?: { skipServer?: boolean }) => void;
     languageLabel: string;
-    languageFlag: string;
+    /** Short code for UI badges, e.g. EN */
+    languageCode: string;
+    /** Translate dashboard shell / shared copy (English source string). */
+    t: (text: string) => string;
 }
 
-// Safe default so the hook never crashes even outside the provider
 const LanguageContext = createContext<LanguageContextType>({
     language: 'en',
-    setLanguage: () => { },
+    setLanguage: () => {},
     languageLabel: 'English',
-    languageFlag: '🇬🇧',
+    languageCode: 'EN',
+    t: (s) => s,
 });
 
-// ── Hook ───────────────────────────────────────────────────────────────────
 export const useLanguage = (): LanguageContextType => useContext(LanguageContext);
 
-// ── Helper: read language synchronously from localStorage (for services) ──
-export const getStoredLanguage = (): SupportedLanguage => {
-    if (typeof window === 'undefined') return 'en';
-    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as SupportedLanguage | null;
-    if (stored && LANGUAGES.some(l => l.code === stored)) return stored;
+export const getStoredLanguage = (userId?: string | null): SupportedLanguage => {
+    const stored = readUserPrefKey(LANGUAGE_STORAGE_KEY, userId) as SupportedLanguage | null;
+    if (stored && LANGUAGES.some((l) => l.code === stored)) return stored;
     return 'en';
 };
 
-// ── Provider ───────────────────────────────────────────────────────────────
+function isSupportedLanguage(value: unknown): value is SupportedLanguage {
+    return typeof value === 'string' && LANGUAGES.some((l) => l.code === value);
+}
+
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user } = useAuth();
+    const userId = user?.id ?? null;
     const [language, setLanguageState] = useState<SupportedLanguage>('en');
 
-    // Load from localStorage on mount (client-only)
     useEffect(() => {
-        try {
-            const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as SupportedLanguage | null;
-            if (stored && LANGUAGES.some(l => l.code === stored)) {
-                setLanguageState(stored);
+        setLanguageState(getStoredLanguage(userId));
+    }, [userId]);
+
+    useEffect(() => {
+        const onLanguageChanged = (event: Event) => {
+            const detail = (event as CustomEvent).detail;
+            if (isSupportedLanguage(detail?.language)) {
+                setLanguageState(detail.language);
             }
-        } catch {
-            // localStorage not available — silently keep default
-        }
+        };
+        window.addEventListener('ac-language-changed', onLanguageChanged);
+        return () => window.removeEventListener('ac-language-changed', onLanguageChanged);
     }, []);
 
-    const setLanguage = useCallback((lang: SupportedLanguage) => {
-        try {
-            localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
-        } catch {
-            // Ignore storage errors
-        }
-        setLanguageState(lang);
-    }, []);
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        document.documentElement.lang = language;
+    }, [language]);
 
-    const meta = LANGUAGES.find(l => l.code === language) ?? LANGUAGES[0];
+    const setLanguage = useCallback(
+        (lang: SupportedLanguage, opts?: { skipServer?: boolean }) => {
+            writeUserPrefKey(LANGUAGE_STORAGE_KEY, lang, userId);
+            setLanguageState(lang);
+            if (typeof document !== 'undefined') {
+                document.documentElement.lang = lang;
+            }
+            try {
+                window.dispatchEvent(new CustomEvent('ac-language-changed', { detail: { language: lang } }));
+            } catch {
+                /* ignore */
+            }
+            if (userId && !opts?.skipServer) {
+                void preferencesService.updateLanguage(userId, lang);
+            }
+        },
+        [userId],
+    );
 
-    return (
-        <LanguageContext.Provider value={{
+    const meta = LANGUAGES.find((l) => l.code === language) ?? LANGUAGES[0];
+
+    const t = useCallback((text: string) => uiTranslate(language, text), [language]);
+
+    const value = useMemo(
+        () => ({
             language,
             setLanguage,
             languageLabel: meta.label,
-            languageFlag: meta.flag,
-        }}>
+            languageCode: meta.code.toUpperCase(),
+            t,
+        }),
+        [language, setLanguage, meta.label, meta.code, t],
+    );
+
+    return (
+        <LanguageContext.Provider value={value}>
             {children}
         </LanguageContext.Provider>
     );

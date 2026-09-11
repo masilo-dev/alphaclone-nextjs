@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import LandingPage from '@/components/LandingPage';
+import MarketingHomePage from '@/components/marketing/system/MarketingHomePage';
 import AppLauncher from '@/components/AppLauncher';
 import { Project } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,7 +23,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    const mode = searchParams.get('mode');
+    const mode = searchParams?.get('mode');
     const isStandalone = typeof window !== 'undefined' && (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone);
     if (mode === 'pwa' || isStandalone) {
       setIsPwa(true);
@@ -50,8 +50,8 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
   }, [user, loading, router, isPwa]);
 
   useEffect(() => {
-    const authStatus = searchParams.get('auth_status');
-    const message = searchParams.get('message');
+    const authStatus = searchParams?.get('auth_status');
+    const message = searchParams?.get('message');
 
     if (authStatus === 'new_account') {
       import('react-hot-toast').then(({ default: toast }) => {
@@ -66,7 +66,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
                 if (loginBtn) {
                   loginBtn.click();
                 } else {
-                  router.push('/register');
+                  router.push('/auth/login?register=true&type=business&plan=starter');
                 }
               }}
               className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold mt-2 hover:bg-teal-500 transition-colors"
@@ -110,7 +110,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
       {isPwa ? (
         <AppLauncher onLogin={handleLogin} />
       ) : (
-        <LandingPage onLogin={handleLogin} projects={projects} />
+        <MarketingHomePage />
       )}
     </>
   );

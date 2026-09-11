@@ -1,28 +1,56 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardCard from '../components/DashboardCard';
 import StatCard from '../components/StatCard';
 import { Ionicons } from '@expo/vector-icons';
+import { getDashboardStats } from '../services/mobileData';
+import type { MobileActivity, MobileDashboardStats } from '../types';
 
 export default function DashboardScreen() {
-  const { user } = useAuth();
+  const { user, activeTenant } = useAuth();
+  const navigation = useNavigation();
+  const [dashboard, setDashboard] = useState<MobileDashboardStats>({
+    activeProjects: 0,
+    totalLeads: 0,
+    revenue: 0,
+    tasks: 0,
+    recentActivity: [],
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadDashboard = async () => {
+      if (!activeTenant || !user) return;
+      setLoading(true);
+      try {
+        const stats = await getDashboardStats(activeTenant.id, user.id);
+        if (mounted) setDashboard(stats);
+      } catch (error) {
+        console.error('Dashboard load error:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadDashboard();
+    return () => {
+      mounted = false;
+    };
+  }, [activeTenant, user]);
 
   const stats = [
-    { title: 'Active Projects', value: '12', icon: 'folder', color: '#00D2A0' },
-    { title: 'Total Leads', value: '48', icon: 'people', color: '#0077FF' },
-    { title: 'Revenue', value: '$24.5K', icon: 'cash', color: '#FFA500' },
-    { title: 'Tasks', value: '23', icon: 'checkmark-circle', color: '#FF6B6B' },
+    { title: 'Active Projects', value: String(dashboard.activeProjects), icon: 'folder', color: '#00D2A0' },
+    { title: 'Total Leads', value: String(dashboard.totalLeads), icon: 'people', color: '#0077FF' },
+    { title: 'Revenue', value: `$${Math.round(dashboard.revenue).toLocaleString()}`, icon: 'cash', color: '#FFA500' },
+    { title: 'Tasks', value: String(dashboard.tasks), icon: 'checkmark-circle', color: '#FF6B6B' },
   ];
 
-  const recentActivities = [
-    { id: 1, title: 'New lead from website', time: '2 hours ago', type: 'lead' },
-    { id: 2, title: 'Project AlphaClone completed', time: '4 hours ago', type: 'project' },
-    { id: 3, title: 'Invoice #1234 paid', time: '6 hours ago', type: 'finance' },
-    { id: 4, title: 'Meeting with client scheduled', time: '1 day ago', type: 'calendar' },
-  ];
+  const recentActivities: MobileActivity[] = dashboard.recentActivity;
 
   return (
     <View style={styles.container}>
@@ -36,9 +64,15 @@ export default function DashboardScreen() {
             <View style={styles.userInfo}>
               <Text style={styles.greeting}>Welcome back,</Text>
               <Text style={styles.userName}>{user?.name || user?.email || 'User'}</Text>
+              <Text style={styles.workspaceName}>{activeTenant?.name || 'Setting up workspace'}</Text>
             </View>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Ionicons name="notifications" size={24} color="#FFFFFF" />
+            <TouchableOpacity
+              style={styles.notificationButton}
+              accessibilityRole="button"
+              accessibilityLabel="Open settings"
+              onPress={() => navigation.navigate('Settings' as never)}
+            >
+              <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
@@ -49,21 +83,36 @@ export default function DashboardScreen() {
             ))}
           </View>
 
-          {/* Quick Actions */}
+          {/* Quick Actions — every visible action must navigate */}
           <BlurView intensity={80} style={styles.quickActions}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Open projects"
+                onPress={() => navigation.navigate('Projects' as never)}
+              >
                 <Ionicons name="add-circle" size={32} color="#00D2A0" />
-                <Text style={styles.actionText}>New Project</Text>
+                <Text style={styles.actionText}>Projects</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Open CRM"
+                onPress={() => navigation.navigate('CRM' as never)}
+              >
                 <Ionicons name="person-add" size={32} color="#0077FF" />
-                <Text style={styles.actionText}>Add Lead</Text>
+                <Text style={styles.actionText}>CRM</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="calendar" size={32} color="#FFA500" />
-                <Text style={styles.actionText}>Schedule</Text>
+              <TouchableOpacity
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Open finance"
+                onPress={() => navigation.navigate('Finance' as never)}
+              >
+                <Ionicons name="cash-outline" size={32} color="#FFA500" />
+                <Text style={styles.actionText}>Finance</Text>
               </TouchableOpacity>
             </View>
           </BlurView>
@@ -71,9 +120,15 @@ export default function DashboardScreen() {
           {/* Recent Activity */}
           <View style={styles.recentActivity}>
             <Text style={styles.sectionTitle}>Recent Activity</Text>
-            {recentActivities.map((activity) => (
-              <DashboardCard key={activity.id} activity={activity} />
-            ))}
+            {loading ? (
+              <ActivityIndicator color="#00D2A0" />
+            ) : recentActivities.length > 0 ? (
+              recentActivities.map((activity) => (
+                <DashboardCard key={activity.id} activity={activity} />
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No activity yet.</Text>
+            )}
           </View>
         </ScrollView>
       </LinearGradient>
@@ -112,6 +167,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
+  workspaceName: {
+    fontSize: 13,
+    color: '#00D2A0',
+    marginTop: 4,
+  },
   notificationButton: {
     padding: 10,
   },
@@ -149,5 +209,9 @@ const styles = StyleSheet.create({
   },
   recentActivity: {
     marginHorizontal: 20,
+  },
+  emptyText: {
+    color: '#94A3B8',
+    fontSize: 14,
   },
 });

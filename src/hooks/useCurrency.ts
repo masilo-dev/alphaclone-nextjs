@@ -22,6 +22,10 @@ export function useCurrency() {
     const format = useMemo(() => {
         return (amount: number, options: Intl.NumberFormatOptions & { currencyOverride?: string } = {}) => {
             const { currencyOverride, ...intlOptions } = options;
+            let safeAmount = Number(amount);
+            if (isNaN(safeAmount)) {
+                safeAmount = 0;
+            }
             try {
                 return new Intl.NumberFormat(undefined, {
                     style: 'currency',
@@ -29,13 +33,13 @@ export function useCurrency() {
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 2,
                     ...intlOptions,
-                }).format(amount);
+                }).format(safeAmount);
             } catch (err) {
                 console.error('Currency formatting error:', err);
                 // Fallback to simple formatting if Intl fails
                 const finalCurrency = currencyOverride || currencyCode;
                 const symbol = finalCurrency === 'USD' ? '$' : finalCurrency + ' ';
-                return `${symbol}${amount.toLocaleString()}`;
+                return `${symbol}${safeAmount.toLocaleString()}`;
             }
         };
     }, [currencyCode]);

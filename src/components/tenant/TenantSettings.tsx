@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   Building2,
   Users,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useTenant, useTenantRole } from '../../contexts/TenantContext';
 import { tenantService } from '../../services/tenancy/TenantService';
+import { PLAN_PRICING, type SubscriptionPlan } from '../../services/tenancy/types';
 
 type Tab = 'general' | 'team' | 'billing' | 'branding';
 
@@ -21,7 +23,7 @@ export default function TenantSettings() {
   const userRole = useTenantRole();
   const [activeTab, setActiveTab] = useState<Tab>('general');
 
-  const isAdmin = userRole === 'admin' || userRole === 'owner';
+  const isAdmin = ['admin', 'owner', 'tenant_admin', 'super_admin'].includes(userRole || '');
 
   if (!currentTenant) {
     return (
@@ -104,10 +106,6 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleBillingEmailChange = (email: string) => {
-    // Local state update if needed, but for now we are using the main save
   };
 
   return (
@@ -265,23 +263,42 @@ function TeamSettings({ tenant, isAdmin }: any) {
       if (!user) throw new Error('Not authenticated');
       await tenantService.createInvitation(tenant.id, inviteEmail.trim(), inviteRole, user.id);
       setInviteEmail('');
-      // Show success via toast if available, otherwise alert
-      try {
-        const { default: toast } = await import('react-hot-toast');
-        toast.success(`Invitation sent to ${inviteEmail}`);
-      } catch {
-        alert(`Invitation sent to ${inviteEmail}`);
-      }
+      toast.success(`Invitation sent to ${inviteEmail}`);
     } catch (error: any) {
       console.error('Failed to send invitation:', error);
-      try {
-        const { default: toast } = await import('react-hot-toast');
-        toast.error(error.message || 'Failed to send invitation');
-      } catch {
-        alert('Failed to send invitation');
-      }
+      toast.error(error.message || 'Failed to send invitation');
     } finally {
       setIsInviting(false);
+    }
+  };
+
+  const handleRemove = async (userId: string, memberRole: string) => {
+    const ownerCount = teamMembers.filter((m: any) =>
+      ['owner', 'tenant_admin'].includes(String(m.role || '').toLowerCase())
+    ).length;
+    const isLastOwner =
+      ['owner', 'tenant_admin'].includes(String(memberRole || '').toLowerCase()) && ownerCount <= 1;
+    if (isLastOwner) {
+      toast.error('The final workspace owner cannot be removed');
+      return;
+    }
+
+    const choice = window.confirm(
+      'Remove this person from the workspace?\n\nOK = remove from workspace only (account stays on the platform)\nCancel = keep them'
+    );
+    if (!choice) return;
+
+    const purge =
+      window.confirm(
+        'Also permanently delete their platform account?\n\nOnly works if they belong to this workspace alone.\n\nOK = delete account\nCancel = workspace remove only'
+      );
+
+    try {
+      const result = await tenantService.removeUserFromTenant(tenant.id, userId, { purge });
+      await loadTeamMembers();
+      toast.success(result.message || (result.purged ? 'User deleted' : 'Team member removed'));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Team member could not be removed');
     }
   };
 
@@ -348,7 +365,7 @@ function TeamSettings({ tenant, isAdmin }: any) {
             <Loader2 className="w-6 h-6 text-slate-400 animate-spin" />
           </div>
         ) : teamMembers.length === 0 ? (
-          <p className="text-slate-400 text-center py-8">No team members yet</p>
+          <p className="text-slate-400 text-center py-8">No team members yet. Invite your first teammate to share this workspace.</p>
         ) : (
           <div className="space-y-3">
             {teamMembers.map((member: any) => (
@@ -376,11 +393,25 @@ function TeamSettings({ tenant, isAdmin }: any) {
                     {member.role}
                   </span>
 
-                  {isAdmin && member.role !== 'owner' && (
-                    <button className="p-2 text-slate-400 hover:text-red-400 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  {isAdmin && (() => {
+                    const ownerCount = teamMembers.filter((m: any) =>
+                      ['owner', 'tenant_admin'].includes(String(m.role || '').toLowerCase())
+                    ).length;
+                    const isLastOwner =
+                      ['owner', 'tenant_admin'].includes(String(member.role || '').toLowerCase()) &&
+                      ownerCount <= 1;
+                    if (isLastOwner) return null;
+                    return (
+                      <button
+                        onClick={() => handleRemove(member.user_id, member.role)}
+                        className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                        aria-label="Remove team member"
+                        title="Remove from workspace"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             ))}
@@ -396,6 +427,23 @@ function BillingSettings({ tenant, isAdmin }: any) {
   const isCanceled = tenant.cancel_at_period_end;
   const isPaidPlan = currentPlan !== 'free';
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const openBillingPortal = async () => {
+    try {
+      setLoadingAction('portal');
+      const response = await fetch('/api/stripe/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: tenant.id }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.url) throw new Error(payload.error || 'Billing portal is unavailable');
+      window.location.assign(payload.url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Billing portal is unavailable');
+      setLoadingAction(null);
+    }
+  };
 
   const handleSubscriptionAction = async (action: 'cancel_at_period_end' | 'resume') => {
     if (!confirm(action === 'cancel_at_period_end'
@@ -417,7 +465,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
       // Reload page to reflect changes (or use a refresh context if available)
       window.location.reload();
     } catch (error: any) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoadingAction(null);
     }
@@ -439,7 +487,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
               )}
             </div>
             <div className="text-slate-400">
-              {currentPlan === 'free' ? 'Free forever' : `$${currentPlan === 'starter' ? 25 : currentPlan === 'pro' ? 89 : 200}/month`}
+              {currentPlan === 'free' ? 'Free forever' : `$${PLAN_PRICING[currentPlan as SubscriptionPlan]?.monthly ?? '—'}/month`}
             </div>
           </div>
 
@@ -466,7 +514,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
                   </button>
                 )
               )}
-              <button className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors">
+              <button onClick={() => window.location.assign('/pricing')} className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors">
                 {currentPlan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
               </button>
             </div>
@@ -504,8 +552,8 @@ function BillingSettings({ tenant, isAdmin }: any) {
                 <p className="text-xs text-slate-400">Managed via Stripe</p>
               </div>
             </div>
-            <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm">
-              Update Card
+            <button onClick={openBillingPortal} disabled={loadingAction === 'portal'} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm disabled:opacity-50">
+              {loadingAction === 'portal' ? 'Opening…' : 'Update Card'}
             </button>
           </div>
         </div>
@@ -517,6 +565,23 @@ function BillingSettings({ tenant, isAdmin }: any) {
 function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
   const [logoUrl, setLogoUrl] = useState(tenant.logo_url || '');
   const [brandColor, setBrandColor] = useState(tenant.settings?.brand_color || '#14b8a6');
+  const [saving, setSaving] = useState(false);
+
+  const saveBranding = async () => {
+    try {
+      setSaving(true);
+      await tenantService.updateTenant(tenant.id, {
+        logo_url: logoUrl || undefined,
+        settings: { ...tenant.settings, brand_color: brandColor },
+      });
+      await onUpdate();
+      toast.success('Branding saved');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Branding could not be saved');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -563,7 +628,7 @@ function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
 
         {isAdmin && (
           <div className="mt-6">
-            <button className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors flex items-center gap-2">
+            <button onClick={saveBranding} disabled={saving} className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
               <Save className="w-4 h-4" />
               Save Branding
             </button>

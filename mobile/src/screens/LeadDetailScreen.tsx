@@ -2,14 +2,17 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import type { MobileLead } from '../types';
 
-export default function LeadDetailScreen({ route, navigation }) {
-  const { lead } = route.params || {
+export default function LeadDetailScreen({ route, navigation }: { route: { params?: { lead?: MobileLead } }; navigation: any }) {
+  const { lead } = route.params || {};
+  const currentLead: MobileLead = lead || {
+    id: 'demo-lead',
     name: 'John Smith',
     email: 'john@techcorp.com',
     company: 'Tech Corp',
     status: 'hot',
-    value: '$5,000',
+    value: 5000,
     phone: '+1 (555) 123-4567',
     notes: 'Interested in website redesign. Budget approved.',
   };
@@ -63,12 +66,12 @@ export default function LeadDetailScreen({ route, navigation }) {
             <View style={styles.avatar}>
               <Ionicons name="person" size={40} color="#FFFFFF" />
             </View>
-            <Text style={styles.leadName}>{lead.name}</Text>
-            <Text style={styles.leadCompany}>{lead.company}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(lead.status) + '20' }]}>
-              <Ionicons name={getStatusIcon(lead.status) as any} size={16} color={getStatusColor(lead.status)} />
-              <Text style={[styles.statusText, { color: getStatusColor(lead.status) }]}>
-                {lead.status.toUpperCase()}
+            <Text style={styles.leadName}>{currentLead.name}</Text>
+            <Text style={styles.leadCompany}>{currentLead.company || 'Lead'}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(currentLead.status) + '20' }]}>
+              <Ionicons name={getStatusIcon(currentLead.status) as any} size={16} color={getStatusColor(currentLead.status)} />
+              <Text style={[styles.statusText, { color: getStatusColor(currentLead.status) }]}>
+                {currentLead.status.toUpperCase()}
               </Text>
             </View>
           </View>
@@ -80,14 +83,14 @@ export default function LeadDetailScreen({ route, navigation }) {
               <Ionicons name="mail" size={20} color="#94A3B8" />
               <View style={styles.contactText}>
                 <Text style={styles.contactLabel}>Email</Text>
-                <Text style={styles.contactValue}>{lead.email}</Text>
+                <Text style={styles.contactValue}>{currentLead.email || 'No email'}</Text>
               </View>
             </View>
             <View style={styles.contactRow}>
               <Ionicons name="call" size={20} color="#94A3B8" />
               <View style={styles.contactText}>
                 <Text style={styles.contactLabel}>Phone</Text>
-                <Text style={styles.contactValue}>{lead.phone}</Text>
+                <Text style={styles.contactValue}>{currentLead.phone || 'No phone'}</Text>
               </View>
             </View>
           </View>
@@ -95,13 +98,13 @@ export default function LeadDetailScreen({ route, navigation }) {
           {/* Deal Value */}
           <View style={styles.valueSection}>
             <Text style={styles.sectionTitle}>Deal Value</Text>
-            <Text style={styles.dealValue}>{lead.value}</Text>
+            <Text style={styles.dealValue}>${Math.round(currentLead.value || 0).toLocaleString()}</Text>
           </View>
 
           {/* Notes */}
           <View style={styles.notesSection}>
             <Text style={styles.sectionTitle}>Notes</Text>
-            <Text style={styles.notesText}>{lead.notes}</Text>
+            <Text style={styles.notesText}>{currentLead.notes || 'No notes yet.'}</Text>
           </View>
 
           {/* Action Buttons */}

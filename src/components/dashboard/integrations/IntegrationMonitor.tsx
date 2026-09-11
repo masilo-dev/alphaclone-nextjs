@@ -11,6 +11,7 @@ interface IntegrationStatus {
   issues: string[];
   actions: string[];
   connected: boolean;
+  reconnectRequired?: boolean;
   lastChecked: string;
 }
 
@@ -37,6 +38,12 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
     try {
       setLoading(true);
       const response = await fetch(`/api/integrations/status?tenantId=${tenantId}`);
+      if (!response.ok) {
+        console.warn('Integration status API not available');
+        setIntegrations([]);
+        setOverallStatus(null);
+        return;
+      }
       const data = await response.json();
       
       if (data.success) {
@@ -45,6 +52,8 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
       }
     } catch (error) {
       console.error('Failed to fetch integration status:', error);
+      setIntegrations([]);
+      setOverallStatus(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -119,8 +128,6 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
         return '📅';
       case 'stripe':
         return '💳';
-      case 'hubspot':
-        return '🔵';
       case 'sendgrid':
         return '📧';
       default:
@@ -230,6 +237,12 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {(integration.reconnectRequired || integration.actions.some((a) => /reconnect/i.test(a))) && (
+              <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                Token may be expired or missing. Reconnect this integration in Settings → Integrations.
               </div>
             )}
 

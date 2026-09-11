@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import {
     LayoutDashboard, Users, TrendingUp, Zap, CheckSquare,
@@ -10,9 +9,11 @@ import {
     ShieldCheck, Database, Bot, BookOpen, ExternalLink,
     Lock, Star, ChevronRight
 } from 'lucide-react';
-import { Button } from '@/components/ui/UIComponents';
-import PublicNavigation from '@/components/PublicNavigation';
 import LoomVideo from '@/components/ui/LoomVideo';
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
+
+const pricingDocLine = `Public plans are ${PUBLIC_PRICING_PLANS.map((p) => `${p.name} ($${p.price}/month)`).join(', ')}. Plan details, usage limits, and trial terms are listed on the pricing page. The 14-day trial does not require a credit card.`;
 
 const sections = [
     'onboarding', 'home', 'crm', 'growth-agent', 'integrations',
@@ -20,13 +21,9 @@ const sections = [
 ];
 
 export default function DocsPageContent() {
-    const [, setIsLoginOpen] = React.useState(false);
-
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30">
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
-            <div className="pt-20 flex">
+        <div className="marketing-theme min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30">
+            <div className="flex">
                 {/* Sticky Sidebar Nav — Desktop */}
                 <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-20 self-start h-[calc(100vh-5rem)] overflow-y-auto border-r border-slate-800/50 py-8 px-4">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 px-2">On This Page</p>
@@ -63,7 +60,7 @@ export default function DocsPageContent() {
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 min-w-0 max-w-4xl mx-auto px-4 py-8 lg:py-16 w-full overflow-x-hidden">
+                <article className="flex-1 min-w-0 max-w-4xl mx-auto px-4 py-8 lg:py-16 w-full overflow-x-hidden">
                     {/* Sticky Mobile Nav */}
                     <div className="lg:hidden sticky top-20 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 pt-4 border-b border-slate-800/50 mb-8 mx-[-1rem] px-4 -mt-8">
                         <div className="relative">
@@ -155,7 +152,7 @@ export default function DocsPageContent() {
                                             },
                                             {
                                                 n: 2, title: 'Plan Selection',
-                                                body: 'All plans include every feature. You choose based on usage quotas: Starter ($15/mo — 5 users, 50 AI queries/mo), Pro ($45/mo — 25 users, 500 AI queries/mo), Enterprise ($80/mo — unlimited everything). 14-day free trial on all plans, no credit card required.'
+                                                body: pricingDocLine
                                             },
                                             {
                                                 n: 3, title: 'Business Workspace Setup',
@@ -276,7 +273,7 @@ export default function DocsPageContent() {
                                 </div>
                             </div>
                             <p className="text-slate-400 mb-8 leading-relaxed">
-                                The AI Growth Agent is AlphaClone's flagship feature — a continuously running automated sales development system that identifies leads, manages outreach, qualifies prospects through AI conversation, and delivers warm leads to your CRM. Available on Pro and Enterprise plans. No separate setup, third-party API keys, or technical configuration required.
+                                The AI Growth Agent supports lead discovery, outreach drafts, qualification workflows, and CRM handoff from one workspace. No separate setup, third-party API keys, or technical configuration required.
                             </p>
                             <div className="bg-gradient-to-br from-teal-900/20 to-blue-900/20 rounded-3xl p-8 border border-white/5 mb-6">
                                 <h4 className="text-teal-400 font-bold mb-6 text-lg">Using the Growth Agent — Step by Step</h4>
@@ -288,11 +285,11 @@ export default function DocsPageContent() {
                                         },
                                         {
                                             title: 'Step 2: Lead Discovery (Scraping)',
-                                            body: 'Go to Growth Agent → Discover Leads → Scrape. Enter a target description (e.g., "digital marketing agencies in Cape Town with under 30 employees"). The agent scans public business directories, LinkedIn-compatible sources, and industry databases. Results typically return within 2–5 minutes. Review the lead list, de-select any irrelevant entries, then click "Add to CRM" or "Begin Outreach."',
+                                            body: 'Go to Growth Agent → Discover Leads → Scrape. Enter a target description (e.g., "digital marketing agencies in Cape Town with under 30 employees"). The agent searches configured public business sources. Review the lead list, de-select any irrelevant entries, then click "Add to CRM" or "Begin Outreach."',
                                         },
                                         {
                                             title: 'Step 3: AI-Managed Outreach',
-                                            body: 'When outreach is activated, the Growth Agent sends personalized first-contact messages to each lead. When a lead replies, the agent continues the conversation: asking discovery questions about their current tools, team size, pain points, and budget. It handles objections, provides information about your services, and continues the dialogue. You can review all active conversations in real time from the Growth Agent → Conversations tab.',
+                                            body: 'When outreach is activated, the Growth Agent prepares or sends first-contact messages based on your workspace settings. When a lead replies, the agent can help continue qualification with discovery questions about current tools, team size, pain points, and budget. Review active conversations from the Growth Agent → Conversations tab.',
                                         },
                                         {
                                             title: 'Step 4: Lead Qualification & Handoff',
@@ -340,7 +337,7 @@ export default function DocsPageContent() {
                                         <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">What you can do:</strong> read full inbox, compose and reply with full formatting, attach documents from Document Hub, view CRM profile alongside any email, create tasks directly from email threads, set email follow-up reminders.</p>
                                         <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">Privacy:</strong> Emails are retrieved in real-time via Google's API. AlphaClone does not store your email content on its servers.</p>
                                     </div>
-                                    <p className="text-[10px] text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Gmail</p>
+                                    <p className="text-xs text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Gmail</p>
                                 </div>
 
                                 <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col">
@@ -352,7 +349,7 @@ export default function DocsPageContent() {
                                         <p className="text-sm text-slate-400 leading-relaxed">AlphaClone includes a built-in HD video conferencing platform. Start instant calls with clients or join scheduled board meetings directly from the sidebar. No external app or Zoom account required.</p>
                                         <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-white">Features:</strong> HD video and audio, screen sharing, meeting recording (saved to Document Hub), in-call task creation, shareable meeting links (clients join via browser — no app install), and team internal rooms.</p>
                                     </div>
-                                    <p className="text-[10px] text-blue-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Dashboard → Active Meetings</p>
+                                    <p className="text-xs text-blue-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Dashboard → Active Meetings</p>
                                 </div>
 
                                 <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 flex flex-col md:col-span-2">
@@ -384,7 +381,7 @@ export default function DocsPageContent() {
                                             ))}
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Calendly</p>
+                                    <p className="text-xs text-teal-500/70 font-mono uppercase tracking-tighter mt-4">Navigation: Settings → Integrations → Calendly</p>
                                 </div>
                             </div>
                         </div>
@@ -401,7 +398,7 @@ export default function DocsPageContent() {
                                 </div>
                             </div>
                             <p className="text-slate-400 mb-6 leading-relaxed">
-                                The AlphaClone Financial Suite replaces standalone accounting software like QuickBooks or FreshBooks for most small and medium businesses. It includes professional invoicing, quote management, full double-entry accounting, and financial reporting — all connected to your CRM so every financial transaction links to the right client record.
+                                The AlphaClone Financial Suite includes invoicing, quote management, double-entry accounting workflows, and financial reporting — all connected to your CRM so financial transactions can link to the right client record. Confirm your accounting and tax requirements before replacing dedicated accounting software.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {[
@@ -456,7 +453,7 @@ export default function DocsPageContent() {
                                         'Finance → Accounting', 'Finance → Reports',
                                         'Finance → Expenses', 'Finance → Settings',
                                     ].map((path, i) => (
-                                        <p key={i} className="text-[10px] text-green-500/70 font-mono">{path}</p>
+                                        <p key={i} className="text-xs text-green-500/70 font-mono">{path}</p>
                                     ))}
                                 </div>
                             </div>
@@ -474,7 +471,7 @@ export default function DocsPageContent() {
                                 </div>
                             </div>
                             <p className="text-slate-400 mb-6 leading-relaxed">
-                                The Contract Engine allows you to draft professional legal contracts using AI assistance and collect legally valid electronic signatures — all without a separate DocuSign account or a lawyer for standard agreements. Navigation: Dashboard → Contracts.
+                                The Contract Engine allows you to draft agreement templates using AI assistance and collect electronic signatures without a separate signature tool. Review legal documents for your jurisdiction and business context before sending. Navigation: Dashboard → Contracts.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {[
@@ -534,15 +531,15 @@ export default function DocsPageContent() {
                                 </div>
                             </div>
                             <p className="text-slate-400 mb-6 leading-relaxed">
-                                AlphaClone implements enterprise-grade security at every layer — from individual data encryption to network-level DDoS protection. All security features are active by default; no configuration is required to benefit from baseline protection.
+                                AlphaClone includes security controls such as data encryption, role-based access, audit logging, and public policy pages. Baseline security controls are active by default.
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {[
                                     { title: 'RBAC', desc: 'Role-Based Access Control. Assign Admin, Manager, Member, or Viewer roles. Configure project-level access for contractors and external stakeholders. Navigate: Settings → Security → Access Roles.' },
-                                    { title: 'SIEM Audit Logs', desc: 'Continuous audit trail of all platform activity. Logs include: who accessed what, when, from which IP. Available to Admin users via Settings → Security → Audit Log.' },
-                                    { title: 'Perimeter Guard', desc: 'Real-time IP threat intelligence and automated DDoS mitigation. Operates at network level — no configuration required. Incident reports available via Settings → Security → Incident Log.' },
-                                    { title: 'Data Encryption', desc: 'All data encrypted at rest (AES-256) and in transit (TLS 1.3). Database-level encryption for all CRM, financial, and document data.' },
-                                    { title: 'GDPR Compliance', desc: 'Full GDPR-compliant data handling. Right to erasure supported — delete any contact and all associated data is purged from our systems permanently within 72 hours.' },
+                                    { title: 'Audit Logs', desc: 'Audit trail for key platform activity. Logs help Admin users review important account actions via Settings → Security → Audit Log.' },
+                                    { title: 'Security Monitoring', desc: 'Security controls and incident visibility are available through the security area and public support channels.' },
+                                    { title: 'Data Encryption', desc: 'Data is encrypted in transit and protected with database-level security controls for CRM, financial, and document records.' },
+                                    { title: 'GDPR Data Rights', desc: 'Data deletion and account lifecycle requests are supported through public policy pages and account controls.' },
                                     { title: '2FA Authentication', desc: 'Two-factor authentication available for all accounts. Enable via Settings → Security → Two-Factor Authentication. Supports authenticator apps and SMS.' },
                                 ].map((item, i) => (
                                     <div key={i} className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800 text-center">
@@ -595,33 +592,14 @@ export default function DocsPageContent() {
                                 The AlphaClone engineering team can assist with custom AI integration flows, private database clusters, security compliance audits, and enterprise onboarding for large teams.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Button
-                                    onClick={() => window.location.href = 'mailto:support@alphaclone.tech'}
-                                    className="bg-teal-500 text-slate-950 hover:bg-teal-400 font-bold px-10 py-4 h-auto text-base rounded-2xl shadow-xl shadow-teal-500/20"
-                                >
-                                    Contact Engineering Team
-                                </Button>
-                                <Link href="/guide">
-                                    <Button variant="outline" className="border-slate-700 hover:bg-slate-800 px-10 py-4 h-auto text-base rounded-2xl">
-                                        Read Full Guide
-                                    </Button>
-                                </Link>
+                                <PrimaryCTA className="w-full sm:w-auto">Start free trial</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                         </div>
 
                     </section>
-                </main>
+                </article>
             </div>
-
-            <footer className="border-t border-slate-900 py-12 text-center text-slate-600 text-sm">
-                © {new Date().getFullYear()} AlphaClone Systems. Built for Scale.
-                <span className="mx-4">·</span>
-                <Link href="/guide" className="hover:text-slate-400 transition-colors">Full Onboarding Guide</Link>
-                <span className="mx-4">·</span>
-                <Link href="/services" className="hover:text-slate-400 transition-colors">All Services</Link>
-                <span className="mx-4">·</span>
-                <a href="mailto:support@alphaclone.tech" className="hover:text-slate-400 transition-colors">support@alphaclone.tech</a>
-            </footer>
         </div>
     );
 }

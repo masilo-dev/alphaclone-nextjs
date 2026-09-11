@@ -168,7 +168,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                     </div>
                     <div>
                         <h2 className="text-base font-bold text-white">Video Studio</h2>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Open-Source Engine</p>
+                        <p className="text-xs text-slate-500 uppercase tracking-widest font-black">Open-Source Engine</p>
                     </div>
                 </div>
                 <button onClick={onCancel} className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors">
@@ -204,7 +204,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                     
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] text-slate-400">START POINT</label>
+                            <label className="text-xs text-slate-400">START POINT</label>
                             <input 
                                 type="range" 
                                 min={0} 
@@ -220,7 +220,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] text-slate-400">END POINT</label>
+                            <label className="text-xs text-slate-400">END POINT</label>
                             <input 
                                 type="range" 
                                 min={0} 
@@ -263,7 +263,7 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
                             <div className="bg-slate-900 border border-teal-500/30 rounded-2xl p-3 flex items-center gap-4">
                                 <Loader2 className="w-4 h-4 text-teal-400 animate-spin shrink-0" />
                                 <div className="flex-1">
-                                    <div className="flex justify-between text-[10px] text-slate-400 mb-1 font-bold">
+                                    <div className="flex justify-between text-xs text-slate-400 mb-1 font-bold">
                                         <span>PROCESSING VIDEO</span>
                                         <span>{progress}%</span>
                                     </div>
@@ -290,3 +290,4 @@ export default function VideoEditor({ source, onSave, onCancel }: VideoEditorPro
         </div>
     );
 }
+

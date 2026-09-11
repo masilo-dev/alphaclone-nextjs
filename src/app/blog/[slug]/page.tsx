@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Calendar, Tag } from 'lucide-react';
 import { getPublishedSeoArticleBySlug } from '@/services/seoServerService';
 import { MarkdownRenderer } from '@/components/blog/MarkdownRenderer';
+import { SITE_URL } from '@/lib/siteUrl';
 
 type PageProps = {
     params: Promise<{ slug: string }>;
@@ -24,12 +25,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         title: article.title,
         description: article.meta_description,
         keywords: article.meta_keywords,
-        alternates: { canonical: `https://alphaclone.tech/blog/${article.slug}` },
+        alternates: { canonical: `${SITE_URL}/blog/${article.slug}` },
         openGraph: {
             title: article.title,
             description: article.meta_description,
             type: 'article',
-            url: `https://alphaclone.tech/blog/${article.slug}`,
+            url: `${SITE_URL}/blog/${article.slug}`,
             publishedTime: article.created_at,
             modifiedTime: article.updated_at,
         },
@@ -63,10 +64,10 @@ export default async function BlogPost({ params }: PageProps) {
             name: 'AlphaClone Systems',
             logo: {
                 '@type': 'ImageObject',
-                url: 'https://alphaclone.tech/favicon.ico',
+                url: `${SITE_URL}/favicon.ico`,
             },
         },
-        mainEntityOfPage: `https://alphaclone.tech/blog/${article.slug}`,
+        mainEntityOfPage: `${SITE_URL}/blog/${article.slug}`,
     };
 
     return (
@@ -76,7 +77,7 @@ export default async function BlogPost({ params }: PageProps) {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
             />
 
-            <div className="relative pt-32 pb-16 overflow-hidden border-b border-white/5 bg-slate-900/50">
+            <div className="relative py-8 pb-16 overflow-hidden border-b border-white/5 bg-slate-900/50">
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="max-w-4xl mx-auto">
                         <Link href="/blog" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8 transition-colors text-sm font-medium">
@@ -127,11 +128,11 @@ export default async function BlogPost({ params }: PageProps) {
 
                     <div className="mt-16 bg-gradient-to-r from-teal-900/50 to-blue-900/50 rounded-2xl p-8 border border-teal-500/20 text-center relative overflow-hidden">
                         <div className="relative z-10">
-                            <h3 className="text-2xl font-bold text-white mb-4">Ready to Transform Your Business?</h3>
+                            <h3 className="text-2xl font-bold text-white mb-4">Ready to Try AlphaClone?</h3>
                             <p className="text-slate-300 mb-8 max-w-xl mx-auto">
-                                Join thousands of businesses using AlphaClone Systems to automate and scale operations.
+                                Start a 14-day trial and test the CRM, billing, contracts, meetings, and workflow modules in one workspace.
                             </p>
-                            <Link href="/register" className="inline-flex items-center px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/20">
+                            <Link href="/auth/login?register=true&type=business&plan=starter" className="inline-flex items-center px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/20">
                                 Start Free Trial <ArrowRight className="w-4 h-4 ml-2" />
                             </Link>
                         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Zap, Plus, Trash2, Edit2, ToggleLeft, ToggleRight, Play, ChevronDown,
     ChevronUp, CheckCircle2, XCircle, Clock, AlertTriangle, Loader2,
@@ -8,7 +8,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 import type { WorkflowCondition, WorkflowAction, TriggerType, ActionType } from '@/services/engine/WorkflowExecutor';
 
 interface WorkflowDef {
@@ -86,6 +89,117 @@ const DEFAULT_WORKFLOWS = [
             config: { to: '{{phone}}', message: 'Hi {{first_name}}, thanks for your interest! We\'ll be in touch shortly.' }
         }],
     },
+    // ── VERTICAL MODULE DEFAULT WORKFLOWS ──
+    {
+        name: 'Low Stock → Purchase Order',
+        description: 'Auto-create purchase order when inventory drops below threshold',
+        trigger_type: 'inventory_low_stock' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'create_purchase_order' as ActionType,
+            config: { supplierName: 'Auto-Reorder', items: '{{low_stock_items}}', notes: 'Auto-generated low stock reorder' }
+        }],
+    },
+    {
+        name: 'Ticket Created → Assign & Notify',
+        description: 'Auto-assign new support tickets and notify the team',
+        trigger_type: 'ticket_created' as TriggerType,
+        conditions: [],
+        actions: [
+            { type: 'assign_ticket' as ActionType, config: { assigneeId: '{{default_assignee}}' } },
+            { type: 'notify_user' as ActionType, config: { title: 'New Ticket', message: 'Ticket {{ticket_id}}: {{ticket_title}}' } },
+        ],
+    },
+    {
+        name: 'Order Placed → Fulfillment & Inventory',
+        description: 'Create fulfillment record and decrement inventory when order is placed',
+        trigger_type: 'order_created' as TriggerType,
+        conditions: [],
+        actions: [
+            { type: 'fulfill_order' as ActionType, config: { carrier: '{{default_carrier}}' } },
+            { type: 'update_inventory' as ActionType, config: { quantityChange: '-{{order_quantity}}', referenceType: 'sale' } },
+        ],
+    },
+    {
+        name: 'Shipment Delivered → Invoice',
+        description: 'Auto-generate invoice when shipment is marked as delivered',
+        trigger_type: 'shipment_delivered' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'send_email' as ActionType,
+            config: { to: '{{client_email}}', subject: 'Invoice for Shipment {{shipment_id}}', body: 'Your shipment has been delivered. Please find the invoice attached.' }
+        }],
+    },
+    {
+        name: 'Signature Completed → Contract Status',
+        description: 'Update contract status to executed when all signatures are collected',
+        trigger_type: 'signature_completed' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'webhook_call' as ActionType,
+            config: { url: '{{app_url}}/api/contracts/{{contract_id}}/status', method: 'PATCH', body: JSON.stringify({ status: 'executed' }) }
+        }],
+    },
+    {
+        name: 'Sprint Completed → Retrospective',
+        description: 'Generate sprint retrospective report when sprint ends',
+        trigger_type: 'sprint_completed' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'notify_user' as ActionType,
+            config: { title: 'Sprint Retrospective', message: 'Sprint {{sprint_name}} has completed. Generate retrospective report.' }
+        }],
+    },
+    {
+        name: 'Daily Log → Project Progress Update',
+        description: 'Update project progress based on daily log submissions',
+        trigger_type: 'daily_log_submitted' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'webhook_call' as ActionType,
+            config: { url: '{{app_url}}/api/projects/{{project_id}}/progress', method: 'PATCH', body: JSON.stringify({ source: 'daily_log' }) }
+        }],
+    },
+    {
+        name: 'Change Order Approved → Budget Update',
+        description: 'Update project budget when change order is approved',
+        trigger_type: 'change_order_approved' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'webhook_call' as ActionType,
+            config: { url: '{{app_url}}/api/projects/{{project_id}}/budget', method: 'PATCH', body: JSON.stringify({ changeOrderId: '{{change_order_id}}' }) }
+        }],
+    },
+    {
+        name: 'Client Approval → Project Stage',
+        description: 'Move project to next stage when client approves',
+        trigger_type: 'client_approval_completed' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'webhook_call' as ActionType,
+            config: { url: '{{app_url}}/api/projects/{{project_id}}/stage', method: 'PATCH', body: JSON.stringify({ stage: 'next' }) }
+        }],
+    },
+    {
+        name: 'Retainer Due → Auto Invoice',
+        description: 'Generate invoice for active retainer agreements on billing day',
+        trigger_type: 'retainer_invoice_generated' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'send_email' as ActionType,
+            config: { to: '{{client_email}}', subject: 'Monthly Retainer Invoice', body: 'Your retainer invoice for {{period}} is ready.' }
+        }],
+    },
+    {
+        name: 'Tax Return Deadline → Reminder',
+        description: 'Send reminder when tax return deadline is approaching',
+        trigger_type: 'tax_return_filed' as TriggerType,
+        conditions: [],
+        actions: [{
+            type: 'notify_user' as ActionType,
+            config: { title: 'Tax Return Due', message: 'Tax return for {{client_name}} is due soon.' }
+        }],
+    },
 ];
 
 const EMPTY_FORM = {
@@ -98,6 +212,7 @@ const EMPTY_FORM = {
 
 export default function WorkflowDashboard() {
     const { currentTenant: tenant } = useTenant();
+    const { confirm } = useConfirmDialog();
     const [workflows, setWorkflows] = useState<WorkflowDef[]>([]);
     const [executions, setExecutions] = useState<WorkflowExecution[]>([]);
     const [loading, setLoading] = useState(true);
@@ -111,17 +226,33 @@ export default function WorkflowDashboard() {
     const loadData = useCallback(async () => {
         if (!tenant?.id) return;
         setLoading(true);
+        // `workflow_executions.workflow_id` references `workflows`, not
+        // `workflow_definitions`, so PostgREST rejects an embedded
+        // `workflow_definitions(name)` (400). Resolve names from the definitions
+        // loaded alongside instead.
         const [wfRes, execRes] = await Promise.all([
             supabase.from('workflow_definitions').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase
                 .from('workflow_executions')
-                .select('*, workflow_definitions(name)')
+                .select('*')
                 .eq('tenant_id', tenant.id)
                 .order('created_at', { ascending: false })
                 .limit(50),
         ]);
         if (!wfRes.error) setWorkflows(wfRes.data || []);
-        if (!execRes.error) setExecutions(execRes.data || []);
+        if (!execRes.error) {
+            const nameById = new Map<string, string>(
+                ((wfRes.data || []) as Array<{ id: string; name?: string }>).map((w) => [w.id, w.name || '']),
+            );
+            setExecutions(
+                ((execRes.data || []) as Array<Record<string, any>>).map((ex) => ({
+                    ...ex,
+                    workflow_definitions: nameById.has(ex.workflow_id)
+                        ? { name: nameById.get(ex.workflow_id) || '' }
+                        : ex.workflow_definitions,
+                })) as WorkflowExecution[],
+            );
+        }
         setLoading(false);
     }, [tenant]);
 
@@ -130,29 +261,32 @@ export default function WorkflowDashboard() {
     const seedDefaults = async () => {
         if (!tenant?.id) return;
         setSeeding(true);
-        for (const wf of DEFAULT_WORKFLOWS) {
-            await supabase.from('workflow_definitions').insert({ ...wf, tenant_id: tenant.id, is_active: false });
-        }
+        await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflows: DEFAULT_WORKFLOWS }) });
         toast.success('Default workflows added');
         loadData();
         setSeeding(false);
     };
 
     const handleToggle = async (wf: WorkflowDef) => {
-        const { error } = await supabase
-            .from('workflow_definitions')
-            .update({ is_active: !wf.is_active })
-            .eq('id', wf.id);
-        if (!error) {
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant!.id)}/workflows`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowId: wf.id, isActive: !wf.is_active }) });
+        if (response.ok) {
             setWorkflows(prev => prev.map(w => w.id === wf.id ? { ...w, is_active: !wf.is_active } : w));
             toast.success(wf.is_active ? 'Workflow paused' : 'Workflow activated');
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Delete this workflow?')) return;
-        const { error } = await supabase.from('workflow_definitions').delete().eq('id', id);
-        if (!error) {
+        const ok = await confirm({
+            title: 'Delete workflow?',
+            description: 'This will remove the workflow definition. Execution history remains in your activity logs.',
+            confirmLabel: 'Delete workflow',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows?workflowId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (response.ok) {
             setWorkflows(prev => prev.filter(w => w.id !== id));
             toast.success('Deleted');
         }
@@ -162,12 +296,9 @@ export default function WorkflowDashboard() {
         if (!tenant?.id || !form.name || !form.trigger_type) return toast.error('Name and trigger required');
         if (form.actions.length === 0) return toast.error('Add at least one action');
         setSaving(true);
-        const { error } = await supabase.from('workflow_definitions').insert({
-            ...form,
-            tenant_id: tenant.id,
-            is_active: false,
-        });
-        if (error) { toast.error(error.message); } else {
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) { toast.error(result.error || 'Workflow could not be created'); } else {
             toast.success('Workflow created (activate to enable)');
             setShowForm(false);
             setForm({ ...EMPTY_FORM });
@@ -178,18 +309,18 @@ export default function WorkflowDashboard() {
 
     const handleTestRun = async (wf: WorkflowDef) => {
         const toastId = toast.loading('Running test...');
-        const res = await fetch('/api/engine/execute', {
-            method: 'POST',
+        if (!tenant?.id) return;
+        const res = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                trigger_type: wf.trigger_type,
-                tenant_id: tenant?.id,
-                data: { intent_label: 'high', intent_score: 75, source: 'test', contact_name: 'Test Lead', phone: '+10000000000' },
+                workflowId: wf.id,
+                sample: { intent_label: 'high', intent_score: 75, source: 'dry-run', contact_name: 'Sample Lead', phone: '+10000000000' },
             }),
         });
-        const result = await res.json();
-        toast.success(`Test: ${result.executed} workflow(s) executed`, { id: toastId });
-        loadData();
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) { toast.error(result.error || 'Dry run failed', { id: toastId }); return; }
+        toast.success(result.conditionsMet ? `Dry run passed: ${result.actions?.length || 0} action(s) previewed` : 'Dry run complete: conditions did not match', { id: toastId });
     };
 
     const addCondition = () => setForm(f => ({
@@ -200,36 +331,55 @@ export default function WorkflowDashboard() {
         ...f, actions: [...f.actions, { type: 'notify_user', config: { title: 'New event', message: '' } }]
     }));
 
+    const activeCount = useMemo(
+        () => workflows.filter(w => w.is_active).length,
+        [workflows],
+    );
+
+    const workflowStats = useMemo<ModuleStat[]>(() => {
+        const succeeded = executions.filter(e => e.status === 'success').length;
+        const failed = executions.filter(e => e.status === 'failed').length;
+        const decided = succeeded + failed;
+        const successRate = decided > 0 ? Math.round((succeeded / decided) * 100) : 0;
+        const avgMs = executions.length > 0
+            ? Math.round(executions.reduce((s, e) => s + (e.duration_ms || 0), 0) / executions.length)
+            : 0;
+        return [
+            { label: 'Active Flows', value: activeCount, sub: `${workflows.length} total workflows`, Icon: Zap, accent: 'teal' },
+            { label: 'Recent Runs', value: executions.length, sub: 'Last execution batch', Icon: Activity, accent: 'blue' },
+            { label: 'Success Rate', value: `${successRate}%`, sub: `${succeeded} succeeded`, Icon: CheckCircle2, accent: successRate >= 80 ? 'emerald' : 'amber' },
+            { label: 'Avg Duration', value: avgMs > 1000 ? `${(avgMs / 1000).toFixed(1)}s` : `${avgMs}ms`, sub: failed > 0 ? `${failed} failed` : 'All healthy', Icon: Clock, accent: failed > 0 ? 'rose' : 'purple' },
+        ];
+    }, [workflows.length, activeCount, executions]);
+
     if (loading) return (
         <div className="flex items-center justify-center h-64">
             <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
         </div>
     );
 
-    const activeCount = workflows.filter(w => w.is_active).length;
-
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-xl font-bold text-white">AlphaClone Flow Engine</h2>
-                    <p className="text-sm text-slate-400">{activeCount} active · {workflows.length} total · {executions.length} recent executions</p>
-                </div>
-                <div className="flex gap-2">
-                    {workflows.length === 0 && (
-                        <button onClick={seedDefaults} disabled={seeding}
-                            className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-xl text-sm transition-colors">
-                            {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                            Add Defaults
-                        </button>
-                    )}
-                    <button onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold text-sm transition-colors">
-                        <Plus className="w-4 h-4" /> New Workflow
-                    </button>
-                </div>
-            </div>
+        <div className="space-y-6 ac-scroll-full ac-enterprise-module">
+            <EnterprisePageHeader
+                moduleKey="workflows"
+                primaryAction={{
+                    label: 'New Workflow',
+                    onClick: () => setShowForm(true),
+                }}
+                secondaryActions={
+                    workflows.length === 0
+                        ? [{
+                            label: seeding ? 'Adding…' : 'Add Defaults',
+                            onClick: seedDefaults,
+                            disabled: seeding,
+                        }]
+                        : undefined
+                }
+            />
+
+            {(workflows.length > 0 || executions.length > 0) && (
+                <ModuleStatCards stats={workflowStats} />
+            )}
 
             {/* Architecture info banner */}
             <div className="flex gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
@@ -432,8 +582,8 @@ export default function WorkflowDashboard() {
                             <p className="text-slate-500 text-sm">No executions yet. Activate a workflow and trigger an event.</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-2xl border border-slate-800">
-                            <table className="w-full text-sm">
+                        <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
+                            <table className="w-full min-w-[560px] text-sm">
                                 <thead>
                                     <tr className="border-b border-slate-800 bg-slate-900/50">
                                         {['Workflow', 'Status', 'Actions', 'Duration', 'Time'].map(h => (

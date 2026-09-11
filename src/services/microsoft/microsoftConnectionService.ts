@@ -1,0 +1,369 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { ENV } from '@/config/env';
+import { getMicrosoftScopes } from '@/config/microsoft';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import {
+  decryptIntegrationToken,
+  encryptIntegrationToken,
+  isEncryptedToken,
+} from '@/lib/integration/integrationTokenCrypto';
+
+export type MicrosoftConnectionRow = {
+  user_id: string;
+  token_expiry: string | null;
+  microsoft_email: string | null;
+  display_name: string | null;
+  updated_at: string | null;
+  access_token?: string | null;
+  refresh_token?: string | null;
+};
+
+const SAFE_COLUMNS = 'user_id, token_expiry, microsoft_email, display_name, updated_at';
+
+const refreshInFlightByUser = new Map<
+  string,
+  Promise<{ accessToken: string; refreshed: boolean }>
+>();
+
+export class MicrosoftReconnectRequiredError extends Error {
+  readonly code = 'MICROSOFT_RECONNECT_REQUIRED';
+
+  constructor(message = 'Microsoft 365 session expired. Reconnect in Settings → Integrations.') {
+    super(message);
+    this.name = 'MicrosoftReconnectRequiredError';
+  }
+}
+
+function isPlausibleMicrosoftRefreshToken(token: string | null | undefined): token is string {
+  const value = String(token || '').trim();
+  if (value.length < 20) return false;
+  // Decrypt failures fall back to ciphertext — never send that to Azure.
+  if (isEncryptedToken(value)) return false;
+  return true;
+}
+
+function isPermanentMicrosoftOAuthError(message: string): boolean {
+  return /invalid_grant|aadsts9002313|aadsts700082|aadsts50173|aadsts65001|refresh token has expired|token.*expired|malformed or invalid/i.test(
+    message
+  );
+}
+
+async function readSecrets(
+  admin: SupabaseClient,
+  userId: string
+): Promise<{ accessToken: string | null; refreshToken: string | null }> {
+  const { data } = await admin
+    .from('microsoft_connection_secrets')
+    .select('access_token_encrypted, refresh_token_encrypted')
+    .eq('connection_user_id', userId)
+    .maybeSingle();
+  if (!data) return { accessToken: null, refreshToken: null };
+  const accessToken = data.access_token_encrypted
+    ? await decryptIntegrationToken(String(data.access_token_encrypted))
+    : null;
+  const refreshToken = data.refresh_token_encrypted
+    ? await decryptIntegrationToken(String(data.refresh_token_encrypted))
+    : null;
+  return { accessToken: accessToken || null, refreshToken: refreshToken || null };
+}
+
+async function writeSecrets(
+  admin: SupabaseClient,
+  userId: string,
+  tokens: { accessToken?: string | null; refreshToken?: string | null }
+): Promise<void> {
+  const payload: Record<string, string> = {
+    connection_user_id: userId,
+    updated_at: new Date().toISOString(),
+  };
+  if (tokens.accessToken) {
+    payload.access_token_encrypted = await encryptIntegrationToken(tokens.accessToken);
+  }
+  if (tokens.refreshToken) {
+    payload.refresh_token_encrypted = await encryptIntegrationToken(tokens.refreshToken);
+  }
+  const { error } = await admin
+    .from('microsoft_connection_secrets')
+    .upsert(payload, { onConflict: 'connection_user_id' });
+  if (error) throw new Error(error.message);
+}
+
+async function migrateLegacyTokens(
+  admin: SupabaseClient,
+  row: MicrosoftConnectionRow
+): Promise<{ accessToken: string | null; refreshToken: string | null }> {
+  const accessToken = row.access_token ? await decryptIntegrationToken(row.access_token) : null;
+  const refreshToken = row.refresh_token ? await decryptIntegrationToken(row.refresh_token) : null;
+  if (!accessToken && !refreshToken) return { accessToken: null, refreshToken: null };
+  await writeSecrets(admin, row.user_id, { accessToken, refreshToken });
+  await admin
+    .from('microsoft_connections')
+    .update({ access_token: null, refresh_token: null })
+    .eq('user_id', row.user_id);
+  return { accessToken, refreshToken };
+}
+
+export async function getMicrosoftConnection(
+  admin: SupabaseClient,
+  userId: string
+): Promise<MicrosoftConnectionRow | null> {
+  const { data, error } = await admin
+    .from('microsoft_connections')
+    .select(SAFE_COLUMNS)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as MicrosoftConnectionRow;
+}
+
+export async function getMicrosoftTokens(
+  admin: SupabaseClient,
+  userId: string
+): Promise<{ accessToken: string | null; refreshToken: string | null; connection: MicrosoftConnectionRow | null }> {
+  const { data, error } = await admin
+    .from('microsoft_connections')
+    .select(`${SAFE_COLUMNS}, access_token, refresh_token`)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error || !data) return { accessToken: null, refreshToken: null, connection: null };
+  const row = data as MicrosoftConnectionRow;
+  let secrets = await readSecrets(admin, userId);
+  if (!secrets.accessToken && !secrets.refreshToken && (row.access_token || row.refresh_token)) {
+    secrets = await migrateLegacyTokens(admin, row);
+  }
+  return { ...secrets, connection: row };
+}
+
+export async function upsertMicrosoftConnection(params: {
+  userId: string;
+  accessToken: string;
+  refreshToken: string | null;
+  tokenExpiry: string | null;
+  microsoftEmail: string | null;
+  displayName: string | null;
+}): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  const payload = {
+    user_id: params.userId,
+    access_token: '',
+    refresh_token: '',
+    token_expiry: params.tokenExpiry,
+    microsoft_email: params.microsoftEmail,
+    display_name: params.displayName,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: upsertError } = await admin.from('microsoft_connections').upsert(
+    payload,
+    { onConflict: 'user_id' }
+  );
+
+  if (upsertError) {
+    if (
+      upsertError.code === '42P10' ||
+      upsertError.code === '23502' ||
+      upsertError.message?.includes('ON CONFLICT')
+    ) {
+      const { data: existing } = await admin
+        .from('microsoft_connections')
+        .select('id')
+        .eq('user_id', params.userId)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error: updateError } = await admin
+          .from('microsoft_connections')
+          .update(payload)
+          .eq('id', existing.id);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await admin
+          .from('microsoft_connections')
+          .insert(payload);
+        if (insertError) throw insertError;
+      }
+    } else {
+      throw upsertError;
+    }
+  }
+
+  await writeSecrets(admin, params.userId, {
+    accessToken: params.accessToken,
+    refreshToken: params.refreshToken,
+  });
+}
+
+async function refreshMicrosoftAccessTokenInner(
+  admin: SupabaseClient,
+  userId: string,
+  options?: { force?: boolean }
+): Promise<{ accessToken: string; refreshed: boolean }> {
+  const { accessToken, refreshToken, connection } = await getMicrosoftTokens(admin, userId);
+  if (!connection) throw new Error('No Microsoft connection found.');
+  if (!isPlausibleMicrosoftRefreshToken(refreshToken)) {
+    throw new MicrosoftReconnectRequiredError(
+      'Microsoft refresh token is missing or invalid. Reconnect Microsoft 365 in Settings → Integrations.'
+    );
+  }
+
+  const expiresAt = connection.token_expiry ? new Date(connection.token_expiry).getTime() : 0;
+  const needsRefresh =
+    options?.force ||
+    !connection.token_expiry ||
+    Number.isNaN(expiresAt) ||
+    Date.now() + 5 * 60 * 1000 >= expiresAt;
+
+  if (!needsRefresh && accessToken && isPlausibleMicrosoftRefreshToken(accessToken)) {
+    return { accessToken, refreshed: false };
+  }
+
+  const clientId = ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID;
+  const clientSecret = ENV.AZURE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    if (accessToken && isPlausibleMicrosoftRefreshToken(accessToken)) {
+      return { accessToken, refreshed: false };
+    }
+    throw new Error('Microsoft OAuth is not configured on the server.');
+  }
+
+  const tokenResponse = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: getMicrosoftScopes().join(' '),
+    }),
+  });
+
+  const tokenPayload = await tokenResponse.json().catch(() => ({}));
+  if (!tokenResponse.ok) {
+    const message =
+      tokenPayload?.error_description || tokenPayload?.error || 'Microsoft refresh failed';
+    if (isPermanentMicrosoftOAuthError(String(message))) {
+      throw new MicrosoftReconnectRequiredError(
+        'Microsoft 365 session expired. Reconnect in Settings → Integrations.'
+      );
+    }
+    throw new Error(message);
+  }
+
+  const newExpiry = tokenPayload.expires_in
+    ? new Date(Date.now() + Number(tokenPayload.expires_in) * 1000).toISOString()
+    : connection.token_expiry;
+
+  await admin
+    .from('microsoft_connections')
+    .update({
+      token_expiry: newExpiry,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId);
+
+  await writeSecrets(admin, userId, {
+    accessToken: tokenPayload.access_token,
+    refreshToken: tokenPayload.refresh_token || refreshToken,
+  });
+
+  return { accessToken: tokenPayload.access_token as string, refreshed: true };
+}
+
+export async function refreshMicrosoftAccessToken(
+  admin: SupabaseClient,
+  userId: string,
+  options?: { force?: boolean }
+): Promise<{ accessToken: string; refreshed: boolean }> {
+  const inFlight = refreshInFlightByUser.get(userId);
+  if (inFlight) return inFlight;
+
+  const pending = refreshMicrosoftAccessTokenInner(admin, userId, options).finally(() => {
+    if (refreshInFlightByUser.get(userId) === pending) {
+      refreshInFlightByUser.delete(userId);
+    }
+  });
+  refreshInFlightByUser.set(userId, pending);
+  return pending;
+}
+
+export async function deleteMicrosoftConnection(admin: SupabaseClient, userId: string): Promise<void> {
+  await admin.from('microsoft_connection_secrets').delete().eq('connection_user_id', userId);
+  const { error } = await admin.from('microsoft_connections').delete().eq('user_id', userId);
+  if (error) throw new Error(error.message);
+}
+
+export async function resolveMicrosoftUserId(
+  admin: SupabaseClient,
+  userId: string,
+  tenantId?: string | null
+): Promise<string> {
+  const trimmedUserId = String(userId || '').trim();
+  if (trimmedUserId) {
+    const direct = await getMicrosoftConnection(admin, trimmedUserId);
+    if (direct) return trimmedUserId;
+  }
+
+  if (!tenantId) {
+    throw new Error('No Microsoft connection found.');
+  }
+
+  const { data: tenant } = await admin
+    .from('tenants')
+    .select('created_by')
+    .eq('id', tenantId)
+    .maybeSingle();
+  const ownerId = typeof tenant?.created_by === 'string' ? tenant.created_by.trim() : '';
+  if (ownerId && ownerId !== trimmedUserId) {
+    const ownerConnection = await getMicrosoftConnection(admin, ownerId);
+    if (ownerConnection) return ownerId;
+  }
+
+  const { data: members } = await admin
+    .from('tenant_users')
+    .select('user_id, role')
+    .eq('tenant_id', tenantId)
+    .in('role', ['owner', 'admin'])
+    .limit(10);
+
+  for (const member of members || []) {
+    const memberId = typeof member.user_id === 'string' ? member.user_id.trim() : '';
+    if (!memberId || memberId === trimmedUserId) continue;
+    const memberConnection = await getMicrosoftConnection(admin, memberId);
+    if (memberConnection) return memberId;
+  }
+
+  throw new Error(
+    'No Microsoft connection found for this workspace. Connect Microsoft 365 in Settings → Integrations.'
+  );
+}
+
+export async function runMicrosoftTokenHealthCheck(limit = 50): Promise<{
+  checked: number;
+  expired: number;
+  reconnectRequired: number;
+}> {
+  const admin = createSupabaseAdminClient();
+  const now = Date.now();
+  const { data: rows } = await admin
+    .from('microsoft_connections')
+    .select('user_id, token_expiry')
+    .limit(limit);
+
+  let expired = 0;
+  let reconnectRequired = 0;
+  for (const row of rows || []) {
+    const exp = row.token_expiry ? new Date(String(row.token_expiry)).getTime() : 0;
+    if (!exp || exp <= now) {
+      expired++;
+      try {
+        await refreshMicrosoftAccessToken(admin, String(row.user_id));
+      } catch (err) {
+        if (err instanceof MicrosoftReconnectRequiredError) {
+          reconnectRequired++;
+        }
+      }
+    }
+  }
+  return { checked: (rows || []).length, expired, reconnectRequired };
+}

@@ -11,6 +11,7 @@ import {
     X,
     Save
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button, Input, Card, Modal } from '../../ui/UIComponents';
 import { Improvement } from '../../../types';
 import { improvementService, ImprovementFilters } from '../../../services/improvementService';
@@ -87,7 +88,7 @@ const ImprovementsPage: React.FC = () => {
             setDetailModalOpen(false);
             setSelectedImprovement(null);
         } else {
-            alert('Failed to update improvement');
+            toast.error('Failed to update improvement');
         }
 
         setIsSaving(false);

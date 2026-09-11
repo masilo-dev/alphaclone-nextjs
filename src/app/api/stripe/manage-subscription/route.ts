@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { supabase } from '@/lib/supabase';
 import { tenantService } from '@/services/tenancy/TenantService';
@@ -70,6 +71,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Manage Subscription Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return clientErrorResponse(error, { request: req, scope: 'stripe/manage-subscription' });
     }
 }

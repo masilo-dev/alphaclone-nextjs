@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, ArrowRight, Loader2, Check, Sparkles } from 'lucide-react';
+import { Building2, ArrowRight, Loader2, Check } from 'lucide-react';
 import { useTenant } from '../../contexts/TenantContext';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
@@ -12,7 +12,7 @@ interface PlanOption {
   price: number;
   period: string;
   features: string[];
-  popular?: boolean;
+  label?: string;
 }
 
 const plans: PlanOption[] = (['starter', 'pro', 'enterprise'] as const).map(id => ({
@@ -20,7 +20,7 @@ const plans: PlanOption[] = (['starter', 'pro', 'enterprise'] as const).map(id =
   name: id.charAt(0).toUpperCase() + id.slice(1),
   price: PLAN_PRICING[id].monthly,
   period: 'per month',
-  popular: id === 'starter',
+  label: id === 'starter' ? 'Lowest monthly price' : undefined,
   features: PLAN_PRICING[id].featureList
 }));
 
@@ -36,7 +36,7 @@ export default function CreateBusinessOnboarding() {
   // Form state
   const [businessName, setBusinessName] = useState('');
   const [businessSlug, setBusinessSlug] = useState('');
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>('starter');
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
 
   // Auto-generate slug from business name
   const handleBusinessNameChange = (name: string) => {
@@ -76,6 +76,11 @@ export default function CreateBusinessOnboarding() {
       return;
     }
 
+    if (!selectedPlan) {
+      setError('Choose a plan to create your workspace.');
+      return;
+    }
+
     try {
       setIsCreating(true);
 
@@ -89,7 +94,7 @@ export default function CreateBusinessOnboarding() {
 
       if (!tenant) throw new Error('Failed to create tenant');
 
-      // Success! During Beta, we redirect directly to dashboard
+      // Continue into the newly provisioned workspace.
       // The context already handles switching to the new tenant
       router.push('/dashboard');
     } catch (err: any) {
@@ -112,10 +117,10 @@ export default function CreateBusinessOnboarding() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Building2 className="w-12 h-12 text-teal-400" />
-            <h1 className="text-4xl font-bold text-white">Create Your Business</h1>
+            <h1 className="text-4xl font-bold text-white tracking-tighter">Set up your AlphaClone workspace</h1>
           </div>
           <p className="text-slate-400 text-lg">
-            Set up your business operating system in minutes
+            Add the basics, choose your plan, and start from the dashboard.
           </p>
         </div>
 
@@ -130,7 +135,7 @@ export default function CreateBusinessOnboarding() {
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 backdrop-blur-sm">
           {step === 1 && (
             <div className="max-w-2xl mx-auto">
-              <h2 className="text-2xl font-bold text-white mb-6">Tell us about your business</h2>
+              <h2 className="text-2xl font-bold text-white mb-6 uppercase tracking-tighter">Add your business details</h2>
 
               {error && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400">
@@ -177,12 +182,12 @@ export default function CreateBusinessOnboarding() {
                 {/* Industry (Optional) */}
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Industry (Optional)
+                    Your Sector
                   </label>
                   <select
                     className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 transition-colors"
                   >
-                    <option value="">Select your industry</option>
+                    <option value="">Choose your sector</option>
                     <option value="agency">Agency / Creative Services</option>
                     <option value="consulting">Consulting / Professional Services</option>
                     <option value="restaurant">Restaurant / Food Service</option>
@@ -193,7 +198,7 @@ export default function CreateBusinessOnboarding() {
                     <option value="other">Other</option>
                   </select>
                   <p className="text-xs text-slate-500 mt-2">
-                    Helps us customize your experience
+                    Helps us shape your workspace defaults
                   </p>
                 </div>
               </div>
@@ -201,9 +206,9 @@ export default function CreateBusinessOnboarding() {
               <button
                 onClick={() => setStep(2)}
                 disabled={!businessName.trim() || !businessSlug.trim()}
-                className="w-full mt-8 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-8 px-6 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-widest"
               >
-                Continue to Plan Selection
+                Keep going →
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
@@ -213,7 +218,7 @@ export default function CreateBusinessOnboarding() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-2 text-center">Choose Your Plan</h2>
               <p className="text-slate-400 text-center mb-8">
-                Start with a 14-day free trial on any plan. Cancel anytime.
+                Start with a 14-day free trial on any plan. No card is required to create the workspace.
               </p>
 
               {error && (
@@ -232,11 +237,10 @@ export default function CreateBusinessOnboarding() {
                       : 'border-slate-700 bg-slate-900/50 hover:border-slate-600'
                       }`}
                   >
-                    {plan.popular && (
+                    {plan.label && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                         <div className="px-3 py-1 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          POPULAR
+                          {plan.label}
                         </div>
                       </div>
                     )}
@@ -259,8 +263,8 @@ export default function CreateBusinessOnboarding() {
                         {PLAN_PRICING[plan.id]?.description}
                       </p>
                       {PLAN_PRICING[plan.id]?.isDiscountable && (
-                        <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-[10px] font-bold text-amber-400 uppercase tracking-tighter">
-                          35% OFF FOR NEXT 3 MONTHS
+                        <div className="mt-2 py-1 px-2 bg-amber-500/20 border border-amber-500/30 rounded text-xs font-bold text-amber-400 uppercase tracking-tighter">
+                          Intro discount shown at checkout
                         </div>
                       )}
                     </div>
@@ -280,7 +284,7 @@ export default function CreateBusinessOnboarding() {
               <div className="max-w-2xl mx-auto space-y-4">
                 <button
                   onClick={handleCreateBusiness}
-                  disabled={isCreating}
+                  disabled={isCreating || !selectedPlan}
                   className="w-full px-6 py-4 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-lg font-semibold rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isCreating ? (
@@ -290,7 +294,7 @@ export default function CreateBusinessOnboarding() {
                     </>
                   ) : (
                     <>
-                      Create My Business
+                      Create workspace
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}

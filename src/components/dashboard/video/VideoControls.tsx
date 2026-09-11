@@ -12,7 +12,10 @@ import {
     Copy,
     Check,
     MessageCircle,
-    MoreHorizontal
+    MoreHorizontal,
+    Disc,
+    Lock,
+    Unlock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -32,6 +35,10 @@ interface VideoControlsProps {
     roomUrl?: string;
     callId?: string;
     unreadMessageCount?: number;
+    isRecording?: boolean;
+    isLocked?: boolean;
+    onToggleRecord?: () => void;
+    onToggleLock?: () => void;
 }
 
 interface ControlButtonProps {
@@ -78,13 +85,13 @@ const ControlButton: React.FC<ControlButtonProps> = ({
             {badgeCount && badgeCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-slate-900 text-[10px] font-bold text-white items-center justify-center">
+                    <span className="relative inline-flex rounded-full h-5 w-5 bg-red-500 border-2 border-slate-900 text-xs font-bold text-white items-center justify-center">
                         {badgeCount && badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                 </span>
             )}
         </button>
-        <span className="text-[10px] sm:text-xs font-medium text-slate-400 group-hover:text-white transition-colors">
+        <span className="text-xs sm:text-xs font-medium text-slate-400 group-hover:text-white transition-colors">
             {label}
         </span>
     </div>
@@ -105,12 +112,14 @@ const VideoControls: React.FC<VideoControlsProps> = ({
     onToggleParticipants,
     onToggleChat,
     onToggleSettings,
-    onEndForAll,
-
     isAdmin = false,
     roomUrl,
     callId,
-    unreadMessageCount = 0
+    unreadMessageCount = 0,
+    isRecording = false,
+    isLocked = false,
+    onToggleRecord,
+    onToggleLock
 }) => {
     const [copied, setCopied] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -187,6 +196,24 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                                 label="Settings"
                             />
                         )}
+                        {isAdmin && onToggleLock && (
+                            <ControlButton
+                                onClick={() => { onToggleLock(); setShowMoreActions(false); }}
+                                active={isLocked}
+                                icon={Unlock}
+                                activeIcon={Lock}
+                                label={isLocked ? "Unlock" : "Lock"}
+                            />
+                        )}
+                        {isAdmin && onToggleRecord && (
+                            <ControlButton
+                                onClick={() => { onToggleRecord(); setShowMoreActions(false); }}
+                                active={isRecording}
+                                icon={Disc}
+                                activeIcon={Disc}
+                                label={isRecording ? "Stop Rec" : "Record"}
+                            />
+                        )}
                         <ControlButton
                             onClick={handleCopyLink}
                             icon={copied ? Check : Copy}
@@ -216,7 +243,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                         />
                     </div>
 
-                    {/* Share Section - Hidden on Mobile main bar to satisfy "not a lot of button" requirement */}
+                    {/* Share + invite — desktop main bar; mobile uses More menu */}
                     {!isMobile && (
                         <>
                             <div className="w-px h-10 bg-white/10" />
@@ -225,6 +252,11 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                                 highlight={isScreenSharing}
                                 icon={isScreenSharing ? MonitorOff : Monitor}
                                 label={isScreenSharing ? "Stop Share" : "Share"}
+                            />
+                            <ControlButton
+                                onClick={handleCopyLink}
+                                icon={copied ? Check : Copy}
+                                label={copied ? "Copied" : "Invite"}
                             />
                         </>
                     )}
@@ -257,6 +289,24 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                                         label="Users"
                                     />
                                 )}
+                                {isAdmin && onToggleLock && (
+                                    <ControlButton
+                                        onClick={onToggleLock}
+                                        active={isLocked}
+                                        icon={Unlock}
+                                        activeIcon={Lock}
+                                        label={isLocked ? "Unlock" : "Lock"}
+                                    />
+                                )}
+                                {isAdmin && onToggleRecord && (
+                                    <ControlButton
+                                        onClick={onToggleRecord}
+                                        active={isRecording}
+                                        icon={Disc}
+                                        activeIcon={Disc}
+                                        label={isRecording ? "Stop Rec" : "Record"}
+                                    />
+                                )}
                                 {onToggleSettings && (
                                     <ControlButton
                                         onClick={onToggleSettings}
@@ -284,3 +334,4 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 };
 
 export default VideoControls;
+

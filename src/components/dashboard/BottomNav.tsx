@@ -1,96 +1,149 @@
-import React, { useMemo } from 'react';
+'use client';
+
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-    LayoutDashboard,
-    Briefcase,
-    MessageSquare,
-    Menu,
-    DollarSign,
-    Users,
-    CheckSquare,
-    Calendar
-} from 'lucide-react';
-import { UserRole } from '../../types';
+import type { UserRole } from '../../types';
+import { Briefcase, House, Layers, Mail, Sparkles } from 'lucide-react';
+import { MOBILE_BOTTOM_DESTINATIONS, isMobileBottomActive } from '@/config/responsive/mobileNav';
+import { usePWA } from '@/contexts/PWAContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import MobileMoreSheet from './responsive/MobileMoreSheet';
 
 interface BottomNavProps {
-    activeTab: string;
-    onNavigate: (href: string) => void;
-    onToggleMenu: () => void;
-    unreadCount?: number;
-    userRole?: UserRole; // Add user role
+  activeTab: string;
+  onNavigate: (href: string) => void;
+  onToggleMenu: () => void;
+  unreadCount?: number;
+  userRole?: UserRole;
 }
 
+type CompanionNavItem = {
+  moduleId: string;
+  label: string;
+  href: string;
+  icon: typeof House;
+  matchPrefixes: string[];
+};
+
+function companionDestinations(role: UserRole): CompanionNavItem[] {
+  const bonnieHref = role === 'tenant_admin' || role === 'business_dashboard'
+    ? '/dashboard/business/bonnie'
+    : '/dashboard/bonnie';
+
+  return [
+    { moduleId: 'home', label: 'Home', href: '/dashboard', icon: House, matchPrefixes: ['/dashboard'] },
+    { moduleId: 'work', label: 'Work', href: '/dashboard/projects', icon: Briefcase, matchPrefixes: ['/dashboard/projects', '/dashboard/business/projects', '/dashboard/tasks', '/dashboard/business/tasks', '/dashboard/calendar', '/dashboard/business/calendar'] },
+    { moduleId: 'bonnie', label: 'Bonnie', href: bonnieHref, icon: Sparkles, matchPrefixes: ['/dashboard/bonnie', '/dashboard/business/bonnie'] },
+    { moduleId: 'inbox', label: 'Inbox', href: '/dashboard/comms', icon: Mail, matchPrefixes: ['/dashboard/comms', '/dashboard/mail', '/dashboard/messages', '/dashboard/business/messages', '/dashboard/notifications'] },
+    { moduleId: 'more', label: 'More', href: '#more', icon: Layers, matchPrefixes: [] },
+  ];
+}
+
+/**
+ * Mobile navigation. Installed AlphaClone Companion always uses the canonical
+ * Home / Work / Bonnie / Inbox / More layout. Normal mobile browser keeps the
+ * existing responsive navigation contract.
+ */
 const BottomNav: React.FC<BottomNavProps> = ({
-    activeTab,
-    onNavigate,
-    onToggleMenu,
-    unreadCount = 0,
-    userRole = 'client'
+  activeTab,
+  onNavigate,
+  onToggleMenu: _onToggleMenu,
+  unreadCount = 0,
+  userRole = 'client',
 }) => {
-    const router = useRouter();
+  const router = useRouter();
+  const { isPWA } = usePWA();
+  const { t } = useLanguage();
+  const [moreOpen, setMoreOpen] = useState(false);
 
-    const mobileNavItems = useMemo(() => {
-        if (userRole === 'tenant_admin') {
-            return [
-                { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-                { label: 'Contacts', href: '/dashboard/business/clients', icon: Users },
-                { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-                { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
-            ];
-        }
+  const destinations = useMemo(() => {
+    if (isPWA) return companionDestinations(userRole);
+    return MOBILE_BOTTOM_DESTINATIONS.map((item) => ({
+      moduleId: item.id,
+      label: item.label,
+      href: item.hrefForRole(userRole),
+      icon: item.icon,
+      matchPrefixes: item.matchPrefixesForRole(userRole),
+    }));
+  }, [isPWA, userRole]);
 
-        return [
-            { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
-            { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
-            { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-            { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
-        ];
-    }, [userRole]);
-
-    const handleNavClick = (href: string) => {
-        onNavigate(href);
-        router.push(href);
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMoreOpen(false);
     };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [moreOpen]);
 
-    return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-lg border-t border-slate-800 pb-safe z-50 h-[calc(env(safe-area-inset-bottom,20px)+64px)]">
-            <div className="flex justify-around items-center h-16">
-                {mobileNavItems.map((item) => {
-                    const isActive = activeTab === item.href;
-                    return (
-                        <button
-                            key={item.href}
-                            onClick={() => handleNavClick(item.href)}
-                            className={`flex flex-col items-center justify-center w-full h-full space-y-1 active:scale-95 transition-transform ${isActive ? 'text-teal-400' : 'text-slate-400 hover:text-slate-300'
-                                }`}
-                        >
-                            <div className="relative">
-                                <item.icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-                                {item.href === '/dashboard/messages' && unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                    </span>
-                                )}
-                            </div>
-                            <span className="text-[10px] font-medium tracking-wide">
-                                {item.label}
-                            </span>
-                        </button>
-                    );
-                })}
+  const handleNavClick = (href: string, moduleId: string) => {
+    if (moduleId === 'more') {
+      setMoreOpen(true);
+      return;
+    }
+    onNavigate(href);
+    router.push(href);
+  };
 
-                {/* 'More' / Menu toggle */}
-                <button
-                    onClick={onToggleMenu}
-                    className="flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-500 hover:text-slate-300 active:scale-95 transition-transform"
-                >
-                    <Menu className="w-6 h-6" />
-                    <span className="text-[10px] font-medium tracking-wide">Menu</span>
-                </button>
-            </div>
+  const isItemActive = (item: (typeof destinations)[number]) => {
+    if (item.moduleId === 'more') return moreOpen;
+    if (isPWA) {
+      if (item.moduleId === 'home') return activeTab === '/dashboard' || activeTab === '/dashboard/business';
+      return item.matchPrefixes.some((prefix) => activeTab === prefix || activeTab.startsWith(`${prefix}/`));
+    }
+    const legacy = MOBILE_BOTTOM_DESTINATIONS.find((d) => d.id === item.moduleId);
+    return legacy ? isMobileBottomActive(activeTab, legacy, userRole) : activeTab === item.href;
+  };
+
+  return (
+    <>
+      <nav
+        aria-label="Primary"
+        className="ac-responsive-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-50 native-bottom-bar ac-v3-floating border-t border-[var(--border-default)]"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 4px)' }}
+      >
+        <div className="flex items-center justify-around h-[58px] px-1">
+          {destinations.map((item) => {
+            const isMore = item.moduleId === 'more';
+            const isActive = isItemActive(item);
+            const showBadge = unreadCount > 0 && item.moduleId === 'inbox';
+            const Icon = item.icon;
+
+            return (
+              <button
+                key={item.moduleId}
+                type="button"
+                onClick={() => handleNavClick(item.href, item.moduleId)}
+                aria-label={t(item.label)}
+                aria-current={!isMore && isActive ? 'page' : undefined}
+                aria-expanded={isMore ? moreOpen : undefined}
+                aria-haspopup={isMore ? 'dialog' : undefined}
+                className="native-tap relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 active:scale-[0.97]"
+              >
+                <div className="relative">
+                  <Icon
+                    className={`h-5 w-5 ${isActive ? 'text-[var(--ac-accent)]' : 'text-[var(--text-muted)]'}`}
+                    strokeWidth={isActive ? 2.35 : 1.8}
+                    aria-hidden
+                  />
+                  {showBadge ? (
+                    <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-[var(--error-500)] px-1 text-[9px] font-bold leading-4 text-white">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  ) : null}
+                </div>
+                <span className={`max-w-[4.75rem] truncate text-[10px] leading-3 ${isActive ? 'font-semibold text-[var(--ac-accent)]' : 'text-[var(--text-muted)]'}`}>
+                  {t(item.label)}
+                </span>
+              </button>
+            );
+          })}
         </div>
-    );
+      </nav>
+
+      <MobileMoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} userRole={userRole} onNavigate={onNavigate} />
+    </>
+  );
 };
 
 export default BottomNav;

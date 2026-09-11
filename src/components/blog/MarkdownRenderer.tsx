@@ -53,7 +53,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                     img: ({ node, ...props }) => (
                         <div className="relative w-full h-[300px] md:h-[500px] my-8 rounded-xl overflow-hidden border border-white/10 shadow-2xl">
                             <Image 
-                                src={props.src || ''} 
+                                src={typeof props.src === 'string' ? props.src : ''} 
                                 alt={updatedAlt(props.alt)}
                                 fill
                                 className="object-cover"
@@ -62,8 +62,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
                         </div>
                     ),
                     table: ({ node, ...props }) => (
-                        <div className="overflow-x-auto mb-8 rounded-lg border border-white/10">
-                            <table {...props} className="w-full text-left text-sm text-slate-300" />
+                        <div className="overflow-x-auto mb-8 rounded-lg border border-white/10 min-w-0">
+                            <table {...props} className="w-full min-w-[480px] text-left text-sm text-slate-300" />
                         </div>
                     ),
                     th: ({ node, ...props }) => (

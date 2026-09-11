@@ -48,9 +48,15 @@ export const pwaService = {
         }
 
         try {
-            const registration = await navigator.serviceWorker.register('/sw.js', {
-                scope: '/',
-            });
+            if (process.env.NODE_ENV !== 'production') {
+                return { success: false, error: 'Service worker is only available in production builds' };
+            }
+
+            const { registerServiceWorkerSafely } = await import('@/lib/pwa/registerServiceWorker');
+            const registration = await registerServiceWorkerSafely();
+            if (!registration) {
+                return { success: false, error: 'Service worker is not available yet' };
+            }
 
             // Check for updates
             registration.addEventListener('updatefound', () => {
@@ -81,11 +87,13 @@ export const pwaService = {
         if (typeof window === 'undefined') return;
 
         const notification = document.createElement('div');
-        notification.className = 'fixed bottom-4 right-4 bg-teal-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-4';
+        if (document.getElementById('alphaclone-update-available')) return;
+        notification.id = 'alphaclone-update-available';
+        notification.className = 'fixed bottom-20 md:bottom-5 left-3 right-3 md:left-auto md:right-5 md:max-w-md bg-slate-950 border border-teal-400/30 text-white px-5 py-4 rounded-2xl shadow-2xl z-[140] flex items-center gap-4';
         notification.innerHTML = `
             <div>
                 <p class="font-semibold">Update Available</p>
-                <p class="text-sm opacity-90">A new version is available. Refresh to update.</p>
+                <p class="text-sm opacity-70">Finish or save current work, then update when ready.</p>
             </div>
             <button id="pwa-update-btn" class="px-4 py-2 bg-white text-teal-600 rounded font-semibold hover:bg-teal-50 transition-colors">
                 Update
@@ -96,13 +104,16 @@ export const pwaService = {
 
         const updateBtn = notification.querySelector('#pwa-update-btn');
         updateBtn?.addEventListener('click', () => {
-            window.location.reload();
+            void navigator.serviceWorker.getRegistration('/').then((registration) => {
+                const waiting = registration?.waiting;
+                if (!waiting) {
+                    window.location.reload();
+                    return;
+                }
+                navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+                waiting.postMessage({ type: 'SKIP_WAITING' });
+            });
         });
-
-        // Auto-dismiss after 10 seconds
-        setTimeout(() => {
-            notification.remove();
-        }, 10000);
     },
 
     /**
@@ -160,7 +171,15 @@ export const pwaService = {
             return { prompt: null, error: 'Not in browser environment' };
         }
 
-        // Listen for beforeinstallprompt event
+        // Reuse the prompt captured by the app shell. Waiting only for a new
+        // browser event made Android install actions feel stuck even though an
+        // install prompt was already available.
+        const capturedPrompt = (window as any).deferredPrompt;
+        if (capturedPrompt) {
+            return { prompt: capturedPrompt, error: null };
+        }
+
+        // Listen for the next beforeinstallprompt event when none was captured.
         return new Promise((resolve) => {
             const handler = (e: Event) => {
                 e.preventDefault();
@@ -280,18 +299,15 @@ export const pwaService = {
                 applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
             });
 
-            // Send subscription to server
-            const { error } = await supabase
-                .from('push_subscriptions')
-                .upsert({
-                    user_id: userId,
-                    endpoint: subscription.endpoint,
-                    keys: subscription.toJSON().keys
-                }, { onConflict: 'endpoint' });
+            const response = await fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(subscription),
+            });
 
-            if (error) {
-                console.error('Failed to save subscription:', error);
-                throw new Error('Database save failed');
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.error || 'Database save failed');
             }
 
             return { success: true, error: null };
@@ -305,4 +321,3 @@ export const pwaService = {
         }
     }
 };
-

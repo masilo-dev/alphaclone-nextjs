@@ -1,7 +1,16 @@
 import { MetadataRoute } from 'next';
+import { SITE_URL } from '@/lib/siteUrl';
 
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = 'https://alphaclone.tech';
+    const baseUrl = SITE_URL;
+    const privateRoutes = [
+        '/dashboard', '/api/', '/api/mcp', '/api/mcp/', '/mcp', '/mcp/',
+        '/auth/', '/private-docs/', '/admin/', '/invoice/', '/project/',
+        '/quote/', '/sign/', '/contract/', '/meet/', '/call/', '/share/', '/billing/',
+        '/account/', '/form/', '/p/', '/bp/', '/portal/', '/alpha/', '/authorize/',
+        '/onboarding/', '/settings/', '/bonnie/', '/data-room/', '/invite/',
+        '/maintenance/', '/search/',
+    ];
 
     return {
         rules: [
@@ -9,51 +18,46 @@ export default function robots(): MetadataRoute.Robots {
             {
                 userAgent: ['Googlebot', 'Googlebot-Image', 'Googlebot-Video', 'Bingbot'],
                 allow: ['/'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/admin/'],
+                disallow: privateRoutes,
             },
 
             // AI Answer Engines — explicitly allowed for citation indexing
             // These bots are allowed to read all marketing & documentation content
             // but must NOT index private user data routes
             {
-                userAgent: 'GPTBot',
-                allow: ['/', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
-            },
-            {
-                userAgent: 'OAI-SearchBot',
-                allow: ['/', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
-            },
-            {
-                userAgent: 'PerplexityBot',
-                allow: ['/', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
-            },
-            {
-                userAgent: 'ClaudeBot',
-                allow: ['/', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/invoice/', '/project/', '/book/', '/meet/', '/call/'],
-            },
-            {
-                userAgent: 'anthropic-ai',
-                allow: ['/', '/services', '/about', '/guide', '/docs', '/pricing', '/blog', '/ecosystem', '/who-we-serve', '/contact', '/tools/ai-architect', '/llms.txt', '/auth/login'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/'],
-            },
-            {
-                userAgent: 'Applebot',
-                allow: ['/', '/auth/login'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/'],
+                userAgent: [
+                    'GPTBot',
+                    'OAI-SearchBot',
+                    'PerplexityBot',
+                    'ClaudeBot',
+                    'anthropic-ai',
+                    'Applebot',
+                    'Google-Extended',
+                    'deepseek-ai',
+                    'DeepSeekBot',
+                    'Meta-ExternalAgent',
+                    'YouBot',
+                    'cohere-ai',
+                    'BytesSpider'
+                ],
+                allow: ['/'],
+                disallow: privateRoutes,
             },
 
             // General fallback — all other bots get full marketing access, no sensitive routes
             {
                 userAgent: '*',
-                allow: ['/', '/auth/login'],
-                disallow: ['/dashboard', '/api/', '/auth/reset-password', '/private-docs/', '/admin/'],
+                allow: ['/'],
+                disallow: privateRoutes,
             },
         ],
-        sitemap: `${baseUrl}/sitemap.xml`,
+        sitemap: [
+            `${baseUrl}/sitemap.xml`,
+            `${baseUrl}/sitemaps/marketing.xml`,
+            `${baseUrl}/sitemaps/solutions.xml`,
+            `${baseUrl}/sitemaps/resources.xml`,
+            `${baseUrl}/sitemaps/company.xml`,
+        ],
         host: baseUrl,
     };
 }

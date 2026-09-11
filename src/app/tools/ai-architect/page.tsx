@@ -6,6 +6,7 @@ import { Button, Input, Card, Badge } from '@/components/ui/UIComponents';
 import { Zap, Shield, Database, Layout, Sparkles, ArrowRight, CheckCircle2, Building2, User } from 'lucide-react';
 import { aiArchitectService, ArchitectSpecs } from '@/services/ai/aiArchitectService';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 export default function AIArchitectPage() {
   const [step, setStep] = useState<'form' | 'loading' | 'blueprint'>('form');
@@ -20,15 +21,14 @@ export default function AIArchitectPage() {
     e.preventDefault();
     setStep('loading');
     
-    // Simulate generation for premium feel or call service
-    const specs = await aiArchitectService.generateSpecs(
-      formData.businessName,
-      formData.businessType,
-      formData.goals
-    );
-    
-    setBlueprint(specs);
-    setStep('blueprint');
+    try {
+      const specs = await aiArchitectService.generateSpecs(formData.businessName, formData.businessType, formData.goals);
+      setBlueprint(specs);
+      setStep('blueprint');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Blueprint generation failed');
+      setStep('form');
+    }
   };
 
   return (
@@ -39,21 +39,7 @@ export default function AIArchitectPage() {
         <div className="absolute bottom-[10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-600/5 blur-[120px]" />
       </div>
 
-      <nav className="relative z-50 border-b border-slate-800/50 bg-[#020D1A]/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20">
-              <Zap className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-black tracking-tighter text-white">ALPHACLONE</span>
-          </Link>
-          <Link href="/auth/login" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
-            Sign In
-          </Link>
-        </div>
-      </nav>
-
-      <main className="relative z-10 max-w-4xl mx-auto px-4 py-20">
+      <main className="relative z-10 max-w-4xl mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
           {step === 'form' && (
             <motion.div

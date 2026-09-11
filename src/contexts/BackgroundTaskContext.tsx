@@ -1,7 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import {
+    getPlatformResetEpoch,
+    PLATFORM_RESET_EVENT,
+} from '@/lib/platformReset';
+
+const TASKS_STORAGE_KEY = 'alphaclone_background_tasks_v1';
 
 export type BackgroundTaskStatus = 'pending' | 'running' | 'completed' | 'error';
 
@@ -25,6 +31,37 @@ const BackgroundTaskContext = createContext<BackgroundTaskContextType | undefine
 
 export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
     const [tasks, setTasks] = useState<BackgroundTask[]>([]);
+    const [hydrated, setHydrated] = useState(false);
+
+    useEffect(() => {
+        try {
+            const raw = sessionStorage.getItem(TASKS_STORAGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw) as BackgroundTask[];
+                if (Array.isArray(parsed)) {
+                    setTasks(parsed);
+                }
+            }
+        } catch {
+            /* ignore corrupt storage */
+        }
+        setHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!hydrated) return;
+        try {
+            sessionStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+        } catch {
+            /* ignore quota */
+        }
+    }, [tasks, hydrated]);
+
+    useEffect(() => {
+        const reset = () => setTasks([]);
+        window.addEventListener(PLATFORM_RESET_EVENT, reset);
+        return () => window.removeEventListener(PLATFORM_RESET_EVENT, reset);
+    }, []);
 
     const startTask = async <T,>(
         id: string,
@@ -33,6 +70,7 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
         onSuccess?: (result: T) => void,
         onError?: (error: any) => void
     ) => {
+        const taskEpoch = getPlatformResetEpoch();
         // Add to state
         setTasks(prev => {
             if (prev.find(t => t.id === id)) return prev;
@@ -47,6 +85,8 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
 
             const result = await taskFn();
 
+            if (taskEpoch !== getPlatformResetEpoch()) return;
+
             setTasks(prev => prev.map(t =>
                 t.id === id ? { ...t, status: 'completed', result } : t
             ));
@@ -56,6 +96,7 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
             if (onSuccess) onSuccess(result);
 
         } catch (error: any) {
+            if (taskEpoch !== getPlatformResetEpoch()) return;
             console.error(`Background task failed: ${name}`, error);
             
             // Better error handling for different types of errors

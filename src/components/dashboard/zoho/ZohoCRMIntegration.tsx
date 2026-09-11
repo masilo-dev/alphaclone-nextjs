@@ -1,29 +1,76 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { RefreshCw, CheckCircle, AlertCircle, Database, Layout, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useTenant } from '../../../contexts/TenantContext';
+import { showActionNextSteps } from '../../common/showActionNextSteps';
 
 export default function ZohoCRMIntegration() {
+    const router = useRouter();
     const { user } = useAuth();
+    const { currentTenant } = useTenant();
     const [syncing, setSyncing] = useState(false);
     const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message?: string }>({ type: 'idle' });
+    const [connectionLoading, setConnectionLoading] = useState(true);
+    const [zohoStatus, setZohoStatus] = useState<{
+        isConnected: boolean;
+        mailReady?: boolean;
+        baseConnected?: boolean;
+    } | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadZohoStatus = async () => {
+            setConnectionLoading(true);
+            try {
+                if (!currentTenant?.id) return;
+                const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(currentTenant.id)}`, { credentials: 'include' });
+                const data = await res.json().catch(() => ({}));
+                if (!cancelled) {
+                    setZohoStatus({
+                        isConnected: data?.isConnected === true,
+                        mailReady: data?.mailReady === true,
+                        baseConnected: data?.baseConnected === true,
+                    });
+                }
+            } catch {
+                if (!cancelled) setZohoStatus(null);
+            } finally {
+                if (!cancelled) setConnectionLoading(false);
+            }
+        };
+
+        void loadZohoStatus();
+        return () => {
+            cancelled = true;
+        };
+    }, [currentTenant?.id]);
 
     const handleSync = async (module?: string) => {
-        if (!user) {
+        if (!user || !currentTenant?.id) {
             setStatus({ type: 'error', message: 'User not authenticated' });
             return;
         }
         setSyncing(true);
         setStatus({ type: 'idle' });
         try {
-            const res = await fetch(`/api/zoho/crm/sync?userId=${user.id}`, {
+            const res = await fetch('/api/zoho/crm/sync', {
                 method: 'POST',
-                body: JSON.stringify({ module })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ module, tenantId: currentTenant.id })
             });
             const data = await res.json();
             if (res.ok) {
                 setStatus({ type: 'success', message: data.message });
+                toast.success(data.message || 'Zoho sync completed');
+                showActionNextSteps('zoho_sync_done', (path) => router.push(path));
+            } else if (data?.reconnect) {
+                setStatus({ type: 'error', message: data.error || 'Zoho needs to be reconnected.' });
+                toast.error(data.error || 'Reconnect Zoho to continue');
             } else {
                 setStatus({ type: 'error', message: data.error });
             }
@@ -104,10 +151,22 @@ export default function ZohoCRMIntegration() {
             </div>
 
             <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between text-xs text-gray-500">
-                <p>Last full sync: 2 hours ago</p>
+                <p>
+                    {connectionLoading
+                        ? 'Checking Zoho connection...'
+                        : zohoStatus?.baseConnected
+                            ? 'Zoho CRM connection detected'
+                            : 'Zoho is not connected yet'}
+                </p>
                 <div className="flex gap-4">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> System Online</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> OAuth Token Valid</span>
+                    <span className="flex items-center gap-1">
+                        <span className={`w-2 h-2 rounded-full ${zohoStatus?.baseConnected ? 'bg-green-500' : 'bg-amber-500'}`}></span>
+                        {zohoStatus?.baseConnected ? 'CRM Connected' : 'CRM Needs Attention'}
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <span className={`w-2 h-2 rounded-full ${zohoStatus?.mailReady ? 'bg-green-500' : 'bg-slate-500'}`}></span>
+                        {zohoStatus?.mailReady ? 'Mail Ready' : 'Mail Not Ready'}
+                    </span>
                 </div>
             </div>
         </div>

@@ -1,52 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
+import { requireTenantAccess } from '@/lib/apiAuth';
 import { hubspotService } from '@/services/hubspotService';
 
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
-        const userId = searchParams.get('userId');
+        const tenantId = searchParams.get('tenantId') || '';
+        const { user } = await requireTenantAccess(tenantId);
         const limit = Number(searchParams.get('limit') || '100');
 
-        if (!userId) {
-            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-        }
-
-        const contacts = await hubspotService.getContacts(userId, limit);
+        const contacts = await hubspotService.getContacts(user.id, tenantId, limit);
         return NextResponse.json({ success: true, contacts });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('HubSpot Fetch Contacts API Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'hubspot/sync' });
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId, leads } = await req.json();
-
-        if (!userId) {
-            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-        }
+        const body = await req.json();
+        const tenantId = String(body.tenantId || '');
+        const { user } = await requireTenantAccess(tenantId);
+        const leads: any[] | undefined = body.leads;
 
         const results = [];
         if (leads && Array.isArray(leads)) {
-            // Sync specific leads
             for (const lead of leads) {
                 try {
-                    const result = await hubspotService.syncLeadToHubSpot(userId, lead);
+                    const result = await hubspotService.syncLeadToHubSpot(user.id, tenantId, lead);
                     results.push({ leadId: lead.id, ...result });
-                } catch (err: any) {
-                    results.push({ leadId: lead.id, success: false, error: err.message });
+                } catch (err: unknown) {
+                    console.error('[hubspot/sync] lead', lead.id, err);
+                    results.push({ leadId: lead.id, success: false, error: OPERATION_FAILED_MESSAGE });
                 }
             }
+            return NextResponse.json({ success: true, results });
         } else {
-            const contacts = await hubspotService.getContacts(userId, 100);
+            const contacts = await hubspotService.getContacts(user.id, tenantId, 100);
             return NextResponse.json({ success: true, message: 'HubSpot contacts refreshed', contacts });
         }
-
-        return NextResponse.json({ success: true, results });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('HubSpot Sync API Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'hubspot/sync' });
     }
 }

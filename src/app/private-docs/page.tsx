@@ -38,9 +38,9 @@ export default function PrivateDocsPage() {
                             </h2>
                             <div className="bg-slate-900/50 rounded-2xl p-8 border border-white/5 space-y-6">
                                 <div>
-                                    <h4 className="text-white font-bold mb-2">Vercel & Next.js</h4>
+                                    <h4 className="text-white font-bold mb-2">Railway & Next.js</h4>
                                     <p className="text-sm text-slate-400 leading-relaxed">
-                                        Production deployments are continuous via Vercel. Ensure all environment variables (Supabase, Stripe, Gmail OAuth) are mirrored in the Vercel dashboard.
+                                        Production deployments are continuous via Railway. Ensure all environment variables (Supabase, Stripe, OAuth providers) are set in the Railway service dashboard.
                                     </p>
                                 </div>
                                 <div className="p-4 bg-slate-950 rounded-xl border border-white/5 font-mono text-[11px] text-teal-500">
@@ -61,11 +61,11 @@ export default function PrivateDocsPage() {
                                 </p>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-4 bg-slate-950 rounded-xl border border-white/5">
-                                        <div className="text-[10px] text-slate-600 font-bold mb-1">AUTH</div>
+                                        <div className="text-xs text-slate-600 font-bold mb-1">AUTH</div>
                                         <div className="text-xs text-slate-300">Supabase Auth hooks handles role assignment.</div>
                                     </div>
                                     <div className="p-4 bg-slate-950 rounded-xl border border-white/5">
-                                        <div className="text-[10px] text-slate-600 font-bold mb-1">STORAGE</div>
+                                        <div className="text-xs text-slate-600 font-bold mb-1">STORAGE</div>
                                         <div className="text-xs text-slate-300">S3 protocol via Supabase Buckets.</div>
                                     </div>
                                 </div>
@@ -78,9 +78,9 @@ export default function PrivateDocsPage() {
                         <div className="p-6 rounded-2xl bg-blue-900/10 border border-blue-500/20">
                             <h3 className="text-sm font-black text-white uppercase tracking-widest mb-4">Quick Links</h3>
                             <ul className="space-y-3 text-xs">
-                                <li><a href="https://supabase.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Database className="w-3 h-3" /> Supabase Console</a></li>
+                                <li><Link href="/dashboard/business/settings" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Database className="w-3 h-3" /> Database Settings</Link></li>
                                 <li><a href="https://dashboard.stripe.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Code className="w-3 h-3" /> Stripe Dashboard</a></li>
-                                <li><a href="https://vercel.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Lock className="w-3 h-3" /> Vercel Deployments</a></li>
+                                <li><a href="https://railway.com" target="_blank" className="text-slate-400 hover:text-blue-400 flex items-center gap-2"><Lock className="w-3 h-3" /> Railway Deployments</a></li>
                             </ul>
                         </div>
 
@@ -99,3 +99,4 @@ export default function PrivateDocsPage() {
         </div>
     );
 }
+

@@ -44,8 +44,7 @@ FORMAT: JSON array of objects: { "assignedTo": "role", "description": "concise t
         const response = await aiService.complete({
             prompt,
             systemPrompt: `You are the Alpha Strategist. Break down missions for a specialized digital workforce.`,
-            provider: 'anthropic',
-            model: strategist.model,
+            provider: 'auto',
             temperature: 0
         });
 

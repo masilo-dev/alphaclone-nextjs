@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import crypto from 'crypto';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { verifyFacebookSignature } from '@/lib/webhookUtils';
+import { ENV } from '@/config/env';
 
-const VERIFY_TOKEN = process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN;
-const APP_SECRET = process.env.FACEBOOK_APP_SECRET;
+const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
+const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
 
 /**
  * Facebook Page Webhook Verification (GET)
@@ -52,30 +53,10 @@ export async function POST(req: NextRequest) {
 
         const bodyText = await req.text();
         const signatureHeader = req.headers.get('x-hub-signature-256');
+        const isValid = await verifyFacebookSignature(bodyText, signatureHeader, APP_SECRET);
 
-        if (signatureHeader) {
-            const signature = signatureHeader.replace('sha256=', '');
-            const expectedSignature = crypto
-                .createHmac('sha256', APP_SECRET)
-                .update(bodyText)
-                .digest('hex');
-
-            let isValid = false;
-            try {
-                isValid = crypto.timingSafeEqual(
-                    Buffer.from(signature.padEnd(64, '0'), 'hex'),
-                    Buffer.from(expectedSignature, 'hex')
-                );
-            } catch {
-                isValid = false;
-            }
-
-            if (!isValid) {
-                console.warn('[Facebook Page Webhook] Rejected: invalid HMAC signature');
-                return new NextResponse('Unauthorized', { status: 401 });
-            }
-        } else {
-            console.warn('[Facebook Page Webhook] Rejected: missing signature header');
+        if (!isValid) {
+            console.warn('[Facebook Page Webhook] Rejected: invalid HMAC signature');
             return new NextResponse('Unauthorized', { status: 401 });
         }
 

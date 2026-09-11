@@ -1,29 +1,56 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { requireTenantRole } from '@/lib/apiAuth';
 import { stripe } from '@/lib/stripe';
-import { headers } from 'next/headers';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { PLAN_PRICING, type SubscriptionPlan } from '@/services/tenancy/types';
+import { z } from 'zod';
 
 export async function POST(req: Request) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
-        const { priceId, planId, tenantId, adminEmail, successUrl, cancelUrl } = await req.json();
+        const { planId, tenantId, successUrl, cancelUrl } = z.object({
+            planId: z.enum(['free', 'starter', 'pro', 'enterprise']),
+            tenantId: z.string().uuid(),
+            successUrl: z.string().url().optional(),
+            cancelUrl: z.string().url().optional(),
+            priceId: z.string().optional(),
+            adminEmail: z.string().optional(),
+        }).parse(await req.json());
 
-        if (!priceId || !tenantId) {
-            return NextResponse.json({ error: 'Missing priceId or tenantId' }, { status: 400 });
+        const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
+
+        // Free plan bypass
+        if (planId === 'free') {
+            const admin = createSupabaseAdminClient();
+            await admin.from('tenants').update({
+                subscription_plan: 'free',
+                subscription_status: 'free',
+                updated_at: new Date().toISOString()
+            }).eq('id', tenantId);
+
+            return NextResponse.json({ url: successUrl || '/dashboard?checkout=free_active' });
         }
 
-        // Apply discount for starter plan if applicable
-        const discounts = [];
-        if (planId === 'starter') {
-            discounts.push({
-                coupon: '3lopMJDs', // START35 coupon ID
-            });
+        const priceId = PLAN_PRICING[planId as SubscriptionPlan]?.stripePriceId;
+        if (!priceId) {
+            return NextResponse.json({ error: `Price ID for plan ${planId} is not configured` }, { status: 503 });
         }
 
-        const session = await stripe.checkout.sessions.create({
+        // Fetch existing tenant record to check for Stripe customer ID
+        const admin = createSupabaseAdminClient();
+        const { data: tenant } = await admin
+            .from('tenants')
+            .select('stripe_customer_id')
+            .eq('id', tenantId)
+            .single();
+
+        const origin = new URL(req.url).origin;
+        const safeReturnUrl = (value: string | undefined, fallback: string) => {
+            if (!value) return `${origin}${fallback}`;
+            return new URL(value).origin === origin ? value : `${origin}${fallback}`;
+        };
+
+        const sessionOptions: any = {
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -34,26 +61,36 @@ export async function POST(req: Request) {
             mode: 'subscription',
             automatic_tax: { enabled: true },
             tax_id_collection: { enabled: true },
-            customer_email: adminEmail,
-            discounts,
-            success_url: successUrl || `${req.headers.get('origin')}/dashboard?checkout=success`,
-            cancel_url: cancelUrl || `${req.headers.get('origin')}/dashboard?checkout=cancelled`,
+            success_url: safeReturnUrl(successUrl, '/dashboard?checkout=success'),
+            cancel_url: safeReturnUrl(cancelUrl, '/dashboard?checkout=cancelled'),
             metadata: {
                 tenantId,
+                userId: user.id,
                 planId,
+                plan: planId,
             },
             subscription_data: {
-                trial_period_days: 14,
                 metadata: {
                     tenantId,
+                    userId: user.id,
                     planId,
+                    plan: planId,
                 },
             },
-        });
+        };
+
+        // Reuse existing customer or pass customer_email
+        if (tenant?.stripe_customer_id) {
+            sessionOptions.customer = tenant.stripe_customer_id;
+        } else {
+            sessionOptions.customer_email = user.email;
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionOptions);
 
         return NextResponse.json({ url: session.url });
     } catch (err: any) {
         console.error('Stripe Checkout Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'stripe/create-checkout-session' });
     }
 }

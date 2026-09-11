@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-export type UserRole = 'admin' | 'client' | 'visitor' | 'tenant_admin' | 'business_dashboard';
+export type UserRole = 'admin' | 'client' | 'visitor' | 'tenant_admin' | 'business_dashboard' | 'super_admin';
 
 export interface User {
   id: string;
@@ -11,7 +11,7 @@ export interface User {
   avatar: string;
   user_metadata?: any;
   company?: string;
-  account_status?: 'active' | 'pending_deletion';
+  account_status?: 'active' | 'pending_deletion' | 'suspended' | 'deleted';
   scheduled_deletion_at?: string;
   sectors?: string[];
   services?: string[];
@@ -34,15 +34,22 @@ export interface ServiceItem {
   icon: React.ComponentType<any>;
 }
 
+export interface EmailDraft {
+  to: string;
+  subject: string;
+  body: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model' | 'system';
   senderName?: string;
   senderId?: string;
-  recipientId?: string; // New: target user (null = system/broadcast)
+  recipientId?: string;
   text: string;
   timestamp: Date;
   isThinking?: boolean;
+  emailDraft?: EmailDraft;
   attachments?: {
     id: string;
     url: string;
@@ -56,12 +63,16 @@ export interface ChatMessage {
   reply_to?: string;
   edited_at?: string;
   group_id?: string;
+  source?: string; // 'internal', 'whatsapp', etc.
 }
 
 export type ProjectStage = 'Initiation' | 'Planning' | 'Execution' | 'Review' | 'Closure';
+export const STAGES: ProjectStage[] = ['Initiation', 'Planning', 'Execution', 'Review', 'Closure'];
 
 export interface Project {
   id: string;
+  dealId?: string;
+  contractId?: string;
   ownerId?: string;
   ownerName?: string; // Helper for contract generation
   name: string;
@@ -86,6 +97,14 @@ export interface Project {
   risk?: 'Low' | 'Medium' | 'High';
   health?: 'On Track' | 'At Risk' | 'Delayed';
   resources?: string[];
+  budgetTotal?: number;
+  budgetUsed?: number;
+  velocityScore?: number;
+  healthScore?: number;
+  portalToken?: string;
+  portalEnabled?: boolean;
+  estimatedCompletionDate?: string;
+  autoInvoiceEnabled?: boolean;
   createdAt?: string; // ISO Date
 }
 

@@ -1,6 +1,22 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
 import { getPublishedSeoArticles, type SeoArticleRecord } from '@/services/seoServerService';
+import { SITE_URL } from '@/lib/siteUrl';
+
+export const metadata: Metadata = {
+    title: 'Business Automation and AI Operations Blog',
+    description: 'Practical guidance for founders and service teams using CRM, contracts, invoicing, automation, and AI agents in one operating system.',
+    alternates: { canonical: `${SITE_URL}/blog` },
+    robots: { index: true, follow: true },
+    openGraph: {
+        title: 'AlphaClone Business Operations Blog',
+        description: 'Guides for running sales, delivery, finance, and customer operations with connected AI workflows.',
+        url: `${SITE_URL}/blog`,
+        type: 'website',
+        images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    },
+};
 
 export default async function BlogPage() {
     let articles: SeoArticleRecord[] = [];
@@ -12,7 +28,7 @@ export default async function BlogPage() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-white">
-            <div className="relative pt-32 pb-20 overflow-hidden">
+            <div className="relative py-8 pb-20 overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
 
                 <div className="container mx-auto px-4 relative z-10">
@@ -64,7 +80,7 @@ export default async function BlogPage() {
                     </div>
                 ) : (
                     <div className="text-center py-20">
-                        <p className="text-slate-400 text-lg">No published articles yet.</p>
+                        <p className="text-slate-400 text-lg">No articles are published yet. Draft or publish the first article from the content dashboard.</p>
                     </div>
                 )}
             </div>

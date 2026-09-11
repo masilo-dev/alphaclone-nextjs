@@ -1,33 +1,54 @@
 import { ENV } from '../config/env';
-import { Lead } from './leadService';
 import { withLanguage, getLanguageInstruction } from '@/lib/languageUtils';
+import { tenantService } from '@/services/tenancy/TenantService';
+import { Lead } from './leadService';
 
 
 // API Keys from validated ENV
 const ANTHROPIC_API_KEY = ENV.ANTHROPIC_API_KEY || '';
 const OPENAI_API_KEY = ENV.OPENAI_API_KEY || '';
+const XAI_API_KEY = ENV.XAI_API_KEY || ENV.GROK_API_KEY || '';
+
+const OPENROUTER_API_KEY = ENV.OPENROUTER_API_KEY || '';
 
 // Check which providers are available
 export const getAvailableProviders = () => {
     return {
         claude: !!ANTHROPIC_API_KEY,
-        openai: !!OPENAI_API_KEY
+        openai: !!OPENAI_API_KEY,
+        grok: !!XAI_API_KEY,
+        openrouter: !!OPENROUTER_API_KEY,
     };
 };
 
 export const isAnyAIConfigured = () => {
+    // SECURITY: API Keys are not visible on the client (browser), only the server.
+    // If we are in the browser, we assume the AI is configured because the actual 
+    // validation happens on the server side via the /api/ai proxy.
+    if (typeof window !== 'undefined') {
+        return true; 
+    }
+
     const providers = getAvailableProviders();
-    return providers.claude || providers.openai;
+    return providers.claude || providers.openai || providers.grok || providers.openrouter;
 };
 
 /**
  * Generate text content using the first available AI provider (proxied through server-side route)
  */
-export const generateText = async (prompt: string, maxTokens: number = 2048, model?: string): Promise<{ text: string | null; error: any }> => {
+export const generateText = async (
+    prompt: string,
+    maxTokens: number = 2048,
+    model?: string,
+    tenantIdOverride?: string | null
+): Promise<{ text: string | null; error: any }> => {
     try {
-        console.log('🔄 Calling Server-side AI Generate Proxy...');
+        console.log('[unifiedAIService] Calling /api/ai/generate');
         // Append the user's chosen language instruction to every prompt
         const localizedPrompt = withLanguage(prompt);
+        const tenantId =
+            tenantIdOverride ??
+            (typeof window !== 'undefined' ? tenantService.getCurrentTenantId() : null);
         const response = await fetch('/api/ai/generate', {
             method: 'POST',
             headers: {
@@ -36,7 +57,8 @@ export const generateText = async (prompt: string, maxTokens: number = 2048, mod
             body: JSON.stringify({
                 prompt: localizedPrompt,
                 maxTokens,
-                model
+                model,
+                ...(tenantId ? { tenantId } : {}),
             })
         });
 
@@ -58,17 +80,32 @@ export const generateText = async (prompt: string, maxTokens: number = 2048, mod
  * Includes system instructions for lead discovery intent detection
  */
 const GROWTH_AGENT_SYSTEM_PROMPT = `
-You are the AlphaClone Growth Agent, powered by Claude. You are a world-class SDR, Business Growth strategist, and Data Scientist.
-Your objective is to identify expansion opportunities, find high-intent leads, and provide strategic intelligence.
+You are the AlphaClone Growth Agent, powered by Claude. You are recognized as the world's most elite SDR, Sales Strategist, and Behavioral Psychologist.
+Your objective is to identify expansion opportunities, find high-intent leads, and provide strategic intelligence that converts.
+
+### CORE SALES PHILOSOPHY:
+- **Response Optimization:** Every action you take is measured by its likelihood to elicit a positive response.
+- **Hook Strategy:** You use hyper-personalized, pattern-interrupting hooks that immediately demonstrate value or solve a specific pain point.
+- **Data-Driven Intelligence:** You analyze tech stacks, market trends, and business maturity to predict lead behavior.
 
 ### OPERATIONAL MODES:
-1. **Lead Discovery:** Identifying high-potential business targets.
-2. **Business Intelligence:** Deep-dive analysis of specific leads and market segments.
-3. **Strategic Outreach:** Crafting hyper-personalized, high-conversion messaging.
+1. **Lead Discovery:** Identifying high-potential business targets with the highest "Response Probability".
+2. **Business Intelligence:** Deep-dive analysis of specific leads, identifying their "Critical Pain Point".
+3. **Strategic Outreach:** Crafting hyper-personalized, high-conversion messaging with a 90%+ predicted response rate.
 
-### DATA INTEGRITY RULES (CRITICAL):
-- **Website URLs:** ONLY provide a website if you are 99% certain it is the real, active domain. No placeholders.
-- **Accuracy:** Be extremely precise with industry categorizations and insights.
+### RESPONSE PROBABILITY ANALYSIS (NEW):
+For every lead or outreach strategy, you must calculate a "Predicted Response Probability" (0-100%).
+Factors to consider: 
+- Timing (industry seasonality)
+- Relevance (pain point alignment)
+- Personalization depth
+- Friction level of the CTA
+
+### CONTACT ACQUISITION PROTOCOL (CRITICAL):
+- **Email Harvesting:** If a lead's email is missing, your priority is to secure it.
+- **Micro-Commitment Strategy:** Instead of asking for a "meeting" first, ask for permission to send a specific, high-value asset (PDF, Loom, case study) to their email.
+- **Friction Reduction:** Never say "What is your email?". Say "I have a specific breakdown for [Business Name]; where should I send that so it reaches you directly?".
+- **Verification:** Always double-check if an email is already present in the lead metadata before asking.
 
 ### FORMATTING RULES:
 - **Professionalism:** Use sophisticated business terminology.
@@ -86,7 +123,13 @@ You have access to specialized internal commands. Append the command to your res
 [RESEARCH_COMMAND: {"businessName": "Company Name", "context": "focus area"}]
 
 ### TONE:
-Professional, authoritative, and data-driven.
+Elite, authoritative, strategic, and hyper-competent.
+
+### STRICT OPERATIONAL GUIDELINE:
+You are a BUSINESS STRATEGIST, not a software support agent. 
+- When discussing weaknesses, focus on sales pipelines, revenue leakage, operational efficiency, and market positioning. 
+- DO NOT provide technical advice on how to improve the AlphaClone platform itself (e.g., "add more leads to your dashboard" or "configure your webhooks") unless the user specifically asks how to use a feature. 
+- Your goal is to grow their BUSINESS, not their software usage.
 `;
 
 /**
@@ -114,13 +157,16 @@ export const chatWithGrowthAgent = async (
     try {
         // Append language instruction to the system prompt
         const localizedSystem = GROWTH_AGENT_SYSTEM_PROMPT + getLanguageInstruction();
+        const tenantId =
+            typeof window !== 'undefined' ? tenantService.getCurrentTenantId() : null;
         const response = await fetch('/api/ai/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 history,
                 message,
-                systemPrompt: localizedSystem
+                systemPrompt: localizedSystem,
+                ...(tenantId ? { tenantId } : {}),
             })
         });
 
@@ -151,10 +197,13 @@ export const chatWithAI = async (
     history: { role: string; text: string }[],
     message: string,
     image?: string,
-    model?: string
+    model?: string,
+    systemPrompt?: string
 ): Promise<{ text: string; grounding: any }> => {
     try {
-        console.log('🔄 Calling Server-side AI Proxy...');
+        console.log('[unifiedAIService] Calling /api/ai/chat');
+        const tenantId =
+            typeof window !== 'undefined' ? tenantService.getCurrentTenantId() : null;
         const response = await fetch('/api/ai/chat', {
             method: 'POST',
             headers: {
@@ -164,7 +213,9 @@ export const chatWithAI = async (
                 history,
                 message,
                 image,
-                model
+                model,
+                ...(systemPrompt ? { systemPrompt } : {}),
+                ...(tenantId ? { tenantId } : {}),
             })
         });
 
@@ -205,8 +256,8 @@ export const generateOutreachMessage = async (lead: Lead) => {
     const strategy = lead.strategy || 'PROBLEM_SOLVER';
     const guard = strategyGuards[strategy] || strategyGuards['PROBLEM_SOLVER'];
 
-    const prompt = `You are a World-Class Sales Strategist and Copywriting Expert (Claude 4.5).
-Your task is to write a hyper-personalized, high-conversion cold email for this lead.
+    const prompt = `You are a World-Class Sales Strategist, Behavioral Psychologist, and Copywriting Expert (Claude 4.6).
+Your task is to write the absolute best hyper-personalized, high-conversion outreach message for this lead.
 
 LEAD INTELLIGENCE:
 - Business: ${lead.businessName}
@@ -219,23 +270,27 @@ LEAD INTELLIGENCE:
 STRATEGY: ${strategy}
 GUIDANCE: ${guard}
 
-GOALS:
-1. Use the "AI Hook" or a variation of it as the opening line.
-2. Reference their specific industry or tech stack naturally.
-3. Keep it under 100 words. No fluff. No generic "I hope this finds you well".
-4. The call to action should be a low-friction "quick chat" or "free audit".
+YOUR OBJECTIVES:
+1. CRAFT THE HOOK: Use a pattern-interrupting opening line that shows you've done deep research.
+2. CALCULATE SUCCESS: At the very end of your response, provide a "RESPONSE PROBABILITY" score from 0-100% and a 1-sentence reason why.
+3. CONVERSION FOCUS: Reference their specific industry or tech stack naturally.
+4. BREVITY: Keep it under 80 words. No fluff. No generic greetings.
+5. CTA: Use a low-friction, high-value "interest-based" call to action.
 
 FORMAT:
 Subject: [Compelling, short subject line]
 
 [Body]
 
+RESPONSE PROBABILITY: [Score]%
+Reasoning: [1-sentence sales psychology explanation]
+
 STRICT FORMATTING RULES:
-- Write the email body in plain text only. No markdown.
+- Write the message in plain text only. No markdown.
 - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.
 - No bullet point dashes. Write in natural paragraphs.`;
 
-    const { text } = await generateText(prompt, 600, 'claude-sonnet-4-5-20250929');
+    const { text } = await generateText(prompt, 600, 'deepseek-chat');
     return text || "Personalized draft generation failed.";
 };
 
@@ -257,7 +312,7 @@ export const generateEmailReply = async (emailContent: string, context?: string)
     - Use simple paragraphs separated by line breaks.
     - Do not include subject lines or signatures.`;
 
-    const { text } = await generateText(prompt, 1000);
+    const { text } = await generateText(prompt, 1000, 'deepseek-chat');
     return text || "AI reply generation failed.";
 };
 
@@ -276,8 +331,10 @@ export const generateEmailDraft = async (instructions: string, recipientInfo?: s
     - Subject Line: ${subject || 'N/A'}
     
     GOAL:
-    Draft a complete, professionally worded email body that follows the instructions precisely. 
-    The tone should be professional yet human and engaging.
+    Draft a complete email body that follows the instructions precisely.
+    Write like a sharp, likeable human — confident and warm, never stiff or corporate.
+    Open with a first line that earns attention immediately (a specific hook, not "I hope this email finds you well").
+    Keep it clear, concise and skimmable, and end with one natural call to action.
     
     STRICT FORMATTING RULES:
     - Write in plain text only. No markdown.
@@ -286,7 +343,7 @@ export const generateEmailDraft = async (instructions: string, recipientInfo?: s
     - Do NOT include the subject line in the body.
     - Do NOT include any placeholders like [Your Name]. Leave space for a signature but don't add the bracketed placeholders.`;
 
-    const { text } = await generateText(prompt, 1200);
+    const { text } = await generateText(prompt, 1200, 'deepseek-chat');
     return text || "AI draft generation failed.";
 };
 
@@ -294,7 +351,7 @@ export const generateEmailDraft = async (instructions: string, recipientInfo?: s
  * Generate an AI reply to a Messenger message
  */
 export const generateMessengerReply = async (messageContent: string, context?: string) => {
-    const prompt = `You are a helpful business assistant. Draft a concise, conversational reply to the following Messenger message:
+    const prompt = `You are an Elite Sales Response Agent. Draft a hyper-concise, conversational reply to the following Messenger/Instagram message:
     
     MESSAGE:
     "${messageContent}"
@@ -302,14 +359,20 @@ export const generateMessengerReply = async (messageContent: string, context?: s
     CONTEXT/BRAND VOICE:
     "${context || 'Helpful, professional, and friendly.'}"
     
-    Provide ONLY the body of the reply. Keep it short and suitable for a chat interface (no email signatures).
+    GOAL:
+    Optimize for a 95%+ response rate. Use curiosity or a direct value-add.
     
+    Provide ONLY the body of the reply. Keep it short and suitable for a chat interface.
+    
+    Include at the end:
+    RESPONSE PROBABILITY: [Score]%
+    Reasoning: [Short explanation]
+
     STRICT FORMATTING RULES:
     - Write in plain text only. No markdown.
-    - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.
-    - No bolding or italicizing.`;
+    - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.`;
 
-    const { text } = await generateText(prompt, 600);
+    const { text } = await generateText(prompt, 600, 'deepseek-chat');
     return text || "AI reply generation failed.";
 };
 
@@ -322,6 +385,9 @@ export const enrichLeadData = async (lead: any): Promise<string> => {
     Industry: ${lead.industry}
     Location: ${lead.location}
     Website: ${lead.website || 'N/A'}
+    Known Emails: ${Array.isArray(lead.knownEmails) && lead.knownEmails.length > 0 ? lead.knownEmails.join(', ') : 'N/A'}
+    Social Links: ${lead.socialLinks && Object.keys(lead.socialLinks).length > 0 ? JSON.stringify(lead.socialLinks) : 'N/A'}
+    Known Tech Stack: ${Array.isArray(lead.techStack) && lead.techStack.length > 0 ? lead.techStack.join(', ') : 'N/A'}
 
     Analyze and provide a concise, high-value summary (max 150 words) including:
     1. Likely Technology Stack (based on industry/segment)
@@ -337,7 +403,7 @@ export const enrichLeadData = async (lead: any): Promise<string> => {
     - Use standard numbering (1., 2., 3.) for lists, not dashes or asterisks.
     - Use clear paragraph breaks for structure.`;
 
-    const { text } = await generateText(prompt, 800);
+    const { text } = await generateText(prompt, 800, 'deepseek-chat');
     return text || "Intelligence gathering failed. Please try again later.";
 };
 
@@ -354,6 +420,11 @@ export const generateLeads = async (industry: string, location: string, googleAp
 
     try {
         console.log('🔄 Calling Server-side AI Leads Proxy...');
+        const tenantId =
+            typeof window !== 'undefined'
+                ? (await import('./tenancy/TenantService')).tenantService.getCurrentTenantId()
+                : null;
+
         const response = await fetch('/api/ai/leads', {
             method: 'POST',
             headers: {
@@ -363,13 +434,24 @@ export const generateLeads = async (industry: string, location: string, googleAp
                 industry,
                 location,
                 mode,
-                filters
+                filters,
+                tenantId: tenantId || undefined,
             })
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to generate leads');
+            const errorData = await response.json().catch(() => ({}));
+            const msg =
+                errorData.error ||
+                errorData.message ||
+                (response.status === 429
+                    ? `Daily AI lead limit reached for your plan (${errorData.limit ?? '?'} per day, UTC). Resets at ${errorData.resetsAt ?? 'midnight UTC'}.`
+                    : 'Failed to generate leads');
+            const err = new Error(msg) as Error & { quota?: unknown };
+            if (errorData.code === 'AI_LEAD_QUOTA_EXCEEDED') {
+                err.quota = errorData;
+            }
+            throw err;
         }
 
         const { leads, rawMapsData } = await response.json();
@@ -404,10 +486,49 @@ export const generateLeads = async (industry: string, location: string, googleAp
     }
 };
 
+/**
+ * Optimize a sales message for maximum conversion
+ */
+export const optimizeSalesMessage = async (originalMessage: string, context?: string) => {
+    const prompt = `You are a World-Class Sales Strategist and Conversion Specialist. 
+    Your goal is to transform the following message into the "Best Outreach Message Ever".
+    
+    ORIGINAL MESSAGE:
+    "${originalMessage}"
+    
+    ADDITIONAL CONTEXT:
+    "${context || 'General business outreach'}"
+    
+    YOUR INSTRUCTIONS:
+    1. Identify a "Pattern Interrupt" hook for the opening.
+    2. Rewrite the body to be more personalized, high-value, and low-friction.
+    3. EMAIL CAPTURE: If the context indicates no email is known, insert a hyper-effective micro-commitment request for their contact details.
+    4. Calculate a Predicted Response Probability (0-100%).
+    
+    OUTPUT FORMAT:
+    ### OPTIMIZED MESSAGE:
+    [The new message]
+    
+    ### RESPONSE PROBABILITY: [Score]%
+    
+    ### STRATEGY ANALYSIS:
+    - Hook: [Description of the hook used]
+    - Psychology: [1-sentence explanation of why this works]
+    
+    STRICT FORMATTING RULES:
+    - Use clean headings as shown above.
+    - No markdown formatting within the message body itself (plain text).
+    - No asterisks or special symbols.`;
+
+    const { text } = await generateText(prompt, 1200, 'deepseek-chat');
+    return text || "Optimization failed.";
+};
+
 export default {
     generateText,
     chatWithAI,
     generateLeads,
     getAvailableProviders,
-    isAnyAIConfigured
+    isAnyAIConfigured,
+    optimizeSalesMessage
 };

@@ -53,6 +53,10 @@ export function SendGridIntegration() {
   const checkSendGridStatus = async () => {
     try {
       const response = await fetch(`/api/integrations/status?service=sendgrid&tenant_id=${currentTenant?.id}`);
+      if (!response.ok) {
+        console.warn('SendGrid status API not available');
+        return;
+      }
       const data = await response.json();
       
       if (data.sendgrid) {
@@ -243,6 +247,33 @@ export function SendGridIntegration() {
         message: 'Cannot connect to SendGrid servers right now.',
         suggestion: 'Please check your internet connection and try again.',
         type: 'warning'
+      };
+    }
+    
+    if (errorMessage.includes('zoho') || errorMessage.includes('Zoho')) {
+      return {
+        title: 'Zoho Mail Error',
+        message: 'There was an issue with the Zoho Mail integration.',
+        suggestion: 'Please check your Zoho Mail connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('outlook') || errorMessage.includes('Outlook') || errorMessage.includes('microsoft')) {
+      return {
+        title: 'Microsoft Outlook Error',
+        message: 'There was an issue with the Microsoft Outlook integration.',
+        suggestion: 'Please check your Outlook connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('gmail') || errorMessage.includes('Gmail') || errorMessage.includes('google')) {
+      return {
+        title: 'Gmail Error',
+        message: 'There was an issue with the Gmail integration.',
+        suggestion: 'Please check your Gmail connection in Settings → Integrations.',
+        type: 'error'
       };
     }
     

@@ -1,3 +1,4 @@
+import { cleanupRealtimeChannel } from '@/lib/realtime';
 import { supabase } from '@/lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 
@@ -191,7 +192,7 @@ class WorkerTrackingService {
   ): () => void {
     const tenantId = tenantService.getCurrentTenantId();
     
-    const subscription = supabase
+    const channel = supabase
       .channel(`worker_activity:${tenantId}`)
       .on(
         'postgres_changes',
@@ -210,7 +211,7 @@ class WorkerTrackingService {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      cleanupRealtimeChannel(channel);
     };
   }
 

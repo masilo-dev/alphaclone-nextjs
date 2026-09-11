@@ -1,14 +1,20 @@
+'use client';
+
 import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles } from 'lucide-react';
+import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
-import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
 import toast from 'react-hot-toast';
+import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';
 import { useTenant } from '../../contexts/TenantContext';
 import { COMPREHENSIVE_INDUSTRIES, getAllIndustryNames, getServicesByIndustry, findIndustryByNameOrKeyword, ServiceItem } from '../../lib/comprehensiveIndustries';
 import { UNIVERSAL_SERVICE_CATALOG } from '../../services/universalServiceCatalog';
+import { supabase } from '@/lib/supabase';
+import { getTaxRateForCountry } from '@/lib/tax/taxRules';
+import { WORKSPACE } from '@/constants/design';
 
 
 interface LineItem {
@@ -26,6 +32,7 @@ interface CreateInvoiceModalProps {
 }
 
 const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onInvoiceCreated, projects }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
     const [step, setStep] = useState<'edit' | 'preview' | 'success'>('edit');
     const [selectedTemplate, setSelectedTemplate] = useState<1 | 2 | 3 | 4 | 5>(1);
@@ -39,6 +46,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [bankDetails, setBankDetails] = useState('');
     const [mobileDetails, setMobileDetails] = useState('');
     const [taxRate, setTaxRate] = useState<number>(0);
+    const [taxCountry, setTaxCountry] = useState<string>('ZW');
     const [discountAmount, setDiscountAmount] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
@@ -53,6 +61,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [searchQuery, setSearchQuery] = useState('');
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     // Service selection state
     const [selectedIndustry, setSelectedIndustry] = useState<string>('');
@@ -83,6 +92,27 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         }
     }, [tenantPaymentMethods, tenantDefaults.bank, tenantDefaults.mobile]);
 
+    React.useEffect(() => {
+        if (!isOpen || !currentTenant?.id) return;
+        const loadTaxDefaults = async () => {
+            const { data } = await supabase
+                .from('business_settings')
+                .select('tax_rate, tax_country')
+                .eq('tenant_id', currentTenant.id)
+                .maybeSingle();
+
+            const country = data?.tax_country || 'ZW';
+            setTaxCountry(country);
+            if (data?.tax_rate != null && Number(data.tax_rate) > 0) {
+                setTaxRate(Number(data.tax_rate));
+            } else {
+                const lookup = getTaxRateForCountry(country);
+                if (lookup.rate > 0) setTaxRate(lookup.rate);
+            }
+        };
+        loadTaxDefaults();
+    }, [isOpen, currentTenant?.id]);
+
     // Load clients when component mounts or project changes
     React.useEffect(() => {
         const loadClients = async () => {
@@ -96,6 +126,87 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
         };
         loadClients();
     }, [currentTenant?.id]);
+
+    // Canvas Drawing Logic
+    React.useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas || signatureType !== 'draw') return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Set canvas size for high DPI
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        // Set drawing style
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        const getCoords = (e: MouseEvent | TouchEvent) => {
+            const rect = canvas.getBoundingClientRect();
+            if ('touches' in e) {
+                return {
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                };
+            }
+            return {
+                x: (e as MouseEvent).clientX - rect.left,
+                y: (e as MouseEvent).clientY - rect.top
+            };
+        };
+
+        const startDrawing = (e: MouseEvent | TouchEvent) => {
+            isDrawing = true;
+            const { x, y } = getCoords(e);
+            lastX = x;
+            lastY = y;
+        };
+
+        const draw = (e: MouseEvent | TouchEvent) => {
+            if (!isDrawing) return;
+            if ('touches' in e) e.preventDefault(); // Prevent scrolling on touch
+            const { x, y } = getCoords(e);
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+            lastX = x;
+            lastY = y;
+        };
+
+        const stopDrawing = () => {
+            if (!isDrawing) return;
+            isDrawing = false;
+            setSignatureData(canvas.toDataURL());
+        };
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+
+        return () => {
+            canvas.removeEventListener('mousedown', startDrawing);
+            canvas.removeEventListener('mousemove', draw);
+            window.removeEventListener('mouseup', stopDrawing);
+            canvas.removeEventListener('touchstart', startDrawing);
+            canvas.removeEventListener('touchmove', draw);
+            canvas.removeEventListener('touchend', stopDrawing);
+        };
+    }, [signatureType]);
 
     // Load user services and sectors
     React.useEffect(() => {
@@ -190,6 +301,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 mobileDetails: paymentMethod === 'mobile_money' ? mobileDetails : '',
                 taxRate: taxRate,
                 discountAmount: discountAmount,
+                subtotal: calculateSubtotal(),
+                tax: calculateTax(),
+                total: calculateTotal(),
                 template: selectedTemplate,
                 signature: signatureData,
                 signatureType: signatureType,
@@ -209,6 +323,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             setCreatedInvoiceId(invoice.id);
             setCreatedInvoice(invoice);
             setStep('success');
+            toast.success('Invoice created');
+            showInvoiceCreatedWithSendPrompt((path) => router.push(path));
             onInvoiceCreated();
 
         } catch (error) {
@@ -296,10 +412,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const selectedClient = clients.find(c => c.id === selectedClientId);
 
     return (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
-            <div className="w-full max-w-4xl bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl my-8">
+        <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+            <div className={`flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} shadow-none`}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                <div className="flex shrink-0 items-center justify-between border-b border-[var(--ws-border)] p-6">
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                             <DollarSign className="w-6 h-6 text-teal-400" />
@@ -316,11 +432,11 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     </button>
                 </div>
 
-                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                <div className="min-h-0 flex-1 overflow-y-auto p-6">
                     {/* STEP 1: Edit Details */}
                     {step === 'edit' && (
                         <div className="space-y-6">
-                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 flex items-start gap-3">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 flex items-start gap-3 border-teal-500/20`}>
                                 <Edit3 className="w-5 h-5 text-teal-400 mt-0.5" />
                                 <div>
                                     <h3 className="text-teal-400 font-bold text-sm">Invoice Details</h3>
@@ -331,7 +447,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Payment Links Warning */}
-                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 border-yellow-500/20`}>
                                 <div className="flex items-start gap-3">
                                     <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5" />
                                     <div className="flex-1">
@@ -354,7 +470,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
 
                             {/* Template Selector */}
-                            <div className="border-b border-slate-800 pb-6">
+                            <div className="border-b border-[var(--ws-border)] pb-6">
                                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <Sparkles className="w-5 h-5 text-teal-400" />
                                     Choose Style
@@ -421,7 +537,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 initial={{ opacity: 0, y: -10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: -10 }}
-                                                className="absolute w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700"
+                                                className={`absolute z-[100] mt-2 max-h-60 w-full overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} shadow-none`}
                                             >
                                                 {clients.filter(c => 
                                                     !searchQuery || 
@@ -449,7 +565,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                                 </div>
                                                                 <div className="flex flex-col">
                                                                     <span className="text-sm font-bold text-slate-200">{c.name}</span>
-                                                                    <span className="text-[10px] text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
+                                                                    <span className="text-xs text-slate-500 font-medium uppercase tracking-tight">{c.email}</span>
                                                                 </div>
                                                             </button>
                                                         ))
@@ -458,7 +574,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                         <p className="text-xs text-slate-500 font-medium italic">No matches found.</p>
                                                         <button 
                                                             onClick={onClose} // Redirect to clients tab or just keep it simple
-                                                            className="mt-2 text-[10px] font-black uppercase tracking-widest text-teal-400 hover:text-teal-300 transition-all border border-teal-500/30 px-3 py-1.5 rounded-md hover:bg-teal-500/10"
+                                                            className="mt-2 text-xs font-black uppercase tracking-widest text-teal-400 hover:text-teal-300 transition-all border border-teal-500/30 px-3 py-1.5 rounded-md hover:bg-teal-500/10"
                                                         >
                                                             Add New Client
                                                         </button>
@@ -546,6 +662,21 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                 </div>
                             )}
 
+                            <p className="text-xs text-slate-400 leading-relaxed border border-slate-700/60 rounded-lg px-3 py-2 bg-slate-900/40">
+                                Save your services and default prices under{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onClose();
+                                        router.push('/dashboard/business/settings');
+                                    }}
+                                    className="text-teal-400 hover:text-teal-300 font-medium underline-offset-2 hover:underline"
+                                >
+                                    Business settings
+                                </button>
+                                {' '}so repeat invoices pre-fill line items.
+                            </p>
+
                             {/* Line Items */}
                             <div>
                                 <div className="flex items-center justify-between mb-3">
@@ -565,7 +696,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                             {/* Service Quick Select for empty items */}
                                             {item.description === '' && (
                                                 <div className="mb-4">
-                                                    <label className="block text-[10px] font-bold text-teal-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                    <label className="block text-xs font-bold text-teal-500 uppercase tracking-widest mb-2 flex items-center gap-1">
                                                         <Sparkles className="w-3 h-3" />
                                                         Quick Select Service
                                                     </label>
@@ -686,7 +817,28 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Tax and Discount */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Tax country</label>
+                                    <select
+                                        value={taxCountry}
+                                        onChange={(e) => {
+                                            const code = e.target.value;
+                                            setTaxCountry(code);
+                                            const lookup = getTaxRateForCountry(code);
+                                            if (lookup.rate > 0) setTaxRate(lookup.rate);
+                                        }}
+                                        className={`w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] ${WORKSPACE.panel.radius} px-3 text-sm text-white outline-none`}
+                                    >
+                                        <option value="ZW">Zimbabwe (15% VAT)</option>
+                                        <option value="ZA">South Africa</option>
+                                        <option value="KE">Kenya</option>
+                                        <option value="GH">Ghana</option>
+                                        <option value="NG">Nigeria</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="US">United States</option>
+                                    </select>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">Tax Rate (%)</label>
                                     <Input
@@ -712,7 +864,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Total */}
-                            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4`}>
                                 <div className="space-y-2 text-sm">
                                     <div className="flex justify-between text-slate-300">
                                         <span>Subtotal:</span>
@@ -738,7 +890,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Digital Signature */}
-                            <div className="border-t border-slate-800 pt-6">
+                            <div className="border-t border-[var(--ws-border)] pt-6">
                                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <PenLine className="w-5 h-5 text-teal-400" />
                                     Digital Signature (Optional)
@@ -766,79 +918,29 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     </div>
 
                                     {signatureType === 'draw' && (
-                                        <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+                                        <div className="bg-white rounded-lg p-2 border border-slate-700">
                                             <canvas
-                                                ref={(canvas) => {
-                                                    if (canvas) {
-                                                        const ctx = canvas.getContext('2d');
-                                                        if (ctx) {
-                                                            // Set canvas size
-                                                            canvas.width = canvas.offsetWidth;
-                                                            canvas.height = 150;
-
-                                                            // Set drawing style
-                                                            ctx.strokeStyle = '#000000';
-                                                            ctx.lineWidth = 2;
-                                                            ctx.lineCap = 'round';
-                                                            ctx.lineJoin = 'round';
-
-                                                            let isDrawing = false;
-                                                            let lastX = 0;
-                                                            let lastY = 0;
-
-                                                            const startDrawing = (e: MouseEvent | TouchEvent) => {
-                                                                isDrawing = true;
-                                                                const rect = canvas.getBoundingClientRect();
-                                                                const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.offsetX;
-                                                                const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.offsetY;
-                                                                lastX = x;
-                                                                lastY = y;
-                                                            };
-
-                                                            const draw = (e: MouseEvent | TouchEvent) => {
-                                                                if (!isDrawing) return;
-                                                                e.preventDefault();
-                                                                const rect = canvas.getBoundingClientRect();
-                                                                const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.offsetX;
-                                                                const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.offsetY;
-
-                                                                ctx.beginPath();
-                                                                ctx.moveTo(lastX, lastY);
-                                                                ctx.lineTo(x, y);
-                                                                ctx.stroke();
-
-                                                                lastX = x;
-                                                                lastY = y;
-                                                            };
-
-                                                            const stopDrawing = () => {
-                                                                isDrawing = false;
-                                                                setSignatureData(canvas.toDataURL());
-                                                            };
-
-                                                            canvas.addEventListener('mousedown', startDrawing);
-                                                            canvas.addEventListener('mousemove', draw);
-                                                            canvas.addEventListener('mouseup', stopDrawing);
-                                                            canvas.addEventListener('mouseout', stopDrawing);
-                                                            canvas.addEventListener('touchstart', startDrawing);
-                                                            canvas.addEventListener('touchmove', draw);
-                                                            canvas.addEventListener('touchend', stopDrawing);
-
-                                                            // Clear button
-                                                            const clearButton = document.createElement('button');
-                                                            clearButton.textContent = 'Clear';
-                                                            clearButton.className = 'mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700';
-                                                            clearButton.onclick = () => {
-                                                                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                                                                setSignatureData(null);
-                                                            };
-                                                            canvas.parentNode?.appendChild(clearButton);
-                                                        }
-                                                    }
-                                                }}
-                                                className="border border-gray-300 rounded cursor-crosshair w-full"
+                                                ref={canvasRef}
+                                                className="cursor-crosshair w-full bg-white touch-none"
                                                 style={{ height: '150px' }}
                                             />
+                                            <div className="flex justify-between mt-2">
+                                                <p className="text-xs text-slate-500 uppercase font-bold">Sign here</p>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const canvas = canvasRef.current;
+                                                        if (canvas) {
+                                                            const ctx = canvas.getContext('2d');
+                                                            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                                            setSignatureData(null);
+                                                        }
+                                                    }}
+                                                    className="text-xs text-red-500 hover:text-red-400 font-bold"
+                                                >
+                                                    Clear Signature
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
 
@@ -858,7 +960,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     {/* STEP 2: Preview */}
                     {step === 'preview' && (
                         <div className="space-y-6">
-                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 flex items-start gap-3">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 flex items-start gap-3 border-teal-500/20`}>
                                 <FileText className="w-5 h-5 text-teal-400 mt-0.5" />
                                 <div>
                                     <h3 className="text-teal-400 font-bold text-sm">Invoice Preview</h3>
@@ -869,7 +971,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Invoice Preview */}
-                            <div className="bg-slate-950 rounded-lg p-6 text-white border border-slate-800">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 text-white`}>
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-2xl font-bold">{currentTenant?.name || 'Business Name'}</h2>
@@ -893,7 +995,8 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                     </div>
                                 </div>
 
-                                <table className="w-full mb-6">
+                                <div className="overflow-x-auto min-w-0 mb-6">
+                                <table className="w-full min-w-[400px]">
                                     <thead>
                                         <tr className="border-b-2 border-slate-700">
                                             <th className="text-left py-2">Description</th>
@@ -913,6 +1016,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                         ))}
                                     </tbody>
                                 </table>
+                                </div>
 
                                 <div className="flex justify-end">
                                     <div className="w-64">
@@ -965,7 +1069,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Status Summary */}
-                            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4`}>
                                 <h4 className="text-white font-bold mb-2">Invoice Status</h4>
                                 <div className="space-y-1 text-sm text-slate-300">
                                     <div className="flex justify-between">
@@ -1022,7 +1126,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Next Steps */}
-                            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 text-left">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 text-left`}>
                                 <h4 className="text-white font-bold mb-2">Next Steps</h4>
                                 <ul className="text-slate-300 text-sm space-y-1">
                                     <li>• Download the PDF and send it to your client</li>
@@ -1034,19 +1138,29 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-900/50">
+                {/* Footer — always visible */}
+                <div className="flex shrink-0 items-center justify-between border-t border-[var(--ws-border)] bg-slate-900/95 p-4 sm:p-6 backdrop-blur-sm">
                     <div className="text-sm text-slate-400">
                         Total: <span className="text-white font-bold">${calculateTotal().toFixed(2)}</span>
                     </div>
                     <div className="flex gap-3">
                         {step === 'edit' && (
-                            <Button
-                                variant="outline"
-                                onClick={handleClose}
-                            >
-                                Cancel
-                            </Button>
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={handleClose}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={() => setStep('preview')}
+                                    disabled={!selectedClientId || !dueDate || calculateTotal() <= 0}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    Preview Invoice
+                                </Button>
+                            </>
                         )}
                         {step === 'preview' && (
                             <Button
@@ -1089,3 +1203,4 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 };
 
 export default CreateInvoiceModal;
+

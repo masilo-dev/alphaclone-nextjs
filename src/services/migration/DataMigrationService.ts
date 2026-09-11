@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { companyService } from '../unified/CompanyService';
-import { contactService } from '../unified/ContactService';
+import { unifiedContactService } from '../unified/ContactService';
 
 export class DataMigrationService {
   /**
@@ -93,7 +93,7 @@ export class DataMigrationService {
           const [firstName, ...lastNameParts] = (lead.businessName || lead.email || 'Unknown').split(' ');
           const lastName = lastNameParts.join(' ') || 'Contact';
 
-          const contact = await contactService.create({
+          const contact = await unifiedContactService.create({
             company_id: company.id,
             first_name: firstName,
             last_name: lastName,
@@ -259,8 +259,8 @@ export class DataMigrationService {
   async linkContractsToCompanies() {
     const { data: contracts, error } = await supabase
       .from('contracts')
-      .select('*')
-      .is('company_id', null); // Only unlinked contracts
+      .select('id, tenant_id, client_id, title, status, metadata, updated_at, payment_amount')
+      .limit(500);
 
     if (error) throw error;
 
@@ -268,39 +268,71 @@ export class DataMigrationService {
 
     for (const contract of contracts || []) {
       try {
-        // Find company by client email
-        const company = await this.findCompanyByEmailOrName(
-          contract.client_party?.email,
-          contract.client_party?.name
-        );
+        if (!contract.client_id) continue;
 
-        if (company) {
-          // Update contract with company_id
-          await supabase
-            .from('contracts')
-            .update({ company_id: company.id })
-            .eq('id', contract.id);
+        const { data: contact } = await supabase
+          .from('contacts')
+          .select('company_id, email, first_name, last_name')
+          .eq('id', contract.client_id)
+          .maybeSingle();
 
-          // Create activity
-          if (contract.status === 'fully_signed') {
+        let companyId = contact?.company_id || null;
+
+        if (!companyId) {
+          const { data: client } = await supabase
+            .from('business_clients')
+            .select('crm_contact_id, email, name')
+            .eq('id', contract.client_id)
+            .maybeSingle();
+
+          if (client?.crm_contact_id) {
+            const { data: linkedContact } = await supabase
+              .from('contacts')
+              .select('company_id')
+              .eq('id', client.crm_contact_id)
+              .maybeSingle();
+            companyId = linkedContact?.company_id || null;
+          }
+
+          if (!companyId) {
+            const company = await this.findCompanyByEmailOrName(
+              contact?.email || client?.email,
+              contact
+                ? `${contact.first_name || ''} ${contact.last_name || ''}`.trim()
+                : client?.name
+            );
+            companyId = company?.id || null;
+          }
+        }
+
+        if (!companyId) continue;
+
+        if (contract.status === 'fully_signed' || contract.status === 'client_signed') {
+          const { count } = await supabase
+            .from('activities')
+            .select('id', { count: 'exact', head: true })
+            .eq('company_id', companyId)
+            .contains('metadata', { contract_id: contract.id });
+
+          if (!count) {
             await supabase.from('activities').insert({
-              tenant_id: company.tenant_id,
-              company_id: company.id,
-              contract_id: contract.id,
+              tenant_id: contract.tenant_id,
+              company_id: companyId,
               type: 'contract_signed',
               subject: `Contract ${contract.title} signed`,
               metadata: {
                 contract_id: contract.id,
-                value: contract.payment_terms?.total_amount
+                deal_id: (contract.metadata as Record<string, unknown> | null)?.deal_id,
+                value: contract.payment_amount,
               },
               source: 'migration',
               is_automated: true,
-              created_at: contract.updated_at
+              created_at: contract.updated_at,
             });
           }
-
-          linkedCount++;
         }
+
+        linkedCount++;
       } catch (error) {
         console.error(`Failed to link contract ${contract.id}:`, error);
       }
@@ -337,7 +369,7 @@ export class DataMigrationService {
         let companyId = null;
 
         if (recipientUser.data?.email) {
-          const contact = await contactService.findByEmail(recipientUser.data.email);
+          const contact = await unifiedContactService.findByEmail(recipientUser.data.email);
           if (contact) {
             contactId = contact.id;
             companyId = contact.company_id;
@@ -469,7 +501,7 @@ export class DataMigrationService {
       }
 
       // Try to find contact with this email
-      const contact = await contactService.findByEmail(email);
+      const contact = await unifiedContactService.findByEmail(email);
       if (contact?.company_id) {
         return await companyService.get(contact.company_id);
       }

@@ -32,14 +32,11 @@
 **Files**:
 - ✅ `src/services/unified/CompanyService.ts` - Complete CRUD for companies
 - ✅ `src/services/unified/ContactService.ts` - Complete CRUD for contacts
-
-**What they do**:
-- Get, list, create, update, delete companies/contacts
-- Search with full-text
-- Link relationships automatically
-- Update health scores
-- Touch timestamps (track activity)
-- Tag management
+- ✅ `src/services/unified/OpportunityService.ts` - Complete CRUD for sales pipeline
+- ✅ `src/services/unified/ActivityService.ts` - Universal timeline for everything
+- ✅ `src/services/unified/UnifiedMessageService.ts` - All communication in one place
+- ✅ `src/services/onboarding/OnboardingService.ts` - Business goal capture
+- ✅ `src/services/monitoring/AuditService.ts` - Immutable audit trail
 
 **Safety**:
 - ✅ Uses existing tenant service for multi-tenancy
@@ -224,16 +221,12 @@ Once migration is complete, we'll build:
 - Background sync (emails sync automatically)
 - Smart routing (send via best channel)
 
-### Week 3:
-- AI Intelligence Layer
-- Customer health analysis
-- Lead scoring
-- Smart replies
-
-### Week 4:
-- Real-time sync
-- Performance optimization
-- Enterprise security
+### 4. AI Core & Business Intelligence
+- [x] AI Core Strategy Implementation (Claude 4.6 + GPT-4o)
+- [x] Autonomous Agent Fleet (Mission Control)
+- [x] Omni Crawler: Google Maps + OSM Simultaneous Discovery
+- [x] Lead Scoring & Enrichment Engine
+- [x] Enterprise Audit Logging (Immutable)
 
 ---
 

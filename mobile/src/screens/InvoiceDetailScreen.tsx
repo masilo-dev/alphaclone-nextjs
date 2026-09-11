@@ -2,21 +2,25 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import type { MobileInvoice } from '../types';
 
-export default function InvoiceDetailScreen({ route, navigation }) {
-  const { invoice } = route.params || {
+export default function InvoiceDetailScreen({ route, navigation }: { route: { params?: { invoice?: MobileInvoice } }; navigation: any }) {
+  const { invoice } = route.params || {};
+  const currentInvoice: MobileInvoice = invoice || {
+    id: 'demo-invoice',
     number: 'INV-001',
     client: 'Tech Corp',
-    amount: '$5,000',
+    amount: 5000,
     status: 'paid',
     dueDate: '2024-01-15',
     issueDate: '2024-01-01',
     items: [
-      { id: 1, description: 'Website Design', quantity: 1, price: '$2,000', total: '$2,000' },
-      { id: 2, description: 'Development', quantity: 1, price: '$2,500', total: '$2,500' },
-      { id: 3, description: 'Testing & QA', quantity: 1, price: '$500', total: '$500' },
+      { id: '1', description: 'Website Design', quantity: 1, price: 2000, total: 2000 },
+      { id: '2', description: 'Development', quantity: 1, price: 2500, total: 2500 },
+      { id: '3', description: 'Testing & QA', quantity: 1, price: 500, total: 500 },
     ],
   };
+  const subtotal = currentInvoice.items.reduce((sum, item) => sum + item.total, 0);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -65,13 +69,13 @@ export default function InvoiceDetailScreen({ route, navigation }) {
           {/* Invoice Header */}
           <View style={styles.invoiceHeader}>
             <View style={styles.invoiceInfo}>
-              <Text style={styles.invoiceNumber}>{invoice.number}</Text>
-              <Text style={styles.invoiceClient}>{invoice.client}</Text>
+              <Text style={styles.invoiceNumber}>{currentInvoice.number}</Text>
+              <Text style={styles.invoiceClient}>{currentInvoice.client || 'Client'}</Text>
             </View>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(invoice.status) + '20' }]}>
-              <Ionicons name={getStatusIcon(invoice.status) as any} size={16} color={getStatusColor(invoice.status)} />
-              <Text style={[styles.statusText, { color: getStatusColor(invoice.status) }]}>
-                {invoice.status.toUpperCase()}
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(currentInvoice.status) + '20' }]}>
+              <Ionicons name={getStatusIcon(currentInvoice.status) as any} size={16} color={getStatusColor(currentInvoice.status)} />
+              <Text style={[styles.statusText, { color: getStatusColor(currentInvoice.status) }]}>
+                {currentInvoice.status.toUpperCase()}
               </Text>
             </View>
           </View>
@@ -80,26 +84,26 @@ export default function InvoiceDetailScreen({ route, navigation }) {
           <View style={styles.datesSection}>
             <View style={styles.dateRow}>
               <Text style={styles.dateLabel}>Issue Date:</Text>
-              <Text style={styles.dateValue}>{invoice.issueDate}</Text>
+              <Text style={styles.dateValue}>{currentInvoice.issueDate || 'Not issued'}</Text>
             </View>
             <View style={styles.dateRow}>
               <Text style={styles.dateLabel}>Due Date:</Text>
-              <Text style={styles.dateValue}>{invoice.dueDate}</Text>
+              <Text style={styles.dateValue}>{currentInvoice.dueDate || 'No due date'}</Text>
             </View>
           </View>
 
           {/* Invoice Items */}
           <View style={styles.itemsSection}>
             <Text style={styles.sectionTitle}>Invoice Items</Text>
-            {invoice.items.map((item) => (
+            {currentInvoice.items.map((item) => (
               <View key={item.id} style={styles.itemRow}>
                 <View style={styles.itemDescription}>
                   <Text style={styles.itemDescriptionText}>{item.description}</Text>
                   <Text style={styles.itemQuantity}>Qty: {item.quantity}</Text>
                 </View>
                 <View style={styles.itemPrices}>
-                  <Text style={styles.itemPrice}>{item.price}</Text>
-                  <Text style={styles.itemTotal}>{item.total}</Text>
+                  <Text style={styles.itemPrice}>${Math.round(item.price).toLocaleString()}</Text>
+                  <Text style={styles.itemTotal}>${Math.round(item.total).toLocaleString()}</Text>
                 </View>
               </View>
             ))}
@@ -109,21 +113,21 @@ export default function InvoiceDetailScreen({ route, navigation }) {
           <View style={styles.totalSection}>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Subtotal:</Text>
-              <Text style={styles.totalValue}>$4,500</Text>
+              <Text style={styles.totalValue}>${Math.round(subtotal).toLocaleString()}</Text>
             </View>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Tax (10%):</Text>
-              <Text style={styles.totalValue}>$500</Text>
+              <Text style={styles.totalValue}>${Math.round(Math.max(currentInvoice.amount - subtotal, 0)).toLocaleString()}</Text>
             </View>
             <View style={[styles.totalRow, styles.finalTotalRow]}>
               <Text style={styles.finalTotalLabel}>Total:</Text>
-              <Text style={styles.finalTotalValue}>{invoice.amount}</Text>
+              <Text style={styles.finalTotalValue}>${Math.round(currentInvoice.amount).toLocaleString()}</Text>
             </View>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.actionsSection}>
-            {invoice.status === 'pending' && (
+            {currentInvoice.status === 'pending' && (
               <TouchableOpacity style={styles.payButton}>
                 <Ionicons name="card" size={20} color="#FFFFFF" />
                 <Text style={styles.actionButtonText}>Pay Now</Text>

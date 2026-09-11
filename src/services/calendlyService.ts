@@ -7,20 +7,27 @@ export const calendlyService = {
      * Get the active Calendly configuration for the current tenant
      */
     async getConfig(tenantId?: string) {
-        // Client-side fallback
-        if (typeof window !== 'undefined' && !tenantId) {
-            const tenant = JSON.parse(localStorage.getItem('alpha_tenant') || '{}');
-            return tenant?.settings?.calendly;
+        let resolvedId = tenantId;
+        if (!resolvedId && typeof window !== 'undefined') {
+            resolvedId = tenantService.getCurrentTenantId() ?? undefined;
         }
 
-        // Server-side: fetch from database
-        if (tenantId) {
+        if (resolvedId) {
+            if (typeof window === 'undefined') {
+                const [{ getCalendlyConfig }, { createSupabaseAdminClient }] = await Promise.all([
+                    import('@/services/calendly/calendlyIntegrationService'),
+                    import('@/lib/supabase-admin'),
+                ]);
+                return getCalendlyConfig(createSupabaseAdminClient(), resolvedId);
+            }
             const { data: tenant } = await supabase
                 .from('tenants')
                 .select('settings')
-                .eq('id', tenantId)
-                .single();
-            return (tenant?.settings as any)?.calendly;
+                .eq('id', resolvedId)
+                .maybeSingle();
+            return (tenant?.settings as Record<string, unknown> | null)?.calendly as
+                | Record<string, unknown>
+                | undefined;
         }
 
         return null;
@@ -61,7 +68,8 @@ export const calendlyService = {
         const config = await this.getConfig(tenantId);
         if (!config || !config.calendlyUserUri) throw new Error('Calendly user connection missing.');
 
-        const data = await this.fetchCalendly(`/event_types?user=${encodeURIComponent(config.calendlyUserUri)}`, {}, tenantId);
+        const userUri = String(config.calendlyUserUri);
+        const data = await this.fetchCalendly(`/event_types?user=${encodeURIComponent(userUri)}`, {}, tenantId);
         return data.collection || [];
     },
 
@@ -75,7 +83,8 @@ export const calendlyService = {
         const minTime = minStartTime ? minStartTime.toISOString() : new Date().toISOString();
 
         let allEvents: any[] = [];
-        let nextPage = `/scheduled_events?user=${encodeURIComponent(config.calendlyUserUri)}&min_start_time=${encodeURIComponent(minTime)}&status=active`;
+        const userUri = String(config.calendlyUserUri);
+        let nextPage = `/scheduled_events?user=${encodeURIComponent(userUri)}&min_start_time=${encodeURIComponent(minTime)}&status=active`;
 
         // Fetch all pages (up to a reasonable limit to prevent endless loops)
         let pages = 0;

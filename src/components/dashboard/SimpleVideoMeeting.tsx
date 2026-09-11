@@ -7,7 +7,6 @@ import { User } from '../../types';
 import { dailyService, VideoCall } from '../../services/dailyService';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '../../contexts/TenantContext'; // Added useTenant
-import { supabase } from '@/lib/supabase'; // Added supabase for direct query
 
 interface SimpleVideoMeetingProps {
     user: User;
@@ -38,30 +37,26 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const [pastMeetings, setPastMeetings] = useState<VideoCall[]>([]);
     const [showPastMeetings, setShowPastMeetings] = useState(false);
 
-    const initRef = useRef(false);
+    const initializedTenantRef = useRef<string | null>(null);
 
     useEffect(() => {
-        if (initRef.current || !currentTenant) return;
-        initRef.current = true;
+        if (!currentTenant || initializedTenantRef.current === currentTenant.id) return;
+        initializedTenantRef.current = currentTenant.id;
+        setRoom(null);
+        setPastMeetings([]);
+        setShowPastMeetings(false);
 
         initializeVideoService();
         loadPastMeetings();
-    }, [currentTenant]); // Re-run if tenant changes, but initRef prevents loops
+    }, [currentTenant]);
 
     const loadPastMeetings = async () => {
         if (!currentTenant) return;
-        
         try {
-            const { data, error } = await supabase
-                .from('video_calls')
-                .select('*')
-                .eq('tenant_id', currentTenant.id)
-                .in('status', ['ended', 'cancelled'])
-                .order('created_at', { ascending: false })
-                .limit(10);
-
-            if (error) throw error;
-            setPastMeetings(data || []);
+            const response = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Failed to load meeting history');
+            setPastMeetings(payload.past || []);
         } catch (err) {
             console.error('Failed to load past meetings:', err);
         }
@@ -74,64 +69,24 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
         setErrorMsg(null);
 
         try {
-            // 1. Check if a permanent room exists for this tenant
-            const { data: permanentRooms, error: lookupError } = await supabase
-                .from('video_calls')
-                .select('*')
-                .eq('tenant_id', currentTenant.id)
-                .eq('is_permanent', true)
-                .eq('status', 'active');
+            const lookupResponse = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, { cache: 'no-store' });
+            const lookupPayload = await lookupResponse.json();
+            if (!lookupResponse.ok) throw new Error(lookupPayload.error || 'Failed to load meeting room');
+            let permanentCall = lookupPayload.permanent;
 
-            let permanentCall = permanentRooms && permanentRooms.length > 0 ? permanentRooms[0] : null;
-
-            // 2. If it doesn't exist, create it
             if (!permanentCall) {
-                const { call, error } = await dailyService.createVideoCall({
-                    hostId: user.id || 'system',
-                    title: `${currentTenant.name} 's Permanent Meeting Room`,
-                    isPublic: true,
-                    maxParticipants: 10,
-                    screenShareEnabled: true,
-                    chatEnabled: true,
-                    tenantId: currentTenant.id
+                const createResponse = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                 });
-
-                if (error || !call) {
-                    throw new Error(error || 'Failed to create room');
-                }
-
-                // Generate a random 6-digit PIN
-                const meetingPin = Math.floor(100000 + Math.random() * 900000).toString();
-
-                // Mark it as permanent and store the PIN in metadata
-                const { error: updateError, data: updatedCall } = await supabase
-                    .from('video_calls')
-                    .update({
-                        is_permanent: true,
-                        metadata: { meeting_pin: meetingPin }
-                    })
-                    .eq('id', call.id)
-                    .select()
-                    .single();
-
-                if (updateError) {
-                    console.error('Failed to mark room as permanent/set PIN:', updateError);
-                } else {
-                    permanentCall = updatedCall;
-                }
+                const createPayload = await createResponse.json();
+                if (!createResponse.ok) throw new Error(createPayload.error || 'Failed to create room');
+                permanentCall = createPayload.permanent;
             } else if (!permanentCall.metadata?.meeting_pin) {
-                // Retroactively add a PIN if one doesn't exist for an older layout
-                const meetingPin = Math.floor(100000 + Math.random() * 900000).toString();
-                const { data: updatedCall } = await supabase
-                    .from('video_calls')
-                    .update({
-                        metadata: { ...permanentCall.metadata, meeting_pin: meetingPin }
-                    })
-                    .eq('id', permanentCall.id)
-                    .select()
-                    .single();
-
-                if (updatedCall) permanentCall = updatedCall;
+                const repairResponse = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, { method: 'POST' });
+                const repairPayload = await repairResponse.json();
+                if (!repairResponse.ok) throw new Error(repairPayload.error || 'Failed to secure meeting room');
+                permanentCall = repairPayload.permanent;
             }
 
             // Always use the branded link for the shareable link to ensure consistency
@@ -181,31 +136,14 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 
         setIsRegenerating(true);
         try {
-            const newPin = Math.floor(100000 + Math.random() * 900000).toString();
-
-            // For regenerating, we just want to update the PIN
-            // We do NOT want to change the pin_generated_at timestamp, as that is only for 
-            // when the meeting starts to track the 35 min expiration limit
-
-            // First get current metadata
-            const { data: currentRoom } = await supabase
-                .from('video_calls')
-                .select('metadata')
-                .eq('id', room.id)
-                .single();
-
-            const currentMetadata = currentRoom?.metadata || {};
-
-            const { error: updateError } = await supabase
-                .from('video_calls')
-                .update({
-                    metadata: { ...currentMetadata, meeting_pin: newPin }
-                })
-                .eq('id', room.id);
-
-            if (updateError) throw updateError;
-
-            setRoom({ ...room, pin: newPin });
+            const response = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'regenerate_pin' }),
+            });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Failed to generate a new meeting code');
+            setRoom({ ...room, pin: payload.permanent?.metadata?.meeting_pin });
             toast.success('New meeting code generated!');
         } catch (err) {
             console.error('Failed to regenerate pin:', err);
@@ -218,10 +156,8 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const handleJoin = async () => {
         if (!room) return;
         try {
-            // Open in our own secure independent route for multitasking
-            const meetingUrl = `${window.location.origin}/meet/${room.id}`;
-            window.open(meetingUrl, '_blank', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
-            toast.success('Opening secure meeting page...');
+            onJoinRoom(room.id);
+            toast.success('Joining your meeting room...');
         } catch (err) {
             console.error('Join error:', err);
             toast.error('Failed to open meeting room');
@@ -230,7 +166,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 
 
     const handleCreateNew = () => {
-        toast('This is your personal permanent room. No need to create a new one!', { icon: 'ℹ️' });
+        toast.success('This is your personal permanent room. No need to create a new one.');
     };
 
     // --- RENDER STATES ---
@@ -259,10 +195,9 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
                         <Zap className="w-8 h-8 text-amber-500" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">AlphaClone Capacity Notice</h3>
+                    <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">You've used your free meetings</h3>
                     <p className="text-amber-200/90 max-w-sm mx-auto mb-8 text-lg leading-relaxed">
-                        Due to extremely high volume right now, free previews are limited.
-                        <span className="block mt-2 font-medium text-white italic">Subscribe to unlock unlimited HD meetings & priority access.</span>
+                        Upgrade to unlock unlimited HD meetings &amp; priority access.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs">
                         <Button
@@ -316,11 +251,11 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     {/* Link Section */}
                     <div>
                         <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">
                                 Invite Link
                             </span>
                             {copied && (
-                                <span className="text-[10px] text-teal-400 flex items-center animate-fade-in">
+                                <span className="text-xs text-teal-400 flex items-center animate-fade-in">
                                     <Check className="w-3 h-3 mr-1" /> Copied
                                 </span>
                             )}
@@ -344,7 +279,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                     {/* PIN Section */}
                     {room.pin && (
                         <div className="pt-2 border-t border-white/5">
-                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
+                            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">
                                 Access Code
                             </span>
                             <div className="flex gap-2 items-center">
@@ -426,7 +361,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                                             </div>
                                             {meeting.status === 'ended' && meeting.recording_url && (
                                                 <div className="mt-3 flex items-center gap-2">
-                                                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-bold uppercase rounded-full">
+                                                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold uppercase rounded-full">
                                                         Recording Available
                                                     </span>
                                                     <a
@@ -441,7 +376,7 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
                                                 </div>
                                             )}
                                         </div>
-                                        <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${
+                                        <div className={`px-2 py-1 rounded text-xs font-bold uppercase ${
                                             meeting.status === 'ended' ? 'bg-green-500/10 text-green-400' :
                                             meeting.status === 'cancelled' ? 'bg-red-500/10 text-red-400' :
                                             'bg-slate-500/10 text-slate-400'

@@ -7,68 +7,44 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, Lead } from '@/services/leadService';
-import { generateEmailReply, generateText } from '@/services/unifiedAIService';
+import { generateEmailReply } from '@/services/unifiedAIService';
+import { integrationsService, IntegrationConfig } from '@/services/integrationsService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LeadOutreachModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onEmailDrafted: (data: { to: string; subject: string; body: string }) => void;
+    onEmailDrafted: (data: { to: string; subject: string; body: string; provider?: string }) => void;
 }
 
 export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: LeadOutreachModalProps) {
+    const { user } = useAuth();
     const [query, setQuery] = useState('');
     const [searching, setSearching] = useState(false);
     const [results, setResults] = useState<Partial<Lead>[]>([]);
     const [syncing, setSyncing] = useState<string | null>(null);
     const [syncedIds, setSyncedIds] = useState<Set<string>>(new Set());
+    const [availableProviders, setAvailableProviders] = useState<IntegrationConfig[]>([]);
+    const [selectedProvider, setSelectedProvider] = useState<IntegrationConfig | null>(null);
+
+    React.useEffect(() => {
+        if (isOpen && user?.id) {
+            integrationsService.getUserIntegrations(user.id).then(({ integrations }) => {
+                const emailTypes = ['zoho', 'brevo', 'resend', 'sendgrid', 'gmail'];
+                const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
+                setAvailableProviders(filtered);
+                
+                // Default to Zoho if available, else first one
+                const zoho = filtered.find(p => p.type === 'zoho');
+                setSelectedProvider(zoho || filtered[0] || null);
+            });
+        }
+    }, [isOpen, user?.id]);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!query) return;
-        setSearching(true);
-        try {
-            const prompt = `You are a B2B lead generation assistant. Generate 4 realistic potential business leads matching this search criteria: "${query}".
-
-Return ONLY a valid JSON array with no markdown, no explanation, no code blocks. Each object must have:
-- id: unique string like "ai_1", "ai_2", etc.
-- businessName: company name
-- industry: industry/sector
-- location: city, state/country
-- email: realistic contact email
-- website: domain only (no https://)
-- notes: 1-2 sentences about why they're a good fit
-
-Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"Austin, TX","email":"hello@acme.com","website":"acme.com","notes":"Rapidly growing SaaS startup."}]`;
-
-            const { text } = await generateText(prompt, 800);
-            if (text) {
-                // Robust parsing: extract JSON from markdown code blocks if present
-                let jsonStr = text.trim();
-                const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-                if (match) {
-                    jsonStr = match[1];
-                }
-                
-                try {
-                    const parsed: Partial<Lead>[] = JSON.parse(jsonStr);
-                    setResults(parsed);
-                } catch (parseErr) {
-                    console.error('Failed to parse AI leads JSON:', parseErr, 'Raw text:', text);
-                    // Fallback: try to find anything that looks like an array
-                    const arrayMatch = jsonStr.match(/\[\s*\{[\s\S]*\}\s*\]/);
-                    if (arrayMatch) {
-                        setResults(JSON.parse(arrayMatch[0]));
-                    } else {
-                        throw parseErr;
-                    }
-                }
-            }
-        } catch (err) {
-            console.error('AI lead search failed:', err);
-            setResults([]);
-        } finally {
-            setSearching(false);
-        }
+        window.location.href = `/dashboard/leads/finder?q=${encodeURIComponent(query)}`;
     };
 
     const handleSyncAndEngage = async (lead: Partial<Lead>) => {
@@ -93,7 +69,8 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
             onEmailDrafted({
                 to: lead.email || '',
                 subject: `Strategic Partnership Opportunity for ${lead.businessName}`,
-                body: draft || ''
+                body: draft || '',
+                provider: selectedProvider?.type
             });
             onClose();
         } catch (err) {
@@ -106,7 +83,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
             <motion.div 
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
@@ -122,14 +99,14 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                 className="relative w-full max-w-4xl bg-gray-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
             >
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 flex items-center justify-between">
+                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-teal-600/10 to-teal-900/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-600/20 rounded-xl text-blue-400">
+                        <div className="p-2 bg-teal-600/20 rounded-xl text-teal-400">
                             <Sparkles size={24} className="animate-pulse" />
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-white tracking-tight">AI Growth Agent: Lead Discovery</h2>
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-0.5">Identify and engage high-intent prospects instantly</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all">
@@ -137,10 +114,32 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                     </button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="p-6">
+                {/* Provider Selection & Search Bar */}
+                <div className="p-6 space-y-4">
+                    {availableProviders.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {availableProviders.map(provider => (
+                                <button
+                                    key={provider.id}
+                                    onClick={() => setSelectedProvider(provider)}
+                                    className={`px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
+                                        ? 'bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-500/20'
+                                        : 'bg-gray-950/50 text-gray-500 border-white/5 hover:border-white/10'
+                                        }`}
+                                >
+                                    {provider.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {availableProviders.length === 0 && (
+                        <div className="text-xs text-gray-500 mb-2">
+                            No email providers connected. Please connect Zoho, Outlook, or Gmail in Settings → Integrations.
+                        </div>
+                    )}
+                    
                     <form onSubmit={handleSearch} className="relative group">
-                        <div className="absolute inset-y-0 left-5 flex items-center text-gray-500 group-focus-within:text-blue-400 transition-colors pointer-events-none">
+                        <div className="absolute inset-y-0 left-5 flex items-center text-gray-500 group-focus-within:text-teal-400 transition-colors pointer-events-none">
                             <Search size={20} />
                         </div>
                         <input 
@@ -148,12 +147,12 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                             placeholder="Identify companies in [Industry] located in [Location]..."
                             value={query}
                             onChange={e => setQuery(e.target.value)}
-                            className="w-full bg-gray-950/50 border border-white/5 rounded-2xl pl-14 pr-32 py-5 text-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
+                            className="w-full bg-gray-950/50 border border-white/5 rounded-2xl pl-14 pr-32 py-5 text-lg focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50 focus:outline-none transition-all placeholder:text-gray-700 font-medium"
                         />
                         <button 
                             type="submit"
                             disabled={searching || !query}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg flex items-center gap-2"
                         >
                             {searching ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
                             <span>Discovery</span>
@@ -166,10 +165,10 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                     {searching ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
                             <div className="relative">
-                                <Loader2 size={48} className="animate-spin text-blue-500" />
-                                <Sparkles size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-400 animate-pulse" />
+                                <Loader2 size={48} className="animate-spin text-teal-500" />
+                                <Sparkles size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-teal-400 animate-pulse" />
                             </div>
-                            <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-400">Scanning High-Intent Signals...</p>
+                            <p className="text-xs font-black uppercase tracking-[0.3em] text-teal-400">Scanning High-Intent Signals...</p>
                         </div>
                     ) : results.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center opacity-30 italic">
@@ -184,9 +183,9 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                                 key={lead.id}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-gray-950/40 border border-white/5 rounded-2xl p-5 hover:border-blue-500/30 transition-all group relative overflow-hidden"
+                                className="bg-gray-950/40 border border-white/5 rounded-2xl p-5 hover:border-teal-500/30 transition-all group relative overflow-hidden"
                             >
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl rounded-full" />
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-teal-500/5 blur-3xl rounded-full" />
                                 
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
                                     <div className="space-y-3 flex-1">
@@ -197,11 +196,11 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                                             <div>
                                                 <h3 className="font-bold text-white text-lg">{lead.businessName}</h3>
                                                 <div className="flex items-center gap-3 mt-0.5">
-                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-blue-400 uppercase tracking-widest">
+                                                    <div className="flex items-center gap-1 text-xs font-bold text-teal-400 uppercase tracking-widest">
                                                         <Briefcase size={10} />
                                                         <span>{lead.industry}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                                    <div className="flex items-center gap-1 text-xs font-bold text-gray-500 uppercase tracking-widest">
                                                         <MapPin size={10} />
                                                         <span>{lead.location}</span>
                                                     </div>
@@ -213,7 +212,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
 
                                     <div className="flex md:flex-col gap-2 shrink-0">
                                         {syncedIds.has(lead.id!) ? (
-                                            <div className="flex items-center justify-center gap-2 bg-green-500/10 text-green-400 px-6 py-2.5 rounded-xl border border-green-500/20 font-black text-[10px] uppercase tracking-widest">
+                                            <div className="flex items-center justify-center gap-2 bg-green-500/10 text-green-400 px-6 py-2.5 rounded-xl border border-green-500/20 font-black text-xs uppercase tracking-widest">
                                                 <CheckCircle2 size={14} />
                                                 <span>Fully Synced</span>
                                             </div>
@@ -221,11 +220,11 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                                             <button 
                                                 onClick={() => handleSyncAndEngage(lead)}
                                                 disabled={!!syncing}
-                                                className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2"
+                                                className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 overflow-hidden flex items-center justify-center gap-2"
                                             >
                                                 {syncing === lead.id ? (
                                                     <>
-                                                        <Loader2 size={14} className="animate-spin text-blue-600" />
+                                                        <Loader2 size={14} className="animate-spin text-teal-600" />
                                                         <span>Syncing CRM...</span>
                                                     </>
                                                 ) : (
@@ -236,7 +235,7 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                                                 )}
                                             </button>
                                         )}
-                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/5 transition-all">
+                                        <button className="bg-gray-800/50 hover:bg-gray-800 text-gray-400 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest border border-white/5 transition-all">
                                             Quick View
                                         </button>
                                     </div>
@@ -248,17 +247,17 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
 
                 {/* Footer Info */}
                 <div className="p-4 bg-gray-950/80 border-t border-white/5 flex items-center justify-between px-8">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">
-                        <CheckCircle2 size={14} className="text-blue-500" />
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-600 uppercase tracking-widest">
+                        <CheckCircle2 size={14} className="text-teal-500" />
                         <span>Connected to Zoho CRM & AlphaClone Native Storage</span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Credits: Unlimited</span>
+                        <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">Credits: Unlimited</span>
                     </div>
                 </div>
             </motion.div>
 
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 4px;
                 }
@@ -269,7 +268,8 @@ Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"
                     background: rgba(255, 255, 255, 0.05);
                     border-radius: 10px;
                 }
-            `}</style>
+            ` }} />
         </div>
     );
 }
+

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { addMinutes } from 'date-fns';
 import { PLAN_PRICING } from '@/services/tenancy/types';
+import { isLaunchFreeWindow } from '@/lib/launchWindow';
 
 
 // Helper to get Supabase Admin Client
@@ -76,13 +77,14 @@ export async function POST(req: NextRequest) {
             }, { status: 403 });
         }
 
-        if (status === 'trial') {
+        // Meeting caps are waived during the free launch window; afterwards trial
+        // plans are limited and prompted to upgrade.
+        if (status === 'trial' && !isLaunchFreeWindow()) {
             const { count } = await supabaseAdmin
                 .from('video_calls')
                 .select('*', { count: 'exact', head: true })
                 .eq('host_id', hostId);
 
-            // Get limits from PLAN_PRICING
             const plan = tenant.subscription_plan || 'free';
             const planLimits = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
             const MAX_MEETINGS = planLimits?.maxVideoMeetingsPerMonth || 2;
@@ -100,7 +102,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Server misconfiguration: No Video API Key' }, { status: 500 });
         }
 
-        const roomName = `room-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+        const roomName = `room-${crypto.randomUUID()}`;
         const duration = meetingType.duration || 30;
 
         const dailyRes = await fetch(`${DAILY_API_URL}/rooms`, {
@@ -148,7 +150,10 @@ export async function POST(req: NextRequest) {
             .select()
             .single();
 
-        if (videoError) throw new Error('DB Error (Video): ' + videoError.message);
+        if (videoError) {
+            console.error('[BookingAPI] video_calls insert:', videoError);
+            throw new Error('VIDEO_DB_ERROR');
+        }
 
         // B. Calendar Event
         const eventStart = new Date(startTime);
@@ -179,7 +184,10 @@ export async function POST(req: NextRequest) {
             .select()
             .single();
 
-        if (calError) throw new Error('DB Error (Calendar): ' + calError.message);
+        if (calError) {
+            console.error('[BookingAPI] calendar_events insert:', calError);
+            throw new Error('CALENDAR_DB_ERROR');
+        }
 
         // Update video call with event ID
         await supabaseAdmin
@@ -206,6 +214,6 @@ export async function POST(req: NextRequest) {
 
     } catch (err) {
         console.error('[BookingAPI] Creation error:', err);
-        return NextResponse.json({ error: String(err) }, { status: 500 });
+        return NextResponse.json({ error: 'Booking could not be completed', code: 'BOOKING_FAILED' }, { status: 500 });
     }
 }

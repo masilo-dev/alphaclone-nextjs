@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import AboutPage from '@/components/pages/AboutPage';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
+import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
+import { absoluteUrl } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
     title: 'About AlphaClone Systems | Unified CRM, Billing, Scheduling, and Operations',
@@ -15,28 +18,24 @@ export const metadata: Metadata = {
         'business workflow automation platform',
         'small business operations software',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/about' },
-    openGraph: {
+    alternates: { canonical: absoluteUrl('/about') },
+    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'About AlphaClone | Unified Business Software for Service Teams',
         description: 'AlphaClone combines CRM, billing, scheduling, contracts, communication, and operations into one connected platform for service businesses.',
-        url: 'https://alphaclone.tech/about',
+        url: absoluteUrl('/about'),
         type: 'website',
     },
-    twitter: {
+    twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
         title: 'About AlphaClone | Unified Business Software for Service Teams',
         description: 'CRM, invoicing, scheduling, contracts, messaging, and operations in one connected platform.',
     },
 };
 
-const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclone.tech' },
-        { '@type': 'ListItem', position: 2, name: 'About', item: 'https://alphaclone.tech/about' },
-    ],
-};
+const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: 'Home', path: '/' },
+    { name: 'About', path: '/about' },
+]);
 
 export default function Page() {
     return (
@@ -45,7 +44,9 @@ export default function Page() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
-            <AboutPage />
+            <MarketingLandingShell>
+                <AboutPage />
+            </MarketingLandingShell>
         </>
     );
 }

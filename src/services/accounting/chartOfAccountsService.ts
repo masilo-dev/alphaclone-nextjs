@@ -349,11 +349,24 @@ export const chartOfAccountsService = {
         try {
             const tenantId = this.getTenantId();
 
-            const { error } = await supabase.rpc('create_default_chart_of_accounts', {
-                p_tenant_id: tenantId,
+            const res = await fetch('/api/accounting/management', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    tenantId,
+                    action: 'create_default_chart_of_accounts',
+                }),
             });
 
-            if (error) throw error;
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.error || `HTTP error! status: ${res.status}`);
+            }
+
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
 
             return { success: true, error: null };
         } catch (err: any) {

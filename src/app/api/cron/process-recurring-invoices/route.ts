@@ -1,62 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cronService } from '@/services/cronService';
+import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { denyIfCronMemoryPressure } from '@/lib/cron/cronMemoryGuard';
+import { executeRecurringInvoicesDirect } from '@/lib/cron/directCronExecutors';
 
-/**
- * API Endpoint for Processing Recurring Invoices
- * 
- * This endpoint should be called by a cron job scheduler (e.g., Vercel Cron, GitHub Actions)
- * on a daily basis to automatically generate recurring invoices.
- * 
- * Example Vercel Cron configuration in vercel.json:
- * {
- *   "crons": [
- *     {
- *       "path": "/api/cron/process-recurring-invoices",
- *       "schedule": "0 0 * * *"
- *     }
- *   ]
- * }
- */
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  // Verify cron secret to prevent unauthorized access
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
+  const denied = denyIfCronUnauthorized(request);
+  if (denied) return denied;
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
-  }
+  const memoryDenied = denyIfCronMemoryPressure('process-recurring-invoices');
+  if (memoryDenied) return memoryDenied;
 
   try {
-    console.log('Starting recurring invoice processing...');
-    
-    const result = await cronService.processRecurringInvoices();
-    
-    console.log(`Recurring invoice processing complete: ${result.processed} invoices generated`);
-    
-    if (result.errors.length > 0) {
-      console.error('Errors encountered:', result.errors);
-    }
+    const result = await executeRecurringInvoicesDirect();
 
     return NextResponse.json({
-      success: result.success,
-      processed: result.processed,
-      errors: result.errors,
-      timestamp: new Date().toISOString()
+      success: true,
+      ...result,
+      timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Cron job execution failed:', error);
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Internal server error',
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
-    );
+    console.error('[cron/process-recurring-invoices] failed:', error);
+    return NextResponse.json({ success: false, error: 'Cron execution failed' }, { status: 500 });
   }
 }

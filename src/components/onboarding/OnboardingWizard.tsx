@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, ChevronRight, Users, FolderPlus, Settings, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
-import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { tenantService } from '@/services/tenancy/TenantService';
 
 interface OnboardingStep {
     id: string;
@@ -70,6 +70,37 @@ export function OnboardingWizard() {
         description: '',
     });
 
+    // Persist partial progress: a refresh mid-onboarding must not lose entered data
+    const draftKey = user?.id ? `onboarding_draft_${user.id}` : null;
+
+    useEffect(() => {
+        if (!draftKey) return;
+        try {
+            const raw = localStorage.getItem(draftKey);
+            if (!raw) return;
+            const draft = JSON.parse(raw);
+            if (typeof draft.currentStep === 'number') setCurrentStep(draft.currentStep);
+            if (draft.profileData) setProfileData(draft.profileData);
+            if (Array.isArray(draft.teamInvites)) setTeamInvites(draft.teamInvites);
+            if (draft.projectData) setProjectData(draft.projectData);
+        } catch {
+            // Corrupt draft — start fresh
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [draftKey]);
+
+    useEffect(() => {
+        if (!draftKey) return;
+        try {
+            localStorage.setItem(
+                draftKey,
+                JSON.stringify({ currentStep, profileData, teamInvites, projectData })
+            );
+        } catch {
+            // Storage full/unavailable — non-fatal
+        }
+    }, [draftKey, currentStep, profileData, teamInvites, projectData]);
+
     const markStepComplete = (stepIndex: number) => {
         const newSteps = [...steps];
         newSteps[stepIndex].completed = true;
@@ -121,17 +152,8 @@ export function OnboardingWizard() {
 
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    full_name: profileData.fullName,
-                    company: profileData.company,
-                    role: profileData.role,
-                    phone: profileData.phone,
-                })
-                .eq('id', user?.id);
-
-            if (error) throw error;
+            const response = await fetch('/api/account/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: profileData.fullName, company: profileData.company, onboardingRole: profileData.role, phone: profileData.phone }) });
+            if (!response.ok) throw new Error('Profile update failed');
 
             markStepComplete(1);
             setCurrentStep(2);
@@ -160,12 +182,8 @@ export function OnboardingWizard() {
         try {
             // Send invitations
             for (const email of validEmails) {
-                await supabase.from('tenant_users').insert({
-                    tenant_id: tenant?.id,
-                    email,
-                    role: 'client',
-                    status: 'invited',
-                });
+                if (!tenant?.id || !user?.id) throw new Error('Workspace is unavailable');
+                await tenantService.createInvitation(tenant.id, email, 'member', user.id);
             }
 
             markStepComplete(2);
@@ -187,15 +205,9 @@ export function OnboardingWizard() {
 
         setLoading(true);
         try {
-            const { error } = await supabase.from('projects').insert({
-                tenant_id: tenant?.id,
-                name: projectData.name,
-                description: projectData.description,
-                status: 'Active',
-                created_by: user?.id,
-            });
-
-            if (error) throw error;
+            if (!tenant?.id) throw new Error('Workspace is unavailable');
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/projects`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: projectData.name, description: projectData.description }) });
+            if (!response.ok) throw new Error('Project creation failed');
 
             markStepComplete(3);
             toast.success('Project created!');
@@ -212,11 +224,12 @@ export function OnboardingWizard() {
 
     const completeOnboarding = async () => {
         try {
+            if (draftKey) {
+                try { localStorage.removeItem(draftKey); } catch { /* non-fatal */ }
+            }
             // Mark onboarding as complete
-            await supabase
-                .from('profiles')
-                .update({ onboarding_completed: true })
-                .eq('id', user?.id);
+            const response = await fetch('/api/account/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboardingCompleted: true }) });
+            if (!response.ok) throw new Error('Onboarding completion could not be saved');
 
             toast.success('Setup complete! Welcome aboard! 🎉');
 
@@ -295,11 +308,10 @@ export function OnboardingWizard() {
                             <div className="text-center py-8">
                                 <Sparkles className="h-16 w-16 text-blue-600 mx-auto mb-4" />
                                 <p className="text-lg text-gray-700 mb-6">
-                                    We're thrilled to have you here! Let's get your account set up
-                                    so you can start managing your business operations seamlessly.
+                                    Welcome. Let's get your account set up so you can start managing your business operations from one command center.
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                    This will only take 2-3 minutes
+                                    You can skip optional setup and return later.
                                 </p>
                             </div>
                         )}

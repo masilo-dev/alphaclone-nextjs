@@ -95,7 +95,7 @@ export default function CustomContextMenu({ items, children, className = '', as:
                                     <span>{item.label}</span>
                                 </div>
                                 {item.shortcut && (
-                                    <span className="text-[10px] text-slate-500 font-mono tracking-tighter">
+                                    <span className="text-xs text-slate-500 font-mono tracking-tighter">
                                         {item.shortcut}
                                     </span>
                                 )}
@@ -107,3 +107,4 @@ export default function CustomContextMenu({ items, children, className = '', as:
         </Component>
     );
 }
+

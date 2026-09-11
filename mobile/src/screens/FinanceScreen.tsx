@@ -1,35 +1,41 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
+import { getInvoices } from '../services/mobileData';
+import type { MobileInvoice } from '../types';
 
-export default function FinanceScreen() {
-  const invoices = [
-    {
-      id: 1,
-      number: 'INV-001',
-      client: 'Tech Corp',
-      amount: '$5,000',
-      status: 'paid',
-      dueDate: '2024-01-15',
-    },
-    {
-      id: 2,
-      number: 'INV-002',
-      client: 'StartupXYZ',
-      amount: '$12,000',
-      status: 'pending',
-      dueDate: '2024-01-30',
-    },
-    {
-      id: 3,
-      number: 'INV-003',
-      client: 'Enterprise Solutions',
-      amount: '$25,000',
-      status: 'overdue',
-      dueDate: '2024-01-10',
-    },
-  ];
+export default function FinanceScreen({ navigation }: { navigation: any }) {
+  const { activeTenant } = useAuth();
+  const [invoices, setInvoices] = useState<MobileInvoice[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadInvoices = async () => {
+      if (!activeTenant) return;
+      setLoading(true);
+      try {
+        const rows = await getInvoices(activeTenant.id);
+        if (mounted) setInvoices(rows);
+      } catch (error) {
+        console.error('Invoices load error:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadInvoices();
+    return () => {
+      mounted = false;
+    };
+  }, [activeTenant]);
+
+  const paidRevenue = invoices
+    .filter((invoice) => invoice.status === 'paid')
+    .reduce((sum, invoice) => sum + invoice.amount, 0);
+  const monthRevenue = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -77,12 +83,12 @@ export default function FinanceScreen() {
             <View style={styles.overviewCard}>
               <Ionicons name="cash" size={32} color="#00D2A0" />
               <Text style={styles.overviewLabel}>Total Revenue</Text>
-              <Text style={styles.overviewValue}>$42,000</Text>
+              <Text style={styles.overviewValue}>${Math.round(paidRevenue).toLocaleString()}</Text>
             </View>
             <View style={styles.overviewCard}>
               <Ionicons name="trending-up" size={32} color="#0077FF" />
               <Text style={styles.overviewLabel}>This Month</Text>
-              <Text style={styles.overviewValue}>$8,500</Text>
+              <Text style={styles.overviewValue}>${Math.round(monthRevenue).toLocaleString()}</Text>
             </View>
           </View>
 
@@ -90,7 +96,7 @@ export default function FinanceScreen() {
           <View style={styles.invoicesSection}>
             <Text style={styles.sectionTitle}>Recent Invoices</Text>
             {invoices.map((invoice) => (
-              <TouchableOpacity key={invoice.id} style={styles.invoiceCard}>
+              <TouchableOpacity key={invoice.id} style={styles.invoiceCard} onPress={() => navigation.navigate('InvoiceDetail', { invoice })}>
                 <View style={styles.invoiceHeader}>
                   <View style={styles.invoiceInfo}>
                     <Text style={styles.invoiceNumber}>{invoice.number}</Text>
@@ -105,11 +111,13 @@ export default function FinanceScreen() {
                 </View>
 
                 <View style={styles.invoiceDetails}>
-                  <Text style={styles.invoiceAmount}>{invoice.amount}</Text>
+                  <Text style={styles.invoiceAmount}>${Math.round(invoice.amount).toLocaleString()}</Text>
                   <Text style={styles.invoiceDueDate}>Due: {invoice.dueDate}</Text>
                 </View>
               </TouchableOpacity>
             ))}
+            {loading && <ActivityIndicator color="#00D2A0" />}
+            {!loading && invoices.length === 0 && <Text style={styles.emptyText}>No invoices yet.</Text>}
           </View>
         </ScrollView>
       </LinearGradient>
@@ -236,5 +244,9 @@ const styles = StyleSheet.create({
   invoiceDueDate: {
     fontSize: 12,
     color: '#64748B',
+  },
+  emptyText: {
+    color: '#94A3B8',
+    fontSize: 14,
   },
 });

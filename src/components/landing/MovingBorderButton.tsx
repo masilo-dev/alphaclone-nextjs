@@ -7,6 +7,7 @@ interface MovingBorderButtonProps {
     onClick?: () => void;
     className?: string;
     href?: string;
+    ariaLabel?: string;
 }
 
 /**
@@ -18,10 +19,12 @@ export function MovingBorderButton({
     children,
     onClick,
     className = '',
+    ariaLabel,
 }: MovingBorderButtonProps) {
     return (
         <button
             onClick={onClick}
+            aria-label={ariaLabel || typeof children === 'string' ? String(children) : 'Action button'}
             className={`relative inline-flex items-center justify-center group ${className}`}
             style={{ padding: '2px', borderRadius: '12px' }}
         >

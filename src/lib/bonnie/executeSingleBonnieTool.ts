@@ -1,0 +1,242 @@
+import { forceSessionArgs } from '@/lib/mcp/sanitizeToolSchema';
+import { initializeRegistry, executeTool, hasTool } from '@/lib/mcp/tool-registry';
+import { BONNIE_CUSTOM_TOOLS } from '@/lib/bonnie/bonnieToolCatalog';
+import { evaluateToolPolicy } from '@/lib/ai/ToolPolicyGate';
+import { resolveBonnieToolSets } from '@/lib/bonnie/resolveBonnieTools';
+import { recordDecision } from '@/services/nexusDecisionLogService';
+import { extractErrorMessage } from '@/lib/copy/businessFriendlyErrors';
+import type { BonnieToolResult } from '@/lib/bonnie/bonnieToolTypes';
+
+const CUSTOM_SET = new Set<string>(BONNIE_CUSTOM_TOOLS);
+
+function extractToolText(result: { content?: Array<{ text?: string }> }): string {
+  const chunk = result.content?.[0]?.text;
+  if (!chunk) return 'No output';
+  try {
+    const parsed = JSON.parse(chunk);
+    if (Array.isArray(parsed)) {
+      if (parsed.length === 0) return 'No results found';
+      return `${parsed.length} results found`;
+    }
+    if (typeof parsed === 'object' && parsed !== null) {
+      if (parsed.message) return String(parsed.message);
+      const identifier = parsed.name || parsed.title || parsed.text || parsed.id;
+      if (identifier) return String(identifier);
+      // Structured MCP errors nest the message under `error` — never "[object Object]".
+      const nested = extractErrorMessage(parsed);
+      return nested || chunk.slice(0, 2000);
+    }
+    return String(parsed);
+  } catch {
+    return chunk.slice(0, 2000);
+  }
+}
+
+function buildApprovalPreview(
+  tool: string,
+  args: Record<string, unknown>
+): BonnieToolResult['preview'] {
+  const target =
+    args.to ||
+    args.recipient ||
+    args.email ||
+    args.phone ||
+    args.client_id ||
+    args.contact_id ||
+    undefined;
+
+  const draft =
+    args.body ||
+    args.message ||
+    args.content ||
+    args.text ||
+    args.subject ||
+    args.html ||
+    undefined;
+
+  return {
+    target: target ? String(target) : undefined,
+    draft: draft ? String(draft).slice(0, 2000) : undefined,
+  };
+}
+
+export async function executeSingleBonnieTool(params: {
+  tenantId: string;
+  userId: string;
+  tool: string;
+  args?: Record<string, unknown>;
+  skipPolicy?: boolean;
+  policySource?: 'bonnie' | 'mcp' | 'playbook';
+  instruction?: string;
+  workflowId?: string;
+  conversationId?: string;
+}): Promise<BonnieToolResult> {
+  const { tenantId, userId, skipPolicy = false, policySource = 'bonnie', instruction, workflowId, conversationId } = params;
+  const tool = String(params.tool || '').trim();
+  const args = forceSessionArgs({ ...(params.args || {}) }, { tenantId, userId });
+
+  initializeRegistry();
+
+  let riskClass: string | undefined;
+
+  // ToolPolicyGate — EU AI Act Art. 14 human oversight
+  if (!skipPolicy) {
+    const policy = await evaluateToolPolicy({
+      tenantId,
+      userId,
+      toolName: tool,
+      source: policySource,
+      args,
+      instruction,
+      workflowId,
+      conversationId,
+    });
+    riskClass = policy.riskClass;
+
+    if (policy.outcome === 'deny') {
+      await recordDecision({
+        tenantId,
+        userId,
+        instruction,
+        toolName: tool,
+        toolArgs: args,
+        outcome: 'denied',
+        riskClass,
+        reasoning: policy.reason,
+      });
+      return {
+        tool,
+        success: false,
+        summary: policy.reason,
+        riskClass,
+      };
+    }
+
+    if (policy.outcome === 'queue_approval' && policy.approvalId) {
+      const preview = buildApprovalPreview(tool, args);
+      await recordDecision({
+        tenantId,
+        userId,
+        instruction,
+        toolName: tool,
+        toolArgs: args,
+        outcome: 'queued_approval',
+        riskClass,
+        reasoning: policy.reason,
+        approvalId: policy.approvalId,
+      });
+      return {
+        tool,
+        success: true,
+        summary: policy.reason,
+        approvalRequired: true,
+        approvalId: policy.approvalId,
+        riskClass,
+        preview,
+      };
+    }
+  }
+
+  try {
+    let toolResult: BonnieToolResult;
+
+    if (CUSTOM_SET.has(tool)) {
+      const { executeCustomTool } = await import('@/lib/bonnie/bonnieCustomTools');
+      toolResult = await executeCustomTool(tool, tenantId, userId, args);
+    } else {
+      if (hasTool(tool)) {
+        const { businessToolActivity, humanizeTechnicalFailure } = await import(
+          '@/lib/copy/businessFriendlyErrors'
+        );
+        const result = await executeTool(tenantId, userId, tool, args);
+        const text = extractToolText(result);
+        toolResult = {
+          tool,
+          success: !result.isError,
+          summary: result.isError
+            ? humanizeTechnicalFailure(text, { tool })
+            : `${businessToolActivity(tool)}.`,
+          details: text,
+        };
+      } else {
+        const { mcpServerTools } = await resolveBonnieToolSets();
+        if (mcpServerTools.includes(tool)) {
+          const { executeBonnieMcpTool } = await import('@/lib/bonnie/bonnieMcpBridge');
+          const { businessToolActivity, humanizeTechnicalFailure } = await import(
+            '@/lib/copy/businessFriendlyErrors'
+          );
+          const result = await executeBonnieMcpTool(tool, args, tenantId, userId);
+          const text = extractToolText(result);
+          toolResult = {
+            tool,
+            success: !result.isError,
+            summary: result.isError
+              ? humanizeTechnicalFailure(text, { tool })
+              : `${businessToolActivity(tool)}.`,
+            details: text,
+          };
+        } else {
+          toolResult = {
+            tool,
+            success: false,
+            summary: 'Bonnie doesn’t have that capability enabled in this workspace yet.',
+          };
+        }
+      }
+    }
+
+    if (!skipPolicy) {
+      await recordDecision({
+        tenantId,
+        userId,
+        instruction,
+        toolName: tool,
+        toolArgs: args,
+        outcome: toolResult.success ? 'executed' : 'failed',
+        riskClass,
+        reasoning: toolResult.summary,
+      });
+    }
+
+    if (!toolResult.approvalRequired) {
+      const { notifyAfterMcpToolExecution } = await import('@/lib/notifications/mcpToolNotificationHook');
+      void notifyAfterMcpToolExecution({
+        tenantId,
+        userId,
+        toolName: tool,
+        args,
+        success: toolResult.success,
+        resultContent: [
+          {
+            text: JSON.stringify({
+              message: toolResult.summary,
+              ...(toolResult.details ? { details: toolResult.details } : {}),
+            }),
+          },
+        ],
+        errorMessage: toolResult.success ? null : toolResult.summary,
+        source: 'bonnie',
+      });
+    }
+
+    return toolResult;
+  } catch (err: unknown) {
+    const { humanizeTechnicalFailure } = await import('@/lib/copy/businessFriendlyErrors');
+    const message = humanizeTechnicalFailure(err instanceof Error ? err : 'Tool execution failed', {
+      tool,
+    });
+    if (!skipPolicy) {
+      await recordDecision({
+        tenantId,
+        userId,
+        instruction,
+        toolName: tool,
+        toolArgs: args,
+        outcome: 'failed',
+        riskClass,
+        reasoning: message,
+      });
+    }
+    return { tool, success: false, summary: message };
+  }
+}

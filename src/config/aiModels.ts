@@ -12,24 +12,18 @@ export interface ClaudeModel {
 }
 
 export const CLAUDE_MODELS: ClaudeModel[] = [
-    // --- Claude 3.5 Series (Current Flagships) ---
-    { 
-        id: 'claude-3-5-sonnet-20241022', 
-        name: 'Claude 3.5 Sonnet (v2)', 
-        description: 'Elite intelligence, breakthrough speed. Best for complex logic and coding.' 
-    },
-    { 
-        id: 'claude-3-5-haiku-20241022', 
-        name: 'Claude 3.5 Haiku', 
-        description: 'The fastest, most intelligent small model in the world.' 
-    },
-
     // --- Claude 4 Series (Next Generation / 2025-2026) ---
     { 
         id: 'claude-sonnet-4-6-20260217', 
         name: 'Claude 4.6 Sonnet', 
-        description: 'Enterprise-grade orchestration and deep semantic reasoning.',
-        isFuturistic: true
+        description: 'Elite intelligence, deep semantic reasoning. The current system flagship.',
+        isFuturistic: false // Now current
+    },
+    { 
+        id: 'claude-sonnet-4-20250514', 
+        name: 'Claude 4 Sonnet', 
+        description: 'High-performance standard model with advanced reasoning.',
+        isFuturistic: false
     },
     { 
         id: 'claude-sonnet-4-5-20250929', 
@@ -44,24 +38,48 @@ export const CLAUDE_MODELS: ClaudeModel[] = [
         isFuturistic: true
     },
 
-    // --- Claude 3 Series (Original) ---
-    { 
-        id: 'claude-3-opus-20240229', 
-        name: 'Claude 3 Opus', 
-        description: 'Legacy powerhouse. Excels at open-ended discussion and nuance.' 
+    // --- OpenAI Series (Modern) ---
+    {
+        id: 'gpt-4o',
+        name: 'GPT-4o',
+        description: 'Omni model from OpenAI. High-performance multi-modal intelligence.'
     },
-    { 
-        id: 'claude-3-sonnet-20240229', 
-        name: 'Claude 3 Sonnet', 
-        description: 'Legacy Sonnet model. Solid performance for general tasks.',
-        isLegacy: true
+    {
+        id: 'gpt-4o-mini',
+        name: 'GPT-4o mini',
+        description: 'Affordable and intelligent small model.'
     },
-    { 
-        id: 'claude-3-haiku-20240307', 
-        name: 'Claude 3 Haiku', 
-        description: 'Lightweight and fast legacy model.',
-        isLegacy: true
+
+    // --- xAI Grok Series (2026) ---
+    {
+        id: 'grok-4.3',
+        name: 'Grok-4.3',
+        description: 'Latest high-performance model from xAI. Superior reasoning and speed.'
+    },
+    {
+        id: 'grok-4',
+        name: 'Grok-4 Vision',
+        description: 'Multi-modal Grok model with advanced image and document understanding.'
     }
 ];
 
-export const DEFAULT_CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
+export const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-6-20260217';
+export const DEFAULT_OPENAI_MODEL = 'gpt-4o';
+/** Free OpenRouter models — zero credits required (rate limits apply). */
+export const OPENROUTER_FREE_MODELS = [
+    'openrouter/free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'google/gemma-4-31b-it:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'qwen/qwen-2.5-72b-instruct:free',
+] as const;
+
+/** OpenRouter models tried in order when the primary model is unavailable or out of credits. */
+export const OPENROUTER_FALLBACK_MODELS = [
+    ...OPENROUTER_FREE_MODELS,
+    'openai/gpt-4o-mini',
+    'google/gemini-2.0-flash-001',
+] as const;
+
+/** Universal fallback — OpenRouter free router (no paid credits required). */
+export const DEFAULT_OPENROUTER_MODEL = OPENROUTER_FREE_MODELS[0];

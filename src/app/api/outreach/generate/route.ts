@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { resolveTenantContextForUser } from '@/lib/quotas/resolveTenantForAiRequest';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { getCampaignLanguageInstruction, resolveCampaignLanguage } from '@/lib/languageUtils';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface LeadForGeneration {
@@ -12,6 +16,8 @@ interface LeadForGeneration {
   pitchAngle: string;
   insights:   string[];
   score:      number;
+  countryCode?: string;
+  country?: string;
 }
 
 interface GeneratedEmail {
@@ -19,6 +25,16 @@ interface GeneratedEmail {
   subject:       string;
   body:          string;
   pitchAngle:    string;
+  recipientEmail: string | null;
+  recipientSource: 'lead' | 'inferred' | 'none';
+  language?: string;
+  languageLabel?: string;
+}
+
+function ensureMinimumEmailWords(body: string, businessName: string, senderName: string): string {
+  const normalized = String(body || '').trim();
+  if (normalized.split(/\s+/).filter(Boolean).length >= 100) return normalized;
+  return `${normalized}\n\nI would be glad to share a practical overview tailored to ${businessName}, including the likely priorities, a sensible first step, and what a low-risk implementation could look like. The goal is not to add another complicated process, but to identify where a focused improvement could save time, strengthen follow-up, and create a clearer path to measurable results. If this is relevant, reply with the main outcome you are working toward and I will prepare a concise recommendation before we speak.\n\nBest,\n${senderName}`.trim();
 }
 
 const PITCH_HOOKS: Record<string, string> = {
@@ -35,6 +51,28 @@ const PITCH_HOOKS: Record<string, string> = {
   'no-email-follow-up':    'no email found — produce a cold CALL script instead of an email',
 };
 
+function inferBusinessEmail(lead: LeadForGeneration): string | null {
+  const directEmail = String(lead.email || '').trim();
+  if (directEmail.includes('@')) {
+    return directEmail.toLowerCase();
+  }
+
+  const rawWebsite = String(lead.website || '').trim();
+  if (!rawWebsite) return null;
+
+  try {
+    const normalizedUrl = rawWebsite.startsWith('http://') || rawWebsite.startsWith('https://')
+      ? rawWebsite
+      : `https://${rawWebsite}`;
+    const url = new URL(normalizedUrl);
+    const host = url.hostname.replace(/^www\./i, '').toLowerCase();
+    if (!host || host.includes('localhost') || !host.includes('.')) return null;
+    return `info@${host}`;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * POST /api/outreach/generate
  * Generates personalized outreach emails for an array of leads.
@@ -42,6 +80,12 @@ const PITCH_HOOKS: Record<string, string> = {
  */
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const {
       leads,
@@ -49,16 +93,34 @@ export async function POST(request: Request) {
       tone = 'professional',
       customContext = '',
       senderName = 'the AlphaClone team',
+      tenantId: bodyTenantId,
+      languageMode = 'auto',
     }: {
       leads: LeadForGeneration[];
       industry: string;
       tone?: string;
       customContext?: string;
       senderName?: string;
+      tenantId?: string;
+      languageMode?: string;
     } = body;
 
     if (!leads?.length) {
       return NextResponse.json({ error: 'No leads provided' }, { status: 400 });
+    }
+    if (resolveCampaignLanguage({ languageMode }).mustAsk) {
+      return NextResponse.json({ error: 'Choose a language before generating outreach, or use languageMode "auto".' }, { status: 400 });
+    }
+
+    const ctx = await resolveTenantContextForUser(supabase, user.id, bodyTenantId ?? null);
+    if (!ctx) {
+      return NextResponse.json(
+        {
+          error: 'A workspace is required. Select your organization or pass tenantId.',
+          code: 'TENANT_REQUIRED',
+        },
+        { status: 400 }
+      );
     }
 
     const TONE_DESCRIPTIONS: Record<string, string> = {
@@ -78,11 +140,13 @@ export async function POST(request: Request) {
         business: l.business_name,
         industry,
         category: l.category || industry,
-        hasEmail:   !!l.email,
+        hasEmail:   !!inferBusinessEmail(l),
         hasPhone:   !!l.phone,
         hasWebsite: !!l.website,
         rating:     l.rating,
         address:    l.address,
+        countryCode: l.countryCode,
+        country: l.country,
         pitchAngle: l.pitchAngle,
         pitchContext: PITCH_HOOKS[l.pitchAngle] || PITCH_HOOKS['growth-opportunity'],
         qualityScore: l.score,
@@ -97,15 +161,16 @@ SENDER: ${senderName}
 INDUSTRY SEARCHED: ${industry}
 TONE: ${TONE_DESCRIPTIONS[tone] || TONE_DESCRIPTIONS.professional}
 ${customContext ? `ADDITIONAL CONTEXT FROM USER: ${customContext}` : ''}
+${getCampaignLanguageInstruction({ languageMode, country: batchLeadsJson[0]?.country, countryCode: batchLeadsJson[0]?.countryCode, address: batchLeadsJson[0]?.address, company: batchLeadsJson[0]?.business })}
 
 RULES:
-- Each email must be 80–140 words maximum
+- Each email must be 100–140 words. Never return fewer than 100 words for an email body.
 - Subject line: punchy, specific to the business, max 8 words
 - Never use generic openers like "I hope this finds you well"
 - Reference the specific business name and industry
 - For pitch angle "digital-presence": urgently highlight they have NO website and what they're losing
 - For pitch angle "reputation-management": reference their low rating subtly without being harsh
-- For pitch angle "no-email-follow-up": write a 60-word PHONE CALL SCRIPT instead
+- For leads where hasEmail is false: write a 60-word PHONE CALL SCRIPT instead of an email body
 - End with ONE clear, low-pressure CTA (e.g. "Worth a quick 10-min call?")
 - Do NOT use asterisks, hashtags, or markdown symbols
 - Return ONLY valid JSON array, no other text
@@ -123,22 +188,23 @@ Return this exact JSON structure (array of objects):
 ]
 `;
         try {
-            const aiRes = await fetch(`${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/ai/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt, maxTokens: 4096 }),
+            const { executeSingleBonnieTool } = await import('@/lib/bonnie/executeSingleBonnieTool');
+            const toolResult = await executeSingleBonnieTool({
+              tenantId: ctx.tenantId,
+              userId: user.id,
+              tool: 'generate_outreach_draft',
+              args: { prompt },
             });
 
-            if (!aiRes.ok) throw new Error('AI generation failed');
-            const { text } = await aiRes.json();
-            if (!text) throw new Error('AI returned empty response');
+            const text = toolResult.details || toolResult.summary || '';
+            if (!toolResult.success || !text) throw new Error(toolResult.summary || 'AI generation failed');
 
             const jsonMatch = text.match(/\[[\s\S]*\]/);
             if (!jsonMatch) throw new Error('AI response was not valid JSON array');
 
             return JSON.parse(jsonMatch[0]) as Array<{ index: number; subject: string; body: string }>;
-        } catch (e: any) {
-            console.error('[Outreach/Generate Batch] Error:', e.message);
+        } catch (e: unknown) {
+            console.error('[Outreach/Generate Batch] Error:', e);
             // Fallback for failed batch
             return batchLeadsJson.map(b => ({
                 index: b.index,
@@ -154,18 +220,39 @@ Return this exact JSON structure (array of objects):
     // Merge with original lead data
     const emails: GeneratedEmail[] = generated.map(g => {
       const lead = leads[g.index];
+      const inferredRecipient = lead ? inferBusinessEmail(lead) : null;
+      const directEmail = String(lead?.email || '').trim();
+      const recipientEmail = directEmail.includes('@') ? directEmail.toLowerCase() : inferredRecipient;
+      const recipientSource: 'lead' | 'inferred' | 'none' = directEmail.includes('@')
+        ? 'lead'
+        : recipientEmail
+          ? 'inferred'
+          : 'none';
+      const language = resolveCampaignLanguage({
+        languageMode,
+        country: lead?.country,
+        countryCode: lead?.countryCode,
+        address: lead?.address,
+        company: lead?.business_name,
+      });
       return {
         business_name: lead?.business_name || `Lead ${g.index}`,
         subject:       g.subject,
-        body:          g.body,
+        body:          lead && recipientEmail
+          ? ensureMinimumEmailWords(g.body, lead.business_name || `Lead ${g.index}`, senderName)
+          : g.body,
         pitchAngle:    lead?.pitchAngle || 'growth-opportunity',
+        recipientEmail,
+        recipientSource,
+        language: language.code,
+        languageLabel: language.label,
       };
     });
 
     return NextResponse.json({ success: true, emails });
 
-  } catch (error: any) {
-    console.error('[Outreach/Generate]', error.message);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('[Outreach/Generate]', error);
+    return clientErrorResponse(error, { request, scope: 'outreach/generate.POST' });
   }
 }

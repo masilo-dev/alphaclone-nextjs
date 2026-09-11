@@ -1,7 +1,16 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { quotaService } from './quotaService';
+import { formatQuotaExceededMessage, isUnlimitedPlan } from '@/lib/entitlements/planEntitlements';
+import { businessClientService } from './businessClientService';
 import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
+import { requestCrmBridgeSync } from '../lib/crm/crmBridgeClient';
+import { assertLeadStageTransition } from '../lib/stageProgression';
+import { isTerminalLeadStage, normalizeLeadPipelineStage } from '../lib/crmPipelineStages';
+import { intelligenceScoringService } from './intelligence/intelligenceScoringService';
+
+type LeadMetadata = Record<string, any>;
 
 export interface Lead {
     id: string;
@@ -34,7 +43,28 @@ export interface Lead {
     lng?: number;
     isAddressValid?: boolean;
     sdrInsight?: string;
+    intelligenceScore?: number;
+    intelligenceConfidence?: number;
+    intelligenceState?: Record<string, number>;
+    intelligenceRecommendations?: string[];
+    psychologyProfile?: string[];
+    responseProbability?: number;
+    hookAnalysis?: string;
+    socialLinks?: Record<string, string>;
+    metadata?: LeadMetadata;
 }
+
+type LeadStageChangeMeta = {
+    previous_stage?: string;
+    last_stage_change_at?: string;
+    stage_change_reason?: string;
+    stage_history?: Array<{
+        from: string;
+        to: string;
+        reason?: string;
+        changed_at: string;
+    }>;
+};
 
 export interface GrowthAgentTarget {
     id: string;
@@ -47,6 +77,151 @@ export interface GrowthAgentTarget {
     last_run_at?: string;
     created_at: string;
     updated_at: string;
+}
+
+function coerceMetadata(value: unknown): LeadMetadata {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return value as LeadMetadata;
+    }
+    return {};
+}
+
+function normalizeSocialLinks(value: unknown): Record<string, string> {
+    const raw = coerceMetadata(value);
+    return Object.fromEntries(
+        Object.entries(raw)
+            .filter(([, link]) => typeof link === 'string' && link.trim().length > 0)
+            .map(([network, link]) => [network, String(link).trim()])
+    );
+}
+
+function uniqueStrings(values: Array<string | null | undefined>): string[] {
+    const seen = new Set<string>();
+    const normalized: string[] = [];
+    for (const value of values) {
+        const item = String(value || '').trim();
+        if (!item) continue;
+        const key = item.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        normalized.push(item);
+    }
+    return normalized;
+}
+
+function extractDomainFromWebsite(website?: string): string | null {
+    const raw = String(website || '').trim();
+    if (!raw) return null;
+    try {
+        const normalized = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+        const host = new URL(normalized).hostname.replace(/^www\./i, '').toLowerCase();
+        return host || null;
+    } catch {
+        return null;
+    }
+}
+
+function buildTrustScore(input: {
+    email?: string;
+    phone?: string;
+    website?: string;
+    socialLinks?: Record<string, string>;
+    techStack?: string[];
+    verifiedEmailCount?: number;
+}): number {
+    let score = 0;
+    if (input.email) score += 30;
+    if (input.phone) score += 25;
+    if (input.website) score += 15;
+    if (input.socialLinks && Object.keys(input.socialLinks).length > 0) score += 10;
+    if (input.techStack && input.techStack.length > 0) score += 10;
+    if ((input.verifiedEmailCount || 0) > 0) score += 10;
+    return Math.min(100, score);
+}
+
+function deriveValueProposition(lead: { industry?: string; website?: string; socialLinks?: Record<string, string>; techStack?: string[] }): string | undefined {
+    const industry = String(lead.industry || '').toLowerCase();
+    if (industry.includes('restaurant') || industry.includes('cafe') || industry.includes('food')) {
+        return 'Improve local discovery, reviews, and direct bookings with a tighter digital funnel.';
+    }
+    if (industry.includes('law') || industry.includes('account') || industry.includes('consult')) {
+        return 'Turn research traffic and referrals into qualified consultations with structured follow-up.';
+    }
+    if (industry.includes('hvac') || industry.includes('plumb') || industry.includes('electric') || industry.includes('roof')) {
+        return 'Capture more high-intent local calls and convert them faster with better intake and follow-up.';
+    }
+    if (lead.website && lead.socialLinks && Object.keys(lead.socialLinks).length === 0) {
+        return 'Strengthen owned web presence with better contact capture and social proof.';
+    }
+    if ((lead.techStack || []).length > 0) {
+        return 'Use the existing digital stack more effectively by tightening conversion and automation gaps.';
+    }
+    return 'Increase qualified inbound demand with sharper positioning, contact capture, and follow-up.';
+}
+
+function normalizeLeadRecord(l: any): Lead {
+    const metadata = coerceMetadata(l.metadata);
+    return {
+        id: l.id,
+        owner_id: l.owner_id,
+        businessName: l.business_name,
+        industry: l.industry,
+        location: l.location,
+        phone: l.phone,
+        email: l.email,
+        website: l.website,
+        source: l.source,
+        stage: normalizeLeadPipelineStage(l.stage),
+        value: l.value,
+        notes: l.notes,
+        created_at: l.created_at,
+        client_id: l.client_id,
+        isVerified: l.is_verified,
+        trustScore: l.trust_score,
+        verificationNotes: l.verification_notes,
+        outreachHook: l.outreach_hook,
+        strategy: l.strategy,
+        techStack: l.tech_stack || [],
+        painPoints: l.pain_points || [],
+        valueProposition: l.value_proposition,
+        lat: l.latitude,
+        lng: l.longitude,
+        status: l.stage === 'lead' ? 'New' : l.stage,
+        fb: l.website,
+        sdrInsight: l.sdr_insight,
+        intelligenceScore: l.intelligence_score,
+        intelligenceConfidence: l.intelligence_confidence,
+        intelligenceState: l.intelligence_state || undefined,
+        intelligenceRecommendations: l.intelligence_recommendations || [],
+        psychologyProfile: l.psychology_profile || [],
+        responseProbability: metadata.responseProbability || 0,
+        hookAnalysis: metadata.hookAnalysis || '',
+        socialLinks: normalizeSocialLinks(l.social_links),
+        metadata
+    };
+}
+
+function appendLeadStageMetadata(
+    metadata: LeadMetadata,
+    fromStage: string,
+    toStage: string,
+    reason?: string
+): LeadMetadata {
+    const history = Array.isArray(metadata.stage_history) ? metadata.stage_history : [];
+    const entry = {
+        from: fromStage,
+        to: toStage,
+        reason: reason?.trim() || undefined,
+        changed_at: new Date().toISOString(),
+    };
+    const nextMeta: LeadStageChangeMeta = {
+        ...metadata,
+        previous_stage: fromStage,
+        last_stage_change_at: entry.changed_at,
+        stage_change_reason: entry.reason,
+        stage_history: [...history.slice(-19), entry],
+    };
+    return nextMeta;
 }
 
 export const leadService = {
@@ -100,40 +275,14 @@ export const leadService = {
             const { data, error } = await supabase
                 .from('leads')
                 .select('*')
-                .eq('tenant_id', tenantId) // ← TENANT FILTER
+                .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            const leads: Lead[] = (data || []).map((l: any) => ({
-                id: l.id,
-                owner_id: l.owner_id,
-                businessName: l.business_name,
-                industry: l.industry,
-                location: l.location,
-                phone: l.phone,
-                email: l.email,
-                website: l.website,
-                source: l.source,
-                stage: l.stage,
-                value: l.value,
-                notes: l.notes,
-                created_at: l.created_at,
-                client_id: l.client_id,
-                isVerified: l.is_verified,
-                trustScore: l.trust_score,
-                verificationNotes: l.verification_notes,
-                outreachHook: l.outreach_hook,
-                strategy: l.strategy,
-                techStack: l.tech_stack || [],
-                painPoints: l.pain_points || [],
-                valueProposition: l.value_proposition,
-                lat: l.latitude,
-                lng: l.longitude,
-                status: l.stage === 'lead' ? 'New' : l.stage,
-                fb: l.website,
-                sdrInsight: l.sdr_insight
-            }));
+            const leads: Lead[] = (data || [])
+                .map(normalizeLeadRecord)
+                .filter((lead: Lead) => !isTerminalLeadStage(lead.stage));
 
             return { leads, error: null };
         } catch (err) {
@@ -148,82 +297,59 @@ export const leadService = {
     async addLead(lead: Partial<Lead>): Promise<{ lead: Lead | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData, error: authError } = await supabase.auth.getUser();
 
-            if (authError || !userData.user) {
-                const { data: refreshData } = await supabase.auth.refreshSession();
-                if (!refreshData.user) {
-                    return { lead: null, error: 'Authentication session expired. Please refresh the page.' };
-                }
-            }
-
-            const dbPayload = {
-                tenant_id: tenantId,
-                owner_id: userData.user?.id || (await supabase.auth.getUser()).data.user?.id,
-                business_name: lead.businessName,
+            const intelligence = intelligenceScoringService.scoreLead({
                 industry: lead.industry,
-                location: lead.location,
-                phone: lead.phone,
                 email: lead.email,
+                phone: lead.phone,
                 website: lead.website || lead.fb,
-                source: lead.source || 'Manual',
-                stage: lead.stage || 'lead',
-                value: lead.value || 0,
-                notes: lead.notes,
-                outreach_message: lead.outreachMessage,
-                outreach_status: lead.outreachStatus || 'pending',
-                is_verified: lead.isVerified || false,
-                trust_score: lead.trustScore || 0,
-                verification_notes: lead.verificationNotes,
-                outreach_hook: lead.outreachHook,
-                strategy: lead.strategy,
-                tech_stack: lead.techStack || [],
-                pain_points: lead.painPoints || [],
-                value_proposition: lead.valueProposition,
-                latitude: lead.lat,
-                longitude: lead.lng,
-                sdr_insight: lead.sdrInsight
-            };
+                role: lead.notes,
+            });
 
-            const { data, error } = await supabase
-                .from('leads')
-                .insert(dbPayload)
-                .select()
-                .single();
+            const res = await fetch('/api/crm/leads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    tenantId,
+                    businessName: lead.businessName,
+                    email: lead.email || '',
+                    phone: lead.phone,
+                    industry: lead.industry,
+                    location: lead.location,
+                    website: lead.website || lead.fb,
+                    source: lead.source || 'Manual',
+                    notes: lead.notes,
+                    stage: lead.stage || 'lead',
+                    value: lead.value || 0,
+                    metadata: {
+                        ...(lead.metadata || {}),
+                        outreach_message: lead.outreachMessage,
+                        outreach_status: lead.outreachStatus || 'pending',
+                        intelligence_score: intelligence.qualifiedProbability,
+                        intelligence_confidence: intelligence.confidence,
+                    },
+                }),
+            });
 
-            if (error) {
-                console.error('LeadService: Insert error', error);
-                if (error.code === '42501') return { lead: null, error: 'Permission denied. Please refresh.' };
-                throw error;
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { lead: null, error: json.error || `HTTP ${res.status}` };
             }
 
-            const newLead: Lead = {
-                id: data.id,
-                businessName: data.business_name,
-                industry: data.industry,
-                location: data.location,
-                phone: data.phone,
-                email: data.email,
-                source: data.source,
-                stage: data.stage,
-                value: data.value,
-                notes: data.notes,
-                status: 'New',
-                outreachMessage: data.outreach_message,
-                outreachStatus: data.outreach_status,
-                isVerified: data.is_verified,
-                trustScore: data.trust_score,
-                verificationNotes: data.verification_notes,
-                outreachHook: data.outreach_hook,
-                strategy: data.strategy,
-                techStack: data.tech_stack || [],
-                painPoints: data.pain_points || [],
-                valueProposition: data.value_proposition,
-                sdrInsight: data.sdr_insight
-            };
+            const newLead: Lead = normalizeLeadRecord(json.lead);
 
-            // SYNC TO EXTERNAL CRM
+            const { requestBusinessEvent } = await import('../lib/automation/request-event');
+            await requestBusinessEvent(tenantId, 'lead_created', {
+                leadId: newLead.id,
+                businessName: newLead.businessName,
+                source: newLead.source,
+                stage: newLead.stage,
+                matched_existing: json.matched_existing,
+            }).catch(err => console.error('Failed to emit lead_created event:', err));
+
             UnifiedCRMService.syncLead(newLead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
+            void requestCrmBridgeSync(tenantId, 'lead', newLead.id);
 
             return { lead: newLead, error: null };
         } catch (err) {
@@ -248,32 +374,49 @@ export const leadService = {
 
             const ownerId = userData.user?.id || (await supabase.auth.getUser()).data.user?.id;
 
-            const dbPayloads = leads.map((l: any) => ({
-                tenant_id: tenantId,
-                owner_id: ownerId,
-                business_name: l.businessName,
-                industry: l.industry,
-                location: l.location,
-                phone: l.phone,
-                email: l.email,
-                website: l.website,
-                source: l.source || 'Bulk Upload',
-                stage: 'lead',
-                value: l.value || 0,
-                notes: l.notes,
-                outreach_message: l.outreachMessage,
-                outreach_status: l.outreachStatus || 'pending',
-                is_verified: l.isVerified || false,
-                trust_score: l.trustScore || 0,
-                outreach_hook: l.outreachHook,
-                strategy: l.strategy,
-                tech_stack: l.techStack || [],
-                pain_points: l.painPoints || [],
-                value_proposition: l.valueProposition,
-                latitude: l.lat,
-                longitude: l.lng,
-                sdr_insight: l.sdrInsight
-            }));
+            const dbPayloads = leads.map((l: any) => {
+                const intelligence = intelligenceScoringService.scoreLead({
+                    industry: l.industry,
+                    email: l.email,
+                    phone: l.phone,
+                    website: l.website,
+                    role: l.notes
+                });
+
+                return {
+                    tenant_id: tenantId,
+                    owner_id: ownerId,
+                    business_name: l.businessName,
+                    industry: l.industry,
+                    location: l.location,
+                    phone: l.phone,
+                    email: l.email,
+                    website: l.website,
+                    source: l.source || 'Bulk Upload',
+                    stage: 'lead',
+                    value: l.value || 0,
+                    notes: l.notes,
+                    outreach_message: l.outreachMessage,
+                    outreach_status: l.outreachStatus || 'pending',
+                    is_verified: l.isVerified || false,
+                    trust_score: l.trustScore || 0,
+                    outreach_hook: l.outreachHook,
+                    strategy: l.strategy,
+                    tech_stack: l.techStack || [],
+                    pain_points: l.painPoints || [],
+                    value_proposition: l.valueProposition,
+                    latitude: l.lat,
+                    longitude: l.lng,
+                    sdr_insight: l.sdrInsight,
+                    social_links: l.socialLinks || {},
+                    metadata: l.metadata || {},
+                    intelligence_score: intelligence.qualifiedProbability,
+                    intelligence_confidence: intelligence.confidence,
+                    intelligence_state: intelligence.stateDistribution,
+                    intelligence_recommendations: intelligence.recommendations,
+                    psychology_profile: intelligence.psychologyProfile
+                };
+            });
 
             const { data, error } = await supabase
                 .from('leads')
@@ -295,30 +438,49 @@ export const leadService = {
     /**
      * Update a lead
      */
-    async updateLead(id: string, updates: Partial<Lead>): Promise<{ error: string | null }> {
+    async updateLead(id: string, updates: Partial<Lead> & { stageReason?: string }): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
 
+        let stageChangeFrom: string | null = null;
+        let stageChangeReason: string | undefined;
+
         if (updates.stage) {
+            const normalizedStage = normalizeLeadPipelineStage(updates.stage);
+            if (isTerminalLeadStage(normalizedStage) && normalizedStage === 'lost') {
+                return this.deleteLead(id);
+            }
+
             const { data: existingLead } = await supabase
                 .from('leads')
-                .select('stage')
+                .select('stage, metadata')
                 .eq('id', id)
                 .eq('tenant_id', tenantId)
                 .single();
 
             if (existingLead) {
-                const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
-                const currentIdx = stageOrder.indexOf(existingLead.stage);
-                const newIdx = stageOrder.indexOf(updates.stage);
-
-                if (newIdx < currentIdx && updates.stage !== 'lost') {
-                    return { error: 'Cannot move lead back to a previous stage' };
+                const fromStage = normalizeLeadPipelineStage(existingLead.stage);
+                const check = assertLeadStageTransition(fromStage, normalizedStage);
+                if (!check.ok) {
+                    const message = (check as any).message || 'Invalid stage transition';
+                    return { error: message };
                 }
+                stageChangeFrom = fromStage;
+                stageChangeReason = updates.stageReason?.trim() || undefined;
+
+                const existingMetadata = coerceMetadata((existingLead as any).metadata);
+                updates = {
+                    ...updates,
+                    metadata: appendLeadStageMetadata(existingMetadata, fromStage, normalizedStage, stageChangeReason),
+                };
             }
+
+            updates = { ...updates, stage: normalizedStage };
         }
 
         const dbPayload: any = {};
         if (updates.businessName) dbPayload.business_name = updates.businessName;
+        if (updates.businessName) dbPayload.contact_name = updates.businessName;
+        if (updates.status !== undefined) dbPayload.status = updates.status;
         if (updates.industry !== undefined) dbPayload.industry = updates.industry;
         if (updates.location !== undefined) dbPayload.location = updates.location;
         if (updates.phone !== undefined) dbPayload.phone = updates.phone;
@@ -343,6 +505,31 @@ export const leadService = {
         if (updates.lat !== undefined) dbPayload.latitude = updates.lat;
         if (updates.lng !== undefined) dbPayload.longitude = updates.lng;
         if (updates.sdrInsight !== undefined) dbPayload.sdr_insight = updates.sdrInsight;
+        if (updates.socialLinks !== undefined) dbPayload.social_links = updates.socialLinks;
+        if (updates.metadata !== undefined) dbPayload.metadata = updates.metadata;
+        const shouldRecomputeIntelligence = [
+            updates.industry,
+            updates.email,
+            updates.phone,
+            updates.website,
+            updates.notes
+        ].some((value) => value !== undefined);
+
+        if (shouldRecomputeIntelligence) {
+            const intelligence = intelligenceScoringService.scoreLead({
+                industry: updates.industry,
+                email: updates.email,
+                phone: updates.phone,
+                website: updates.website,
+                role: updates.notes
+            });
+
+            dbPayload.intelligence_score = intelligence.qualifiedProbability;
+            dbPayload.intelligence_confidence = intelligence.confidence;
+            dbPayload.intelligence_state = intelligence.stateDistribution;
+            dbPayload.intelligence_recommendations = intelligence.recommendations;
+            dbPayload.psychology_profile = intelligence.psychologyProfile;
+        }
 
         const { error } = await supabase
             .from('leads')
@@ -355,6 +542,10 @@ export const leadService = {
             this.getLeadById(id).then(({ lead }) => {
                 if (lead) UnifiedCRMService.syncLead(lead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
             });
+        }
+
+        if (!error) {
+            void requestCrmBridgeSync(tenantId, 'lead', id);
         }
 
         return { error: error ? error.message : null };
@@ -375,37 +566,7 @@ export const leadService = {
 
             if (error) throw error;
 
-            const lead: Lead = {
-                id: data.id,
-                owner_id: data.owner_id,
-                businessName: data.business_name,
-                industry: data.industry,
-                location: data.location,
-                phone: data.phone,
-                email: data.email,
-                website: data.website,
-                source: data.source,
-                stage: data.stage,
-                value: data.value,
-                notes: data.notes,
-                created_at: data.created_at,
-                status: data.stage === 'lead' ? 'New' : data.stage,
-                fb: data.website,
-                outreachMessage: data.outreach_message,
-                outreachStatus: data.outreach_status,
-                isVerified: data.is_verified,
-                trustScore: data.trust_score,
-                verificationNotes: data.verification_notes,
-                outreachHook: data.outreach_hook,
-                strategy: data.strategy,
-                techStack: data.tech_stack || [],
-                painPoints: data.pain_points || [],
-                valueProposition: data.value_proposition,
-                sdrInsight: data.sdr_insight
-            };
-
-            // SYNC TO EXTERNAL CRM
-            UnifiedCRMService.syncLead(lead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
+            const lead: Lead = normalizeLeadRecord(data);
 
             return { lead, error: null };
         } catch (err) {
@@ -419,60 +580,102 @@ export const leadService = {
     async deleteLead(id: string): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
         await fileUploadService.deleteFileByEntity('lead', id);
-        const { error } = await supabase
-            .from('leads')
-            .delete()
-            .eq('id', id)
-            .eq('tenant_id', tenantId);
-        return { error: error ? error.message : null };
+
+        const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: id });
+        if (!error && data && (data as { ok?: boolean }).ok) {
+            return { error: null };
+        }
+
+        if (error) {
+            const { error: directError } = await supabase
+                .from('leads')
+                .delete()
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+            return { error: directError ? directError.message : error.message };
+        }
+
+        const rpcError = (data as { error?: string } | null)?.error;
+        if (rpcError) {
+            const { error: directError } = await supabase
+                .from('leads')
+                .delete()
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+            return { error: directError ? directError.message : rpcError };
+        }
+
+        return { error: null };
+    },
+
+    async bulkDeleteLeads(ids: string[]): Promise<{ error: string | null; count: number }> {
+        if (!ids.length) return { error: null, count: 0 };
+        const tenantId = this.getTenantId();
+        const uniqueIds = [...new Set(ids)];
+        try {
+            await Promise.all(uniqueIds.map((id) => fileUploadService.deleteFileByEntity('lead', id)));
+            let count = 0;
+            for (const id of uniqueIds) {
+                const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: id });
+                if (!error && data && (data as { ok?: boolean }).ok) {
+                    count += 1;
+                    continue;
+                }
+                const { error: directError } = await supabase
+                    .from('leads')
+                    .delete()
+                    .eq('id', id)
+                    .eq('tenant_id', tenantId);
+                if (directError) throw directError;
+                count += 1;
+            }
+            return { error: null, count };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error', count: 0 };
+        }
     },
 
     /**
-     * Check if the tenant has reached the lead generation limit
-     * Limit: 30 leads per 24-hour window for Free users
+     * Check if the tenant can add more leads today (centralized plan entitlements).
      */
     async checkLeadLimit(userRole?: string): Promise<{ allowed: boolean; error: string | null; remaining: number }> {
         try {
-            // Super Admin bypass
             if (userRole === 'admin') {
-                return { allowed: true, error: null, remaining: 9999 };
+                return { allowed: true, error: null, remaining: -1 };
             }
 
             const tenantId = this.getTenantId();
-            const { data: tenant, error: tenantError } = await supabase
-                .from('tenants')
-                .select('subscription_plan')
-                .eq('id', tenantId)
-                .single();
-
-            if (tenantError) throw tenantError;
-
-            if (tenant.subscription_plan === 'free') {
-                const MAX_LEADS_24H = 30;
-                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-                const { count, error } = await supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tenant_id', tenantId)
-                    .gte('created_at', twentyFourHoursAgo);
-
-                if (error) throw error;
-
-                const currentCount = count || 0;
-                const remaining = Math.max(0, MAX_LEADS_24H - currentCount);
-
-                if (currentCount >= MAX_LEADS_24H) {
-                    return {
-                        allowed: false,
-                        error: `Free plan limit reached: ${MAX_LEADS_24H} leads per 24 hours. Upgrade for unlimited lead generation.`,
-                        remaining: 0
-                    };
-                }
-                return { allowed: true, error: null, remaining };
+            if (!tenantId) {
+                return { allowed: false, error: 'No tenant context', remaining: 0 };
             }
 
-            return { allowed: true, error: null, remaining: 999 };
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user?.id) {
+                return { allowed: false, error: 'Authentication required', remaining: 0 };
+            }
+
+            const summary = await quotaService.getTenantUsageSummary(tenantId, user.id);
+            const leadsMetric = summary.metrics.leads;
+
+            if (summary.unlimited || isUnlimitedPlan(summary.plan) || leadsMetric.unlimited) {
+                return { allowed: true, error: null, remaining: -1 };
+            }
+
+            const remaining = leadsMetric.remaining;
+            if (remaining <= 0) {
+                return {
+                    allowed: false,
+                    error: formatQuotaExceededMessage({
+                        plan: summary.normalizedPlan,
+                        resourceLabel: 'leads added',
+                        currentUsage: leadsMetric.current,
+                        limit: leadsMetric.limit,
+                    }),
+                    remaining: 0,
+                };
+            }
+
+            return { allowed: true, error: null, remaining };
         } catch (error) {
             console.error('Error checking lead limit:', error);
             return { allowed: false, error: 'Failed to verify usage limits. Please try again.', remaining: 0 };
@@ -533,22 +736,233 @@ export const leadService = {
                 .single();
             if (getError || !lead) throw new Error(getError?.message || 'Lead not found');
 
-            // Use the unified AI service for deep business research
-            const { enrichLeadData } = await import('./unifiedAIService');
-            const intelligence = await enrichLeadData({
-                businessName: lead.business_name || lead.name,
-                industry: lead.industry,
-                location: lead.location || lead.city,
-                website: lead.website
-            });
+            const existingMetadata = coerceMetadata(lead.metadata);
+            const existingSocialLinks = normalizeSocialLinks(lead.social_links);
+            const domain = extractDomainFromWebsite(lead.website);
+            const discoveredEmails: Array<{ email: string; source: string; confidence: number; verified: boolean }> = [];
+            const verificationNotes: string[] = [];
+            const socialLinks: Record<string, string> = { ...existingSocialLinks };
+            const phoneCandidates = uniqueStrings([lead.phone]);
+            const techStack = uniqueStrings(Array.isArray(lead.tech_stack) ? lead.tech_stack : []);
+            const enrichmentSources: string[] = [];
 
-            const { error: updateError } = await supabase
+            if (lead.website) {
+                try {
+                    const response = await fetch('/api/scraper/deep-crawl', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: lead.website, usePlaywright: true })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('deep-crawl');
+                        uniqueStrings(data.emails || []).forEach((email) => {
+                            discoveredEmails.push({ email, source: 'deep-crawl', confidence: 78, verified: false });
+                        });
+                        if (data.phone) phoneCandidates.push(String(data.phone).trim());
+                        Object.assign(socialLinks, normalizeSocialLinks(data.social_links));
+                        verificationNotes.push(`Deep crawl found ${Array.isArray(data.emails) ? data.emails.length : 0} emails`);
+                    }
+                } catch (crawlError) {
+                    console.warn('[LeadService] Deep crawl skipped:', crawlError);
+                }
+            }
+
+            if (domain) {
+                try {
+                    const response = await fetch('/api/scraper/email-discovery', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            domain,
+                            company_name: lead.business_name,
+                            methods: ['dns', 'whois', 'github', 'website', 'linkedin'],
+                            verify: true
+                        })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('email-discovery');
+                        for (const item of Array.isArray(data.emails) ? data.emails : []) {
+                            const email = String(item?.email || '').trim();
+                            if (!email) continue;
+                            discoveredEmails.push({
+                                email,
+                                source: String(item?.source || 'email-discovery'),
+                                confidence: Number(item?.confidence || 0),
+                                verified: Boolean(item?.verified)
+                            });
+                        }
+                        verificationNotes.push(`Email discovery found ${Array.isArray(data.emails) ? data.emails.length : 0} candidates`);
+                    }
+                } catch (emailError) {
+                    console.warn('[LeadService] Email discovery skipped:', emailError);
+                }
+
+                try {
+                    const response = await fetch('/api/scraper/affordable', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'enrich_lead',
+                            domain,
+                            tenant_id: this.getTenantId()
+                        })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('affordable-enrichment');
+                        uniqueStrings(data?.technology?.technologies || []).forEach((item) => techStack.push(item));
+                        for (const item of Array.isArray(data?.emails) ? data.emails : []) {
+                            const email = String(item?.email || '').trim();
+                            if (!email) continue;
+                            discoveredEmails.push({
+                                email,
+                                source: 'hunter',
+                                confidence: Number(item?.score || 0),
+                                verified: Boolean(item?.valid)
+                            });
+                        }
+                        if (data?.technology?.company_size) {
+                            verificationNotes.push(`BuiltWith company size: ${data.technology.company_size}`);
+                        }
+                    }
+                } catch (affordableError) {
+                    console.warn('[LeadService] Affordable enrichment skipped:', affordableError);
+                }
+            }
+
+            const rankedEmails = discoveredEmails
+                .filter((item) => item.email.includes('@'))
+                .sort((a, b) => {
+                    if (a.verified !== b.verified) return a.verified ? -1 : 1;
+                    return b.confidence - a.confidence;
+                });
+            const primaryEmail = uniqueStrings([lead.email, rankedEmails[0]?.email])[0] || undefined;
+            const primaryPhone = uniqueStrings([lead.phone, ...phoneCandidates])[0] || undefined;
+            const mergedMetadata = {
+                ...existingMetadata,
+                enrichment: {
+                    ...(coerceMetadata(existingMetadata.enrichment)),
+                    lastEnrichedAt: new Date().toISOString(),
+                    domain,
+                    sources: uniqueStrings([...(Array.isArray(existingMetadata.enrichment?.sources) ? existingMetadata.enrichment.sources : []), ...enrichmentSources]),
+                    discoveredEmails: rankedEmails.slice(0, 10),
+                    discoveredPhones: uniqueStrings(phoneCandidates).slice(0, 5),
+                    socialLinks,
+                    techStack: uniqueStrings(techStack).slice(0, 20),
+                }
+            };
+
+            // Use DeepSeek for AI enrichment if available
+            let intelligence: string;
+            try {
+                const deepSeekKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY;
+                
+                if (deepSeekKey) {
+                    const { callDeepSeek } = await import('@/lib/ai/deepseek');
+                    const prompt = `Analyze this business lead and provide strategic insights:
+Business Name: ${lead.business_name || lead.name}
+Industry: ${lead.industry || 'Unknown'}
+Location: ${lead.location || lead.city || 'Unknown'}
+Website: ${lead.website || 'N/A'}
+Known Emails: ${uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5).join(', ') || 'None'}
+Social Links: ${Object.keys(socialLinks).join(', ') || 'None'}
+Tech Stack: ${uniqueStrings(techStack).slice(0, 20).join(', ') || 'Unknown'}
+
+Provide:
+1. Business overview and likely size
+2. Key pain points they might face
+3. Recommended outreach angle
+4. Technology opportunities
+5. Risk factors to consider
+
+Write in plain professional text. No markdown.`;
+
+                    intelligence = await callDeepSeek(prompt, {
+                        model: 'deepseek-chat',
+                        temperature: 0.5,
+                        maxTokens: 1024,
+                    });
+                } else {
+                    const { enrichLeadData } = await import('./unifiedAIService');
+                    intelligence = await enrichLeadData({
+                        businessName: lead.business_name || lead.name,
+                        industry: lead.industry,
+                        location: lead.location || lead.city,
+                        website: lead.website,
+                        knownEmails: uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5),
+                        socialLinks,
+                        techStack: uniqueStrings(techStack).slice(0, 20)
+                    });
+                }
+            } catch {
+                const { enrichLeadData } = await import('./unifiedAIService');
+                intelligence = await enrichLeadData({
+                    businessName: lead.business_name || lead.name,
+                    industry: lead.industry,
+                    location: lead.location || lead.city,
+                    website: lead.website,
+                    knownEmails: uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5),
+                    socialLinks,
+                    techStack: uniqueStrings(techStack).slice(0, 20)
+                });
+            }
+
+            const updatePayload: Record<string, unknown> = {
+                notes: intelligence,
+                email: primaryEmail,
+                phone: primaryPhone,
+                social_links: socialLinks,
+                tech_stack: uniqueStrings(techStack).slice(0, 20),
+                value_proposition: lead.value_proposition || deriveValueProposition({
+                    industry: lead.industry,
+                    website: lead.website,
+                    socialLinks,
+                    techStack
+                }),
+                is_verified: Boolean(primaryEmail || primaryPhone),
+                trust_score: buildTrustScore({
+                    email: primaryEmail,
+                    phone: primaryPhone,
+                    website: lead.website,
+                    socialLinks,
+                    techStack,
+                    verifiedEmailCount: rankedEmails.filter((item) => item.verified).length
+                }),
+                verification_notes: uniqueStrings([
+                    lead.verification_notes,
+                    ...verificationNotes,
+                    rankedEmails[0] ? `Top email candidate: ${rankedEmails[0].email} via ${rankedEmails[0].source}` : ''
+                ]).join(' | '),
+                metadata: mergedMetadata,
+                sdr_insight: intelligence.split('\n').map((line: string) => line.trim()).find(Boolean) || lead.sdr_insight || null
+            };
+
+            let { error: updateError } = await supabase
                 .from('leads')
-                .update({ notes: intelligence })
+                .update(updatePayload)
                 .eq('id', id);
+
+            if (updateError && /social_links/i.test(updateError.message || '')) {
+                delete updatePayload.social_links;
+                const retry = await supabase.from('leads').update(updatePayload).eq('id', id);
+                updateError = retry.error;
+            }
+            if (updateError && /metadata/i.test(updateError.message || '')) {
+                delete updatePayload.metadata;
+                const retry = await supabase.from('leads').update(updatePayload).eq('id', id);
+                updateError = retry.error;
+            }
             if (updateError) throw updateError;
 
-            await this.addLeadActivity(id, userId, 'enrichment', 'AI Intelligence Gathering Completed');
+            await this.addLeadActivity(id, userId, 'enrichment', 'Lead enrichment completed', {
+                sources: enrichmentSources,
+                discoveredEmailCount: rankedEmails.length,
+                discoveredPhoneCount: uniqueStrings(phoneCandidates).length,
+                socialLinkCount: Object.keys(socialLinks).length,
+                techStackCount: uniqueStrings(techStack).length,
+            });
 
             return { notes: intelligence, error: null };
         } catch (err: any) {
@@ -563,13 +977,25 @@ export const leadService = {
     async getRelatedDeals(leadId: string): Promise<{ data: any[]; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            
-            // Get deals where contact was created from this lead
+
+            // PostgREST filters do not accept SQL subqueries. Resolve the
+            // converted client first, then use literal UUID filters only.
+            const { data: lead, error: leadError } = await supabase
+                .from('leads')
+                .select('client_id')
+                .eq('tenant_id', tenantId)
+                .eq('id', leadId)
+                .maybeSingle();
+            if (leadError) throw leadError;
+
+            const filters = [`metadata->>originalLeadId.eq.${leadId}`];
+            if (lead?.client_id) filters.push(`contact_id.eq.${lead.client_id}`);
+
             const { data: deals, error } = await supabase
                 .from('deals')
                 .select('*')
                 .eq('tenant_id', tenantId)
-                .or(`metadata->>originalLeadId.eq.${leadId},contact_id.in.(SELECT client_id FROM leads WHERE id = '${leadId}')`)
+                .or(filters.join(','))
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -667,6 +1093,107 @@ export const leadService = {
         } catch (err: any) {
             console.error('Error deleting growth agent target:', err);
             return { error: err.message };
+        }
+    },
+
+    async previewBatchOutreach(options: {
+        leadIds: string[];
+        source?: 'leads' | 'clients';
+    }): Promise<{
+        success: boolean;
+        error: string | null;
+        recipients?: Array<{ id: string; kind: 'lead' | 'client'; name: string; email: string }>;
+        excluded?: Array<{ id: string; kind: 'lead' | 'client'; name: string; reason: string }>;
+    }> {
+        try {
+            const tenantId = this.getTenantId();
+            const recipientIds = [...new Set(options.leadIds)];
+            if (!recipientIds.length) throw new Error('No recipients selected');
+            if (recipientIds.length > 120) {
+                throw new Error('Batch outreach is limited to 120 recipients. Split the selection into smaller reviewed batches.');
+            }
+            const response = await fetch('/api/outreach/batch-review', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    leadIds: options.source === 'clients' ? [] : recipientIds,
+                    clientIds: options.source === 'clients' ? recipientIds : [],
+                    preview: true,
+                }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success !== true) {
+                throw new Error(data.error || 'Unable to review recipients');
+            }
+            return {
+                success: true,
+                error: null,
+                recipients: Array.isArray(data.recipients) ? data.recipients : [],
+                excluded: Array.isArray(data.excluded) ? data.excluded : [],
+            };
+        } catch (err: any) {
+            console.error('Error in previewBatchOutreach:', err);
+            return { success: false, error: err.message };
+        }
+    },
+
+    /**
+     * Review and queue batch outreach. This browser method never sends email:
+     * final delivery can only occur through the server-side queue worker after
+     * the recipient preflight, consent, suppression, and audit checks succeed.
+     */
+    async sendBatchOutreach(options: {
+        leadIds: string[];
+        tone: string;
+        customContext: string;
+        deliveryProvider?: string;
+        source?: 'leads' | 'clients';
+        finalApproval?: boolean;
+    }): Promise<{ success: boolean; error: string | null; sent?: number; total?: number; skipped?: number; batchId?: string }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Authentication required');
+
+            const recipientIds = [...new Set(options.leadIds)];
+            if (!recipientIds.length) throw new Error('No recipients selected');
+            if (recipientIds.length > 120) {
+                throw new Error('Batch outreach is limited to 120 recipients. Split the selection into smaller reviewed batches.');
+            }
+            if (options.finalApproval !== true) {
+                throw new Error('Review the recipients and confirm final approval before scheduling outreach.');
+            }
+
+            const response = await fetch('/api/outreach/batch-review', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    leadIds: options.source === 'clients' ? [] : recipientIds,
+                    clientIds: options.source === 'clients' ? recipientIds : [],
+                    tone: options.tone,
+                    customContext: options.customContext,
+                    deliveryProvider: options.deliveryProvider || 'zoho',
+                    finalConfirmation: true,
+                }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success !== true) {
+                throw new Error(data.error || 'Unable to review and queue batch outreach');
+            }
+
+            return {
+                success: true,
+                error: null,
+                sent: 0,
+                total: Number(data.recipientCount || 0),
+                skipped: Array.isArray(data.excluded) ? data.excluded.length : 0,
+                batchId: typeof data.batchId === 'string' ? data.batchId : undefined,
+            };
+        } catch (err: any) {
+            console.error('Error in sendBatchOutreach:', err);
+            return { success: false, error: err.message };
         }
     }
 };

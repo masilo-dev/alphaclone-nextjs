@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { denyUnlessInternalApiKey } from '@/lib/security/productionGuard';
 
 const INDEXNOW_KEY = process.env.INDEXNOW_KEY;
-const BASE_URL = 'https://alphaclone.tech';
+const BASE_URL = 'https://alphaclonesystems.com';
 
 // IndexNow protocol — real-time notification to Bing and AI search partners
 // POST with JSON body: { urls: string[] }
 // Notifies search engines of new or updated content immediately
 export async function POST(request: NextRequest) {
     try {
+        const denied = denyUnlessInternalApiKey(request);
+        if (denied) return denied;
         if (!INDEXNOW_KEY) {
             return NextResponse.json({ error: 'INDEXNOW_KEY is not configured' }, { status: 500 });
         }
@@ -20,7 +23,7 @@ export async function POST(request: NextRequest) {
         }
 
         const payload = {
-            host: 'alphaclone.tech',
+            host: 'alphaclonesystems.com',
             key: INDEXNOW_KEY,
             keyLocation: `${BASE_URL}/${INDEXNOW_KEY}.txt`,
             urlList: urls,
@@ -55,7 +58,9 @@ export async function POST(request: NextRequest) {
 }
 
 // GET handler — ping all core marketing pages
-export async function GET() {
+export async function GET(request: NextRequest) {
+    const denied = denyUnlessInternalApiKey(request);
+    if (denied) return denied;
     if (!INDEXNOW_KEY) {
         return NextResponse.json({ error: 'INDEXNOW_KEY is not configured' }, { status: 500 });
     }
@@ -74,7 +79,7 @@ export async function GET() {
     ];
 
     const payload = {
-        host: 'alphaclone.tech',
+        host: 'alphaclonesystems.com',
         key: INDEXNOW_KEY,
         keyLocation: `${BASE_URL}/${INDEXNOW_KEY}.txt`,
         urlList: coreUrls,

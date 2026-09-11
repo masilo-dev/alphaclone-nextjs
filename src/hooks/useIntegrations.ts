@@ -25,7 +25,9 @@ export function useIntegrations(): UseIntegrationsReturn {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await integrationService.getIntegrationsForTenant(currentTenant?.id ?? '');
+      const data = await integrationService.getIntegrationsForTenant(
+        currentTenant?.id ?? ''
+      );
       setIntegrations(data);
     } catch (err) {
       console.error('[useIntegrations] load failed:', err);
@@ -48,7 +50,7 @@ export function useIntegrations(): UseIntegrationsReturn {
       const result: ConnectResult = await integrationService.connect(
         currentTenant.id,
         integrationId,
-        '' // userId not available here; service handles gracefully
+        ''
       );
 
       if (!result.success) {
@@ -57,8 +59,17 @@ export function useIntegrations(): UseIntegrationsReturn {
       }
 
       if (result.redirectUrl) {
+        const url = result.redirectUrl;
+        const isInternal = url.startsWith('/') && !url.startsWith('//');
+        if (isInternal) {
+          toast.success('Opening setup…');
+          setTimeout(() => {
+            window.location.assign(url);
+          }, 400);
+          return;
+        }
         toast.success('Redirecting to authorization…');
-        setTimeout(() => window.open(result.redirectUrl, '_blank'), 800);
+        setTimeout(() => window.open(url, '_blank'), 800);
         return;
       }
 
@@ -73,7 +84,10 @@ export function useIntegrations(): UseIntegrationsReturn {
     if (!currentTenant?.id) return;
     const toastId = toast.loading('Disconnecting…');
     try {
-      const result = await integrationService.disconnect(currentTenant.id, integrationId);
+      const result = await integrationService.disconnect(
+        currentTenant.id,
+        integrationId
+      );
       if (!result.success) {
         toast.error(result.error ?? 'Failed to disconnect', { id: toastId });
         return;

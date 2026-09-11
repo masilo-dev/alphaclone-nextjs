@@ -1,47 +1,84 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { businessInvoiceService, BusinessInvoice } from '@/services/businessInvoiceService';
-import { Card, Button, Badge } from '@/components/ui/UIComponents';
-import { FileText, CreditCard, Calendar, Download, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import jsPDF from 'jspdf';
+import React, { Suspense, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useParams, useSearchParams } from 'next/navigation';
+import { Card, Button } from '@/components/ui/UIComponents';
+import { FileText, CreditCard, Download, ShieldCheck, CheckCircle2, Building2 } from 'lucide-react';
+import InvoiceStatusPipeline, { InvoiceStatus } from '@/components/invoice/InvoiceStatusPipeline';
+import type { TenantBranding } from '@/lib/tenantBranding';
 
-export default function PublicInvoicePage() {
+function PublicInvoiceContent() {
     const params = useParams();
+    const searchParams = useSearchParams();
     const invoiceId = params?.id as string;
+    const publicToken = searchParams?.get('token') || '';
+    const paymentResult = searchParams?.get('payment');
     const [invoice, setInvoice] = useState<any | null>(null);
+    const [branding, setBranding] = useState<TenantBranding>({ name: 'Your Business' });
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
+    const [confirmingBank, setConfirmingBank] = useState(false);
+    const [bankReference, setBankReference] = useState('');
+    const [bankNote, setBankNote] = useState('');
+    const [payerName, setPayerName] = useState('');
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (invoiceId) {
             loadInvoice();
         }
-    }, [invoiceId]);
+    }, [invoiceId, publicToken]);
+
+    // Fire read receipt silently on mount (web portal view)
+    useEffect(() => {
+        if (invoiceId && publicToken) {
+            fetch(`/api/invoices/${invoiceId}/view?token=${encodeURIComponent(publicToken)}`).catch(() => {});
+        }
+    }, [invoiceId, publicToken]);
+
+    useEffect(() => {
+        if (paymentResult === 'success') {
+            toast.success('Payment received — thank you!');
+        }
+    }, [paymentResult]);
 
     const loadInvoice = async () => {
         try {
-            const { invoice, error } = await businessInvoiceService.getInvoiceWithDetails(invoiceId);
-            if (error) {
-                setError(error);
-            } else if (invoice && !invoice.is_public) {
-                setError('This invoice is not authorized for public viewing.');
+            const qs = new URLSearchParams({ id: invoiceId });
+            if (publicToken) qs.set('token', publicToken);
+            const response = await fetch(`/api/invoices/public?${qs.toString()}`, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok || !payload.invoice) {
+                setError(payload.error || 'Invoice not found');
             } else {
-                setInvoice(invoice);
+                setInvoice(payload.invoice);
+                setBranding(payload.branding || { name: 'Your Business' });
             }
-        } catch (err) {
+        } catch {
             setError('Failed to load invoice details');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDownloadPDF = () => {
+    const handleDownloadPDF = async () => {
         if (!invoice) return;
-        const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
-        doc.save(`invoice-${invoice.invoice_number || invoice.invoiceNumber}.pdf`);
+        try {
+            const response = await fetch(`/api/pdf/invoice/${invoice.id}`);
+            if (!response.ok) throw new Error('Failed to generate PDF');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `${invoice.invoice_number || invoice.invoiceNumber}.pdf`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(url);
+        } catch (error: any) {
+            toast.error(error.message || 'Unable to download PDF');
+        }
     };
 
     const handlePayment = async () => {
@@ -52,6 +89,7 @@ export default function PublicInvoicePage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     invoiceId: invoice.id,
+                    publicToken: invoice.publicToken || publicToken || undefined,
                 }),
             });
 
@@ -63,8 +101,38 @@ export default function PublicInvoicePage() {
             }
         } catch (error: any) {
             console.error('Payment Error:', error);
-            alert(error.message || 'Payment service unavailable');
+            toast.error(error.message || 'Payment service unavailable');
             setProcessing(false);
+        }
+    };
+
+    const handleBankConfirm = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const token = invoice.publicToken || publicToken;
+        if (!token) {
+            toast.error('Invalid invoice link');
+            return;
+        }
+        setConfirmingBank(true);
+        try {
+            const res = await fetch('/api/invoices/confirm-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token,
+                    reference: bankReference.trim(),
+                    note: bankNote.trim(),
+                    payerName: payerName.trim() || invoice.clientName,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed');
+            toast.success('Payment confirmation sent to your provider');
+            setInvoice((prev: any) => prev ? { ...prev, paymentPendingConfirmation: true } : prev);
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to submit confirmation');
+        } finally {
+            setConfirmingBank(false);
         }
     };
 
@@ -91,48 +159,84 @@ export default function PublicInvoicePage() {
         );
     }
 
+    const normalizedItems = (invoice.lineItems || []).map((item: any) => {
+        const quantity = Number(item?.quantity || 0);
+        const rate = Number(item?.unit_price || item?.rate || 0);
+        const amount = Number(item?.line_total ?? quantity * rate);
+        return {
+            description: item?.description || '',
+            quantity,
+            rate,
+            amount,
+        };
+    });
+    const subtotal = Math.round(normalizedItems.reduce((sum: number, item: any) => sum + item.amount, 0) * 100) / 100;
+    const discount = Number(invoice.discount_amount ?? invoice.discountAmount ?? 0);
+    const taxRate = Number(invoice.tax_rate ?? invoice.taxRate ?? 0);
+    const taxAmount = Math.round(Math.max(0, subtotal - discount) * (taxRate / 100) * 100) / 100;
+    const total = Number(invoice.total ?? 0) || Math.round(((subtotal - discount) + taxAmount) * 100) / 100;
     const isPaid = invoice.status === 'paid';
+    const pendingBank = invoice.paymentPendingConfirmation;
+    const bankDetails = String(invoice.bankDetails || '').trim();
+    const mobilePaymentDetails = String(invoice.mobilePaymentDetails || '').trim();
+    const hasManualPaymentDetails = Boolean(bankDetails || mobilePaymentDetails);
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white p-6 md:p-12 font-sans selection:bg-teal-500/30">
+        <div className="min-h-screen overflow-x-hidden bg-slate-950 text-white p-3 sm:p-6 md:p-12 font-sans selection:bg-teal-500/30">
             {/* Ambient Background */}
             <div className="fixed inset-0 pointer-events-none opacity-20">
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/20 blur-[150px] rounded-full"></div>
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 blur-[150px] rounded-full"></div>
             </div>
 
-            <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-8 relative z-10">
+            <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-6 sm:gap-8 relative z-10">
                 {/* Left: Invoice Details */}
-                <div className="md:col-span-3 space-y-6">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-16 h-16 bg-white flex items-center justify-center rounded-2xl shadow-xl shadow-white/5">
-                            <span className="text-black font-black text-2xl">A</span>
-                        </div>
-                        <div>
-                            <h1 className="text-3xl font-bold tracking-tight">AlphaClone Systems</h1>
-                            <p className="text-slate-500 text-sm font-mono">FINANCIAL SETTLEMENT PORTAL</p>
+                <div className="md:col-span-3 space-y-6 order-1">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
+                        {branding.logoUrl ? (
+                            <img src={branding.logoUrl} alt="" className="h-12 sm:h-16 w-auto object-contain rounded-xl" />
+                        ) : (
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white flex items-center justify-center rounded-2xl shadow-xl shadow-white/5 shrink-0">
+                                <span className="text-black font-black text-xl sm:text-2xl">{branding.name.charAt(0)}</span>
+                            </div>
+                        )}
+                        <div className="min-w-0">
+                            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate">{branding.name}</h1>
+                            <p className="text-slate-500 text-xs sm:text-sm font-mono">INVOICE & PAYMENT</p>
                         </div>
                     </div>
 
-                    <Card className="p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
-                        <div className="flex justify-between items-start mb-12">
-                            <div>
+                    {/* Status Pipeline */}
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">Invoice Status</p>
+                        <InvoiceStatusPipeline
+                            status={(invoice.status || 'draft') as InvoiceStatus}
+                            timestamps={{
+                                created_at: invoice.created_at,
+                                sent_at: invoice.sent_at,
+                                viewed_at: invoice.viewed_at,
+                                paid_at: invoice.paid_at,
+                                disputed_at: invoice.disputed_at,
+                            }}
+                        />
+                    </div>
+
+                    <Card className="p-4 sm:p-8 border-slate-800 bg-slate-900/50 backdrop-blur-xl">
+                        <div className="flex flex-wrap justify-between items-start gap-3 mb-8 sm:mb-12">
+                            <div className="min-w-0">
                                 <p className="text-slate-500 text-xs uppercase tracking-widest font-bold mb-1">Invoice Reference</p>
-                                <h2 className="text-3xl font-mono font-bold text-white">{invoice.invoice_number || invoice.invoiceNumber}</h2>
+                                <h2 className="text-2xl sm:text-3xl font-mono font-bold text-white break-all">{invoice.invoiceNumber}</h2>
                             </div>
-                            <Badge variant={isPaid ? 'success' : 'neutral'} className="px-4 py-1.5 text-sm uppercase">
-                                {invoice.status}
-                            </Badge>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-8 mb-12">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-8 mb-8 sm:mb-12">
                             <div>
                                 <p className="text-slate-500 text-xs uppercase font-bold mb-2">Issue Date</p>
-                                <p className="text-lg font-medium">{new Date(invoice.issue_date || invoice.issueDate).toLocaleDateString()}</p>
+                                <p className="text-lg font-medium">{new Date(invoice.issueDate).toLocaleDateString()}</p>
                             </div>
                             <div>
                                 <p className="text-slate-500 text-xs uppercase font-bold mb-2">Due Date</p>
-                                <p className="text-lg font-medium text-teal-400">{new Date(invoice.due_date || invoice.dueDate).toLocaleDateString()}</p>
+                                <p className="text-lg font-medium text-teal-400">{new Date(invoice.dueDate).toLocaleDateString()}</p>
                             </div>
                         </div>
 
@@ -140,13 +244,13 @@ export default function PublicInvoicePage() {
                         <div className="space-y-4 border-t border-white/5 pt-8">
                             <p className="text-slate-500 text-xs uppercase font-bold mb-4">Billing Summary</p>
                             <div className="space-y-3">
-                                {(invoice.line_items || invoice.lineItems || []).map((item: any, idx: number) => (
-                                    <div key={idx} className="flex justify-between items-center bg-slate-950/30 p-4 rounded-xl border border-white/5">
-                                        <div>
-                                            <p className="font-semibold text-slate-200">{item.description}</p>
+                                {normalizedItems.map((item: any, idx: number) => (
+                                    <div key={idx} className="flex justify-between items-center gap-3 bg-slate-950/30 p-4 rounded-xl border border-white/5">
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-slate-200 break-words">{item.description}</p>
                                             <p className="text-xs text-slate-500">Qty: {item.quantity} &times; ${item.rate.toFixed(2)}</p>
                                         </div>
-                                        <p className="font-mono font-bold text-teal-400">${item.amount.toLocaleString()}</p>
+                                        <p className="font-mono font-bold text-teal-400 shrink-0">${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                     </div>
                                 ))}
                             </div>
@@ -156,48 +260,57 @@ export default function PublicInvoicePage() {
                         <div className="mt-8 pt-8 border-t border-white/5 space-y-3">
                             <div className="flex justify-between text-slate-400">
                                 <span>Subtotal</span>
-                                <span className="font-mono">${invoice.subtotal.toLocaleString()}</span>
+                                <span className="font-mono">${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                             <div className="flex justify-between text-slate-400">
-                                <span>Tax (0%)</span>
-                                <span className="font-mono">$0.00</span>
+                                <span>Tax ({taxRate}%)</span>
+                                <span className="font-mono">${taxAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
-                            <div className="flex justify-between items-center text-white pt-4">
-                                <span className="text-xl font-bold">Total Amount Due</span>
-                                <span className="text-4xl font-mono font-black text-teal-500">${invoice.total.toLocaleString()}</span>
+                            {discount > 0 && (
+                                <div className="flex justify-between text-slate-400">
+                                    <span>Discount</span>
+                                    <span className="font-mono">-${discount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            )}
+                            <div className="flex flex-wrap justify-between items-center gap-2 text-white pt-4">
+                                <span className="text-lg sm:text-xl font-bold">Total Amount Due</span>
+                                <span className="text-3xl sm:text-4xl font-mono font-black text-teal-500 break-all">${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                     </Card>
 
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
                         <Button variant="outline" className="flex-1 gap-2 border-slate-800 bg-slate-900/50" onClick={handleDownloadPDF}>
-                            <Download className="w-4 h-4" /> Download Statement
-                        </Button>
-                        <Button variant="outline" className="flex-1 gap-2 border-slate-800 bg-slate-900/50">
-                            <FileText className="w-4 h-4" /> Print Receipt
+                            <Download className="w-4 h-4" /> Download PDF
                         </Button>
                     </div>
                 </div>
 
                 {/* Right: Payment Sidebar */}
-                <div className="md:col-span-2 space-y-6">
-                    <div className="sticky top-12">
+                <div className="md:col-span-2 space-y-6 order-2">
+                    <div className="md:sticky md:top-12">
                         {isPaid ? (
-                            <Card className="p-8 border-teal-500/30 bg-teal-500/10 text-center space-y-6">
+                            <Card className="p-5 sm:p-8 border-teal-500/30 bg-teal-500/10 text-center space-y-6">
                                 <div className="w-20 h-20 bg-teal-500 rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(20,184,166,0.5)]">
                                     <CheckCircle2 className="w-12 h-12 text-white" />
                                 </div>
                                 <h3 className="text-2xl font-bold">Payment Confirmed</h3>
                                 <p className="text-slate-400 text-sm leading-relaxed">
-                                    Thank you for your business. Your payment for {invoice.invoice_number || invoice.invoiceNumber} has been successfully processed and verified on the blockchain.
+                                    Thank you for your business. Your payment for {invoice.invoiceNumber} has been successfully processed and verified.
                                 </p>
                                 <div className="pt-4 mt-4 border-t border-teal-500/20">
                                     <p className="text-xs text-teal-500 font-mono uppercase tracking-widest">Transaction Verified</p>
                                 </div>
                             </Card>
+                        ) : pendingBank ? (
+                            <Card className="p-6 sm:p-8 border-amber-500/30 bg-amber-500/10 text-center space-y-4">
+                                <Building2 className="w-10 h-10 text-amber-400 mx-auto" />
+                                <h3 className="text-xl font-bold">Payment submitted</h3>
+                                <p className="text-slate-400 text-sm">Your bank transfer confirmation was sent. The team will verify and mark this invoice paid.</p>
+                            </Card>
                         ) : (
                             <div className="space-y-6">
-                                <Card className="p-8 border-slate-800 bg-slate-900 shadow-2xl space-y-8">
+                                <Card className="p-5 sm:p-8 border-slate-800 bg-slate-900 shadow-2xl space-y-7">
                                     <div className="text-center">
                                         <h3 className="text-xl font-bold mb-2">Checkout Securely</h3>
                                         <p className="text-slate-500 text-xs uppercase tracking-widest flex items-center justify-center gap-2">
@@ -228,9 +341,47 @@ export default function PublicInvoicePage() {
                                                     <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
                                                     Processing...
                                                 </span>
-                                            ) : `Pay $${invoice.total.toLocaleString()} Now`}
+                                            ) : `Pay $${total.toLocaleString()} Now`}
                                         </button>
                                     </div>
+
+                                    {hasManualPaymentDetails && (
+                                        <Card className="p-5 border-slate-800 bg-slate-950/50 space-y-4">
+                                            <p className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                                                <Building2 className="w-4 h-4" /> Alternative payment details
+                                            </p>
+                                            {bankDetails && (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs uppercase tracking-widest text-slate-500">Bank transfer</p>
+                                                    <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3 text-sm text-slate-200 whitespace-pre-wrap break-words">
+                                                        {bankDetails}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {mobilePaymentDetails && (
+                                                <div className="space-y-1">
+                                                    <p className="text-xs uppercase tracking-widest text-slate-500">Mobile payment</p>
+                                                    <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3 text-sm text-slate-200 whitespace-pre-wrap break-words">
+                                                        {mobilePaymentDetails}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </Card>
+                                    )}
+
+                                    <Card className="p-5 border-slate-800 bg-slate-950/50 space-y-3">
+                                        <p className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                                            <Building2 className="w-4 h-4" /> Paid by bank transfer?
+                                        </p>
+                                        <form onSubmit={handleBankConfirm} className="space-y-2">
+                                            <input value={payerName} onChange={(e) => setPayerName(e.target.value)} placeholder="Your name" className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white" />
+                                            <input value={bankReference} onChange={(e) => setBankReference(e.target.value)} placeholder="Payment reference / transaction ID" required className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white" />
+                                            <textarea value={bankNote} onChange={(e) => setBankNote(e.target.value)} placeholder="Optional note" rows={2} className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white resize-none" />
+                                            <button type="submit" disabled={confirmingBank} className="w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-bold text-white disabled:opacity-50">
+                                                {confirmingBank ? 'Submitting…' : 'Confirm payment sent'}
+                                            </button>
+                                        </form>
+                                    </Card>
 
                                     <div className="flex items-center justify-center gap-4 opacity-30">
                                         <span className="text-xs">VISA</span>
@@ -242,7 +393,7 @@ export default function PublicInvoicePage() {
 
                                 <div className="p-6 bg-slate-900/30 border border-slate-900 rounded-2xl">
                                     <p className="text-slate-500 text-xs italic text-center">
-                                        By clicking &apos;Pay Now&apos;, you agree to AlphaClone&apos;s standard Terms of Service and Refund Policy.
+                                        By paying, you agree to {branding.name}&apos;s terms of service.
                                     </p>
                                 </div>
                             </div>
@@ -252,16 +403,24 @@ export default function PublicInvoicePage() {
             </div>
 
             {/* Global Footer */}
-            <div className="max-w-5xl mx-auto mt-24 pt-12 border-t border-slate-900 flex flex-col items-center gap-8 text-slate-600">
-                <div className="flex items-center gap-4 font-mono text-xs uppercase tracking-widest">
+            <div className="max-w-5xl mx-auto mt-12 sm:mt-24 pt-12 border-t border-slate-900 flex flex-col items-center gap-8 text-slate-600">
+                <div className="flex flex-wrap justify-center text-center items-center gap-3 sm:gap-4 font-mono text-xs uppercase tracking-widest">
                     <span>AlphaClone Core</span>
                     <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
-                    <span>Finance Engine v2.0</span>
+                    <span>Finance Engine v3.0</span>
                     <span className="w-1 h-1 bg-slate-800 rounded-full"></span>
                     <span>GDPR Compliant</span>
                 </div>
-                <p className="text-xs">&copy; {new Date().getFullYear()} AlphaClone. Dynamic Systems for Professional Operations.</p>
+                <p className="text-xs">&copy; {new Date().getFullYear()} {branding.name}</p>
             </div>
         </div>
+    );
+}
+
+export default function PublicInvoicePage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Loading invoice…</div>}>
+            <PublicInvoiceContent />
+        </Suspense>
     );
 }

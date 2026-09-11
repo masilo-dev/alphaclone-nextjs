@@ -1,42 +1,11 @@
 import { MetadataRoute } from 'next';
 import { getPublishedSeoArticles } from '@/services/seoServerService';
+import { SITE_URL } from '@/lib/siteUrl';
+import { STATIC_SITEMAP } from '@/lib/seo/sitemapData';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = 'https://alphaclone.tech'; // Updated domain
-
-    // 1. Static Marketing Routes
-    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/pricing', '/contact', '/tools/ai-architect', '/auth/login'].map((route) => ({
-        url: `${baseUrl}${route}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: route === '' ? 1.0 : (route === '/auth/login' || route === '/tools/ai-architect') ? 0.8 : 0.9,
-    }));
-
-    const standardRoutes = [
-        '/ecosystem',
-        '/who-we-serve',
-        '/blog',
-    ].map((route) => ({
-        url: `${baseUrl}${route}`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly' as const,
-        priority: 0.7,
-    }));
-
-    const legalRoutes = [
-        '/privacy-policy',
-        '/terms-of-service',
-        '/cookie-policy',
-    ].map((route) => ({
-        url: `${baseUrl}${route}`,
-        lastModified: new Date('2026-01-01'),
-        changeFrequency: 'yearly' as const,
-        priority: 0.3,
-    }));
-
-    const staticRoutes = [...highPriorityRoutes, ...standardRoutes, ...legalRoutes];
-
-    // 2. Dynamic Blog Routes
+    const baseUrl = SITE_URL;
+    // Dynamic blog routes keep their real publication/update timestamps.
     let blogRoutes: MetadataRoute.Sitemap = [];
     try {
         const articles = await getPublishedSeoArticles();
@@ -50,5 +19,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         console.error('Failed to generate blog sitemap:', error);
     }
 
-    return [...staticRoutes, ...blogRoutes];
+    return [...STATIC_SITEMAP, ...blogRoutes];
 }

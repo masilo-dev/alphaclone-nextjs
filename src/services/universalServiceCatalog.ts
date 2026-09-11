@@ -13,6 +13,34 @@ export interface ServiceItem {
     stages: string[];
 }
 
+/**
+ * All individual service names from the catalog (50+), sorted for dropdowns.
+ * Used by the contract generator and aligned with Settings → service sectors.
+ */
+export function getContractProjectTypeOptions(): string[] {
+    const names = new Set<string>();
+    for (const cat of UNIVERSAL_SERVICE_CATALOG) {
+        for (const s of cat.services) {
+            names.add(s.name);
+        }
+    }
+    names.add('Other (describe fully in scope below)');
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+}
+
+/** Service line items belonging to tenant-selected sector categories (Settings). */
+export function getPreferredContractProjectTypes(serviceSectorCategoryNames: string[]): string[] {
+    if (!serviceSectorCategoryNames?.length) return [];
+    const wanted = new Set(serviceSectorCategoryNames.map(s => s.trim()).filter(Boolean));
+    const preferred: string[] = [];
+    for (const cat of UNIVERSAL_SERVICE_CATALOG) {
+        if (wanted.has(cat.name)) {
+            for (const s of cat.services) preferred.push(s.name);
+        }
+    }
+    return preferred;
+}
+
 export const UNIVERSAL_SERVICE_CATALOG: ServiceCategory[] = [
     {
         name: 'Creative & Design',

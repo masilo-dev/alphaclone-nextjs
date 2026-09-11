@@ -17,7 +17,7 @@
 export function getVideoMeetingUrl(roomId: string, useProxy: boolean = true): string {
     if (useProxy) {
         // Client-facing URL: Uses AlphaClone domain
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.com';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
         return `${baseUrl}/meet/${roomId}`;
     } else {
         // Direct provider URL for internal use only
@@ -46,7 +46,7 @@ function getProviderUrl(roomId: string): string {
  * @returns Branded shareable URL
  */
 export function getShareableMeetingLink(roomId: string, meetingName?: string): string {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.com';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
     const path = meetingName
         ? `/meet/${roomId}?name=${encodeURIComponent(meetingName)}`
         : `/meet/${roomId}`;
@@ -78,17 +78,6 @@ export function extractRoomId(url: string): string | null {
     } catch {
         return null;
     }
-}
-
-/**
- * Generate a demo meeting URL for testing
- * Always uses AlphaClone branding for demos
- *
- * @returns Demo meeting URL
- */
-export function getDemoMeetingUrl(): string {
-    const roomId = `demo-${Math.random().toString(36).substring(7)}`;
-    return getShareableMeetingLink(roomId, 'Demo Meeting');
 }
 
 /**

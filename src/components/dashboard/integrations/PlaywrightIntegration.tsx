@@ -49,6 +49,10 @@ export function PlaywrightIntegration() {
   const checkPlaywrightStatus = async () => {
     try {
       const response = await fetch(`/api/integrations/status?service=playwright&tenant_id=${currentTenant?.id}`);
+      if (!response.ok) {
+        console.warn('Playwright status API not available');
+        return;
+      }
       const data = await response.json();
       
       if (data.playwright) {
@@ -132,9 +136,36 @@ export function PlaywrightIntegration() {
       };
     }
     
+    if (errorMessage.includes('zoho') || errorMessage.includes('Zoho')) {
+      return {
+        title: 'Zoho Mail Error',
+        message: 'There was an issue with the Zoho Mail integration.',
+        suggestion: 'Please check your Zoho Mail connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('outlook') || errorMessage.includes('Outlook') || errorMessage.includes('microsoft')) {
+      return {
+        title: 'Microsoft Outlook Error',
+        message: 'There was an issue with the Microsoft Outlook integration.',
+        suggestion: 'Please check your Outlook connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('gmail') || errorMessage.includes('Gmail') || errorMessage.includes('google')) {
+      return {
+        title: 'Gmail Error',
+        message: 'There was an issue with the Gmail integration.',
+        suggestion: 'Please check your Gmail connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
     if (errorMessage.includes('No leads found') || errorMessage.includes('empty')) {
       return {
-        title: 'No Leads Found',
+        title: 'No Matching Leads',
         message: 'We could not find any business leads on this page.',
         suggestion: 'Try a different page or check if this website contains business information.',
         type: 'info'
@@ -143,7 +174,7 @@ export function PlaywrightIntegration() {
     
     // Default friendly error
     return {
-      title: 'Something Went Wrong',
+      title: 'Lead Discovery Error',
       message: 'We encountered an unexpected issue while finding leads.',
       suggestion: 'Please try again. If this continues, contact our support team.',
       type: 'error'

@@ -12,24 +12,19 @@ export default function ShellSwitcher({ children }: { children: React.ReactNode 
     const { isPWA, isLoading } = usePWA();
     const pathname = usePathname();
 
-    // optimization: Landing page and Booking pages are always "Marketing/Web" mode.
-    // Bypass PWA Loading/Splash screen completely for faster generic user access, 
-    // unless we are specifically in PWA mode (where we want the branded splash).
+    // Landing / booking / meet are always marketing shell — skip PWA splash for faster access.
     if (!isPWA && (pathname === '/' || pathname?.startsWith('/book') || pathname?.startsWith('/meet'))) {
         return <MarketingShell>{children}</MarketingShell>;
     }
 
     if (isLoading) {
-        console.log('[ShellSwitcher] Waiting for PWA status check...');
         return <Splash />;
     }
-
-
-    console.log('[ShellSwitcher] Shell decision:', { isPWA, pathname });
 
     if (isPWA) {
         return <AppShell>{children}</AppShell>;
     }
 
+    // Install banner lives once in root layout (PwaInstallPrompt) — do not mount a second nudge here.
     return <MarketingShell>{children}</MarketingShell>;
 }
