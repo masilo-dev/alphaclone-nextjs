@@ -25,6 +25,10 @@ CREATE TABLE IF NOT EXISTS public.project_client_approvals (
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   correlation_id text,
   idempotency_key text,
+  last_actor_type text NOT NULL DEFAULT 'system',
+  last_actor_user_id uuid,
+  last_actor_name text,
+  last_actor_email text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (tenant_id, public_token)
@@ -105,8 +109,9 @@ BEGIN
       tenant_id, approval_id, project_id, action, actor_type, actor_user_id,
       actor_name, actor_email, approved_version, correlation_id, evidence
     ) VALUES (
-      NEW.tenant_id, NEW.id, NEW.project_id, 'requested', 'system', NEW.requested_by,
-      NEW.requested_from_name, NEW.requested_from_email, NEW.version_label, NEW.correlation_id,
+      NEW.tenant_id, NEW.id, NEW.project_id, 'requested', COALESCE(NEW.last_actor_type, 'system'),
+      COALESCE(NEW.last_actor_user_id, NEW.requested_by), NEW.last_actor_name, NEW.last_actor_email,
+      NEW.version_label, NEW.correlation_id,
       jsonb_build_object('approval_type', NEW.approval_type, 'status', NEW.status)
     );
     RETURN NEW;
@@ -122,11 +127,14 @@ BEGIN
     END;
     IF mapped_action IS NOT NULL THEN
       INSERT INTO public.project_client_approval_history (
-        tenant_id, approval_id, project_id, action, actor_type, approved_version,
-        correlation_id, evidence
+        tenant_id, approval_id, project_id, action, actor_type, actor_user_id,
+        actor_name, actor_email, approved_version, correlation_id, evidence
       ) VALUES (
-        NEW.tenant_id, NEW.id, NEW.project_id, mapped_action, 'system', NEW.version_label,
-        NEW.correlation_id, jsonb_build_object('previous_status', OLD.status, 'new_status', NEW.status)
+        NEW.tenant_id, NEW.id, NEW.project_id, mapped_action,
+        COALESCE(NEW.last_actor_type, 'system'), NEW.last_actor_user_id,
+        NEW.last_actor_name, NEW.last_actor_email, NEW.version_label,
+        NEW.correlation_id,
+        jsonb_build_object('previous_status', OLD.status, 'new_status', NEW.status)
       );
     END IF;
   END IF;
