@@ -396,6 +396,15 @@ export async function sendWhatsAppMessage(params: {
     };
   }
 
+  if (/\{\{[^}]+\}\}/.test(outboundMessage)) {
+    return {
+      success: false,
+      provider: 'meta-whatsapp',
+      code: 'VALIDATION_ERROR',
+      error: 'Blocked: unresolved template variables found in message body',
+    };
+  }
+
   const resolved = await resolveWhatsAppProvider({
     tenantId: params.tenantId,
     integrationId: params.integrationId,

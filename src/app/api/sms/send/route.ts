@@ -22,6 +22,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'to and message are required' }, { status: 400 });
         }
 
+        if (/\{\{[^}]+\}\}/.test(String(message))) {
+            return NextResponse.json({ error: 'Blocked: unresolved template variables found in message' }, { status: 400 });
+        }
+
         if (tenantId) {
             await requireTenantAccess(tenantId);
         }

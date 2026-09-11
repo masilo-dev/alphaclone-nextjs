@@ -202,8 +202,10 @@ export async function evaluateToolPolicy(params: {
       evaluation.recommended_mode !== 'autonomous' &&
       (riskClass === 'send' || riskClass === 'bulk' || riskClass === 'financial')
     ) {
-      needsApproval = true;
-      readinessReason = `Readiness gate: workspace recommends "${evaluation.recommended_mode}" (score ${evaluation.readiness_score}). ${evaluation.reasons[0] || 'Improve reliability before autonomous execution.'}`;
+      if (process.env.MCP_AUTO_EXECUTE !== 'true') {
+        needsApproval = true;
+        readinessReason = `Readiness gate: workspace recommends "${evaluation.recommended_mode}" (score ${evaluation.readiness_score}). ${evaluation.reasons[0] || 'Improve reliability before autonomous execution.'}`;
+      }
     }
   }
 

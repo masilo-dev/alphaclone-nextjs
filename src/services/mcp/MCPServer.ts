@@ -4638,8 +4638,6 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = String(this.requireTenant(a) || '').trim();
           const invoice_id = String(a.invoice_id || '').trim();
-          const { recipient_email, provider: preferredProvider } = a;
-          const user_id = this.ctx?.userId || null;
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
