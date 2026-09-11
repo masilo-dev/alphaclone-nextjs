@@ -1,0 +1,419 @@
+src/app/auth/callback/route.ts:31: .filter(name => name.startsWith('sb-') && name.includes('-auth-token'));
+src/app/auth/callback/route.ts:117: .filter(Boolean)
+src/app/search/page.tsx:40: ? SITE_PAGES.filter((page) =>
+src/components/AIAssistant.tsx:147: .filter(Boolean)
+src/components/Breadcrumbs.tsx:57: const segments = pathname.split('/').filter(Boolean);
+src/components/BulkActions.tsx:26: const selectedItems = items.filter(item => selectedIds.has(item.id));
+src/components/Dashboard.tsx:304: const activeBgTasksCount = (bgTasks || []).filter(t => t.status === 'running').length;
+src/components/Dashboard.tsx:314: : (projects || []).filter(p => p.ownerId === user.id), [user.id, user.role, projects]);
+src/components/Dashboard.tsx:318: : (messages || []).filter(m => m.senderId === user.id || m.recipientId === user.id), [user.id, user.role, messages]);
+src/components/Dashboard.tsx:322: : (invoices || []).filter(i => i.clientId === user.id), [user.id, user.role, invoices]);
+src/components/Dashboard.tsx:367: const myDueRevenue = dashboardStats?.pendingRevenue ?? filteredInvoices.filter(i => i.status === 'Unpaid').reduce((acc: number, curr: Invoice) => acc + curr.amount, 0);
+src/components/Dashboard.tsx:413: const unreadMessageCount = (filteredMessages || []).filter(m =>
+src/components/Dashboard.tsx:510: const count = (users || []).filter(u => u.role === 'client').length;
+src/components/Dashboard.tsx:771: setMessages(prev => prev.filter(m => m.id !== tempId));
+src/components/Dashboard.tsx:799: setMessages(prev => prev.filter(m => m.id !== tempId));
+src/components/Dashboard.tsx:806: setMessages(prev => prev.filter(m => m.id !== tempId));
+src/components/Favorites.tsx:74: setFavorites(favorites.filter(f => f.id !== favoriteId));
+src/components/KeyboardShortcuts.tsx:61: const filteredShortcuts = shortcuts.filter(
+src/components/KeyboardShortcuts.tsx:68: acc[category] = filteredShortcuts.filter(s => s.category === category);
+src/components/PublicNavigation.tsx:97: const primaryMobileItems = navItems.filter((item) =>
+src/components/PublicNavigation.tsx:100: const secondaryMobileItems = navItems.filter((item) => !primaryMobileItems.some((primary) => primary.path === item.path));
+src/components/common/GroupChatManager.tsx:33: ? prev.filter(id => id !== memberId)
+src/components/common/LeadSelector.tsx:34: filteredLeads = data.filter(l => l.stage === 'qualified' || l.status === 'Qualified');
+src/components/common/LeadSelector.tsx:36: filteredLeads = data.filter(l => l.stage === 'lead' || !l.stage);
+src/components/common/LeadSelector.tsx:62: const filteredLeads = leads.filter(lead =>
+src/components/contracts/ContractDashboard.tsx:294: pendingApprovals: approvalsRes.approvals.filter((approval) => approval.status === 'pending').length,
+src/components/contracts/DocumentViewer.tsx:148: setAnnotations(annotations.filter(a => a.id !== id));
+src/components/contracts/DocumentViewer.tsx:270: .filter(anno => anno.pageNumber === pageNo)
+src/components/dashboard/AIAgentsTab.tsx:262: const completedRuns = runs.filter(r => r.status === 'completed' || r.status === 'partial_success');
+src/components/dashboard/AIAgentsTab.tsx:264: ? Math.round((runs.filter(r => r.status === 'completed').length / runs.length) * 100)
+src/components/dashboard/AIAgentsTab.tsx:266: const failures = runs.filter(r => r.status === 'failed').length;
+src/components/dashboard/AIAgentsTab.tsx:267: const pendingApprovalsCount = approvals.filter(a => a.status === 'pending').length;
+src/components/dashboard/AIAgentsTab.tsx:511: {approvals.filter(a => a.status === 'pending').length === 0 ? (
+src/components/dashboard/AIAgentsTab.tsx:519: {approvals.filter(a => a.status === 'pending').map((app) => (
+src/components/dashboard/AIAgentsTab.tsx:923: {runs.filter(r => r.summary?.actions?.some(a => a.key === selectedPlaybook.key)).slice(0, 5).length === 0 ? (
+src/components/dashboard/AIAgentsTab.tsx:930: .filter(r => r.summary?.actions?.some(a => a.key === selectedPlaybook.key))
+src/components/dashboard/AIPredictiveWidget.tsx:77: setInsights(prev => prev.filter(i => i.actionType !== insight.actionType));
+src/components/dashboard/AddExpenseModal.tsx:98: const currentAssets = assetRes.accounts.filter((a: any) =>
+src/components/dashboard/AddExpenseModal.tsx:457: {clients.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+src/components/dashboard/AddExpenseModal.tsx:458: clients.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase())).map(client => (
+src/components/dashboard/ArticleEditor.tsx:285: {articles.filter(a => a.published).length}
+src/components/dashboard/CRMTab.tsx:84: return name.split(' ').filter(Boolean).map(n => n[0] || '').join('').toUpperCase().slice(0, 2) || '?';
+src/components/dashboard/CRMTab.tsx:1022: [contact.givenName, contact.surname].filter(Boolean).join(' ') ||
+src/components/dashboard/CRMTab.tsx:1034: .filter(Boolean)
+src/components/dashboard/CRMTab.tsx:1037: .filter((contact: any) => contact.email);
+src/components/dashboard/CRMTab.tsx:1051: .filter((contact: any) => !existingByEmail.has(contact.email))
+src/components/dashboard/CRMTab.tsx:1065: const updates = normalized.filter((contact: any) => existingByEmail.has(contact.email));
+src/components/dashboard/CRMTab.tsx:1266: const filteredEntities = entities.filter(ent => {
+src/components/dashboard/CRMTab.tsx:1321: const activeClientsCount = (clients || []).filter(c => c.sales_stage === 'customer').length;
+src/components/dashboard/CRMTab.tsx:1322: const totalClientValue = (clients || []).filter(c => c.sales_stage === 'customer').reduce((sum, c) => sum + (c.value || 0), 0);
+src/components/dashboard/CalendarComponent.tsx:129: const unhandledPast = fetchedEvents.filter(e => {
+src/components/dashboard/CalendarComponent.tsx:208: const questions = (newEvent as any).questions?.filter((q: any) => q.text.trim());
+src/components/dashboard/CalendarComponent.tsx:290: const questions = (newEvent as any).questions?.filter((q: any) => q.text.trim());
+src/components/dashboard/CalendarComponent.tsx:1011: const newQs = (newEvent as any).questions.filter((_: any, i: number) => i !== idx);
+src/components/dashboard/CommandPalette.tsx:127: const filteredCommands = commands.filter(cmd =>
+src/components/dashboard/CommandPalette.tsx:182: setRecentCommands((prev) => [cmd.id, ...prev.filter((id) => id !== cmd.id)].slice(0, 5));
+src/components/dashboard/CommandPalette.tsx:298: const catCmds = filteredCommands.filter(c => c.category === category);
+src/components/dashboard/ConferenceTab.tsx:148: const filtered = filter === 'all' ? rooms : rooms.filter(r => r.status === filter);
+src/components/dashboard/ContactSubmissionsTab.tsx:30: : submissions.filter(s => s.status === filter);
+src/components/dashboard/ContactSubmissionsTab.tsx:71: ({submissions.filter(s => s.status === status).length})
+src/components/dashboard/CreateInvoiceModal.tsx:488: {clients.filter(c => c.name?.toLowerCase().includes(searchQuery.toLowerCase())).map(c => (
+src/components/dashboard/CreateInvoiceModal.tsx:554: <button onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))} className="text-slate-500 hover:text-red-400 p-1">
+src/components/dashboard/DealsTab.tsx:168: setProducts(prev => prev.filter(p => p.id !== id));
+src/components/dashboard/DealsTab.tsx:462: acc[s] = deals.filter(d => d.stage === s);
+src/components/dashboard/DealsTab.tsx:475: .filter((deal) => {
+src/components/dashboard/EnhancedCreateInvoiceModal.tsx:247: setLineItems(lineItems.filter((_, i) => i !== index));
+src/components/dashboard/EnhancedCreateInvoiceModal.tsx:273: lineItems: lineItems.filter(item => item.description.trim()),
+src/components/dashboard/EnhancedCreateInvoiceModal.tsx:515: {clients.filter(c =>
+src/components/dashboard/EnhancedCreateInvoiceModal.tsx:521: .filter(c =>
+src/components/dashboard/EnhancedCreateInvoiceModal.tsx:678: .filter(cat => userSectors.length === 0 || userSectors.includes(cat.name))
+src/components/dashboard/EnhancedCreateInvoiceModal.tsx:720: .filter(cat => userSectors.length === 0 || userSectors.includes(cat.name))
+src/components/dashboard/EnhancedCreateInvoiceModal.tsx:961: {lineItems.filter(item => item.description.trim()).map((item, index) => (
+src/components/dashboard/EnhancedInvoiceModal.tsx:165: items: prev.items.filter((_, i) => i !== index)
+src/components/dashboard/EnhancedInvoiceModal.tsx:341: {clients.filter(c =>
+src/components/dashboard/EnhancedInvoiceModal.tsx:347: .filter(c =>
+src/components/dashboard/EnhancedInvoiceModal.tsx:614: paymentMethods: prev.paymentMethods.filter(id => id !== method.id)
+src/components/dashboard/FinanceTab.tsx:264: setInvoices(prev => prev.filter(i => i.id !== id));
+src/components/dashboard/FinanceTab.tsx:278: setExpenses(prev => prev.filter(e => e.id !== id));
+src/components/dashboard/FinanceTab.tsx:311: const filteredInvoices = invoices.filter(i => invFilter === 'all' || i.status === invFilter);
+src/components/dashboard/FinanceTab.tsx:312: const filteredExpenses = expenses.filter(e => expCat === 'All' || e.category.toLowerCase() === expCat.toLowerCase());
+src/components/dashboard/FinanceTab.tsx:315: const thisMonth = expenses.filter(e => e.date && new Date(e.date).getMonth() === new Date().getMonth());
+src/components/dashboard/GamificationTab.tsx:111: <span className="text-[11px] font-bold px-2 py-0.5 bg-slate-800 text-slate-400 rounded-full">{BADGES.filter(b => b.earned).length}/{BADGES.length}</span>
+src/components/dashboard/GlobalSearch.tsx:108: : searchResults.filter(result => result.type === typeFilter);
+src/components/dashboard/HomeTab.tsx:171: {clientInvoices.filter(i => i.status !== 'paid').map(inv => (
+src/components/dashboard/KPICards.tsx:66: .filter((d: any) => d.stage === 'closed_won')
+src/components/dashboard/KPICards.tsx:69: const activeDeals = safeDeals.filter(
+src/components/dashboard/KPICards.tsx:73: const closedWon = safeDeals.filter((d: any) => d.stage === 'closed_won').length;
+src/components/dashboard/KPICards.tsx:74: const closedLost = safeDeals.filter((d: any) => d.stage === 'closed_lost').length;
+src/components/dashboard/Layout/NotificationBell.tsx:56: setUnreadCount(data.filter((n: Notification) => !n.read).length);
+src/components/dashboard/MarketplacePage.tsx:394: const filtered = ITEMS.filter(item => {
+src/components/dashboard/MarketplacePage.tsx:489: {ITEMS.filter(i => i.isMCP).map((item: any) => {
+src/components/dashboard/MeetingsListWidget.tsx:125: const active = meetings.filter(m => m.status === 'active');
+src/components/dashboard/MeetingsListWidget.tsx:126: const past = meetings.filter(m => ['ended', 'cancelled'].includes(m.status));
+src/components/dashboard/MessagesTab.tsx:37: const existing = supabase.getChannels().filter((channel: RealtimeChannel) => channel.topic === topic);
+src/components/dashboard/MessagesTab.tsx:119: const filteredClients = users.filter(u => u.id !== user.id);
+src/components/dashboard/MessagesTab.tsx:340: setUnifiedMessages(prev => [...prev.filter(m => m.id !== newMsg.id), newMsg]);
+src/components/dashboard/MessagesTab.tsx:396: const filtered = unifiedMessages.filter(m => {
+src/components/dashboard/MessagesTab.tsx:403: internal = filteredMessages.filter(m =>
+src/components/dashboard/MessagesTab.tsx:568: setPendingAttachments(prev => [...prev, ...uploaded.filter(Boolean) as any]);
+src/components/dashboard/MessagesTab.tsx:627: const filteredClients = clients.filter(c =>
+src/components/dashboard/MessagesTab.tsx:773: ) : crmClients.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.email?.toLowerCase().includes(searchQuery.toLowerCase())).map(contact => (
+src/components/dashboard/MessagesTab.tsx:1055: onClick={() => setPendingAttachments(prev => prev.filter((_, i) => i !== idx))}
+src/components/dashboard/MicrosoftMailView.tsx:127: const recipients = composeTo.split(',').map(email => email.trim()).filter(Boolean);
+src/components/dashboard/MicrosoftMailView.tsx:176: const filteredMessages = messages.filter(msg => {
+src/components/dashboard/NotificationCenter.tsx:91: setNotifications(prev => prev.filter(n => n.id !== id));
+src/components/dashboard/NotificationCenter.tsx:107: setUnreadCount(notifications.filter(n => !n.read).length);
+src/components/dashboard/NotificationCenter.tsx:111: ? notifications.filter(n => !n.read)
+src/components/dashboard/NotificationCenter.tsx:247: const unreadCount = notifs.filter(n => !n.read).length;
+src/components/dashboard/OnboardingPipelines.tsx:212: { id: 'lead', label: 'Lead', color: 'bg-slate-600', count: leads.filter(l => l.stage === 'lead').length },
+src/components/dashboard/OnboardingPipelines.tsx:213: { id: 'qualified', label: 'Qualified', color: 'bg-blue-600', count: leads.filter(l => l.stage === 'qualified').length },
+src/components/dashboard/OnboardingPipelines.tsx:214: { id: 'proposal', label: 'Proposal', color: 'bg-purple-600', count: leads.filter(l => l.stage === 'proposal').length },
+src/components/dashboard/OnboardingPipelines.tsx:215: { id: 'negotiation', label: 'Negotiation', color: 'bg-orange-600', count: leads.filter(l => l.stage === 'negotiation').length },
+src/components/dashboard/OnboardingPipelines.tsx:216: { id: 'won', label: 'Won', color: 'bg-green-600', count: leads.filter(l => l.stage === 'won').length },
+src/components/dashboard/OnboardingPipelines.tsx:217: { id: 'lost', label: 'Lost', color: 'bg-red-600', count: leads.filter(l => l.stage === 'lost').length },
+src/components/dashboard/OnboardingPipelines.tsx:221: .filter((l: Lead) => l.stage !== 'lost')
+src/components/dashboard/OnboardingPipelines.tsx:225: .filter((l: Lead) => l.stage === 'won')
+src/components/dashboard/OnboardingPipelines.tsx:277: {leads.length > 0 ? ((leads.filter(l => l.stage === 'won').length / leads.length) * 100).toFixed(0) : 0}%
+src/components/dashboard/OnboardingPipelines.tsx:305: .filter((lead) => lead.stage === stage.id)
+src/components/dashboard/OnboardingPipelines.tsx:379: {leads.filter((lead) => lead.stage === stage.id).length === 0 && (
+src/components/dashboard/OnboardingPipelines.tsx:520: setLeads(leads.filter(l => l.id !== leadId));
+src/components/dashboard/PastEventPromptModal.tsx:20: const actualCalendarEvents = events.filter(e =>
+src/components/dashboard/PortfolioShowcase.tsx:43: const portfolioProjects = isAdmin ? projects : projects.filter(
+src/components/dashboard/PortfolioShowcase.tsx:47: const filteredProjects = portfolioProjects.filter((p) => {
+src/components/dashboard/PortfolioShowcase.tsx:63: { id: 'web', label: 'Websites', count: portfolioProjects.filter(p => p.category.toLowerCase().includes('web')).length },
+src/components/dashboard/PortfolioShowcase.tsx:64: { id: 'mobile', label: 'Mobile Apps', count: portfolioProjects.filter(p => p.category.toLowerCase().includes('mobile')).length },
+src/components/dashboard/PortfolioShowcase.tsx:65: { id: 'ai', label: 'AI Projects', count: portfolioProjects.filter(p => p.category.toLowerCase().includes('ai')).length },
+src/components/dashboard/QuotesTab.tsx:366: setItems((prev) => prev.filter((_, idx) => idx !== index));
+src/components/dashboard/QuotesTab.tsx:554: setQuotes(p => p.filter(q => q.id !== id));
+src/components/dashboard/QuotesTab.tsx:646: const filtered = quotes.filter(q => filter === 'all' || q.status === filter);
+src/components/dashboard/ResourceAllocationView.tsx:73: const assignedProjects = activeProjects.filter(p =>
+src/components/dashboard/ResourceAllocationView.tsx:87: setProjects(activeProjects.filter(p => p.status === 'Active'));
+src/components/dashboard/ResourceAllocationView.tsx:96: return projects.filter(p => p.team && p.team.includes(memberId));
+src/components/dashboard/ResourceAllocationView.tsx:109: return prev.filter(id => id !== projectId);
+src/components/dashboard/ResourceAllocationView.tsx:127: const projectsToAdd = selectedProjects.filter(id => !currentProjectIds.includes(id));
+src/components/dashboard/ResourceAllocationView.tsx:130: const projectsToRemove = currentProjectIds.filter(id => !selectedProjects.includes(id));
+src/components/dashboard/ResourceAllocationView.tsx:145: const updatedTeam = (project.team || []).filter(id => id !== selectedMember.id);
+src/components/dashboard/ResourceAllocationView.tsx:229: const availableMembers = members.filter(m => m.status === 'Available').length;
+src/components/dashboard/SalesAgent.tsx:97: const filteredLeads = leads.filter(l => !l.client_id);
+src/components/dashboard/SalesAgent.tsx:522: setSelectedLeads(selectedLeads.filter(lid => lid !== id));
+src/components/dashboard/SalesAgent.tsx:542: setLeads(prev => prev.filter(l => !selectedLeads.includes(l.id)));
+src/components/dashboard/SalesAgent.tsx:963: const pendingLeads = allLeads.filter(l => !l.client_id);
+src/components/dashboard/ScheduleMeetingModal.tsx:48: setProfiles(users.filter(u => u.id !== user.id));
+src/components/dashboard/ScheduleMeetingModal.tsx:53: const admins = users.filter(u => u.role === 'admin');
+src/components/dashboard/ScheduleMeetingModal.tsx:219: setAttendees(attendees.filter(id => id !== p.id));
+src/components/dashboard/SecurityDashboard.tsx:208: {['logs', 'sessions', 'alerts', 'failed_logins', 'errors', user.role === 'admin' && 'blocked'].filter(Boolean).map((tab) => (
+src/components/dashboard/SettingsPage.tsx:585: : businessSettings.serviceSectors.filter(s => s !== category.name);
+src/components/dashboard/Sidebar.tsx:329: {tasks.filter((task) => task.status === 'running').length} {t('Active')}
+src/components/dashboard/SocialPanel.tsx:120: prev.filter((p) => p.id !== (payload.old as SocialPost).id)
+src/components/dashboard/TasksTab.tsx:343: setTasks(prev => prev.filter(t => t.id !== id));
+src/components/dashboard/accounting/AccountingDashboard.tsx:88: .filter(a => a.accountType === 'asset' && (a.accountCode?.startsWith('10') || a.accountName.toLowerCase().includes('cash')))
+src/components/dashboard/accounting/ChartOfAccountsPage.tsx:132: const filteredAccounts = accounts.filter(account => {
+src/components/dashboard/accounting/JournalEntryModal.tsx:63: const newLines = formData.lines.filter((_, i) => i !== index);
+src/components/dashboard/accounting/JournalEntryModal.tsx:153: const assetAccounts = accounts.filter(a => a.accountType === 'asset');
+src/components/dashboard/accounting/JournalEntryModal.tsx:183: const expenseAccounts = accounts.filter(a => a.accountType === 'expense');
+src/components/dashboard/accounting/JournalEntryModal.tsx:295: .filter(a => a.accountType === 'asset' || a.accountType === 'liability') // Include credit cards
+src/components/dashboard/accounting/JournalEntryModal.tsx:346: .filter(a => transactionType === 'received' ? (a.accountType === 'revenue' || a.accountType === 'other_income') : (a.accountType === 'expense' || a.accountType === 'other_expense'))
+src/components/dashboard/accounting/JournalEntryModal.tsx:353: {accounts.filter(a => transactionType === 'received' ? (a.accountType === 'revenue' || a.accountType === 'other_income') : (a.accountType === 'expense' || a.accountType === 'other_expense')).length === 0 && (
+src/components/dashboard/accounting/ReceiptGeneratorModal.tsx:61: const handleRemoveItem = (i: number) => setReceiptData(p => ({ ...p, items: p.items.filter((_, idx) => idx !== i) }));
+src/components/dashboard/accounting/ReceiptUploadModal.tsx:254: .filter(a => a.accountType === 'expense' || a.accountType === 'other_expense')
+src/components/dashboard/accounting/ReceiptUploadModal.tsx:284: .filter(a => a.accountType === 'asset' || a.accountType === 'liability')
+src/components/dashboard/admin/SuperAdminTenantsTab.tsx:48: setTenants(prev => prev.filter(t => t.id !== tenantId));
+src/components/dashboard/admin/SuperAdminTenantsTab.tsx:55: const filteredTenants = tenants.filter(t =>
+src/components/dashboard/admin/SuperAdminUsersTab.tsx:74: const filteredUsers = users.filter(u => {
+src/components/dashboard/admin/UserLocationTable.tsx:96: const filteredUsers = users.filter(user =>
+src/components/dashboard/admin/WorkerMonitoringDashboard.tsx:112: : activeWorkers.filter(w => w.app_name === filterApp);
+src/components/dashboard/business/AIOutreachModal.tsx:78: const emailIntegrations = userIntegrations.filter(i =>
+src/components/dashboard/business/AIOutreachModal.tsx:150: if (prev.includes(id)) return prev.filter(i => i !== id);
+src/components/dashboard/business/AIOutreachModal.tsx:171: const selectedLeadRecords = leads.filter((lead) => selectedLeads.includes(lead.id));
+src/components/dashboard/business/AIOutreachModal.tsx:265: toast.success(`Successfully processed ${sendResults.filter((r) => r.status === 'success').length} emails`);
+src/components/dashboard/business/AIOutreachModal.tsx:273: const filteredLeads = leads.filter(l =>
+src/components/dashboard/business/BillingPage.tsx:109: setInvoices(prev => prev.filter(inv => inv.id !== invoiceId));
+src/components/dashboard/business/BillingPage.tsx:129: : invoices.filter(inv => inv.status === filter);
+src/components/dashboard/business/BillingPage.tsx:133: paid: Math.round(invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + (inv.total || 0), 0) * 100) / 100,
+src/components/dashboard/business/BillingPage.tsx:134: pending: Math.round(invoices.filter(inv => inv.status !== 'paid').reduce((sum, inv) => sum + (inv.total || 0), 0) * 100) / 100
+src/components/dashboard/business/BillingPage.tsx:325: const availableStatuses = (statusOrder as string[]).filter((_: string, i: number) => i >= currentIndex);
+src/components/dashboard/business/BookingSettings.tsx:102: ? settings.availability.days.filter(d => d !== dayIndex)
+src/components/dashboard/business/BookingSettings.tsx:457: const newTypes = settings.meetingTypes.filter((_, i) => i !== idx);
+src/components/dashboard/business/BusinessDashboard.tsx:194: const activeBgTasksCount = (bgTasks || []).filter(t => t.status === 'running').length;
+src/components/dashboard/business/BusinessDashboard.tsx:304: const dueTasks = (tasks || []).filter(t => {
+src/components/dashboard/business/CalendarPage.tsx:327: const filteredEvents = allEvents.filter(e => activeFilters.has(e.source));
+src/components/dashboard/business/CalendarPage.tsx:341: return filteredEvents.filter(event => {
+src/components/dashboard/business/CalendarPage.tsx:561: .filter(e => new Date(e.date) >= now)
+src/components/dashboard/business/CalendarPage.tsx:760: const dayEvents = events.filter(e => {
+src/components/dashboard/business/CalendlySettings.tsx:332: {eventTypes.filter(et => et.active).map(et => (
+src/components/dashboard/business/CampaignBuilder.tsx:195: const lines = pasteLeadsText.split('\n').map(l => l.trim()).filter(Boolean);
+src/components/dashboard/business/CampaignBuilder.tsx:348: ? contacts.filter((contact) => selectedContactIds.includes(contact.id))
+src/components/dashboard/business/CampaignBuilder.tsx:502: setCampaigns(prev => prev.filter(c => c.id !== id));
+src/components/dashboard/business/CampaignBuilder.tsx:999: {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).length === 0 && (
+src/components/dashboard/business/CampaignBuilder.tsx:1003: {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).map(industry => {
+src/components/dashboard/business/CampaignBuilder.tsx:1004: const isChecked = contacts.filter(c => c.industry === industry).every(c => selectedContactIds.includes(c.id));
+src/components/dashboard/business/CampaignBuilder.tsx:1009: const ids = contacts.filter(c => c.industry === industry).map(c => c.id);
+src/components/dashboard/business/CampaignBuilder.tsx:1011: isChecked ? prev.filter(id => !ids.includes(id)) : Array.from(new Set([...prev, ...ids]))
+src/components/dashboard/business/CampaignBuilder.tsx:1034: {contacts.filter(c => !contactSearch || c.name?.toLowerCase().includes(contactSearch.toLowerCase())).map(c => (
+src/components/dashboard/business/CampaignBuilder.tsx:1037: onClick={() => setSelectedContactIds(prev => prev.includes(c.id) ? prev.filter(id => id !== c.id) : [...prev, c.id])}
+src/components/dashboard/business/CashFlowForecastTab.tsx:117: setProjections(prev => prev.filter(p => p.id !== id));
+src/components/dashboard/business/CashFlowForecastTab.tsx:147: .filter(p => p.type === 'inflow')
+src/components/dashboard/business/CashFlowForecastTab.tsx:150: .filter(p => p.type === 'outflow')
+src/components/dashboard/business/ClientOnboardingTab.tsx:131: setSteps(prev => prev.filter(s => s.id !== id));
+src/components/dashboard/business/ClientsPage.tsx:259: filtered = filtered.filter(c => c.salesStage === selectedStage);
+src/components/dashboard/business/ClientsPage.tsx:420: setClients(clients.filter(c => c.id !== clientId));
+src/components/dashboard/business/ClientsPage.tsx:553: const activeClientsCount = clients.filter(c => c.salesStage !== 'lost').length;
+src/components/dashboard/business/ClientsPage.tsx:907: setSelectedClientIds(selectedClientIds.filter(id => id !== client.id));
+src/components/dashboard/business/ClientsPage.tsx:1008: Billing ({clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment')?.length || 0})
+src/components/dashboard/business/ClientsPage.tsx:1110: {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').length === 0 ? (
+src/components/dashboard/business/ClientsPage.tsx:1113: clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').map((note: any) => (
+src/components/dashboard/business/ClientsPage.tsx:1131: {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').length === 0 ? (
+src/components/dashboard/business/ClientsPage.tsx:1136: clientTimeline.activities.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').map((inv: any) => {
+src/components/dashboard/business/ComposeEmailModal.tsx:73: const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
+src/components/dashboard/business/ComposeEmailModal.tsx:115: const filteredClients = clients.filter(c =>
+src/components/dashboard/business/ComposeEmailModal.tsx:179: setAttachments(prev => prev.filter(a => a.id !== id));
+src/components/dashboard/business/DocumentVaultTab.tsx:112: setDocuments(prev => prev.filter(d => d.id !== id));
+src/components/dashboard/business/EnhancedBillingPage.tsx:102: const filteredInvoices = invoices.filter(inv => {
+src/components/dashboard/business/ExpenseTrackerTab.tsx:207: const filtered = expenses.filter(e => {
+src/components/dashboard/business/ExpenseTrackerTab.tsx:216: const pendingAmount = filtered.filter(e => e.status === 'pending').reduce((sum, e) => sum + (e.total ?? e.amount), 0);
+src/components/dashboard/business/ExpenseTrackerTab.tsx:217: const approvedAmount = filtered.filter(e => e.status === 'approved').reduce((sum, e) => sum + (e.total ?? e.amount), 0);
+src/components/dashboard/business/ExpenseTrackerTab.tsx:284: setExpenses(prev => prev.filter(e => e.id !== id));
+src/components/dashboard/business/ExpenseTrackerTab.tsx:381: <span className="text-xs text-slate-500">{filtered.filter(e => e.status === 'pending').length} pending items</span>
+src/components/dashboard/business/ExpenseTrackerTab.tsx:395: <span className="text-xs text-slate-500">{filtered.filter(e => e.status === 'approved').length} approved items</span>
+src/components/dashboard/business/FormsHub.tsx:265: <button onClick={() => setFields((arr) => arr.filter((_, i) => i !== idx))} className="p-1.5 text-slate-500 hover:text-red-400">
+src/components/dashboard/business/HubspotIntegration.tsx:50: return contacts.filter((contact) => {
+src/components/dashboard/business/HubspotIntegration.tsx:184: setContacts((prev) => prev.filter((contact) => contact.id !== id));
+src/components/dashboard/business/LaunchActivationChecklist.tsx:70: const done = CHECKLIST_ITEMS.filter((item) => stepState[item.id]).length;
+src/components/dashboard/business/MicrosoftInboxView.tsx:44: to: compose.to.split(',').map((item) => item.trim()).filter(Boolean),
+src/components/dashboard/business/PresentationTemplates.tsx:186: setSlides(slides.filter((_, i) => i !== index));
+src/components/dashboard/business/PresentationTemplates.tsx:569: onChange={(e) => handleSlideEdit(currentSlide, 'content', e.target.value.split('\n').filter(line => line.trim()))}
+src/components/dashboard/business/ProjectsPage.tsx:187: setProjects(prev => prev.filter(p => p.id !== projectId));
+src/components/dashboard/business/ProjectsPage.tsx:194: return projects.filter(p => p.name.toLowerCase().includes(query) || p.description?.toLowerCase().includes(query));
+src/components/dashboard/business/ProjectsPage.tsx:483: const atRiskCount = projects.filter(p => p.health === 'At Risk' || p.risk === 'High').length;
+src/components/dashboard/business/ProjectsPage.tsx:484: const delayedCount = projects.filter(p => p.health === 'Delayed').length;
+src/components/dashboard/business/ProjectsPage.tsx:533: const count = projects.filter(p => p.health === status).length;
+src/components/dashboard/business/ProjectsPage.tsx:961: ].filter(Boolean);
+src/components/dashboard/business/ProjectsPage.tsx:1104: {milestones.filter(m => m.checked).length}/{milestones.length} done
+src/components/dashboard/business/ReportsPage.tsx:106: const invoices = allInvoices.filter(inv => new Date(inv.issueDate) >= cutoff);
+src/components/dashboard/business/ReportsPage.tsx:117: .filter(inv => inv.status === 'paid')
+src/components/dashboard/business/ReportsPage.tsx:120: const activeProjects = projects.filter(p => p.status === 'Active' || p.status === 'Pending').length;
+src/components/dashboard/business/ReportsPage.tsx:121: const completedProjects = projects.filter(p => p.status === 'Completed').length;
+src/components/dashboard/business/ReportsPage.tsx:144: invoices.filter(inv => inv.status === 'paid').forEach(inv => {
+src/components/dashboard/business/ReportsPage.tsx:166: value: clients.filter(c => c.salesStage === stage).length
+src/components/dashboard/business/ReportsPage.tsx:174: value: projects.filter(p => p.currentStage === stage).length
+src/components/dashboard/business/ResourceAllocation.tsx:210: setTeamMembers(prev => prev.filter(m => m.id !== member.id));
+src/components/dashboard/business/ResourceAllocation.tsx:302: setResources(prev => prev.filter(r => r.id !== resource.id));
+src/components/dashboard/business/ResourceAllocation.tsx:355: const assignedTeam = teamMembers.filter(member =>
+src/components/dashboard/business/ResourceAllocation.tsx:481: {teamMembers.filter(m => m.status === 'available').length}
+src/components/dashboard/business/ResourceAllocation.tsx:492: {projects.filter(p => p.status === 'active').length}
+src/components/dashboard/business/ServicesCatalog.tsx:25: const filteredServices = services.filter(s =>
+src/components/dashboard/business/TaskScheduler.tsx:195: .filter(Boolean);
+src/components/dashboard/business/TaskScheduler.tsx:578: setTasks(prev => prev.filter(t => t.id !== id));
+src/components/dashboard/business/TaskScheduler.tsx:614: { label: 'Active',    count: tasks.filter(t => t.status === 'active').length,    color: 'text-teal-400',   bg: 'bg-teal-400/10' },
+src/components/dashboard/business/TaskScheduler.tsx:615: { label: 'AI Tasks',  count: tasks.filter(t => t.aiEnabled).length,              color: 'text-violet-400', bg: 'bg-violet-400/10' },
+src/components/dashboard/business/TaskScheduler.tsx:616: { label: 'Paused',    count: tasks.filter(t => t.status === 'paused').length,    color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+src/components/dashboard/business/TaskScheduler.tsx:617: { label: 'Completed', count: tasks.filter(t => t.status === 'completed').length, color: 'text-slate-400',  bg: 'bg-slate-400/10' },
+src/components/dashboard/business/TaxEstimatorTab.tsx:124: setRecords(prev => prev.filter(r => r.id !== id));
+src/components/dashboard/business/TeamChat.tsx:103: .filter(msg => msg.userId !== user.id && msg.type === 'text' && !msg.readAt)
+src/components/dashboard/business/TeamChat.tsx:192: const recipientMembers = teamMembers.filter((m) => m.user?.email && m.user_id !== user.id);
+src/components/dashboard/business/TeamChat.tsx:193: const recipients = recipientMembers.map((m) => m.user.email).filter((email): email is string => Boolean(email));
+src/components/dashboard/business/TeamPage.tsx:108: setTeamMembers(teamMembers.filter(m => m.user_id !== userId));
+src/components/dashboard/business/TeamPage.tsx:204: {teamMembers.filter(m => m.role !== 'admin').map(member => (
+src/components/dashboard/business/UnifiedInboxTab.tsx:108: setMessages(prev => prev.filter(m => m.id !== msgId));
+src/components/dashboard/business/UnifiedInboxTab.tsx:237: const filteredMessages = messages.filter(m => {
+src/components/dashboard/business/UnifiedInboxTab.tsx:264: {messages.filter(m => m.needs_response).length} Pending
+src/components/dashboard/business/WhatsAppChatHub.tsx:313: return threads.filter(t =>
+src/components/dashboard/client/ClientMeetingsView.tsx:65: const upcomingMeetings = meetings.filter(m =>
+src/components/dashboard/crm/CommunicationModal.tsx:76: setClients(loadedClients.filter(item => !!item.email));
+src/components/dashboard/crm/CommunicationModal.tsx:160: return clients.filter(contact =>
+src/components/dashboard/crm/DealPipeline.tsx:411: setDeals(prev => prev.filter(d => d.id !== id));
+src/components/dashboard/crm/DealPipeline.tsx:440: const filteredDeals = deals.filter(d =>
+src/components/dashboard/crm/DealPipeline.tsx:449: deals: filteredDeals.filter(d => d.stage === stage.key),
+src/components/dashboard/crm/DealPipeline.tsx:451: .filter(d => d.stage === stage.key)
+src/components/dashboard/crm/KanbanBoard.tsx:563: return (leads || []).filter((lead) => sourceBucket(lead) === sourceFilter);
+src/components/dashboard/crm/KanbanBoard.tsx:569: counts[stage.id] = visibleLeads.filter((lead) => lead.stage === stage.id).length;
+src/components/dashboard/crm/KanbanBoard.tsx:577: ai_mcp: leads.filter((lead) => sourceBucket(lead) === 'ai_mcp').length,
+src/components/dashboard/crm/KanbanBoard.tsx:578: manual: leads.filter((lead) => sourceBucket(lead) === 'manual').length,
+src/components/dashboard/crm/KanbanBoard.tsx:777: leads={visibleLeads.filter((l) => l.stage === col.id)}
+src/components/dashboard/crm/KanbanBoard.tsx:782: if (prev.includes(id)) return prev.filter(i => i !== id);
+src/components/dashboard/crm/LeadImportModal.tsx:35: setLeads(allLeads.filter(l => !l.client_id));
+src/components/dashboard/crm/LeadImportModal.tsx:63: const leadsToImport = leads.filter(l => selectedIds.has(l.id));
+src/components/dashboard/crm/LeadImportModal.tsx:98: const filteredLeads = leads.filter(l =>
+src/components/dashboard/deals/DealDetailModal.tsx:317: {activities.filter(a => a.type === 'note').map((note) => (
+src/components/dashboard/engine/IngestionPanel.tsx:123: const filtered = events.filter(e => {
+src/components/dashboard/engine/IngestionPanel.tsx:130: const highCount = events.filter(e => ['high','urgent'].includes(e.intent_label)).length;
+src/components/dashboard/engine/IngestionPanel.tsx:131: const leadsCreated = events.filter(e => e.lead_id).length;
+src/components/dashboard/engine/IngestionPanel.tsx:301: ? prev.filter(id => id !== leadId)
+src/components/dashboard/engine/SMSCampaignTab.tsx:131: ? { numbers: form.manual_numbers.split('\n').map(n => n.trim()).filter(Boolean) }
+src/components/dashboard/engine/SMSCampaignTab.tsx:177: setCampaigns(prev => prev.filter(c => c.id !== id));
+src/components/dashboard/engine/SMSCampaignTab.tsx:234: ? messages.filter(m => m.status !== undefined)
+src/components/dashboard/engine/SocialMediaComposer.tsx:68: .filter(Boolean);
+src/components/dashboard/engine/SocialMediaComposer.tsx:74: .filter(Boolean);
+src/components/dashboard/engine/SocialMediaComposer.tsx:162: return posts.filter((post) => {
+src/components/dashboard/engine/SocialMediaComposer.tsx:265: setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+src/components/dashboard/engine/SocialMediaComposer.tsx:270: setSelectedMedia(prev => prev.filter(u => u !== asset.public_url));
+src/components/dashboard/engine/SocialMediaComposer.tsx:271: setSelectedMediaTypes(prev => prev.filter((_, i) => selectedMedia[i] !== asset.public_url));
+src/components/dashboard/engine/SocialMediaComposer.tsx:339: setPosts(prev => prev.filter(p => p.id !== id));
+src/components/dashboard/engine/SocialMediaComposer.tsx:346: setMediaAssets(prev => prev.filter(a => a.id !== asset.id));
+src/components/dashboard/engine/SocialMediaComposer.tsx:852: {posts.filter((p) => p.status === 'failed').slice(0, 2).map((post) => (
+src/components/dashboard/engine/SocialMediaComposer.tsx:1166: <button onClick={() => setHashtags(prev => prev.filter(h => h !== tag))} className="hover:text-red-400">
+src/components/dashboard/engine/WorkflowDashboard.tsx:267: setWorkflows(prev => prev.filter(w => w.id !== id));
+src/components/dashboard/engine/WorkflowDashboard.tsx:320: const activeCount = workflows.filter(w => w.is_active).length;
+src/components/dashboard/engine/WorkflowDashboard.tsx:411: <button onClick={() => setForm(f => ({ ...f, conditions: f.conditions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-300"><X className="w-3.5 h-3.5" /></button>
+src/components/dashboard/engine/WorkflowDashboard.tsx:435: <button onClick={() => setForm(f => ({ ...f, actions: f.actions.filter((_, j) => j !== i) }))} className="text-red-400 hover:text-red-300"><X className="w-3.5 h-3.5" /></button>
+src/components/dashboard/facebook/FacebookIntegrationTab.tsx:245: const parts = cleanName.split(' ').filter(p => p.length > 0);
+src/components/dashboard/facebook/FacebookIntegrationTab.tsx:479: setPagePosts((prev) => prev.filter((post) => post.id !== postId));
+src/components/dashboard/facebook/FacebookIntegrationTab.tsx:498: allPosts.filter((p: ScheduledSocialPost) =>
+src/components/dashboard/facebook/FacebookIntegrationTab.tsx:503: allPosts.filter((p: ScheduledSocialPost) =>
+src/components/dashboard/facebook/FacebookIntegrationTab.tsx:753: const filteredLeads = statusFilter === 'all' ? leads : leads.filter(l => l.status === statusFilter);
+src/components/dashboard/facebook/FacebookIntegrationTab.tsx:1160: .filter((post) => activeQueueFilter === 'all' || post.status === activeQueueFilter)
+src/components/dashboard/integrations/IntegrationMarketplace.tsx:208: : integrations.filter(int => int.category === selectedCategory);
+src/components/dashboard/integrations/IntegrationMarketplaceDashboard.tsx:151: return integrations.filter(i => {
+src/components/dashboard/integrations/IntegrationMarketplaceDashboard.tsx:168: const connectedCount = integrations.filter(i => i.status === 'connected').length;
+src/components/dashboard/integrations/IntegrationMonitor.tsx:281: {integrations.filter(i => i.status === 'working').length}
+src/components/dashboard/integrations/IntegrationMonitor.tsx:287: {integrations.filter(i => i.status === 'needs_attention').length}
+src/components/dashboard/integrations/IntegrationMonitor.tsx:293: {integrations.filter(i => i.status === 'not_connected').length}
+src/components/dashboard/integrations/IntegrationMonitor.tsx:299: {integrations.filter(i => i.status === 'error').length}
+src/components/dashboard/integrations/MCPSetupGuide.tsx:345: {SETUP_STEPS.filter(s => setupType === 'claude' || [1, 2, 3, 6].includes(s.number)).map((step, idx) => {
+src/components/dashboard/integrations/ResendIntegration.tsx:514: <p>Verified Domains: {domains.filter(d => d.status === 'verified').length}</p>
+src/components/dashboard/marketing/CampaignAnalytics.tsx:41: sent: recipients.filter(r => r.status !== 'pending').length,
+src/components/dashboard/marketing/CampaignAnalytics.tsx:42: delivered: recipients.filter(r => ['delivered', 'opened', 'clicked'].includes(r.status)).length,
+src/components/dashboard/marketing/CampaignAnalytics.tsx:43: opened: recipients.filter(r => ['opened', 'clicked'].includes(r.status)).length,
+src/components/dashboard/marketing/CampaignAnalytics.tsx:44: clicked: recipients.filter(r => r.status === 'clicked').length,
+src/components/dashboard/marketing/CampaignAnalytics.tsx:45: bounced: recipients.filter(r => r.status === 'bounced').length,
+src/components/dashboard/marketing/CampaignAnalytics.tsx:46: failed: recipients.filter(r => r.status === 'failed').length,
+src/components/dashboard/marketing/CampaignList.tsx:73: const filtered = campaigns.filter(c => {
+src/components/dashboard/marketing/CampaignList.tsx:122: { label: 'Active', value: campaigns.filter(c => c.status === 'sending' || c.status === 'scheduled').length.toString(), color: 'text-yellow-400' },
+src/components/dashboard/messenger/MessengerInbox.tsx:46: const existing = supabase.getChannels().filter((channel: RealtimeChannel) => channel.topic === topic);
+src/components/dashboard/messenger/MessengerInbox.tsx:142: .filter((id): id is string => Boolean(id));
+src/components/dashboard/messenger/MessengerInbox.tsx:260: const filteredConversations = conversations.filter(c =>
+src/components/dashboard/projects/CollaborativeTaskNotes.tsx:89: setCursors(updatedCursors.filter(c => c.userId !== userId));
+src/components/dashboard/projects/GanttChart.tsx:34: .filter((d): d is number => d !== null);
+src/components/dashboard/projects/MilestoneManager.tsx:59: setMilestones(prev => prev.filter(m => m.id !== id));
+src/components/dashboard/social/InstagramIntegrationTab.tsx:85: {integrations.filter((i) => i.is_active).map((ig) => (
+src/components/dashboard/social/LinkedInManagementTab.tsx:64: .filter(Boolean);
+src/components/dashboard/social/LinkedInManagementTab.tsx:70: .filter(Boolean);
+src/components/dashboard/social/LinkedInManagementTab.tsx:129: .filter(Boolean)
+src/components/dashboard/social/LinkedInManagementTab.tsx:244: ? posts.filter((post) => !post.linkedin_member_id || post.linkedin_member_id === selectedLinkedInMemberId)
+src/components/dashboard/social/LinkedInManagementTab.tsx:247: return accountPosts.filter((post) => post.status === statusFilter);
+src/components/dashboard/social/SocialCommandCenter.tsx:296: setPosts(prev => prev.filter(p => p.id !== id));
+src/components/dashboard/social/SocialCommandCenter.tsx:528: const filteredPosts = posts.filter(post => {
+src/components/dashboard/social/SocialCommandCenter.tsx:549: const platformPosts = posts.filter(post => post.platforms.includes(activePlatform));
+src/components/dashboard/social/SocialCommandCenter.tsx:550: const publishedPlatformPosts = platformPosts.filter(post => post.status === 'published');
+src/components/dashboard/social/SocialCommandCenter.tsx:630: { id: 'queue', label: 'Scheduled Queue', count: posts.filter(p => p.status === 'scheduled' && p.platforms.includes(activePlatform)).length },
+src/components/dashboard/social/SocialCommandCenter.tsx:631: { id: 'published', label: 'Published Feed', count: posts.filter(p => p.status === 'published' && p.platforms.includes(activePlatform)).length },
+src/components/dashboard/social/SocialCommandCenter.tsx:1055: ? prev.filter(x => x !== plat.id)
+src/components/dashboard/social/SocialCommandCenter.tsx:1163: onClick={() => setXThreadPosts(prev => prev.filter((_, idx) => idx !== index))}
+src/components/dashboard/social/SocialCommandCenter.tsx:1242: onClick={() => setComposeMedia(prev => prev.filter(item => item !== url))}
+src/components/dashboard/tasks/KanbanView.tsx:62: acc[status.id] = tasks.filter((t) => t.status === status.id);
+src/components/dashboard/tasks/KanbanView.tsx:216: const completed = subs.filter((s) => s.completed).length;
+src/components/dashboard/tickets/DeepDeskView.tsx:273: const filteredTickets = tickets.filter(ticket => {
+src/components/dashboard/video/CustomVideoRoom.tsx:110: renderTimestampsRef.current = renderTimestampsRef.current.filter(
+src/components/dashboard/video/CustomVideoRoom.tsx:238: const roomName = resolvedRoomUrl.split('/').filter(Boolean).pop();
+src/components/dashboard/video/CustomVideoRoom.tsx:699: .filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId))
+src/components/dashboard/video/DeviceSettingsModal.tsx:34: const audios = allDevices.filter(d => d.kind === 'audioinput');
+src/components/dashboard/video/DeviceSettingsModal.tsx:35: const videos = allDevices.filter(d => d.kind === 'videoinput');
+src/components/dashboard/video/DeviceSettingsModal.tsx:50: const audioDevices = devices.filter(d => d.kind === 'audioinput');
+src/components/dashboard/video/DeviceSettingsModal.tsx:51: const videoDevices = devices.filter(d => d.kind === 'videoinput');
+src/components/dashboard/video/DeviceSettingsModal.tsx:52: const outputDevices = devices.filter(d => d.kind === 'audiooutput'); // Optional, Daily supports output switching but not exposed yet
+src/components/dashboard/zoho/CRMContactPickerModal.tsx:40: const filteredLeads = leads.filter(l =>
+src/components/dashboard/zoho/LeadOutreachModal.tsx:34: const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
+src/components/dashboard/zoho/ZohoMailView.tsx:108: const parts = cleanName.split(' ').filter(p => p.length > 0);
+src/components/dashboard/zoho/ZohoMailView.tsx:131: const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
+src/components/dashboard/zoho/ZohoMailView.tsx:180: : messages.filter(msg => msg.category === categoryFilter);
+src/components/dashboard/zoho/ZohoMailView.tsx:183: return scoped.filter(msg =>
+src/components/dashboard/zoho/ZohoMailView.tsx:307: setMessages(prev => prev.filter(m => m.messageId !== messageId));
+src/components/dashboard/zoho/ZohoMailView.tsx:321: setMessages(prev => prev.filter(m => m.messageId !== messageId));
+src/components/dashboard/zoho/ZohoMailView.tsx:699: <button type="button" onClick={() => setToEmails(prev => prev.filter((_, i) => i !== idx))} className="text-teal-400 hover:text-white">
+src/components/dashboard/zoho/ZohoMailView.tsx:726: <button type="button" onClick={() => setCcEmails(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-white">
+src/components/dashboard/zoho/ZohoMailView.tsx:745: <button type="button" onClick={() => setBccEmails(prev => prev.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-white">
+src/components/documents/DocumentHub.tsx:654: const filteredFiles = files.filter(f => {
+src/components/leads/LeadMapView.tsx:50: const pinned = leads.filter(l => l.lat && l.lng);
+src/components/leads/LeadMapView.tsx:267: return pinnable.filter((lead) => {
+src/components/leads/OmniLeadFinder.tsx:224: const filtered = items.filter(i => i.toLowerCase().includes(search.toLowerCase()));
+src/components/leads/OmniLeadFinder.tsx:333: const activeFilterCount = [filterText.length > 0, filterRating > 0, filterSource !== 'all', filterPhone, filterEmail, filterTier !== 'all'].filter(Boolean).length;
+src/components/leads/OmniLeadFinder.tsx:338: return results.filter(lead => {
+src/components/leads/OmniLeadFinder.tsx:363: const selectedLeads = useMemo(() => filteredResults.filter((_, i) => selectedSet.has(i)), [filteredResults, selectedSet]);
+src/components/leads/OmniLeadFinder.tsx:413: ].filter(Boolean);
+src/components/leads/OmniLeadFinder.tsx:462: const errs = Object.values(sourceErrors || {}).filter(Boolean);
+src/components/leads/OmniLeadFinder.tsx:467: .filter(([, message]) => Boolean(message))
+src/components/leads/OmniLeadFinder.tsx:485: mappedLeadCount: searchLeads.filter((l) => l.lat != null && l.lng != null).length,
+src/components/leads/OmniLeadFinder.tsx:513: const matches = mapHistory.filter((entry) =>
+src/components/leads/OmniLeadFinder.tsx:571: .filter(Boolean);
+src/components/leads/OmniLeadFinder.tsx:1200: {filteredResults.filter(l => !l.lat).length > 0 && (
+src/components/leads/OmniLeadFinder.tsx:1202: {filteredResults.filter(l => !l.lat).length} leads without coordinates hidden from map
+src/components/leads/OutreachPanel.tsx:100: const leadsWithRecipient = leads.filter((l) => Boolean(inferLeadRecipient(l)));
+src/components/leads/OutreachPanel.tsx:101: const leadsWithoutRecipient = leads.filter((l) => !inferLeadRecipient(l));
+src/components/leads/OutreachPanel.tsx:243: const sentCount   = results.filter(r => r.status === 'sent').length;
+src/components/leads/OutreachPanel.tsx:244: const queuedCount = results.filter(r => r.status === 'queued').length;
+src/components/leads/OutreachPanel.tsx:245: const failedCount = results.filter(r => r.status === 'failed').length;
+src/components/leads/OutreachPanel.tsx:401: const next = prev.filter((p) => p !== provider.id);
+src/components/leads/OutreachPanel.tsx:576: { label: 'Sent',   count: sendResults.filter(r => r.status === 'sent').length,   color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+src/components/leads/OutreachPanel.tsx:577: { label: 'Queued', count: sendResults.filter(r => r.status === 'queued').length, color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/20'   },
+src/components/leads/OutreachPanel.tsx:578: { label: 'Failed', count: sendResults.filter(r => r.status === 'failed').length, color: 'text-rose-400',   bg: 'bg-rose-500/10 border-rose-500/20'     },
+src/components/meeting/VideoLayout.tsx:78: setAuditNotifications(prev => prev.filter(n => n.id !== notification.id));
+src/components/meeting/VideoLayout.tsx:91: const screenShares = participantIds.filter(id => {
+src/components/onboarding/OnboardingWizard.tsx:148: const validEmails = teamInvites.filter(email =>
+src/components/onboarding/SetupWizard.tsx:427: const emailList = emails.split(',').map(e => e.trim()).filter(e => e);
+src/components/pages/PagesTab.tsx:94: sort_order: pages.filter(p => p.parent_id === parentId).length,
+src/components/pages/PagesTab.tsx:113: setPages(prev => prev.filter(p => p.id !== id && p.parent_id !== id));
+src/components/pages/PagesTab.tsx:121: setPages(prev => prev.filter(p => p.id !== id));
+src/components/pages/PagesTab.tsx:151: const rootPages = pages.filter(p => !p.parent_id);
+src/components/pages/PagesTab.tsx:152: const getChildren = (id: string) => pages.filter(p => p.parent_id === id);
+src/components/pages/PagesTab.tsx:154: ? pages.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()))
+src/components/pages/PublicPortfolio.tsx:24: const publicProjects = fetchedProjects.filter(p =>
+src/components/pages/PublicPortfolio.tsx:34: const filteredProjects = projects.filter((p) => {
+src/components/pages/PublicPortfolio.tsx:50: { id: 'web', label: 'Websites', count: projects.filter(p => p.category.toLowerCase().includes('web')).length },
+src/components/pages/PublicPortfolio.tsx:51: { id: 'mobile', label: 'Mobile', count: projects.filter(p => p.category.toLowerCase().includes('mobile')).length },
+src/components/pages/PublicPortfolio.tsx:52: { id: 'ai', label: 'AI & Tech', count: projects.filter(p => p.category.toLowerCase().includes('ai')).length },
+src/contexts/AuthContext.tsx:35: const keys = Object.keys(localStorage).filter(
+src/contexts/BackgroundTaskContext.tsx:111: setTasks(prev => prev.filter(t => t.id !== id));
+src/hooks/useIntegrations.ts:115: connected: integrations.filter(i => i.status === 'connected'),
+src/hooks/useIntegrations.ts:116: available: integrations.filter(i => i.status !== 'connected'),
+src/hooks/useOptimisticUpdate.ts:86: setItems(items.filter(item => item.id !== newItem.id));
+src/hooks/useOptimisticUpdate.ts:136: setItems(items.filter(item => item.id !== itemId));
+src/hooks/useRealTimeMessages.ts:120: setMessages((prev) => prev.filter((msg) => msg.id !== deletedId));
+src/hooks/useRealTimeMessages.ts:212: setProjects((prev) => prev.filter((p) => p.id !== payload.old.id));
+src/hooks/useRealTimeMessages.ts:288: setTasks((prev) => prev.filter((t) => t.id !== payload.old.id));
+src/hooks/useRealTimeMessages.ts:337: setUnreadCount(data?.filter((n: any) => !n.read).length || 0);
+src/hooks/useRealTimeMessages.ts:363: const newUnread = current.filter((n: any) => !n.read).length;
+src/hooks/useServicesCatalog.ts:107: setServices((prev) => prev.filter((s) => s.id !== id));
+src/hooks/useVideoPlatform.ts:406: return participants.filter(p => !p.isLocal);
+src/utils/design.ts:35: return classes.filter(Boolean).join(' ');
+src/utils/pdfGenerator.ts:47: const addressLines = (tenant?.business_address || '').split('\n').filter(Boolean);

@@ -1,27 +1,33 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+'use client';
+
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useVideoPlatform } from '../../../hooks/useVideoPlatform';
 import CustomVideoTile from './CustomVideoTile';
 import VideoControls from './VideoControls';
-import MeetingChat, { ChatMessage } from './MeetingChat';
+import { DeviceSettingsModal } from './DeviceSettingsModal';
+import toast from 'react-hot-toast';
+import { MicOff, Maximize2, PhoneOff, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
-import toast from 'react-hot-toast';
-import { ChevronRight, ChevronLeft, Minimize2, Maximize2, X, Mic, MicOff, Video, VideoOff, Users } from 'lucide-react';
+import LiveKitStage from './LiveKitStage';
 
 interface CustomVideoRoomProps {
     user: User;
-    roomUrl: string;
-    callId?: string;
+    roomUrl?: string;
+    callId: string;
     onLeave: () => void;
     onToggleSidebar?: () => void;
     showSidebar?: boolean;
     isMinimized?: boolean;
     onToggleMinimize?: () => void;
+    meetingAccessPin?: string;
+    guestName?: string;
+    meetingAccessToken?: string;
 }
 
 // Check if user is admin or tenant admin
 const isUserAdmin = (user: User): boolean => {
-    return user.role === 'admin' || user.role === 'tenant_admin';
+    return ['admin', 'tenant_admin', 'owner', 'super_admin'].includes(user.role);
 };
 
 /**
@@ -33,14 +39,18 @@ const isUserAdmin = (user: User): boolean => {
  */
 const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     user,
-    roomUrl,
+    roomUrl: providedRoomUrl,
     callId,
     onLeave,
-    onToggleSidebar,
-    showSidebar,
     isMinimized = false,
-    onToggleMinimize
+    onToggleMinimize,
+    meetingAccessPin,
+    guestName,
+    meetingAccessToken,
 }) => {
+    const [resolvedRoomUrl, setResolvedRoomUrl] = useState<string | null>(providedRoomUrl || null);
+    const [liveKitSession, setLiveKitSession] = useState<{ url: string; token: string; roomName: string } | null>(null);
+    const [liveKitError, setLiveKitError] = useState<string | null>(null);
     const {
         isJoined,
         isJoining,
@@ -51,749 +61,645 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         localParticipant,
         remoteParticipants,
         error,
+        platformState,
+        networkQuality,
         join,
         leave,
+        reconnect,
+        startCamera,
+        setAudioDevice,
+        setVideoDevice,
         toggleAudio,
         toggleVideo,
         toggleScreenShare,
-        sendChatMessage,
         muteParticipant,
         removeParticipant,
-        startCamera,
-        config,
+        isRecording,
+        startRecording,
+        stopRecording,
+        setRoomLocked,
     } = useVideoPlatform();
 
     const [callStartTime, setCallStartTime] = useState<Date | null>(null);
     const [secondsElapsed, setSecondsElapsed] = useState(0);
-    const MAX_DURATION_SECONDS = 25 * 60; // 25 minutes
-    const isRestricted = user.role !== 'admin';
+    const [hasMeetingStarted, setHasMeetingStarted] = useState(false);
     const [showParticipants, setShowParticipants] = useState(false);
-    const [showChat, setShowChat] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'speaker'>('speaker');
-    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-    const joinAttemptedRef = useRef(false); // Prevent double join in React Strict Mode
-    const isJoinedRef = useRef(isJoined); // Track joined state without causing re-renders
+    const [isMobile, setIsMobile] = useState(false);
+    const [preJoinAccepted, setPreJoinAccepted] = useState(false);
+    const [isCheckingDevices, setIsCheckingDevices] = useState(false);
+    const [preJoinError, setPreJoinError] = useState<string | null>(null);
+    const [isLocked, setIsLocked] = useState(false);
+    const [showDeviceSettings, setShowDeviceSettings] = useState(false);
 
-    // Circuit breaker: Detect rapid re-renders (Error 310 prevention)
-    const renderCountRef = useRef(0);
-    const renderTimestampsRef = useRef<number[]>([]);
-    const RENDER_LIMIT = 50; // Max renders allowed
-    const RENDER_WINDOW_MS = 1000; // Within 1 second
+    const joinAttemptedRef = useRef(false);
+    const isJoinedRef = useRef(isJoined);
+    const finalizedRef = useRef(false);
 
     useEffect(() => {
-        renderCountRef.current++;
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Circuit breaker: Detect rapid re-renders
+    const renderTimestampsRef = useRef<number[]>([]);
+    const circuitBreakerWarnedRef = useRef(false);
+    const RENDER_LIMIT = 50;
+    const RENDER_WINDOW_MS = 1000;
+
+    useEffect(() => {
         const now = Date.now();
         renderTimestampsRef.current.push(now);
-
-        // Keep only recent renders
         renderTimestampsRef.current = renderTimestampsRef.current.filter(
             timestamp => now - timestamp < RENDER_WINDOW_MS
         );
 
-        // If too many renders in window, log warning
-        if (renderTimestampsRef.current.length > RENDER_LIMIT) {
-            console.error('⚠️ CIRCUIT BREAKER: Too many re-renders detected!', {
-                count: renderTimestampsRef.current.length,
-                windowMs: RENDER_WINDOW_MS,
-                limit: RENDER_LIMIT,
-                participantCount: participants.length,
-            });
-            // Don't throw - just log. React will handle the actual Error 310 if limit exceeded
+        if (
+            process.env.NODE_ENV !== 'production' &&
+            renderTimestampsRef.current.length > RENDER_LIMIT &&
+            !circuitBreakerWarnedRef.current
+        ) {
+            circuitBreakerWarnedRef.current = true;
+            console.error('CIRCUIT_BREAKER: too many re-renders detected');
         }
     });
 
-    // START CAMERA IMMEDIATELY (Instant Self-View)
-    useEffect(() => {
-        // Only start if not already joined/joining/started (to avoid resetting)
-        if (!isJoined && !isJoining && !localParticipant?.video?.track) {
-            console.log('📸 Starting camera immediately for self-view...');
-            startCamera().catch(err => console.error('Failed to start camera:', err));
-        }
-    }, []);
-
-    // Join meeting on mount
-    useEffect(() => {
-        // Guard: Prevent double join attempts (React Strict Mode protection)
-        if (joinAttemptedRef.current || isJoining || isJoined) {
-            console.log('Join attempt skipped:', {
-                attemptedBefore: joinAttemptedRef.current,
-                isJoining,
-                isJoined
-            });
-            return;
-        }
-
-        joinAttemptedRef.current = true;
-
-        const joinMeeting = async () => {
-            try {
-                console.log('Attempting to join meeting...');
-                await join({
-                    url: roomUrl,
-                    userName: user.name || 'Guest',
-                });
-
-                setCallStartTime(new Date());
-
-                // Mark call as active in database
-                if (callId) {
-                    await dailyService.startVideoCall(callId).catch(err => {
-                        console.error('Failed to mark call as active:', err);
-                    });
-                }
-
-                toast.success('Joined meeting successfully!');
-            } catch (err: any) {
-                console.error('Failed to join meeting:', err);
-                toast.error(err?.userMessage || 'Failed to join meeting');
-                joinAttemptedRef.current = false; // Reset on error so user can retry
-                setTimeout(onLeave, 2000);
-            }
-        };
-
-        // Small delay to allow startCamera to initiate first (better UX)
-        // but don't block joining if camera takes long
-        setTimeout(joinMeeting, 100);
-
-        // Cleanup on unmount - use ref to avoid dependency on isJoined state
-        return () => {
-            if (isJoinedRef.current) {
-                handleLeave();
-            }
-        };
-    }, []);
-
-    // Keep isJoinedRef in sync with isJoined state
-    useEffect(() => {
-        isJoinedRef.current = isJoined;
-    }, [isJoined]);
-
-    // ... (rest of hooks omitted for brevity, logic remains same) ...
-    // Subscribe to call status changes (for admin ending call for all)
-    useEffect(() => {
-        if (!callId) return;
-
-        const unsubscribe = dailyService.subscribeToCallStatus(callId, (status) => {
-            if (status === 'ended' && isJoinedRef.current) {
-                console.log('Call ended by admin, leaving automatically...');
-                toast.success('The host has ended the meeting');
-                setTimeout(() => {
-                    handleLeave();
-                }, 1500); // Give time for toast to show
-            }
-        });
-
-        return () => {
-            unsubscribe();
-        };
-    }, [callId]); // Only re-subscribe when callId changes, not isJoined
-
-    // Limit enforcement timer
-    useEffect(() => {
-        if (!isJoined || !callStartTime || !isRestricted) return;
-
-        const interval = setInterval(() => {
-            const now = new Date();
-            const elapsed = Math.floor((now.getTime() - callStartTime.getTime()) / 1000);
-            setSecondsElapsed(elapsed);
-
-            if (elapsed >= MAX_DURATION_SECONDS) {
-                toast.error("Meeting time limit (20 min) reached.");
-                handleLeave();
-            } else if (MAX_DURATION_SECONDS - elapsed === 60) {
-                toast.error("1 minute remaining until auto-disconnection.");
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [isJoined, callStartTime, isRestricted]);
-
-    // Show error toast when errors occur
-    useEffect(() => {
-        if (error) {
-            toast.error(error.userMessage);
-
-            // Auto-retry if recoverable
-            if (error.action === 'retry' && error.recoverable) {
-                // Could implement auto-retry logic here
-            }
-        }
-    }, [error]);
-
-    // ... (handlers omitted for brevity) ... 
-    // Copied handlers back to ensure scope - or I can assume they are unchanged if I carefully slice.
-    // To be safe, I will include the handlers since "multi_replace" isn't used here and I'm replacing a large chunk.
-    // Wait, replacing a large chunk of hooks + handlers is risky if I duplicate logic or miss imports.
-    // The previous implementation was fine, I only need to inject startCamera and change return logic.
-    // I will use replace_file_content targeted at specific blocks if possible, or just be careful.
-    // I'll stick to the original plan of replacing the top part (hooks) and bottom part (rendering) separately if needed, 
-    // but here I'm replacing lines 62-151 (hooks) AND lines 417-429 (rendering). 
-    // "replace_file_content" can only do one contiguous block.
-    // I will do TWO calls. 
-    // FIRST CALL: Update hooks locally.
-    // SECOND CALL: Update rendering logic.
-
-    // Changing strategy to two calls.
-    // This tool call only updates the hooks part (lines 62-151).
-    // I will use the hook update logic below.
-
-    // ... (Re-implementing handlers for context if needed, but I'll try to just edit the hooks section)
-
-
-    // Keep isJoinedRef in sync with isJoined state
-    useEffect(() => {
-        isJoinedRef.current = isJoined;
-    }, [isJoined]);
-
-    // Subscribe to call status changes (for admin ending call for all)
-    useEffect(() => {
-        if (!callId) return;
-
-        const unsubscribe = dailyService.subscribeToCallStatus(callId, (status) => {
-            if (status === 'ended' && isJoinedRef.current) {
-                console.log('Call ended by admin, leaving automatically...');
-                toast.success('The host has ended the meeting');
-                setTimeout(() => {
-                    handleLeave();
-                }, 1500); // Give time for toast to show
-            }
-        });
-
-        return () => {
-            unsubscribe();
-        };
-    }, [callId]); // Only re-subscribe when callId changes, not isJoined
-
-    // Limit enforcement timer
-    useEffect(() => {
-        if (!isJoined || !callStartTime || !isRestricted) return;
-
-        const interval = setInterval(() => {
-            const now = new Date();
-            const elapsed = Math.floor((now.getTime() - callStartTime.getTime()) / 1000);
-            setSecondsElapsed(elapsed);
-
-            if (elapsed >= MAX_DURATION_SECONDS) {
-                toast.error("Meeting time limit (20 min) reached.");
-                handleLeave();
-            } else if (MAX_DURATION_SECONDS - elapsed === 60) {
-                toast.error("1 minute remaining until auto-disconnection.");
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [isJoined, callStartTime, isRestricted]);
-
-    // Show error toast when errors occur
-    useEffect(() => {
-        if (error) {
-            toast.error(error.userMessage);
-
-            // Auto-retry if recoverable
-            if (error.action === 'retry' && error.recoverable) {
-                // Could implement auto-retry logic here
-            }
-        }
-    }, [error]);
-
-    // Handle leaving the meeting
-    const handleLeave = async () => {
+    const finalizeMeetingDb = useCallback(async () => {
+        if (finalizedRef.current) return;
+        finalizedRef.current = true;
         try {
-            // Calculate duration
             const duration = callStartTime
                 ? Math.floor((new Date().getTime() - callStartTime.getTime()) / 1000)
                 : undefined;
 
-            // End call in database
-            if (callId && duration) {
+            if (callId && duration && isUserAdmin(user)) {
                 await dailyService.endVideoCall(callId, duration).catch(err => {
                     console.error('Failed to end call in database:', err);
                 });
             }
-
-            await leave();
+            import('@/services/activityService').then(({ activityService }) => {
+                activityService.logActivity(user.id, 'VIDEO_MEETING_ENDED', {
+                    callId,
+                    durationSeconds: duration || 0,
+                    participantCount: participants.length,
+                }).catch(() => undefined);
+            }).catch(() => undefined);
+            if (duration && duration > 0) {
+                const minutes = Math.max(1, Math.round(duration / 60));
+                toast.success(`Meeting completed. Duration: ${minutes} min.`);
+            }
             onLeave();
         } catch (err) {
-            console.error('Error leaving meeting:', err);
+            console.error('Error finalizing meeting:', err);
             onLeave();
         }
-    };
+    }, [callStartTime, callId, onLeave, user, participants.length]);
 
-    // Handle audio toggle
-    const handleToggleAudio = async () => {
+    const handleLeave = useCallback(async () => {
         try {
-            await toggleAudio();
-        } catch (err: any) {
-            toast.error(err?.userMessage || 'Failed to toggle audio');
-        }
-    };
-
-    // Handle video toggle
-    const handleToggleVideo = async () => {
-        try {
-            await toggleVideo();
-        } catch (err: any) {
-            toast.error(err?.userMessage || 'Failed to toggle video');
-        }
-    };
-
-    // Handle screen share toggle
-    const handleToggleScreenShare = async () => {
-        try {
-            await toggleScreenShare();
-        } catch (err: any) {
-            toast.error(err?.userMessage || 'Failed to toggle screen share');
-        }
-    };
-
-    // Admin: Mute participant (force mute)
-    const handleMuteParticipant = async (sessionId: string) => {
-        if (!isUserAdmin(user)) {
-            toast.error('Only admins can mute participants');
-            return;
-        }
-
-        try {
-            await muteParticipant(sessionId);
-            toast.success('Mute request sent');
-        } catch (err: any) {
-            toast.error('Failed to mute participant');
-        }
-    };
-
-    // Admin: Remove participant from call
-    const handleRemoveParticipant = async (sessionId: string) => {
-        if (!isUserAdmin(user)) {
-            toast.error('Only admins can remove participants');
-            return;
-        }
-
-        try {
-            await removeParticipant(sessionId);
-            toast.success('Remove request sent');
-        } catch (err: any) {
-            toast.error('Failed to remove participant');
-        }
-    };
-
-    // Admin: End meeting for everyone
-    const handleEndMeetingForAll = async () => {
-        if (!isUserAdmin(user)) {
-            toast.error('Only admins can end meetings');
-            return;
-        }
-
-        if (!confirm('End this meeting for everyone?')) {
-            return;
-        }
-
-        try {
-            if (callId) {
-                await dailyService.endVideoCall(callId, 0);
-                toast.success('Meeting ended for all participants');
-            }
             await leave();
-            onLeave();
-        } catch (err: any) {
-            toast.error('Failed to end meeting');
+            await finalizeMeetingDb();
+        } catch (err) {
+            console.error('Error leaving meeting:', err);
+            await finalizeMeetingDb();
         }
-    };
+    }, [leave, finalizeMeetingDb]);
 
-    // Handle sending chat message
-    const handleSendChatMessage = async (message: string) => {
+    const handlePreflightCheck = useCallback(async () => {
+        setIsCheckingDevices(true);
+        setPreJoinError(null);
         try {
-            await sendChatMessage(message);
-
-            // Add to local messages immediately for instant feedback
-            const newMessage: ChatMessage = {
-                id: Date.now().toString(),
-                userName: user.name || 'You',
-                userId: user.id,
-                message,
-                timestamp: new Date(),
-                isLocal: true,
-            };
-            setChatMessages(prev => [...prev, newMessage]);
-        } catch (err: any) {
-            toast.error('Failed to send message');
+            await startCamera();
+        } catch (err) {
+            setPreJoinError('Camera or microphone access is blocked. Please allow permissions and retry.');
+        } finally {
+            setIsCheckingDevices(false);
         }
-    };
+    }, [startCamera]);
 
-    // Listen for incoming chat messages via app-message events
     useEffect(() => {
-        if (!isJoined) return;
+        if (!preJoinAccepted || liveKitSession || liveKitError || !callId) return;
 
-        // Get the platform instance to listen for app messages
-        const platform = config as any;
-        const engine = platform?.engine;
+        let cancelled = false;
+        const connectLiveKit = async () => {
+            try {
+                const response = await fetch('/api/livekit/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ callId, meetingAccessPin, meetingAccessToken, guestName }),
+                });
 
-        if (!engine) return;
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(payload?.error || 'Failed to create secure meeting token');
+                }
 
-        const handleAppMessage = (event: any) => {
-            const { data, fromId } = event;
+                if (cancelled) return;
+                setLiveKitSession({
+                    url: payload.url,
+                    token: payload.token,
+                    roomName: payload.roomName,
+                });
+                setCallStartTime(new Date());
 
-            // Handle chat messages
-            if (data?.type === 'chat') {
-                const isFromSelf = localParticipant?.sessionId === data.senderSessionId;
-
-                // Don't add if it's from us (already added in handleSendChatMessage)
-                if (isFromSelf) return;
-
-                const newMessage: ChatMessage = {
-                    id: `${data.timestamp}-${fromId}`,
-                    userName: data.sender || 'Guest',
-                    userId: data.senderSessionId || fromId,
-                    message: data.message,
-                    timestamp: new Date(data.timestamp),
-                    isLocal: false,
-                };
-
-                setChatMessages(prev => [...prev, newMessage]);
-
-                // Show notification if chat is closed
-                if (!showChat) {
-                    toast.success(`${data.sender}: ${data.message.substring(0, 50)}${data.message.length > 50 ? '...' : ''}`);
+                import('@/services/activityService').then(({ activityService }) => {
+                    activityService.logActivity(user.id, 'VIDEO_MEETING_JOINED', {
+                        callId,
+                        transport: 'secure_realtime',
+                    }).catch(() => undefined);
+                }).catch(() => undefined);
+            } catch (err) {
+                if (!cancelled) {
+                    const message = err instanceof Error ? err.message : 'Failed to connect to secure meeting';
+                    setLiveKitError(message);
+                    toast.error(message);
                 }
             }
         };
 
-        engine.on('app-message', handleAppMessage);
-
+        void connectLiveKit();
         return () => {
-            engine.off('app-message', handleAppMessage);
+            cancelled = true;
         };
-    }, [isJoined, localParticipant, showChat, config]);
+    }, [preJoinAccepted, liveKitSession, liveKitError, callId, user, meetingAccessPin, meetingAccessToken, guestName]);
 
-    // DEBUG: Log participant info to diagnose visibility issues
-    // Use refs to prevent this from triggering re-renders
-    // CRITICAL: Must be defined BEFORE any early returns (Rules of Hooks)
-    const lastParticipantCountRef = useRef(0);
+    // Legacy room-url join remains disabled; secure meetings are brokered by /api/livekit/token.
     useEffect(() => {
-        // Only log when participant count changes (not on every state update)
-        if (participants.length !== lastParticipantCountRef.current) {
-            lastParticipantCountRef.current = participants.length;
-            console.log('🎥 PARTICIPANTS UPDATE:', {
-                total: participants.length,
-                local: localParticipant ? 1 : 0,
-                remote: remoteParticipants.length,
-                participants: participants.map(p => ({
-                    name: p.userName,
-                    sessionId: p.sessionId,
-                    isLocal: p.isLocal,
-                    hasVideo: !!p.video.track,
-                    hasAudio: !!p.audio.track
-                }))
-            });
+        if (liveKitSession || preJoinAccepted) return;
+        if (!preJoinAccepted || joinAttemptedRef.current || isJoining || isJoined || !resolvedRoomUrl) return;
+        joinAttemptedRef.current = true;
+
+        const joinMeeting = async () => {
+            try {
+                let token: string | undefined;
+                if (callId) {
+                    const { token: fetched } = await dailyService.getMeetingToken(
+                        callId,
+                        guestName || user.name || 'Guest',
+                        meetingAccessPin,
+                        meetingAccessToken,
+                    );
+                    if (fetched) token = fetched;
+                }
+
+                await join({
+                    url: resolvedRoomUrl,
+                    userName: user.name || 'Guest',
+                    token,
+                });
+
+                setCallStartTime(new Date());
+
+                toast.success('Joined meeting successfully!');
+                import('@/services/activityService').then(({ activityService }) => {
+                    activityService.logActivity(user.id, 'VIDEO_MEETING_JOINED', {
+                        callId,
+                    }).catch(() => undefined);
+                }).catch(() => undefined);
+            } catch (err: any) {
+                console.error('Failed to join meeting:', err);
+                toast.error(err?.userMessage || 'Failed to join meeting');
+                joinAttemptedRef.current = false;
+                setTimeout(onLeave, 2000);
+            }
+        };
+
+        setTimeout(joinMeeting, 100);
+    }, [resolvedRoomUrl, user.name, callId, onLeave, join, isJoining, isJoined, user, preJoinAccepted]);
+
+    // Meeting Start Logic (2 people trigger)
+    useEffect(() => {
+        if (!isJoined || !callId || hasMeetingStarted) return;
+
+        // Let the server determine whether this participant is the host. This also
+        // supports member-role hosts without trusting client-side role labels.
+        if (participants.length >= 2) {
+            const startActiveMeeting = async () => {
+                setHasMeetingStarted(true);
+                try {
+                    const result = await dailyService.startVideoCall(callId);
+                    if (result.error) throw new Error(result.error);
+                } catch (err) {
+                    console.error('Failed to set meeting_started_at:', err);
+                }
+            };
+
+            startActiveMeeting();
         }
-    }, [participants.length, localParticipant, remoteParticipants.length]);
+    }, [isJoined, callId, participants, hasMeetingStarted, user]);
 
-    // Calculate grid layout based on participant count (support up to 50+ people)
-    // Automatically minimize tiles as more people join
-    // Memoized to prevent recalculation on every render (Error 310 protection)
-    // CRITICAL: Must be defined BEFORE any early returns (Rules of Hooks)
+    const handleLeaveRef = useRef(handleLeave);
+    useEffect(() => {
+        handleLeaveRef.current = handleLeave;
+    }, [handleLeave]);
+
+    const finalizeMeetingDbRef = useRef(finalizeMeetingDb);
+    useEffect(() => {
+        finalizeMeetingDbRef.current = finalizeMeetingDb;
+    }, [finalizeMeetingDb]);
+
+    useEffect(() => {
+        return () => {
+            void (async () => {
+                if (finalizedRef.current) return;
+                if (isJoinedRef.current) {
+                    await handleLeaveRef.current();
+                }
+            })();
+        };
+    }, []);
+
+    useEffect(() => {
+        isJoinedRef.current = isJoined;
+    }, [isJoined]);
+
+    // Subscribe to call status changes
+    useEffect(() => {
+        if (!callId) return;
+
+        const unsubscribe = dailyService.subscribeToCallStatus(callId, (status) => {
+            if (status === 'ended' && isJoinedRef.current) {
+                toast.success('The host has ended the meeting');
+                setTimeout(handleLeave, 1500);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [callId, handleLeave]);
+
+    useEffect(() => {
+        if (!callStartTime) return;
+
+        const interval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - callStartTime.getTime()) / 1000);
+            setSecondsElapsed(elapsed);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [callStartTime]);
+
+    // Error handling
+    useEffect(() => {
+        if (error) {
+            toast.error(error.userMessage);
+        }
+    }, [error]);
+
+    const handleToggleAudio = useCallback(async () => {
+        if (!isJoined) return;
+        try { await toggleAudio(); } catch (err: any) { toast.error('Failed to toggle audio'); }
+    }, [toggleAudio, isJoined]);
+
+    const handleToggleVideo = useCallback(async () => {
+        if (!isJoined) return;
+        try { await toggleVideo(); } catch (err: any) { toast.error('Failed to toggle video'); }
+    }, [toggleVideo, isJoined]);
+
+    const handleToggleScreenShare = useCallback(async () => {
+        if (!isJoined) return;
+        try { await toggleScreenShare(); } catch (err: any) { toast.error('Failed to toggle screen share'); }
+    }, [toggleScreenShare, isJoined]);
+
+    const handleMuteParticipant = useCallback(async (sessionId: string) => {
+        if (!isUserAdmin(user)) return;
+        try { await muteParticipant(sessionId); toast.success('Muted'); } catch (err) { toast.error('Error'); }
+    }, [user, muteParticipant]);
+
+    const handleRemoveParticipant = useCallback(async (sessionId: string) => {
+        if (!isUserAdmin(user)) return;
+        try { await removeParticipant(sessionId); toast.success('Removed'); } catch (err) { toast.error('Error'); }
+    }, [user, removeParticipant]);
+
+    const handleToggleRecord = useCallback(async () => {
+        if (!isUserAdmin(user)) return;
+        try {
+            if (isRecording) {
+                await stopRecording();
+                toast.success('Recording stopped');
+            } else {
+                await startRecording();
+                toast.success('Recording started');
+            }
+        } catch (err: any) {
+            toast.error('Failed to toggle recording');
+        }
+    }, [user, isRecording, startRecording, stopRecording]);
+
+    const handleToggleLock = useCallback(async () => {
+        if (!isUserAdmin(user)) return;
+        try {
+            await setRoomLocked(!isLocked);
+            setIsLocked(!isLocked);
+            toast.success(isLocked ? 'Room unlocked' : 'Room locked. Guests must knock.');
+        } catch (err: any) {
+            toast.error('Failed to toggle lock');
+        }
+    }, [user, isLocked, setRoomLocked]);
+
+    const handleEndMeetingForAll = useCallback(async () => {
+        if (!isUserAdmin(user)) return;
+        if (!confirm('End meeting for all?')) return;
+        try {
+            if (callId) {
+                const result = await dailyService.endVideoCall(callId, 0, true);
+                if (result.error) throw new Error(result.error);
+            }
+            finalizedRef.current = true;
+            await leave();
+            onLeave();
+        } catch (err) { toast.error('Error ending meeting'); }
+    }, [user, callId, leave, onLeave]);
+
     const gridClass = useMemo(() => {
-        return participants.length === 1 ? 'grid-cols-1' :
-            participants.length === 2 ? 'grid-cols-1 sm:grid-cols-2' :
-                participants.length <= 4 ? 'grid-cols-2 sm:grid-cols-2' :
-                    participants.length <= 6 ? 'grid-cols-2 sm:grid-cols-3' :
-                        participants.length <= 9 ? 'grid-cols-3 sm:grid-cols-3 lg:grid-cols-3' :
-                            participants.length <= 16 ? 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-4' :
-                                participants.length <= 25 ? 'grid-cols-4 sm:grid-cols-5 lg:grid-cols-5' :
-                                    'grid-cols-4 sm:grid-cols-6 lg:grid-cols-7'; // 50+ people
-    }, [participants.length]);
+        const count = participants.length;
+        if (count === 1) return 'grid-cols-1';
+        if (count === 2) return isMobile ? 'grid-cols-1' : 'grid-cols-2';
+        if (count <= 4) return 'grid-cols-2';
+        if (count <= 6) return isMobile ? 'grid-cols-2' : 'grid-cols-3';
+        return isMobile ? 'grid-cols-2' : 'grid-cols-3 lg:grid-cols-4';
+    }, [participants.length, isMobile]);
 
-    // Show loading state while joining - BUT show local video immediately if available (Instant View)
-    // CRITICAL: This early return must come AFTER all hooks (Rules of Hooks)
-    if ((isJoining || !isJoined) && !localParticipant) {
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const handleLiveKitLeave = useCallback(() => {
+        void finalizeMeetingDb();
+    }, [finalizeMeetingDb]);
+
+    const handleLiveKitFatalError = useCallback((message: string) => {
+        setLiveKitError(message);
+        toast.error('Secure video connection failed. Please retry.');
+    }, []);
+
+    if (liveKitSession) {
         return (
-            <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-teal-500 mx-auto mb-6"></div>
-                    <p className="text-white text-xl font-medium mb-2">
-                        {isJoining ? 'Joining meeting...' : 'Connecting...'}
-                    </p>
-                    <p className="text-slate-400 text-sm">Please wait while we connect you</p>
+            <LiveKitStage
+                url={liveKitSession.url}
+                token={liveKitSession.token}
+                displayName={user.name || 'Guest'}
+                callId={callId}
+                secondsElapsed={secondsElapsed}
+                formatElapsed={formatTime}
+                requestHardStop={false}
+                onHardStopConsumed={() => undefined}
+                onLeave={handleLiveKitLeave}
+                onFatalError={handleLiveKitFatalError}
+            />
+        );
+    }
+
+    if (!isJoined) {
+        if (!preJoinAccepted) {
+            return (
+                <div className="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 overflow-hidden p-4">
+                    <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl">
+                        <h2 className="text-white text-2xl font-bold mb-2">Ready to join meeting</h2>
+                        <p className="text-slate-400 text-sm mb-5">
+                            Complete a quick device check, then join the full-screen meeting room. You can share your screen once connected.
+                        </p>
+                        {preJoinError && (
+                            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+                                {preJoinError}
+                            </div>
+                        )}
+                        <div className="flex flex-wrap gap-3">
+                            <button
+                                onClick={() => void handlePreflightCheck()}
+                                disabled={isCheckingDevices}
+                                className="px-4 py-2 rounded-xl border border-teal-500/30 text-teal-300 hover:bg-teal-500/10 transition-colors text-sm font-semibold disabled:opacity-60"
+                            >
+                                {isCheckingDevices ? 'Checking devices...' : 'Check camera and mic'}
+                            </button>
+                            <button
+                                onClick={() => setPreJoinAccepted(true)}
+                                className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white transition-colors text-sm font-semibold"
+                            >
+                                Join now
+                            </button>
+                            <button
+                                onClick={() => void handleLeave()}
+                                className="px-4 py-2 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-colors text-sm font-semibold"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div className="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center z-50 overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/10 via-transparent to-transparent opacity-50" />
+                <div className="relative text-center">
+                    <div className="relative w-24 h-24 mx-auto mb-8">
+                        <div className="absolute inset-0 rounded-full border-4 border-teal-500/20" />
+                        <div className="absolute inset-0 rounded-full border-4 border-teal-500 border-t-transparent animate-spin" />
+                    </div>
+                    <h2 className="text-white text-2xl font-bold tracking-tight mb-2">Connecting to meeting...</h2>
+                    <p className="text-slate-400 font-medium">Securing your encrypted channel</p>
                 </div>
             </div>
         );
     }
 
-    // Render Minimized (PiP) View
     if (isMinimized) {
+        const primaryParticipant = remoteParticipants[0] || localParticipant || participants[0];
         return (
-            <div className="fixed bottom-4 right-4 z-[200] w-80 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-slide-up">
-                {/* Header / Draggable Area */}
-                <div className="bg-slate-800 p-2 flex items-center justify-between cursor-move">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        <span className="text-xs font-bold text-white">Live Call ({participants.length})</span>
+            <div className="fixed bottom-24 right-4 z-[120] w-[360px] max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl overflow-hidden backdrop-blur-md">
+                <div className="flex items-center justify-between px-3 py-2 bg-slate-900/90 border-b border-white/10">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        Meeting in background
                     </div>
                     <div className="flex items-center gap-1">
+                        {onToggleMinimize && (
+                            <button
+                                onClick={onToggleMinimize}
+                                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                                title="Restore meeting"
+                            >
+                                <Maximize2 className="w-3.5 h-3.5" />
+                            </button>
+                        )}
                         <button
-                            onClick={onToggleMinimize}
-                            className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white"
-                            title="Maximize"
+                            onClick={() => void handleLeave()}
+                            className="p-1.5 rounded-lg text-red-300 hover:text-red-200 hover:bg-red-500/20 transition-colors"
+                            title="Leave meeting"
                         >
-                            <Maximize2 className="w-4 h-4" />
-                        </button>
-                        <button
-                            onClick={handleLeave}
-                            className="p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300"
-                            title="Leave Call"
-                        >
-                            <X className="w-4 h-4" />
+                            <PhoneOff className="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
-
-                {/* Video Content (Simplified Grid) */}
-                <div className="aspect-video bg-black relative">
-                    {/* Show Active Speaker or Local if alone */}
-                    {participants.length > 0 ? (
+                <div className="h-[200px] bg-slate-900">
+                    {primaryParticipant ? (
                         <CustomVideoTile
-                            participant={participants.find(p => !p.isLocal) || participants[0]}
-                            isLocal={participants.find(p => !p.isLocal) ? false : true}
-                            isAdmin={false}
-                        // Removed isMinimized prop to avoid TS error until CustomVideoTile is updated
+                            participant={primaryParticipant}
+                            isLocal={primaryParticipant.isLocal}
+                            isAdmin={isUserAdmin(user)}
+                            variant="stage"
                         />
                     ) : (
-                        <div className="flex items-center justify-center h-full text-slate-500 text-xs">Waiting...</div>
+                        <div className="h-full w-full flex items-center justify-center text-sm text-slate-400">
+                            Waiting for participants...
+                        </div>
                     )}
-                </div>
-
-                {/* Mini Controls */}
-                <div className="p-3 bg-slate-900 flex justify-center gap-4">
-                    <button onClick={handleToggleAudio} className={`p-2 rounded-full ${!isAudioEnabled ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-white'}`}>
-                        {!isAudioEnabled ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    </button>
-                    <button onClick={handleToggleVideo} className={`p-2 rounded-full ${!isVideoEnabled ? 'bg-red-500/20 text-red-400' : 'bg-slate-800 text-white'}`}>
-                        {!isVideoEnabled ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
-                    </button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="fixed inset-0 bg-gray-900 z-[100]">
-            {/* Window Controls */}
-            <div className="absolute top-4 right-4 z-[120] flex gap-2">
-                {onToggleMinimize && (
-                    <button
-                        onClick={onToggleMinimize}
-                        className="p-2 bg-gray-800/90 hover:bg-gray-700/90 rounded-lg text-white shadow-lg border border-gray-700 transition-all"
-                        title="Minimize"
-                    >
-                        <Minimize2 className="w-5 h-5" />
-                    </button>
-                )}
-            </div>
-
-            {/* Toggle Sidebar Button - Arrow */}
-            {onToggleSidebar && (
-                <button
-                    onClick={onToggleSidebar}
-                    className="fixed top-4 left-4 z-[120] p-3 bg-gray-800/90 hover:bg-gray-700/90 rounded-full shadow-lg transition-all border border-gray-700"
-                    title={showSidebar ? 'Hide navigation' : 'Show navigation'}
-                >
-                    {showSidebar ? (
-                        <ChevronLeft className="w-5 h-5 text-white" />
-                    ) : (
-                        <ChevronRight className="w-5 h-5 text-white" />
-                    )}
-                </button>
-            )}
-
-            {/* TOP BAR - Consolidates Metadata & Status (Gate B.3) */}
-            <div className={`absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/80 to-transparent z-[110] flex items-center justify-between px-6 transition-transform duration-300 ${isMinimized ? '-translate-y-full' : 'translate-y-0'}`}>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center space-x-2 bg-teal-500/10 px-3 py-1 rounded-full border border-teal-500/30 backdrop-blur-md">
-                        <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse shadow-[0_0_8px_rgba(20,184,166,0.6)]" />
-                        <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Autonomous Session</span>
+        <div className="fixed inset-0 bg-slate-950 z-[1100] text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+            {/* Immersive Header */}
+            <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-14 sm:h-16 bg-gradient-to-b from-black/70 to-transparent z-[110] px-3 sm:px-6 flex items-center justify-between pointer-events-none">
+                <div className="flex items-center gap-4 pointer-events-auto">
+                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-2xl">
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
+                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/90">
+                            {formatTime(secondsElapsed)}
+                        </span>
                     </div>
+                    {!isMobile && (
+                    <div className="flex items-end gap-0.5 h-3">
+                        <div className="w-0.5 h-full bg-teal-500 rounded-full" />
+                        <div className="w-0.5 h-4/5 bg-teal-500 rounded-full" />
+                        <div className="w-0.5 h-3/5 bg-teal-500 rounded-full" />
+                    </div>
+                    )}
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <div className="flex bg-black/40 backdrop-blur-xl rounded-full border border-white/10 p-0.5">
+                <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
+                    <div className={`px-2 sm:px-3 py-1 rounded-xl border text-[10px] sm:text-xs font-bold uppercase tracking-wide ${
+                        networkQuality === 'good'
+                            ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-300'
+                            : networkQuality === 'poor'
+                                ? 'bg-amber-500/10 border-amber-400/30 text-amber-300'
+                                : 'bg-slate-500/10 border-white/10 text-slate-300'
+                    }`}>
+                        {networkQuality === 'good' ? <Wifi className="inline w-3 h-3" /> : <WifiOff className="inline w-3 h-3" />}
+                        {!isMobile && (
+                          <span className="ml-1">{networkQuality === 'good' ? 'Good' : networkQuality === 'poor' ? 'Poor' : '…'}</span>
+                        )}
+                    </div>
+                    {(platformState === 'error' || networkQuality === 'poor') && !isMobile && (
+                        <button
+                            onClick={() => void reconnect()}
+                            className="px-3 py-1 rounded-xl border border-white/10 text-xs text-slate-200 hover:bg-white/10 transition-colors"
+                            title="Reconnect"
+                        >
+                            <RefreshCw className="inline w-3 h-3 mr-1" />
+                            Reconnect
+                        </button>
+                    )}
+                    <div className={`flex bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 p-0.5 sm:p-1 ${isMobile ? 'hidden' : ''}`}>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${viewMode === 'grid' ? 'bg-teal-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${viewMode === 'grid' ? 'bg-white text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
                         >
                             Grid
                         </button>
                         <button
                             onClick={() => setViewMode('speaker')}
-                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all ${viewMode === 'speaker' ? 'bg-teal-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${viewMode === 'speaker' ? 'bg-white text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}
                         >
-                            Stage
+                            Speaker
                         </button>
                     </div>
-
-                    {isRestricted && isJoined && (
-                        <div className="bg-black/40 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-                            <span className={`text-[11px] font-black tracking-tighter ${MAX_DURATION_SECONDS - secondsElapsed < 120 ? 'text-red-400 animate-pulse' : 'text-slate-300'}`}>
-                                {Math.floor((MAX_DURATION_SECONDS - secondsElapsed) / 60)}:{((MAX_DURATION_SECONDS - secondsElapsed) % 60).toString().padStart(2, '0')}
-                            </span>
-                            <div className="w-px h-3 bg-white/10" />
-                            <span className="text-[10px] text-slate-500 font-bold uppercase">Time Left</span>
-                        </div>
-                    )}
                 </div>
-            </div>
+            </header>
 
-            {/* MAIN STAGE & SHELF - Layout Reflow (Gate E) */}
-            <div className={`absolute inset-0 pt-16 pb-24 overflow-hidden flex flex-col ${viewMode === 'grid' ? 'p-4' : ''}`}>
-
-                {/* Grid View Mode */}
-                {viewMode === 'grid' && (
-                    <div className={`grid gap-4 w-full h-full ${gridClass} auto-rows-fr`}>
-                        {participants.map(participant => (
-                            <div key={participant.sessionId} className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 shadow-xl">
-                                <CustomVideoTile
-                                    participant={participant}
-                                    isLocal={participant.isLocal}
-                                    isAdmin={isUserAdmin(user)}
-                                    variant="stage"
-                                />
-                                <div className="absolute bottom-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white font-medium">
-                                    {participant.userName || 'Guest'} {participant.isLocal && '(You)'}
+            {/* Main Stage */}
+            <main className={`flex-1 relative mt-12 sm:mt-14 mb-[calc(5.5rem+env(safe-area-inset-bottom))] overflow-hidden ${viewMode === 'grid' ? 'p-2 sm:p-6' : ''}`}>
+                {viewMode === 'grid' ? (
+                    <div className={`grid gap-3 sm:gap-6 w-full h-full ${gridClass}`}>
+                        {participants.map(p => (
+                            <div key={p.sessionId} className="relative rounded-3xl overflow-hidden bg-slate-900 ring-1 ring-white/5 shadow-2xl transition-transform duration-500">
+                                <CustomVideoTile participant={p} isLocal={p.isLocal} isAdmin={isUserAdmin(user)} variant="stage" />
+                                <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                                    {!p.audio.enabled && <MicOff className="w-3.5 h-3.5 text-red-500" />}
+                                    <span className="text-xs font-semibold">{p.isLocal ? "You" : p.userName}</span>
                                 </div>
                             </div>
                         ))}
                     </div>
-                )}
-
-                {/* Speaker View Mode (Stage + Shelf) */}
-                {viewMode === 'speaker' && (
-                    <>
-                        {/* 1. THE STAGE (Host / Active Speaker) - Max 35% Mobile Height (Gate B.1) */}
-                        <div className="flex-1 flex flex-col min-h-0">
-                            <div className="flex-1 p-2 sm:p-4 flex items-center justify-center min-h-0">
-                                {participants.length > 0 && (remoteParticipants[0] || localParticipant) ? (
-                                    <div className="w-full h-full max-w-5xl mx-auto">
-                                        <CustomVideoTile
-                                            participant={(remoteParticipants[0] || localParticipant)!}
-                                            isLocal={remoteParticipants.length === 0}
-                                            isAdmin={isUserAdmin(user)}
-                                            variant="stage"
-                                        />
-                                    </div>
-                                ) : (
-                                    /* Empty state when alone */
-                                    <div className="text-center text-gray-500 animate-in fade-in zoom-in duration-700">
-                                        <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700">
-                                            <Users className="w-8 h-8 opacity-20" />
-                                        </div>
-                                        <p className="text-lg font-medium text-slate-400">Waiting for participants...</p>
-                                        <p className="text-sm text-slate-600">Your Business OS is ready for the meeting</p>
-                                    </div>
-                                )}
-                            </div>
+                ) : (
+                    <div className="w-full h-full flex flex-col gap-4">
+                        {/* Speaker View - Big area */}
+                        <div className="flex-1 flex items-center justify-center p-2 min-h-0">
+                            {participants.length > 0 ? (
+                                <div className="w-full h-full max-w-6xl rounded-3xl overflow-hidden ring-1 ring-white/5 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+                                    <CustomVideoTile
+                                        participant={remoteParticipants[0] || localParticipant!}
+                                        isLocal={remoteParticipants.length === 0}
+                                        isAdmin={isUserAdmin(user)}
+                                        variant="stage"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="animate-pulse flex flex-col items-center">
+                                    <div className="w-16 h-16 bg-slate-800 rounded-full mb-4" />
+                                    <div className="w-48 h-4 bg-slate-800 rounded-full" />
+                                </div>
+                            )}
                         </div>
 
-                        {/* 2. THE SHELF (Guest List) - Density Logic (Gate B.2) */}
+                        {/* Filmstrip - other participants */}
                         {participants.length > 1 && (
-                            <div className="h-28 sm:h-36 bg-black/20 backdrop-blur-sm border-t border-white/5 flex flex-col">
-                                <div className="px-4 pt-2 flex items-center justify-between">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Participants ({participants.length})</span>
-                                </div>
-                                <div className="flex-1 flex overflow-x-auto overflow-y-hidden gap-2 p-2 sm:p-3 scrollbar-hide">
-                                    {/* If local participated in stage, don't show here unless count > 2, etc. 
-                                For simplicity: Show all EXCEPT the one currently on stage. */}
-                                    {participants
-                                        .filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId))
-                                        .map(participant => (
-                                            <div key={participant.sessionId} className="h-full aspect-video flex-shrink-0 animate-in slide-in-from-right duration-300">
-                                                <CustomVideoTile
-                                                    participant={participant}
-                                                    isLocal={participant.isLocal}
-                                                    isAdmin={isUserAdmin(user)}
-                                                    variant="sidecar"
-                                                    onMuteParticipant={handleMuteParticipant}
-                                                    onRemoveParticipant={handleRemoveParticipant}
-                                                />
-                                            </div>
-                                        ))
-                                    }
-
-                                    {/* Always show local video in shelf if remote is on stage */}
-                                    {remoteParticipants.length > 0 && localParticipant && (
-                                        <div className="h-full aspect-video flex-shrink-0 order-first">
+                            <div className="h-32 sm:h-44 flex gap-4 p-4 overflow-x-auto scrollbar-hide">
+                                {participants
+                                    .filter(p => p.sessionId !== (remoteParticipants[0]?.sessionId || localParticipant?.sessionId))
+                                    .map(p => (
+                                        <div key={p.sessionId} className="h-full aspect-video flex-shrink-0 rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-xl group cursor-pointer active:scale-95 transition-transform">
                                             <CustomVideoTile
-                                                participant={localParticipant}
-                                                isLocal={true}
+                                                participant={p}
+                                                isLocal={p.isLocal}
                                                 isAdmin={isUserAdmin(user)}
                                                 variant="sidecar"
+                                                onMuteParticipant={handleMuteParticipant}
+                                                onRemoveParticipant={handleRemoveParticipant}
                                             />
                                         </div>
-                                    )}
-                                </div>
+                                    ))}
                             </div>
                         )}
-                    </>
-                )}
-            </div>
-
-            {/* Participants sidebar */}
-            {
-                showParticipants && (
-                    <div className="absolute right-0 top-0 bottom-24 w-80 bg-gray-800 border-l border-gray-700 p-4 overflow-auto z-10">
-                        <h3 className="text-white text-lg font-semibold mb-4">
-                            Participants ({participants.length})
-                        </h3>
-                        <div className="space-y-2">
-                            {participants.map(participant => (
-                                <div
-                                    key={participant.sessionId}
-                                    className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-teal-500 flex items-center justify-center">
-                                        <span className="text-white font-medium">
-                                            {(participant?.userName?.[0] || 'G').toUpperCase()}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-white text-sm font-medium">
-                                            {participant.userName || 'Guest'}
-                                            {participant.isLocal && ' (You)'}
-                                        </p>
-                                        <p className="text-gray-400 text-xs">
-                                            {participant.isLocal ? 'You' : 'Participant'}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
                     </div>
-                )
-            }
+                )}
+            </main>
 
-            {/* Chat panel */}
-            <MeetingChat
-                user={user}
-                isOpen={showChat}
-                onClose={() => setShowChat(false)}
-                onSendMessage={handleSendChatMessage}
-                messages={chatMessages}
-            />
-
-            {/* Control bar */}
+            {/* Bottom Controls */}
             <VideoControls
                 isMuted={!isAudioEnabled}
                 isVideoOff={!isVideoEnabled}
                 isScreenSharing={isScreenSharing}
+                isRecording={isRecording}
+                isLocked={isLocked}
                 onToggleMic={handleToggleAudio}
                 onToggleVideo={handleToggleVideo}
                 onToggleScreenShare={handleToggleScreenShare}
+                onToggleRecord={handleToggleRecord}
+                onToggleLock={handleToggleLock}
                 onLeave={handleLeave}
                 onToggleParticipants={() => setShowParticipants(!showParticipants)}
-                onToggleChat={() => setShowChat(!showChat)}
+                onToggleSettings={() => setShowDeviceSettings(true)}
                 onEndForAll={isUserAdmin(user) ? handleEndMeetingForAll : undefined}
                 isAdmin={isUserAdmin(user)}
-                roomUrl={roomUrl}
+                roomUrl={resolvedRoomUrl || ''}
                 callId={callId}
             />
-        </div >
+
+            <DeviceSettingsModal
+                isOpen={showDeviceSettings}
+                onClose={() => setShowDeviceSettings(false)}
+                setAudioDevice={setAudioDevice}
+                setVideoDevice={setVideoDevice}
+            />
+        </div>
     );
 };
 

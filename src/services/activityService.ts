@@ -38,49 +38,44 @@ import { ipTrackingService } from './ipTrackingService';
 
 // Get IP and location data
 const getLocationData = async () => {
-    try {
-        const data = await ipTrackingService.getClientIP();
-        if (!data) throw new Error('No location data');
-
-        return {
-            ip: data.ip,
-            country: data.country_name,
-            city: data.city,
-            countryCode: data.country,
-        };
-    } catch (e) {
-        return {
-            ip: null,
-            country: 'Unknown',
-            city: 'Unknown',
-            countryCode: 'XX',
-        };
-    }
+    // IP and location tracking disabled per privacy policy
+    return {
+        ip: null,
+        country: 'Private',
+        city: 'Private',
+        countryCode: 'XX',
+    };
 };
 
 export const activityService = {
     /**
-     * Log user activity
+     * Log user activity with optional field-level diffs
      */
-    async logActivity(userId: string, action: string, metadata: Record<string, unknown> = {}) {
+    async logActivity(
+        userId: string, 
+        action: string, 
+        metadata: Record<string, unknown> = {}, 
+        passedTenantId?: string,
+        diff?: { before: any; after: any }
+    ) {
         const locationData = await getLocationData();
-        const { browser, deviceType } = parseUserAgent(navigator.userAgent);
-        const tenantId = tenantService.getCurrentTenantId();
+        const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side';
+        const { browser, deviceType } = parseUserAgent(ua);
+        const tenantId = passedTenantId || tenantService.getCurrentTenantId();
 
-        const { error } = await supabase.from('activity_logs').insert({
-            user_id: userId,
-            action,
-            ip_address: locationData.ip,
-            country: locationData.country,
-            city: locationData.city,
-            device_type: deviceType,
-            browser,
-            user_agent: navigator.userAgent,
-            metadata,
-            tenant_id: tenantId,
+        const combinedMetadata = {
+            ...metadata,
+            ...(diff ? { _audit_diff: diff } : {})
+        };
+
+        if (!tenantId) return { error: new Error('No active workspace selected') };
+        const response = await fetch(`/api/tenant/${tenantId}/activity`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, metadata: combinedMetadata, device: { deviceType, browser, userAgent: ua } }),
         });
-
-        return { error };
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? null : new Error(payload.error || 'Activity could not be recorded') };
     },
 
     /**
@@ -88,7 +83,8 @@ export const activityService = {
      */
     async createLoginSession(userId: string) {
         const locationData = await getLocationData();
-        const { browser, deviceType } = parseUserAgent(navigator.userAgent);
+        const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side';
+        const { browser, deviceType } = parseUserAgent(ua);
         const tenantId = tenantService.getCurrentTenantId();
 
         const { data, error } = await supabase
@@ -101,7 +97,7 @@ export const activityService = {
                 device_info: {
                     browser,
                     deviceType,
-                    userAgent: navigator.userAgent,
+                    userAgent: ua,
                 },
                 tenant_id: tenantId,
             })
@@ -133,6 +129,27 @@ export const activityService = {
 
         localStorage.removeItem('session_id');
         return { error };
+    },
+
+    /**
+     * Get recent activity for pulse ticker
+     */
+    async getRecentActivity(userId: string, tenantId: string, hours = 24) {
+        const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+        const { data, error } = await supabase
+            .from('activity_logs')
+            .select('id, action, metadata, created_at')
+            .eq('tenant_id', tenantId)
+            .gte('created_at', since)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        if (error) throw error;
+        
+        return (data || []).map((log: any) => ({
+            ...log,
+            description: (log.metadata as any)?.description || log.action
+        }));
     },
 
     /**
@@ -386,14 +403,15 @@ export const activityService = {
         location?: string
     ) {
         const locationData = await getLocationData();
-        const { browser, deviceType } = parseUserAgent(userAgent || navigator.userAgent);
+        const ua = userAgent || (typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side');
+        const { browser, deviceType } = parseUserAgent(ua);
         const tenantId = tenantService.getCurrentTenantId();
 
         const { error } = await supabase.from('failed_logins').insert({
             tenant_id: tenantId,
             email,
             ip_address: ipAddress || locationData.ip || 'Unknown',
-            user_agent: userAgent || navigator.userAgent,
+            user_agent: ua,
             location: location || `${locationData.city}, ${locationData.country}`,
             device_info: { browser, deviceType },
             failure_reason: failureReason,
@@ -431,7 +449,7 @@ export const activityService = {
             endpoint: options?.endpoint,
             status_code: options?.statusCode,
             severity: options?.severity || 'error',
-            user_agent: navigator.userAgent,
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side',
             ip_address: locationData.ip || 'Unknown',
             metadata: options?.metadata,
         });
@@ -465,5 +483,75 @@ export const activityService = {
             .limit(limit);
 
         return { errorLogs: data, error };
+    },
+
+    /**
+     * Standardized system-wide audit logging
+     * Use this for critical business actions (deletions, exports, settings changes)
+     */
+    async logSystemAction(
+        userId: string,
+        action: 'DELETE' | 'EDIT' | 'EXPORT' | 'GENERATE' | 'SECURITY' | 'INTEGRATION' | 'EXECUTE' | 'AI_INSIGHTS',
+        details: string,
+        metadata: Record<string, any> = {},
+        tenantId?: string
+    ) {
+        return this.logActivity(userId, `SYSTEM_${action}`, {
+            ...metadata,
+            description: details,
+            timestamp: new Date().toISOString(),
+            isSystemAction: true
+        }, tenantId);
+    },
+
+    /**
+     * High-fidelity audit logging for sensitive state changes
+     * Writes to the immutable public.audit_logs table
+     */
+    async logAudit(params: {
+        userId: string;
+        tenantId?: string;
+        action: string;
+        resourceType: string;
+        resourceId?: string;
+        oldValues?: any;
+        newValues?: any;
+        severity?: 'info' | 'warning' | 'error' | 'critical';
+        metadata?: Record<string, any>;
+    }) {
+        const {
+            userId,
+            tenantId: passedTenantId,
+            action,
+            resourceType,
+            resourceId,
+            oldValues = {},
+            newValues = {},
+            severity = 'info',
+            metadata = {}
+        } = params;
+
+        const locationData = await getLocationData();
+        const ua = typeof navigator !== 'undefined' ? navigator.userAgent : 'Server-Side';
+        const tenantId = passedTenantId || tenantService.getCurrentTenantId();
+
+        const { error } = await supabase.from('audit_logs').insert({
+            user_id: userId,
+            tenant_id: tenantId,
+            action,
+            resource_type: resourceType,
+            resource_id: resourceId,
+            old_values: oldValues,
+            new_values: newValues,
+            ip_address: locationData.ip,
+            user_agent: ua,
+            severity,
+            metadata: {
+                ...metadata,
+                timestamp: new Date().toISOString()
+            }
+        });
+
+        return { error };
     }
 };

@@ -2,12 +2,12 @@
 
 ## Prerequisites
 - Supabase project created at https://supabase.com
-- Project URL: https://ehekzoiogvtweugeinktn.supabase.co
+- Project URL: https://your-project-ref.supabase.co
 
 ## Step 1: Deploy Database Migrations
 
 ### Option A: Using Supabase Dashboard (Recommended)
-1. Go to https://supabase.com/dashboard/project/ehekzoiogvtweugeinktn/sql/new
+1. Go to your Supabase project SQL editor
 2. Copy and paste the contents of each migration file in order:
    - `supabase/migrations/20241207000001_initial_schema.sql`
    - `supabase/migrations/20241207000002_rls_policies.sql`
@@ -25,7 +25,7 @@ scoop install supabase
 supabase login
 
 # Link to your project
-supabase link --project-ref ehekzoiogvtweugeinktn
+supabase link --project-ref <your-project-ref>
 
 # Push migrations
 supabase db push
@@ -38,11 +38,11 @@ supabase db push
 2. Click "Add user" > "Create new user"
 3. Create first admin:
    - Email: `info@alphaclone.tech`
-   - Password: `Amgseries@gmail.com`
+   - Password: `[create a secure password]`
    - Auto Confirm User: ✓
 4. Create second admin:
    - Email: `alphaclonesystems@hotmail.com`
-   - Password: `Amgseries@gmail.com`
+   - Password: `[create a secure password]`
    - Auto Confirm User: ✓
 
 ### Update User Roles to Admin
@@ -83,7 +83,7 @@ npm run dev
 
 3. Test login with admin credentials:
    - Email: `info@alphaclone.tech`
-   - Password: `Amgseries@gmail.com`
+   - Password: `[your configured secure password]`
 
 4. Verify:
    - ✓ Login works

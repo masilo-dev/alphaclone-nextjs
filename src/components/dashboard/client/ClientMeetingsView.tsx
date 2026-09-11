@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { dailyService, VideoCall } from '../../../services/dailyService';
 import { supabase } from '../../../lib/supabase';
 import { User, Video, Calendar, Clock, AlertCircle } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Card, Badge, Button } from '@/components/ui/UIComponents';
 import { format, isFuture } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { resolveMeetingJoinUrl } from '@/services/instantMeetingService';
 
 interface ClientMeetingsViewProps {
     onJoinRoom?: (url: string) => void;
@@ -16,14 +17,9 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
     const router = useRouter();
     const [meetings, setMeetings] = useState<VideoCall[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentTime, setCurrentTime] = useState(() => Date.now());
 
-    useEffect(() => {
-        if (user) {
-            loadMeetings();
-        }
-    }, [user]);
-
-    const loadMeetings = async () => {
+    const loadMeetings = useCallback(async () => {
         if (!user) return;
         setLoading(true);
 
@@ -54,13 +50,34 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
             setMeetings([...dailyCalls, ...mappedBookings]);
         }
         setLoading(false);
-    };
+    }, [user]);
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(Date.now()), 60000); // Update every minute
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        if (user) {
+            loadMeetings();
+        }
+    }, [user, loadMeetings]);
 
     const upcomingMeetings = meetings.filter(m =>
         (m.status === 'scheduled' || m.status === 'active' || (m.status as any) === 'confirmed') &&
         // Show active meetings or future ones.
         (m.status === 'active' || isFuture(new Date(m.scheduled_at || m.created_at)))
     );
+
+    const joinMeeting = (meeting: VideoCall) => {
+        const destination = (meeting as any).room_url || resolveMeetingJoinUrl(meeting);
+        if (destination?.startsWith('http')) {
+            if (onJoinRoom && !destination.includes('teams.microsoft.com')) onJoinRoom(destination);
+            else window.open(destination, '_blank', 'noopener,noreferrer');
+            return;
+        }
+        router.push(destination || `/meet/${meeting.id}`);
+    };
 
     return (
         <div className="space-y-6">
@@ -121,24 +138,7 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                                     <div className="flex items-center gap-3">
                                         {meeting.status === 'active' ? (
                                             <Button
-                                                onClick={() => {
-                                                    // "active" logic: derive room URL or fetch it? 
-                                                    // The meeting object from dailyService likely has room_url.
-                                                    // Let's check the type definition or just assume room_url exists or construct it.
-                                                    // Actually, `getUserVideoCall` returns calls. dailyService usually returns full objects.
-                                                    // Assuming `meeting.room_url` or similar exists. Inspecting VideoCall type.
-                                                    // If we don't have URL, we might need to fetch it.
-                                                    // But for now let's assume `meeting.room_url` or fallback to `/call/id`.
-                                                    // Since we are hoisting, we prefer `onJoinRoom(url)`.
-
-                                                    // Type check: meetings matches VideoCall interface.
-                                                    // Let's assume onJoinRoom handles the URL.
-                                                    if (onJoinRoom && (meeting as any).room_url) {
-                                                        onJoinRoom((meeting as any).room_url);
-                                                    } else {
-                                                        router.push(`/call/${meeting.id}`);
-                                                    }
-                                                }}
+                                                onClick={() => joinMeeting(meeting)}
                                                 className="bg-green-600 hover:bg-green-700 text-white gap-2 shadow-lg shadow-green-900/20"
                                             >
                                                 <Video className="w-4 h-4 animate-pulse" />
@@ -146,20 +146,14 @@ export const ClientMeetingsView: React.FC<ClientMeetingsViewProps> = ({ onJoinRo
                                             </Button>
                                         ) : (
                                             <Button
-                                                onClick={() => {
-                                                    if (onJoinRoom && (meeting as any).room_url) {
-                                                        onJoinRoom((meeting as any).room_url);
-                                                    } else {
-                                                        router.push(`/call/${meeting.id}`);
-                                                    }
-                                                }}
+                                                onClick={() => joinMeeting(meeting)}
                                                 variant="secondary"
                                                 className="gap-2"
                                                 // Allow joining 10 mins early
-                                                disabled={dateToFormat.getTime() - Date.now() > 10 * 60 * 1000}
+                                                disabled={dateToFormat.getTime() - currentTime > 10 * 60 * 1000}
                                             >
                                                 <Video className="w-4 h-4" />
-                                                {dateToFormat.getTime() - Date.now() > 10 * 60 * 1000 ? 'Join (Too Early)' : 'Join Link'}
+                                                {dateToFormat.getTime() - currentTime > 10 * 60 * 1000 ? 'Join (Too Early)' : 'Join Link'}
                                             </Button>
                                         )}
                                     </div>

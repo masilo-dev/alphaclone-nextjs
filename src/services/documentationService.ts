@@ -54,7 +54,7 @@ export const documentationService = {
             },
             servers: [
                 {
-                    url: 'https://alphaclone.tech/api/public/v1',
+                    url: 'https://alphaclonesystems.com/api/public/v1',
                     description: 'Production server',
                 },
             ],

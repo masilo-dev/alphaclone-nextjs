@@ -247,7 +247,7 @@
 ### Option 1: Apply Both Files Separately
 
 **File 1:** `20260209_revenue_optimization.sql`
-1. Open: https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql/new
+1. Open: https://supabase.com/dashboard/project/<your-project-ref>/sql/new
 2. Copy entire file contents
 3. Paste and click "Run"
 
@@ -553,7 +553,7 @@ You've completed **Week 3** of the AlphaClone implementation!
 2. src/supabase/migrations/20260209_week3_complete.sql
 ```
 
-**Apply at:** https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql/new
+**Apply at:** https://supabase.com/dashboard/project/<your-project-ref>/sql/new
 
 ---
 

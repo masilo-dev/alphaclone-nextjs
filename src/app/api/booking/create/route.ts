@@ -1,21 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
-
-// Initialize Clients
-// Initialize Clients inside handler to avoid build-time errors if env vars missing
-// const supabase = createClient(...);
-
-const DAILY_API_KEY = process.env.DAILY_API_KEY;
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { microsoftServerService } from '@/services/server/microsoftServerService';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
+import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: Request) {
     try {
-        // Initialize Supabase Client
-        // Must be inside handler to avoid build-time error if key is missing during static generation
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        const supabase = createSupabaseAdminClient();
 
         const body = await req.json();
         const {
@@ -28,12 +21,32 @@ export async function POST(req: Request) {
             client_phone,
             client_notes,
             time_zone,
-            booking_type_name // pass explicitly to save query
+            booking_type_name,
         } = body;
 
-        // 1. Validation
+        const limited = await rateLimitMiddleware(
+            req as any,
+            rateLimitConfigs.public.contact,
+            `booking:${tenant_id}:${client_email || req.headers.get('x-forwarded-for') || 'anonymous'}`
+        );
+        if (limited) return limited;
+
         if (!tenant_id || !booking_type_id || !start_time || !client_email) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        }
+
+        if (isTurnstileEnforced()) {
+            const turnstile_token = readTurnstileToken(body);
+            if (!turnstile_token) {
+                return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
+            }
+            const ok = await verifyTurnstileToken(turnstile_token, readClientIp(req));
+            if (!ok) {
+                return NextResponse.json(
+                    { error: 'Security verification failed. Please try again.' },
+                    { status: 403 }
+                );
+            }
         }
 
         // 1b. Fetch Plan and Enforce Limits
@@ -64,6 +77,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Configuration Error: Tenant has no active hosts.' }, { status: 500 });
         }
         const host_id = users[0].user_id;
+        const microsoftConnection = await microsoftServerService.getConnection(host_id).catch(() => null);
 
         // 2b. Conflict Check (Harden against Race Conditions)
         const requestedStart = new Date(start_time);
@@ -81,64 +95,72 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'This slot was just taken. Please select another time.' }, { status: 409 });
         }
 
-        // 3. Create Daily Room
-        // Room name: "booking-{short_random}"
-        const roomName = `booking-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+        if (microsoftConnection) {
+            try {
+                const externalBusy = await microsoftServerService.getCalendarBusyWindows(
+                    host_id,
+                    requestedStart.toISOString(),
+                    requestedEnd.toISOString()
+                );
+                const isMicrosoftBlocked = externalBusy.some((event) => {
+                    return requestedStart.getTime() < event.end && requestedEnd.getTime() > event.start;
+                });
 
-        // 3a. Enforce Video Duration Limit
-        const meetingDurationMinutes = (new Date(end_time).getTime() - new Date(start_time).getTime()) / 60000;
-        const maxMinutes = planFeatures.maxVideoMinutesPerMeeting;
-
-        // If plan limit is stricter than requested duration, cap it
-        const finalDurationMinutes = maxMinutes === -1 ? meetingDurationMinutes : Math.min(meetingDurationMinutes, maxMinutes);
-
-        const startUnix = Math.floor(new Date(start_time).getTime() / 1000);
-        const endUnix = startUnix + (finalDurationMinutes * 60);
-
-        let dailyRoomUrl = '';
-        let roomId = '';
-
-        if (DAILY_API_KEY) {
-            const dailyRes = await fetch('https://api.daily.co/v1/rooms', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${DAILY_API_KEY}`
-                },
-                body: JSON.stringify({
-                    name: roomName,
-                    properties: {
-                        nbf: startUnix - 600, // 10 mins before
-                        exp: endUnix + 3600, // 1 hour after
-                        enable_chat: true,
-                    }
-                })
-            });
-
-            if (dailyRes.ok) {
-                const roomData = await dailyRes.json();
-                dailyRoomUrl = roomData.url;
-                roomId = roomData.name;
-            } else {
-                console.error('Daily API Failed', await dailyRes.text());
-                // Fallback? We can continue without video or error.
-                // Let's error for now as "video call" is key feature.
-                return NextResponse.json({ error: 'Failed to generate video meeting' }, { status: 502 });
-            }
-        } else {
-            console.warn('DAILY_API_KEY missing - skipping video room');
-            // Mock for dev if key missing
-            if (process.env.NODE_ENV === 'development') {
-                const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN || 'alphaclone';
-                roomId = roomName;
-                dailyRoomUrl = `https://${domain}.daily.co/${roomName}`;
+                if (isMicrosoftBlocked) {
+                    return NextResponse.json({ error: 'This slot is busy on the host Microsoft calendar.' }, { status: 409 });
+                }
+            } catch (microsoftError) {
+                console.error('Microsoft booking conflict check failed:', microsoftError);
             }
         }
 
-        // 3b. Construct Masked URL
+        // 3. Create meeting provider room/link
+        const roomName = `booking-${crypto.randomUUID()}`;
+        const jitsiRoomName = `alphaclone-${roomName}`;
+        let dailyRoomUrl = '';
+        let roomId = '';
+        const meetingProvider = 'external';
+        let providerMetadata: Record<string, unknown> = {
+            room_name: jitsiRoomName,
+        };
+
+        if (microsoftConnection) {
+            const msEvent = await microsoftServerService.createCalendarEvent(host_id, {
+                subject: `${booking_type_name || 'Meeting'} with ${client_name}`,
+                start: requestedStart.toISOString(),
+                end: requestedEnd.toISOString(),
+                attendees: [client_email],
+                body: client_notes || `Booking created in Alphaclone for ${client_name}.`,
+                isOnlineMeeting: true,
+            });
+
+            dailyRoomUrl =
+                msEvent.onlineMeeting?.joinUrl ||
+                msEvent.onlineMeetingUrl ||
+                msEvent.webLink ||
+                '';
+            roomId = msEvent.id || roomName;
+            providerMetadata = {
+                ...providerMetadata,
+                provider: 'teams',
+                microsoft_event_id: msEvent.id,
+                teams_join_url: dailyRoomUrl,
+                web_link: msEvent.webLink || '',
+            };
+        } else {
+            roomId = roomName;
+            dailyRoomUrl = `https://meet.jit.si/${jitsiRoomName}`;
+            providerMetadata = {
+                ...providerMetadata,
+                provider: 'jitsi',
+                jitsi_url: dailyRoomUrl,
+            };
+        }
+
+        // 3b. Base URL for the masked meeting link (filled in after we have the
+        // video_calls UUID, since /meet/[id] resolves a UUID — not the Daily room name).
         const host = req.headers.get('host') || 'localhost:3000';
         const protocol = host.includes('localhost') ? 'http' : 'https';
-        const maskedUrl = roomId ? `${protocol}://${host}/meet/${roomId}` : '';
 
         // 4. Insert Video Call
         let videoCallId = null;
@@ -152,7 +174,11 @@ export async function POST(req: Request) {
                     host_id: host_id,
                     title: `Meeting with ${client_name}`,
                     status: 'scheduled',
-                    is_public: false
+                    // Public so the booked client can join from the email link without an account.
+                    is_public: true,
+                    video_provider: meetingProvider,
+                    provider_metadata: providerMetadata,
+                    metadata: { source: 'booking', start_time, end_time, client_email },
                 })
                 .select('id')
                 .single();
@@ -164,6 +190,82 @@ export async function POST(req: Request) {
                 return NextResponse.json({ error: 'Failed to schedule video call record' }, { status: 500 });
             }
             videoCallId = vCall.id;
+        }
+
+        let microsoftEventId: string | null = null;
+        // The client-facing meeting link MUST point at the video_calls UUID so /meet/[id]
+        // resolves the room (a Daily room name would be misread as a tenant slug → "Business not found").
+        const maskedUrl = videoCallId ? `${protocol}://${host}/meet/${videoCallId}` : '';
+
+        // 4.5 NATIVE CRM INTEGRATION (Lead, Calendar Event, Task)
+        let leadId = null;
+        try {
+            // Check if Lead exists
+            const { data: lead } = await supabase
+                .from('leads')
+                .select('id')
+                .eq('tenant_id', tenant_id)
+                .eq('email', client_email)
+                .maybeSingle();
+
+            if (lead?.id) {
+                leadId = lead.id;
+            } else {
+                // Create new Lead
+                const { data: newLead } = await supabase
+                    .from('leads')
+                    .insert({
+                        tenant_id,
+                        business_name: client_name,
+                        email: client_email,
+                        phone: client_phone,
+                        stage: 'lead',
+                        source: 'Inbound Booking',
+                        notes: client_notes
+                    })
+                    .select('id')
+                    .single();
+                if (newLead) leadId = newLead.id;
+            }
+
+            // Create Native Calendar Event
+            const calendarInsert = await supabase.from('calendar_events').insert({
+                tenant_id,
+                user_id: host_id,
+                title: `Booking: ${booking_type_name || 'Meeting'} with ${client_name}`,
+                description: `Notes: ${client_notes || 'No notes provided.'}`,
+                start_time,
+                end_time,
+                type: 'meeting',
+                video_room_id: roomId,
+                related_to_lead: leadId,
+                is_all_day: false,
+                reminder_minutes: 15,
+                metadata: providerMetadata.provider === 'teams'
+                    ? { microsoft_event_id: providerMetadata.microsoft_event_id }
+                    : { jitsi_url: dailyRoomUrl }
+            });
+            if (calendarInsert.error) throw calendarInsert.error;
+
+            microsoftEventId = typeof providerMetadata.microsoft_event_id === 'string'
+                ? providerMetadata.microsoft_event_id
+                : null;
+
+            // Create Native Task for the Sales Agent
+            await supabase.from('tasks').insert({
+                tenant_id,
+                assigned_to: host_id,
+                title: `Prepare for meeting with ${client_name}`,
+                description: `Review lead details before the booked session. Notes: ${client_notes || ''}`,
+                due_date: start_time, // Due at start time
+                status: 'pending',
+                priority: 'high',
+                related_to_lead: leadId
+            });
+
+        } catch (crmErr) {
+            console.error('Failed to create native CRM records:', crmErr);
+            // Non-fatal, continue with booking creation
         }
 
         // 5. Insert Booking
@@ -180,7 +282,12 @@ export async function POST(req: Request) {
                 end_time,
                 time_zone,
                 status: 'confirmed',
-                video_call_id: videoCallId
+                video_call_id: videoCallId,
+                metadata: {
+                    meeting_provider: providerMetadata.provider,
+                    room_url: dailyRoomUrl,
+                    microsoft_event_id: microsoftEventId,
+                }
             })
             .select('*')
             .single();
@@ -191,19 +298,18 @@ export async function POST(req: Request) {
         }
 
         // 6. Send Email
-        const resendApiKey = process.env.NEXT_PUBLIC_RESEND_API_KEY || process.env.RESEND_API_KEY;
-        if (resendApiKey) {
-            const resend = new Resend(resendApiKey);
+        if (tenant_id) {
             const dateStr = new Date(start_time).toLocaleString('en-US', {
                 timeZone: time_zone || 'UTC',
                 dateStyle: 'full',
                 timeStyle: 'short'
             });
 
-            await resend.emails.send({
-                from: 'AlphaClone <bookings@resend.dev>', // Update on prod
+            const emailResult = await sendEmailServer({
+                tenantId: tenant_id,
                 to: client_email,
                 subject: `Confirmation: ${booking_type_name || 'Meeting'} on ${dateStr}`,
+                templateName: 'bookingConfirmation',
                 html: `
                     <!DOCTYPE html>
                     <html>
@@ -259,11 +365,43 @@ export async function POST(req: Request) {
                     </html>
                  `
             });
+            if (!emailResult.success) {
+                console.error('Booking confirmation email failed:', emailResult.error);
+            }
+
+            // Notify host + follow-up task so the owner sees the booking off-platform too
+            try {
+                const { data: hostProfile } = await supabase
+                    .from('profiles')
+                    .select('email, name')
+                    .eq('id', host_id)
+                    .maybeSingle();
+
+                if (hostProfile?.email) {
+                    await sendEmailServer({
+                        tenantId: tenant_id,
+                        to: hostProfile.email,
+                        subject: `New booking: ${client_name} — ${booking_type_name || 'Meeting'}`,
+                        html: `
+                            <div style="font-family:sans-serif;padding:20px;color:#333;">
+                                <h2 style="color:#0d9488;">New client booking</h2>
+                                <p><strong>${client_name}</strong> (${client_email}) booked <strong>${booking_type_name || 'Meeting'}</strong>.</p>
+                                <p><strong>When:</strong> ${dateStr}</p>
+                                ${maskedUrl ? `<p><a href="${maskedUrl}" style="display:inline-block;padding:10px 20px;background:#0d9488;color:#fff;text-decoration:none;border-radius:6px;">Join meeting</a></p>` : ''}
+                                ${client_notes ? `<p><strong>Notes:</strong> ${client_notes}</p>` : ''}
+                            </div>
+                        `,
+                        isPlatformNotification: true,
+                    });
+                }
+            } catch (hostEmailErr) {
+                console.error('Host booking notification failed:', hostEmailErr);
+            }
         }
 
         return NextResponse.json({ success: true, booking, roomUrl: maskedUrl });
     } catch (err: any) {
         console.error('Booking API Error:', err);
-        return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'booking/create' });
     }
 }

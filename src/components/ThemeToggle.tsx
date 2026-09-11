@@ -1,42 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { preferencesService } from '../services/dashboardService';
+import type { AcThemeMode } from '../lib/applyAcTheme';
+import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '../lib/applyAcTheme';
 
 interface ThemeToggleProps {
     userId: string;
 }
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
-    const [theme, setTheme] = useState<'light' | 'dark' | 'auto'>('dark');
+    const [theme, setTheme] = useState<AcThemeMode>('dark');
+
+    const loadTheme = async () => {
+        const stored = readStoredAcTheme(userId);
+        applyAcThemeClass(stored);
+        setTheme(stored);
+        const { preferences } = await preferencesService.getPreferences(userId);
+        const serverTheme = preferences?.theme as AcThemeMode | undefined;
+        if (serverTheme && ['light', 'dark', 'auto'].includes(serverTheme)) {
+            setTheme(serverTheme);
+            persistAcTheme(serverTheme, userId);
+            applyAcThemeClass(serverTheme);
+        }
+    };
 
     useEffect(() => {
         loadTheme();
     }, [userId]);
 
-    const loadTheme = async () => {
-        const { preferences } = await preferencesService.getPreferences(userId);
-        if (preferences?.theme) {
-            setTheme(preferences.theme);
-            applyTheme(preferences.theme);
-        }
-    };
+    useEffect(() => {
+        const onRemote = () => setTheme(readStoredAcTheme(userId));
+        window.addEventListener('ac-theme-changed', onRemote);
+        return () => window.removeEventListener('ac-theme-changed', onRemote);
+    }, [userId]);
 
-    const applyTheme = (newTheme: 'light' | 'dark' | 'auto') => {
-        const root = document.documentElement;
-
-        if (newTheme === 'auto') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            root.classList.toggle('dark', prefersDark);
-            root.classList.toggle('light', !prefersDark);
-        } else {
-            root.classList.toggle('dark', newTheme === 'dark');
-            root.classList.toggle('light', newTheme === 'light');
-        }
-    };
-
-    const handleThemeChange = async (newTheme: 'light' | 'dark' | 'auto') => {
+    const handleThemeChange = async (newTheme: AcThemeMode) => {
         setTheme(newTheme);
-        applyTheme(newTheme);
+        persistAcTheme(newTheme, userId);
+        applyAcThemeClass(newTheme);
         await preferencesService.updateTheme(userId, newTheme);
     };
 
@@ -47,7 +48,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
                 className={`p-2 rounded-md transition-colors ${theme === 'light'
                         ? 'bg-slate-700 text-yellow-400'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                    } `}
                 title="Light mode"
             >
                 <Sun className="w-4 h-4" />
@@ -57,7 +58,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
                 className={`p-2 rounded-md transition-colors ${theme === 'dark'
                         ? 'bg-slate-700 text-blue-400'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                    } `}
                 title="Dark mode"
             >
                 <Moon className="w-4 h-4" />
@@ -67,7 +68,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ userId }) => {
                 className={`p-2 rounded-md transition-colors ${theme === 'auto'
                         ? 'bg-slate-700 text-teal-400'
                         : 'text-slate-400 hover:text-white'
-                    }`}
+                    } `}
                 title="Auto (system)"
             >
                 <Monitor className="w-4 h-4" />

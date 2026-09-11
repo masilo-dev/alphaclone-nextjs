@@ -89,8 +89,8 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                                 </svg>
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-white">Something Went Wrong</h1>
-                                <p className="text-slate-400">The application encountered an unexpected error</p>
+                                <h1 className="text-2xl font-bold text-white">This workspace hit an error</h1>
+                                <p className="text-slate-400">Reload the page, or try again to recover the current view.</p>
                             </div>
                         </div>
 
@@ -128,8 +128,8 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                         <div className="mt-6 text-center">
                             <p className="text-sm text-slate-500">
                                 If this problem persists, please contact{' '}
-                                <a href="mailto:support@alphaclone.systems" className="text-teal-400 hover:underline">
-                                    support@alphaclone.systems
+                                <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">
+                                    support@alphaclonesystems.com
                                 </a>
                             </p>
                         </div>

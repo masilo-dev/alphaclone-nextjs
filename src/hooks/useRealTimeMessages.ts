@@ -31,7 +31,8 @@ export function useRealTimeMessages(userId: string, role: 'admin' | 'client') {
         // Get tenant context
         const tenantId = tenantService.getCurrentTenantId();
         if (!tenantId) {
-          throw new Error('No active tenant');
+          console.warn('RealTimeMessages: No active tenant ID. Skipping connection.');
+          return;
         }
 
         // Initial load of messages

@@ -16,10 +16,11 @@ import { Tenant } from '@/services/tenancy/types';
 import { bookingService, BookingSlot } from '@/services/bookingService';
 import toast from 'react-hot-toast';
 import CalendlyEmbed from '@/components/booking/CalendlyEmbed';
-
-// Redundant local interface removed. Using imported BookingSlot from @/services/bookingService.
+import TurnstileWidget from '@/components/security/TurnstileWidget';
+import Image from 'next/image';
 
 type Step = 'date' | 'time' | 'form' | 'success';
+
 
 export default function BookingPage() {
     const params = useParams();
@@ -51,8 +52,11 @@ export default function BookingPage() {
         phone: '',
         notes: ''
     });
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [turnstileNonce, setTurnstileNonce] = useState(0);
     const [submitting, setSubmitting] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState<{ date: Date; time: string; url: string } | null>(null);
+    const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
     // Logic Settings (Defaults)
     const bufferTime = tenant?.settings.booking?.bufferTime || 15;
@@ -67,12 +71,6 @@ export default function BookingPage() {
     const loadInitialData = async () => {
         try {
             const { tenant, service } = await fetchBookingData(activeSlug, serviceSlug);
-
-            // Redirect to main booking page if Calendly is enabled (deprecating legacy service links)
-            if ((tenant.settings as any)?.calendly?.enabled) {
-                router.replace(`/book/${activeSlug}`);
-                return;
-            }
 
             setTenant(tenant);
             setService(service);
@@ -132,17 +130,13 @@ export default function BookingPage() {
 
         setSubmitting(true);
         try {
-            const { bookingId, error: bookingError } = await bookingService.createBooking(
+            const { error: bookingError, roomUrl } = await bookingService.createBooking(
                 tenant.id,
                 service.id,
                 selectedSlot.start,
                 selectedSlot.end,
-                {
-                    name: formData.name,
-                    email: formData.email,
-                    phone: formData.phone,
-                    notes: formData.notes
-                }
+                { name: formData.name, email: formData.email, phone: formData.phone, notes: formData.notes },
+                { turnstileToken: turnstileToken || null, meetingTypeName: service.name }
             );
 
             if (bookingError) throw new Error(bookingError);
@@ -150,13 +144,15 @@ export default function BookingPage() {
             setBookingSuccess({
                 date: parseISO(selectedSlot.start),
                 time: format(parseISO(selectedSlot.start), 'h:mm a'),
-                url: `/meet/active` // Placeholder, will be updated by server response if possible
+                url: roomUrl || '',
             });
             setStep('success');
             toast.success('Confirmed!');
         } catch (err: any) {
             toast.error(err.message || 'Booking failed. Please try again.');
         } finally {
+            setTurnstileToken('');
+            setTurnstileNonce((value) => value + 1);
             setSubmitting(false);
         }
     };
@@ -196,11 +192,16 @@ export default function BookingPage() {
                         </div>
                     </div>
 
-                    {bookingSuccess.url && (
-                        <a href={bookingSuccess.url} target="_blank" className="block w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl mb-3 hover:opacity-90 transition-opacity">
+                    {bookingSuccess.url ? (
+                        <a
+                            href={bookingSuccess.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl mb-3 hover:opacity-90 transition-opacity text-center"
+                        >
                             Join Meeting
                         </a>
-                    )}
+                    ) : null}
                     <button onClick={() => window.location.reload()} className="text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
                         Book Another
                     </button>
@@ -230,7 +231,14 @@ export default function BookingPage() {
                     <div className="lg:col-span-4 space-y-8">
                         <div className="flex items-start gap-4">
                             {tenant.settings.branding?.logo ? (
-                                <img src={tenant.settings.branding.logo} className="w-16 h-16 rounded-2xl object-cover shadow-sm" />
+                                <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-sm">
+                                    <Image 
+                                        src={tenant.settings.branding.logo} 
+                                        alt={tenant.name}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
                             ) : (
                                 <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-xl font-bold text-slate-400">
                                     {tenant.name[0]}
@@ -282,7 +290,7 @@ export default function BookingPage() {
                                     url={(tenant.settings as any).calendly.eventUrl}
                                     branding={{
                                         primaryColor: tenant.settings.branding?.primaryColor,
-                                        backgroundColor: '#0f172a' // Dark slate to match theme
+                                        backgroundColor: '#0f172a'
                                     }}
                                 />
                             ) : (
@@ -442,9 +450,25 @@ export default function BookingPage() {
                                                     </div>
                                                 </div>
 
+                                                {turnstileEnabled && (
+                                                    <TurnstileWidget
+                                                        key={turnstileNonce}
+                                                        className="flex justify-center"
+                                                        onTokenChange={setTurnstileToken}
+                                                        onExpire={() => setTurnstileToken('')}
+                                                        onError={() => setTurnstileToken('')}
+                                                    />
+                                                )}
+                                                {turnstileEnabled && !turnstileToken && (
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                        Please complete the security check before confirming.
+                                                    </p>
+                                                )}
+
+
                                                 <button
                                                     type="submit"
-                                                    disabled={submitting}
+                                                    disabled={submitting || (turnstileEnabled && !turnstileToken)}
                                                     className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                                                 >
                                                     {submitting ? 'Confirming...' : 'Confirm Booking'}

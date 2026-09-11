@@ -1,0 +1,129 @@
+import { SITE_URL, absoluteUrl } from '@/lib/siteUrl';
+
+export const SOCIAL_PROFILES = {
+  linkedin: 'https://www.linkedin.com/company/alphaclone-systems',
+  facebook: 'https://www.facebook.com/100089899181752',
+  twitter: 'https://twitter.com/AlphaCloneSys',
+  x: 'https://x.com/AlphaCloneSys',
+} as const;
+
+/** Verified external profiles — used in Organization schema sameAs for entity linking. */
+export const SAME_AS_URLS = [
+  SOCIAL_PROFILES.linkedin,
+  SOCIAL_PROFILES.facebook,
+  SOCIAL_PROFILES.twitter,
+] as const;
+
+/** Primary marketing routes Google uses for sitelink and navigation signals. */
+export const PRIMARY_SITE_NAV = [
+  { name: 'Product', path: '/services' },
+  { name: 'Solutions', path: '/who-we-serve' },
+  { name: 'Resources', path: '/docs' },
+  { name: 'Company', path: '/about' },
+  { name: 'Pricing', path: '/pricing' },
+  { name: 'Documentation', path: '/docs' },
+  { name: 'Integrations', path: '/ecosystem' },
+  { name: 'Customer Workflows', path: '/results' },
+  { name: 'About AlphaClone', path: '/about' },
+  { name: 'How It Works', path: '/how-it-works' },
+  { name: 'Execution Session', path: '/execution-session' },
+  { name: 'Reliability', path: '/reliability' },
+  { name: 'Contact AlphaClone', path: '/contact' },
+  { name: 'Legal and Trust Center', path: '/legal' },
+  { name: 'Platform Status', path: '/platform-status' },
+] as const;
+
+export function buildSiteNavigationSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'AlphaClone Systems Site Navigation',
+    itemListElement: PRIMARY_SITE_NAV.map((item, index) => ({
+      '@type': 'SiteNavigationElement',
+      position: index + 1,
+      name: item.name,
+      url: absoluteUrl(item.path),
+    })),
+  };
+}
+
+/** Registered legal entity details (Wyoming, USA). */
+export const COMPANY_LEGAL = {
+  legalName: 'Alphaclone Systems, LLC',
+  displayName: 'AlphaClone Systems',
+  brandName: 'AlphaClone',
+  entityType: 'Limited Liability Company - Domestic',
+  filingId: '2026-002002581',
+  jurisdiction: 'Wyoming, USA',
+  formedDate: '2026-06-10',
+  status: 'Active',
+  street: '30 N Gould St',
+  city: 'Sheridan',
+  region: 'WY',
+  postalCode: '82801',
+  country: 'US',
+} as const;
+
+/** Single-line registered office address for footers and legal blocks. */
+export function formatLegalAddress(): string {
+  return `${COMPANY_LEGAL.street}, ${COMPANY_LEGAL.city}, ${COMPANY_LEGAL.region} ${COMPANY_LEGAL.postalCode}, USA`;
+}
+
+/** Copyright line for public footers. */
+export function formatCopyrightLine(year: number = new Date().getFullYear()): string {
+  return `© ${year} ${COMPANY_LEGAL.legalName}. All rights reserved.`;
+}
+
+/** Entity block for privacy policy / trust pages. */
+export function formatLegalEntityBlock(): string[] {
+  return [
+    COMPANY_LEGAL.legalName,
+    formatLegalAddress(),
+    `${COMPANY_LEGAL.jurisdiction} · Filing ID ${COMPANY_LEGAL.filingId}`,
+    `Formed ${COMPANY_LEGAL.formedDate} · Status: ${COMPANY_LEGAL.status}`,
+  ];
+}
+
+export function buildOrganizationEntitySchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'AlphaClone Systems',
+    legalName: COMPANY_LEGAL.legalName,
+    alternateName: ['Alphaclone', 'AlphaClone', 'Alphaclone Systems, LLC'],
+    url: SITE_URL,
+    logo: `${SITE_URL}/logo.png`,
+    description:
+      'Unified AI business operating system with CRM, lead management, invoicing, contracts, meetings, and automation. Alphaclone Systems, LLC is a Wyoming (USA) registered company.',
+    identifier: {
+      '@type': 'PropertyValue',
+      name: 'Wyoming Filing ID',
+      value: COMPANY_LEGAL.filingId,
+    },
+    foundingLocation: {
+      '@type': 'Place',
+      name: COMPANY_LEGAL.jurisdiction,
+    },
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: COMPANY_LEGAL.street,
+      addressLocality: COMPANY_LEGAL.city,
+      addressRegion: COMPANY_LEGAL.region,
+      postalCode: COMPANY_LEGAL.postalCode,
+      addressCountry: COMPANY_LEGAL.country,
+    },
+    sameAs: [...SAME_AS_URLS],
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        contactType: 'sales',
+        email: 'sales@alphaclonesystems.com',
+      },
+      {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: 'support@alphaclonesystems.com',
+      },
+    ],
+  };
+}

@@ -11,6 +11,9 @@ export interface IPLocation {
 
 export const ipTrackingService = {
     async getClientIP(): Promise<IPLocation | null> {
+        // IP collection is strictly disabled per privacy policy
+        return null;
+        /*
         try {
             // Call our internal proxy to avoid CORS issues
             const response = await fetch('/api/ip-location');
@@ -33,6 +36,7 @@ export const ipTrackingService = {
             console.warn('Unable to fetch IP location:', error);
             return null;
         }
+        */
     },
 
     async trackLogin(userId: string) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { stripePromise, paymentService, Invoice, Payment } from '../../services/paymentService';
 import { CheckoutForm } from './CheckoutForm';
@@ -25,11 +25,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadData();
-    }, [user.id]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         const { invoices: invData } = await paymentService.getUserInvoices(user.id);
         const { payments: payData } = await paymentService.getPaymentHistory(user.id);
@@ -37,9 +33,13 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
         if (invData) setInvoices(invData);
         if (payData) setPayments(payData);
         setLoading(false);
-    };
+    }, [user.id]);
 
-    const handlePayClick = async (invoice: Invoice) => {
+    useEffect(() => {
+        loadData();
+    }, [user.id, loadData]);
+
+    const handlePayClick = useCallback(async (invoice: Invoice) => {
         if (!isStripeConfigured) {
             toast.error('Payment system is not configured');
             return;
@@ -55,9 +55,9 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
         } else {
             console.error('Failed to init payment:', error);
         }
-    };
+    }, [isStripeConfigured]);
 
-    const handlePaymentSuccess = async (paymentIntentId: string) => {
+    const handlePaymentSuccess = useCallback(async (paymentIntentId: string) => {
         if (selectedInvoice) {
             await paymentService.markInvoicePaid(selectedInvoice.id, paymentIntentId);
             setShowCheckout(false);
@@ -65,23 +65,11 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
             setSelectedInvoice(null);
             loadData(); // Refresh list
         }
-    };
+    }, [selectedInvoice, loadData]);
 
-    const startCreateInvoice = () => {
-        const dummyInvoice = {
-            user_id: user.id,
-            amount: 499.00,
-            currency: 'usd',
-            due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            description: 'Web Development Services - Milestone 1',
-            items: [
-                { description: 'Frontend Development', quantity: 1, unit_price: 299.00, amount: 299.00 },
-                { description: 'UI Design', quantity: 1, unit_price: 200.00, amount: 200.00 }
-            ]
-        };
-
-        paymentService.createInvoice(dummyInvoice).then(() => loadData());
-    };
+    const startCreateInvoice = useCallback(() => {
+        window.location.href = '/dashboard/business/invoices';
+    }, []);
 
     if (loading) {
         return <div className="p-8 text-center text-slate-400">Loading payments...</div>;
@@ -128,7 +116,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                     {invoices.length === 0 ? (
                         <Card className="p-8 text-center text-slate-400">
                             <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                            No invoices found.
+                            No invoices yet. Create or send an invoice to start tracking payments.
                         </Card>
                     ) : (
                         invoices.map((invoice) => (
@@ -180,7 +168,7 @@ const PaymentPage: React.FC<PaymentPageProps> = ({ user }) => {
                     {payments.length === 0 ? (
                         <Card className="p-8 text-center text-slate-400">
                             <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                            No payment history yet.
+                            No payments recorded yet. Paid invoices will appear here.
                         </Card>
                     ) : (
                         payments.map((payment) => (

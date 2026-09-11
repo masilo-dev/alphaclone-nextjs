@@ -4,6 +4,31 @@ import { messageSchema } from '../schemas/validation';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
 import { linkValidator } from '../utils/linkValidator';
+import { routeAIRequest } from '@/services/aiRouter';
+import { buildBusinessReplyPrompt } from '@/lib/ai/businessContext';
+
+function isExpectedRealtimeCloseError(error: unknown): boolean {
+    if (!error) return false;
+    const msg = error instanceof Error ? error.message : String(error);
+    return msg.includes('WebSocket is closed before the connection is established');
+}
+
+function isUnknownChannelRealtimeError(error?: Error): boolean {
+    if (!error) return false;
+    const msg = String(error.message || '').toLowerCase();
+    return msg.includes('unknown channel error') || msg.includes('channel error');
+}
+
+async function safeRemoveRealtimeChannel(channel: any): Promise<void> {
+    if (!channel) return;
+    try {
+        await supabase.removeChannel(channel);
+    } catch (error) {
+        if (!isExpectedRealtimeCloseError(error)) {
+            console.warn('[Realtime] Failed to remove channel:', error);
+        }
+    }
+}
 
 export const messageService = {
     /**
@@ -17,6 +42,7 @@ export const messageService = {
         }
         return tenantId;
     },
+
     /**
      * Get messages for a conversation between current user and another (or all if admin view)
      * Now with DATABASE-LEVEL filtering for performance (50x faster!)
@@ -62,7 +88,11 @@ export const messageService = {
                 attachments: m.attachments || [],
                 readAt: m.read_at ? new Date(m.read_at) : null,
                 deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                priority: m.priority as any
+                priority: m.priority as any,
+                reactions: m.reactions || {},
+                reply_to: m.reply_to,
+                edited_at: m.edited_at,
+                group_id: m.group_id
             })).reverse(); // Reverse to show oldest first in chat
 
             return { messages, error: null };
@@ -109,7 +139,59 @@ export const messageService = {
                 attachments: m.attachments || [],
                 readAt: m.read_at ? new Date(m.read_at) : null,
                 deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                priority: m.priority as any
+                priority: m.priority as any,
+                reactions: m.reactions || {},
+                reply_to: m.reply_to,
+                edited_at: m.edited_at,
+                group_id: m.group_id
+            })).reverse();
+
+            return { messages, error: null };
+        } catch (err) {
+            return { messages: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Get group messages
+     */
+    async getGroupMessages(
+        groupId: string,
+        limit: number = 100
+    ): Promise<{ messages: ChatMessage[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return { messages: [], error: null };
+
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .eq('group_id', groupId)
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                return { messages: [], error: error.message };
+            }
+
+            const messages: ChatMessage[] = (data || []).map((m: any) => ({
+                id: m.id,
+                role: m.sender_role as 'user' | 'model' | 'system',
+                senderName: m.sender_name,
+                senderId: m.sender_id,
+                recipientId: m.recipient_id,
+                text: m.text,
+                timestamp: new Date(m.created_at),
+                isThinking: m.is_thinking,
+                attachments: m.attachments || [],
+                readAt: m.read_at ? new Date(m.read_at) : null,
+                deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
+                priority: m.priority as any,
+                reactions: m.reactions || {},
+                reply_to: m.reply_to,
+                edited_at: m.edited_at,
+                group_id: m.group_id
             })).reverse();
 
             return { messages, error: null };
@@ -162,7 +244,11 @@ export const messageService = {
                 attachments: m.attachments || [],
                 readAt: m.read_at ? new Date(m.read_at) : null,
                 deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                priority: m.priority as any
+                priority: m.priority as any,
+                reactions: m.reactions || {},
+                reply_to: m.reply_to,
+                edited_at: m.edited_at,
+                group_id: m.group_id
             })).reverse();
 
             // Check if there are more messages beyond this page
@@ -184,7 +270,9 @@ export const messageService = {
         text: string,
         recipientId?: string, // Optional: if null, might be treated as broadcast/system
         attachments: { id: string; url: string; type: 'image' | 'file'; name: string }[] = [],
-        priority: 'normal' | 'high' | 'urgent' = 'normal'
+        priority: 'normal' | 'high' | 'urgent' = 'normal',
+        replyTo?: string,
+        groupId?: string
     ): Promise<{ message: ChatMessage | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
@@ -210,10 +298,12 @@ export const messageService = {
                     sender_name: senderName,
                     sender_role: senderRole,
                     recipient_id: validated.recipientId,
+                    group_id: groupId,
                     text: validated.text,
                     is_thinking: false,
                     attachments: attachments,
-                    priority: priority
+                    priority: priority,
+                    reply_to: replyTo
                 })
                 .select()
                 .single();
@@ -234,8 +324,39 @@ export const messageService = {
                 attachments: data.attachments || [],
                 readAt: data.read_at ? new Date(data.read_at) : null,
                 deliveredAt: data.delivered_at ? new Date(data.delivered_at) : null,
-                priority: data.priority as any
+                priority: data.priority as any,
+                reactions: data.reactions || {},
+                reply_to: data.reply_to,
+                edited_at: data.edited_at,
+                group_id: data.group_id
             };
+
+            // Fan out to the recipient off-platform (web push + email + in-app bell)
+            // so they're notified even when the app is closed. Skip self-messages.
+            if (validated.recipientId && validated.recipientId !== senderId) {
+                const preview = validated.text.length > 140
+                    ? `${validated.text.substring(0, 140)}…`
+                    : validated.text;
+                try {
+                    const notifyRes = await fetch('/api/notifications/dispatch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: validated.recipientId,
+                            tenantId,
+                            type: 'message',
+                            title: `New message from ${senderName}`,
+                            message: preview,
+                            link: '/dashboard/business/messages',
+                        }),
+                    });
+                    if (!notifyRes.ok) {
+                        console.warn('[messageService] notification dispatch failed:', notifyRes.status);
+                    }
+                } catch (err) {
+                    console.warn('[messageService] notification dispatch error:', err);
+                }
+            }
 
             return { message, error: null };
         } catch (err) {
@@ -254,24 +375,30 @@ export const messageService = {
     ) {
         const tenantId = this.getTenantId();
         if (!tenantId) {
-            console.warn('Realtime: Waiting for tenant ID...');
+            console.warn('[Realtime] Waiting for tenant ID...');
             return () => { };
         }
 
         // Create unique channel per user for better isolation
+        const safeUserId = userId.replace(/[^a-zA-Z0-9-_]/g, '_');
+        const safeTenantId = tenantId.replace(/[^a-zA-Z0-9-_]/g, '_');
+        const channelName = `messages_${safeUserId}_${safeTenantId}`;
+
+        console.log(`[Realtime] Subscribing to messages for tenant: ${tenantId}, channel: ${channelName}`);
+
         const channel = supabase
-            .channel(`messages:${userId}:${tenantId}`)
+            .channel(channelName)
             .on(
-                'postgres_changes' as any,
+                'postgres_changes',
                 {
-                    event: 'INSERT',
+                    event: '*',
                     schema: 'public',
                     table: 'messages',
-                    // ✅ FIXED: Simplified filter - Supabase Realtime doesn't support complex AND/OR
-                    // We filter by tenant_id only, then filter in callback
-                    filter: `tenant_id=eq.${tenantId}`
-                },
+                    filter: `tenant_id=eq.${tenantId.trim()}`
+                } as any,
                 (payload: any) => {
+                    if (payload.eventType !== 'INSERT' && payload.eventType !== 'UPDATE') return;
+                    
                     const m = payload.new;
 
                     // ✅ Client-side filter: Only show messages involving this user
@@ -291,76 +418,98 @@ export const messageService = {
                         attachments: m.attachments || [],
                         readAt: m.read_at ? new Date(m.read_at) : null,
                         deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                        priority: m.priority as any
+                        priority: m.priority as any,
+                        reactions: m.reactions || {},
+                        reply_to: m.reply_to,
+                        edited_at: m.edited_at,
+                        group_id: m.group_id
                     };
-                    callback(message, 'INSERT');
+                    callback(message, payload.eventType as 'INSERT' | 'UPDATE');
                 }
             )
-            .on(
-                'postgres_changes' as any,
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'messages',
-                    // ✅ FIXED: Simplified filter for updates too
-                    filter: `tenant_id=eq.${tenantId}`
-                },
-                (payload: any) => {
-                    const m = payload.new;
-
-                    // ✅ Client-side filter: Only show messages involving this user
-                    if (!isAdmin && m.sender_id !== userId && m.recipient_id !== userId) {
-                        return; // Skip this message
-                    }
-
-                    const message: ChatMessage = {
-                        id: m.id,
-                        role: m.sender_role as 'user' | 'model' | 'system',
-                        senderName: m.sender_name,
-                        senderId: m.sender_id,
-                        recipientId: m.recipient_id,
-                        text: m.text,
-                        timestamp: new Date(m.created_at),
-                        isThinking: m.is_thinking,
-                        attachments: m.attachments || [],
-                        readAt: m.read_at ? new Date(m.read_at) : null,
-                        deliveredAt: m.delivered_at ? new Date(m.delivered_at) : null,
-                        priority: m.priority as any
-                    };
-                    callback(message, 'UPDATE');
-                }
-            )
-            .subscribe((status: string) => {
+            .subscribe(async (status: string, err?: Error) => {
                 if (status === 'SUBSCRIBED') {
-                    console.log('✅ Subscribed to real-time messages (INSERT + UPDATE)');
+                    console.log(`✅ [Realtime] Subscribed to messages (INSERT + UPDATE) for ${tenantId}`);
                 } else if (status === 'CHANNEL_ERROR') {
-                    console.error('❌ Failed to subscribe to messages');
+                    if (isUnknownChannelRealtimeError(err)) {
+                        console.warn('[Realtime] Messages channel unavailable. Continuing without live updates.');
+                    } else {
+                        console.warn('[Realtime] Messages subscription failed. Continuing without live updates.', {
+                            tenantId,
+                            channelName,
+                            error: err?.message || 'Unknown channel error',
+                        });
+                    }
+                    // Potential mismatch between server and client bindings often manifests here
                 } else if (status === 'CLOSED') {
-                    console.warn('⚠️ Message subscription closed');
+                    console.info('[Realtime] Message subscription closed. Reconnecting logic handled by Supabase SDK.');
+                } else if (status === 'TIMED_OUT') {
+                    console.warn('[Realtime] Message subscription timed out. Live updates may be delayed.');
                 }
             });
 
         return () => {
-            supabase.removeChannel(channel);
+            void safeRemoveRealtimeChannel(channel);
         };
     },
 
-    async markAsRead(messageId: string): Promise<{ error: string | null }> {
+    /**
+     * Add reaction to message
+     */
+    async addReaction(messageId: string, emoji: string, userId: string): Promise<{ error: string | null }> {
         try {
-            const { error, data } = await supabase
+            // Get current reactions
+            const { data: currentData, error: fetchError } = await supabase
                 .from('messages')
-                .update({ read_at: new Date().toISOString() })
+                .select('reactions')
                 .eq('id', messageId)
-                .select('recipient_id, sender_id')
                 .single();
 
-            // Log activity - recipient read the message
-            if (!error && data?.recipient_id) {
-                activityService.logActivity(data.recipient_id, 'Message Read', {
-                    messageId: messageId,
-                    senderId: data.sender_id
-                }).catch(err => console.error('Failed to log activity:', err));
+            if (fetchError) {
+                return { error: fetchError.message };
             }
+
+            const reactions = currentData?.reactions || {};
+
+            // Add or remove reaction
+            if (!reactions[emoji]) {
+                reactions[emoji] = [];
+            }
+
+            if (reactions[emoji].includes(userId)) {
+                // Remove reaction
+                reactions[emoji] = reactions[emoji].filter((id: string) => id !== userId);
+                if (reactions[emoji].length === 0) {
+                    delete reactions[emoji];
+                }
+            } else {
+                // Add reaction
+                reactions[emoji].push(userId);
+            }
+
+            const { error } = await supabase
+                .from('messages')
+                .update({ reactions })
+                .eq('id', messageId);
+
+            return { error: error ? error.message : null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Edit message
+     */
+    async editMessage(messageId: string, newText: string): Promise<{ error: string | null }> {
+        try {
+            const { error } = await supabase
+                .from('messages')
+                .update({
+                    text: newText,
+                    edited_at: new Date().toISOString()
+                })
+                .eq('id', messageId);
 
             return { error: error ? error.message : null };
         } catch (err) {
@@ -385,12 +534,77 @@ export const messageService = {
     },
 
     /**
+     * Get group chats
+     */
+    async getGroupChats(): Promise<any[]> {
+        try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return [];
+
+            const { data, error } = await supabase
+                .from('group_chats')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .order('last_message_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching group chats:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (err) {
+            console.error('Error fetching group chats:', err);
+            return [];
+        }
+    },
+
+    /**
+     * Create group chat
+     */
+    async createGroupChat(groupData: {
+        name: string;
+        description?: string;
+        members: string[];
+        type: 'public' | 'private';
+        avatar_url?: string;
+    }): Promise<{ group: any | null; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return { group: null, error: 'No active tenant' };
+
+            const { data, error } = await supabase
+                .from('group_chats')
+                .insert({
+                    tenant_id: tenantId,
+                    name: groupData.name,
+                    description: groupData.description,
+                    members: groupData.members,
+                    type: groupData.type,
+                    avatar_url: groupData.avatar_url,
+                    created_at: new Date().toISOString(),
+                    last_message_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+
+            if (error) {
+                return { group: null, error: error.message };
+            }
+
+            return { group: data, error: null };
+        } catch (err) {
+            return { group: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Upload an attachment to 'chat-attachments' bucket
      */
     async uploadAttachment(file: File): Promise<{ url: string; id: string; type: 'image' | 'file'; name: string; error: string | null }> {
         try {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+            const fileName = `${crypto.randomUUID()}_${Date.now()}.${fileExt}`;
             const filePath = `${fileName}`;
 
             const { error } = await supabase.storage
@@ -401,14 +615,12 @@ export const messageService = {
                 return { url: '', id: '', type: 'file', name: '', error: error.message };
             }
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('chat-attachments')
-                .getPublicUrl(filePath);
+            const url = `/api/storage/chat-attachments/${filePath}`;
 
             const type = file.type.startsWith('image/') ? 'image' : 'file';
 
             return {
-                url: publicUrl,
+                url: url,
                 id: filePath,
                 type,
                 name: file.name,
@@ -497,11 +709,47 @@ export const messageService = {
     },
 
     /**
+     * Mark message as read
+     */
+    async markAsRead(messageId: string): Promise<{ error: string | null }> {
+        try {
+            const { error, data } = await supabase
+                .from('messages')
+                .update({ read_at: new Date().toISOString() })
+                .eq('id', messageId)
+                .select('recipient_id, sender_id')
+                .single();
+
+            // Log activity - recipient read the message
+            if (!error && data?.recipient_id) {
+                const tenantId = this.getTenantId();
+                activityService.logActivity(data.recipient_id, 'Message Read', {
+                    messageId: messageId,
+                    senderId: data.sender_id
+                }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
+            }
+
+            return { error: error ? error.message : null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
      * Send 'typing' event via Realtime Presence
      */
     sendTypingEvent(channel: any, userId: string, isTyping: boolean) {
         if (!channel) return;
         channel.track({ user_id: userId, is_typing: isTyping });
+    },
+
+    /**
+     * Unsubscribe from messages
+     */
+    unsubscribeFromMessages(channel: any) {
+        if (channel) {
+            void safeRemoveRealtimeChannel(channel);
+        }
     },
 
     /**
@@ -515,12 +763,22 @@ export const messageService = {
         senderName: string
     ): Promise<{ autoReply: ChatMessage | null; error: string | null }> {
         try {
-            // Import dynamically
-            const { generateAutoReply } = await import('./geminiService');
+            const prompt = buildBusinessReplyPrompt({
+                sender: { name: senderName },
+                recipient: { name: 'AlphaClone team' },
+                message: message.text,
+                channel: 'chat',
+                context: 'Draft a concise customer-facing reply from the business. Keep the tone professional, helpful, and specific to the message content.',
+            });
 
-            // 1. Generate text
-            const replyText = await generateAutoReply(message.text, senderName);
+            const response = await routeAIRequest({
+                prompt,
+                systemPrompt: 'You are an AI assistant for a professional digital agency. Keep replies short, helpful, and human.',
+                maxTokens: 256,
+                temperature: 0.4,
+            });
 
+            const replyText = response.content.trim();
             if (!replyText) return { autoReply: null, error: 'Failed to generate reply' };
 
             // 2. Send the message as 'model' (AI Agent)
@@ -550,11 +808,21 @@ export const messageService = {
         senderName: string
     ): Promise<{ reply: string | null; error: string | null }> {
         try {
-            // Import dynamically to avoid circular dependencies if any
-            const { generateAutoReply } = await import('./geminiService');
+            const prompt = buildBusinessReplyPrompt({
+                sender: { name: senderName },
+                recipient: { name: 'AlphaClone team' },
+                message: incomingText,
+                channel: 'chat',
+                context: 'Draft the reply as a short, polished business response. Keep it under 3 sentences unless more detail is required.',
+            });
 
-            const reply = await generateAutoReply(incomingText, senderName);
-            return { reply, error: null };
+            const response = await routeAIRequest({
+                prompt,
+                systemPrompt: 'You are an AI assistant for a professional digital agency. Keep replies short, helpful, and human.',
+                maxTokens: 256,
+                temperature: 0.4,
+            });
+            return { reply: response.content.trim() || null, error: null };
         } catch (err) {
             return { reply: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }

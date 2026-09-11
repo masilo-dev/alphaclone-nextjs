@@ -414,6 +414,12 @@ The existing `CustomVideoRoom`, `CustomVideoTile`, and `VideoControls` component
 
 ---
 
+## Multi-provider video (Zoom alongside Daily)
+
+The database supports multiple backends on `video_calls` (`video_provider`, Zoom URL and session fields, `tenant_zoom_settings`). The client stack in this repository is still built around Daily.co (`VideoEngine` and related layers). Adding Zoom with a custom UI typically means integrating the **Zoom Video SDK** (see Zoom developer documentation) and branching join resolution in server routes so `/meet/:token` can return either Daily or Zoom credentials. Engineering notes and an MCP audit live in `src/docs/MCP_AND_ZOOM_INTEGRATION.md`.
+
+---
+
 ## Summary
 
 This architecture provides:

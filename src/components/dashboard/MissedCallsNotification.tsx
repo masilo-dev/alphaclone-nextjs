@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { PhoneMissed, X, Phone } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { PhoneMissed, Phone } from 'lucide-react';
 import { missedCallsService, MissedCall } from '../../services/missedCallsService';
 import { Button, Modal } from '../ui/UIComponents';
+import { Avatar } from '@/components/ui/Avatar';
 import toast from 'react-hot-toast';
 
 interface MissedCallsNotificationProps {
@@ -17,11 +18,27 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
     const [showModal, setShowModal] = useState(false);
     const [missedCalls, setMissedCalls] = useState<MissedCall[]>([]);
     const [loading, setLoading] = useState(false);
+    const onCallBackRef = useRef(onCallBack);
 
     useEffect(() => {
-        loadUnseenCount();
+        onCallBackRef.current = onCallBack;
+    }, [onCallBack]);
 
-        // Subscribe to new missed calls
+    const loadUnseenCount = useCallback(async () => {
+        const { count } = await missedCallsService.getUnseenMissedCallsCount(userId);
+        setUnseenCount(count);
+    }, [userId]);
+
+    const loadMissedCalls = useCallback(async () => {
+        setLoading(true);
+        const { missedCalls: calls } = await missedCallsService.getMissedCallsForUser(userId, 20);
+        setMissedCalls(calls);
+        setLoading(false);
+    }, [userId]);
+
+    useEffect(() => {
+        void loadUnseenCount();
+
         const unsubscribe = missedCallsService.subscribeToMissedCalls(
             userId,
             (newMissedCall) => {
@@ -37,9 +54,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                             size="sm"
                             onClick={() => {
                                 toast.dismiss(t.id);
-                                if (onCallBack) {
-                                    onCallBack(newMissedCall.caller_id);
-                                }
+                                onCallBackRef.current?.(newMissedCall.caller_id);
                             }}
                         >
                             Call Back
@@ -55,33 +70,18 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
         return () => {
             unsubscribe();
         };
-    }, [userId]);
+    }, [userId, loadUnseenCount]);
 
-    const loadUnseenCount = async () => {
-        const { count } = await missedCallsService.getUnseenMissedCallsCount(userId);
-        setUnseenCount(count);
-    };
-
-    const loadMissedCalls = async () => {
-        setLoading(true);
-        const { missedCalls: calls } = await missedCallsService.getMissedCallsForUser(userId, 20);
-        setMissedCalls(calls);
-        setLoading(false);
-    };
-
-    const handleOpenModal = async () => {
+    const handleOpenModal = useCallback(async () => {
         setShowModal(true);
         await loadMissedCalls();
-        // Mark all as seen
         await missedCallsService.markAllMissedCallsSeen(userId);
         setUnseenCount(0);
-    };
+    }, [userId, loadMissedCalls]);
 
     const handleCallBack = (callerId: string) => {
         setShowModal(false);
-        if (onCallBack) {
-            onCallBack(callerId);
-        }
+        onCallBackRef.current?.(callerId);
     };
 
     if (unseenCount === 0) return null;
@@ -121,18 +121,18 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                             {missedCalls.map((call) => (
                                 <div
                                     key={call.id}
-                                    className={`p-4 rounded-lg border transition-all ${
-                                        call.seen_at
-                                            ? 'bg-slate-800/30 border-slate-700/30'
-                                            : 'bg-red-500/10 border-red-500/20'
-                                    }`}
+                                    className={`p-4 rounded-lg border transition-all ${call.seen_at
+                                        ? 'bg-slate-800/30 border-slate-700/30'
+                                        : 'bg-red-500/10 border-red-500/20'
+                                        }`}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3 flex-1">
-                                            <img
-                                                src={call.caller_avatar || '/default-avatar.png'}
-                                                alt={call.caller_name || 'Unknown'}
-                                                className="w-10 h-10 rounded-full"
+                                            <Avatar
+                                                src={call.caller_avatar}
+                                                name={call.caller_name || 'Unknown'}
+                                                size={40}
+                                                className="flex-shrink-0"
                                             />
                                             <div>
                                                 <p className="font-medium text-white">

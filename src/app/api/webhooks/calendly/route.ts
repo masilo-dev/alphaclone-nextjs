@@ -1,142 +1,264 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { denyIfWebhookVerificationMissing } from '@/lib/security/webhookVerify';
 import crypto from 'crypto';
+import {
+    findTenantByCalendlyUserUri,
+    resolveCalendlyUserUriFromPayload,
+    resolveTenantHostUser,
+    upsertCalendlyEvent,
+} from '@/lib/calendly/syncToNative';
 
-// Calendly Webhook Handler
-// Events: invitee.created, invitee.canceled
 export async function POST(req: Request) {
+    const denied = denyIfWebhookVerificationMissing('calendly', !!process.env.CALENDLY_WEBHOOK_SIGNING_KEY);
+    if (denied) return denied;
+
     try {
         const body = await req.text();
-        const payload = JSON.parse(body);
         const signature = req.headers.get('calendly-webhook-signature');
+        const signingKey = process.env.CALENDLY_WEBHOOK_SIGNING_KEY;
 
-        // TODO: Implement signature verification if CALENDLY_WEBHOOK_SIGNING_KEY is provided
-        // For now, we'll process the payload but log the event
-        console.log('Calendly Webhook Received:', payload.event);
+        if (signingKey) {
+            if (!signature) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
 
-        const supabase = await createClient();
+            const parts: Record<string, string> = {};
+            signature.split(',').forEach((part) => {
+                const [key, value] = part.split('=');
+                if (key && value) parts[key] = value;
+            });
+
+            const timestamp = parts['t'];
+            const receivedHmac = parts['v1'];
+            if (!timestamp || !receivedHmac) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+
+            const requestAge = Math.floor(Date.now() / 1000) - parseInt(timestamp, 10);
+            if (Math.abs(requestAge) > 300) {
+                return NextResponse.json({ error: 'Unauthorized – Replay' }, { status: 401 });
+            }
+
+            const signedPayload = `${timestamp}.${body}`;
+            const expectedHmac = crypto.createHmac('sha256', signingKey).update(signedPayload).digest('hex');
+
+            let isValid = false;
+            try {
+                isValid = crypto.timingSafeEqual(
+                    Buffer.from(receivedHmac.padEnd(64, '0'), 'hex'),
+                    Buffer.from(expectedHmac, 'hex')
+                );
+            } catch {
+                isValid = false;
+            }
+
+            if (!isValid) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+        } else {
+            console.warn('[Calendly] CALENDLY_WEBHOOK_SIGNING_KEY not set – skipping signature check (dev only).');
+        }
+
+        const payload = JSON.parse(body);
+        const supabaseAdmin = createSupabaseAdminClient();
 
         if (payload.event === 'invitee.created') {
-            await handleInviteeCreated(payload.payload, supabase);
+            await handleInviteeCreated(payload.payload, supabaseAdmin);
         } else if (payload.event === 'invitee.canceled') {
-            await handleInviteeCanceled(payload.payload, supabase);
+            await handleInviteeCanceled(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'invitee.no_show.created') {
+            await handleInviteeCanceled({ ...payload.payload, status: 'missed' }, supabaseAdmin);
+        } else if (payload.event === 'meeting_recap.created') {
+            await handleMeetingRecap(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'routing_form_submission.created') {
+            await handleRoutingFormSubmission(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'contact.created' || payload.event === 'contact.updated') {
+            await handleContactUpsert(payload.payload, supabaseAdmin);
+        } else if (payload.event === 'contact.deleted') {
+            await handleContactDeleted(payload.payload, supabaseAdmin);
         }
 
         return NextResponse.json({ success: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Calendly Webhook Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'webhooks/calendly' });
     }
 }
 
-async function handleInviteeCreated(payload: any, supabase: any) {
-    const {
-        email,
-        name,
-        questions_and_answers,
-        tracking,
-        text_reminder_number,
-        uri: inviteeUri,
-        event: eventUri
-    } = payload;
+async function handleInviteeCreated(payload: Record<string, unknown>, supabase: ReturnType<typeof createSupabaseAdminClient>) {
+    const userUri = resolveCalendlyUserUriFromPayload(payload);
+    if (!userUri) {
+        console.error('[Calendly] Could not resolve user URI from webhook payload');
+        return;
+    }
 
-    // We need to find the tenant associated with this event
-    // The event payload doesn't directly give us the tenantId, but we can look it up 
-    // by the owner of the event or the user URI if we stored it
+    const match = await findTenantByCalendlyUserUri(userUri);
+    if (!match) {
+        console.error('[Calendly] Could not find tenant for user URI:', userUri);
+        return;
+    }
 
-    // Fetch event details to get the owner/user URI
-    // But since we are likely using the tokens of the tenant, we can try to find them
-    // via a metadata field if we passed it in the booking URL, or by matching the user URI.
+    const hostUserId = (await resolveTenantHostUser(match.tenantId)) || '';
+    if (!hostUserId) return;
 
-    // For simplicity, let's look for a tenant who has this calendlyUserUri in their settings
-    const { data: tenant, error: tenantError } = await supabase
-        .from('tenants')
-        .select('id, settings')
-        .contains('settings', { calendly: { calendlyUserUri: payload.event_type_owner_uri || payload.owner_uri } })
-        .limit(1)
+    const scheduled = payload.scheduled_event as Record<string, unknown> | undefined;
+    const qna = payload.questions_and_answers as unknown;
+    const notes = qna ? JSON.stringify(qna) : null;
+
+    await upsertCalendlyEvent({
+        tenantId: match.tenantId,
+        hostUserId,
+        eventUri: String(payload.event || ''),
+        inviteeUri: String(payload.uri || ''),
+        eventName: String(scheduled?.name || 'Meeting'),
+        inviteeName: String(payload.name || ''),
+        inviteeEmail: String(payload.email || ''),
+        inviteePhone: String(payload.text_reminder_number || ''),
+        startTime: String(scheduled?.start_time || new Date().toISOString()),
+        endTime: String(scheduled?.end_time || new Date().toISOString()),
+        location: (scheduled?.location as { location?: string } | undefined)?.location || null,
+        notes,
+        extraMetadata: { full_payload: payload },
+    });
+}
+
+async function handleInviteeCanceled(payload: Record<string, unknown>, supabase: ReturnType<typeof createSupabaseAdminClient>) {
+    const userUri = resolveCalendlyUserUriFromPayload(payload);
+    const match = userUri ? await findTenantByCalendlyUserUri(userUri) : null;
+    if (!match) return;
+
+    const hostUserId = (await resolveTenantHostUser(match.tenantId)) || '';
+    if (!hostUserId) return;
+
+    const scheduled = payload.scheduled_event as Record<string, unknown> | undefined;
+    const status = payload.status === 'missed' ? 'missed' as const : 'canceled' as const;
+
+    await upsertCalendlyEvent({
+        tenantId: match.tenantId,
+        hostUserId,
+        eventUri: String(payload.event || scheduled?.uri || ''),
+        inviteeUri: String(payload.uri || ''),
+        eventName: String(scheduled?.name || 'Meeting'),
+        inviteeName: String(payload.name || ''),
+        startTime: String(scheduled?.start_time || new Date().toISOString()),
+        endTime: String(scheduled?.end_time || new Date().toISOString()),
+        status,
+    });
+}
+
+async function handleMeetingRecap(payload: Record<string, unknown>, supabase: ReturnType<typeof createSupabaseAdminClient>) {
+    const eventUri = String(payload.event || '');
+    const { data: booking } = await supabase
+        .from('bookings')
+        .select('id, tenant_id, metadata')
+        .filter('metadata->>calendly_event_uri', 'eq', eventUri)
         .maybeSingle();
 
-    if (!tenant) {
-        // Fallback: search more broadly in JSONB
-        const { data: allTenants } = await supabase.from('tenants').select('id, settings');
-        const matchingTenant = allTenants?.find((t: any) =>
-            t.settings?.calendly?.calendlyUserUri === payload.event_type_owner_uri ||
-            t.settings?.calendly?.calendlyUserUri === payload.owner_uri
-        );
+    if (!booking) return;
 
-        if (!matchingTenant) {
-            console.error('Could not find tenant for Calendly event:', payload.event_type_owner_uri);
-            return;
-        }
-    }
+    const summary = String(payload.summary || '');
+    const actionItems = payload.action_items as string[] | undefined;
+    const transcriptUrl = payload.transcript_url as string | undefined;
 
-    const tenantId = tenant?.id;
-
-    // Map to bookings table
-    const { data: booking, error: bookingError } = await supabase
+    await supabase
         .from('bookings')
-        .insert({
-            tenant_id: tenantId,
-            client_name: name || 'Calendly Guest',
-            client_email: email,
-            client_phone: text_reminder_number,
-            client_notes: questions_and_answers ? JSON.stringify(questions_and_answers) : null,
-            start_time: payload.scheduled_event?.start_time || new Date().toISOString(),
-            end_time: payload.scheduled_event?.end_time || new Date().toISOString(),
-            status: 'confirmed',
+        .update({
+            client_notes: `${summary}\n\nAction Items:\n${actionItems?.join('\n') || 'None'}`,
             metadata: {
-                calendly_invitee_uri: inviteeUri,
-                calendly_event_uri: eventUri,
-                full_payload: payload
-            }
+                ...booking.metadata,
+                recap_received: true,
+                transcript_url: transcriptUrl,
+                action_items: actionItems,
+            },
         })
-        .select()
-        .single();
-
-    if (bookingError) {
-        console.error('Error inserting booking from Calendly:', bookingError);
-    } else {
-        // Also sync to video_calls so it shows in Meetings dashboard
-        // We'll use the tenant's primary user or the host if we can find them
-        const { data: userData } = await supabase
-            .from('users')
-            .select('id')
-            .eq('tenant_id', tenantId)
-            .eq('role', 'tenant')
-            .limit(1)
-            .maybeSingle();
-
-        if (userData) {
-            await supabase
-                .from('video_calls')
-                .insert({
-                    host_id: userData.id,
-                    title: `Calendly: ${name || 'Guest'}`,
-                    status: 'scheduled',
-                    scheduled_at: booking.start_time,
-                    daily_room_url: payload.scheduled_event?.location?.location || null, // Could be Zoom/Meet link
-                    description: questions_and_answers ? JSON.stringify(questions_and_answers) : null,
-                    metadata: {
-                        booking_id: booking.id,
-                        calendly_event_uri: eventUri
-                    }
-                });
-        }
-    }
+        .eq('id', booking.id);
 }
 
-async function handleInviteeCanceled(payload: any, supabase: any) {
-    const { uri: inviteeUri } = payload;
+// ── Calendly Contacts API (May 2026) ─────────────────────────────────────────
 
-    // Update status to canceled in bookings table
-    await supabase
-        .from('bookings')
-        .update({ status: 'canceled' })
-        .filter('metadata->>calendly_invitee_uri', 'eq', inviteeUri);
+async function handleContactUpsert(
+    payload: Record<string, unknown>,
+    supabase: ReturnType<typeof createSupabaseAdminClient>
+) {
+    const userUri = typeof payload.owner_uri === 'string' ? payload.owner_uri : null;
+    if (!userUri) return;
 
-    // Also update video_calls
+    const match = await findTenantByCalendlyUserUri(userUri);
+    if (!match) return;
+
+    const contactUri = String(payload.uri || '');
+    const name = String(payload.name || 'Unknown');
+    const email = String(payload.email || '');
+    if (!email) return;
+
+    // Upsert into business_clients so Calendly contacts flow into the CRM
+    await supabase.from('business_clients').upsert(
+        {
+            tenant_id: match.tenantId,
+            name,
+            email,
+            sales_stage: 'lead',
+            is_active: true,
+            custom_fields: { calendly_contact_uri: contactUri },
+        },
+        { onConflict: 'tenant_id,email', ignoreDuplicates: false }
+    );
+}
+
+async function handleContactDeleted(
+    payload: Record<string, unknown>,
+    supabase: ReturnType<typeof createSupabaseAdminClient>
+) {
+    const email = String(payload.email || '');
+    if (!email) return;
+
+    // Don't delete—just mark inactive to preserve data integrity
     await supabase
-        .from('video_calls')
-        .update({ status: 'cancelled' })
-        .filter('metadata->>calendly_invitee_uri', 'eq', inviteeUri);
+        .from('business_clients')
+        .update({ is_active: false })
+        .filter('email', 'eq', email)
+        .filter('custom_fields->>calendly_contact_uri', 'not.is', null);
+}
+
+async function handleRoutingFormSubmission(
+    payload: Record<string, unknown>,
+    supabase: ReturnType<typeof createSupabaseAdminClient>
+) {
+    const userUri = typeof payload.event_type_owner_uri === 'string'
+        ? payload.event_type_owner_uri
+        : typeof payload.owner_uri === 'string' ? payload.owner_uri : null;
+    if (!userUri) return;
+
+    const match = await findTenantByCalendlyUserUri(userUri);
+    if (!match) return;
+
+    const invitee = payload.invitee as Record<string, unknown> | undefined;
+    const name = String(invitee?.name || payload.name || 'Calendly Lead');
+    const email = String(invitee?.email || payload.email || '');
+    const qna = payload.questions_and_answers as unknown[];
+    const notes = qna ? JSON.stringify(qna, null, 2) : null;
+
+    if (!email) return;
+
+    // Push routing form submissions into leads table
+    const { data: existing } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('tenant_id', match.tenantId)
+        .eq('email', email)
+        .maybeSingle();
+
+    if (!existing) {
+        await supabase.from('leads').insert({
+            tenant_id: match.tenantId,
+            name,
+            email,
+            source: 'calendly_routing_form',
+            status: 'new',
+            notes,
+            metadata: { calendly_routing_payload: payload },
+        });
+    }
 }

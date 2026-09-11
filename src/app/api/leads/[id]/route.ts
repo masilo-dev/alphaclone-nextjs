@@ -1,0 +1,283 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { PlatformTenantError, resolveActiveTenantForUser } from '@/lib/tenant/platformTenant';
+
+function normalizePhoneForStorage(phone: unknown, defaultCountryCode = '1'): string | null {
+  if (phone == null) return null;
+  const raw = String(phone).trim();
+  if (!raw) return null;
+  const plusPrefixed = raw.startsWith('+');
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+  if (plusPrefixed && /^[1-9]\d{6,14}$/.test(digits)) return `+${digits}`;
+  if (digits.startsWith('00') && /^[1-9]\d{6,14}$/.test(digits.slice(2))) return `+${digits.slice(2)}`;
+  if (digits.length === 10) return `+${defaultCountryCode}${digits}`;
+  if (digits.length === 11 && digits.startsWith(defaultCountryCode)) return `+${digits}`;
+  if (digits.length >= 8 && digits.length <= 15) return `+${digits}`;
+  return raw;
+}
+
+/**
+ * GET /api/leads/[id]
+ * Get a single lead by ID with proper error handling and tenant isolation
+ */
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Lead ID required' }, { status: 400 });
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let tenantId: string;
+    try {
+      const hintedTenantId =
+        req.headers.get('x-tenant-id')?.trim() ||
+        req.nextUrl.searchParams.get('tenantId')?.trim() ||
+        null;
+      const resolved = await resolveActiveTenantForUser({ userId: user.id, hintedTenantId });
+      tenantId = resolved.tenantId;
+    } catch (err) {
+      if (err instanceof PlatformTenantError) {
+        const status = err.code === 'TENANT_REQUIRED' ? 400 : err.code === 'NOT_A_MEMBER' ? 403 : 403;
+        return NextResponse.json({ error: err.message }, { status });
+      }
+      throw err;
+    }
+
+    // Get lead with tenant isolation
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select(`
+        *,
+        lead_activities(*),
+        deals(id, name, stage, value)
+      `)
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .single();
+
+    if (leadError) {
+      console.error('[API] Lead fetch error:', leadError);
+      return NextResponse.json(
+        { error: leadError.code === 'PGRST116' ? 'Lead not found' : 'Failed to fetch lead' }, 
+        { status: leadError.code === 'PGRST116' ? 404 : 500 }
+      );
+    }
+
+    if (!lead) {
+      return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      lead,
+      related: {
+        activities: lead.lead_activities || [],
+        deals: lead.deals || []
+      }
+    });
+
+  } catch (error: unknown) {
+    console.error('[API] GET /api/leads/[id] error:', error);
+    return clientErrorResponse(error, { request: req, scope: 'leads/[id].GET' });
+  }
+}
+
+/**
+ * PATCH /api/leads/[id]
+ * Update a lead with validation
+ */
+export async function PATCH(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Lead ID required' }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let tenantId: string;
+    let role: string;
+    try {
+      const hintedTenantId =
+        req.headers.get('x-tenant-id')?.trim() ||
+        req.nextUrl.searchParams.get('tenantId')?.trim() ||
+        null;
+      const resolved = await resolveActiveTenantForUser({ userId: user.id, hintedTenantId });
+      tenantId = resolved.tenantId;
+      role = String(resolved.membership.role || '').toLowerCase();
+    } catch (err) {
+      if (err instanceof PlatformTenantError) {
+        const status = err.code === 'TENANT_REQUIRED' ? 400 : err.code === 'NOT_A_MEMBER' ? 403 : 403;
+        return NextResponse.json({ error: err.message }, { status });
+      }
+      throw err;
+    }
+    if (role === 'client' || role === 'visitor') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Build update payload
+    const updateData: any = {};
+    if (body.businessName !== undefined) updateData.business_name = body.businessName;
+    if (body.industry !== undefined) updateData.industry = body.industry;
+    if (body.location !== undefined) updateData.location = body.location;
+    if (body.phone !== undefined) updateData.phone = normalizePhoneForStorage(body.phone);
+    if (body.email !== undefined) updateData.email = body.email;
+    if (body.website !== undefined) updateData.website = body.website;
+    if (body.stage !== undefined) updateData.stage = body.stage;
+    if (body.value !== undefined) updateData.value = body.value;
+    if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.outreachStatus !== undefined) updateData.outreach_status = body.outreachStatus;
+
+    // Check stage transition rules
+    if (body.stage) {
+      const { data: currentLead } = await supabase
+        .from('leads')
+        .select('stage')
+        .eq('id', id)
+        .eq('tenant_id', tenantId)
+        .single();
+
+      if (currentLead) {
+        const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+        const currentIdx = stageOrder.indexOf(currentLead.stage);
+        const newIdx = stageOrder.indexOf(body.stage);
+
+        if (newIdx < currentIdx && body.stage !== 'lost') {
+          return NextResponse.json(
+            { error: 'Cannot move lead back to previous stage' }, 
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // Update lead
+    const { data: lead, error: updateError } = await supabase
+      .from('leads')
+      .update(updateData)
+      .eq('id', id)
+      .eq('tenant_id', tenantId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('[API] Lead update error:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update lead' }, 
+        { status: 500 }
+      );
+    }
+
+    // Log activity
+    await supabase.from('lead_activities').insert({
+      lead_id: id,
+      user_id: user.id,
+      type: 'update',
+      description: `Lead updated: ${Object.keys(updateData).join(', ')}`,
+      metadata: { updates: Object.keys(updateData) }
+    });
+
+    return NextResponse.json({ 
+      success: true,
+      lead,
+      message: 'Lead updated successfully'
+    });
+
+  } catch (error: unknown) {
+    console.error('[API] PATCH /api/leads/[id] error:', error);
+    return clientErrorResponse(error, { request: req, scope: 'leads/[id].PATCH' });
+  }
+}
+
+/**
+ * DELETE /api/leads/[id]
+ * Delete a lead
+ */
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Lead ID required' }, { status: 400 });
+    }
+
+    const supabase = await createSupabaseServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let tenantId: string;
+    let role: string;
+    try {
+      const hintedTenantId =
+        req.headers.get('x-tenant-id')?.trim() ||
+        req.nextUrl.searchParams.get('tenantId')?.trim() ||
+        null;
+      const resolved = await resolveActiveTenantForUser({ userId: user.id, hintedTenantId });
+      tenantId = resolved.tenantId;
+      role = String(resolved.membership.role || '').toLowerCase();
+    } catch (err) {
+      if (err instanceof PlatformTenantError) {
+        const status = err.code === 'TENANT_REQUIRED' ? 400 : err.code === 'NOT_A_MEMBER' ? 403 : 403;
+        return NextResponse.json({ error: err.message }, { status });
+      }
+      throw err;
+    }
+    if (!['owner', 'admin', 'tenant_admin', 'super_admin'].includes(role)) {
+      return NextResponse.json({ error: 'Insufficient workspace permissions' }, { status: 403 });
+    }
+
+    // Delete lead (tenant isolated)
+    const { error: deleteError } = await supabase
+      .from('leads')
+      .delete()
+      .eq('id', id)
+      .eq('tenant_id', tenantId);
+
+    if (deleteError) {
+      console.error('[API] Lead delete error:', deleteError);
+      return NextResponse.json(
+        { error: 'Failed to delete lead' }, 
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      message: 'Lead deleted successfully'
+    });
+
+  } catch (error: unknown) {
+    console.error('[API] DELETE /api/leads/[id] error:', error);
+    return clientErrorResponse(error, { request: req, scope: 'leads/[id].DELETE' });
+  }
+}

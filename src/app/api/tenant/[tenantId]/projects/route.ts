@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { requireTenantAccess, routeErrorResponse } from "@/lib/apiAuth";
+import {
+  normalizeProjectStage,
+  normalizeProjectStatus,
+} from "@/lib/projects/projectEnums";
+
+const optionalDate = z.union([z.string(), z.null()]).optional().transform((val) => (val && val.trim().length > 0 ? val.trim() : null));
+const optionalUuid = z.union([z.string(), z.null()]).optional().transform((val) => (val && z.string().uuid().safeParse(val.trim()).success ? val.trim() : undefined));
+const optionalNullableUuid = z.union([z.string(), z.null()]).optional().transform((val) => (val && z.string().uuid().safeParse(val.trim()).success ? val.trim() : null));
+const optionalUrl = z.union([z.string(), z.null()]).optional().transform((val) => (val && z.string().url().safeParse(val.trim()).success ? val.trim() : null));
+const optionalNumber = z.union([z.number(), z.string().transform((v) => parseFloat(v)), z.null()]).optional().transform((val) => (typeof val === 'number' && !isNaN(val) ? val : null));
+
+const schema = z.object({
+  name: z.string().trim().min(1).max(200), ownerId: optionalUuid, ownerName: z.string().trim().max(300).optional(),
+  category: z.string().trim().max(120).default("General"), status: z.string().trim().min(1).max(80).default("Pending"),
+  currentStage: z.string().trim().min(1).max(120).default("Discovery"), progress: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).default(0),
+  dueDate: optionalDate, startDate: optionalDate,
+  team: z.union([z.array(z.string()), z.null()]).optional().default([]).transform((arr) => (arr || []).filter((id) => Boolean(id) && z.string().uuid().safeParse(id.trim()).success)),
+  image: optionalUrl, description: z.string().max(10_000).nullable().optional(), contractStatus: z.string().max(80).default("None"),
+  contractText: z.string().max(100_000).nullable().optional(), externalUrl: optionalUrl, isPublic: z.boolean().default(false), showInPortfolio: z.boolean().default(false),
+  clientId: optionalNullableUuid, location: z.string().max(500).nullable().optional(), budget: optionalNumber, risk: z.string().max(40).nullable().optional(), health: z.string().max(40).nullable().optional(),
+  resources: z.union([z.array(z.string()), z.null()]).optional().default([]).transform((arr) => (arr || []).map((s) => String(s).trim()).filter(Boolean)),
+  budgetTotal: optionalNumber, budgetUsed: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).default(0), velocityScore: optionalNumber, healthScore: optionalNumber,
+  portalEnabled: z.boolean().default(false), estimatedCompletionDate: optionalDate, autoInvoiceEnabled: z.boolean().default(false), templateId: optionalUuid,
+});
+
+const cleanDate = (value: string | null | undefined) => value ? value.slice(0, 10) : null;
+
+export async function POST(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
+  try {
+    const { tenantId } = await context.params;
+    const { user } = await requireTenantAccess(tenantId, req);
+    const parsed = schema.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) return NextResponse.json({ error: "Invalid project details", fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+    const input = parsed.data;
+    const status = normalizeProjectStatus(input.status) || "Pending";
+    const currentStage = normalizeProjectStage(input.currentStage) || "Discovery";
+    const ownerId = input.ownerId || user.id;
+    const admin = createSupabaseAdminClient();
+
+    const memberIds = [...new Set([ownerId, ...input.team])].filter((id) => Boolean(id) && z.string().uuid().safeParse(id).success);
+    if (memberIds.length) {
+      const { data: members, error: memberError } = await admin.from("tenant_users").select("user_id").eq("tenant_id", tenantId).in("user_id", memberIds);
+      if (!memberError) {
+        const valid = new Set((members || []).map((m) => m.user_id)); valid.add(user.id); input.team = input.team.filter((id) => valid.has(id));
+      }
+    }
+    const { data: ownerProfile } = await admin.from("profiles").select("full_name, name, email").eq("id", ownerId).maybeSingle();
+
+    if (input.templateId) {
+      const { data: template, error: templateError } = await admin.from("project_templates").select("id").eq("id", input.templateId).eq("tenant_id", tenantId).eq("is_active", true).maybeSingle();
+      if (templateError) throw templateError;
+      if (!template) return NextResponse.json({ error: "Project template not found" }, { status: 404 });
+    }
+
+    const portalToken = input.portalEnabled ? crypto.randomUUID().replace(/-/g, "") : null;
+    const projectPayload: Record<string, unknown> = {
+      tenant_id: tenantId, owner_id: ownerId,
+      owner_name: input.ownerName || ownerProfile?.full_name || ownerProfile?.name || ownerProfile?.email || user.email || "Workspace member",
+      name: input.name, category: input.category, status, current_stage: currentStage, progress: input.progress,
+      due_date: cleanDate(input.dueDate), start_date: cleanDate(input.startDate), team: input.team, image: input.image || null,
+      description: input.description || null, contract_status: input.contractStatus, contract_text: input.contractText || null, external_url: input.externalUrl || null,
+      is_public: input.isPublic, show_in_portfolio: input.showInPortfolio, client_id: input.clientId || null, location: input.location || null,
+      budget: input.budget ?? null, risk: input.risk || null, health: input.health || null, resources: input.resources,
+      budget_total: input.budgetTotal ?? null, budget_used: input.budgetUsed, velocity_score: input.velocityScore ?? null, health_score: input.healthScore ?? null,
+      portal_token: portalToken, portal_enabled: input.portalEnabled, estimated_completion_date: cleanDate(input.estimatedCompletionDate), auto_invoice_enabled: input.autoInvoiceEnabled,
+    };
+    let { data: project, error } = await admin.from("projects").insert(projectPayload).select("*").single();
+    if (error && (error.code === 'PGRST204' || /location|schema cache/i.test(error.message))) {
+      delete projectPayload.location;
+      const fallback = await admin.from("projects").insert(projectPayload).select("*").single(); project = fallback.data; error = fallback.error;
+    }
+    if (error || !project) throw error || new Error("Project creation failed");
+
+    let templateApplication: unknown = null;
+    if (input.templateId) {
+      const startDate = cleanDate(input.startDate) || cleanDate(project.created_at) || new Date().toISOString().slice(0, 10);
+      const idempotencyKey = `project-create:${tenantId}:${project.id}:${input.templateId}`;
+      const { data: application, error: applicationError } = await admin.rpc("apply_project_template", {
+        p_tenant_id: tenantId, p_project_id: project.id, p_template_id: input.templateId, p_start_date: startDate,
+        p_idempotency_key: idempotencyKey, p_applied_by: user.id, p_correlation_id: `project-create:${project.id}`,
+      });
+      if (applicationError) {
+        await admin.from("projects").delete().eq("id", project.id).eq("tenant_id", tenantId);
+        throw applicationError;
+      }
+      templateApplication = application;
+    }
+
+    const { error: eventError } = await admin.from("business_automation_events").insert({
+      tenant_id: tenantId, event_type: "project_created",
+      payload: { projectId: project.id, projectName: project.name || input.name, actorUserId: user.id, templateId: input.templateId || null, templateApplication },
+    });
+    if (eventError) console.error("[projects] project_created event could not be recorded", eventError);
+
+    const { bridgeAutomationEventToTenantNotification } = await import('@/lib/audit/businessEventBridge');
+    void bridgeAutomationEventToTenantNotification(tenantId, 'project_created', { projectId: project.id, projectName: project.name || input.name, actorUserId: user.id, source: 'user' });
+    return NextResponse.json({ project, templateApplication }, { status: 201 });
+  } catch (error) {
+    return routeErrorResponse(error, "Project could not be created", req);
+  }
+}

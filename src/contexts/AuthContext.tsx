@@ -1,100 +1,309 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import { AuthChangeEvent } from '@supabase/supabase-js';
+import { resetPlatformState } from '@/lib/platformReset';
+
 
 interface AuthContextType {
     user: User | null;
     loading: boolean;
+    error: string | null;
+    mfaLevel: 'aal1' | 'aal2' | null;
+    needsMfa: boolean;
     signOut: () => Promise<void>;
+    cancelAccountDeletion: () => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+
+
+
+
+/**
+ * Clear all Supabase auth tokens from localStorage AND cookies.
+ * Called before signOut to ensure the session is fully cleared.
+ */
+function clearAuthSession() {
+    try {
+        if (typeof window === 'undefined') return;
+
+        // 1. Clear LocalStorage
+        const keys = Object.keys(localStorage).filter(
+            (k) => (k.startsWith('sb-') || k.includes('auth-token'))
+        );
+        keys.forEach((k) => localStorage.removeItem(k));
+
+        // 2. Clear Cookies (set expiry to past)
+        if (typeof document !== 'undefined') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i];
+                const eqPos = cookie.indexOf('=');
+                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                if (name.includes('auth-token') || name.startsWith('sb-')) {
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+                    // Also try domain-scoped if needed
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`;
+                }
+            }
+        }
+    } catch {
+        // ignore
+    }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [mfaLevel, setMfaLevel] = useState<'aal1' | 'aal2' | null>(null);
+    const [needsMfa, setNeedsMfa] = useState(false);
+    // Track the latest user state to prevent race conditions between initSession and onAuthStateChange
+    const latestUserRef = useRef<User | null>(null);
+
+    // Fetch and set MFA level
+    // Fetch and set MFA level - wrapped in timeout to prevent blocking init
+    const refreshMfaLevel = async () => {
+        try {
+            // Add a 3s timeout to the MFA check
+            const mfaPromise = supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('MFA check timeout')), 3000));
+
+            const { data, error } = await Promise.race([mfaPromise, timeoutPromise]) as any;
+
+            if (error) {
+                console.error('[AuthContext] Error getting MFA level:', error);
+                return;
+            }
+            console.log('[AuthContext] MFA Level:', data);
+            setMfaLevel(data.currentLevel as 'aal1' | 'aal2');
+            setNeedsMfa(data.nextLevel === 'aal2' && data.currentLevel !== 'aal2');
+        } catch (err) {
+            console.error('[AuthContext] MFA level fetch suppressed or timed out:', err);
+        }
+    };
+
+    // Wrapper to set user and update ref
+    const setSafeUser = (u: User | null) => {
+        latestUserRef.current = u;
+        setUser(u);
+    };
 
     useEffect(() => {
         let isMounted = true;
 
-        // OPTIMIZATION: Immediate session check (Optimistic)
+        if (!isSupabaseConfigured()) {
+            setLoading(false);
+            setSafeUser(null);
+            setError(null);
+            return;
+        }
+
+        // Async validation — runs to confirm/retrieve session from Supabase.
+        // This correctly reads sessions from HTTP-only cookies (set by the SSR callback
+        // after Google OAuth) as well as localStorage sessions (email/password sign-in).
         const initSession = async () => {
             try {
-                // Check if we have a session immediately
-                const { user: initialUser } = await authService.getCurrentUser();
-                if (isMounted && initialUser) {
-                    console.log('AuthContext: Optimistic session found', initialUser.email);
-                    setUser(initialUser);
+                const { user: validatedUser, error: authError } = await authService.getCurrentUser();
+
+                if (!isMounted) return;
+
+                if (authError) {
+                    // Silently ignore abort/cancel — happens in React StrictMode dev double-mount
+                    const isAbort = authError.toLowerCase().includes('abort') ||
+                        authError.toLowerCase().includes('cancel') ||
+                        authError.toLowerCase().includes('signal');
+                    if (isAbort) {
+                        console.log('[AuthContext] Auth request aborted (expected in dev StrictMode). Retaining current state.');
+                        return;
+                    }
+
+                    console.error('[AuthContext] Debug: getCurrentUser returned error', authError);
+
+                    const isAuthError = authError.toLowerCase().includes('invalid') ||
+                        authError.toLowerCase().includes('expired') ||
+                        authError.toLowerCase().includes('unauthorized') ||
+                        authError.toLowerCase().includes('not found') ||
+                        authError.toLowerCase().includes('account');
+
+                    // Do NOT treat transient "profile" sync races (common after Google OAuth)
+                    // as a hard session wipe — retry once via getCurrentUser path instead.
+                    if (isAuthError) {
+                        clearAuthSession();
+                        setSafeUser(null);
+                        setError(authError);
+                    } else if (authError.toLowerCase().includes('profile')) {
+                        console.warn('[AuthContext] Profile not ready yet after OAuth — retrying once');
+                        setTimeout(() => {
+                            if (!isMounted) return;
+                            void initSession();
+                        }, 1200);
+                        setError(authError);
+                    } else {
+                        setSafeUser(null);
+                        setError('We could not verify your session. Please retry when your connection is stable.');
+                    }
+                } else if (validatedUser) {
+                    setSafeUser(validatedUser);
+                    setError(null);
+                    await refreshMfaLevel();
+                } else {
+                    // RACE CONDITION FIX: If onAuthStateChange already found a user, don't overwrite with null
+                    if (!latestUserRef.current) {
+                        setSafeUser(null);
+                        setError(null);
+                    }
+                }
+            } catch (e: any) {
+                if (!isMounted) return;
+                console.error('[AuthContext] Debug: initSession caught exception', e);
+
+                if (e.name !== 'AbortError' && !e.message?.includes('abort')) {
+                    if (!latestUserRef.current) {
+                        setSafeUser(null);
+                    }
+                }
+            } finally {
+                if (isMounted) {
                     setLoading(false);
                 }
-            } catch (e) {
-                console.warn('AuthContext: Optimistic check failed', e);
             }
         };
 
-        initSession();
-
-        // Subscribe to auth changes
-        const { data: { subscription } } = authService.onAuthStateChange((u, event) => {
+        // Primary: rely on onAuthStateChange for session events.
+        // INITIAL_SESSION fires with the current session (including sessions stored in
+        // HTTP-only cookies from the Google OAuth callback route).
+        const { data: { subscription } } = authService.onAuthStateChange(async (u: User | null, event?: AuthChangeEvent) => {
             if (!isMounted) return;
-            console.log(`AuthContext: Handling ${event} event, User: ${u?.email}`);
 
-            // OPTIMIZATION: Prevent unnecessary state updates (flip-flopping)
-            // If we already have the same user loaded, ignores INITIAL_SESSION or SIGNED_IN events
-            if (u && user && u.id === user.id && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN')) {
-                console.log('AuthContext: User already loaded, skipping update');
-                return;
-            }
+            console.log(`[AuthContext] Auth State Event: ${event}`, { hasUser: !!u });
 
             if (u) {
-                // User is authenticated and profile is loaded
-                setUser(u);
+                setSafeUser(u);
+                setError(null);
                 setLoading(false);
-            } else if (event === 'SIGNED_OUT') {
-                // Explicit sign out
-                setUser(null);
-                setLoading(false);
-            } else if (event === 'SIGNED_IN' && !u) {
-                // Signed in but no user data (shouldn't happen with our wrapper, but safe fallback)
-                setUser(null);
-                setLoading(false);
-            } else {
-                // Initial session check or other events where no user is present
-                // Don't clear user if we're just refreshing session token!
-                if (event === 'TOKEN_REFRESHED' && user) {
-                    return;
+                refreshMfaLevel();
+                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                    void authService.triggerPlatformWelcomeIfNeeded();
                 }
+            } else if (event === 'SIGNED_OUT') {
+                setSafeUser(null);
+                setError(null);
+                setMfaLevel(null);
+                setNeedsMfa(false);
+                setLoading(false);
+                void resetPlatformState({
+                    reason: 'session-expired',
+                    clearAuth: true,
+                });
+            } else if (event === 'INITIAL_SESSION') {
+                // Check if we are in an auth callback flow
+                const isAuthCallback = typeof window !== 'undefined' && (
+                    window.location.search.includes('code=') ||
+                    window.location.pathname.includes('/auth/callback') ||
+                    sessionStorage.getItem('auth_callback_in_progress') === 'true'
+                );
 
-                // Only clear if we didn't find an optimistic user earlier or if this is an explicit no-session event
-                if (event === 'INITIAL_SESSION' && !u) {
-                    setUser(null);
+                if (!u && !latestUserRef.current) {
+                    if (isAuthCallback) {
+                        console.log('[AuthContext] INITIAL_SESSION: No user yet but auth callback in progress, holding loading state...');
+                        setLoading(true);
+                    } else {
+                        console.log('[AuthContext] INITIAL_SESSION returned no user, performing manual validation...');
+                        initSession();
+                    }
+                } else if (!u) {
+                    // No user and no callback — stop the loading spinner
                     setLoading(false);
                 }
+            } else if (event === 'TOKEN_REFRESHED') {
+                return;
+            } else if (!u) {
+                setSafeUser(null);
+                setLoading(false);
             }
         });
+
+        // Backup: if onAuthStateChange doesn't fire INITIAL_SESSION within 2s, run manually.
+        // This handles edge cases in some browser/SDK versions.
+        const runBackupInit = setTimeout(() => {
+            if (isMounted && !latestUserRef.current) {
+                console.log('[AuthContext] Backup init triggered (2s grace)...');
+                initSession();
+            }
+        }, 2000);
+
+        // Safety net: force stop loading after 10s to ensure the UI doesn't hang forever
+        // We use a separate check inside the timeout to ensure we don't log false positives
+        const safetyTimeout = setTimeout(() => {
+            if (isMounted) {
+                // We check the latest state. If it's still loading, we force it off.
+                setLoading((currentLoading) => {
+                    if (currentLoading) {
+                        console.warn('[AuthContext] Safety timeout reached (10s). Forcing loading to false to unblock UI.');
+                        return false;
+                    }
+                    return currentLoading;
+                });
+            }
+        }, 10000);
 
         return () => {
             isMounted = false;
             subscription.unsubscribe();
+            clearTimeout(safetyTimeout);
+            clearTimeout(runBackupInit);
         };
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // A PWA can remain suspended for a long time. Refresh its stored session as
+    // soon as it becomes visible so reopening the installed app does not send a
+    // valid returning user back through the sign-in screen.
+    useEffect(() => {
+        if (!user || typeof document === 'undefined') return;
+        const refreshOnReturn = () => {
+            if (document.visibilityState === 'visible') {
+                void supabase.auth.refreshSession().catch(() => undefined);
+            }
+        };
+        document.addEventListener('visibilitychange', refreshOnReturn);
+        return () => document.removeEventListener('visibilitychange', refreshOnReturn);
+    }, [user?.id]);
 
     const signOut = async () => {
+        setSafeUser(null);
+        setLoading(false);
+        setMfaLevel(null);
+        setNeedsMfa(false);
 
-        await authService.signOut();
-        setUser(null);
+        // Stop protected reads/subscriptions before asking Supabase to revoke the session.
+        await resetPlatformState({ reason: 'sign-out', clearAuth: false });
+        try {
+            await authService.signOut();
+        } finally {
+            // Local cleanup is mandatory even when the provider is unavailable.
+            clearAuthSession();
+            await resetPlatformState({ reason: 'sign-out', clearAuth: true });
+        }
     };
 
-    const value = {
-        user,
-        loading,
-        signOut
+    const cancelAccountDeletion = async () => {
+        const { error } = await authService.cancelAccountDeletion();
+        if (!error) {
+            // Re-fetch to update state
+            const { user: refreshedUser } = await authService.getCurrentUser();
+            setSafeUser(refreshedUser);
+        }
+        return { error };
     };
 
     return (
-        <AuthContext.Provider value={value}>
+        <AuthContext.Provider value={{ user, loading, error, mfaLevel, needsMfa, signOut, cancelAccountDeletion }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,10 +1,6 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ENV } from '../../config/env';
-import { supabase } from '../../lib/supabase';
-import { tenantService } from '../tenancy/TenantService';
-
-const GEMINI_API_KEY = ENV.VITE_GEMINI_API_KEY || '';
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+import { routeAIRequest } from '../aiRouter';
+import { supabase } from '@/lib/supabase';
+import { tenantService } from '@/services/tenancy/TenantService';
 
 interface AIContext {
   tenantId: string;
@@ -14,11 +10,17 @@ interface AIContext {
   recentActivity?: any[];
 }
 
+/**
+ * AICore Service
+ * Refactored to use centralized AI Router (Claude/OpenAI) instead of legacy Gemini.
+ */
 export class AICore {
-  private model: any;
-
-  constructor() {
-    this.model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+  /**
+   * Check if AI providers are configured
+   */
+  isConfigured(): boolean {
+    return !!(process.env.ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || 
+              process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY);
   }
 
   /**
@@ -49,8 +51,11 @@ Format as JSON with these exact keys: strategy, tactics (array), timeline, budge
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        temperature: 0.7 
+      });
+      const response = result.content;
 
       // Parse JSON from response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -103,8 +108,11 @@ Make it professional, legally sound, and clear.
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const contract = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+        temperature: 0.3 
+      });
+      const contract = result.content;
 
       // Save to database
       const tenantId = tenantService.getCurrentTenantId();
@@ -162,8 +170,10 @@ Format as JSON with keys: summary, message, nextSteps (array)
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -208,8 +218,10 @@ Keep each reply under 100 words. Format as array of strings.
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt, 
+      });
+      const response = result.content;
 
       // Extract array from response
       const arrayMatch = response.match(/\[[\s\S]*\]/);
@@ -258,8 +270,10 @@ Return JSON array with: title, description, priority, estimatedHours
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
@@ -313,8 +327,10 @@ Format as JSON with keys: summary, strengths, improvements, recommendations (all
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -360,8 +376,11 @@ Format as JSON with keys: subject, preview, body, variations (array of {subject,
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt,
+        temperature: 0.8 
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -445,8 +464,10 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = result.response.text();
+      const result = await routeAIRequest({ 
+        prompt
+      });
+      const response = result.content;
 
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -458,6 +479,157 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
       console.error('AI prediction failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * CONTEXT: Aggregates current business state for AI awareness
+   */
+  async getBusinessContext(tenantId: string): Promise<string> {
+    try {
+      const [
+        { data: tenant },
+        { data: projects },
+        { data: deals },
+        { data: clients },
+        { data: invoices }
+      ] = await Promise.all([
+        supabase.from('tenants').select('*').eq('id', tenantId).single(),
+        supabase.from('projects').select('*').eq('tenant_id', tenantId).limit(5),
+        supabase.from('deals').select('*').eq('tenant_id', tenantId).limit(5),
+        supabase.from('business_clients').select('*').eq('tenant_id', tenantId).limit(5),
+        supabase.from('business_invoices').select('*').eq('tenant_id', tenantId).in('status', ['sent', 'overdue', 'partially_paid', 'draft']).limit(5)
+      ]);
+
+      return `
+Business Name: ${tenant?.name || 'Unknown'}
+Business Description: ${tenant?.description || 'N/A'}
+Industry: ${tenant?.industry || 'General Business'}
+Active Projects: ${projects?.map((p: any) => p.name).join(', ') || 'None'}
+Recent Deals: ${deals?.map((d: any) => d.title).join(', ') || 'None'}
+Key Clients: ${clients?.map((c: any) => c.name).join(', ') || 'None'}
+Pending Revenue: ${invoices?.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) || 0} USD
+`;
+    } catch (error) {
+      console.error('Error fetching business context:', error);
+      return 'Context unavailable';
+    }
+  }
+
+  /**
+   * PROACTIVE: Generates "Mission Control" actions for 900% automation
+   */
+  async getProactiveInsights(tenantId: string): Promise<Array<{
+    type: 'action' | 'warning' | 'opportunity';
+    title: string;
+    description: string;
+    priority: 'low' | 'medium' | 'high';
+    actionLabel: string;
+    actionType: string;
+    metadata?: any;
+  }>> {
+    const contextText = await this.getBusinessContext(tenantId);
+    
+    const prompt = `
+You are the AlphaClone Autonomous Business Engine. Analyze the following business context and generate 3-5 PROACTIVE high-stakes actions.
+Your goal is 900% business automation (AI handles the heavy lifting).
+
+Context:
+${contextText}
+
+Return a JSON array of objects with:
+- type: "action" (standard task), "warning" (risk), "opportunity" (revenue)
+- title: Short punchy title
+- description: 1 sentence explanation
+- priority: "low", "medium", "high"
+- actionLabel: Button text (e.g., "Draft Contract", "Follow-up")
+- actionType: one of "DRAFT_CONTRACT", "REVIEW_OVERDUE_INVOICES", "REVIEW_STALE_LEADS", or "REVIEW_TASKS". Use DRAFT_CONTRACT only when metadata includes a real projectId.
+- metadata: Relevant IDs
+
+Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handle any industry contextually.
+`;
+
+    try {
+      const result = await routeAIRequest({ 
+        prompt,
+        temperature: 0.6 
+      });
+      const response = result.content;
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      
+      const insights = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      
+      // Log for audit trail
+      if (typeof window !== 'undefined') {
+        const { activityService } = await import('@/services/activityService');
+        await activityService.logSystemAction(
+          'system_ai',
+          'AI_INSIGHTS',
+          `Generated ${insights.length} proactive business insights`,
+          { insightCount: insights.length },
+          tenantId
+        );
+      }
+
+      return insights;
+    } catch (error) {
+      console.error('Proactive insights failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 900% AUTOMATION: Generate lead outreach email
+   */
+  async generateLeadOutreach(lead: any): Promise<{ subject: string; body: string }> {
+    const prompt = `
+You are the best sales rep, copywriter and founder rolled into one — the kind whose cold emails actually get replies. Write a personalized, high-converting outreach email for this lead.
+Lead Name: ${lead.name}
+Industry: ${lead.industry || 'Business Services'}
+Description: ${lead.description || 'Professional engagement'}
+Website: ${lead.website || 'N/A'}
+
+Rules:
+1. Write like a sharp human, not a corporation. Conversational, confident, warm — zero stiff corporate jargon, zero "I hope this email finds you well", zero "As an AI", no [placeholders].
+2. OPENING LINE: Lead with a pattern-interrupt that grabs attention in the first 8 words — a specific observation about THEIR business, a bold/curious statement, or a sharp question. Never a generic intro. This single line decides if they keep reading.
+3. Body: 60–110 words. One concrete, specific value angle tied to their industry. Make it about them, not us. Easy to skim.
+4. CTA: one low-friction, casual ask (e.g. "Worth a quick look?" / "Want me to send a 2-min example?"). No pressure, no salesy fluff.
+5. Subject line: punchy, curiosity-driven, max 7 words. Never clickbait-spammy.
+6. No asterisks, hashtags, or markdown symbols.
+7. Return Format: JSON object with "subject" and "body". No other text.
+`;
+
+    try {
+      const result = await routeAIRequest({ 
+        prompt,
+        temperature: 0.7 
+      });
+      const response = result.content;
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      const data = jsonMatch ? JSON.parse(jsonMatch[0]) : { subject: 'Strategic Partnership Inquiry', body: 'I would like to discuss how we can support your business growth.' };
+      
+      // Clean the body to ensure 100% human finish
+      data.body = this.cleanProOutput(data.body);
+      
+      return data;
+    } catch (error) {
+      console.error('Lead outreach generation failed:', error);
+      return { subject: 'Strategic Introduction', body: `I followed your work in the ${lead.industry || 'industry'} and would love to introduce our services.` };
+    }
+  }
+
+  /**
+   * CLEANER: Removes AI identifiers for a 100% human finish
+   */
+  cleanProOutput(text: string): string {
+    return text
+      // Remove AI conversational prefixes
+      .replace(/^(Certainly|Here is|Sure|I have generated|As an AI|Please find|This is a draft|Subject:|Note:).*/gi, '')
+      // Replace common AI placeholders with real-looking defaults or empty space
+      .replace(/\[Client Name\]/g, 'Valued Partner')
+      .replace(/\[Your Name\]/g, '') // Usually handled by signature
+      .replace(/\[.*?\]/g, '') // Remove remaining [Placeholders]
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
   }
 }
 

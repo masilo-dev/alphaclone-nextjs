@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 
 export interface SearchFilters {
-    type?: ('project' | 'message' | 'invoice' | 'user' | 'all')[];
+    type?: ('project' | 'message' | 'invoice' | 'contract' | 'document' | 'campaign' | 'user' | 'all')[];
     dateFrom?: Date;
     dateTo?: Date;
     status?: string[];
@@ -9,7 +9,7 @@ export interface SearchFilters {
 }
 
 export interface SearchResult {
-    type: 'project' | 'message' | 'invoice' | 'user';
+    type: 'project' | 'message' | 'invoice' | 'contract' | 'document' | 'campaign' | 'user';
     id: string;
     title: string;
     subtitle?: string;
@@ -27,7 +27,8 @@ export const searchService = {
         query: string,
         userId: string,
         userRole: 'admin' | 'client',
-        filters?: SearchFilters
+        filters?: SearchFilters,
+        tenantId?: string
     ): Promise<{ results: SearchResult[]; error: string | null }> {
         if (!query.trim()) {
             return { results: [], error: null };
@@ -36,12 +37,14 @@ export const searchService = {
         try {
             const searchTerm = query.toLowerCase().trim();
             const results: SearchResult[] = [];
+            if (!tenantId) return { results: [], error: 'Active workspace required' };
 
             // Search projects
             if (!filters?.type || filters.type.includes('project') || filters.type.includes('all')) {
                 let projectQuery = supabase
                     .from('projects')
                     .select('*')
+                    .eq('tenant_id', tenantId)
                     .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`);
 
                 if (userRole !== 'admin') {
@@ -91,6 +94,7 @@ export const searchService = {
                 let messageQuery = supabase
                     .from('messages')
                     .select('*, sender:profiles!sender_id(name), recipient:profiles!recipient_id(name)')
+                    .eq('tenant_id', tenantId)
                     .ilike('text', `%${searchTerm}%`);
 
                 if (userRole !== 'admin') {
@@ -126,16 +130,13 @@ export const searchService = {
                 });
             }
 
-            // Search invoices
+            // Search canonical business invoices
             if (!filters?.type || filters.type.includes('invoice') || filters.type.includes('all')) {
                 let invoiceQuery = supabase
-                    .from('invoices')
-                    .select('*, project:projects(name)')
-                    .or(`id.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
-
-                if (userRole !== 'admin') {
-                    invoiceQuery = invoiceQuery.eq('user_id', userId);
-                }
+                    .from('business_invoices')
+                    .select('*')
+                    .eq('tenant_id', tenantId)
+                    .or(`invoice_number.ilike.%${searchTerm}%,notes.ilike.%${searchTerm}%`);
 
                 if (filters?.status) {
                     invoiceQuery = invoiceQuery.in('status', filters.status);
@@ -154,19 +155,19 @@ export const searchService = {
                 (invoices || []).forEach((invoice: any) => {
                     const relevance = this.calculateRelevance(searchTerm, [
                         invoice.id,
-                        invoice.description,
-                        invoice.project?.name,
+                        invoice.invoice_number,
+                        invoice.notes,
                     ]);
 
                     results.push({
                         type: 'invoice',
                         id: invoice.id,
-                        title: `Invoice #${invoice.id.substring(0, 8).toUpperCase()}`,
-                        subtitle: `$${invoice.amount?.toLocaleString()} - ${invoice.status}`,
-                        description: invoice.description,
-                        link: '/dashboard/finance',
+                        title: invoice.invoice_number || `Invoice #${invoice.id.substring(0, 8).toUpperCase()}`,
+                        subtitle: `${invoice.currency || 'USD'} ${Number(invoice.total || 0).toLocaleString()} - ${invoice.lifecycle_status || invoice.status}`,
+                        description: invoice.notes,
+                        link: `/dashboard/business/billing/manage?invoiceId=${invoice.id}`,
                         metadata: {
-                            amount: invoice.amount,
+                            amount: invoice.total,
                             status: invoice.status,
                             dueDate: invoice.due_date,
                         },
@@ -175,11 +176,33 @@ export const searchService = {
                 });
             }
 
+            if (!filters?.type || filters.type.includes('contract') || filters.type.includes('all')) {
+                const { data: contracts } = await supabase.from('contracts').select('id, title, content, status, lifecycle_status, updated_at')
+                    .eq('tenant_id', tenantId).or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`).limit(20);
+                (contracts || []).forEach((contract: any) => results.push({ type: 'contract', id: contract.id, title: contract.title, subtitle: String(contract.lifecycle_status || contract.status).replaceAll('_',' '), description: String(contract.content || '').replace(/<[^>]+>/g,' ').slice(0,220), link: `/dashboard/business/contracts?contractId=${contract.id}`, metadata: { status: contract.status }, relevance: this.calculateRelevance(searchTerm, [contract.title, contract.content]) }));
+            }
+
+            if (!filters?.type || filters.type.includes('document') || filters.type.includes('all')) {
+                const { data: documents } = await supabase.from('documents').select('id, name, title, summary, extracted_text, document_type, intelligence_status')
+                    .eq('tenant_id', tenantId).is('deleted_at', null).or(`name.ilike.%${searchTerm}%,title.ilike.%${searchTerm}%,summary.ilike.%${searchTerm}%,extracted_text.ilike.%${searchTerm}%`).limit(20);
+                (documents || []).forEach((document: any) => results.push({ type: 'document', id: document.id, title: document.title || document.name || 'Document', subtitle: document.document_type || 'Document', description: document.summary || String(document.extracted_text || '').slice(0,220), link: `/dashboard/business/documents?documentId=${document.id}`, metadata: { intelligenceStatus: document.intelligence_status }, relevance: this.calculateRelevance(searchTerm, [document.title, document.name, document.summary, document.extracted_text]) }));
+            }
+
+            if (!filters?.type || filters.type.includes('campaign') || filters.type.includes('all')) {
+                const [campaignResult, sequenceResult] = await Promise.all([
+                    supabase.from('email_campaigns').select('id, name, subject, status').eq('tenant_id', tenantId).or(`name.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%`).limit(20),
+                    supabase.from('outreach_sequences').select('id, name, status, timezone').eq('tenant_id', tenantId).ilike('name', `%${searchTerm}%`).limit(20),
+                ]);
+                (campaignResult.data || []).forEach((campaign: any) => results.push({ type: 'campaign', id: campaign.id, title: campaign.name, subtitle: campaign.subject || campaign.status, description: `Campaign · ${campaign.status}`, link: `/dashboard/outreach?campaignId=${campaign.id}`, metadata: { status: campaign.status }, relevance: this.calculateRelevance(searchTerm, [campaign.name, campaign.subject]) }));
+                (sequenceResult.data || []).forEach((sequence: any) => results.push({ type: 'campaign', id: sequence.id, title: sequence.name, subtitle: `${sequence.status} · ${sequence.timezone}`, description: 'Multi-channel outreach sequence', link: `/dashboard/outreach?sequenceId=${sequence.id}`, metadata: { status: sequence.status }, relevance: this.calculateRelevance(searchTerm, [sequence.name]) }));
+            }
+
             // Search users (admin only)
             if (userRole === 'admin' && (!filters?.type || filters.type.includes('user') || filters.type.includes('all'))) {
                 const { data: users } = await supabase
                     .from('profiles')
                     .select('*')
+                    .eq('tenant_id', tenantId)
                     .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
                     .limit(20);
 
@@ -337,4 +360,3 @@ export const searchService = {
         }
     },
 };
-

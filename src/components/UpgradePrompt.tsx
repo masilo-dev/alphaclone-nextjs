@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Zap, Check, TrendingUp } from 'lucide-react';
 import { subscriptionService, TIER_PRICING } from '../services/subscriptionService';
 import { useAuth } from '../contexts/AuthContext';
+import { useTenant } from '../contexts/TenantContext';
 
 export interface UpgradePromptProps {
     currentTier: string;
@@ -16,29 +17,27 @@ export interface UpgradePromptProps {
 
 const TIER_FEATURES = {
     starter: [
-        '10 users',
-        '25 projects',
-        '5GB storage',
-        'Email support',
-        'Basic analytics',
+        '5 Multi-tenant Users',
+        'Core CRM Pipeline',
+        '5GB Secure Storage',
+        'Standard Project MGMT',
+        'Basic Analytics',
     ],
     pro: [
-        '50 users',
-        '100 projects',
-        '25GB storage',
-        'Priority support',
-        'Advanced analytics',
-        'AI features',
-        'White-label',
+        '25 Multi-tenant Users',
+        'AI Sales Automation',
+        '25GB Secure Storage',
+        'Contract Logic',
+        'Advanced Analytics',
+        'Priority Support',
     ],
     enterprise: [
-        'Unlimited users',
-        'Unlimited projects',
-        'Unlimited storage',
-        '24/7 phone support',
-        'Custom integrations',
-        'Dedicated account manager',
-        'SLA guarantee',
+        'Unlimited Users',
+        'Perimeter Guard',
+        'Custom Branding',
+        'SIEM Monitoring',
+        'Dedicated Support',
+        'Unlimited Storage',
     ],
 };
 
@@ -59,19 +58,13 @@ export function UpgradePrompt({
     onClose,
     onUpgrade,
 }: UpgradePromptProps) {
-    const { user, tenant } = useAuth();
+    const { user } = useAuth();
+    const { currentTenant: tenant } = useTenant();
     const [promptId, setPromptId] = useState<string | null>(null);
     const [isVisible, setIsVisible] = useState(true);
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
-    useEffect(() => {
-        // Track that prompt was shown
-        if (user && tenant) {
-            trackPromptShown();
-        }
-    }, []);
-
-    async function trackPromptShown() {
+    const trackPromptShown = useCallback(async () => {
         const result = await subscriptionService.trackUpgradePrompt(
             tenant!.id,
             user!.id,
@@ -87,7 +80,14 @@ export function UpgradePrompt({
         if (result.success && result.promptId) {
             setPromptId(result.promptId);
         }
-    }
+    }, [tenant, user, promptType, triggerFeature, currentTier, suggestedTier]);
+
+    useEffect(() => {
+        // Track that prompt was shown
+        if (user && tenant) {
+            trackPromptShown();
+        }
+    }, [user, tenant, trackPromptShown]);
 
     async function handleUpgradeClick() {
         if (promptId) {
@@ -114,7 +114,7 @@ export function UpgradePrompt({
     const pricing = subscriptionService.getPricing(suggestedTier, billingCycle);
     const savings = subscriptionService.calculateAnnualSavings(suggestedTier);
     const features = TIER_FEATURES[suggestedTier as keyof typeof TIER_FEATURES] || [];
-    const message = FEATURE_MESSAGES[triggerFeature as keyof typeof FEATURE_MESSAGES] || 'Upgrade to unlock more';
+    const message = FEATURE_MESSAGES[triggerFeature as keyof typeof FEATURE_MESSAGES] || 'You have reached this plan limit';
 
     // Banner style
     if (promptType === 'banner') {
@@ -125,7 +125,7 @@ export function UpgradePrompt({
                         <div className="flex items-center flex-1">
                             <Zap className="h-5 w-5 mr-2" />
                             <p className="font-medium">
-                                {message} • <span className="font-bold">Upgrade to {suggestedTier}</span> and get 20% off annual plans!
+                                {message} • <span className="font-bold">Upgrade to {suggestedTier}</span> for more workspace capacity.
                             </p>
                         </div>
                         <div className="flex items-center space-x-3 mt-2 sm:mt-0">
@@ -164,7 +164,7 @@ export function UpgradePrompt({
                         <span className="font-semibold">{message}</span>
                     </div>
                     <p className="text-sm text-gray-600">
-                        Upgrade to <strong>{suggestedTier}</strong> for more capacity and features.
+                        Upgrade to <strong>{suggestedTier}</strong> for more seats, storage, requests, or contract capacity.
                     </p>
                 </div>
                 <button
@@ -191,9 +191,9 @@ export function UpgradePrompt({
                     </button>
                     <div className="flex items-center mb-2">
                         <Zap className="h-8 w-8 mr-3" />
-                        <h2 className="text-2xl font-bold">Unlock More Power</h2>
+                        <h2 className="text-2xl font-bold">Add capacity for this workflow</h2>
                     </div>
-                    <p className="text-blue-100">{message}. Upgrade to keep growing!</p>
+                    <p className="text-blue-100">{message}. Upgrade if you need more seats, storage, AI requests, or contract capacity.</p>
                 </div>
 
                 {/* Content */}
@@ -202,21 +202,19 @@ export function UpgradePrompt({
                     <div className="flex items-center justify-center mb-6 bg-gray-100 rounded-lg p-1">
                         <button
                             onClick={() => setBillingCycle('monthly')}
-                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                                billingCycle === 'monthly'
-                                    ? 'bg-white text-blue-600 shadow'
-                                    : 'text-gray-600 hover:text-gray-900'
-                            }`}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${billingCycle === 'monthly'
+                                ? 'bg-white text-blue-600 shadow'
+                                : 'text-gray-600 hover:text-gray-900'
+                                }`}
                         >
                             Monthly
                         </button>
                         <button
                             onClick={() => setBillingCycle('annual')}
-                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                                billingCycle === 'annual'
-                                    ? 'bg-white text-blue-600 shadow'
-                                    : 'text-gray-600 hover:text-gray-900'
-                            }`}
+                            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${billingCycle === 'annual'
+                                ? 'bg-white text-blue-600 shadow'
+                                : 'text-gray-600 hover:text-gray-900'
+                                }`}
                         >
                             Annual
                             <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">

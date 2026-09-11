@@ -1,49 +1,128 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
+import { Inter, Space_Grotesk } from "next/font/google";
+
 import "./globals.css";
+import "@/styles/alphaclone-os-v3.css";
+import "@/styles/alphaclone-os-v3-pwa.css";
+import "@/styles/marketing-system.css";
+import "@/styles/accessibility.css";
+import "@/styles/apple-fluid-system.css";
 import { Providers } from "@/components/Providers";
+
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter-next" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], display: "swap", variable: "--font-space-grotesk-next" });
+
 import { PWAProvider } from "@/contexts/PWAContext";
+import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
 import ShellSwitcher from "@/components/shells/ShellSwitcher";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import CookieBanner from "@/components/legal/CookieBanner";
+import PwaInstallPrompt from "@/components/common/PwaInstallPrompt";
+import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics";
+import NativeInteractions from "@/components/common/NativeInteractions";
+import PageTransition from "@/components/PageTransition";
+import { WebVitals } from "@/components/common/WebVitals";
+import { SITE_URL } from "@/lib/siteUrl";
+import { buildOrganizationEntitySchema, buildSiteNavigationSchema } from "@/lib/seo/siteEntity";
+import { buildPublicPlanOffers, PUBLIC_PRICING_PLANS } from "@/config/pricingPlans";
+import { EXECUTION_LAYER } from "@/config/marketingPositioning";
 
 export const metadata: Metadata = {
-  title: "AlphaClone Business OS",
-  description: "The All-In-One Business Operating System",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "AlphaClone Systems", template: "%s · AlphaClone" },
+  description: EXECUTION_LAYER.explanatoryLine,
+  keywords: ["AI business operating system", "AlphaClone", "AlphaClone Systems", "AI CRM for founders", "small business CRM automated", "lead finding software AI", "small business AI automation", "ai crm claude", "manus and automation", "do your business while in claude", "AI agents for business operations", "autonomous business management", "AI business assistant", "HubSpot alternative small business", "QuickBooks alternative freelancers", "Salesforce alternative for startups", "all in one business platform", "replace business software stack", "AI invoicing and billing software", "automated contract generation AI", "AI social media scheduler", "integrated video meetings for business", "business management software", "founder business software", "solopreneur operating system", "SaaS for service businesses", "agency management software AI"],
+  authors: [{ name: "AlphaClone Systems", url: SITE_URL }],
+  creator: "AlphaClone Systems",
+  publisher: "AlphaClone Systems",
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  alternates: { canonical: SITE_URL },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION } : {},
+  },
+  openGraph: { title: "AlphaClone Systems", description: EXECUTION_LAYER.explanatoryLine, type: "website", url: SITE_URL, siteName: "AlphaClone Systems", locale: "en_US", images: [{ url: "/opengraph-image" }] },
+  twitter: { card: "summary_large_image", title: "AlphaClone Systems", description: EXECUTION_LAYER.explanatoryLine, creator: "@AlphaCloneSys", images: ["/twitter-image"] },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "AlphaClone", statusBarStyle: "black-translucent" },
+  icons: {
+    icon: [{ url: "/favicon.ico", sizes: "any" }, { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" }, { url: "/email-assets/alphaclone-email-logo.png", sizes: "256x256", type: "image/png" }],
+    apple: [{ url: "/favicon-192x192.png", sizes: "192x192" }],
+    shortcut: ["/favicon.ico"],
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#212446" },
+    { media: "(prefers-color-scheme: dark)", color: "#15182A" },
+  ],
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "AlphaClone Systems",
+  alternateName: "AlphaClone AI Business OS",
+  disambiguatingDescription: "AlphaClone Systems LLC is an independent software development company registered in Wyoming, USA (Filing ID: 2026-002002581). It provides an AI-powered business operating system for solo founders, consultants, and service agencies. AlphaClone Systems is not affiliated with, and should not be confused with, any financial fund, ETF, or investment index that uses the word AlphaClone.",
+  operatingSystem: "All",
+  applicationCategory: "BusinessApplication",
+  applicationSubCategory: "CRM, Invoicing, Project Management, AI Automation",
+  url: SITE_URL,
+  logo: `${SITE_URL}/logo.png`,
+  description: "AlphaClone Systems consolidates CRM, client management, automated billing, project tracking, contract lifecycle, and social media distribution into one AI-assisted workspace. Free plan available; paid plans from $45/month.",
+  featureList: ["Unified Client Journey Records", "AI-Driven Lead Tracking and CRM Workflows", "Automated Multi-Tenant Billing and Invoicing", "Contract Drafting, Versioning, and E-Signature", "Native Social Media Scheduling and Publishing", "Regional Tax Compliance Formatting (SARS, ZIMRA, ZRA)", "Built-in HD Video Conferencing", "Project and Task Management with Milestone Tracking", "Bonnie AI Operational Assistant", "MCP-Compatible AI Agent Tool Integration"],
+  offers: { "@type": "AggregateOffer", lowPrice: "0.00", highPrice: "80.00", priceCurrency: "USD", offerCount: PUBLIC_PRICING_PLANS.length, offers: buildPublicPlanOffers(SITE_URL) },
+  publisher: { "@type": "Organization", name: "AlphaClone Systems", legalName: "AlphaClone Systems, LLC", url: SITE_URL, logo: `${SITE_URL}/logo.png`, sameAs: ["https://www.linkedin.com/company/alphaclone-systems", "https://www.facebook.com/100089899181752", "https://twitter.com/AlphaCloneSys"] },
+};
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "AlphaClone Systems",
+  url: SITE_URL,
+  description: "Unified business operating platform for service businesses.",
+  potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/search?q={search_term_string}`, "query-input": "required name=search_term_string" },
+};
+
+const navigationSchema = buildSiteNavigationSchema();
+const organizationEntitySchema = buildOrganizationEntitySchema();
+function serializeJsonLd(value: object): string { return JSON.stringify(value).replace(/</g, "\\u003c"); }
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+      <head>
+        <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
+        <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />
+        <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap" />
+        <Script src="/lockdown-install.js?v=5" strategy="afterInteractive" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512x512.png" />
+        <link rel="apple-touch-startup-image" href="/logo.png" />
+        <link rel="mask-icon" href="/favicon-192x192.png" color="#212446" />
+      </head>
+      <body className="antialiased text-base subpixel-antialiased font-sans touch-action-manipulation overscroll-behavior-none" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none', touchAction: 'manipulation' }}>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(navigationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationEntitySchema) }} />
+        <WebVitals />
         <Providers>
           <PWAProvider>
-            <ShellSwitcher>
-              {children}
-            </ShellSwitcher>
+            <PwaPushBootstrap />
+            <NativeInteractions />
+            <ShellSwitcher><PageTransition>{children}</PageTransition></ShellSwitcher>
+            <PwaInstallPrompt />
           </PWAProvider>
+          <CookieBanner />
         </Providers>
+        <ConsentAwareAnalytics />
       </body>
     </html>
   );

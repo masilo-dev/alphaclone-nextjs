@@ -52,14 +52,13 @@ const SecurityDashboard: React.FC = () => {
         setResult(null);
 
         try {
-            const scanResult = await securityScannerService.scanWebsite(url);
+            if (!tenantId) throw new Error('Select a workspace before scanning');
+            const scanResult = await securityScannerService.scanWebsite(url, tenantId);
             setResult(scanResult);
-            if (tenantId) {
-                await securityScannerService.saveScanResult(tenantId, scanResult);
-                await loadScanHistory();
-            }
+            await loadScanHistory();
         } catch (error) {
             console.error(error);
+            toast.error(error instanceof Error ? error.message : 'Security scan failed');
         } finally {
             setIsScanning(false);
         }
@@ -186,8 +185,8 @@ const SecurityDashboard: React.FC = () => {
                     {/* Scan History */}
                     <Card className="lg:col-span-3 p-6 border-slate-700 bg-slate-800/50">
                         <h3 className="text-xl font-bold text-white mb-4">Scan History</h3>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
+                        <div className="overflow-x-auto min-w-0">
+                            <table className="w-full min-w-[560px] text-left">
                                 <thead>
                                     <tr className="text-slate-500 text-sm border-b border-slate-700">
                                         <th className="pb-3 pr-4">URL</th>

@@ -95,9 +95,9 @@ export const predictiveAnalyticsService = {
         try {
             // Get historical revenue data
             const { data: invoices } = await supabase
-                .from('invoices')
-                .select('amount, created_at')
-                .eq('status', 'Paid')
+                .from('business_invoices')
+                .select('total, created_at')
+                .ilike('status', 'paid')
                 .order('created_at', { ascending: false })
                 .limit(12);
 
@@ -112,7 +112,7 @@ export const predictiveAnalyticsService = {
             const monthlyRevenue: Record<string, number> = {};
             invoices.forEach((inv: any) => {
                 const month = new Date(inv.created_at).toISOString().substring(0, 7); // YYYY-MM
-                monthlyRevenue[month] = (monthlyRevenue[month] || 0) + (inv.amount || 0);
+                monthlyRevenue[month] = (monthlyRevenue[month] || 0) + (inv.total || 0);
             });
 
             // Simple linear regression for forecasting
@@ -317,11 +317,11 @@ export const predictiveAnalyticsService = {
 
             // Get invoices for this project
             const { data: invoices } = await supabase
-                .from('invoices')
-                .select('amount, status')
+                .from('business_invoices')
+                .select('total, status')
                 .eq('project_id', projectId);
 
-            const totalSpent = (invoices || []).reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
+            const totalSpent = (invoices || []).reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
             const budget = project.budget || 0;
             const variance = budget > 0 ? ((totalSpent - budget) / budget) * 100 : 0;
 

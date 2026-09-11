@@ -1,26 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import { Plus, Edit, Trash2, Eye, EyeOff, Save, X } from 'lucide-react';
-
-interface Article {
-    id: string;
-    title: string;
-    slug: string;
-    meta_description: string;
-    meta_keywords: string[];
-    content: string;
-    category: string;
-    tags: string[];
-    published: boolean;
-    views: number;
-    created_at: string;
-}
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Save, X, Loader2 } from 'lucide-react';
+import { TabSkeleton } from '../ui/TabSkeleton';
+import { articleService, Article } from '../../services/articleService';
+import toast from 'react-hot-toast';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+    rowActionsClass,
+} from '../ui/ResponsiveTable';
 
 const ArticleEditor: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [editing, setEditing] = useState<Article | null>(null);
     const [isNew, setIsNew] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     const emptyArticle: Partial<Article> = {
         title: '',
@@ -33,79 +28,67 @@ const ArticleEditor: React.FC = () => {
         published: false
     };
 
-    useEffect(() => {
-        loadArticles();
-    }, []);
-
-    const loadArticles = async () => {
-        const { data, error } = await supabase
-            .from('seo_articles')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (!error && data) {
+    const loadArticles = useCallback(async () => {
+        setLoading(true);
+        const { articles: data, error } = await articleService.getArticles();
+        if (error) {
+            toast.error(`Failed to load articles: ${error}`);
+        } else {
             setArticles(data);
         }
         setLoading(false);
-    };
+    }, []);
 
-    const handleSave = async () => {
+    useEffect(() => {
+        loadArticles();
+    }, [loadArticles]);
+
+    const handleSave = useCallback(async () => {
         if (!editing) return;
-
-        const articleData = {
-            ...editing,
-            slug: editing.slug || editing.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-        };
-
-        if (isNew) {
-            const { error } = await supabase
-                .from('seo_articles')
-                .insert([articleData]);
-
-            if (!error) {
-                loadArticles();
-                setEditing(null);
-                setIsNew(false);
-            }
-        } else {
-            const { error } = await supabase
-                .from('seo_articles')
-                .update(articleData)
-                .eq('id', editing.id);
-
-            if (!error) {
-                loadArticles();
-                setEditing(null);
-            }
+        if (!editing.title.trim()) {
+            toast.error('Title is required');
+            return;
         }
-    };
 
-    const handleDelete = async (id: string) => {
+        setIsSaving(true);
+        const { error } = await articleService.saveArticle(editing, isNew);
+
+        if (error) {
+            toast.error(`Error saving: ${error}`);
+        } else {
+            toast.success(isNew ? 'Article created!' : 'Article updated!');
+            loadArticles();
+            setEditing(null);
+            setIsNew(false);
+        }
+        setIsSaving(false);
+    }, [editing, isNew, loadArticles]);
+
+    const handleDelete = useCallback(async (id: string) => {
         if (!confirm('Are you sure you want to delete this article?')) return;
 
-        const { error } = await supabase
-            .from('seo_articles')
-            .delete()
-            .eq('id', id);
+        const { error } = await articleService.deleteArticle(id);
 
-        if (!error) {
+        if (error) {
+            toast.error(`Error deleting: ${error}`);
+        } else {
+            toast.success('Article deleted');
             loadArticles();
         }
-    };
+    }, [loadArticles]);
 
-    const togglePublished = async (article: Article) => {
-        const { error } = await supabase
-            .from('seo_articles')
-            .update({ published: !article.published })
-            .eq('id', article.id);
+    const togglePublished = useCallback(async (article: Article) => {
+        const { error } = await articleService.togglePublished(article.id, !article.published);
 
-        if (!error) {
+        if (error) {
+            toast.error(`Error toggling status: ${error}`);
+        } else {
             loadArticles();
         }
-    };
+    }, [loadArticles]);
 
     if (loading) {
-        return <div className="text-white">Loading...</div>;
+        return <TabSkeleton rows={4} showStats={false} />;
     }
 
     if (editing) {
@@ -118,10 +101,20 @@ const ArticleEditor: React.FC = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={handleSave}
-                            className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600"
+                            disabled={isSaving || !editing.title.trim()}
+                            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Save className="w-4 h-4" />
-                            Save
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4" />
+                                    Save
+                                </>
+                            )}
                         </button>
                         <button
                             onClick={() => {
@@ -288,7 +281,7 @@ const ArticleEditor: React.FC = () => {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-slate-800 rounded-lg p-4">
                     <div className="text-2xl font-bold text-white">{articles.length}</div>
                     <div className="text-sm text-slate-400">Total Articles</div>
@@ -308,8 +301,35 @@ const ArticleEditor: React.FC = () => {
             </div>
 
             {/* Articles List */}
-            <div className="bg-slate-800 rounded-lg overflow-hidden">
-                <table className="w-full">
+            <ResponsiveTableMobile>
+                {articles.map((article) => (
+                    <MobileDataCard key={article.id} className="border-slate-700 bg-slate-800">
+                        <div className="min-w-0">
+                            <p className="text-white font-medium truncate">{article.title}</p>
+                            <p className="text-xs text-slate-400 truncate">/blog/{article.slug}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                            <span className="px-2 py-1 bg-slate-700 text-slate-300 rounded">{article.category}</span>
+                            <span className="text-slate-400">{article.views || 0} views</span>
+                            {article.published ? (
+                                <span className="px-2 py-1 bg-teal-500/20 text-teal-400 rounded">Published</span>
+                            ) : (
+                                <span className="px-2 py-1 bg-slate-700 text-slate-400 rounded">Draft</span>
+                            )}
+                        </div>
+                        <div className={`${rowActionsClass} justify-end`}>
+                            <button onClick={() => togglePublished(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-teal-400 rounded-lg border border-slate-600 text-xs">
+                                {article.published ? 'Unpublish' : 'Publish'}
+                            </button>
+                            <button onClick={() => setEditing(article)} className="min-h-11 px-3 py-2 text-slate-400 hover:text-violet-400 rounded-lg border border-slate-600 text-xs">Edit</button>
+                            <button onClick={() => handleDelete(article.id)} className="min-h-11 px-3 py-2 text-red-400 rounded-lg border border-red-500/30 text-xs">Delete</button>
+                        </div>
+                    </MobileDataCard>
+                ))}
+            </ResponsiveTableMobile>
+
+            <ResponsiveTableDesktop className="bg-slate-800 rounded-lg min-w-0">
+                <table className="w-full min-w-[640px]">
                     <thead className="bg-slate-700">
                         <tr>
                             <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Title</th>
@@ -372,7 +392,7 @@ const ArticleEditor: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
-            </div>
+            </ResponsiveTableDesktop>
         </div>
     );
 };
