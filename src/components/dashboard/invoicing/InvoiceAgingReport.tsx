@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
 import { Clock, DollarSign, FileText } from 'lucide-react';
 import { WrapChart } from '@/lib/chartWrapper';
+import { CHART_COLORS, SEMANTIC } from '@/constants/brand';
 
 type AgingBucket = {
   range: string;
@@ -16,10 +17,10 @@ type AgingBucket = {
 };
 
 const BUCKET_CONFIG: AgingBucket[] = [
-  { range: '0-30', label: '0–30 Days', count: 0, totalAmount: 0, color: '#3b82f6' },
-  { range: '31-60', label: '31–60 Days', count: 0, totalAmount: 0, color: '#f59e0b' },
-  { range: '61-90', label: '61–90 Days', count: 0, totalAmount: 0, color: '#f97316' },
-  { range: '90+', label: '90+ Days (Critical)', count: 0, totalAmount: 0, color: '#ef4444' },
+  { range: '0-30', label: '0–30 Days', count: 0, totalAmount: 0, color: CHART_COLORS.invoice.sent },
+  { range: '31-60', label: '31–60 Days', count: 0, totalAmount: 0, color: SEMANTIC.warning[500] },
+  { range: '61-90', label: '61–90 Days', count: 0, totalAmount: 0, color: '#DE6A28' },
+  { range: '90+', label: '90+ Days (Critical)', count: 0, totalAmount: 0, color: CHART_COLORS.invoice.overdue },
 ];
 
 const OPEN_STATUSES = ['draft', 'sent', 'viewed', 'partially_paid', 'overdue', 'disputed'];
@@ -89,54 +90,54 @@ export function InvoiceAgingReport() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <section className="space-y-6" aria-labelledby="invoice-aging-heading">
       <div>
-        <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
-          <Clock className="text-amber-400" size={20} /> Invoice Aging Report
+        <h3 id="invoice-aging-heading" className="flex items-center gap-2 text-[18px] font-semibold leading-[26px] tracking-tight text-[var(--ws-text-primary)]">
+          <Clock className="text-[var(--warning)]" size={20} aria-hidden="true" /> Invoice Aging Report
         </h3>
-        <p className="text-xs text-slate-400 mt-0.5">Accounts receivable breakdown by age of unpaid balance</p>
+        <p className="mt-0.5 text-xs text-[var(--ws-text-secondary)]">Accounts receivable breakdown by age of unpaid balance</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="ac-workspace-panel rounded-xl p-4">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-            <FileText size={13} className="text-slate-500" /> Outstanding Invoices
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="ac-workspace-panel p-4">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)]">
+            <FileText size={13} aria-hidden="true" /> Outstanding Invoices
           </p>
-          <p className="text-2xl font-black text-white mt-2">{invoiceCount}</p>
-          <p className="text-[11px] text-slate-500 mt-1">Pending payment</p>
+          <p className="mt-2 text-[28px] font-bold leading-[34px] text-[var(--ws-text-primary)]">{invoiceCount}</p>
+          <p className="mt-1 text-[11px] text-[var(--ws-text-tertiary)]">Pending payment</p>
         </div>
-        <div className="ac-workspace-panel rounded-xl p-4 border border-amber-500/20">
-          <p className="text-xs font-black uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
-            <DollarSign size={13} /> Total Receivables
+        <div className="ac-workspace-panel border-[color-mix(in_srgb,var(--warning)_28%,var(--ws-border))] p-4">
+          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--warning)]">
+            <DollarSign size={13} aria-hidden="true" /> Total Receivables
           </p>
-          <p className="text-2xl font-black text-amber-300 mt-2">${totalOverdue.toLocaleString()}</p>
-          <p className="text-[11px] text-slate-500 mt-1">Uncollected revenue</p>
+          <p className="mt-2 text-[28px] font-bold leading-[34px] text-[var(--warning)]">${totalOverdue.toLocaleString()}</p>
+          <p className="mt-1 text-[11px] text-[var(--ws-text-tertiary)]">Uncollected revenue</p>
         </div>
       </div>
 
       {loading ? (
-        <div className="ac-workspace-panel rounded-xl p-8 flex items-center justify-center min-h-[280px]">
-          <p className="text-slate-500 text-sm animate-pulse">Computing aging report...</p>
+        <div className="ac-workspace-panel flex min-h-[280px] items-center justify-center p-8" role="status">
+          <p className="animate-pulse text-sm text-[var(--ws-text-secondary)]">Computing aging report...</p>
         </div>
       ) : (
         <>
-          <div className="ac-workspace-panel rounded-xl p-4 sm:p-6">
-            <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Receivables by Age</p>
+          <div className="ac-workspace-panel p-4 sm:p-6">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)]">Receivables by Age</p>
             <div className="min-h-[240px]">
               <WrapChart height={240}>
                 <BarChart data={buckets} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.16)" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fill: '#8491A6', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#8491A6', fontSize: 11 }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
                   <Tooltip
                     content={({ active, payload }: any) => {
                       if (!active || !payload?.length) return null;
                       const d = payload[0].payload as AgingBucket;
                       return (
-                        <div className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-xs shadow-xl space-y-1">
-                          <p className="font-black text-white">{d.label}</p>
-                          <p className="text-slate-300">{d.count} invoice{d.count !== 1 ? 's' : ''}</p>
-                          <p className="text-amber-400 font-bold">${d.totalAmount.toLocaleString()}</p>
+                        <div className="ac-workspace-panel space-y-1 px-3 py-2 text-xs shadow-xl">
+                          <p className="font-semibold text-[var(--ws-text-primary)]">{d.label}</p>
+                          <p className="text-[var(--ws-text-secondary)]">{d.count} invoice{d.count !== 1 ? 's' : ''}</p>
+                          <p className="font-semibold text-[var(--warning)]">${d.totalAmount.toLocaleString()}</p>
                         </div>
                       );
                     }}
@@ -149,23 +150,23 @@ export function InvoiceAgingReport() {
             </div>
           </div>
 
-          <div className="ac-workspace-panel rounded-xl overflow-hidden">
-            <div className="px-5 py-3 border-b border-white/5 bg-[var(--ws-toolbar)]">
-              <p className="text-xs font-black uppercase tracking-widest text-white">Aging Buckets</p>
+          <div className="ac-workspace-panel overflow-hidden p-0">
+            <div className="border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] px-5 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-primary)]">Aging Buckets</p>
             </div>
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-[var(--ws-border)]">
               {buckets.map(b => (
-                <div key={b.range} className="px-5 py-3 flex items-center gap-4">
-                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: b.color }} />
-                  <span className="text-sm text-slate-300 flex-1">{b.label}</span>
-                  <span className="text-xs text-slate-500">{b.count} invoices</span>
-                  <span className="text-sm font-black text-amber-300 w-28 text-right">${b.totalAmount.toLocaleString()}</span>
+                <div key={b.range} className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-[var(--ws-hover)]">
+                  <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: b.color }} />
+                  <span className="flex-1 text-sm text-[var(--ws-text-secondary)]">{b.label}</span>
+                  <span className="text-xs text-[var(--ws-text-tertiary)]">{b.count} invoices</span>
+                  <span className="w-28 text-right text-sm font-semibold text-[var(--warning)]">${b.totalAmount.toLocaleString()}</span>
                 </div>
               ))}
             </div>
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }

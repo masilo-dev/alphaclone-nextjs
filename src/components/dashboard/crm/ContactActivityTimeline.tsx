@@ -21,10 +21,10 @@ interface ContactActivityTimelineProps {
 }
 
 const TYPE_CONFIG = {
-  email: { icon: Mail, color: 'text-indigo-400', bg: 'bg-indigo-500/10', label: 'Email' },
-  deal: { icon: DollarSign, color: 'text-teal-400', bg: 'bg-teal-500/10', label: 'Deal' },
-  invoice: { icon: FileText, color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Invoice' },
-  note: { icon: MessageSquare, color: 'text-slate-400', bg: 'bg-white/5', label: 'Note' },
+  email: { icon: Mail, color: 'text-[var(--ac-bonnie)]', bg: 'bg-[color-mix(in_srgb,var(--ac-bonnie)_12%,transparent)]', label: 'Email' },
+  deal: { icon: DollarSign, color: 'text-[var(--brand-teal)]', bg: 'bg-[color-mix(in_srgb,var(--brand-teal)_12%,transparent)]', label: 'Deal' },
+  invoice: { icon: FileText, color: 'text-[var(--warning)]', bg: 'bg-[color-mix(in_srgb,var(--warning)_12%,transparent)]', label: 'Invoice' },
+  note: { icon: MessageSquare, color: 'text-[var(--ws-text-secondary)]', bg: 'bg-[var(--ws-surface-secondary)]', label: 'Note' },
 };
 
 export function ContactActivityTimeline({ contactId, contactEmail, contactName, onClose }: ContactActivityTimelineProps) {
@@ -43,7 +43,6 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
     setLoading(true);
     const items: ActivityItem[] = [];
     try {
-      // Deals linked to contact
       const { data: deals } = await supabase
         .from('deals')
         .select('id, name, stage, value, created_at, updated_at')
@@ -61,7 +60,6 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
         });
       }
 
-      // Invoices linked by email
       if (contactEmail) {
         const { data: clientRow } = await supabase
           .from('business_clients')
@@ -91,7 +89,6 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
           });
         }
 
-        // Emails sent (lead_audit_logs or communications)
         const { data: logs } = await supabase
           .from('lead_audit_logs')
           .select('id, action, details, created_at')
@@ -111,7 +108,6 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
         }
       }
 
-      // Sort by date descending
       items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setActivities(items);
     } catch (err) {
@@ -122,56 +118,62 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
   }
 
   return (
-    <div className="fixed inset-y-0 right-0 z-50 flex flex-col w-full max-w-sm bg-[var(--ws-panel,#0f172a)] border-l border-white/10 shadow-2xl animate-in slide-in-from-right duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 bg-[var(--ws-toolbar,#1e293b)]">
+    <aside
+      data-sheet
+      data-side="right"
+      data-state="open"
+      aria-label={`${contactName} activity timeline`}
+      className="fixed inset-y-0 right-0 z-[1110] flex w-full max-w-sm flex-col border-l border-[var(--ws-border)] bg-[color-mix(in_srgb,var(--ws-panel)_94%,transparent)] shadow-2xl"
+    >
+      <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-[color-mix(in_srgb,var(--ws-toolbar)_92%,transparent)] px-5 py-4">
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Activity Timeline</p>
-          <p className="text-sm font-bold text-white truncate mt-0.5">{contactName}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ws-text-tertiary)]">Activity Timeline</p>
+          <p className="mt-0.5 truncate text-sm font-semibold text-[var(--ws-text-primary)]">{contactName}</p>
         </div>
         <button
+          type="button"
           onClick={onClose}
-          className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+          aria-label="Close activity timeline"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--ws-radius-control,8px)] text-[var(--ws-text-secondary)] transition-colors hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
         >
-          <X size={16} />
+          <X size={16} aria-hidden="true" />
         </button>
       </div>
 
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="ios-scroll flex-1 overflow-y-auto px-4 py-4">
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="text-teal-400 animate-spin" size={28} />
+          <div className="flex items-center justify-center py-16" role="status" aria-label="Loading contact activity">
+            <Loader2 className="animate-spin text-[var(--brand-teal)]" size={28} aria-hidden="true" />
           </div>
         ) : activities.length === 0 ? (
-          <div className="text-center py-16">
-            <Clock className="text-slate-600 mx-auto mb-3" size={36} />
-            <p className="text-slate-400 font-semibold">No activity yet</p>
-            <p className="text-slate-500 text-xs mt-1">Deals, emails, and invoices linked to this contact will appear here.</p>
+          <div className="py-16 text-center">
+            <Clock className="mx-auto mb-3 text-[var(--ws-text-tertiary)]" size={36} aria-hidden="true" />
+            <p className="font-semibold text-[var(--ws-text-secondary)]">No activity yet</p>
+            <p className="mt-1 text-xs leading-5 text-[var(--ws-text-tertiary)]">Deals, emails, and invoices linked to this contact will appear here.</p>
           </div>
         ) : (
           <div className="relative">
-            <div className="absolute left-5 top-2 bottom-2 w-px bg-white/5" />
+            <div className="absolute bottom-2 left-5 top-2 w-px bg-[var(--ws-border)]" />
             <div className="space-y-4">
               {activities.map(activity => {
                 const cfg = TYPE_CONFIG[activity.type];
                 const Icon = cfg.icon;
                 return (
                   <div key={activity.id} className="relative flex items-start gap-3 pl-2">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${cfg.bg} z-10 mt-0.5`}>
-                      <Icon size={14} className={cfg.color} />
+                    <div className={`z-10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--ws-radius-control,8px)] ${cfg.bg}`}>
+                      <Icon size={14} className={cfg.color} aria-hidden="true" />
                     </div>
-                    <div className="flex-1 min-w-0 ac-workspace-panel rounded-xl px-3 py-2">
+                    <div className="ac-workspace-panel min-w-0 flex-1 px-3 py-2">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs font-bold text-white capitalize truncate">{activity.title}</p>
-                        <span className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.color} shrink-0`}>
+                        <p className="truncate text-xs font-semibold capitalize text-[var(--ws-text-primary)]">{activity.title}</p>
+                        <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.04em] ${cfg.bg} ${cfg.color}`}>
                           {cfg.label}
                         </span>
                       </div>
-                      {activity.detail && (
-                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">{activity.detail}</p>
-                      )}
-                      <p className="text-[10px] text-slate-600 mt-1">
+                      {activity.detail ? (
+                        <p className="mt-0.5 truncate text-[11px] text-[var(--ws-text-secondary)]">{activity.detail}</p>
+                      ) : null}
+                      <p className="mt-1 text-[10px] text-[var(--ws-text-tertiary)]">
                         {new Date(activity.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
@@ -182,6 +184,6 @@ export function ContactActivityTimeline({ contactId, contactEmail, contactName, 
           </div>
         )}
       </div>
-    </div>
+    </aside>
   );
 }

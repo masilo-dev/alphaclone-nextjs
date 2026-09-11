@@ -7,17 +7,21 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const variants: Record<NonNullable<BadgeProps['variant']>, string> = {
-  default: 'border-transparent bg-white text-slate-950',
-  secondary: 'border-transparent bg-slate-800 text-slate-200',
-  outline: 'border-white/10 bg-transparent text-slate-200',
-  destructive: 'border-transparent bg-rose-600 text-white',
+  default:
+    'border-transparent bg-[var(--ac-accent-muted)] text-[var(--ac-accent)]',
+  secondary:
+    'border-transparent bg-[var(--ws-surface-secondary,var(--surface-secondary))] text-[var(--ws-text-secondary,var(--text-secondary))]',
+  outline:
+    'border-[var(--ws-border,var(--border-default))] bg-transparent text-[var(--ws-text-secondary,var(--text-secondary))]',
+  destructive:
+    'border-transparent bg-[var(--error-600,var(--danger))] text-white',
 };
 
 export function Badge({ className = '', variant = 'default', ...props }: BadgeProps) {
   return (
     <span
       className={[
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold leading-none',
+        'inline-flex min-h-6 items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold leading-none tracking-[0.01em]',
         variants[variant],
         className,
       ].join(' ')}
