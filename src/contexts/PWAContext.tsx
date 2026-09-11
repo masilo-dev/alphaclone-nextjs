@@ -3,15 +3,29 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { isPWA } from '@/utils/pwaUtils';
 
+type AppSurface = 'browser' | 'pwa-mobile' | 'pwa-tablet' | 'pwa-desktop';
+
 interface PWAContextType {
     isPWA: boolean;
     isLoading: boolean;
+    appSurface: AppSurface;
 }
 
-const PWAContext = createContext<PWAContextType>({ isPWA: false, isLoading: true });
+const PWAContext = createContext<PWAContextType>({ isPWA: false, isLoading: true, appSurface: 'browser' });
+
+function getAppSurface(pwaMode: boolean): AppSurface {
+    if (!pwaMode || typeof window === 'undefined') return 'browser';
+    const width = window.innerWidth;
+    const coarse = window.matchMedia('(pointer: coarse)').matches;
+    if (width < 768) return 'pwa-mobile';
+    if (width < 1100 && coarse) return 'pwa-tablet';
+    return 'pwa-desktop';
+}
 
 export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
-    const [isPwaMode, setIsPwaMode] = useState(typeof window !== 'undefined' ? isPWA() : false);
+    const initialPwa = typeof window !== 'undefined' ? isPWA() : false;
+    const [isPwaMode, setIsPwaMode] = useState(initialPwa);
+    const [appSurface, setAppSurface] = useState<AppSurface>(getAppSurface(initialPwa));
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
@@ -19,9 +33,7 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
             const key = 'alphaclone_sw_unregistered';
             if (!sessionStorage.getItem(key)) {
                 void navigator.serviceWorker?.getRegistrations?.().then((regs) => {
-                    if (regs && regs.length > 0) {
-                        regs.forEach((r) => void r.unregister());
-                    }
+                    if (regs && regs.length > 0) regs.forEach((r) => void r.unregister());
                     sessionStorage.setItem(key, 'true');
                 });
             }
@@ -29,40 +41,51 @@ export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     useEffect(() => {
-        // Check immediately on mount
-        const checkPWA = () => {
+        const syncEnvironment = () => {
             const pwaStatus = isPWA();
-            if (process.env.NODE_ENV === 'development') {
-                console.log('[PWAContext] PWA check complete:', pwaStatus);
-            }
             setIsPwaMode(pwaStatus);
+            setAppSurface(getAppSurface(pwaStatus));
             setIsLoading(false);
         };
 
-        checkPWA();
+        syncEnvironment();
+        const standaloneQuery = window.matchMedia('(display-mode: standalone)');
+        const overlayQuery = window.matchMedia('(display-mode: window-controls-overlay)');
+        const onChange = () => syncEnvironment();
 
-        // Optional: Listen for changes if display mode changes dynamically (rare but good for dev)
-        const mediaQuery = window.matchMedia('(display-mode: standalone)');
-        const handleChange = (e: MediaQueryListEvent) => {
-            // recheck everything effectively
-            setIsPwaMode(e.matches || isPWA());
+        standaloneQuery.addEventListener?.('change', onChange);
+        overlayQuery.addEventListener?.('change', onChange);
+        window.addEventListener('resize', onChange, { passive: true });
+
+        return () => {
+            standaloneQuery.removeEventListener?.('change', onChange);
+            overlayQuery.removeEventListener?.('change', onChange);
+            window.removeEventListener('resize', onChange);
         };
-
-        // safe addEventListener check for older browsers not strictly needed for modern PWA but good practice
-        if (mediaQuery.addEventListener) {
-            mediaQuery.addEventListener('change', handleChange);
-            return () => mediaQuery.removeEventListener('change', handleChange);
-        }
     }, []);
 
     useEffect(() => {
         if (typeof document === 'undefined') return;
-        document.documentElement.classList.toggle('pwa-standalone', isPwaMode);
-        return () => document.documentElement.classList.remove('pwa-standalone');
-    }, [isPwaMode]);
+        const root = document.documentElement;
+        const classes = ['pwa-standalone', 'ac-pwa-mobile', 'ac-pwa-tablet', 'ac-pwa-desktop'];
+        classes.forEach((name) => root.classList.remove(name));
+        root.dataset.appSurface = appSurface;
+
+        if (isPwaMode) {
+            root.classList.add('pwa-standalone');
+            if (appSurface === 'pwa-mobile') root.classList.add('ac-pwa-mobile');
+            if (appSurface === 'pwa-tablet') root.classList.add('ac-pwa-tablet');
+            if (appSurface === 'pwa-desktop') root.classList.add('ac-pwa-desktop');
+        }
+
+        return () => {
+            classes.forEach((name) => root.classList.remove(name));
+            delete root.dataset.appSurface;
+        };
+    }, [appSurface, isPwaMode]);
 
     return (
-        <PWAContext.Provider value={{ isPWA: isPwaMode, isLoading }}>
+        <PWAContext.Provider value={{ isPWA: isPwaMode, isLoading, appSurface }}>
             {children}
         </PWAContext.Provider>
     );
