@@ -243,45 +243,21 @@ export async function evaluateToolPolicy(params: {
       })
       .catch(() => {});
 
-    return { outcome: 'allow', riskClass, reason: 'Tier 1 Policy allows immediate execution.' };
-  }
-
-  // Tier 2: Executes immediately, pushes dashboard notification
-  if (tier === 2) {
-    // Log as executed in the approvals table for idempotency tracking
-    await admin
-      .from('autonomous_runner_approvals')
-      .insert({
-        tenant_id: tenantId,
-        action_key: `${source}:${toolName}`,
-        risk_level: 'low',
-        confidence_score: 100,
-        status: 'executed',
-        reason: `Tier 2 Auto-executed: ${toolName}.`,
-        payload: {
-          source,
-          tool_name: toolName,
-          args,
-          user_id: userId,
-          idempotency_hash: idempotencyHash,
-          tier,
-        },
-      })
-      .catch(() => {});
-
-    try {
-      if (userId) {
-        await notificationService.sendNotification({
-          userId,
-          type: 'system',
-          title: `Autonomous Action: ${toolName}`,
-          message: `Executed autonomously under Tier 2. Action: ${toolName}. Purpose: ${instruction || 'routine operational task'}.`,
-          priority: 'low',
-          metadata: { toolName, args },
-        });
+  if (agentMode === 'autonomous' && riskClass !== 'read') {
+    const evaluation = evaluateBusinessAIState(aiState, {
+      requires_external_action: riskClass === 'send' || riskClass === 'bulk',
+      requires_financial_action: riskClass === 'financial',
+      requires_customer_facing_action: riskClass === 'send',
+      task_category: source,
+    });
+    if (
+      evaluation.recommended_mode !== 'autonomous' &&
+      (riskClass === 'send' || riskClass === 'bulk' || riskClass === 'financial')
+    ) {
+      if (process.env.MCP_AUTO_EXECUTE !== 'true') {
+        needsApproval = true;
+        readinessReason = `Readiness gate: workspace recommends "${evaluation.recommended_mode}" (score ${evaluation.readiness_score}). ${evaluation.reasons[0] || 'Improve reliability before autonomous execution.'}`;
       }
-    } catch (err) {
-      console.warn('[ToolPolicyGate] Notification delivery skipped:', err);
     }
     return { outcome: 'allow', riskClass, reason: 'Tier 2 Policy allows execution with active notification.' };
   }

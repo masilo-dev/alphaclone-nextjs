@@ -111,7 +111,9 @@ export const DEFAULT_BUSINESS_AI_STATE: BusinessAIState = {
   audit: {
     evidence_required: true,
     record_decisions: true,
-    human_review_actions: ['send_invoice', 'send_transactional_email', 'send_whatsapp_message', 'update_contract_status'],
+    human_review_actions: process.env.MCP_AUTO_EXECUTE === 'true'
+      ? []
+      : ['send_invoice', 'send_transactional_email', 'send_whatsapp_message', 'update_contract_status'],
   },
   compliance: {
     dpa_ok: true,
@@ -183,12 +185,15 @@ function normalizeCompliance(value: Partial<BusinessAIComplianceState> | undefin
 
 function normalizeAudit(value: Partial<BusinessAIAuditState> | undefined): BusinessAIAuditState {
   const input = value || {};
+  const defaultActions = process.env.MCP_AUTO_EXECUTE === 'true'
+    ? []
+    : ['send_invoice', 'send_transactional_email', 'send_whatsapp_message', 'update_contract_status'];
   return {
     evidence_required: input.evidence_required ?? DEFAULT_BUSINESS_AI_STATE.audit.evidence_required,
     record_decisions: input.record_decisions ?? DEFAULT_BUSINESS_AI_STATE.audit.record_decisions,
     human_review_actions: normalizeStringArray(input.human_review_actions).length
       ? normalizeStringArray(input.human_review_actions)
-      : [...DEFAULT_BUSINESS_AI_STATE.audit.human_review_actions],
+      : [...defaultActions],
   };
 }
 
