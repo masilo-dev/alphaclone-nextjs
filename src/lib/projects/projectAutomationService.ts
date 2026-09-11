@@ -33,6 +33,66 @@ async function loadAmountPaid(supabase: SupabaseClient, tenantId: string, contra
   return (data || []).reduce((sum: number, row: any) => sum + Number(row.amount_paid || 0), 0);
 }
 
+async function resolveContractIdFromBusinessEvent(
+  supabase: SupabaseClient,
+  tenantId: string,
+  payload: Record<string, any>,
+): Promise<string | null> {
+  const direct = String(payload.contractId || payload.contract_id || '');
+  if (direct) return direct;
+
+  const invoiceId = String(payload.invoiceId || payload.invoice_id || payload?.payment?.invoiceId || '');
+  if (!invoiceId) return null;
+
+  const { data: invoice, error } = await supabase
+    .from('business_invoices')
+    .select('contract_id, metadata')
+    .eq('tenant_id', tenantId)
+    .eq('id', invoiceId)
+    .maybeSingle();
+  if (error) throw error;
+  return invoice?.contract_id || (invoice?.metadata as any)?.contract_id || null;
+}
+
+/**
+ * Adapter from AlphaClone's canonical business-event stream into project automation.
+ * The event itself remains the durable audit source; this adapter only evaluates
+ * whether an already-recorded business fact makes a project eligible to start.
+ */
+export async function handleProjectAutomationBusinessEvent(input: {
+  tenantId: string;
+  eventType: string;
+  payload: Record<string, any>;
+  eventId?: string | null;
+}): Promise<ProjectAutomationEventResult | null> {
+  const normalized = String(input.eventType || '').toLowerCase();
+  const isContractSigned = normalized === 'contract.signed' || normalized === 'contract_signed';
+  const isPayment = [
+    'payment.received',
+    'payment_received',
+    'invoice.paid',
+    'invoice_paid',
+  ].includes(normalized);
+  if (!isContractSigned && !isPayment) return null;
+
+  const admin = createSupabaseAdminClient();
+  const contractId = await resolveContractIdFromBusinessEvent(admin, input.tenantId, input.payload || {});
+  if (!contractId) return null;
+
+  return runProjectAutomationEvent({
+    tenantId: input.tenantId,
+    contractId,
+    trigger: isContractSigned ? 'contract.signed' : 'payment.received',
+    actorUserId:
+      typeof input.payload?.actorUserId === 'string'
+        ? input.payload.actorUserId
+        : typeof input.payload?.userId === 'string'
+          ? input.payload.userId
+          : undefined,
+    correlationId: input.eventId || input.payload?.correlation_id || input.payload?.correlationId || undefined,
+  });
+}
+
 export async function runProjectAutomationEvent(
   input: ProjectAutomationEventInput,
 ): Promise<ProjectAutomationEventResult> {
