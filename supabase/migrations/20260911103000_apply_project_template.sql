@@ -212,21 +212,23 @@ BEGIN
   WHERE id = v_application_id;
 
   INSERT INTO public.project_activity (
-    tenant_id, project_id, activity_type, title, description, actor_user_id, metadata, created_at
+    tenant_id, project_id, actor_user_id, action, target_type, target_id,
+    new_value, source, correlation_id, created_at
   ) VALUES (
     p_tenant_id,
     p_project_id,
-    'template_applied',
-    'Project template applied',
-    v_template.name,
     p_applied_by,
+    'template_applied',
+    'project_template',
+    p_template_id,
     jsonb_build_object(
-      'template_id', p_template_id,
+      'template_name', v_template.name,
       'template_version', v_template.version,
       'application_id', v_application_id,
-      'correlation_id', p_correlation_id,
       'result', v_result
     ),
+    'project_template',
+    p_correlation_id,
     now()
   );
 
