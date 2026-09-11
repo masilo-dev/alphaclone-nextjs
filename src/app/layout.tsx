@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Inter, Space_Grotesk } from "next/font/google";
 
 import "./globals.css";
+import "@/styles/alphaclone-os-v3.css";
 import "@/styles/marketing-system.css";
 import "@/styles/accessibility.css";
 import { Providers } from "@/components/Providers";
@@ -231,34 +232,19 @@ export default function RootLayout({
           touchAction: 'manipulation',
         }}
       >
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(navigationSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationEntitySchema) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(navigationSchema) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationEntitySchema) }} />
         <WebVitals />
         <Providers>
           <PWAProvider>
             <PwaPushBootstrap />
             <NativeInteractions />
             <ShellSwitcher>
-              <PageTransition>
-                {children}
-              </PageTransition>
+              <PageTransition>{children}</PageTransition>
             </ShellSwitcher>
             <PwaInstallPrompt />
-            {/* <GlobalAlpha /> */}
           </PWAProvider>
           <CookieBanner />
         </Providers>
