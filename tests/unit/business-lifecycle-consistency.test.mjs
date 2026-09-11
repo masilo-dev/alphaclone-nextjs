@@ -29,6 +29,20 @@ describe('business lifecycle consistency', () => {
     assert.match(source, /lifecycleConsistency/);
   });
 
+  it('blocks evidence-free paid and signed status updates', () => {
+    const invoices = fs.readFileSync(new URL('../../src/lib/mcp/tools/invoicing.ts', import.meta.url), 'utf8');
+    const contracts = fs.readFileSync(new URL('../../src/lib/mcp/tools/contracts.ts', import.meta.url), 'utf8');
+    assert.match(invoices, /INVOICE_PAYMENT_EVIDENCE_REQUIRED/);
+    assert.match(contracts, /CONTRACT_SIGNATURE_EVIDENCE_REQUIRED/);
+    assert.match(contracts, /inspectContractLifecycle/);
+  });
+
+  it('returns effective quote expiry without mutating historical evidence', () => {
+    const quotes = fs.readFileSync(new URL('../../src/lib/mcp/tools/gap-tools-finance.ts', import.meta.url), 'utf8');
+    assert.match(quotes, /effective_status/);
+    assert.match(quotes, /QUOTE_EXPIRED_STATE_MISMATCH/);
+  });
+
   it('requires payment evidence before an invoice can claim paid', () => {
     assert.equal(inspectInvoiceLifecycle({ id: 'i1', status: 'paid', total: 100, amount_paid: 100 }).at(0)?.code,
       'INVOICE_PAID_WITHOUT_PAYMENT_EVIDENCE');

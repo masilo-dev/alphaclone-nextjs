@@ -212,12 +212,23 @@ registerTool('gap-finance', {
   inputSchema: z.object({ tenant_id: tid, status: z.string().optional(), limit: z.number().optional().default(20) }),
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, status: { type: 'string' }, limit: { type: 'number' } }, required: [] },
   handler: async (args) => {
+    const { inspectQuoteLifecycle } = await import('@/lib/business/lifecycleConsistency');
     const supabase = createSupabaseAdminClient();
     let q = supabase.from('quotes').select('*').eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(args.limit ?? 20);
-    if (args.status) q = q.eq('status', args.status);
+    if (args.status && args.status !== 'expired') q = q.eq('status', args.status);
     const { data, error } = await q;
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
-    return { content: [{ type: 'text', text: JSON.stringify({ quotes: data || [] }, null, 2) }] };
+    const quotes = (data || []).map((quote) => {
+      const lifecycleIssues = inspectQuoteLifecycle(quote);
+      return {
+        ...quote,
+        effective_status: lifecycleIssues.some((issue) => issue.code === 'QUOTE_EXPIRED_STATE_MISMATCH')
+          ? 'expired'
+          : quote.status,
+        lifecycle_issues: lifecycleIssues,
+      };
+    }).filter((quote) => !args.status || quote.effective_status === args.status);
+    return { content: [{ type: 'text', text: JSON.stringify({ quotes }, null, 2) }] };
   },
 });
 

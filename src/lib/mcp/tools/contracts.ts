@@ -3,6 +3,7 @@ import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { AppUrls } from '@/lib/urls';
+import { inspectContractLifecycle } from '@/lib/business/lifecycleConsistency';
 
 // 1. get_contracts
 registerTool('contracts', {
@@ -42,9 +43,12 @@ registerTool('contracts', {
     if (args.contract_id) {
       const contract = (data || [])[0];
       if (!contract) throw new Error('Contract not found');
-      return contract;
+      return { ...contract, lifecycle_issues: inspectContractLifecycle(contract) };
     }
-    return data;
+    return (data || []).map((contract) => ({
+      ...contract,
+      lifecycle_issues: inspectContractLifecycle(contract),
+    }));
   },
 });
 
@@ -137,6 +141,23 @@ registerTool('contracts', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+    const requestedStatus = String(args.status || '').toLowerCase();
+    if (['signed', 'fully_signed', 'active', 'completed'].includes(requestedStatus)) {
+      const { data: existing, error: fetchError } = await supabase
+        .from('contracts')
+        .select('id,status,lifecycle_status,signed_at,client_signed_at,admin_signed_at')
+        .eq('id', args.contract_id)
+        .eq('tenant_id', args.tenant_id)
+        .maybeSingle();
+      if (fetchError) throw fetchError;
+      if (!existing) throw new Error('CONTRACT_NOT_FOUND');
+      const candidate = { ...existing, status: requestedStatus, lifecycle_status: requestedStatus };
+      if (inspectContractLifecycle(candidate).some((issue) => issue.code === 'CONTRACT_SIGNED_WITHOUT_SIGNATURE_EVIDENCE')) {
+        throw new Error(
+          'CONTRACT_SIGNATURE_EVIDENCE_REQUIRED: complete the canonical signature workflow first',
+        );
+      }
+    }
     const { data, error } = await supabase
       .from('contracts')
       .update({

@@ -3,6 +3,7 @@ import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
 import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
+import { inspectInvoiceLifecycle } from '@/lib/business/lifecycleConsistency';
 
 // 1. get_invoices
 registerTool('invoicing', {
@@ -32,7 +33,10 @@ registerTool('invoicing', {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data;
+    return (data || []).map((invoice) => ({
+      ...invoice,
+      lifecycle_issues: inspectInvoiceLifecycle(invoice),
+    }));
   },
 });
 
@@ -70,6 +74,11 @@ registerTool('invoicing', {
     required: ['client_id', 'amount'],
   },
   handler: async (args) => {
+    if (args.status === 'paid') {
+      throw new Error(
+        'INVOICE_PAYMENT_EVIDENCE_REQUIRED: use reconcile_payment or the invoice payment endpoint',
+      );
+    }
     const supabase = createSupabaseAdminClient();
     const { insertBusinessInvoiceSchemaCompat } = await import('@/lib/mcp/schemaWriteCompat');
 
@@ -120,6 +129,11 @@ registerTool('invoicing', {
     required: ['invoice_id', 'status'],
   },
   handler: async (args) => {
+    if (args.status === 'paid') {
+      throw new Error(
+        'INVOICE_PAYMENT_EVIDENCE_REQUIRED: use reconcile_payment or the invoice payment endpoint',
+      );
+    }
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from('business_invoices')
