@@ -23,31 +23,25 @@ const SalesForecastTab = () => {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [summaryRes, pipelineRes, winRateRes] = await Promise.all([
+            const [summaryRes, pipelineRes, winRateRes, forecastsRes] = await Promise.all([
                 forecastingService.getForecastSummary(),
                 dealService.getPipelineStats(),
-                dealService.getWinRate()
+                dealService.getWinRate(),
+                forecastingService.getForecasts(),
             ]);
 
             if (summaryRes.summary) setSummary(summaryRes.summary);
             if (pipelineRes.stats) setPipelineStats(pipelineRes.stats);
             if (winRateRes.error === null) setWinRate(winRateRes.winRate);
 
-            // Generate chart data based on real pipeline distribution
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-            const currentMonthIndex = new Date().getMonth();
-
-            const synthesizedData = months.map((m, idx) => {
-                const isPast = idx < (currentMonthIndex % 6);
-                const baseValue = summaryRes.summary?.totalWeightedPipeline || 0;
-
-                return {
-                    month: m,
-                    actual: isPast ? Math.floor(baseValue * (0.5 + Math.random() * 0.5)) : 0,
-                    projected: Math.floor(baseValue * (0.8 + (idx / 10)))
-                };
-            });
-            setChartData(synthesizedData);
+            setChartData((forecastsRes.forecasts || [])
+                .slice()
+                .sort((a, b) => a.startDate.localeCompare(b.startDate))
+                .map((forecast) => ({
+                    month: forecast.forecastPeriod || new Date(forecast.startDate).toLocaleDateString(undefined, { month: 'short', year: '2-digit' }),
+                    actual: forecast.actualRevenue || 0,
+                    projected: forecast.forecastedRevenue ?? forecast.weightedPipelineValue ?? 0,
+                })));
 
         } catch (error) {
             console.error('Failed to load sales forecast:', error);
@@ -95,7 +89,7 @@ const SalesForecastTab = () => {
                     themeColor="emerald"
                     icon={DollarSign}
                     interactive={false}
-                    comparisonText="+12.5% growth"
+                    comparisonText="From saved forecasts"
                 />
                 <StandardStatCard
                     label="Revenue Target"

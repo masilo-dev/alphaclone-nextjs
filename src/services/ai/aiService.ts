@@ -1,10 +1,8 @@
 import {
     routeAIRequest,
-    getAvailableProviders,
+    streamAIRequest,
     getRecommendedModel,
     estimateCost,
-    AIRequestOptions,
-    AIResponse as RouterResponse
 } from '../aiRouter';
 
 export type AIProvider = 'openai' | 'anthropic' | 'xai' | 'auto';
@@ -33,13 +31,21 @@ export interface AIResponse {
 }
 
 class AIService {
+    private resolveRequestedModel(request: AIRequest): string {
+        if (request.model) return request.model;
+        if (request.provider === 'anthropic') return 'claude-sonnet-4-6-20260217';
+        if (request.provider === 'xai') return 'grok-4.3';
+        if (request.provider === 'openai') return 'gpt-4o';
+        return 'deepseek-chat';
+    }
+
     async complete(request: AIRequest): Promise<AIResponse> {
         const response = await routeAIRequest({
             prompt: request.prompt,
             systemPrompt: request.systemPrompt,
             maxTokens: request.maxTokens,
             temperature: request.temperature,
-            model: request.model || 'deepseek-chat'
+            model: this.resolveRequestedModel(request)
         });
 
 
@@ -53,9 +59,27 @@ class AIService {
     }
 
     async *stream(request: AIRequest): AsyncGenerator<string> {
-        // Fallback to complete for now if stream is not implemented in router
-        const response = await this.complete(request);
-        yield response.content;
+        const response = await streamAIRequest({
+            prompt: request.prompt,
+            systemPrompt: request.systemPrompt,
+            maxTokens: request.maxTokens,
+            temperature: request.temperature,
+            model: this.resolveRequestedModel(request),
+        });
+        const reader = response.stream.getReader();
+        const decoder = new TextDecoder();
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                if (chunk) yield chunk;
+            }
+            const finalChunk = decoder.decode();
+            if (finalChunk) yield finalChunk;
+        } finally {
+            reader.releaseLock();
+        }
     }
 
     getRecommendedModel(taskType: string) {

@@ -3,8 +3,6 @@ import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { AppUrls } from '@/lib/urls';
-import { notifyContractCreated, notifyContractSent } from '@/services/contractNotificationService';
-import { resolvePartyEmail } from '@/lib/contracts/contractCoherenceServer';
 
 // 1. get_contracts
 registerTool('contracts', {
@@ -13,12 +11,14 @@ registerTool('contracts', {
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     status: z.string().optional(),
+    contract_id: z.string().uuid().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', format: 'uuid' },
       status: { type: 'string', description: 'Filter by contract status (e.g. draft, sent, signed)' },
+      contract_id: { type: 'string', format: 'uuid', description: 'Return a single contract by id' },
     },
     required: ['tenant_id'],
   },
@@ -29,12 +29,21 @@ registerTool('contracts', {
       .select('*')
       .eq('tenant_id', args.tenant_id);
 
+    if (args.contract_id) {
+      query = query.eq('id', args.contract_id);
+    }
+
     if (args.status) {
       query = query.eq('status', args.status);
     }
 
     const { data, error } = await query;
     if (error) throw error;
+    if (args.contract_id) {
+      const contract = (data || [])[0];
+      if (!contract) throw new Error('Contract not found');
+      return contract;
+    }
     return data;
   },
 });
@@ -50,6 +59,8 @@ registerTool('contracts', {
     content: z.string(),
     status: z.string().optional().default('draft'),
     type: z.string().optional().default('service_agreement'),
+    governing_law: z.string().optional(),
+    jurisdiction: z.string().optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -60,26 +71,44 @@ registerTool('contracts', {
       content: { type: 'string', description: 'The complete text / body of the contract' },
       status: { type: 'string', default: 'draft' },
       type: { type: 'string', default: 'service_agreement' },
+      governing_law: { type: 'string' },
+      jurisdiction: { type: 'string' },
     },
     required: ['tenant_id', 'title', 'content'],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+    const { extractContractLegalFields } = await import('@/lib/contracts/extractContractLegalFields');
+    const { normalizeContractContent } = await import('@/lib/contracts/normalizeContractContent');
+    const normalizedContent = normalizeContractContent(args.content);
+    const extracted = extractContractLegalFields(normalizedContent);
+    const governingLaw = args.governing_law || extracted.governing_law;
+    const jurisdiction = args.jurisdiction || extracted.jurisdiction || governingLaw;
+
     const { data, error } = await supabase
       .from('contracts')
       .insert({
         tenant_id: args.tenant_id,
         client_id: args.client_id || null,
         title: args.title,
-        content: args.content,
+        content: normalizedContent,
         status: args.status,
         type: args.type,
+        governing_law: governingLaw,
+        jurisdiction,
+        metadata: {
+          governing_law_extracted: Boolean(extracted.governing_law),
+          jurisdiction_extracted: Boolean(extracted.jurisdiction),
+        },
       })
       .select()
       .single();
 
     if (error) throw error;
 
+    const { notifyContractCreated } = await import(
+      '@/services/contractNotificationService'
+    );
     await notifyContractCreated(args.tenant_id, data.id, data.title).catch((err) =>
       console.error('[create_contract] notify failed:', err)
     );
@@ -158,6 +187,9 @@ registerTool('contracts', {
 
     let clientEmail = '';
     if (contract.client_id) {
+      const { resolvePartyEmail } = await import(
+        '@/lib/contracts/contractCoherenceServer'
+      );
       clientEmail = (await resolvePartyEmail(supabase, args.tenant_id, contract.client_id)) || '';
     }
 
@@ -219,6 +251,9 @@ registerTool('contracts', {
         .single();
       
       if (contract?.client_id) {
+        const { resolvePartyEmail } = await import(
+          '@/lib/contracts/contractCoherenceServer'
+        );
         toEmail = (await resolvePartyEmail(supabase, args.tenant_id, contract.client_id)) || undefined;
       }
     }
@@ -252,6 +287,9 @@ registerTool('contracts', {
       .maybeSingle();
 
     const sentAt = new Date().toISOString();
+    const { notifyContractSent } = await import(
+      '@/services/contractNotificationService'
+    );
     await notifyContractSent(
       args.tenant_id,
       args.contract_id,

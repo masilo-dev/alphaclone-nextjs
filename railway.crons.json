@@ -1,36 +1,75 @@
 {
   "crons": [
     { "path": "/api/cron/process-recurring-invoices", "schedule": "0 0 * * *" },
-    { "path": "/api/cron/process-invoice-overdue-reminders", "schedule": "0 1 * * *" },
+    {
+      "path": "/api/cron/process-invoice-overdue-reminders",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/contract-signature-reminders",
+      "schedule": "0 9 * * *"
+    },
+    { "path": "/api/cron/revenue-lifecycle-alerts", "schedule": "0 8 * * *" },
+    {
+      "path": "/api/cron/process-document-intelligence",
+      "schedule": "*/5 * * * *"
+    },
     { "path": "/api/cron/bonnie-dream", "schedule": "0 2 * * *" },
+    { "path": "/api/cron/bonnie-continuous", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/bonnie-goals-chase", "schedule": "*/10 * * * *" },
+    { "path": "/api/cron/bonnie-runtime-outbox", "schedule": "*/1 * * * *" },
+    { "path": "/api/cron/bonnie-runtime-timers", "schedule": "1-59/2 * * * *" },
+    { "path": "/api/cron/bonnie-runtime-worker", "schedule": "0-58/2 * * * *" },
+    { "path": "/api/cron/bonnie-runtime-reconcile", "schedule": "3-58/5 * * * *" },
     { "path": "/api/cron/chief-of-staff", "schedule": "0 5 * * *" },
     { "path": "/api/cron/automation-heartbeat", "schedule": "0 7 * * *" },
     { "path": "/api/cron/activity-digest", "schedule": "0 */3 * * *" },
-    { "path": "/api/cron/resolve-stuck-social-posts", "schedule": "*/30 * * * *" },
+    {
+      "path": "/api/cron/resolve-stuck-social-posts",
+      "schedule": "*/30 * * * *"
+    },
     { "path": "/api/cron/daily", "schedule": "0 3 * * *" },
     { "path": "/api/cron/intelligence-snapshots", "schedule": "0 4 * * *" },
-    { "path": "/api/cron/social-publish", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/social-publish", "schedule": "4-59/5 * * * *" },
     { "path": "/api/cron/publish-linkedin", "schedule": "*/15 * * * *" },
     { "path": "/api/cron/sync-zoho-inbox", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/process-events", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/process-events", "schedule": "2-57/5 * * * *" },
     { "path": "/api/cron/process-campaigns", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/sequence-worker", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/process-scheduled-ai-tasks", "schedule": "*/5 * * * *" },
+    {
+      "path": "/api/cron/process-scheduled-ai-tasks",
+      "schedule": "1-56/5 * * * *"
+    },
+    { "path": "/api/cron/webhook-deliveries", "schedule": "*/1 * * * *" },
     { "path": "/api/cron/process-task-reminders", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/booking-automations", "schedule": "*/2 * * * *" },
+    { "path": "/api/cron/lead-discovery-worker", "schedule": "*/2 * * * *" },
+    { "path": "/api/cron/workflows", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/autonomous-runner", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/autonomous-sync", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/retry-failed", "schedule": "0 * * * *" },
+    { "path": "/api/cron/process-mcp-event-queue", "schedule": "2-59/3 * * * *" },
     { "path": "/api/cron/reconcile-social-posts", "schedule": "0 * * * *" },
+    { "path": "/api/cron/sync-social-analytics", "schedule": "0 */6 * * *" },
     { "path": "/api/cron/linkedin-token-health", "schedule": "0 6 * * *" },
     { "path": "/api/cron/meta-token-health", "schedule": "0 6 * * *" },
     { "path": "/api/cron/zoho-token-health", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/integration-token-health", "schedule": "15 6 * * *" },
+    { "path": "/api/cron/bonnie-morning-brief", "schedule": "30 6 * * *" },
+    { "path": "/api/cron/account-lifecycle", "schedule": "30 2 * * *" },
     { "path": "/api/cron/linkedin-inbox-sync", "schedule": "*/15 * * * *" },
     { "path": "/api/cron/deal-intelligence", "schedule": "0 * * * *" },
     { "path": "/api/cron/contact-psychology", "schedule": "0 * * * *" },
     { "path": "/api/cron/entanglement-model", "schedule": "0 * * * *" },
-    { "path": "/api/cron/calendly-sync", "schedule": "*/30 * * * *" }
+    { "path": "/api/cron/calendly-sync", "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/tenant-event-inbox-digest", "schedule": "0 18 * * *" },
+    { "path": "/api/cron/follow-up-escalation", "schedule": "0 */2 * * *" }
   ],
   "scraper_crons": [
-  { "path": "/api/scraper/campaign/poll", "schedule": "*/10 * * * *", "service": "alphaclone-scraper" }
+    {
+      "path": "/api/scraper/campaign/poll",
+      "schedule": "*/10 * * * *",
+      "service": "alphaclone-scraper"
+    }
   ]
 }

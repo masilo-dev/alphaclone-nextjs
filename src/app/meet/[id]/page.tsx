@@ -5,12 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import CustomVideoRoom from '@/components/dashboard/video/CustomVideoRoom';
+import DailyVideoRoom from '@/components/dashboard/DailyVideoRoom';
 import MicrosoftMeetingEmbed from '@/components/dashboard/video/MicrosoftMeetingEmbed';
-import { dailyService } from '@/services/dailyService';
-import { resolveMeetingJoinUrl, resolveMeetingProvider } from '@/services/instantMeetingService';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
 import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 
 export default function MeetPage() {
     const params = useParams();
@@ -20,18 +18,20 @@ export default function MeetPage() {
     const meetingScopeKey = `${user?.id || 'guest'}:${currentTenant?.id || 'no-tenant'}`;
     const { endMeeting } = useMeetingSession(meetingScopeKey);
     const [roomUrl, setRoomUrl] = useState<string | null>(null);
-    const [meetingProvider, setMeetingProvider] = useState<'daily' | 'teams' | 'jitsi'>('daily');
+    const [meetingProvider, setMeetingProvider] = useState<'livekit' | 'daily' | 'teams' | 'jitsi'>('livekit');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [callId, setCallId] = useState<string | null>(null);
 
     const [inputPin, setInputPin] = useState('');
-    const [expectedPin, setExpectedPin] = useState<string | null>(null);
+    const [requiresPin, setRequiresPin] = useState(false);
     const [isPinValidated, setIsPinValidated] = useState(false);
     const [guestName, setGuestName] = useState('');
     const [guestEmail, setGuestEmail] = useState('');
+    const [guestIdentityConfirmed, setGuestIdentityConfirmed] = useState(false);
     const [pinError, setPinError] = useState('');
     const [validatedMeetingPin, setValidatedMeetingPin] = useState<string | undefined>(undefined);
+    const [meetingAccessToken, setMeetingAccessToken] = useState<string | undefined>(undefined);
 
     // This ID is the database UUID or the business slug
     const meetingIdOrSlug = params?.id as string;
@@ -49,177 +49,53 @@ export default function MeetPage() {
     }), [guestId, guestName, guestEmail]);
 
     useEffect(() => {
-        // Wait for auth to initialize (even if user is null, we need to know that for sure)
-        if (authLoading) return;
-
-        const connectToMeeting = async () => {
+        if (authLoading || !meetingIdOrSlug) return;
+        let cancelled = false;
+        (async () => {
             try {
-                // Utility to check if string is a valid UUID
-                const isUUID = (str: string) => {
-                    const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
-                    return regexExp.test(str);
-                };
-
-                let targetMeetingId = meetingIdOrSlug;
-
-                // If it's not a UUID, treat it as a slug and look up the tenant
-                if (!isUUID(meetingIdOrSlug)) {
-                    // Try to resolve the tenant by slug
-                    const { data: tenant, error: tenantError } = await supabase
-                        .from('tenants')
-                        .select('id, admin_user_id')
-                        .eq('slug', meetingIdOrSlug)
-                        .is('deletion_pending_at', null)
-                        .single();
-
-                    if (tenantError || !tenant) {
-                        setError('Business not found or is no longer active.');
-                        setLoading(false);
-                        return;
-                    }
-
-                    // Look up the permanent room for this tenant
-                    const { data: permanentRooms, error: roomError } = await supabase
-                        .from('video_calls')
-                        .select('id, metadata')
-                        .eq('tenant_id', tenant.id)
-                        .eq('is_permanent', true)
-                        .eq('status', 'active');
-
-                    if (roomError || !permanentRooms || permanentRooms.length === 0) {
-                        setError('This business has not set up a permanent meeting room yet.');
-                        setLoading(false);
-                        return;
-                    }
-
-                    targetMeetingId = permanentRooms[0].id;
-                    const metadata = permanentRooms[0].metadata;
-                    if (metadata?.meeting_pin) {
-                        setExpectedPin(metadata.meeting_pin);
-
-                        // Check if PIN has expired (35 minutes after meeting start)
-                        if (metadata.meeting_started_at) {
-                            const timeSinceStart = Date.now() - metadata.meeting_started_at;
-                            if (timeSinceStart > 35 * 60 * 1000) {
-                                setError('The meeting code has expired. Please contact the host for a new link/code.');
-                                setLoading(false);
-                                return;
-                            }
-                        }
-                    }
-                } else {
-                    const { data: room } = await supabase
-                        .from('video_calls')
-                        .select('metadata')
-                        .eq('id', targetMeetingId)
-                        .single();
-
-                    const metadata = room?.metadata;
-                    if (metadata && metadata.meeting_pin) {
-                        setExpectedPin(metadata.meeting_pin);
-
-                        // Check if PIN has expired (35 minutes after meeting start)
-                        if (metadata.meeting_started_at) {
-                            const timeSinceStart = Date.now() - metadata.meeting_started_at;
-                            if (timeSinceStart > 35 * 60 * 1000) {
-                                setError('The meeting code has expired. Please contact the host for a new link/code.');
-                                setLoading(false);
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                // 1. Fetch meeting details from OUR database
-                // This ensures we control access, status, and logic
-                const { call, error: fetchError } = await dailyService.getVideoCall(targetMeetingId);
-
-                if (fetchError || !call) {
-                    setError('Meeting not found. Please check the link and try again.');
-                    setLoading(false);
+                const response = await fetch(`/api/meetings/resolve/${encodeURIComponent(meetingIdOrSlug)}`, { cache: 'no-store' });
+                const payload = await response.json();
+                if (response.status === 401) {
+                    router.push(`/login?redirect=/meet/${encodeURIComponent(meetingIdOrSlug)}`);
                     return;
                 }
-
-                setCallId(call.id);
-
-                // 2. SECURITY CHECK: Is the meeting active or scheduled?
-                if (call.status === 'ended' || call.status === 'cancelled') {
-                    setError('This meeting has ended.');
-                    setLoading(false);
-                    return;
-                }
-
-                // 3. AUTH CHECK: Is it public or does the user have access?
-                if (!call.is_public && !user) {
-                    // Redirect to login, then back here
-                    router.push(`/login?redirect=/meet/${meetingIdOrSlug}`);
-                    return;
-                }
-
-                // If the user logging in is the host/tenant owner, skip the PIN check
-                if (user && call.host_id === user.id) {
-                    setIsPinValidated(true);
-                }
-
-                // 4. Token & URL Generation
-                // Ideally, we generate a token for the user to join securely.
-                // For now, we will use the roomUrl.
-                // TODO: Enhance with token generation for stricter access control if needed.
-
-                const joinUrl = resolveMeetingJoinUrl(call);
-                if (!joinUrl) {
-                    setError('Meeting room configuration error.');
-                    setLoading(false);
-                    return;
-                }
-
-                const resolvedProvider = resolveMeetingProvider(call);
-                const provider =
-                    resolvedProvider === 'teams'
-                        ? 'teams'
-                        : resolvedProvider === 'jitsi'
-                            ? 'jitsi'
-                            : 'daily';
-                setMeetingProvider(provider);
-                setRoomUrl(joinUrl);
+                if (!response.ok) throw new Error(payload.error || 'Meeting not found');
+                if (cancelled) return;
+                const meeting = payload.meeting;
+                if (!meeting.isPublic && !user) { router.push(`/login?redirect=/meet/${encodeURIComponent(meetingIdOrSlug)}`); return; }
+                if (meeting.pinExpired && !user) throw new Error('The meeting code has expired. Please contact the host for a new code.');
+                if (meeting.provider !== 'livekit' && !meeting.joinUrl) throw new Error('Meeting provider configuration is incomplete.');
+                setCallId(meeting.callId);
+                setRequiresPin(Boolean(meeting.requiresPin));
+                setMeetingProvider(meeting.provider);
+                setRoomUrl(meeting.joinUrl);
+                setMeetingAccessToken(meeting.resolvedByAccessToken ? meetingIdOrSlug : undefined);
+                if (!meeting.requiresPin) setIsPinValidated(true);
                 setLoading(false);
-
-                // For permanent public rooms with no PIN, we can potentially auto-join if name is already known
-                // or just ensure the UI is extremely minimal.
-                if (call.is_permanent && call.is_public && !expectedPin && guestName) {
-                    setIsPinValidated(true);
-                }
-
-            } catch (err) {
-                console.error('Error connecting to meeting:', err);
-                setError('Failed to connect to the secure meeting channel.');
-                setLoading(false);
+            } catch (reason) {
+                if (!cancelled) { setError(reason instanceof Error ? reason.message : 'Failed to connect to the secure meeting channel.'); setLoading(false); }
             }
-        };
-
-        connectToMeeting();
+        })();
+        return () => { cancelled = true; };
     }, [meetingIdOrSlug, authLoading, user, router]);
 
     const handlePinSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setPinError('');
 
-        if (!guestName.trim()) {
+        if (!user && !guestName.trim()) {
             setPinError('Please enter your name.');
             return;
         }
 
-        if (expectedPin && inputPin !== expectedPin) {
-            setPinError('Incorrect meeting code. Please try again.');
-            return;
-        }
-
-        if (expectedPin) {
+        if (requiresPin) {
+            if (!/^\d{6}$/.test(inputPin.trim())) { setPinError('Enter the six-digit meeting code.'); return; }
             setValidatedMeetingPin(inputPin.trim());
         } else {
             setValidatedMeetingPin(undefined);
         }
         setIsPinValidated(true);
+        setGuestIdentityConfirmed(true);
     };
 
     if (loading || authLoading) {
@@ -263,7 +139,7 @@ export default function MeetPage() {
     }
 
     // Require PIN validation if expectedPin exists and hasn't been validated yet
-    if (expectedPin && !isPinValidated) {
+    if ((!user && !guestIdentityConfirmed) || (requiresPin && !isPinValidated)) {
         return (
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white p-4">
                 <form onSubmit={handlePinSubmit} className="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl">
@@ -275,7 +151,7 @@ export default function MeetPage() {
                             {meetingIdOrSlug.length < 20 ? `${meetingIdOrSlug}'s Office` : 'Join Secure Meeting'}
                         </h2>
                         <p className="text-slate-400 text-sm">
-                            {expectedPin ? 'Please enter the meeting code provided by the host.' : 'Welcome! Please enter your name to join the meeting.'}
+                            {requiresPin ? 'Enter your name and the meeting code provided by the host.' : 'Enter your name before joining the secure meeting.'}
                         </p>
                     </div>
 
@@ -292,7 +168,7 @@ export default function MeetPage() {
                             />
                         </div>
 
-                        {expectedPin && (
+                        {requiresPin && (
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-1">Meeting Code</label>
                                 <input
@@ -328,16 +204,21 @@ export default function MeetPage() {
 
     return (
         <div className="h-screen w-screen bg-slate-950 overflow-hidden relative">
-            {roomUrl && meetingProvider === 'daily' && (
+            {callId && meetingProvider === 'livekit' && (
                 <CustomVideoRoom
                     user={user || guestUser}
-                    roomUrl={roomUrl}
                     callId={callId!}
+                    meetingAccessPin={validatedMeetingPin}
+                    guestName={guestName}
+                    meetingAccessToken={meetingAccessToken}
                     onLeave={() => {
                         endMeeting();
                         router.push(user ? '/dashboard' : '/');
                     }}
                 />
+            )}
+            {roomUrl && meetingProvider === 'daily' && (
+                <DailyVideoRoom user={user || guestUser} roomUrl={roomUrl} callId={callId!} meetingAccessPin={validatedMeetingPin} meetingAccessToken={meetingAccessToken} guestName={guestName} onLeave={() => { endMeeting(); router.push(user ? '/dashboard' : '/'); }} />
             )}
             {roomUrl && meetingProvider === 'teams' && (
                 <MicrosoftMeetingEmbed

@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { quotaService } from './quotaService';
+import { formatQuotaExceededMessage, isUnlimitedPlan } from '@/lib/entitlements/planEntitlements';
 import { businessClientService } from './businessClientService';
 import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
@@ -274,7 +276,6 @@ export const leadService = {
                 .from('leads')
                 .select('*')
                 .eq('tenant_id', tenantId)
-                .eq('is_test_data', false)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -296,82 +297,57 @@ export const leadService = {
     async addLead(lead: Partial<Lead>): Promise<{ lead: Lead | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData, error: authError } = await supabase.auth.getUser();
-
-            if (authError || !userData.user) {
-                const { data: refreshData } = await supabase.auth.refreshSession();
-                if (!refreshData.user) {
-                    return { lead: null, error: 'Authentication session expired. Please refresh the page.' };
-                }
-            }
 
             const intelligence = intelligenceScoringService.scoreLead({
                 industry: lead.industry,
                 email: lead.email,
                 phone: lead.phone,
                 website: lead.website || lead.fb,
-                role: lead.notes
+                role: lead.notes,
             });
 
-            const dbPayload = {
-                tenant_id: tenantId,
-                owner_id: userData.user?.id || (await supabase.auth.getUser()).data.user?.id,
-                business_name: lead.businessName,
-                industry: lead.industry,
-                location: lead.location,
-                phone: lead.phone,
-                email: lead.email,
-                website: lead.website || lead.fb,
-                source: lead.source || 'Manual',
-                stage: lead.stage || 'lead',
-                value: lead.value || 0,
-                notes: lead.notes,
-                outreach_message: lead.outreachMessage,
-                outreach_status: lead.outreachStatus || 'pending',
-                is_verified: lead.isVerified || false,
-                trust_score: lead.trustScore || 0,
-                verification_notes: lead.verificationNotes,
-                outreach_hook: lead.outreachHook,
-                strategy: lead.strategy,
-                tech_stack: lead.techStack || [],
-                pain_points: lead.painPoints || [],
-                value_proposition: lead.valueProposition,
-                latitude: lead.lat,
-                longitude: lead.lng,
-                sdr_insight: lead.sdrInsight,
-                social_links: lead.socialLinks || {},
-                metadata: lead.metadata || {},
-                intelligence_score: intelligence.qualifiedProbability,
-                intelligence_confidence: intelligence.confidence,
-                intelligence_state: intelligence.stateDistribution,
-                intelligence_recommendations: intelligence.recommendations,
-                psychology_profile: intelligence.psychologyProfile
-            };
+            const res = await fetch('/api/crm/leads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    tenantId,
+                    businessName: lead.businessName,
+                    email: lead.email || '',
+                    phone: lead.phone,
+                    industry: lead.industry,
+                    location: lead.location,
+                    website: lead.website || lead.fb,
+                    source: lead.source || 'Manual',
+                    notes: lead.notes,
+                    stage: lead.stage || 'lead',
+                    value: lead.value || 0,
+                    metadata: {
+                        ...(lead.metadata || {}),
+                        outreach_message: lead.outreachMessage,
+                        outreach_status: lead.outreachStatus || 'pending',
+                        intelligence_score: intelligence.qualifiedProbability,
+                        intelligence_confidence: intelligence.confidence,
+                    },
+                }),
+            });
 
-            const { data, error } = await supabase
-                .from('leads')
-                .insert(dbPayload)
-                .select()
-                .single();
-
-            if (error) {
-                console.error('LeadService: Insert error', error);
-                if (error.code === '42501') return { lead: null, error: 'Permission denied. Please refresh.' };
-                throw error;
+            const json = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { lead: null, error: json.error || `HTTP ${res.status}` };
             }
 
-            const newLead: Lead = normalizeLeadRecord(data);
+            const newLead: Lead = normalizeLeadRecord(json.lead);
 
-            // EMIT AUTOMATION EVENT
-            const { emitBusinessEvent } = await import('../lib/automation/emit-event');
-            await emitBusinessEvent(tenantId, 'lead_created', {
+            const { requestBusinessEvent } = await import('../lib/automation/request-event');
+            await requestBusinessEvent(tenantId, 'lead_created', {
                 leadId: newLead.id,
                 businessName: newLead.businessName,
                 source: newLead.source,
-                stage: newLead.stage
+                stage: newLead.stage,
+                matched_existing: json.matched_existing,
             }).catch(err => console.error('Failed to emit lead_created event:', err));
 
-            // SYNC TO EXTERNAL CRM
             UnifiedCRMService.syncLead(newLead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
             void requestCrmBridgeSync(tenantId, 'lead', newLead.id);
 
@@ -660,51 +636,46 @@ export const leadService = {
     },
 
     /**
-     * Check if the tenant has reached the lead generation limit
-     * Limit: 30 leads per 24-hour window for Free users
+     * Check if the tenant can add more leads today (centralized plan entitlements).
      */
     async checkLeadLimit(userRole?: string): Promise<{ allowed: boolean; error: string | null; remaining: number }> {
         try {
-            // Super Admin bypass
             if (userRole === 'admin') {
-                return { allowed: true, error: null, remaining: 9999 };
+                return { allowed: true, error: null, remaining: -1 };
             }
 
             const tenantId = this.getTenantId();
-            const { data: tenant, error: tenantError } = await supabase
-                .from('tenants')
-                .select('subscription_plan')
-                .eq('id', tenantId)
-                .single();
-
-            if (tenantError) throw tenantError;
-
-            if (tenant.subscription_plan === 'free') {
-                const MAX_LEADS_24H = 50;
-                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-                const { count, error } = await supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tenant_id', tenantId)
-                    .gte('created_at', twentyFourHoursAgo);
-
-                if (error) throw error;
-
-                const currentCount = count || 0;
-                const remaining = Math.max(0, MAX_LEADS_24H - currentCount);
-
-                if (currentCount >= MAX_LEADS_24H) {
-                    return {
-                        allowed: false,
-                        error: `Free plan limit reached: ${MAX_LEADS_24H} new leads per 24 hours (includes saved AI leads). Upgrade for higher limits.`,
-                        remaining: 0
-                    };
-                }
-                return { allowed: true, error: null, remaining };
+            if (!tenantId) {
+                return { allowed: false, error: 'No tenant context', remaining: 0 };
             }
 
-            return { allowed: true, error: null, remaining: 999 };
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user?.id) {
+                return { allowed: false, error: 'Authentication required', remaining: 0 };
+            }
+
+            const summary = await quotaService.getTenantUsageSummary(tenantId, user.id);
+            const leadsMetric = summary.metrics.leads;
+
+            if (summary.unlimited || isUnlimitedPlan(summary.plan) || leadsMetric.unlimited) {
+                return { allowed: true, error: null, remaining: -1 };
+            }
+
+            const remaining = leadsMetric.remaining;
+            if (remaining <= 0) {
+                return {
+                    allowed: false,
+                    error: formatQuotaExceededMessage({
+                        plan: summary.normalizedPlan,
+                        resourceLabel: 'leads added',
+                        currentUsage: leadsMetric.current,
+                        limit: leadsMetric.limit,
+                    }),
+                    remaining: 0,
+                };
+            }
+
+            return { allowed: true, error: null, remaining };
         } catch (error) {
             console.error('Error checking lead limit:', error);
             return { allowed: false, error: 'Failed to verify usage limits. Please try again.', remaining: 0 };
@@ -1006,13 +977,25 @@ Write in plain professional text. No markdown.`;
     async getRelatedDeals(leadId: string): Promise<{ data: any[]; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            
-            // Get deals where contact was created from this lead
+
+            // PostgREST filters do not accept SQL subqueries. Resolve the
+            // converted client first, then use literal UUID filters only.
+            const { data: lead, error: leadError } = await supabase
+                .from('leads')
+                .select('client_id')
+                .eq('tenant_id', tenantId)
+                .eq('id', leadId)
+                .maybeSingle();
+            if (leadError) throw leadError;
+
+            const filters = [`metadata->>originalLeadId.eq.${leadId}`];
+            if (lead?.client_id) filters.push(`contact_id.eq.${lead.client_id}`);
+
             const { data: deals, error } = await supabase
                 .from('deals')
                 .select('*')
                 .eq('tenant_id', tenantId)
-                .or(`metadata->>originalLeadId.eq.${leadId},contact_id.in.(SELECT client_id FROM leads WHERE id = '${leadId}')`)
+                .or(filters.join(','))
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -1113,8 +1096,52 @@ Write in plain professional text. No markdown.`;
         }
     },
 
+    async previewBatchOutreach(options: {
+        leadIds: string[];
+        source?: 'leads' | 'clients';
+    }): Promise<{
+        success: boolean;
+        error: string | null;
+        recipients?: Array<{ id: string; kind: 'lead' | 'client'; name: string; email: string }>;
+        excluded?: Array<{ id: string; kind: 'lead' | 'client'; name: string; reason: string }>;
+    }> {
+        try {
+            const tenantId = this.getTenantId();
+            const recipientIds = [...new Set(options.leadIds)];
+            if (!recipientIds.length) throw new Error('No recipients selected');
+            if (recipientIds.length > 120) {
+                throw new Error('Batch outreach is limited to 120 recipients. Split the selection into smaller reviewed batches.');
+            }
+            const response = await fetch('/api/outreach/batch-review', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    leadIds: options.source === 'clients' ? [] : recipientIds,
+                    clientIds: options.source === 'clients' ? recipientIds : [],
+                    preview: true,
+                }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success !== true) {
+                throw new Error(data.error || 'Unable to review recipients');
+            }
+            return {
+                success: true,
+                error: null,
+                recipients: Array.isArray(data.recipients) ? data.recipients : [],
+                excluded: Array.isArray(data.excluded) ? data.excluded : [],
+            };
+        } catch (err: any) {
+            console.error('Error in previewBatchOutreach:', err);
+            return { success: false, error: err.message };
+        }
+    },
+
     /**
-     * Trigger batch outreach via MCP tool
+     * Review and queue batch outreach. This browser method never sends email:
+     * final delivery can only occur through the server-side queue worker after
+     * the recipient preflight, consent, suppression, and audit checks succeed.
      */
     async sendBatchOutreach(options: {
         leadIds: string[];
@@ -1122,145 +1149,48 @@ Write in plain professional text. No markdown.`;
         customContext: string;
         deliveryProvider?: string;
         source?: 'leads' | 'clients';
-    }): Promise<{ success: boolean; error: string | null; sent?: number; total?: number }> {
+        finalApproval?: boolean;
+    }): Promise<{ success: boolean; error: string | null; sent?: number; total?: number; skipped?: number; batchId?: string }> {
         try {
             const tenantId = this.getTenantId();
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Authentication required');
-            if (!options.leadIds.length) throw new Error('No recipients selected');
 
-            type Recipient = { id: string; businessName: string; email?: string; industry?: string; phone?: string; website?: string; location?: string };
-            let recipients: Recipient[] = [];
-
-            if (options.source === 'clients') {
-                const { clients, error } = await businessClientService.getClients(tenantId, 1, 200);
-                if (error) throw new Error(error);
-                recipients = (clients || [])
-                    .filter((c) => options.leadIds.includes(c.id))
-                    .map((c) => ({
-                        id: c.id,
-                        businessName: c.name,
-                        email: c.email,
-                        industry: c.industry,
-                        phone: c.phone,
-                        website: c.website,
-                        location: c.location,
-                    }));
-            } else {
-                for (const id of options.leadIds) {
-                    const { lead } = await this.getLeadById(id);
-                    if (lead) {
-                        recipients.push({
-                            id: lead.id,
-                            businessName: lead.businessName,
-                            email: (lead as any).email,
-                            industry: lead.industry,
-                            phone: lead.phone,
-                            website: lead.website,
-                            location: lead.location,
-                        });
-                    }
-                }
+            const recipientIds = [...new Set(options.leadIds)];
+            if (!recipientIds.length) throw new Error('No recipients selected');
+            if (recipientIds.length > 120) {
+                throw new Error('Batch outreach is limited to 120 recipients. Split the selection into smaller reviewed batches.');
+            }
+            if (options.finalApproval !== true) {
+                throw new Error('Review the recipients and confirm final approval before scheduling outreach.');
             }
 
-            const inferEmail = (r: Recipient): string => {
-                const direct = String(r.email || '').trim();
-                if (direct.includes('@')) return direct.toLowerCase();
-                const website = String(r.website || '').trim();
-                if (!website) return '';
-                try {
-                    const url = website.startsWith('http') ? website : `https://${website}`;
-                    const host = new URL(url).hostname.replace(/^www\./i, '');
-                    return host.includes('.') ? `info@${host}` : '';
-                } catch {
-                    return '';
-                }
-            };
-
-            const generationResponse = await fetch('/api/outreach/generate', {
+            const response = await fetch('/api/outreach/batch-review', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    leads: recipients.map((r) => {
-                        const email = inferEmail(r);
-                        return {
-                            business_name: r.businessName || 'Unknown',
-                            email,
-                            phone: r.phone || '',
-                            website: r.website || '',
-                            address: r.location || '',
-                            category: r.industry || '',
-                            rating: 0,
-                            pitchAngle: email ? 'growth-opportunity' : 'no-email-follow-up',
-                            insights: [],
-                            score: 75,
-                        };
-                    }),
-                    industry: 'mixed',
+                    tenantId,
+                    leadIds: options.source === 'clients' ? [] : recipientIds,
+                    clientIds: options.source === 'clients' ? recipientIds : [],
                     tone: options.tone,
                     customContext: options.customContext,
-                    senderName: user.email || 'AlphaClone Systems',
-                    tenantId,
+                    deliveryProvider: options.deliveryProvider || 'zoho',
+                    finalConfirmation: true,
                 }),
             });
-
-            const generationData = await generationResponse.json().catch(() => ({}));
-            if (!generationResponse.ok || !generationData.success) {
-                throw new Error(generationData.error || 'Outreach generation failed');
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success !== true) {
+                throw new Error(data.error || 'Unable to review and queue batch outreach');
             }
 
-            const drafts = Array.isArray(generationData.emails) ? generationData.emails : [];
-            const provider = options.deliveryProvider || 'zoho';
-            const sendResults = await Promise.all(
-                drafts.map(async (draft: any) => {
-                    const recipient = String(draft.recipientEmail || '').trim();
-                    if (!recipient.includes('@')) return { ok: false };
-                    const sendResponse = await fetch('/api/outreach/send', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tenantId,
-                            leadEmail: recipient,
-                            leadName: draft.business_name,
-                            subject: draft.subject,
-                            body: draft.body,
-                            pitchAngle: draft.pitchAngle || 'growth-opportunity',
-                            industry: 'mixed',
-                            score: 75,
-                            autoSend: true,
-                            consentGranted: true,
-                            confidenceScore: 100,
-                            deliveryProviders: [provider],
-                            preferredProvider: provider,
-                            balanceByDailyLimit: false,
-                        }),
-                    });
-                    const sendData = await sendResponse.json().catch(() => ({}));
-                    return { ok: sendResponse.ok && sendData.success };
-                })
-            );
-
-            const sent = sendResults.filter((r) => r.ok).length;
-            const now = new Date().toISOString();
-
-            if (options.source !== 'clients') {
-                await Promise.all(
-                    options.leadIds.map((id) =>
-                        this.getLeadById(id).then(({ lead }) => {
-                            if (lead) {
-                                const metadata = { ...lead.metadata, last_contacted_at: now };
-                                return this.updateLead(id, { metadata });
-                            }
-                        })
-                    )
-                );
-            }
-
-            if (sent === 0) {
-                return { success: false, error: 'All outreach sends failed', sent: 0, total: options.leadIds.length };
-            }
-
-            return { success: true, error: null, sent, total: options.leadIds.length };
+            return {
+                success: true,
+                error: null,
+                sent: 0,
+                total: Number(data.recipientCount || 0),
+                skipped: Array.isArray(data.excluded) ? data.excluded.length : 0,
+                batchId: typeof data.batchId === 'string' ? data.batchId : undefined,
+            };
         } catch (err: any) {
             console.error('Error in sendBatchOutreach:', err);
             return { success: false, error: err.message };

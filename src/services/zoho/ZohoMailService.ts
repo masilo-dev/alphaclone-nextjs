@@ -189,6 +189,22 @@ export class ZohoMailService extends ZohoService {
         }
     }
 
+    async getAttachmentInfo(messageId: string, folderId: string) {
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(`${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/attachmentinfo?includeInline=false`);
+        const attachments = data?.data?.attachments || data?.attachments || [];
+        return attachments.map((attachment: any) => ({
+            fileName: attachment.attachmentName || attachment.fileName || 'attachment',
+            fileSize: Number(attachment.attachmentSize || attachment.fileSize || 0),
+            attachmentId: String(attachment.attachmentId || attachment.attachmentID || ''),
+        })).filter((attachment: any) => attachment.attachmentId);
+    }
+
+    async downloadAttachment(messageId: string, folderId: string, attachmentId: string) {
+        const { accountId } = await this.getMailBase();
+        return this.proxyImage(`/api/accounts/${encodeURIComponent(accountId)}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`);
+    }
+
     async getFullMessagePayload(message: any, folderId?: string): Promise<ZohoFullMessage> {
         const resolvedFolderId = folderId || message.folderId || message.folder_id || '';
         const id = String(message.messageId || message.id || message.message_id || '');
@@ -299,7 +315,7 @@ export class ZohoMailService extends ZohoService {
 
         // Log the outbound email in unified_messages for contact/CRM sync
         try {
-            const tenantId = await this.resolveTenantIdForIntegration();
+            const tenantId = this.tenantId;
             if (tenantId) {
                 const supabase = this.getSupabaseClient();
                 const { contact_id, company_id } = await resolveContactByEmailAdmin(supabase, tenantId, toAddress);
@@ -326,6 +342,40 @@ export class ZohoMailService extends ZohoService {
         }
 
         return result;
+    }
+
+    async saveDraft(params: {
+        fromAddress?: string;
+        toAddress?: string;
+        subject: string;
+        content: string;
+        ccAddress?: string;
+        bccAddress?: string;
+        inReplyTo?: string;
+    }) {
+        const { base } = await this.getMailBase();
+        const validAddresses = await this.getSenderAddresses();
+        if (!params.fromAddress || (validAddresses.length > 0 && !validAddresses.includes(params.fromAddress))) {
+            const primary = validAddresses.length > 0 ? validAddresses[0] : null;
+            if (primary) params.fromAddress = primary;
+        }
+
+        const subject = normalizeEmailSubject(params.subject) || '(Draft)';
+        const toAddress = params.toAddress ? extractEmailAddress(params.toAddress) : '';
+
+        return this.callZohoAPI(`${base}/messages`, {
+            method: 'POST',
+            body: JSON.stringify({
+                mode: 'draft',
+                fromAddress: params.fromAddress,
+                toAddress: toAddress || undefined,
+                subject,
+                content: String(params.content || ''),
+                ccAddress: params.ccAddress,
+                bccAddress: params.bccAddress,
+                inReplyTo: params.inReplyTo,
+            }),
+        });
     }
 
     async replyToMessage(params: {
@@ -358,8 +408,18 @@ export class ZohoMailService extends ZohoService {
 
     async searchMessages(query: string): Promise<ZohoMessage[]> {
         const { base } = await this.getMailBase();
-        const data = await this.callZohoAPI(`${base}/messages/search?searchKey=${encodeURIComponent(query)}`);
-        return (data?.data ?? []) as ZohoMessage[];
+        const normalized = String(query || '').trim();
+        if (!normalized) return [];
+        const searchKey = normalized.includes('@') ? `from:${normalized}` : normalized;
+        try {
+            const data = await this.callZohoAPI(`${base}/messages/search?searchKey=${encodeURIComponent(searchKey)}`);
+            return (data?.data ?? []) as ZohoMessage[];
+        } catch (error: any) {
+            // Zoho rejects free-form addresses with 400/Invalid search query.
+            // A search miss is not an application failure for inbox lookup.
+            if (error?.status === 400 || /invalid search query/i.test(String(error?.message || ''))) return [];
+            throw error;
+        }
     }
 
     async deleteMessage(messageId: string, folderId: string) {
@@ -447,6 +507,12 @@ export class ZohoMailService extends ZohoService {
 
     async triageIncomingEmail(messageId: string, folderId: string) {
         try {
+            const { getEmailAutoReplyMode } = await import('@/lib/email/autoReplySettings');
+            const autoReplyMode = await getEmailAutoReplyMode(this.tenantId);
+            if (autoReplyMode === 'off') {
+                return { status: 'ignored', reason: 'auto_reply_disabled' };
+            }
+
             const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
             const supabase = createSupabaseAdminClient();
 
@@ -534,6 +600,7 @@ export class ZohoMailService extends ZohoService {
                 const { data: zohoIntegration } = await admin
                     .from('integrations')
                     .select('tenant_id, id')
+                    .eq('tenant_id', this.tenantId)
                     .eq('user_id', this.userId)
                     .eq('type', 'zoho')
                     .eq('enabled', true)
@@ -560,6 +627,16 @@ export class ZohoMailService extends ZohoService {
                             integrationId: zohoIntegration.id,
                         },
                     });
+                    const { recordInboundOutreachReply } = await import('@/lib/outreach/recordInboundOutreachReply');
+                    await recordInboundOutreachReply({
+                        admin,
+                        tenantId: zohoIntegration.tenant_id,
+                        channel: 'email',
+                        sender: normalizedSenderEmail || sender,
+                        text: content,
+                        provider: 'zoho',
+                        providerEventId: messageId,
+                    }).catch((replyError) => console.error('[zoho-inbound] outreach reply capture failed', replyError));
 
                     try {
                         const { searchEmailContext } = await import('@/lib/scraper/emailLeadAutoSearch');
@@ -625,28 +702,49 @@ Rules:
                     sender,
                     sender_email: normalizedSenderEmail,
                     subject,
-                    triage_status: 'scheduled',
+                    triage_status: 'draft_ready',
                     draft_reply: draftReply,
-                    ai_analysis: { classification: 'qualified' },
+                    ai_analysis: { classification: 'qualified', mode: 'draft_only' },
                 }).select().single();
 
                 if (log) {
-                    const { Client } = await import('@upstash/qstash');
-                    const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });
-                    const autoReplyDelaySeconds = Number(process.env.EMAIL_AUTO_REPLY_DELAY_SECONDS || '3600');
-                    await qstash.publishJSON({
-                        url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
-                        body: {
-                            userId: this.userId,
-                            messageId,
-                            folderId,
-                            senderEmail: normalizedSenderEmail,
-                            originalSubject: normalizeReplySubject(subject),
-                            replyText: draftReply,
-                            logId: log.id,
-                        },
-                        delay: autoReplyDelaySeconds,
-                    });
+                    try {
+                        await this.saveDraft({
+                            toAddress: normalizedSenderEmail,
+                            subject: normalizeReplySubject(subject),
+                            content: draftReply,
+                            inReplyTo: messageId,
+                        });
+                    } catch (draftErr) {
+                        console.warn('[ZohoMailService] Could not save AI reply to Zoho drafts folder:', draftErr);
+                    }
+
+                    const autoSendEnabled =
+                        autoReplyMode === 'auto_send' ||
+                        process.env.EMAIL_AUTO_REPLY_AUTO_SEND === 'true';
+                    if (autoSendEnabled) {
+                        const { Client } = await import('@upstash/qstash');
+                        const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });
+                        const autoReplyDelaySeconds = Number(process.env.EMAIL_AUTO_REPLY_DELAY_SECONDS || '3600');
+                        await qstash.publishJSON({
+                            url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
+                            body: {
+                                userId: this.userId,
+                                tenantId: this.tenantId,
+                                messageId,
+                                folderId,
+                                senderEmail: normalizedSenderEmail,
+                                originalSubject: normalizeReplySubject(subject),
+                                replyText: draftReply,
+                                logId: log.id,
+                            },
+                            delay: autoReplyDelaySeconds,
+                        });
+                        await supabase
+                            .from('zoho_auto_responder_logs')
+                            .update({ triage_status: 'scheduled' })
+                            .eq('id', log.id);
+                    }
                 }
             } else {
                 await supabase.from('zoho_auto_responder_logs').insert({
@@ -681,7 +779,7 @@ Rules:
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                channelId: `user-${this.userId}`,
+                channelId: `zoho:${this.tenantId}:${this.userId}`,
                 notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/incoming`,
                 resource: '/api/v1/messages',
                 event: 'NEW_MAIL'

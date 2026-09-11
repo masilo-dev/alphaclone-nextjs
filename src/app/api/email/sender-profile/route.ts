@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
         }
 
         const tenantCtx = await requireTenantAccess(tenantId);
-        const admin = createSupabaseAdminClient();
+        const { admin } = tenantCtx;
 
         const { data, error } = await admin
             .from('integrations')
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         }
 
         const tenantCtx = await requireTenantAccess(tenantId);
-        const admin = createSupabaseAdminClient();
+        const { admin } = tenantCtx;
 
         const { data: existingIntegrations, error: listError } = await admin
             .from('integrations')

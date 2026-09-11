@@ -83,7 +83,7 @@ async function checkUsage(tenantId: string) {
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
   const [invoiceRes, leadRes, dealRes, socialRes] = await Promise.all([
-    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    supabase.from('business_invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
     supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
     supabase.from('deals').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
     supabase.from('social_posts').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),

@@ -6,7 +6,6 @@ import {
   Sparkles, Loader2, ClipboardList, Clock, Check, 
   Send, ExternalLink, RefreshCw, Layers, Eye
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 
@@ -59,24 +58,11 @@ export default function ClientOnboardingTab() {
     if (!tenant?.id) return;
     setLoading(true);
     try {
-      const [stepsRes, subRes] = await Promise.all([
-        supabase
-          .from('onboarding_steps')
-          .select('*')
-          .eq('tenant_id', tenant.id)
-          .order('step_order', { ascending: true }),
-        supabase
-          .from('onboarding_submissions')
-          .select('*, contacts!inner(first_name, last_name, email, tenant_id), onboarding_steps(*)')
-          .eq('contacts.tenant_id', tenant.id)
-          .order('created_at', { ascending: false })
-      ]);
-
-      if (stepsRes.error) throw stepsRes.error;
-      if (subRes.error) throw subRes.error;
-
-      setSteps(stepsRes.data || []);
-      setSubmissions(subRes.data || []);
+      const response = await fetch(`/api/tenant/${tenant.id}/onboarding`, { cache: 'no-store' });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Failed to load onboarding details');
+      setSteps(payload.steps || []);
+      setSubmissions(payload.submissions || []);
     } catch (err: any) {
       toast.error('Failed to load onboarding details: ' + err.message);
     } finally {
@@ -95,18 +81,9 @@ export default function ClientOnboardingTab() {
 
     setSavingStep(true);
     try {
-      const { error } = await supabase
-        .from('onboarding_steps')
-        .insert({
-          tenant_id: tenant.id,
-          step_name: stepForm.step_name,
-          step_description: stepForm.step_description || null,
-          step_order: stepForm.step_order,
-          step_type: stepForm.step_type,
-          is_required: stepForm.is_required
-        });
-
-      if (error) throw error;
+      const response = await fetch(`/api/tenant/${tenant.id}/onboarding`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ steps: [{ ...stepForm, step_description: stepForm.step_description || null }] }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Failed to create onboarding step');
       toast.success('Onboarding step registered');
       setShowStepModal(false);
       setStepForm({ step_name: '', step_description: '', step_order: steps.length + 1, step_type: 'form', is_required: true });
@@ -121,12 +98,10 @@ export default function ClientOnboardingTab() {
   const handleDeleteStep = async (id: string) => {
     if (!confirm('Are you sure you want to delete this onboarding step?')) return;
     try {
-      const { error } = await supabase
-        .from('onboarding_steps')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      if (!tenant?.id) return;
+      const response = await fetch(`/api/tenant/${tenant.id}/onboarding`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stepId: id }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Failed to delete onboarding step');
       toast.success('Step deleted');
       setSteps(prev => prev.filter(s => s.id !== id));
     } catch (err: any) {
@@ -136,15 +111,10 @@ export default function ClientOnboardingTab() {
 
   const handleReviewSubmission = async (id: string, status: 'approved' | 'pending' | 'rejected') => {
     try {
-      const { error } = await supabase
-        .from('onboarding_submissions')
-        .update({
-          status,
-          completed_at: status === 'approved' ? new Date().toISOString() : null
-        })
-        .eq('id', id);
-
-      if (error) throw error;
+      if (!tenant?.id) return;
+      const response = await fetch(`/api/tenant/${tenant.id}/onboarding`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ submissionId: id, status }) });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'Failed to review onboarding submission');
       toast.success(
         status === 'approved'
           ? 'Submission approved'
@@ -176,18 +146,16 @@ export default function ClientOnboardingTab() {
       
       const parsedSteps = JSON.parse(data.draft.replace(/```json|```/g, '').trim());
       if (Array.isArray(parsedSteps)) {
-        for (const step of parsedSteps) {
-          await supabase
-            .from('onboarding_steps')
-            .insert({
-              tenant_id: tenant.id,
-              step_name: step.step_name || step.title,
-              step_description: step.step_description || step.description || null,
-              step_order: step.step_order || step.sort_order || 1,
-              step_type: step.step_type || 'form',
-              is_required: step.is_required !== undefined ? step.is_required : true
-            });
-        }
+        const normalized = parsedSteps.map((step, index) => ({
+          step_name: String(step.step_name || step.title || '').trim(),
+          step_description: String(step.step_description || step.description || '').trim() || null,
+          step_order: Number(step.step_order || step.sort_order || index + 1),
+          step_type: ['form', 'contract', 'payment', 'upload'].includes(step.step_type) ? step.step_type : 'form',
+          is_required: step.is_required !== undefined ? Boolean(step.is_required) : true
+        }));
+        const saveResponse = await fetch(`/api/tenant/${tenant.id}/onboarding`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ steps: normalized }) });
+        const savePayload = await saveResponse.json();
+        if (!saveResponse.ok) throw new Error(savePayload.error || 'Generated workflow could not be saved');
         toast.success('Workflow generated and seeded!', { id: seedToast });
         loadOnboardingData();
       } else {

@@ -13,6 +13,7 @@ export interface MCPTool<T extends z.ZodObject<any> = z.ZodObject<any>> {
     type: 'object';
     properties: Record<string, any>;
     required?: string[];
+    anyOf?: Array<{ required: string[] }>;
   };
   handler: (args: z.infer<T>, context: MCPToolContext) => Promise<any>;
 }

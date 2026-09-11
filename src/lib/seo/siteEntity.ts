@@ -17,15 +17,20 @@ export const SAME_AS_URLS = [
 /** Primary marketing routes Google uses for sitelink and navigation signals. */
 export const PRIMARY_SITE_NAV = [
   { name: 'Product', path: '/services' },
+  { name: 'Solutions', path: '/who-we-serve' },
+  { name: 'Resources', path: '/docs' },
+  { name: 'Company', path: '/about' },
   { name: 'Pricing', path: '/pricing' },
-  { name: 'Results', path: '/results' },
-  { name: 'CRM', path: '/crm' },
-  { name: 'Lead Management', path: '/lead-management' },
-  { name: 'AI Agents', path: '/ai-agents' },
   { name: 'Documentation', path: '/docs' },
-  { name: 'Onboarding Guide', path: '/guide' },
-  { name: 'Book Demo', path: '/book-demo' },
-  { name: 'Contact', path: '/contact' },
+  { name: 'Integrations', path: '/ecosystem' },
+  { name: 'Customer Workflows', path: '/results' },
+  { name: 'About AlphaClone', path: '/about' },
+  { name: 'How It Works', path: '/how-it-works' },
+  { name: 'Execution Session', path: '/execution-session' },
+  { name: 'Reliability', path: '/reliability' },
+  { name: 'Contact AlphaClone', path: '/contact' },
+  { name: 'Legal and Trust Center', path: '/legal' },
+  { name: 'Platform Status', path: '/platform-status' },
 ] as const;
 
 export function buildSiteNavigationSchema() {

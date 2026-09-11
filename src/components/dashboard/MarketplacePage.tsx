@@ -4,18 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Star, CheckCircle, Zap, Globe, Mail, Calendar, FileText,
-  MessageSquare, TrendingUp, Users, Briefcase, DollarSign, Clock,
-  Sparkles, Rocket, Bot, Shield, ChevronLeft, Phone, BarChart2,
+  MessageSquare, TrendingUp, Users, Briefcase, DollarSign,
+  Sparkles, Bot, Shield, ChevronLeft, Phone, BarChart2,
   ArrowRight, Package, Link2, Bell, CreditCard, Layers, Cpu,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import MCPSetupGuide from './integrations/MCPSetupGuide';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type Category = 'all' | 'ai' | 'integration' | 'email' | 'automation' | 'template';
-type ItemStatus = 'free' | 'paid' | 'included' | 'coming_soon';
+type ItemStatus = 'free' | 'paid' | 'included';
 
 interface MarketplaceItem {
   id: string;
@@ -34,7 +35,7 @@ interface MarketplaceItem {
   developer: string;
   actionUrl?: string;
   isMCP?: boolean;
-  mcpType?: 'claude' | 'manus' | 'grok' | 'chatgpt';
+  mcpType?: 'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor';
   badge?: string;
 }
 
@@ -115,6 +116,24 @@ const ITEMS: MarketplaceItem[] = [
     badge: 'New',
   },
   {
+    id: 'mcp-cursor',
+    name: 'Cursor IDE (MCP)',
+    description: 'Connect Cursor to your AlphaClone workspace with a personal API key. Full CRM, deals, tasks, and invoicing from your editor.',
+    category: 'ai',
+    status: 'free',
+    rating: 5.0,
+    installs: 480,
+    icon: Layers,
+    iconBg: 'bg-sky-500/15',
+    iconColor: 'text-sky-400',
+    features: ['API key auth', 'Full tool catalog', 'CRM read & write', 'Copy-paste MCP JSON', 'Works in Cursor Settings'],
+    tags: ['ai', 'mcp', 'cursor', 'ide'],
+    developer: 'AlphaClone',
+    isMCP: true,
+    mcpType: 'cursor',
+    badge: 'New',
+  },
+  {
     id: 'sales-agent',
     name: 'AI Sales Agent',
     description: 'Your in-platform AI agent for lead prospecting, outreach campaigns, deal qualification, and CRM automation.',
@@ -128,26 +147,9 @@ const ITEMS: MarketplaceItem[] = [
     features: ['B2B lead prospecting', 'Outreach email drafting', 'Lead-to-deal conversion', 'Task scheduling', 'CRM sync'],
     tags: ['ai', 'sales', 'prospecting', 'outreach'],
     developer: 'AlphaClone',
-    actionUrl: '/dashboard/sales-agent',
+    actionUrl: '/dashboard/leads/finder',
   },
   // ── Integrations ───────────────────────────────────────────────────────────
-  {
-    id: 'hubspot',
-    name: 'HubSpot CRM',
-    description: 'Two-way sync between HubSpot and AlphaClone. Contacts, deals, and activities stay in perfect alignment.',
-    category: 'integration',
-    status: 'paid',
-    price: 19,
-    rating: 4.8,
-    installs: 3200,
-    icon: Users,
-    iconBg: 'bg-orange-500/15',
-    iconColor: 'text-orange-400',
-    features: ['Contact sync', 'Deal pipeline sync', 'Two-way updates', 'Activity tracking', 'Lead scoring'],
-    tags: ['crm', 'hubspot', 'contacts', 'deals'],
-    developer: 'HubSpot',
-    actionUrl: '/dashboard/business/settings?tab=integrations',
-  },
   {
     id: 'facebook',
     name: 'Facebook & Lead Ads',
@@ -198,25 +200,26 @@ const ITEMS: MarketplaceItem[] = [
   },
   {
     id: 'zapier',
-    name: 'Zapier Automation',
-    description: 'Connect AlphaClone to 5,000+ apps with no code. Automate lead capture, follow-ups, and notifications.',
+    name: 'Native Workflow Automation',
+    description: 'Build multi-step automations for lead capture, follow-ups, tasks, and notifications.',
     category: 'automation',
-    status: 'coming_soon',
+    status: 'included',
     rating: 4.8,
     installs: 0,
     icon: Link2,
     iconBg: 'bg-orange-500/15',
     iconColor: 'text-orange-400',
-    features: ['5000+ app connections', 'Trigger-based workflows', 'Multi-step zaps', 'Lead auto-tagging', 'CRM sync'],
-    tags: ['zapier', 'automation', 'workflow', 'no-code'],
-    developer: 'Zapier',
+    features: ['Trigger-based workflows', 'Multi-step actions', 'Lead auto-tagging', 'CRM updates', 'Audited runs'],
+    tags: ['automation', 'workflow', 'no-code'],
+    developer: 'AlphaClone',
+    actionUrl: '/dashboard/business/workflows',
   },
   {
     id: 'google-workspace',
     name: 'Google Workspace',
     description: 'Sync Google Calendar, connect Gmail for outreach, and access Drive documents from within AlphaClone.',
     category: 'integration',
-    status: 'coming_soon',
+    status: 'free',
     rating: 4.8,
     installs: 0,
     icon: Globe,
@@ -225,13 +228,14 @@ const ITEMS: MarketplaceItem[] = [
     features: ['Gmail sync', 'Calendar integration', 'Drive file access', 'Meet link generation', 'Contact import'],
     tags: ['google', 'gmail', 'calendar', 'workspace'],
     developer: 'Google',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
   },
   {
     id: 'slack',
     name: 'Slack Notifications',
     description: 'Get CRM alerts, new lead notifications, and task reminders delivered straight to your Slack channels.',
     category: 'integration',
-    status: 'coming_soon',
+    status: 'free',
     rating: 4.7,
     installs: 0,
     icon: MessageSquare,
@@ -240,22 +244,23 @@ const ITEMS: MarketplaceItem[] = [
     features: ['New lead alerts', 'Deal stage updates', 'Task reminders', 'Revenue notifications', 'Custom channels'],
     tags: ['slack', 'notifications', 'alerts', 'team'],
     developer: 'Slack',
+    actionUrl: '/dashboard/business/settings?tab=integrations',
   },
   {
     id: 'quickbooks',
-    name: 'QuickBooks Accounting',
-    description: 'Sync invoices, expenses, and payments between AlphaClone and QuickBooks for seamless bookkeeping.',
+    name: 'Native Accounting',
+    description: 'Manage invoices, expenses, journals, reports, banking, and period close inside AlphaClone.',
     category: 'integration',
-    status: 'coming_soon',
-    price: 29,
+    status: 'included',
     rating: 4.6,
     installs: 0,
     icon: BarChart2,
     iconBg: 'bg-green-500/15',
     iconColor: 'text-green-400',
     features: ['Invoice sync', 'Expense mapping', 'Tax categories', 'P&L reports', 'Bank reconciliation'],
-    tags: ['accounting', 'quickbooks', 'finance', 'bookkeeping'],
-    developer: 'Intuit',
+    tags: ['accounting', 'finance', 'bookkeeping'],
+    developer: 'AlphaClone',
+    actionUrl: '/dashboard/accounting',
   },
   // ── Email & Communication ──────────────────────────────────────────────────
   {
@@ -311,7 +316,7 @@ const ITEMS: MarketplaceItem[] = [
     name: 'SMS Outreach',
     description: 'Send SMS messages to leads and clients directly from your CRM. Powered by Twilio.',
     category: 'email',
-    status: 'coming_soon',
+    status: 'free',
     rating: 4.6,
     installs: 0,
     icon: Phone,
@@ -320,6 +325,7 @@ const ITEMS: MarketplaceItem[] = [
     features: ['Bulk SMS', 'Two-way messaging', 'Opt-out management', 'Delivery reports', 'Template library'],
     tags: ['sms', 'twilio', 'outreach', 'messaging'],
     developer: 'Twilio',
+    actionUrl: '/dashboard/business/sms',
   },
   // ── Templates ──────────────────────────────────────────────────────────────
   {
@@ -371,7 +377,6 @@ const STATUS_CONFIG: Record<ItemStatus, { label: string; cls: string }> = {
   free: { label: 'Free', cls: 'text-green-400 bg-green-500/10 border-green-500/20' },
   paid: { label: 'PRO', cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
   included: { label: 'Included', cls: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
-  coming_soon: { label: 'Coming Soon', cls: 'text-slate-400 bg-slate-500/10 border-slate-600/30' },
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -380,15 +385,15 @@ const MarketplacePage: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category>('all');
-  const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | 'grok' | 'chatgpt' | null>(null);
-  const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'mcp-grok', 'mcp-chatgpt', 'sales-agent', 'proposal-template', 'invoice-template']));
+  const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor' | null>(null);
+  const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'mcp-grok', 'mcp-chatgpt', 'mcp-cursor', 'sales-agent', 'proposal-template', 'invoice-template']));
 
   // Handle ?mcp=claude / ?mcp=manus deep link
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const p = new URLSearchParams(window.location.search);
     const mcp = p.get('mcp');
-    if (mcp === 'claude' || mcp === 'manus' || mcp === 'grok' || mcp === 'chatgpt') setActiveMcp(mcp);
+    if (mcp === 'claude' || mcp === 'manus' || mcp === 'grok' || mcp === 'chatgpt' || mcp === 'cursor') setActiveMcp(mcp);
   }, []);
 
   const filtered = ITEMS.filter(item => {
@@ -403,9 +408,6 @@ const MarketplacePage: React.FC = () => {
   const handleAction = (item: MarketplaceItem) => {
     if (item.isMCP && item.mcpType) {
       setActiveMcp(item.mcpType);
-      return;
-    }
-    if (item.status === 'coming_soon') {
       return;
     }
     if (item.actionUrl) {
@@ -460,6 +462,12 @@ const MarketplacePage: React.FC = () => {
             >
               ChatGPT
             </button>
+            <button
+              onClick={() => setActiveMcp('cursor')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeMcp === 'cursor' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Cursor
+            </button>
           </div>
         </div>
         <MCPSetupGuide initialType={activeMcp} />
@@ -469,19 +477,8 @@ const MarketplacePage: React.FC = () => {
 
   // ── Marketplace grid ───────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-950 p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-teal-900/30">
-            <Rocket className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Marketplace</h1>
-            <p className="text-slate-400 text-sm">Connect your tools, power your workflow</p>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-0 ac-scroll-full ac-enterprise-module space-y-6 px-3 sm:px-4 py-4">
+      <EnterprisePageHeader moduleKey="marketplace" />
 
       {/* AI Agents hero banner */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -576,7 +573,6 @@ const MarketplacePage: React.FC = () => {
             const Icon = item.icon;
             const isInstalled = installed.has(item.id);
             const statusCfg = STATUS_CONFIG[item.status];
-            const comingSoon = item.status === 'coming_soon';
 
             return (
               <motion.div
@@ -586,17 +582,11 @@ const MarketplacePage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2, delay: i * 0.03 }}
-                className={`group relative flex flex-col bg-slate-900/70 border rounded-2xl p-5 transition-all ${
-                  comingSoon
-                    ? 'border-slate-800/60 opacity-60'
-                    : 'border-slate-800 hover:border-teal-500/30 hover:bg-slate-900 hover:shadow-xl hover:shadow-teal-900/10 cursor-pointer'
-                }`}
-                onClick={() => !comingSoon && handleAction(item)}
+                className="group relative flex flex-col bg-slate-900/70 border border-slate-800 rounded-2xl p-5 transition-all hover:border-teal-500/30 hover:bg-slate-900 hover:shadow-xl hover:shadow-teal-900/10 cursor-pointer"
+                onClick={() => handleAction(item)}
               >
                 {/* Hover glow */}
-                {!comingSoon && (
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-500/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                )}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-teal-500/3 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-3">
@@ -651,12 +641,7 @@ const MarketplacePage: React.FC = () => {
                       <span>{item.installs.toLocaleString()} installs</span>
                     )}
                   </div>
-                  {comingSoon ? (
-                    <span className="flex items-center gap-1 text-xs text-slate-500">
-                      <Clock className="w-3.5 h-3.5" />
-                      Soon
-                    </span>
-                  ) : isInstalled ? (
+                  {isInstalled ? (
                     <span className="flex items-center gap-1 text-xs font-semibold text-teal-400">
                       <CheckCircle className="w-3.5 h-3.5" />
                       Connected

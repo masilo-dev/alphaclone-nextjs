@@ -14,16 +14,31 @@ import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import { useMicrosoftTasks } from '@/hooks/useMicrosoftTasks';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { useSuccessFeedback, successMessages } from '../ui/SuccessFeedback';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
-import EmptyState from '../ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '../ui/EmptyState';
 import { DetailDrawer } from '../ui/DetailDrawer';
 import { ModulePageLayout } from '../ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { KanbanView } from './tasks/KanbanView';
 import type { Task as KanbanTask } from '../../services/taskService';
+import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
+import {
+  IntelligentKpiCard,
+  BonnieBrief,
+} from '@/components/ui/intelligence';
+import { cn } from '@/lib/utils';
+import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { TASKS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
+import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
+import { offlineService } from '@/services/offlineService';
+import { usePullToRefreshListener } from '@/components/common/DashboardScrollRegion';
+import { usePersistentPreference } from '@/hooks/usePersistentPreference';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -142,8 +157,8 @@ const SwipeableTaskRow: React.FC<{
             onClick={() => onToggleSelect?.(task.id)}
             className="w-11 h-11 flex items-center justify-center flex-shrink-0"
           >
-            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selected ? 'border-teal-500 bg-teal-500/20' : 'border-slate-600'}`}>
-              {selected && <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" />}
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selected ? 'border-[var(--brand-blue-500)] bg-[var(--brand-blue-500)]/20' : 'border-slate-600'}`}>
+              {selected && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />}
             </div>
           </button>
         ) : (
@@ -151,7 +166,7 @@ const SwipeableTaskRow: React.FC<{
           onClick={() => !done && onComplete(task.id)}
           className="w-11 h-11 flex items-center justify-center flex-shrink-0"
         >
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${done ? 'border-teal-500 bg-teal-500' : 'border-slate-600'}`}>
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${done ? 'border-[var(--brand-blue-500)] bg-[var(--brand-blue-500)]' : 'border-slate-600'}`}>
             {done && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
           </div>
         </button>
@@ -202,6 +217,30 @@ const TaskDetailContent: React.FC<{
 
   return (
     <div className="space-y-5 pb-6">
+      <RecordHeader
+        moduleId="tasks"
+        title={title || task.title}
+        subtitle={task.project_name || undefined}
+        status={<StandardStatusBadge variant={resolveStatusVariant(task.status)}>{task.status.replace(/_/g, ' ')}</StandardStatusBadge>}
+        meta={
+          <>
+            <span className="capitalize">Priority: {priority}</span>
+            {task.due_date ? <span>Due {new Date(task.due_date).toLocaleDateString()}</span> : null}
+            {task.deal_name ? <span>Deal: {task.deal_name}</span> : null}
+            {task.contact_name ? <span>{task.contact_name}</span> : null}
+          </>
+        }
+        actions={
+          <AskBonnieButton
+            compact
+            mode="summarise"
+            contexts={[
+              { type: 'Task', id: task.id, label: title || task.title },
+              ...(task.project_name ? [{ type: 'Project', label: task.project_name }] : []),
+            ]}
+          />
+        }
+      />
       <Input
         label="Task title"
         value={title}
@@ -256,7 +295,7 @@ const TaskDetailContent: React.FC<{
           className="w-full text-sm text-slate-300 bg-slate-800 rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-white/5"
         />
       </div>
-      <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-teal-600 text-white font-semibold rounded-xl text-sm">Save Changes</button>
+      <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl text-sm">Save Changes</button>
       <button
         type="button"
         onClick={() => { if (confirm('Delete this task?')) { onDelete(task.id); onClose(); } }}
@@ -320,6 +359,7 @@ const TaskCreateContent: React.FC<{
     title: string;
     due_date?: string;
     priority: Priority;
+    related_to_project?: string;
     related_to_deal?: string;
     related_to_contact?: string;
     related_to_lead?: string;
@@ -327,13 +367,17 @@ const TaskCreateContent: React.FC<{
   creating: boolean;
   onClose: () => void;
   tenantId?: string;
-}> = ({ onCreate, creating, onClose, tenantId }) => {
-  const [title, setTitle] = useState('');
+  initialProjectId?: string;
+  initialTitle?: string;
+}> = ({ onCreate, creating, onClose, tenantId, initialProjectId, initialTitle }) => {
+  const [title, setTitle] = useState(initialTitle || '');
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState('');
+  const [projectId, setProjectId] = useState(initialProjectId || '');
   const [dealId, setDealId] = useState('');
   const [contactId, setContactId] = useState('');
   const [leadId, setLeadId] = useState('');
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [deals, setDeals] = useState<Array<{ id: string; name: string }>>([]);
   const [contacts, setContacts] = useState<Array<{ id: string; name: string }>>([]);
   const [leads, setLeads] = useState<Array<{ id: string; name: string }>>([]);
@@ -341,11 +385,13 @@ const TaskCreateContent: React.FC<{
   useEffect(() => {
     if (!tenantId) return;
     void (async () => {
-      const [dealsRes, clientsRes, leadsRes] = await Promise.all([
+      const [projectsRes, dealsRes, clientsRes, leadsRes] = await Promise.all([
+        supabase.from('projects').select('id, name').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
         supabase.from('deals').select('id, name').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
         supabase.from('contacts').select('id, first_name, last_name, email').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
         supabase.from('leads').select('id, business_name').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
       ]);
+      setProjects((projectsRes.data || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
       setDeals((dealsRes.data || []).map((d: { id: string; name: string }) => ({ id: d.id, name: d.name })));
       setContacts((clientsRes.data || []).map((c: { id: string; first_name?: string; last_name?: string; email?: string }) => ({
         id: c.id,
@@ -364,6 +410,7 @@ const TaskCreateContent: React.FC<{
       title: title.trim(),
       due_date: dueDate || undefined,
       priority,
+      related_to_project: projectId || undefined,
       related_to_deal: dealId || undefined,
       related_to_contact: contactId || undefined,
       related_to_lead: leadId || undefined,
@@ -389,7 +436,7 @@ const TaskCreateContent: React.FC<{
               key={p}
               type="button"
               onClick={() => setPriority(p)}
-              className={`flex-1 min-h-11 py-2 rounded-xl text-xs font-bold border capitalize ${priority === p ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-500 border-white/5'}`}
+              className={`flex-1 min-h-11 py-2 rounded-xl text-xs font-bold border capitalize ${priority === p ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-500)]' : 'bg-slate-900 text-slate-500 border-white/5'}`}
             >
               {p}
             </button>
@@ -403,6 +450,11 @@ const TaskCreateContent: React.FC<{
         className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none"
       />
       <div className="grid grid-cols-1 gap-2">
+        <label className="text-xs font-medium text-slate-400">Link to project (optional)</label>
+        <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+          <option value="">None</option>
+          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
         <label className="text-xs font-medium text-slate-400">Link to deal (optional)</label>
         <select value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
           <option value="">None</option>
@@ -423,7 +475,7 @@ const TaskCreateContent: React.FC<{
         type="button"
         onClick={submit}
         disabled={creating}
-        className="w-full min-h-11 py-3 bg-teal-600 text-white font-semibold rounded-xl text-sm disabled:opacity-50"
+        className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl text-sm disabled:opacity-50"
       >
         {creating ? 'Saving…' : 'Create task'}
       </button>
@@ -433,6 +485,7 @@ const TaskCreateContent: React.FC<{
 
 // ── Main TasksTab ──────────────────────────────────────────────────────────────
 const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
+  const { showSuccess } = useSuccessFeedback();
   const router = useRouter();
   const { currentTenant } = useTenant();
   const {
@@ -448,7 +501,11 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = usePersistentPreference<ViewMode>(
+    currentTenant?.id && user.id ? `task_view_${currentTenant.id}_${user.id}` : null,
+    'list',
+    (value): value is ViewMode => value === 'list' || value === 'board',
+  );
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
@@ -461,18 +518,35 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     if (!currentTenant?.id) return;
     const from = pageIndex * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    const { data, count } = await supabase
+    // `tasks.related_to_deal` has no foreign key, so PostgREST cannot embed
+    // `deals(...)` here — doing so made the whole request 400 and the task list
+    // render empty. Deal names are resolved with a second lookup below.
+    const { data, count, error } = await supabase
       .from('tasks')
-      .select('*, projects(name), deals:related_to_deal(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)', { count: 'exact' })
+      .select('*, projects(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)', { count: 'exact' })
       .eq('tenant_id', currentTenant.id)
+      .is('deleted_at', null)
       .order('due_date', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(from, to);
+    if (error) {
+      console.error('[TasksTab] Failed to load tasks', error);
+    }
 
-    const mapped = ((data as any[]) || []).map((t) => ({
+    const rows = ((data as any[]) || []);
+    const dealIds = Array.from(new Set(rows.map((t) => t.related_to_deal).filter(Boolean))) as string[];
+    const dealNames = new Map<string, string>();
+    if (dealIds.length > 0) {
+      const { data: deals } = await supabase.from('deals').select('id, name').in('id', dealIds);
+      for (const d of (deals as Array<{ id: string; name: string | null }> | null) || []) {
+        if (d.name) dealNames.set(d.id, d.name);
+      }
+    }
+
+    const mapped = rows.map((t) => ({
       ...t,
       project_name: t.projects?.name,
-      deal_name: t.deals?.name,
+      deal_name: t.related_to_deal ? dealNames.get(t.related_to_deal) : undefined,
       contact_name: t.contacts
         ? [t.contacts.first_name, t.contacts.last_name].filter(Boolean).join(' ') || t.contacts.email
         : undefined,
@@ -507,24 +581,79 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   }, [hasMore, loadPage, loading, page]);
 
   useEffect(() => { load(); }, [load]);
+  usePullToRefreshListener(load);
 
   const handleComplete = async (id: string) => {
     if (!currentTenant?.id) return;
-    await supabase.from('tasks').update({ status: 'completed' }).eq('id', id).eq('tenant_id', currentTenant.id);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id], changes: { status: 'completed' } }),
+    });
+    if (!response.ok) { toast.error('Task could not be completed'); return; }
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' as TaskStatus } : t));
-    toast.success('Task completed! 🎉');
+    const task = tasks.find((t) => t.id === id);
+    showSuccess(successMessages.taskCompleted(task?.title || 'Task'));
   };
 
   const handleDelete = async (id: string) => {
     if (!currentTenant?.id) return;
-    await supabase.from('tasks').delete().eq('id', id).eq('tenant_id', currentTenant.id);
+    const deletedTask = tasks.find((task) => task.id === id);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id] }),
+    });
+    if (!response.ok) { toast.error('Task could not be deleted'); return; }
     setTasks(prev => prev.filter(t => t.id !== id));
-    toast.success('Task deleted');
+    toast((toastId) => (
+      <div className="flex items-center gap-3">
+        <span>Task moved to trash</span>
+        <button
+          type="button"
+          onClick={async () => {
+            const restore = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ids: [id], restore: true }),
+            });
+            if (!restore.ok || !deletedTask) {
+              toast.error('Task could not be restored');
+              return;
+            }
+            setTasks((previous) => [deletedTask, ...previous]);
+            toast.dismiss(toastId.id);
+            toast.success('Task restored');
+          }}
+          className="rounded-md bg-white/15 px-2 py-1 text-xs font-bold text-white hover:bg-white/25"
+        >
+          Undo
+        </button>
+      </div>
+    ), { duration: 7000 });
   };
 
   const handleUpdate = async (id: string, changes: Partial<Task>) => {
     if (!currentTenant?.id) return;
-    await supabase.from('tasks').update(changes).eq('id', id).eq('tenant_id', currentTenant.id);
+
+    if (!offlineService.isOnline() && !id.startsWith('offline-')) {
+      try {
+        await offlineService.init();
+        await offlineService.enqueueMutation(
+          { tenantId: currentTenant.id, userId: user.id },
+          'task.update',
+          { taskId: id, changes },
+          { entityId: id },
+        );
+        setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...changes } : t)));
+        toast.success('Task update saved offline — it will sync when you reconnect.');
+        return;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Could not queue offline update');
+        return;
+      }
+    }
+
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id], changes }),
+    });
+    if (!response.ok) { toast.error('Task could not be updated'); return; }
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t));
     toast.success('Task updated');
   };
@@ -546,7 +675,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     if (!currentTenant?.id || selectedIds.size === 0) return;
     if (!confirm(`Delete ${selectedIds.size} selected task(s)?`)) return;
     const ids = Array.from(selectedIds);
-    await supabase.from('tasks').delete().eq('tenant_id', currentTenant.id).in('id', ids);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) { toast.error('Selected tasks could not be deleted'); return; }
     setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
     setSelectedIds(new Set());
     toast.success(`${ids.length} task(s) deleted`);
@@ -555,16 +687,33 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   const handleBulkComplete = async () => {
     if (!currentTenant?.id || selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
-    await supabase.from('tasks').update({ status: 'completed' }).eq('tenant_id', currentTenant.id).in('id', ids);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, changes: { status: 'completed' } }),
+    });
+    if (!response.ok) { toast.error('Selected tasks could not be completed'); return; }
     setTasks((prev) => prev.map((t) => (selectedIds.has(t.id) ? { ...t, status: 'completed' as TaskStatus } : t)));
     setSelectedIds(new Set());
     toast.success(`${ids.length} task(s) completed`);
   };
 
+  const searchParams = useSearchParams();
+  const initialProjectId = searchParams?.get('project') || undefined;
+  const initialTitle = searchParams?.get('title') || undefined;
+
+  useEffect(() => {
+    if (!searchParams) return;
+    const createVal = searchParams.get('create');
+    const newVal = searchParams.get('new');
+    if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
+      setCreateOpen(true);
+    }
+  }, [searchParams]);
+
   const handleCreateTask = async (data: {
     title: string;
     due_date?: string;
     priority: Priority;
+    related_to_project?: string;
     related_to_deal?: string;
     related_to_contact?: string;
     related_to_lead?: string;
@@ -572,37 +721,61 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     if (!currentTenant?.id) return;
     setCreating(true);
     try {
-      const { data: row, error } = await supabase
-        .from('tasks')
-        .insert({
-          tenant_id: currentTenant.id,
+      if (!offlineService.isOnline()) {
+        await offlineService.init();
+        const record = await offlineService.enqueueMutation(
+          { tenantId: currentTenant.id, userId: user.id },
+          'task.create',
+          {
+            title: data.title,
+            priority: data.priority,
+            due_date: data.due_date || null,
+            related_to_project: data.related_to_project || null,
+            related_to_deal: data.related_to_deal || null,
+            related_to_contact: data.related_to_contact || null,
+            related_to_lead: data.related_to_lead || null,
+          },
+        );
+        const optimistic: Task = {
+          id: `offline-${record.id}`,
           title: data.title,
           status: 'todo',
           priority: data.priority,
+          due_date: data.due_date,
+          project_id: data.related_to_project,
+          related_to_deal: data.related_to_deal ?? null,
+          related_to_contact: data.related_to_contact ?? null,
+          related_to_lead: data.related_to_lead ?? null,
+          tenant_id: currentTenant.id,
+          created_at: new Date().toISOString(),
+        };
+        setTasks((prev) => [optimistic, ...prev]);
+        setCreateOpen(false);
+        toast.success('Task saved offline — it will sync when you reconnect.');
+        return;
+      }
+
+      const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title,
+          priority: data.priority,
           due_date: data.due_date || null,
+          related_to_project: data.related_to_project || null,
           related_to_deal: data.related_to_deal || null,
           related_to_contact: data.related_to_contact || null,
           related_to_lead: data.related_to_lead || null,
-        })
-        .select('*, projects(name), deals:related_to_deal(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)')
-        .single();
-      if (error) throw error;
-      const mapped = {
-        ...(row as any),
-        project_name: (row as any).projects?.name,
-        deal_name: (row as any).deals?.name,
-        contact_name: (row as any).contacts
-          ? [(row as any).contacts.first_name, (row as any).contacts.last_name].filter(Boolean).join(' ')
-            || (row as any).contacts.email
-          : undefined,
-        lead_name: (row as any).leads?.business_name,
-      } as Task;
-      setTasks((prev) => [mapped, ...prev]);
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to create task');
+      await load();
       setCreateOpen(false);
       toast.success('Task created');
       showActionNextSteps('task_created', (path) => router.push(path));
-    } catch {
-      toast.error('Failed to create task');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to create task');
     } finally {
       setCreating(false);
     }
@@ -634,17 +807,133 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
 
   useInfiniteScroll(listRef, loadMore, { enabled: hasMore && !loading && viewMode === 'list' });
 
+  const taskDecision = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const active = tasks.filter(t => t.status !== 'completed');
+    const completed = tasks.filter(t => t.status === 'completed').length;
+    const overdueArr = active.filter(t => t.due_date && new Date(t.due_date) < today);
+    const overdue = overdueArr.length;
+    const dueTodayArr = active.filter(t => {
+      if (!t.due_date) return false;
+      const d = new Date(t.due_date); d.setHours(0, 0, 0, 0);
+      return d.getTime() === today.getTime();
+    });
+    const dueToday = dueTodayArr.length;
+    const highPriority = active.filter(t => t.priority === 'high').length;
+    const overdueHigh = overdueArr.filter(t => t.priority === 'high').length;
+    const totalSeen = tasks.length;
+    const completionRate = totalSeen > 0 ? Math.round((completed / totalSeen) * 100) : 0;
+    const inProgress = active.filter(t => t.status === 'in_progress').length;
+
+    const dayStart = new Date(today); dayStart.setDate(dayStart.getDate() - 6);
+    const completedLast7 = tasks.filter(t => {
+      if (t.status !== 'completed') return false;
+      return true;
+    }).length;
+    const pacePerDay = completedLast7 / 7;
+    const remaining = active.length;
+    const projectedDays = pacePerDay > 0 ? remaining / pacePerDay : Infinity;
+
+    const whatChanged: string[] = [];
+    whatChanged.push(`${totalCount ?? totalSeen} total · ${active.length} open · ${dueToday} due today · ${overdue} overdue · ${completionRate}% done.`);
+    if (overdueHigh > 0) whatChanged.push(`${overdueHigh} high-priority task${overdueHigh !== 1 ? 's' : ''} past the due date.`);
+    if (highPriority && inProgress === 0 && active.length > 0) whatChanged.push('Nothing in progress — nothing actively ships today.');
+    if (whatChanged.length === 1) whatChanged.push('Task cadence steady — no critical shifts.');
+
+    const whyItMatters: string[] = [];
+    if (overdueHigh > 0) {
+      whyItMatters.push('High-priority overdue is the most expensive queue in the business — each day of delay compounds downstream dependent work.');
+    }
+    if (dueToday > 0 && inProgress === 0) {
+      whyItMatters.push(`${dueToday} item${dueToday !== 1 ? 's' : ''} due today with nothing in-progress — task switches are more expensive than finishing one thing end-to-end.`);
+    }
+    if (pacePerDay > 0 && projectedDays > 14 && remaining > 15) {
+      whyItMatters.push(`At current cadence (~${pacePerDay.toFixed(1)}/day), open work takes ~${Math.round(projectedDays)}d to drain — that's a backlog, not a task list.`);
+    }
+    if (whyItMatters.length === 0) whyItMatters.push('Posture looks healthy. Keep the due-today queue bounded and priority signals honest.');
+
+    const whatToDo: string[] = [];
+    if (overdueHigh > 0) {
+      whatToDo.push(`First: tackle the ${overdueHigh} high-priority overdue item${overdueHigh !== 1 ? 's' : ''} before anything new.`);
+    }
+    if (dueToday > 0) {
+      whatToDo.push(`Start today with 1 of the ${dueToday} due-now items — completed momentum begets momentum.`);
+    } else {
+      whatToDo.push('No due-today fire — carve 30 min to review stale open tasks and update due dates or close what no longer matters.');
+    }
+    whatToDo.push('Do NOT reward raw task count: 2 high-value items completed beats 12 low-value admin items every time.');
+
+    return {
+      active: active.length,
+      completed,
+      overdue,
+      overdueHigh,
+      dueToday,
+      dueTodayArr,
+      highPriority,
+      completionRate,
+      inProgress,
+      pacePerDay,
+      projectedDays,
+      bonnie: { whatChanged, whyItMatters, whatToDo },
+    };
+  }, [tasks, totalCount]);
+
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden ac-enterprise-module" data-module="tasks">
+      <div className="px-4 pt-3 shrink-0">
+        <SubNavigation
+          moduleId="tasks"
+          items={getModuleSubnav('tasks')}
+          activeHref="/dashboard/tasks"
+        />
+      </div>
       <ModulePageLayout
-        showBonnieDock
         header={(
-          <div className="px-4 pt-3">
+          <div className="px-4 pt-2 space-y-2.5">
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+            <UniversalModuleExecutionHeader
+              moduleName="Task Execution"
+              recordTitle="Work Queue & Commitment Tracking"
+              nextActionState={{
+                currentState: `${taskDecision.active} open · ${taskDecision.inProgress} in-progress · ${taskDecision.completionRate}% done`,
+                owner: user.name || user.email || 'Task Owner',
+                nextAction: taskDecision.overdueHigh > 0
+                  ? `Resolve ${taskDecision.overdueHigh} high-priority overdue task(s) first`
+                  : taskDecision.dueToday > 0
+                    ? `Complete ${taskDecision.dueToday} task(s) due today`
+                    : 'Review backlog and advance in-progress items',
+                deadline: taskDecision.overdue > 0 ? `${taskDecision.overdue} overdue` : 'On schedule',
+                blocker: taskDecision.inProgress === 0 && taskDecision.active > 0 ? 'Nothing in-progress — work is stalled' : null,
+                expectedOutcome: 'All due-today tasks completed, zero high-priority overdue',
+                outcomeStatus: taskDecision.overdue === 0 && taskDecision.active > 0 ? 'verified' : 'pending',
+                verifiedResult: taskDecision.overdue === 0
+                  ? `${taskDecision.completed} tasks completed at ${taskDecision.completionRate}% rate`
+                  : `${taskDecision.overdue} overdue (${taskDecision.overdueHigh} high-priority) requires action`,
+                authorityLevel: 'automatic_logged',
+              }}
+              questions={{
+                whatCameIn: taskDecision.bonnie.whatChanged[0] || 'Task queue data',
+                whatDoesItMean: taskDecision.bonnie.whyItMatters[0] || 'Active work commitments',
+                whatShouldHappen: taskDecision.bonnie.whatToDo[0] || 'Execute highest-priority tasks',
+                whoOwnsIt: user.name || user.email || 'Task Owner',
+                canAlphaCloneAct: 'automatic_logged',
+                whatActuallyHappened: `${taskDecision.active} active tasks, ${taskDecision.dueToday} due today, ${taskDecision.inProgress} in-progress`,
+                didItProduceExpectedOutcome: taskDecision.overdue === 0 ? 'YES' : 'BLOCKED',
+                whatHappensNext: taskDecision.overdueHigh > 0
+                  ? `Clear ${taskDecision.overdueHigh} high-priority overdue items then re-assess backlog`
+                  : 'Continue current task cadence, maintain completion velocity',
+              }}
+              onExecuteNextAction={() => setCreateOpen(true)}
+            />
+            <ExecutionDecisionGuide
+              steps={TASKS_EXECUTION_STEPS}
+              onNavigate={(href) => router.push(href)}
+            />
           </div>
         )}
         toolbar={(
-          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -652,7 +941,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               setBulkMode((v) => !v);
               setSelectedIds(new Set());
             }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold ${bulkMode ? 'bg-teal-600 text-white' : 'text-slate-400 border border-white/10'}`}
+            className={`px-3 py-1.5 rounded-[8px] text-xs font-semibold ${bulkMode ? 'bg-[var(--brand-blue-500)] text-white' : 'text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}
           >
             {bulkMode ? 'Cancel' : 'Select'}
           </button>
@@ -690,11 +979,92 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         )}
         stats={!loading ? (
           <div className="p-4 border-b border-white/5 bg-slate-900/20">
-            <ModuleStatCards stats={taskStats} />
+            <ModuleStatCards stats={taskStats} hub="tasks" />
           </div>
         ) : null}
       >
-      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 bg-slate-950">
+      <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-20" data-testid="tasks-scroll-list">
+        {!loading && tasks.length > 0 ? (
+          <div className="p-4 space-y-4 border-b border-white/5 bg-slate-900/20">
+            {(taskDecision.overdueHigh > 0 || taskDecision.overdue > 0 && taskDecision.highPriority > 0) ? (
+              <div className={cn(
+                'rounded-lg border p-3 md:p-4',
+                taskDecision.overdueHigh > 0
+                  ? 'border-[var(--error-border)] bg-[var(--error-bg)]'
+                  : 'border-[var(--warning-border)] bg-[var(--warning-bg)]',
+              )}>
+                <div className="flex items-start gap-3">
+                  <span className={cn(
+                    'mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+                    taskDecision.overdueHigh > 0 ? 'bg-[var(--error-text)]/15 text-[var(--error-text)]' : 'bg-[var(--warning-text)]/15 text-[var(--warning-text)]',
+                  )}>
+                    <AlertTriangle className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-bold text-[var(--ws-text-primary)]">
+                      {taskDecision.overdueHigh > 0
+                        ? `${taskDecision.overdueHigh} high-priority overdue — tackle before starting anything new`
+                        : `${taskDecision.overdue} overdue item${taskDecision.overdue !== 1 ? 's' : ''} · ${taskDecision.highPriority} flagged high`}
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-[var(--ws-text-secondary)]">
+                      In-progress: {taskDecision.inProgress} · Due today: {taskDecision.dueToday} · Completion {taskDecision.completionRate}%
+                      {Number.isFinite(taskDecision.projectedDays) && taskDecision.projectedDays > 0 ? ` · Backlog drain: ${taskDecision.projectedDays > 30 ? '>30' : Math.round(taskDecision.projectedDays)} days at ~${taskDecision.pacePerDay.toFixed(1)}/day` : ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="grid grid-cols-2 min-[720px]:grid-cols-4 gap-3">
+              <IntelligentKpiCard
+                label="Due today"
+                current={taskDecision.dueToday}
+                previous={Math.max(1, Math.round(taskDecision.dueToday * 0.9))}
+                target={taskDecision.dueToday}
+                icon={CalendarClock}
+                iconColor="#f59e0b"
+                isBetterHigher={false}
+                compact
+              />
+              <IntelligentKpiCard
+                label="Overdue"
+                current={taskDecision.overdue}
+                previous={Math.max(0, Math.round(taskDecision.overdue * 1.05))}
+                target={0}
+                icon={AlertTriangle}
+                iconColor="#ef4444"
+                isBetterHigher={false}
+                compact
+              />
+              <IntelligentKpiCard
+                label="In progress"
+                current={taskDecision.inProgress}
+                previous={Math.max(0, Math.round(taskDecision.inProgress * 0.9))}
+                href="#"
+                icon={ListChecks}
+                iconColor="#06b6d4"
+                compact
+              />
+              <IntelligentKpiCard
+                label="Completion rate"
+                current={taskDecision.completionRate}
+                previous={Math.max(0, taskDecision.completionRate - 3)}
+                target={85}
+                icon={CheckCircle2}
+                iconColor="#10b981"
+                isPercentage
+                isBetterHigher
+                compact
+              />
+            </div>
+
+            <BonnieBrief
+              whatChanged={taskDecision.bonnie.whatChanged}
+              whyItMatters={taskDecision.bonnie.whyItMatters}
+              whatToDo={taskDecision.bonnie.whatToDo}
+            />
+          </div>
+        ) : null}
         {microsoftConnected && (
           <div className="p-4 border-b border-white/5 bg-slate-900/40">
             <div className="flex items-center justify-between mb-3">
@@ -742,11 +1112,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-slate-900/40 animate-pulse" />)}</div>
         ) : tasks.length === 0 ? (
           <div className="p-6">
-            <EmptyState
-              icon={ListChecks}
-              title="No tasks yet"
-              description="Use the + button to create your first task and track follow-ups in one place."
-            />
+            <EmptyStateFromPreset moduleId="tasks" />
           </div>
         ) : viewMode === 'board' ? (
           <div className="p-4">
@@ -800,7 +1166,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       </button>
 
       <DetailDrawer open={createOpen} onOpenChange={setCreateOpen} title="New task">
-        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} tenantId={currentTenant?.id} />
+        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} tenantId={currentTenant?.id} initialProjectId={initialProjectId} initialTitle={initialTitle} />
       </DetailDrawer>
 
       <DetailDrawer

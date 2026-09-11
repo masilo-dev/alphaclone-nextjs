@@ -50,17 +50,17 @@ export function BulkActions<T extends { id: string }>({
     if (selectedIds.size === 0) return null;
 
     return (
-        <div className={`bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between ${className}`}>
+        <div className={`ac-workspace-panel flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 ${className}`}>
             <div className="flex items-center gap-4">
                 <button
                     onClick={toggleSelectAll}
-                    className="flex items-center gap-2 text-sm text-slate-300 hover:text-white transition-colors"
+                    className="flex items-center gap-2 text-sm text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] transition-colors"
                 >
                     <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${allSelected
                             ? 'bg-teal-500 border-teal-500'
                             : someSelected
                                 ? 'bg-teal-500/50 border-teal-500'
-                                : 'border-slate-600'
+                                : 'border-[var(--ws-border-strong)]'
                         }`}>
                         {(allSelected || someSelected) && <Check className="w-3 h-3 text-white" />}
                     </div>
@@ -69,22 +69,22 @@ export function BulkActions<T extends { id: string }>({
 
                 <button
                     onClick={() => onSelectionChange(new Set())}
-                    className="text-slate-400 hover:text-white transition-colors"
+                    className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] transition-colors"
                     title="Clear selection"
                 >
                     <X className="w-4 h-4" />
                 </button>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
                 {actions.map((action, index) => (
                     <button
                         key={index}
                         onClick={() => handleAction(action)}
                         disabled={isProcessing}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${action.variant === 'danger'
-                                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
-                                : 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 border border-teal-500/20'
+                        className={`min-h-11 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 border ${action.variant === 'danger'
+                                ? 'bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_16%,transparent)] border-[color-mix(in_srgb,var(--danger)_28%,var(--ws-border))]'
+                                : 'bg-[color-mix(in_srgb,var(--interactive-secondary)_12%,transparent)] text-[var(--interactive-secondary)] hover:bg-[color-mix(in_srgb,var(--interactive-secondary)_16%,transparent)] border-[color-mix(in_srgb,var(--interactive-secondary)_22%,var(--ws-border))]'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                         {action.icon}
@@ -123,10 +123,12 @@ export const SelectableItem: React.FC<SelectableItemProps> = ({
                         e.stopPropagation();
                         onToggle(id);
                     }}
-                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${isSelected
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app)] ${isSelected
                             ? 'bg-teal-500 border-teal-500'
-                            : 'border-slate-600 hover:border-teal-500'
+                            : 'border-[var(--ws-border-strong)] hover:border-teal-500'
                         }`}
+                    aria-pressed={isSelected}
+                    aria-label={isSelected ? 'Deselect item' : 'Select item'}
                 >
                     {isSelected && <Check className="w-3 h-3 text-white" />}
                 </button>

@@ -1,12 +1,17 @@
 import { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { createSupabaseAdminClient, hasSupabaseServiceRole } from '@/lib/supabase-admin';
 import {
   buildAuthorizePageUrl,
   isRedirectUriAllowed,
   normalizeMcpClientId,
+  PLATFORM_MCP_OAUTH_CLIENT_IDS,
   shouldUseBrowserOAuthConsent,
 } from '@/lib/mcp/oauthRedirect';
+import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
+import { getMcpPublicBaseUrl } from '@/lib/mcpWellKnown';
+import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
+import { ensurePlatformMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -290,27 +295,52 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
     return oauthError(redirectUri, 'invalid_request', 'client_id and redirect_uri are required', state);
   }
 
-  if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!ENV.VITE_SUPABASE_URL || !hasSupabaseServiceRole()) {
     return oauthError(redirectUri, 'server_error', 'Server configuration error', state);
   }
 
-  const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+  const supabase = createSupabaseAdminClient();
 
-  const { data: client } = await supabase
+  let { data: client } = await supabase
     .from('mcp_oauth_clients')
     .select('client_id, redirect_uris, is_public')
     .eq('client_id', clientId)
     .maybeSingle();
 
+  if (!client && PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId)) {
+    await ensurePlatformMcpOAuthClient(supabase, clientId);
+    ({ data: client } = await supabase
+      .from('mcp_oauth_clients')
+      .select('client_id, redirect_uris, is_public')
+      .eq('client_id', clientId)
+      .maybeSingle());
+  }
+
   if (client) {
-    const allowedRedirects: string[] = client.redirect_uris || [];
+    const allowedRedirects: string[] = [...(client.redirect_uris || [])];
+    if (!allowedRedirects.length) {
+      return oauthError(
+        null,
+        'invalid_client',
+        'Client has no registered redirect_uris. Register via Dynamic Client Registration or update the client record.',
+        state
+      );
+    }
     if (!isRedirectUriAllowed(redirectUri, allowedRedirects)) {
       console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
       return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
     }
+  } else if (PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId)) {
+    console.error('[MCP Authorize] Platform client not registered in database:', clientId);
+    return oauthError(
+      redirectUri,
+      'invalid_client',
+      'This AI connector is not configured on this server. Contact support or run MCP client migration.',
+      state
+    );
   }
 
-  // ChatGPT / Claude / other PKCE connectors → login + consent UI (not API-key form)
+  // PKCE / public clients → login + consent UI (not legacy API-key form)
   if (
     !apiKey &&
     shouldUseBrowserOAuthConsent({
@@ -319,7 +349,7 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
       isPublicClient: client?.is_public,
     })
   ) {
-    const origin = new URL(req.url).origin;
+    const origin = getMcpPublicBaseUrl(req);
     const authorizeUrl = buildAuthorizePageUrl(origin, new URL(req.url).searchParams);
     return Response.redirect(authorizeUrl, 302);
   }
@@ -330,13 +360,9 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   }
 
   // Validate API key → resolve tenant + user
-  const { data: keyData, error: keyError } = await supabase
-    .from('mcp_api_keys')
-    .select('tenant_id, user_id')
-    .eq('api_key', apiKey)
-    .single();
+  const keyData = await lookupMcpApiKey(supabase, apiKey, { requireActive: true });
 
-  if (keyError || !keyData) {
+  if (!keyData) {
     console.warn('[MCP Authorize] Invalid API key presented');
     // If browser form, re-render with error instead of redirecting with access_denied
     return serveConsentPage({
@@ -349,9 +375,7 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   const code = `ac_${crypto.randomUUID().replace(/-/g, '')}`;
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
 
-  const { error: insertError } = await supabase
-    .from('mcp_oauth_codes')
-    .insert({
+  const codeRow: Record<string, unknown> = {
       code,
       client_id: clientId,
       user_id: keyData.user_id,
@@ -362,7 +386,14 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
       code_challenge: codeChallenge || null,
       code_challenge_method: codeChallenge ? codeChallengeMethod : null,
       used: false,
-    });
+      resource: PUBLIC_MCP_RESOURCE,
+    };
+
+  let { error: insertError } = await supabase.from('mcp_oauth_codes').insert(codeRow);
+  if (insertError?.code === '42703' || insertError?.message?.includes('resource')) {
+    const { resource: _r, ...legacy } = codeRow;
+    ({ error: insertError } = await supabase.from('mcp_oauth_codes').insert(legacy));
+  }
 
   if (insertError) {
     console.error('[MCP Authorize] Failed to store auth code:', insertError);

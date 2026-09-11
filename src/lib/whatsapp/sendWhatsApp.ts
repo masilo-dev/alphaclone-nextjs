@@ -169,12 +169,12 @@ async function sendViaMeta(params: {
       provider: 'meta-whatsapp',
       code: 'NOT_CONFIGURED',
       error:
-        'WhatsApp integration is not configured. Add Phone Number ID and Access Token under Integration Settings, or set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Vercel.',
+        'WhatsApp integration is not configured. Add Phone Number ID and Access Token under Integration Settings, or set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Railway environment variables.',
     };
   }
 
   try {
-    const url = `https://graph.facebook.com/v18.0/${resolvedPhoneNumberId}/messages`;
+    const url = `https://graph.facebook.com/v21.0/${resolvedPhoneNumberId}/messages`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -535,7 +535,7 @@ export async function sendWhatsAppTemplate(params: {
   }
 
   try {
-    const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {

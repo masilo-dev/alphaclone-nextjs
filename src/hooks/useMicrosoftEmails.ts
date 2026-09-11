@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { microsoftGraphService } from '@/services/microsoftGraphService';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { isAuthErrorMessage, refreshMicrosoftTokenIfNeeded } from '@/lib/email/tokenRefresh';
+import type { InboxFolder } from '@/types/unifiedInbox';
 
 export interface MicrosoftEmailMessage {
   id: string;
@@ -19,7 +20,7 @@ export interface MicrosoftEmailMessage {
 
 export function useMicrosoftEmails(limit = 25, enabled = true) {
   const [emails, setEmails] = useState<MicrosoftEmailMessage[]>([]);
-  const [folder, setFolder] = useState<'inbox' | 'sent' | 'drafts' | 'trash'>('inbox');
+  const [folder, setFolder] = useState<InboxFolder>('inbox');
   const [loading, setLoading] = useState(enabled);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);

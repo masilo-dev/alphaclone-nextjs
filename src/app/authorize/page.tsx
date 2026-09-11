@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Bot, Check, X, Loader2, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 function AuthorizeContent() {
     const { user, loading } = useAuth();
@@ -23,7 +24,7 @@ function AuthorizeContent() {
     useEffect(() => {
         if (!loading && !user) {
             const currentUrl = window.location.pathname + window.location.search;
-            router.push(`/login?returnTo=${encodeURIComponent(currentUrl)}`);
+            router.push(`/auth/login?returnTo=${encodeURIComponent(currentUrl)}`);
         }
     }, [user, loading, router]);
 
@@ -37,24 +38,60 @@ function AuthorizeContent() {
         setError('');
 
         try {
+            const normalizedScope = (scope || 'read write')
+                .split(/[\s+]+/)
+                .map((s) => (s === 'wrie' ? 'write' : s))
+                .filter(Boolean)
+                .filter((s, i, arr) => arr.indexOf(s) === i)
+                .join(' ');
+
+            // Prefer Bearer from the browser session. Cookie-only auth often 401s
+            // on /authorize because ChatGPT opens this page with a client session
+            // that may not be mirrored into SSR auth cookies yet.
+            const { data: sessionData } = await supabase.auth.getSession();
+            const accessToken = sessionData.session?.access_token;
+            if (!accessToken) {
+                const currentUrl = window.location.pathname + window.location.search;
+                router.push(`/auth/login?returnTo=${encodeURIComponent(currentUrl)}`);
+                return;
+            }
+
             const res = await fetch('/api/mcp/oauth/approve', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                credentials: 'include',
+                cache: 'no-store',
                 body: JSON.stringify({
-                    user_id: user.id,
                     client_id: clientId,
                     redirect_uri: redirectUri,
                     state,
                     code_challenge: codeChallenge || undefined,
                     code_challenge_method: codeChallenge ? codeChallengeMethod : undefined,
-                    scope,
+                    scope: normalizedScope,
                 })
             });
 
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
+
+            if (res.status === 401) {
+                const currentUrl = window.location.pathname + window.location.search;
+                router.push(`/auth/login?returnTo=${encodeURIComponent(currentUrl)}`);
+                return;
+            }
+
+            if (res.status === 524 || res.status === 502 || res.status === 504) {
+                throw new Error(
+                    'Authorization timed out. Wait a few seconds and click Authorize Access again.'
+                );
+            }
 
             if (!res.ok) {
-                throw new Error(data.error || 'Failed to approve authorization');
+                throw new Error(
+                    data.error_description || data.error || 'Failed to approve authorization'
+                );
             }
 
             if (data.redirectUrl) {
@@ -87,8 +124,9 @@ function AuthorizeContent() {
 
     if (loading || !user) {
         return (
-            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+            <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-3 text-slate-400">
+                <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
+                <p className="text-sm">{loading ? 'Checking your session…' : 'Redirecting to sign in…'}</p>
             </div>
         );
     }

@@ -22,7 +22,7 @@ class EvolutionaryLearning {
         if (successes.length > 0) {
             // Extract common tool sequences or descriptions
             events.push({
-                patternId: `P_${Math.random().toString(36).substring(7)}`,
+                patternId: `P_${crypto.randomUUID()}`,
                 description: `Optimized tool sequencing for ${successes[0].content.tool}`,
                 impact: 0.15,
                 action: 'Update Strategist prompt with new sequencing weights'

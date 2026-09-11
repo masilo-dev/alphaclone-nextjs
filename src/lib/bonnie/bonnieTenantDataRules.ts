@@ -11,13 +11,13 @@ TENANT DATA (NON-NEGOTIABLE)
 - Never mix, reference, or infer data from other tenants or workspaces.
 - Do NOT pass tenant_id or user_id in tool arguments — the server binds workspace "${tenantId}" and the signed-in user automatically.
 - For questions about "my", "our", or module data (how many, who, what, show, list, status, overview): call get_/list_/search_ tools, get_account_overview, or summarize_workspace / get_business_snapshot immediately.
-- For lead discovery: use find_and_qualify_leads (multi-source search + scoring), parse_lead_criteria (save how you want leads qualified), qualify_crm_leads, get_scraper_leads, search_facebook_leads, or start_lead_campaign for durable workflows.
-- Only external-facing sends (email, WhatsApp, invoice to client, bulk campaign publish) may queue approval — reading, lead search, and drafting inside the workspace never needs permission.`;
+- For lead discovery: use find_and_qualify_leads (multi-source search + scoring), parse_lead_criteria (save how you want leads qualified), qualify_crm_leads, get_scraper_leads, list_scraper_campaigns, create_scraper_campaign, run_scraper_campaign, search_facebook_leads, or start_lead_campaign for durable workflows.
+- In-app Bonnie executes sends, posts, invoice chases, and outreach immediately — do not invent approval or DPA gates. Reading, lead search, and drafting never need permission.`;
 }
 
 export const BONNIE_MODULE_DATA_TOOLS: Record<string, string[]> = {
   crm: ['get_contacts', 'get_clients', 'search_clients'],
-  leads: ['get_leads', 'get_scraper_leads', 'find_and_qualify_leads', 'qualify_crm_leads'],
+  leads: ['get_leads', 'get_scraper_leads', 'find_and_qualify_leads', 'qualify_crm_leads', 'list_scraper_campaigns', 'create_scraper_campaign', 'run_scraper_campaign'],
   deals: ['get_deals', 'get_pipeline_summary'],
   campaigns: ['campaign_diagnose', 'campaign_brief'],
   whatsapp: ['get_whatsapp_status', 'get_recent_messages'],
@@ -57,10 +57,12 @@ export function suggestToolsForQuestion(text: string, moduleId: string): string[
     picks.add('get_leads');
     picks.add('qualify_crm_leads');
   }
-  if (/\b(find lead|search lead|discover|prospect|qualif)\b/.test(t)) {
+  if (/\b(find lead|search lead|discover|prospect|qualif|scraper|lead finder)\b/.test(t)) {
     picks.add('find_and_qualify_leads');
     picks.add('get_scraper_leads');
     picks.add('parse_lead_criteria');
+    picks.add('create_scraper_campaign');
+    picks.add('run_scraper_campaign');
   }
   if (/\b(contact|client|crm|customer)\b/.test(t)) {
     picks.add('get_contacts');

@@ -36,6 +36,17 @@ class PresenceService {
         );
     }
 
+    private isTransientDbError(error: { code?: string; message?: string } | null | undefined): boolean {
+        if (!error) return false;
+        const message = String(error.message || '').toLowerCase();
+        return (
+            this.isMissingRpc(error) ||
+            message.includes('503') ||
+            message.includes('service unavailable') ||
+            message.includes('schema cache')
+        );
+    }
+
     private isPresenceAuthError(error: { message?: string } | null | undefined): boolean {
         const message = String(error?.message || '').toLowerCase();
         return message.includes('not authorized to update this presence record');
@@ -74,7 +85,7 @@ class PresenceService {
             });
 
             if (error) {
-                if (this.isMissingRpc(error) || this.isPresenceAuthError(error)) {
+                if (this.isTransientDbError(error) || this.isPresenceAuthError(error)) {
                     this.markUnsupported();
                     return { error: null };
                 }
@@ -116,7 +127,7 @@ class PresenceService {
                     p_device_info: null,
                 });
 
-                if (error && (this.isMissingRpc(error) || this.isPresenceAuthError(error))) {
+                if (error && (this.isTransientDbError(error) || this.isPresenceAuthError(error))) {
                     this.markUnsupported();
                 }
             } catch {
@@ -159,7 +170,7 @@ class PresenceService {
             });
 
             if (error) {
-                if (this.isMissingRpc(error) || this.isPresenceAuthError(error)) {
+                if (this.isTransientDbError(error) || this.isPresenceAuthError(error)) {
                     this.markUnsupported();
                     return { error: null };
                 }

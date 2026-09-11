@@ -129,8 +129,8 @@ export function parseLeadIntentHeuristic(userMessage: string): ParsedLeadIntent 
     userMessage.replace(/find|leads|businesses|companies|owners?/gi, '').trim().slice(0, 80) ||
     'local business';
 
-  const locationMatch = userMessage.match(/\b(?:in|near|around|at)\s+([^.!?\n,]+)/i);
-  const locationRaw = locationMatch?.[1]?.trim() || '';
+  const locationMatch = userMessage.match(/\b(?:in|near|around|at)\s+([^.!?\n]+?)(?:\s+within\s+\d|\s*$|[.!?])/i);
+  const locationRaw = locationMatch?.[1]?.trim().replace(/,?\s*within\s+\d+.*$/i, '').trim() || '';
   const parts = locationRaw.split(',').map((p) => p.trim()).filter(Boolean);
   const location: ParsedLeadIntent['location'] = {};
   if (parts.length >= 2) {
@@ -139,7 +139,11 @@ export function parseLeadIntentHeuristic(userMessage: string): ParsedLeadIntent 
   } else if (locationRaw) {
     location.city = locationRaw;
   }
-  location.radius_km = 25;
+  const radiusMatch = userMessage.match(/\bwithin\s+(\d+)\s*k?m?\b/i) || userMessage.match(/\b(\d+)\s*km\b/i);
+  const parsedRadius = radiusMatch ? Number(radiusMatch[1]) : 25;
+  location.radius_km = Number.isFinite(parsedRadius)
+    ? Math.min(Math.max(parsedRadius, 1), 100)
+    : 25;
 
   const industry = niche.split(/\s+/).slice(0, 3).join(' ');
 

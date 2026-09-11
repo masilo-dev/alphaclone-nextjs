@@ -19,6 +19,9 @@ export async function POST(
     // Accept either Brevo or generic format
     const event: string = (body.event || body.type || '').toLowerCase();
     const msgId: string = body.MessageID || body.message_id || body.msg_id || '';
+    if (!msgId || !event) {
+      return NextResponse.json({ error: 'Provider event and message ID are required' }, { status: 400 });
+    }
 
     const admin = createSupabaseAdminClient();
     const now = new Date().toISOString();
@@ -28,12 +31,13 @@ export async function POST(
       .from('invoice_delivery_log')
       .select('id, invoice_id, tenant_id, delivery_status')
       .eq('invoice_id', invoiceId)
+      .eq('provider_msg_id', msgId)
       .order('sent_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (!deliveryLog) {
-      return NextResponse.json({ error: 'Delivery log not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Provider receipt does not match this invoice' }, { status: 404 });
     }
 
     let newStatus: 'PENDING' | 'DELIVERED' | 'BOUNCED' | 'OPENED' = deliveryLog.delivery_status;
@@ -47,7 +51,8 @@ export async function POST(
       updatePayload.bounced_at = now;
       updatePayload.bounce_reason = body.reason || body.description || '';
     } else if (event.includes('open')) {
-      newStatus = newStatus === 'PENDING' ? 'DELIVERED' : newStatus; // opened implies delivered
+      newStatus = 'OPENED';
+      updatePayload.delivered_at = now;
       updatePayload.opened_at = now;
     }
 
@@ -61,7 +66,11 @@ export async function POST(
     // Also update the main invoice delivery_status
     await admin
       .from('business_invoices')
-      .update({ delivery_status: newStatus, updated_at: now })
+      .update({
+        delivery_status: newStatus,
+        delivery_verified_at: newStatus === 'DELIVERED' || newStatus === 'OPENED' ? now : undefined,
+        updated_at: now,
+      })
       .eq('id', invoiceId);
 
     // Audit

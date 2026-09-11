@@ -7,9 +7,12 @@ import {
   // @ts-ignore
   ReadResourceRequestSchema,
   // @ts-ignore
-  ListPromptsRequestSchema
+  ListPromptsRequestSchema,
+  // @ts-ignore
+  GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCP_TOOLS } from './toolManifest';
+import { MARKETING_PRICING } from '../../config/pricingPlans';
 import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
 import {
@@ -30,6 +33,9 @@ import { getFacebookTokens } from '@/services/facebook/facebookIntegrationServic
 import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import { sendScheduledCampaignServer } from '../../lib/server/sendScheduledCampaignServer';
+import { ensureEmailProviderReady } from '../../lib/mcp/ensureEmailProviderReady';
+import { shouldUseMcpDirectExecution } from '../../lib/mcp/mcpDirectExecution';
+import { executeBatchOutreach } from '../../lib/mcp/executeBatchOutreach';
 import Anthropic from '@anthropic-ai/sdk';
 import { routeAutonomousTask, cleanProfessionalContent, type AIStrengthTask } from '../aiRouter';
 import { PROFESSIONAL_GUARDRAILS } from '../ai/autonomousGuardrails';
@@ -50,8 +56,10 @@ import { onLeadCreated } from '../../lib/leads/leadOnCreated';
 import { resolveEmailProviderConfig } from '../../lib/email/providerIntegrationResolver';
 import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/providerSdk';
 import { sendEmailServer } from '../../lib/email/sendEmailServer';
+import { isEmailSuppressed } from '../../lib/email/suppression';
 import { insertBeforeEmailFooter } from '../../lib/email/emailComposition';
 import { parseFlexibleDueDate } from '../../lib/dates/parseFlexibleDueDate';
+import { validateDailyResourceQuota } from '../../lib/server/dailyResourceQuota';
 import {
   cancelRun,
   executeRun,
@@ -71,12 +79,12 @@ import { getCampaignLanguageInstruction, resolveCampaignLanguage } from '../../l
 import { fileUploadService } from '../fileUploadService';
 import { publicShareService } from '../publicShareService';
 import { start } from 'workflow/api';
-import { invoiceLifecycleWorkflow } from '../../workflows/invoice-lifecycle';
-import { contractLifecycleWorkflow } from '../../workflows/contract-lifecycle';
+import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
+import { queueContractLifecycle } from '@/lib/contracts/durableContractRouter';
+import { queueScheduledSocialPublish } from '@/lib/social/durableSocialScheduleRouter';
 import { leadFindingWorkflow } from '../../workflows/lead-finding';
 import { leadNurtureWorkflow } from '../../workflows/lead-nurture';
 import { dealStageWorkflow } from '../../workflows/deal-stage';
-import { socialScheduleWorkflow } from '../../workflows/social-schedule';
 import { emailCampaignWorkflow } from '../../workflows/email-campaign';
 import { projectKickoffWorkflow } from '../../workflows/project-kickoff';
 import { videoRoomOrchestrationWorkflow } from '../../workflows/video-room-orchestration';
@@ -98,6 +106,11 @@ import { routeAIRequest } from '../aiRouter';
 import { resolveMcpEmailRecipient } from '../../lib/email/resolveMcpEmailRecipient';
 import { resolveEmailAttachmentsFromFileIds } from '../../lib/files/resolveEmailAttachments';
 import { resolveEmailTemplateVars } from '../../lib/email/resolveEmailTemplateVars';
+import {
+  executeBulkEmail,
+  executeBulkUpdateRecords,
+  executeBulkUploadMedia,
+} from '../../lib/mcp/bulkOperations';
 
 
 const UUID_RE =
@@ -105,6 +118,22 @@ const UUID_RE =
 
 function isUuidString(value: unknown): value is string {
     return typeof value === 'string' && UUID_RE.test(value.trim());
+}
+
+/** Always returns valid JSON text, including for undefined and bigint values. */
+function safeJsonText(value: unknown, fallback: unknown = {}): string {
+  try {
+    return JSON.stringify(value ?? fallback, (_key, item) =>
+      typeof item === 'bigint' ? item.toString() : item, 2);
+  } catch (error) {
+    return JSON.stringify({
+      ok: false,
+      error: {
+        code: 'RESPONSE_SERIALIZATION_FAILED',
+        message: error instanceof Error ? error.message : 'Response could not be serialized',
+      },
+    });
+  }
 }
 
 async function generateContractDraftText(contractType: string, clientName: string, keyTerms?: string) {
@@ -684,6 +713,7 @@ type FacebookIntegrationIdentity = {
   pageAccessToken: string | null;
   metadata: Record<string, unknown> | null;
   updated_at?: string | null;
+  expires_at?: string | null;
 };
 
 function canPublishFacebookPage(identity: FacebookIntegrationIdentity): boolean {
@@ -700,15 +730,14 @@ function pickPreferredFacebookIdentity(identities: FacebookIntegrationIdentity[]
   const publishable = identities.filter(canPublishFacebookPage);
   if (!publishable.length) return null;
 
-  const explicitPrimary = publishable.find((item) => Boolean(item?.metadata?.is_primary));
+  // Explicit tenant primary only — never silently switch pages when multiple exist
+  const explicitPrimary = publishable.find((item) => Boolean(item?.metadata?.is_primary || item?.metadata?.is_default));
   if (explicitPrimary) return explicitPrimary;
 
-  const sorted = [...publishable].sort((a, b) => {
-    const aTs = Date.parse(String(a.updated_at || '')) || 0;
-    const bTs = Date.parse(String(b.updated_at || '')) || 0;
-    return bTs - aTs;
-  });
-  return sorted[0] || null;
+  // Auto-select only when exactly one publishable page for this tenant
+  if (publishable.length === 1) return publishable[0];
+
+  return null;
 }
 
 /**
@@ -728,6 +757,8 @@ export type MCPConnectionContext = {
   tenantId: string;
   userId: string;
   clientLabel?: string;
+  /** Set only by the authenticated queue worker after it validates a reviewed event. */
+  internalQueueWorker?: boolean;
 };
 
 function inferMcpLeadSource(
@@ -762,14 +793,14 @@ function hasCountryCode(phone: unknown): boolean {
   return /^\+[1-9]\d{6,14}$/.test(normalized);
 }
 
-async function enqueueMcpEvent(
+export async function enqueueMcpEvent(
   supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
   tenantId: string,
   userId: string | null,
   eventName: string,
   payload: Record<string, unknown>
 ) {
-  await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('mcp_event_queue')
     .insert({
       tenant_id: tenantId,
@@ -779,7 +810,11 @@ async function enqueueMcpEvent(
       status: 'pending',
       attempts: 0,
       available_at: new Date().toISOString(),
-    });
+    })
+    .select('id')
+    .single();
+  if (error) throw supabaseErrorToMcpClientError(eventName, error.message);
+  return data?.id as string | undefined;
 }
 
 class AlphaCloneMCPServer {
@@ -795,25 +830,16 @@ class AlphaCloneMCPServer {
     this.setupToolHandlers();
   }
 
-  /** Workspace scope for this HTTP connection (from MCP API key). */
+  /** Workspace scope for this HTTP connection (from MCP API key / OAuth). */
   private requireTenant(args: Record<string, any>): string {
     if (this.ctx?.tenantId) {
       // Session-scoped MCP: always use connection tenant; ignore echoed tenant_id from agents.
       return this.ctx.tenantId;
     }
-    const t = args.tenant_id;
-    if (!t || typeof t !== 'string') {
-      throw new Error(
-        'tenant_id is required unless you use the MCP connection URL from the dashboard (API-key scoped workspace). Pass your workspace UUID as tenant_id.'
-      );
-    }
-    const tid = t.trim();
-    if (!isUuidString(tid)) {
-      throw new Error(
-        'tenant_id must be a valid workspace UUID from your MCP dashboard URL, not a name or slug.'
-      );
-    }
-    return tid;
+    // Fail closed: never trust AI/client-supplied tenant_id without a bound session.
+    throw new Error(
+      'Active workspace required. Connect via the MCP dashboard URL or OAuth session — tenant_id from the model is not authoritative.'
+    );
   }
 
   private requireProfileUser(args: Record<string, any>): string {
@@ -825,13 +851,9 @@ class AlphaCloneMCPServer {
       }
       return this.ctx.userId;
     }
-    const u = args.user_id;
-    if (!u || typeof u !== 'string') throw new Error('user_id is required');
-    const uid = u.trim();
-    if (!isUuidString(uid)) {
-      throw new Error('user_id must be a valid UUID from your MCP connection URL.');
-    }
-    return uid;
+    throw new Error(
+      'Authenticated user required. Connect via the MCP dashboard URL or OAuth session — user_id from the model is not authoritative.'
+    );
   }
 
   private async getFacebookIntegrations(
@@ -865,6 +887,7 @@ class AlphaCloneMCPServer {
           pageAccessToken: tokens.pageAccessToken,
           metadata: row.metadata,
           updated_at: row.updated_at,
+          expires_at: row.expires_at,
         });
       }
       return resolved;
@@ -873,7 +896,8 @@ class AlphaCloneMCPServer {
     const selectCols =
       'id, page_id, page_name, is_active, metadata, updated_at, expires_at, page_access_token, user_access_token';
 
-    // 1. Try to query with tenant_id + user_id
+    // Tenant-scoped only. NEVER fall back to user_id across tenants.
+    // Co-members of the same tenant may share pages (tenant_id filter, optional user filter).
     let query = supabaseAdmin.from('facebook_integrations').select(selectCols);
     
     if (activeOnly) {
@@ -883,47 +907,23 @@ class AlphaCloneMCPServer {
       query = query.eq('page_id', pageId);
     }
     
-    const { data: tenantRows, error: tenantError } = await query
+    // Prefer tenant + user, then tenant-wide (same workspace). Never user-only.
+    const { data: tenantUserRows, error: tenantUserError } = await query
       .eq('tenant_id', tenantId)
       .eq('user_id', userId);
 
-    if (!tenantError && tenantRows && tenantRows.length > 0) {
-      return resolveTokens(tenantRows as Parameters<typeof resolveTokens>[0]);
+    if (!tenantUserError && tenantUserRows && tenantUserRows.length > 0) {
+      return resolveTokens(tenantUserRows as Parameters<typeof resolveTokens>[0]);
     }
 
-    // 2. Fallback: Query with user_id only (in case tenant_id mismatch/missing in connection flow)
-    let fallbackQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
-    
-    if (activeOnly) {
-      fallbackQuery = fallbackQuery.eq('is_active', true);
-    }
-    if (pageId) {
-      fallbackQuery = fallbackQuery.eq('page_id', pageId);
-    }
-
-    const { data: userRows, error: userError } = await fallbackQuery
-      .eq('user_id', userId);
-
-    if (!userError && userRows && userRows.length > 0) {
-      console.log(`[Facebook Fallback] Found ${userRows.length} integrations by user_id ${userId} (tenant_id mismatch)`);
-      return resolveTokens(userRows as Parameters<typeof resolveTokens>[0]);
-    }
-
-    // 3. Last fallback: Query by tenant_id only (no user_id filter)
     let tenantOnlyQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
-
-    if (activeOnly) {
-      tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
-    }
-    if (pageId) {
-      tenantOnlyQuery = tenantOnlyQuery.eq('page_id', pageId);
-    }
+    if (activeOnly) tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
+    if (pageId) tenantOnlyQuery = tenantOnlyQuery.eq('page_id', pageId);
 
     const { data: tenantOnlyRows, error: tenantOnlyError } = await tenantOnlyQuery
       .eq('tenant_id', tenantId);
 
     if (!tenantOnlyError && tenantOnlyRows && tenantOnlyRows.length > 0) {
-      console.log(`[Facebook Fallback] Found ${tenantOnlyRows.length} integrations by tenant_id ${tenantId} (user_id mismatch)`);
       return resolveTokens(tenantOnlyRows as Parameters<typeof resolveTokens>[0]);
     }
 
@@ -1006,11 +1006,43 @@ class AlphaCloneMCPServer {
       return { prompts };
     });
 
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request: any) => {
+      const { getMcpPrompt } = await import('../../lib/mcp/prompts/review_bonnie_patterns');
+      const name = String(request.params?.name || '');
+      const prompt = getMcpPrompt(name);
+      if (!prompt) throw new Error(`Unknown prompt: ${name}`);
+      const args = (request.params?.arguments || {}) as Record<string, string>;
+      return {
+        description: prompt.description,
+        messages: [
+          {
+            role: 'user',
+            content: { type: 'text', text: prompt.template(args) },
+          },
+        ],
+      };
+    });
+
     // ── Tool Manifest (unified discovery) ─────────────────────────────────
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-      const tools = await getUnifiedMcpTools({ sanitizeForClient: false });
-      return { tools };
+      try {
+        const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+        // Full catalog for SDK transports (Claude Code, etc.).
+        const tools = await getUnifiedMcpTools({
+          sanitizeForClient: false,
+          forChatGPT: false,
+          clientLabel: 'mcp-sdk',
+          catalogMode: 'full',
+        });
+        console.info(`[mcp.ListTools] returning ${tools.length} tools`);
+        if (tools.length === 0) {
+          console.error('[mcp.ListTools] CRITICAL empty tool list');
+        }
+        return { tools };
+      } catch (err: any) {
+        console.error('[mcp.ListTools] failed:', err?.message || err);
+        throw err;
+      }
     });
 
     // ── Tool Execution ──────────────────────────────────────────────────────
@@ -1042,7 +1074,15 @@ class AlphaCloneMCPServer {
     name: string,
     args: Record<string, any>,
     traceId: string,
-    supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>
+    supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+    options?: {
+      /**
+       * Skip the tool-registry lookup and go straight to the legacy switch.
+       * Set by the manifest bridge, whose registry entries forward here — without
+       * this the bridge and this method call each other until the heap is gone.
+       */
+      skipRegistry?: boolean;
+    }
   ): Promise<any> {
     const supabase = supabaseAdmin;
 
@@ -1065,10 +1105,38 @@ class AlphaCloneMCPServer {
         source: 'mcp',
         args: args || {},
       });
-      if (policy.outcome === 'deny' || policy.outcome === 'queue_approval') {
+      if (policy.outcome === 'deny') {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ error: true, message: policy.reason, approvalId: policy.approvalId }) }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: true,
+                code: 'POLICY_DENIED',
+                message: policy.reason,
+                risk_class: policy.riskClass,
+              }),
+            },
+          ],
           isError: true,
+        };
+      }
+      if (policy.outcome === 'queue_approval') {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                queued_for_approval: true,
+                approval_id: policy.approvalId,
+                risk_class: policy.riskClass,
+                message: policy.reason,
+                next_step:
+                  'Call list_pending_approvals then approve_pending_action with approval_id to execute.',
+              }),
+            },
+          ],
         };
       }
     }
@@ -1080,9 +1148,13 @@ class AlphaCloneMCPServer {
     let executedViaRegistry = false;
 
     try {
-      const { hasTool, executeTool, initializeRegistry } = await import('@/lib/mcp/tool-registry');
+      const { hasTool, executeTool, initializeRegistry, isBridgedTool } = await import('@/lib/mcp/tool-registry');
       initializeRegistry();
-      if (hasTool(name)) {
+      // Bridged tools are thin forwarders back into this method. Routing them
+      // through the registry again would recurse forever (each hop allocates a
+      // fresh server + Ajv instance), which is exactly the production OOM loop.
+      const routeViaRegistry = !options?.skipRegistry && hasTool(name) && !isBridgedTool(name);
+      if (routeViaRegistry) {
         executedViaRegistry = true;
         const tenantId = this.requireTenant((args || {}) as Record<string, any>);
         const userId = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
@@ -1563,7 +1635,7 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const { snapshot, error } = await strategicAuditService.getSnapshot(tenant_id, supabaseAdmin);
           if (error) throw new Error(error);
-          result = { content: [{ type: 'text', text: JSON.stringify(snapshot, null, 2) }] };
+          result = { content: [{ type: 'text', text: safeJsonText(snapshot, {}) }] };
           break;
         }
 
@@ -1614,25 +1686,13 @@ class AlphaCloneMCPServer {
           if (typeof query !== 'string' || !query.trim()) {
             throw new Error('query is required');
           }
-          const q = `%${query.trim()}%`;
-          const { data, error } = await supabaseAdmin
-            .from('business_clients')
-            .select('id, name, email, phone, industry, location, sales_stage, value, website, is_active, created_at')
-            .eq('tenant_id', tenant_id)
-            .eq('is_active', true)
-            .or(`name.ilike.${q},email.ilike.${q},phone.ilike.${q},website.ilike.${q},location.ilike.${q}`)
-            .order('created_at', { ascending: false })
-            .limit(Math.min(Number(limit) || 100, 1000));
-          if (error) throw supabaseErrorToMcpClientError('search_clients', error.message);
+          const { searchBusinessClients } = await import('@/lib/crm/searchBusinessClients');
+          const data = await searchBusinessClients(supabaseAdmin, tenant_id, query, limit);
           result = {
             content: [
               {
                 type: 'text',
-                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
-              },
-              {
-                type: 'text',
-                text: JSON.stringify(data || [], null, 2),
+                text: JSON.stringify({ ok: true, tool: 'search_clients', data: { items: data, count: data.length }, error: null }, null, 2),
               },
             ],
           };
@@ -2314,22 +2374,6 @@ class AlphaCloneMCPServer {
         // get_deals, create_deal, update_deal — handled by lib/mcp/tools/deals.ts registry
 
         // â”€â”€ get_projects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        case 'get_projects': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { status } = a;
-          let query = supabaseAdmin
-            .from('business_projects')
-            .select('id, name, status, due_date, description, client_id, created_at')
-            .eq('tenant_id', tenant_id)
-            .limit(50);
-          if (status) query = query.eq('status', status);
-          const { data, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('get_projects', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-          break;
-        }
-
         case 'get_project_summary': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -2771,6 +2815,15 @@ class AlphaCloneMCPServer {
           const campaignQuality = campaignQualityCheck(String(body_html || ''));
           const languageWarnings = campaignQuality.warnings;
 
+          if (publish_now) {
+            if (!shouldUseMcpDirectExecution('create_bulk_email_campaign')) {
+              throw new Error(
+                'Campaign durable queue is not implemented for MCP. Unset MCP_BULK_EMAIL_DURABLE to send directly in chat.',
+              );
+            }
+            await ensureEmailProviderReady(tenant_id, createdByUserId);
+          }
+
           if (publish_now && blocksBonnieSend(campaignQuality.score)) {
             throw new Error(
               `Campaign quality score ${campaignQuality.score}/100 — rewrite before send. Issues: ${languageWarnings.join('; ')}`
@@ -2778,18 +2831,24 @@ class AlphaCloneMCPServer {
           }
 
           if (publish_now) {
-             actionText = `Campaign "${campaignName}" created and queued to send to ${recipients.length} recipients with provider balancing.`;
              const sendResult = await sendScheduledCampaignServer(campaign.id);
              if (!sendResult.success) {
                throw new Error(sendResult.error || 'Campaign send failed');
              }
-             actionText = `Campaign "${campaignName}" created and sent to ${recipients.length} recipients.`;
+             actionText = `Campaign "${campaignName}" created and sent to ${recipients.length} recipients (direct execution).`;
           }
 
           result = { content: [{ type: 'text', text: JSON.stringify({
-            message: actionText,
-            campaign_id: campaign.id,
-            ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+            ok: true,
+            tool: 'create_bulk_email_campaign',
+            data: {
+              message: actionText,
+              campaign_id: campaign.id,
+              recipient_count: recipients.length,
+              publish_now: Boolean(publish_now),
+              execution_mode: publish_now ? 'direct' : 'draft',
+              ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+            },
           }, null, 2) }] };
           break;
         }
@@ -2810,6 +2869,15 @@ class AlphaCloneMCPServer {
             throw supabaseErrorToMcpClientError('queue_email_campaign_send', campaignErr?.message || 'Campaign not found');
           }
 
+          if (!shouldUseMcpDirectExecution('queue_email_campaign_send')) {
+            throw new Error(
+              'Campaign durable queue is not implemented for MCP. Unset MCP_BULK_EMAIL_DURABLE to send directly in chat.',
+            );
+          }
+
+          const userId = this.ctx?.userId || this.requireProfileUser(a);
+          await ensureEmailProviderReady(tenant_id, userId);
+
           const campaignBody = String((campaign as any)?.metadata?.bodyHtml || '');
           const preSendQuality = campaignQualityCheck(campaignBody);
           if (blocksBonnieSend(preSendQuality.score)) {
@@ -2817,12 +2885,6 @@ class AlphaCloneMCPServer {
               `Campaign quality score ${preSendQuality.score}/100 — rewrite before send. Issues: ${preSendQuality.warnings.join('; ')}`
             );
           }
-
-          await supabaseAdmin
-            .from('email_campaigns')
-            .update({ status: 'queued', queued_at: new Date().toISOString() })
-            .eq('tenant_id', tenant_id)
-            .eq('id', campaignId);
 
           const sendResult = await sendScheduledCampaignServer(campaignId);
           if (!sendResult.success) {
@@ -2833,13 +2895,17 @@ class AlphaCloneMCPServer {
 
           result = {
             content: [{ type: 'text', text: JSON.stringify({
-              campaign_id: campaignId,
-              campaign_name: campaign.name,
-              status: 'sent',
-              total_recipients: campaign.total_recipients || 0,
-              provider_routing: 'AlphaClone used connected providers through sendEmail fallback.',
-              quality_score: preSendQuality.score,
-              ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+              ok: true,
+              tool: 'queue_email_campaign_send',
+              data: {
+                campaign_id: campaignId,
+                campaign_name: campaign.name,
+                status: 'sent',
+                execution_mode: 'direct',
+                total_recipients: campaign.total_recipients || 0,
+                quality_score: preSendQuality.score,
+                ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+              },
             }, null, 2) }],
           };
           break;
@@ -2896,121 +2962,71 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const { lead_ids = [], client_ids = [], tone = 'professional', custom_context = '', delivery_provider = 'sendgrid' } = a;
-          const batchLanguage = resolveCampaignLanguage({
-            languageMode: a.language_mode,
-            language: a.language,
-          });
-          
-          if (lead_ids.length === 0 && client_ids.length === 0) {
-            throw new Error('Provide at least one lead_id or client_id');
-          }
-          if (batchLanguage.mustAsk) {
-            throw new Error('language_mode is "ask". Ask the user which language to use before sending outreach, then call this tool again with language or language_mode set to that language code.');
-          }
-          
-          const combinedIds = [...new Set([...lead_ids, ...client_ids])].slice(0, 50);
-          const CHUNK_SIZE = 3;
-          const ASYNC_THRESHOLD = 5;
+          const isQueueWorker = this.ctx?.internalQueueWorker === true;
+          const useDirect = shouldUseMcpDirectExecution('send_batch_outreach');
 
-          if (combinedIds.length > ASYNC_THRESHOLD) {
-            await enqueueMcpEvent(supabaseAdmin, tenant_id, user_id, 'send_batch_outreach', {
+          if (!isQueueWorker && !useDirect) {
+            const lead_ids = Array.isArray(a.lead_ids) ? a.lead_ids : [];
+            const client_ids = Array.isArray(a.client_ids) ? a.client_ids : [];
+            const recipientCount = new Set(lead_ids).size + new Set(client_ids).size;
+            if (!recipientCount) throw new Error('Provide at least one lead_id or client_id');
+            if (a.final_confirmation !== true) {
+              throw new Error('Set final_confirmation: true after reviewing recipients before queuing batch outreach.');
+            }
+            const batchLanguage = resolveCampaignLanguage({
+              languageMode: a.language_mode,
+              language: a.language,
+            });
+            const batchId = await enqueueMcpEvent(supabaseAdmin, tenant_id, user_id, 'send_batch_outreach', {
               lead_ids,
               client_ids,
-              tone,
-              custom_context,
-              delivery_provider,
+              tone: a.tone || 'professional',
+              custom_context: a.custom_context || '',
+              delivery_provider: a.delivery_provider || 'sendgrid',
               language_mode: batchLanguage.code,
+              final_confirmation: true,
+              reviewed_at: typeof a.reviewed_at === 'string' ? a.reviewed_at : new Date().toISOString(),
             });
             result = {
               content: [{
                 type: 'text',
                 text: JSON.stringify({
-                  status: 'queued',
-                  message: `Batch outreach queued for ${combinedIds.length} recipients (chunks of ${CHUNK_SIZE}). Poll get_email_campaign_stats or dashboard outreach log for delivery.`,
-                  recipient_count: combinedIds.length,
+                  ok: true,
+                  tool: 'send_batch_outreach',
+                  data: {
+                    status: 'queued',
+                    execution_mode: 'durable',
+                    batch_id: batchId,
+                    job_id: batchId,
+                    recipient_count: recipientCount,
+                    message: `Batch outreach queued for ${recipientCount} recipients. Requires cron worker (MCP_BULK_OUTREACH_DURABLE=true).`,
+                  },
                 }, null, 2),
               }],
             };
             break;
           }
-          
-          const [{ data: leads }, { data: clients }] = await Promise.all([
-            supabaseAdmin.from('leads').select('*').in('id', combinedIds).eq('tenant_id', tenant_id),
-            supabaseAdmin.from('business_clients').select('*').in('id', combinedIds).eq('tenant_id', tenant_id)
-          ]);
-            
-          const allEntities = [...(leads || []), ...(clients || [])];
-          
-          if (allEntities.length === 0) {
-            throw new Error('No valid leads or clients found for the provided IDs');
-          }
 
-          const results: Array<Record<string, unknown>> = [];
-          for (let i = 0; i < allEntities.length; i += CHUNK_SIZE) {
-            const chunk = allEntities.slice(i, i + CHUNK_SIZE);
-            const chunkResults = await Promise.all(chunk.map(async (entity) => {
-             const email = entity.email || (entity as any).emails?.[0];
-             if (!email) return { name: entity.business_name || entity.name, status: 'failed', error: 'No email found' };
-             
-             try {
-                const prompt = `Generate a highly personalized, professional B2B outreach email for ${entity.business_name || entity.name}.
-                Industry: ${entity.industry || 'Business'}.
-                Target Tone: ${tone}.
-                User Context: ${custom_context}.
-                Business Context: ${JSON.stringify(entity.metadata || {})}.
-                ${getCampaignLanguageInstruction({
-                  languageMode: batchLanguage.code,
-                  country: (entity as any).country,
-                  countryCode: (entity as any).country_code,
-                  address: (entity as any).address,
-                  company: entity.business_name || entity.name,
-                })}
-                
-                Rules:
-                - Max 120 words.
-                - Professional, punchy subject line.
-                - NO emojis.
-                - Clear CTA.`;
-                
-                const aiRes = await routeAutonomousTask('social_caption', prompt);
-                
-                const emailResult = await sendEmailServer({
-                  tenantId: tenant_id,
-                  userId: user_id,
-                  to: email,
-                  subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
-                  html: aiRes.content,
-                  fromName: 'AlphaClone Outreach',
-                  preferredProvider: delivery_provider as any,
-                  templateName: 'mcpAiOutreach',
-                });
-                if (!emailResult.success) throw new Error(emailResult.error || 'Outreach email failed');
+          const output = await executeBatchOutreach(
+            {
+              lead_ids: a.lead_ids,
+              client_ids: a.client_ids,
+              tone: a.tone,
+              custom_context: a.custom_context,
+              delivery_provider: a.delivery_provider,
+              language_mode: a.language_mode,
+              language: a.language,
+              final_confirmation: a.final_confirmation,
+              dry_run: a.dry_run,
+            },
+            { tenantId: tenant_id, userId: user_id },
+          );
 
-                await supabaseAdmin.from('lead_outreach_log').insert({
-                  tenant_id,
-                  user_id,
-                  lead_name: entity.business_name || entity.name,
-                  lead_email: email,
-                  subject: `Business Inquiry regarding ${entity.business_name || entity.name}`,
-                  body_html: aiRes.content,
-                  status: 'sent',
-                  provider: emailResult.provider,
-                });
-                
-                return { name: entity.business_name || entity.name, status: 'sent', language: batchLanguage.code, provider: emailResult.provider, email_id: emailResult.emailId };
-             } catch (err: any) {
-                return { name: entity.business_name || entity.name, status: 'failed', error: err.message };
-             }
-            }));
-            results.push(...chunkResults);
-          }
-          
-          result = { 
-            content: [{ 
-              type: 'text', 
-              text: `AI Outreach Batch complete. Sent to ${results.filter(r => r.status === 'sent').length}/${results.length} entities.\n\nResults: ${JSON.stringify(results, null, 2)}` 
-            }] 
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ ok: true, tool: 'send_batch_outreach', data: output }, null, 2),
+            }],
           };
           break;
         }
@@ -3280,15 +3296,12 @@ class AlphaCloneMCPServer {
           if (!binary.length) throw new Error('file_base64 is invalid or empty');
 
           const isVideo = mime_type.startsWith('video/');
-          const isImage = mime_type.startsWith('image/');
-          if (!isVideo && !isImage) {
-            throw new Error('Unsupported media type. Only image/* or video/* is allowed.');
+          // No size/type restriction — accept any media from external AI tools (Kling, etc.).
+          // Prefer media_urls on create_post when content already lives on an external host.
+          if (!mime_type.includes('/') ) {
+            throw new Error('mime_type must be a valid MIME string (e.g. image/png, video/mp4, application/octet-stream).');
           }
-          const maxBytes = isVideo ? 200 * 1024 * 1024 : 10 * 1024 * 1024;
-          if (binary.length > maxBytes) {
-            throw new Error(`Media exceeds max size of ${Math.round(maxBytes / 1024 / 1024)}MB.`);
-          }
-          const assetType = isVideo ? 'video' : mime_type.includes('gif') ? 'gif' : 'image';
+          const assetType = isVideo ? 'video' : mime_type.includes('gif') ? 'gif' : mime_type.startsWith('image/') ? 'image' : 'file';
           const ext = String(file_name).split('.').pop() || (isVideo ? 'mp4' : 'bin');
           const storagePath = `media/${tenant_id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
@@ -3486,8 +3499,12 @@ class AlphaCloneMCPServer {
         case 'get_facebook_post_insights': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const postId = String(a.post_id || '').trim();
-          if (!postId) throw new Error('post_id is required');
+          const postId = String(a.post_id || a.facebook_post_id || a.id || '').trim();
+          if (!postId) {
+            throw new Error(
+              'post_id is required (pass post_id, facebook_post_id, or id of the Facebook post)'
+            );
+          }
           let pageId = typeof a.page_id === 'string' ? a.page_id.trim() : '';
           let integration: FacebookIntegrationIdentity | null = null;
           let user_id = '';
@@ -3496,7 +3513,7 @@ class AlphaCloneMCPServer {
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
           if (!integration?.pageAccessToken) throw new Error('No Facebook Page token found for insights.');
           const metrics = ['post_impressions', 'post_impressions_unique', 'post_engaged_users', 'post_clicks'].join(',');
-          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.pageAccessToken)}`);
+          const resp = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.pageAccessToken)}`);
           const fb = await resp.json();
           if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook insights unavailable');
           result = { content: [{ type: 'text', text: JSON.stringify({ post_id: postId, insights: fb.data || [] }, null, 2) }] };
@@ -3516,7 +3533,7 @@ class AlphaCloneMCPServer {
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
           if (!integration?.pageAccessToken) throw new Error('No Facebook Page token found for delete.');
           pageId = integration.page_id;
-          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`, { method: 'DELETE' });
+          const resp = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`, { method: 'DELETE' });
           const fb = await resp.json().catch(() => ({}));
           if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook delete failed');
           await supabaseAdmin.from('facebook_page_posts').delete().eq('fb_post_id', postId).eq('page_id', pageId);
@@ -3564,28 +3581,61 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
+
+          // Flexible parameter extraction & normalization for ChatGPT / AI agent compatibility
+          const rawCaption = a.caption ?? a.content ?? a.text ?? a.message ?? a.post ?? a.description ?? a.prompt ?? '';
+
+          let rawMediaUrls: string[] = [];
+          if (Array.isArray(a.media_urls)) rawMediaUrls.push(...a.media_urls);
+          if (Array.isArray(a.image_urls)) rawMediaUrls.push(...a.image_urls);
+          if (typeof a.media_url === 'string' && a.media_url.trim()) rawMediaUrls.push(a.media_url.trim());
+          if (typeof a.image_url === 'string' && a.image_url.trim()) rawMediaUrls.push(a.image_url.trim());
+          if (typeof a.image === 'string' && a.image.trim()) rawMediaUrls.push(a.image.trim());
+          if (typeof a.file_url === 'string' && a.file_url.trim()) rawMediaUrls.push(a.file_url.trim());
+          if (typeof a.url === 'string' && a.url.trim()) rawMediaUrls.push(a.url.trim());
+          const media_urls = Array.from(new Set(rawMediaUrls.filter((u) => typeof u === 'string' && u.trim().startsWith('http'))));
+
+          let rawPlatforms: string[] = [];
+          if (Array.isArray(a.platforms)) rawPlatforms.push(...a.platforms);
+          if (typeof a.platforms === 'string' && a.platforms.trim()) rawPlatforms.push(a.platforms.trim());
+          if (typeof a.platform === 'string' && a.platform.trim()) rawPlatforms.push(a.platform.trim());
+          if (Array.isArray(a.platform)) rawPlatforms.push(...a.platform);
+          const platforms = rawPlatforms.length > 0 ? rawPlatforms : ['facebook'];
+
+          const publish_now = Boolean(a.publish_now);
+          let scheduled_at = typeof a.scheduled_at === 'string' && a.scheduled_at.trim()
+            ? a.scheduled_at.trim()
+            : new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+          let rawBase64: any[] = [];
+          if (Array.isArray(a.media_base64_data)) rawBase64 = a.media_base64_data;
+          else if (Array.isArray(a.media_base64)) rawBase64 = a.media_base64;
+          else if (a.image_base64 || a.file_base64 || a.base64) {
+            const b64 = a.image_base64 || a.file_base64 || a.base64;
+            const mime = a.mime_type || a.image_mime_type || a.file_type || 'image/png';
+            const fname = a.file_name || a.filename || 'ai-image.png';
+            rawBase64 = [{ file_name: fname, file_type: mime, base64: b64 }];
+          }
+          const media_base64_data = rawBase64;
+
           const {
-            platforms = ['facebook'],
             page_id,
-            caption,
+            caption = rawCaption,
             link_url,
-            media_urls = [],
             media_asset_ids = [],
             hashtags = [],
-            publish_now = false,
-            scheduled_at,
             task_id,
             task_title,
             task_note,
             mark_task_done,
             executing_agent,
-            media_base64_data = [],
             auto_refine_with_context = true,
           } = a;
-          const postPrep = prepareSocialPostContent(cleanProfessionalContent(caption || ''), link_url);
+
+          const postPrep = prepareSocialPostContent(cleanProfessionalContent(String(caption || '')), link_url);
           const cleanCaption = postPrep.content;
           const postCtaWarning = postPrep.warning;
-          if (!cleanCaption) throw new Error('caption is required');
+          if (!cleanCaption) throw new Error('caption is required (or pass content, text, message, or description)');
           if (publish_now && !isSocialPublishEnabled()) {
             throw new Error('Publishing disabled');
           }
@@ -3607,17 +3657,18 @@ class AlphaCloneMCPServer {
             }
             
             // 3. Solopreneur starting pricing value hook
-            const hasPricing = lower.includes('$15') || lower.includes('trial') || lower.includes('risk-free');
+            const hasPricing = lower.includes('trial') || lower.includes('risk-free') || lower.includes('free plan');
             if (!hasPricing) {
-              finalCaption += '\n\nKickstart your B2B lead pipelines with our zero-risk 14-day trial. Pricing starts at just $15/month.';
+              finalCaption += `\n\nKickstart your B2B lead pipelines with our zero-risk 14-day trial. ${MARKETING_PRICING.startingPriceLine}.`;
             }
           }
 
           const postSanitized = sanitizePost(finalCaption);
           finalCaption = postSanitized.clean;
 
-          // B. Direct base64 Multimedia Ingestion
+          // B. Direct base64 Multimedia Ingestion (optional — prefer external media_urls)
           const uploadedAssetUrls: string[] = [];
+          const uploadFailures: string[] = [];
           if (Array.isArray(media_base64_data) && media_base64_data.length > 0) {
             for (const item of media_base64_data) {
               try {
@@ -3626,6 +3677,7 @@ class AlphaCloneMCPServer {
                   const normalizedBase = base64.includes('base64,') ? base64.split('base64,')[1] : base64;
                   const binary = Buffer.from(normalizedBase, 'base64');
                   if (binary.length > 0) {
+                    // No size limit — accept video and any MIME from external AI tools.
                     const ext = String(file_name).split('.').pop() || (file_type.startsWith('video/') ? 'mp4' : 'bin');
                     const storagePath = `media/${tenant_id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
                     const { error: uploadError } = await supabaseAdmin.storage
@@ -3634,31 +3686,39 @@ class AlphaCloneMCPServer {
                         contentType: file_type,
                         upsert: false,
                       });
-                    if (!uploadError) {
-                      const { data: urlData } = supabaseAdmin.storage.from('public-assets').getPublicUrl(storagePath);
-                      const publicUrl = urlData.publicUrl;
-                      const assetType = file_type.startsWith('video/') ? 'video' : file_type.includes('gif') ? 'gif' : 'image';
-                      await supabaseAdmin
-                        .from('media_assets')
-                        .insert({
-                          tenant_id,
-                          user_id,
-                          file_name: file_name.trim(),
-                          file_type: file_type.trim(),
-                          asset_type: assetType,
-                          storage_path: storagePath,
-                          public_url: publicUrl,
-                          file_size_bytes: binary.length,
-                          alt_text: '',
-                          tags: ['mcp-direct-upload'],
-                        });
-                      uploadedAssetUrls.push(publicUrl);
+                    if (uploadError) {
+                      uploadFailures.push(`${file_name}: ${uploadError.message}`);
+                      continue;
                     }
+                    const { data: urlData } = supabaseAdmin.storage.from('public-assets').getPublicUrl(storagePath);
+                    const publicUrl = urlData.publicUrl;
+                    const assetType = file_type.startsWith('video/') ? 'video' : file_type.includes('gif') ? 'gif' : 'image';
+                    await supabaseAdmin
+                      .from('media_assets')
+                      .insert({
+                        tenant_id,
+                        user_id,
+                        file_name: file_name.trim(),
+                        file_type: file_type.trim(),
+                        asset_type: assetType,
+                        storage_path: storagePath,
+                        public_url: publicUrl,
+                        file_size_bytes: binary.length,
+                        alt_text: '',
+                        tags: ['mcp-direct-upload'],
+                      });
+                    uploadedAssetUrls.push(publicUrl);
                   }
                 }
-              } catch (err) {
+              } catch (err: any) {
+                uploadFailures.push(err?.message || 'unknown upload error');
                 console.error('Failed to upload direct base64 asset inside create_social_post:', err);
               }
+            }
+            if (uploadedAssetUrls.length === 0 && uploadFailures.length > 0) {
+              throw new Error(
+                `All media_base64_data uploads failed: ${uploadFailures.join('; ')}. Pass media_urls from the external AI tool instead.`
+              );
             }
           }
 
@@ -3671,12 +3731,7 @@ class AlphaCloneMCPServer {
             throw new Error(`Unsupported platforms: ${unsupported.join(', ')}. Allowed: facebook, linkedin, instagram, x, tiktok`);
           }
           const hasFacebook = normalizedPlatforms.includes('facebook');
-          if (!publish_now && (typeof scheduled_at !== 'string' || !scheduled_at.trim())) {
-            throw new Error('scheduled_at is required when publish_now is false');
-          }
-          if (publish_now && !hasFacebook) {
-            throw new Error('Immediate publish is currently supported only for Facebook. For LinkedIn/Instagram/X/TikTok, set publish_now=false to schedule/store.');
-          }
+          const hasLinkedIn = normalizedPlatforms.includes('linkedin');
 
           let resolvedPageId = typeof page_id === 'string' && page_id.trim() ? page_id.trim() : '';
           let integration: FacebookIntegrationIdentity | null = null;
@@ -3691,10 +3746,28 @@ class AlphaCloneMCPServer {
           }
 
           if (hasFacebook && !resolvedPageId) {
-            throw new Error('No connected Facebook pages were found for this workspace.');
+            throw new Error(
+              'page_id is required when this tenant has multiple Facebook Pages. Call get_social_identities or get_facebook_identities and pass identity_id/page_id.'
+            );
           }
 
-          const normalizedMediaUrls = Array.isArray(media_urls) ? media_urls.filter((u) => typeof u === 'string') : [];
+          const normalizedMediaUrls = Array.isArray(media_urls)
+            ? media_urls.filter((u) => typeof u === 'string' && String(u).trim())
+            : [];
+          // External AI/content tool URLs are first-class — no requirement to store in our DB first.
+          if (normalizedMediaUrls.length > 0) {
+            const { assertMediaUrlReachable } = await import('@/lib/social/uploadMediaAsset');
+            for (const url of normalizedMediaUrls) {
+              try {
+                await assertMediaUrlReachable(url);
+              } catch (mediaErr: any) {
+                throw new Error(
+                  mediaErr?.message ||
+                    `Media URL rejected: ${url}. Pass a reachable public URL from the generator tool.`
+                );
+              }
+            }
+          }
           let resolvedAssetUrls: string[] = [];
           if (Array.isArray(media_asset_ids) && media_asset_ids.length > 0) {
             const ids = media_asset_ids.filter((id) => typeof id === 'string');
@@ -3707,6 +3780,11 @@ class AlphaCloneMCPServer {
             resolvedAssetUrls = (assets || [])
               .map((asset: any) => String(asset.public_url || ''))
               .filter(Boolean);
+            if (resolvedAssetUrls.length === 0) {
+              throw new Error(
+                `None of the provided media_asset_ids resolved to a public URL for tenant ${tenant_id}.`
+              );
+            }
           }
 
           const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls, ...uploadedAssetUrls];
@@ -3728,13 +3806,43 @@ class AlphaCloneMCPServer {
           let status: 'scheduled' | 'queued' | 'published' = publish_now ? 'queued' : 'scheduled';
           let publishedAt: string | null = null;
           let facebookPostId: string | null = null;
+          let facebookPostUrl: string | null = null;
           const assuredIntegration = hasFacebook ? integration : null;
 
           if (publish_now && hasFacebook) {
             if (!assuredIntegration?.pageAccessToken) {
               throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
             }
-            const graph = new URL(`https://graph.facebook.com/v19.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
+
+            const {
+              confirmFacebookPublish,
+              FacebookPublishError,
+              inspectFacebookPublishToken,
+              logFacebookPublishTokenHealth,
+            } = await import('@/lib/facebook/verifyFacebookPost');
+
+            const tokenHealth = inspectFacebookPublishToken({
+              pageId: resolvedPageId,
+              pageAccessToken: assuredIntegration.pageAccessToken,
+              expiresAt: assuredIntegration.expires_at || null,
+              metadata: assuredIntegration.metadata,
+            });
+            logFacebookPublishTokenHealth(tokenHealth);
+
+            if (tokenHealth.isExpired) {
+              throw new FacebookPublishError(
+                'Facebook page token is expired or about to expire. Reconnect the Facebook Page in AlphaClone Integrations before posting.',
+                'TOKEN_EXPIRED'
+              );
+            }
+            if (!tokenHealth.hasPagesManagePosts) {
+              throw new FacebookPublishError(
+                'Facebook page token is missing publish permission (pages_manage_posts / CREATE_CONTENT). Reconnect the Page and grant pages_manage_posts.',
+                'MISSING_SCOPE'
+              );
+            }
+
+            const graph = new URL(`https://graph.facebook.com/v21.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
             graph.searchParams.set('access_token', assuredIntegration.pageAccessToken);
             const body = new URLSearchParams();
             if (firstMediaUrl) {
@@ -3759,9 +3867,17 @@ class AlphaCloneMCPServer {
               const msg = fb?.error?.message || 'Facebook publish failed';
               throw new Error(msg);
             }
+
+            // Hard verification: require Graph post id + confirm via GET /{post-id}
+            const verified = await confirmFacebookPublish({
+              graphResponse: fb,
+              pageAccessToken: assuredIntegration.pageAccessToken,
+              pageId: resolvedPageId,
+            });
             status = 'published';
             publishedAt = new Date().toISOString();
-            facebookPostId = fb?.id || null;
+            facebookPostId = verified.postId;
+            facebookPostUrl = verified.postUrl;
           }
 
           const { data, error } = await supabaseAdmin
@@ -3784,6 +3900,17 @@ class AlphaCloneMCPServer {
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_social_post', error.message);
 
+          // Dynamic LinkedIn publishing execution
+          let linkedinPublishResult: any = null;
+          if (publish_now && hasLinkedIn && data?.id) {
+            try {
+              const { publishLinkedInPost } = await import('@/lib/linkedin/publishPost');
+              linkedinPublishResult = await publishLinkedInPost(data.id);
+            } catch (lErr: any) {
+              linkedinPublishResult = { ok: false, platform: 'linkedin', reason: lErr?.message || 'LinkedIn publish failed' };
+            }
+          }
+
           // C. Daily Multi-Agent CRM Activity Timeline Logger
           const detectedAgent = typeof executing_agent === 'string' && executing_agent.trim()
             ? executing_agent.trim().toLowerCase()
@@ -3792,7 +3919,8 @@ class AlphaCloneMCPServer {
           const agentDisplayNames: Record<string, string> = {
             claude: 'Claude 3.5 Sonnet',
             grok: 'Grok 3 (Social Agent)',
-            manus: 'Manus AI (Web Agent)'
+            manus: 'Manus AI (Web Agent)',
+            chatgpt: 'ChatGPT (OpenAI Agent)',
           };
           const agentName = agentDisplayNames[detectedAgent] || 'Claude 3.5 Sonnet';
 
@@ -3801,7 +3929,7 @@ class AlphaCloneMCPServer {
             .insert({
               tenant_id: tenant_id,
               title: `[${agentName}] Autonomous Social Post Dispatched`,
-              description: `AI Agent successfully executed the autonomous social media distribution matrix.\n\nPlatforms: ${normalizedPlatforms.join(', ').toUpperCase()}\nCaption: ${finalCaption}\nAssets: ${mergedMediaUrls.length} media attached.\nStatus: ${status.toUpperCase()}`,
+              description: `AI Agent successfully executed the autonomous social media distribution matrix.\n\nPlatforms: ${normalizedPlatforms.join(', ').toUpperCase()}\nCaption: ${finalCaption}\nAssets: ${mergedMediaUrls.length} media attached.\nStatus: ${status.toUpperCase()}${linkedinPublishResult ? `\nLinkedIn: ${linkedinPublishResult.ok ? 'PUBLISHED (' + linkedinPublishResult.postUrn + ')' : 'FAILED (' + linkedinPublishResult.reason + ')'}` : ''}`,
               priority: 'medium',
               status: 'completed',
               completed_at: new Date().toISOString(),
@@ -3810,11 +3938,12 @@ class AlphaCloneMCPServer {
                 agent: detectedAgent,
                 agent_name: agentName,
                 tool: 'create_social_post',
-                social_post_id: data?.id || null
+                social_post_id: data?.id || null,
+                linkedin_result: linkedinPublishResult,
               }
             });
 
-          const actionLabel = publish_now ? 'posted to Facebook' : `scheduled for ${String(scheduled_at)}`;
+          const actionLabel = publish_now ? 'dispatched' : `scheduled for ${String(scheduled_at)}`;
           const resolvedTaskNote = typeof task_note === 'string' && task_note.trim()
             ? task_note.trim()
             : `Social content ${actionLabel}. social_post_id=${data?.id || 'unknown'} platforms=${normalizedPlatforms.join(',')}`;
@@ -3846,9 +3975,16 @@ class AlphaCloneMCPServer {
               {
                 type: 'text',
                 text: `Social post created: ${JSON.stringify({
-                  post: data,
+                  post: {
+                    ...data,
+                    facebook_post_url: facebookPostUrl,
+                    verified: publish_now && hasFacebook ? true : undefined,
+                    linkedin: linkedinPublishResult,
+                  },
                   task: taskResult,
                   page: hasFacebook ? { page_id: resolvedPageId, page_name: integration?.page_name || null } : null,
+                  facebook_post_url: facebookPostUrl,
+                  linkedin_result: linkedinPublishResult,
                   refinement: auto_refine_with_context !== false ? 'applied brand context' : 'skipped',
                   logged_run: { agent: detectedAgent, status: 'completed' },
                   has_cta: postPrep.has_cta,
@@ -3886,7 +4022,7 @@ class AlphaCloneMCPServer {
           }
 
           const response = await fetch(
-            `https://graph.facebook.com/v19.0/${post_id}/comments`,
+            `https://graph.facebook.com/v21.0/${post_id}/comments`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -4505,8 +4641,80 @@ class AlphaCloneMCPServer {
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
-          const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id }]);
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, status: 'sent', message: `Invoice lifecycle started successfully.`, runId }, null, 2) }] };
+
+          const { invoice, error: fetchErr } = await getInvoiceWithDetailsAdmin(supabaseAdmin, invoice_id, tenant_id);
+          if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
+
+          // Generate PDF
+          const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
+          const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
+          const pdfBase64 = pdfBuffer.toString('base64');
+
+          const to = recipient_email || invoice.client?.email;
+          if (!to) throw new Error('Recipient email is required (not found on client record)');
+
+          const amount = `${invoice.currency || '$'}${Number(invoice.total).toFixed(2)}`;
+          const pdfUrl = await getPublicInvoicePaymentUrl(supabaseAdmin, invoice_id, tenant_id);
+
+          const dispatch = await sendEmailServer({
+            tenantId: tenant_id,
+            userId: user_id || undefined,
+            preferredProvider: preferredProvider as any,
+            to,
+            subject: `Invoice ${invoice.invoice_number} — ${amount}`,
+            fromName: invoice.tenant?.name || 'AlphaClone',
+            html: invoiceEmailTemplates.invoiceSent({
+              recipientName: invoice.client?.name || 'Valued Client',
+              recipientEmail: to,
+              tenantId: tenant_id,
+              invoiceNumber: invoice.invoice_number,
+              amount: Number(invoice.total || 0),
+              currency: invoice.currency || 'USD',
+              dueDate: invoice.due_date,
+              actionUrl: pdfUrl,
+              workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
+              notes: invoice.notes || undefined,
+            }),
+            attachments: [{
+              filename: `Invoice_${invoice.invoice_number}.pdf`,
+              content: pdfBase64,
+              contentType: 'application/pdf',
+            }],
+            templateName: 'mcpInvoiceSent',
+            skipFooter: true,
+          });
+
+          if (!dispatch.success) {
+            throw new Error(`Invoice email delivery failed: ${dispatch.error || 'unknown error'} ${JSON.stringify(dispatch.errorDetails || [])}`);
+          }
+
+          const { error: updateError } = await supabaseAdmin
+            .from('business_invoices')
+            .update({
+              status: 'sent',
+              is_public: true,
+              sent_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('tenant_id', tenant_id)
+            .eq('id', invoice_id);
+          if (updateError) throw supabaseErrorToMcpClientError('send_invoice', updateError.message);
+
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            status: 'sent',
+            message: `Invoice ${invoice.invoice_number} sent successfully.`,
+            sent_to: to,
+            invoice_number: invoice.invoice_number,
+            amount,
+            provider_used: dispatch.provider,
+            email_id: dispatch.emailId,
+            pdf_url: pdfUrl,
+            attachment: {
+              filename: `Invoice_${invoice.invoice_number}.pdf`,
+              content_type: 'application/pdf',
+              base64: pdfBase64,
+            },
+          }, null, 2) }] };
           break;
         }
 
@@ -5530,7 +5738,7 @@ class AlphaCloneMCPServer {
               attachments.push({
                 filename: att.filename,
                 content: att.content,
-                contentType: String(att.content_type || att.contentType || 'application/octet-stream'),
+                contentType: String(att.contentType || 'application/octet-stream'),
               });
             }
           }
@@ -5605,7 +5813,7 @@ class AlphaCloneMCPServer {
             byProvider[p] = (byProvider[p] || 0) + 1;
             byStatus[s] = (byStatus[s] || 0) + 1;
           });
-          result = { content: [{ type: 'text', text: JSON.stringify({ total: rows.length, by_provider: byProvider, by_status: byStatus }, null, 2) }] };
+          result = { content: [{ type: 'text', text: safeJsonText({ total: rows.length, by_provider: byProvider, by_status: byStatus }) }] };
           break;
         }
 
@@ -5734,7 +5942,7 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const invoice_id = String(a.invoice_id || '').trim();
           if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid UUID');
-          const { data, error } = await supabaseAdmin.from('invoice_line_items').select('*').eq('tenant_id', tenant_id).eq('invoice_id', invoice_id).order('position', { ascending: true });
+          const { data, error } = await supabaseAdmin.from('invoice_line_items').select('*').eq('tenant_id', tenant_id).eq('invoice_id', invoice_id).order('created_at', { ascending: true });
           if (error) throw supabaseErrorToMcpClientError('get_invoice_line_items', error.message);
           result = {
             content: [
@@ -5756,12 +5964,32 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const invoice_id = String(a.invoice_id || '').trim();
           if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid UUID');
-          const patch: Record<string, unknown> = { status: 'paid', paid_at: a.paid_at ? String(a.paid_at) : new Date().toISOString() };
-          if (a.amount != null) patch.paid_amount = Number(a.amount) || 0;
-          if (a.payment_ref) patch.payment_reference = String(a.payment_ref);
-          const { data, error } = await supabaseAdmin.from('invoices').update(patch).eq('tenant_id', tenant_id).eq('id', invoice_id).select('id,status,paid_at,updated_at').single();
-          if (error) throw supabaseErrorToMcpClientError('reconcile_payment', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          const amount = a.amount != null ? Number(a.amount) : null;
+          const { data: invoice, error: fetchError } = await supabaseAdmin
+            .from('business_invoices')
+            .select('id,total,amount_paid,status')
+            .eq('tenant_id', tenant_id)
+            .eq('id', invoice_id)
+            .maybeSingle();
+          if (fetchError) throw supabaseErrorToMcpClientError('reconcile_payment', fetchError.message);
+          if (!invoice) throw new Error('Invoice not found');
+          const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
+          const payAmount = amount && amount > 0 ? amount : remaining;
+          if (payAmount <= 0) {
+            result = { content: [{ type: 'text', text: JSON.stringify({ id: invoice.id, status: invoice.status, message: 'Nothing to reconcile' }, null, 2) }] };
+            break;
+          }
+          const { recordInvoicePaymentServer } = await import('@/lib/invoices/recordInvoicePaymentServer');
+          const paid = await recordInvoicePaymentServer(supabaseAdmin, {
+            tenantId: tenant_id,
+            invoiceId: invoice_id,
+            amount: payAmount,
+            idempotencyKey: `mcp:reconcile:${invoice_id}:${a.payment_ref || Date.now()}`,
+            source: 'mcp_reconcile',
+            externalReference: a.payment_ref ? String(a.payment_ref) : null,
+            actorUserId: null,
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify({ id: paid?.id, status: paid?.status, paid_at: paid?.paid_at, amount_paid: paid?.amount_paid }, null, 2) }] };
           break;
         }
 
@@ -6056,6 +6284,362 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'bulk_update_records': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const output = await executeBulkUpdateRecords(a as any, { tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: safeJsonText(output) }] };
+          break;
+        }
+
+        case 'bulk_upsert_contacts': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const contacts = Array.isArray(a.contacts) ? a.contacts : [];
+          if (contacts.length === 0) throw new Error('contacts array is required');
+          const succeeded: any[] = [];
+          const failed: any[] = [];
+          for (const c of contacts) {
+            try {
+              if (!c.email) throw new Error('Email is required');
+              const { data, error } = await supabaseAdmin
+                .from('business_clients')
+                .upsert({
+                  tenant_id,
+                  email: String(c.email).trim().toLowerCase(),
+                  name: c.name ? String(c.name).trim() : String(c.email).split('@')[0],
+                  phone: c.phone ? String(c.phone).trim() : null,
+                  company_name: c.company ? String(c.company).trim() : null,
+                  notes: c.notes ? String(c.notes) : null,
+                  metadata: c.metadata || {},
+                  updated_at: new Date().toISOString(),
+                }, { onConflict: 'tenant_id,email' })
+                .select('id, email, name')
+                .single();
+              if (error) throw error;
+              succeeded.push(data);
+            } catch (err: any) {
+              failed.push({ email: c.email, error: err.message || 'Upsert failed' });
+            }
+          }
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                total: contacts.length,
+                succeeded_count: succeeded.length,
+                failed_count: failed.length,
+                succeeded,
+                failed,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_create_leads': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.ctx?.userId || (a.user_id && typeof a.user_id === 'string' ? a.user_id.trim() : null);
+          if (!user_id) throw new Error('Authenticated user required');
+          const leads = Array.isArray(a.leads) ? a.leads : [];
+          if (leads.length === 0) throw new Error('leads array is required');
+
+          const idempotencyKey = String(a.idempotency_key || '').trim();
+          if (idempotencyKey) {
+            const { findReceiptByIdempotency } = await import('@/lib/mcp/actionReceipts');
+            const existing = await findReceiptByIdempotency({
+              tenantId: tenant_id,
+              tool: 'bulk_create_leads',
+              idempotencyKey,
+            });
+            if (existing?.sanitized_output) {
+              result = {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify(existing.sanitized_output, null, 2),
+                }],
+              };
+              break;
+            }
+          }
+
+          const { validateProjectedUsage, recordSuccessfulUsage } = await import('@/lib/entitlements/meteringService');
+          const projected = await validateProjectedUsage(tenant_id, user_id, 'leads', leads.length);
+          if (!projected.allowed) {
+            throw new Error(projected.reason || 'Daily lead limit would be exceeded');
+          }
+
+          const succeeded: any[] = [];
+          const failed: any[] = [];
+          for (const l of leads) {
+            try {
+              if (!l.business_name) throw new Error('business_name is required');
+              const { data, error } = await supabaseAdmin
+                .from('leads')
+                .insert({
+                  tenant_id,
+                  business_name: String(l.business_name).trim(),
+                  email: l.email ? String(l.email).trim().toLowerCase() : null,
+                  phone: l.phone ? String(l.phone).trim() : null,
+                  website: l.website ? String(l.website).trim() : null,
+                  category: l.category ? String(l.category).trim() : 'General',
+                  source: l.source ? String(l.source).trim() : 'bulk_api',
+                  notes: l.notes ? String(l.notes) : null,
+                  status: 'new',
+                })
+                .select('id, business_name, email')
+                .single();
+              if (error) throw error;
+              succeeded.push(data);
+            } catch (err: any) {
+              failed.push({ lead: l.business_name, error: err.message || 'Create failed' });
+            }
+          }
+
+          if (succeeded.length > 0) {
+            await recordSuccessfulUsage({
+              tenantId: tenant_id,
+              userId: user_id,
+              resource: 'leads',
+              amount: succeeded.length,
+              operationId: idempotencyKey ? `bulk_create_leads:${idempotencyKey}` : undefined,
+              initiationSource: 'mcp_bulk_create_leads',
+              metadata: { requested: leads.length, failed: failed.length },
+            });
+          }
+
+          const payload = {
+            tenant_id,
+            total: leads.length,
+            succeeded_count: succeeded.length,
+            failed_count: failed.length,
+            succeeded,
+            failed,
+          };
+
+          if (idempotencyKey) {
+            const { persistActionReceipt } = await import('@/lib/mcp/actionReceipts');
+            await persistActionReceipt({
+              tenantId: tenant_id,
+              userId: user_id,
+              tool: 'bulk_create_leads',
+              idempotencyKey,
+              receipt: {
+                action_id: idempotencyKey,
+                status: failed.length === 0 ? 'completed' : 'partial',
+                entity_type: 'lead',
+                entity_id: succeeded[0]?.id,
+                timestamp: new Date().toISOString(),
+              },
+              success: succeeded.length > 0,
+              sanitizedInput: { lead_count: leads.length },
+              sanitizedOutput: payload,
+            });
+          }
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(payload, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_update_leads': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const lead_ids = Array.isArray(a.lead_ids) ? a.lead_ids : [];
+          const patch = a.patch && typeof a.patch === 'object' ? a.patch : {};
+          if (!lead_ids.length) throw new Error('lead_ids array is required');
+          const { data, error } = await supabaseAdmin
+            .from('leads')
+            .update({ ...patch, updated_at: new Date().toISOString() })
+            .eq('tenant_id', tenant_id)
+            .in('id', lead_ids)
+            .select('id, status, category');
+          if (error) throw supabaseErrorToMcpClientError('bulk_update_leads', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                requested: lead_ids.length,
+                updated_count: (data || []).length,
+                updated: data || [],
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_add_to_segment': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const record_ids = Array.isArray(a.record_ids) ? a.record_ids : [];
+          const record_type = String(a.record_type || 'lead');
+          const segment_name = String(a.segment_name || '').trim();
+          if (!record_ids.length || !segment_name) throw new Error('record_ids and segment_name are required');
+          const table = record_type === 'contact' ? 'business_clients' : 'leads';
+          const { data, error } = await supabaseAdmin
+            .from(table)
+            .update({ category: segment_name, updated_at: new Date().toISOString() })
+            .eq('tenant_id', tenant_id)
+            .in('id', record_ids)
+            .select('id');
+          if (error) throw supabaseErrorToMcpClientError('bulk_add_to_segment', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                segment_name,
+                record_type,
+                updated_count: (data || []).length,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_assign_campaign': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const campaign_id = String(a.campaign_id || '').trim();
+          const record_ids = Array.isArray(a.record_ids) ? a.record_ids : [];
+          if (!campaign_id || !record_ids.length) throw new Error('campaign_id and record_ids are required');
+
+          const recipientsToInsert = record_ids.map((id) => ({
+            campaign_id,
+            tenant_id,
+            email: `${id}@campaign.placeholder`,
+            status: 'pending',
+            metadata: { assigned_record_id: id },
+          }));
+
+          const { data, error } = await supabaseAdmin
+            .from('campaign_recipients')
+            .upsert(recipientsToInsert, { onConflict: 'campaign_id,email' })
+            .select('id');
+
+          if (error) throw supabaseErrorToMcpClientError('bulk_assign_campaign', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                campaign_id,
+                assigned_count: (data || []).length,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_archive_leads': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const lead_ids = Array.isArray(a.lead_ids) ? a.lead_ids : [];
+          const reason = String(a.reason || 'Bulk archived via MCP');
+          if (!lead_ids.length) throw new Error('lead_ids is required');
+          const { data, error } = await supabaseAdmin
+            .from('leads')
+            .update({ status: 'archived', notes: reason, updated_at: new Date().toISOString() })
+            .eq('tenant_id', tenant_id)
+            .in('id', lead_ids)
+            .select('id');
+          if (error) throw supabaseErrorToMcpClientError('bulk_archive_leads', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                archived_count: (data || []).length,
+                reason,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'upload_file': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = a.user_id ? String(a.user_id) : 'system';
+          const filename = String(a.filename || 'upload.bin').trim();
+          const content_base64 = String(a.content_base64 || '').trim();
+          const mime_type = String(a.mime_type || 'application/octet-stream').trim();
+
+          const { fileUploadService } = await import('@/services/fileUploadService');
+          const buffer = Buffer.from(content_base64, 'base64');
+          const fileRecord = await fileUploadService.uploadFileFromBuffer(
+            buffer,
+            filename,
+            mime_type,
+            tenant_id,
+            user_id
+          );
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(fileRecord, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'ingest_document': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = a.user_id ? String(a.user_id) : 'system';
+          const filename = String(a.filename || 'document.pdf').trim();
+          const content_base64 = String(a.content_base64 || '').trim();
+          const mime_type = String(a.mime_type || 'application/pdf').trim();
+          const title = String(a.title || filename).trim();
+          const category = String(a.category || 'General').trim();
+
+          const { fileUploadService } = await import('@/services/fileUploadService');
+          const buffer = Buffer.from(content_base64, 'base64');
+          const docRecord = await fileUploadService.uploadFileFromBuffer(
+            buffer,
+            filename,
+            mime_type,
+            tenant_id,
+            user_id,
+            { category, aiSummary: title }
+          );
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(docRecord, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_upload_media': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const output = await executeBulkUploadMedia(a as any, { tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: safeJsonText(output) }] };
+          break;
+        }
+
+        case 'send_bulk_email': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const output = await executeBulkEmail(a as any, { tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: safeJsonText(output) }] };
+          break;
+        }
+
         case 'update_client_status_batch': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -6126,40 +6710,37 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
           const dryRun = a.dry_run !== false;
+          if (!dryRun && a.confirm_send !== true) {
+            throw new Error('Set confirm_send: true after reviewing a dry run before sending bulk email');
+          }
+          if (!dryRun) {
+            if (!shouldUseMcpDirectExecution('send_bulk_email_campaign')) {
+              throw new Error(
+                'Bulk email durable queue is not implemented for MCP. Unset MCP_BULK_EMAIL_DURABLE to send directly in chat.',
+              );
+            }
+            await ensureEmailProviderReady(tenant_id, user_id);
+          }
           const clientIds = Array.isArray(a.client_ids) ? a.client_ids.map((id) => String(id || '').trim()).filter((id) => isUuidString(id)) : [];
           const subject = String(a.subject || '').trim();
           if (!clientIds.length || !subject) throw new Error('client_ids and subject are required');
-          const { data: clients, error: clientsErr } = await supabaseAdmin
-            .from('business_clients')
-            .select('id,name,email')
-            .eq('tenant_id', tenant_id)
-            .in('id', clientIds);
-          if (clientsErr) throw supabaseErrorToMcpClientError('send_bulk_email_campaign', clientsErr.message);
-          const targets = (clients || []).filter((c: any) => !!c.email);
-          const itemResults: Array<Record<string, unknown>> = dryRun
-            ? targets.map((t: any) => ({ client_id: t.id, email: t.email, status: 'dry_run' }))
-            : [];
-          if (!dryRun) {
-            for (const target of targets) {
-              const sendResult = await sendEmailServer({
-                tenantId: tenant_id,
-                userId: user_id,
-                to: String(target.email),
-                subject,
-                html: a.html ? String(a.html) : undefined,
-                text: a.text ? String(a.text) : undefined,
-                fromName: String(a.from_name || 'AlphaClone Systems'),
-                preferredProvider: a.provider as any,
-                templateName: 'mcpBulkEmail',
-              });
-              if (!sendResult.success) {
-                itemResults.push({ client_id: target.id, email: target.email, status: 'failed', error: sendResult.error || 'send_failed' });
-              } else {
-                itemResults.push({ client_id: target.id, email: target.email, status: 'sent', provider: sendResult.provider, email_id: sendResult.emailId });
-              }
-            }
-          }
-          result = { content: [{ type: 'text', text: JSON.stringify({ dry_run: dryRun, requested: clientIds.length, processed: itemResults.length, items: itemResults }, null, 2) }] };
+          const output = await executeBulkEmail({
+            client_ids: clientIds,
+            subject,
+            html: a.html ? String(a.html) : undefined,
+            text: a.text ? String(a.text) : undefined,
+            provider: a.provider,
+            from_name: a.from_name,
+            dry_run: dryRun,
+            confirm_send: a.confirm_send,
+            idempotency_key: a.idempotency_key,
+            email_category: a.email_category || 'marketing',
+          }, { tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            ok: true,
+            tool: 'send_bulk_email_campaign',
+            data: output,
+          }, null, 2) }] };
           break;
         }
 
@@ -6235,12 +6816,17 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
+          const {
+            assertProviderCircuitClosed,
+            recordProviderSuccess,
+          } = await import('@/lib/email/providerCircuitBreaker');
+          assertProviderCircuitClosed(tenant_id, 'zoho', 'get_zoho_mail_messages');
           const folderId = typeof a.folder_id === 'string' ? a.folder_id.trim() : '';
           const searchQuery = typeof a.search_query === 'string' ? a.search_query.trim() : '';
           const limit = Math.min(Math.max(Number(a.limit) || 20, 1), 100);
           const start = Math.max(Number(a.start) || 1, 1);
 
-          const zoho = new ZohoMailService(user_id);
+          const zoho = new ZohoMailService(user_id, tenant_id);
           let payload: Record<string, unknown>;
           if (searchQuery) {
             const messages = await zoho.searchMessages(searchQuery);
@@ -6255,12 +6841,59 @@ class AlphaCloneMCPServer {
             payload = { mode: 'folders', folders };
           }
 
+          recordProviderSuccess(tenant_id, 'zoho', 'get_zoho_mail_messages');
           result = { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
           } catch (err: any) {
             if (err instanceof ZohoAuthExpiredError) {
               result = { content: [{ type: 'text', text: JSON.stringify({ zoho_auth_error: true, action: 'Reconnect Zoho in Settings', message: err.message }, null, 2) }] };
+            } else if (err?.name === 'ProviderCircuitOpenError') {
+              result = { content: [{ type: 'text', text: JSON.stringify({ error: 'CIRCUIT_OPEN', provider: 'zoho', message: err.message }, null, 2) }], isError: true };
             } else {
-              throw err;
+              const tenant_id = (args as Record<string, any>).tenant_id || (args as Record<string, any>).tenantId;
+              if (tenant_id) {
+                const { recordProviderFailure } = await import('@/lib/email/providerCircuitBreaker');
+                const paused = recordProviderFailure({
+                  tenantId: String(tenant_id),
+                  provider: 'zoho',
+                  operation: 'get_zoho_mail_messages',
+                  fingerprint: err?.message || 'zoho_mail_read_failed',
+                });
+                if (paused.paused) {
+                  result = {
+                    content: [{
+                      type: 'text',
+                      text: JSON.stringify({
+                        ok: false,
+                        tool: 'get_zoho_mail_messages',
+                        data: null,
+                        error: {
+                          code: 'CIRCUIT_OPEN',
+                          provider: 'zoho',
+                          message: 'Zoho mailbox reads paused after repeated failures. Reconnect Zoho in Settings.',
+                          consecutive_failures: paused.consecutiveFailures,
+                        },
+                      }, null, 2),
+                    }],
+                    isError: true,
+                  };
+                  break;
+                }
+              }
+              result = {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    ok: false,
+                    tool: 'get_zoho_mail_messages',
+                    data: null,
+                    error: {
+                      code: 'PROVIDER_ERROR',
+                      message: err?.message || 'Zoho mailbox read failed',
+                    },
+                  }, null, 2),
+                }],
+                isError: true,
+              };
             }
           }
           break;
@@ -6273,7 +6906,7 @@ class AlphaCloneMCPServer {
           const user_id = this.requireProfileUser(a);
           const threadId = String(a.thread_id || '').trim();
           if (!threadId) throw new Error('thread_id is required');
-          const zoho = new ZohoMailService(user_id);
+          const zoho = new ZohoMailService(user_id, tenant_id);
           const messages = await zoho.getThread(threadId);
           result = { content: [{ type: 'text', text: JSON.stringify({ tenant_id, thread_id: threadId, messages }, null, 2) }] };
           } catch (err: any) {
@@ -6294,7 +6927,7 @@ class AlphaCloneMCPServer {
           const messageId = String(a.message_id || '').trim();
           if (!messageId) throw new Error('message_id is required');
           if (!a.body_html && !a.body_text) throw new Error('body_html or body_text is required');
-          const zoho = new ZohoMailService(user_id);
+          const zoho = new ZohoMailService(user_id, tenant_id);
           const reply = await zoho.replyToMessage({
             messageId,
             bodyHtml: String(a.body_html || a.body_text || ''),
@@ -6457,7 +7090,7 @@ class AlphaCloneMCPServer {
             attachments: [{
               filename: `Quote_${quote.quote_number || quote.id}.html`,
               content: attachmentContent,
-              content_type: 'text/html',
+              contentType: 'text/html',
             }],
             templateName: 'mcpQuoteEmail',
           });
@@ -6754,71 +7387,69 @@ Return ONLY a JSON array of 60 objects:
           delete a.hd;
           const tenant_id = this.requireTenant(a);
           const userId = this.requireProfileUser(a);
-          const { topic, image_prompt, image_provider = 'openai', provided_image_url, platforms = ['facebook', 'linkedin'], scheduled_at } = a;
+          const { topic, image_prompt, image_provider = 'openai', provided_image_url, platforms = ['facebook', 'linkedin'], scheduled_at, fallback_to_text_only = false } = a;
 
           let imageUrl: string | null = provided_image_url || null;
           let imageStatus = provided_image_url ? 'provided' : 'not_generated';
+          let imageGenerationWarning: Record<string, unknown> | null = null;
 
           // 1. Generate Image if not provided
           if (!imageUrl) {
             if (!image_prompt) throw new Error('image_prompt is required if provided_image_url is omitted');
-            const wantsOpenAi = image_provider !== 'xai';
-            if (wantsOpenAi && !process.env.OPENAI_API_KEY) {
-              result = {
-                content: [{
-                  type: 'text',
-                  text: JSON.stringify({
-                    error: 'OPENAI_BILLING_NOT_CONFIGURED',
-                    message: 'OpenAI image generation is unavailable — OPENAI_API_KEY is missing or OpenAI billing is inactive. Retry with image_provider "xai", pass provided_image_url, or activate OpenAI billing in platform settings.',
-                    action_required: true,
-                  }, null, 2),
-                }],
-              };
-              break;
-            }
-            try {
-              // Try primary provider
-              let img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', image_provider as any);
-              
-              // If primary fails, try the other one
-              if (!img.success || !img.url) {
-                  const altProvider = image_provider === 'openai' ? 'xai' : 'openai';
-                  console.warn(`[MCP] Image Gen failed with ${image_provider}, retrying with ${altProvider}...`, img.error);
-                  img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', altProvider as any);
-              }
+            const { generateSocialImage } = await import('@/lib/ai/generateSocialImage');
+            const img = await generateSocialImage({
+              prompt: String(image_prompt),
+              size: '1024x1024',
+              provider: image_provider === 'xai' ? 'xai' : image_provider === 'openai' ? 'openai' : 'auto',
+            });
 
-              if (!img.success || !img.url) {
-                const billingIssue = String(img.error || '').toLowerCase().includes('billing')
-                  || String(img.error || '').toLowerCase().includes('openai');
-                result = {
-                  content: [{
-                    type: 'text',
-                    text: JSON.stringify({
-                      error: billingIssue ? 'OPENAI_BILLING_LIMIT' : 'IMAGE_GENERATION_FAILED',
-                      message: billingIssue
-                        ? `OpenAI billing limit reached or inactive: ${img.error}. Activate billing, use image_provider "xai", or pass provided_image_url.`
-                        : `Could not generate an image for this post. Both AI image providers failed. Reason: ${img.error || 'Unknown'}. Please retry with a different image_prompt, or provide a provided_image_url instead.`,
-                      action_required: true,
-                    }, null, 2),
-                  }],
+            if (img.ok) {
+              const bytes = Buffer.from(img.base64, 'base64');
+              const storagePath = `generated/${tenant_id}/${userId}/${crypto.randomUUID()}.png`;
+              const { error: storageError } = await supabaseAdmin.storage
+                .from('social-assets')
+                .upload(storagePath, bytes, { contentType: 'image/png', cacheControl: '31536000', upsert: false });
+              if (storageError) {
+                imageStatus = 'storage_failed';
+                imageGenerationWarning = {
+                  code: 'IMAGE_STORAGE_FAILED',
+                  message: storageError.message,
+                  provider: img.provider,
                 };
-                break;
+              } else {
+                const { data: publicData } = supabaseAdmin.storage.from('social-assets').getPublicUrl(storagePath);
+                imageUrl = publicData.publicUrl;
+                imageStatus = 'generated';
               }
-              imageUrl = img.url;
-              imageStatus = 'generated';
-            } catch (imgErr: any) {
-              result = {
-                content: [{
-                  type: 'text',
-                  text: JSON.stringify({
-                    error: 'IMAGE_GENERATION_EXCEPTION',
-                    message: `Image generation threw an error: ${imgErr.message}. Please retry or provide a provided_image_url.`,
-                    action_required: true,
-                  }, null, 2),
-                }],
+            } else {
+              imageStatus = 'generation_failed';
+              imageGenerationWarning = {
+                code: img.error.code,
+                message: img.error.message,
+                provider: img.error.provider || null,
               };
-              break;
             }
+          }
+
+          if (imageGenerationWarning && !fallback_to_text_only) {
+            result = {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error: imageGenerationWarning.code,
+                  message: imageGenerationWarning.message,
+                  provider: imageGenerationWarning.provider || null,
+                  post_not_created: true,
+                  next_steps: [
+                    'This is an AI image provider failure — not Facebook or LinkedIn.',
+                    'Ask the user whether to schedule/publish caption-only or retry with another image.',
+                    'Caption-only: call create_social_post without media, or retry with fallback_to_text_only=true after explicit approval.',
+                  ],
+                }, null, 2),
+              }],
+            };
+            break;
           }
 
           // 2. Generate Professional Article (Grok)
@@ -6830,7 +7461,7 @@ Return ONLY a JSON array of 60 objects:
             includeCta: true,
           });
 
-          // 3. Schedule
+          // 3. Schedule (caption-only when image generation failed)
           const publishTime = typeof scheduled_at === 'string' && scheduled_at
             ? scheduled_at
             : new Date(Date.now() + 60 * 60 * 1000).toISOString();
@@ -6839,12 +7470,15 @@ Return ONLY a JSON array of 60 objects:
             user_id: userId,
             caption: multiPass.content,
             platforms: Array.isArray(platforms) ? platforms : ['facebook', 'linkedin'],
-            media_urls: [imageUrl],
+            media_urls: imageUrl ? [imageUrl] : [],
             status: 'scheduled',
             scheduled_at: publishTime,
             metadata: {
               autonomous: true,
               ai_image_prompt: image_prompt,
+              image_status: imageStatus,
+              image_generation_warning: imageGenerationWarning,
+              text_only_fallback: !imageUrl && Boolean(imageGenerationWarning),
               generation: {
                 strategistNotes: multiPass.strategistNotes,
                 reviewerNotes: multiPass.reviewerNotes,
@@ -6863,11 +7497,59 @@ Return ONLY a JSON array of 60 objects:
                 scheduled_at: publishTime,
                 image_url: imageUrl,
                 image_status: imageStatus,
+                image_generation_warning: imageGenerationWarning,
+                fallback: imageGenerationWarning ? 'text_only' : null,
+                warning: imageGenerationWarning
+                  ? `${imageGenerationWarning.message} Post scheduled caption-only because fallback_to_text_only=true.`
+                  : null,
                 content_length: multiPass.content.length,
                 confidence_score: multiPass.confidenceScore,
-                message: `Autonomous content creation complete. Post scheduled for ${publishTime} with ${imageStatus} image.`,
+                message: imageUrl
+                  ? `Autonomous content creation complete. Post scheduled for ${publishTime} with ${imageStatus} image.`
+                  : `Autonomous content creation complete. Post scheduled caption-only for ${publishTime} because image generation failed.`,
               }, null, 2),
             }],
+          };
+          break;
+        }
+
+        // ── generate_ai_image / generate_image ─────────────────────────────
+        case 'generate_ai_image':
+        case 'generate_image': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const userId = this.requireProfileUser(a);
+          const prompt = String(a.prompt || a.image_prompt || a.description || '').trim();
+          if (!prompt) throw new Error('prompt is required (e.g. prompt: "Professional B2B banner for AI automation")');
+          const image_provider = a.image_provider === 'xai' ? 'xai' : 'openai';
+          const size = (a.size as any) || '1024x1024';
+
+          let img = await aiGenerationService.generateImage(userId, 'admin', prompt, size, image_provider);
+          if (!img.success || !img.url) {
+            const altProvider = image_provider === 'openai' ? 'xai' : 'openai';
+            console.warn(`[MCP] generate_ai_image failed with ${image_provider}, retrying with ${altProvider}...`, img.error);
+            img = await aiGenerationService.generateImage(userId, 'admin', prompt, size, altProvider);
+          }
+
+          if (!img.success || !img.url) {
+            throw new Error(`Failed to generate AI image: ${img.error || 'Both AI image providers failed'}`);
+          }
+
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  image_url: img.url,
+                  url: img.url,
+                  media_url: img.url,
+                  prompt,
+                  provider: image_provider,
+                  message: `AI image successfully generated and uploaded to sovereign CDN storage. Pass image_url (${img.url}) to create_social_post.`,
+                }, null, 2),
+              },
+            ],
           };
           break;
         }
@@ -6897,7 +7579,7 @@ Return ONLY a JSON array of 60 objects:
           let zohoMessages: any[] = [];
           if (user_id) {
             try {
-              const zoho = new ZohoMailService(user_id);
+              const zoho = new ZohoMailService(user_id, tenant_id);
               const folders = await zoho.getFolders();
               const inbox = folders.find((folder) => /inbox/i.test(folder.folderName)) || folders[0];
               if (inbox) {
@@ -6970,21 +7652,31 @@ Return ONLY a JSON array of 60 objects:
         case 'get_calendly_status': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { data: tenant, error } = await supabaseAdmin
-            .from('tenants')
-            .select('settings')
-            .eq('id', tenant_id)
-            .maybeSingle();
-          if (error) throw supabaseErrorToMcpClientError('get_calendly_status', error.message);
-          const settings = (tenant?.settings || {}) as Record<string, any>;
+          const { getTenantIntegrationSnapshot } = await import('@/services/integrationStatusService');
+          const { getCalendlyConfig } = await import('../calendly/calendlyIntegrationService');
+          const [snapshot, privateCalendly, tenantRow] = await Promise.all([
+            getTenantIntegrationSnapshot(tenant_id),
+            getCalendlyConfig(supabaseAdmin, tenant_id),
+            supabaseAdmin.from('tenants').select('settings').eq('id', tenant_id).maybeSingle(),
+          ]);
+          const settings = ((tenantRow.data?.settings || {}) as Record<string, any>);
           const calendly = settings.calendly || {};
           const booking = settings.booking || {};
+          const calendlyRow = snapshot.optional_integrations.find((i) => i.key === 'calendly');
+          const bookingReady = snapshot.overall.booking_ready;
           result = { content: [{ type: 'text', text: JSON.stringify({
-            calendly_connected: Boolean(calendly.enabled && calendly.accessToken && calendly.calendlyUserUri),
+            calendly_connected: Boolean(
+              calendlyRow?.connected ||
+              (privateCalendly?.accessToken && privateCalendly.calendlyUserUri)
+            ),
+            booking_ready: bookingReady,
             calendly_event_url: calendly.eventUrl || null,
             local_booking_enabled: Boolean(booking.enabled && booking.slug),
             local_booking_url: booking.slug ? `${(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://')}/book/${booking.slug}` : null,
-            recommended: calendly.enabled ? 'Run sync_calendly_events to import bookings into AlphaClone calendar.' : 'Connect Calendly or enable the native AlphaClone booking link in Meetings settings.',
+            integration_snapshot_generated_at: snapshot.generated_at,
+            recommended: bookingReady
+              ? 'Run sync_calendly_events to import bookings into AlphaClone calendar.'
+              : 'Connect Cal.com or Calendly, or enable the native AlphaClone booking link in Meetings settings.',
           }, null, 2) }] };
           break;
         }
@@ -7118,18 +7810,35 @@ Return ONLY a JSON array of 60 objects:
         case 'start_invoice_lifecycle': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
           const { invoice_id } = a;
-          const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id }]);
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
+          if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid invoice UUID');
+          const { data: invoice, error: invoiceError } = await supabaseAdmin
+            .from('business_invoices')
+            .select('id,status')
+            .eq('tenant_id', tenant_id)
+            .eq('id', invoice_id)
+            .maybeSingle();
+          if (invoiceError) throw invoiceError;
+          if (!invoice) throw new Error('Invoice not found');
+          if (invoice.status !== 'draft') throw new Error(`Only draft invoices can be sent. This invoice is ${invoice.status}.`);
+          await validateDailyResourceQuota(tenant_id, user_id, 'invoices');
+          const queued = await queueInvoiceSend({
+            tenantId: tenant_id,
+            userId: user_id,
+            invoiceId: invoice_id,
+          });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId: queued.run_id, durable: queued.durable, poll_tool: queued.poll_tool }, null, 2) }] };
           break;
         }
 
         case 'start_contract_lifecycle': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
           const { contract_id } = a;
-          const { runId } = await start(contractLifecycleWorkflow, [{ contractId: contract_id, tenantId: tenant_id }]);
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
+          const queued = await queueContractLifecycle({ contractId: contract_id, tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId: queued.run_id, durable: queued.durable, poll_tool: queued.poll_tool }, null, 2) }] };
           break;
         }
 
@@ -7163,9 +7872,10 @@ Return ONLY a JSON array of 60 objects:
         case 'schedule_social_automation': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
           const { post_id } = a;
-          const { runId } = await start(socialScheduleWorkflow, [{ postId: post_id, tenantId: tenant_id }]);
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
+          const queued = await queueScheduledSocialPublish({ postId: post_id, tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId: queued.run_id, durable: queued.durable, poll_tool: queued.poll_tool }, null, 2) }] };
           break;
         }
 
@@ -7414,7 +8124,7 @@ Return ONLY a JSON array of 60 objects:
 
           // Run all finance queries in parallel
           // Note: Supabase query builder does not expose .catch() — use async IIFEs
-          const safeQuery = async (fn: () => Promise<{ data: any; error: any }>) => {
+          const safeQuery = async (fn: () => PromiseLike<{ data: any; error: any }>) => {
             try { return await fn(); } catch { return { data: null, error: null }; }
           };
 
@@ -7662,7 +8372,7 @@ Return ONLY a JSON array of 60 objects:
           if (entity_id && typeof entity_id === 'string') docQuery = docQuery.eq('entity_id', entity_id.trim());
           const { data: docData, error: docError } = await docQuery;
           if (docError) throw supabaseErrorToMcpClientError('get_documents', docError.message);
-          result = { content: [{ type: 'text', text: JSON.stringify({ total: (docData || []).length, documents: docData || [] }, null, 2) }] };
+          result = { content: [{ type: 'text', text: safeJsonText({ total: (docData || []).length, documents: docData || [] }) }] };
           break;
         }
 
@@ -8055,7 +8765,7 @@ Return ONLY a JSON array of 60 objects:
           const [integrationRes, settingsRes, recentLogsRes, recentMessagesRes] = await Promise.all([
             supabaseAdmin
               .from('whatsapp_integrations')
-              .select('id, phone_number, waba_id, provider, is_active, status, last_connected_at, metadata, created_at, updated_at')
+              .select('id, phone_number_id, waba_id, is_active, metadata, created_at, updated_at')
               .eq('tenant_id', tenant_id)
               .order('updated_at', { ascending: false })
               .limit(5),
@@ -8097,13 +8807,12 @@ Return ONLY a JSON array of 60 objects:
                 issues,
                 active_integration: active ? {
                   id: active.id,
-                  phone_number: active.phone_number,
-                  provider: active.provider,
-                  status: active.status,
+                  phone_number_id: active.phone_number_id,
+                  waba_id: active.waba_id,
                   is_active: active.is_active,
                   has_id_instance: Boolean(active.waba_id),
                   has_api_token: Boolean(active.metadata?.apiTokenInstance),
-                  last_connected_at: active.last_connected_at,
+                  updated_at: active.updated_at,
                 } : null,
                 settings: settingsRes.data || null,
                 recent_outreach_logs: recentLogsRes.data || [],
@@ -8308,8 +9017,33 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        case 'get_social_posts':
+        case 'list_social_posts': {
+          // Alias for connectors that ask for get_social_posts (maps to social_posts table)
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const limit = Math.min(Number(a.limit) || 50, 100);
+          const status = typeof a.status === 'string' ? a.status.trim() : '';
+          let query = supabaseAdmin
+            .from('social_posts')
+            .select('id, caption, status, scheduled_at, published_at, created_at, analytics')
+            .eq('tenant_id', tenant_id)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+          if (status) query = query.eq('status', status);
+          const { data, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('get_social_posts', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ posts: data || [], count: data?.length || 0 }, null, 2),
+            }],
+          };
+          break;
+        }
+
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, get_contract_versions, get_contract_approvals, get_current_user, send_transactional_email, enable_whatsapp_chatbot, disable_whatsapp_chatbot, train_chatbot, get_chatbot_persona, update_chatbot_persona, get_chatbot_conversations, set_chatbot_handoff_rules, enable_lead_auto_outreach, set_outreach_limits, get_chatbot_performance, and many more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, get_contract_versions, get_contract_approvals, get_current_user, send_transactional_email, enable_whatsapp_chatbot, disable_whatsapp_chatbot, train_chatbot, get_chatbot_persona, update_chatbot_persona, get_chatbot_conversations, set_chatbot_handoff_rules, enable_lead_auto_outreach, set_outreach_limits, get_chatbot_performance, get_social_posts, and many more.`);
         }
 
         // â”€â”€ Audit Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -8336,16 +9070,31 @@ Return ONLY a JSON array of 60 objects:
           const tenantForLog =
             this.ctx?.tenantId ||
             ((args as Record<string, any>)?.tenant_id ? String((args as Record<string, any>).tenant_id) : '');
+          const userForNotify =
+            this.ctx?.userId ||
+            ((args as Record<string, any>)?.user_id ? String((args as Record<string, any>).user_id) : '');
           if (tenantForLog) {
             const { logMcpToolExecution, normalizeToolName } = await import('@/lib/mcp/mcpToolTelemetry');
             await logMcpToolExecution({
               tenantId: tenantForLog,
-              userId: this.ctx?.userId || (args as Record<string, any>)?.user_id || null,
+              userId: userForNotify || null,
               toolName: normalizeToolName(name),
               durationMs: Date.now() - telemetryStart,
               success: telemetrySuccess,
               errorMessage: telemetryError || null,
             });
+          }
+          if (tenantForLog && userForNotify) {
+            const { notifyAfterMcpToolExecution } = await import('@/lib/notifications/mcpToolNotificationHook');
+            void notifyAfterMcpToolExecution({
+              tenantId: tenantForLog,
+              userId: userForNotify,
+              toolName: name,
+              args: (args || {}) as Record<string, unknown>,
+              success: telemetrySuccess,
+              resultContent: typeof result !== 'undefined' ? result?.content : undefined,
+              errorMessage: telemetryError || undefined,
+            }).catch(() => undefined);
           }
         }
       }

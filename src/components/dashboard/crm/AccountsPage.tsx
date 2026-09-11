@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Building2, Plus, Loader2, ChevronRight } from 'lucide-react';
 import { companyService, type Company } from '@/services/unified/CompanyService';
 import ListViewToolbar from './ListViewToolbar';
 import RecordPageShell from './RecordPageShell';
 import RecordFilesTab from './RecordFilesTab';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import toast from 'react-hot-toast';
 import { CRMNav } from './CRMNav';
-import { usePathname } from 'next/navigation';
 import { AccountFormModal } from './AccountFormModal';
 import { useTenant } from '@/contexts/TenantContext';
 import { CrmSyncToolbar } from './CrmSyncToolbar';
+import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
 
 const STAGE_FILTERS = [
   { value: 'all', label: 'All' },
@@ -26,6 +26,7 @@ const STAGE_FILTERS = [
 export default function AccountsPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -59,6 +60,16 @@ export default function AccountsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const companyId = searchParams?.get('company') || searchParams?.get('companyId') || searchParams?.get('account');
+    if (!companyId || companies.length === 0) return;
+    const match = companies.find((c) => c.id === companyId);
+    if (match) {
+      setSelected(match);
+      router.replace('/dashboard/crm/accounts', { scroll: false });
+    }
+  }, [searchParams, companies, router]);
 
   const handleCreateAccount = async (name: string) => {
     setCreating(true);
@@ -204,7 +215,35 @@ export default function AccountsPage() {
           )}
           {detailTab === 'files' && <RecordFilesTab companyId={selected.id} />}
           {detailTab === 'activity' && (
-            <RelatedList items={relations?.activities || []} labelKey="subject" fallback="Activity" />
+            <div className="space-y-4">
+              {(() => {
+                const primaryContact = (relations?.contacts || [])[0] as
+                  | { business_client_id?: string; client_id?: string; id?: string }
+                  | undefined;
+                const linkedClientId =
+                  primaryContact?.business_client_id ||
+                  primaryContact?.client_id ||
+                  undefined;
+                if (linkedClientId) {
+                  return (
+                    <CustomerTimeline
+                      clientId={linkedClientId}
+                      onOpenComms={() => router.push('/dashboard/comms')}
+                    />
+                  );
+                }
+                if ((relations?.activities || []).length === 0) {
+                  return (
+                    <EmptyStateFromPreset
+                      moduleId="messages"
+                      actionLabel="Open customers"
+                      onAction={() => router.push('/dashboard/crm/workspace')}
+                    />
+                  );
+                }
+                return <RelatedList items={relations?.activities || []} labelKey="subject" fallback="Activity" />;
+              })()}
+            </div>
           )}
           <button
             type="button"

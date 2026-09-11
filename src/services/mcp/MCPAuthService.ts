@@ -1,5 +1,4 @@
 import { supabase } from '../../lib/supabase';
-import { generateMcpApiKey, hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 
 export class MCPAuthService {
   /**
@@ -14,32 +13,10 @@ export class MCPAuthService {
       return { token: null, error: 'User must be signed in to create an MCP connection key.' };
     }
     try {
-      const { data, error } = await supabase
-        .from('mcp_api_keys')
-        .select('api_key, updated_at')
-        .eq('tenant_id', tenantId)
-        .eq('user_id', userId)
-        .order('updated_at', { ascending: false })
-        .limit(1);
-
-      if (error) {
-        return { token: null, error: error.message };
-      }
-
-      const existingToken = Array.isArray(data) && data[0]?.api_key ? data[0].api_key : null;
-      if (existingToken) {
-        return { token: existingToken };
-      }
-
-      const { data: byHashOnly } = await supabase
-        .from('mcp_api_keys')
-        .select('id')
-        .eq('tenant_id', tenantId)
-        .eq('user_id', userId)
-        .not('api_key_hash', 'is', null)
-        .maybeSingle();
-
-      if (byHashOnly?.id) {
+      const response = await fetch(`/api/mcp/keys?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
+      const status = await response.json().catch(() => ({}));
+      if (!response.ok) return { token: null, error: status.error || 'MCP key status could not be loaded.' };
+      if (status.exists) {
         return { token: null, error: 'MCP key exists but cannot be retrieved. Rotate to generate a new key.' };
       }
 
@@ -60,29 +37,10 @@ export class MCPAuthService {
       return { token: null, error: 'User must be signed in.' };
     }
     try {
-      const newToken = generateMcpApiKey();
-      const keyHash = hashMcpApiKey(newToken);
-
-      const { data, error } = await supabase
-        .from('mcp_api_keys')
-        .upsert(
-          {
-            tenant_id: tenantId,
-            user_id: userId,
-            api_key: newToken,
-            api_key_hash: keyHash,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'tenant_id,user_id' }
-        )
-        .select('api_key')
-        .single();
-
-      if (error) {
-        return { token: null, error: error.message };
-      }
-
-      return { token: data.api_key };
+      const response = await fetch('/api/mcp/keys', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { token: null, error: data.error || 'MCP key could not be rotated.' };
+      return { token: data.token || null };
     } catch (err) {
       return { token: null, error: String(err) };
     }
@@ -95,37 +53,7 @@ export class MCPAuthService {
     token: string
   ): Promise<{ tenantId: string | null; userId: string | null; error?: string }> {
     try {
-      const keyHash = hashMcpApiKey(token);
-      const { data: byHash } = await supabase
-        .from('mcp_api_keys')
-        .select('tenant_id, user_id')
-        .eq('api_key_hash', keyHash)
-        .maybeSingle();
-
-      const data = byHash || (await supabase
-        .from('mcp_api_keys')
-        .select('tenant_id, user_id, id')
-        .eq('api_key', token)
-        .maybeSingle()).data;
-
-      if (!data) {
-        return { tenantId: null, userId: null, error: 'Invalid or expired MCP connection token' };
-      }
-
-      if (!byHash && 'id' in data && data.id) {
-        await supabase
-          .from('mcp_api_keys')
-          .update({ api_key_hash: keyHash, api_key: null, updated_at: new Date().toISOString() })
-          .eq('id', data.id);
-      }
-
-      supabase
-        .from('mcp_api_keys')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('api_key_hash', keyHash)
-        .then();
-
-      return { tenantId: data.tenant_id, userId: data.user_id };
+      return { tenantId: null, userId: null, error: 'Static MCP keys are validated only by the server.' };
     } catch (err) {
       return { tenantId: null, userId: null, error: String(err) };
     }

@@ -70,12 +70,19 @@ export async function getInstagramPageAccessToken(
 
 export async function getInstagramIntegration(
   admin: SupabaseClient,
-  query: { tenantId?: string; userId?: string; instagramAccountId?: string; requireActive?: boolean }
+  query: {
+    tenantId?: string;
+    userId?: string;
+    instagramAccountId?: string;
+    facebookPageId?: string;
+    requireActive?: boolean;
+  }
 ): Promise<InstagramIntegrationRow | null> {
   let q = admin.from('instagram_integrations').select(`${SAFE_COLUMNS}, page_access_token`);
   if (query.tenantId) q = q.eq('tenant_id', query.tenantId);
   if (query.userId) q = q.eq('user_id', query.userId);
   if (query.instagramAccountId) q = q.eq('instagram_account_id', query.instagramAccountId);
+  if (query.facebookPageId) q = q.eq('facebook_page_id', query.facebookPageId);
   if (query.requireActive !== false) q = q.eq('is_active', true);
   const { data, error } = await q.order('updated_at', { ascending: false }).limit(1).maybeSingle();
   if (error || !data) return null;
@@ -84,7 +91,12 @@ export async function getInstagramIntegration(
 
 export async function getInstagramIntegrationWithToken(
   admin: SupabaseClient,
-  query: { tenantId?: string; userId?: string; instagramAccountId?: string }
+  query: {
+    tenantId?: string;
+    userId?: string;
+    instagramAccountId?: string;
+    facebookPageId?: string;
+  }
 ): Promise<(InstagramIntegrationRow & { pageAccessToken: string }) | null> {
   const row = await getInstagramIntegration(admin, query);
   if (!row) return null;
@@ -108,7 +120,7 @@ export async function upsertInstagramIntegration(params: {
   expiresAt: string | null;
 }): Promise<{ integrationId: string | null; error?: string }> {
   const admin = createSupabaseAdminClient();
-  const { data, error } = await admin
+  let { data, error } = await admin
     .from('instagram_integrations')
     .upsert(
       {
@@ -131,6 +143,54 @@ export async function upsertInstagramIntegration(params: {
     )
     .select('id')
     .single();
+
+  if (error) {
+    let q = admin
+      .from('instagram_integrations')
+      .select('id')
+      .eq('user_id', params.userId)
+      .eq('instagram_account_id', params.instagramAccountId);
+    if (params.tenantId) {
+      q = q.eq('tenant_id', params.tenantId);
+    }
+    const { data: existing } = await q.maybeSingle();
+
+    const payload = {
+      user_id: params.userId,
+      tenant_id: params.tenantId,
+      instagram_account_id: params.instagramAccountId,
+      username: params.username,
+      account_name: params.accountName,
+      profile_picture_url: params.profilePictureUrl,
+      facebook_page_id: params.facebookPageId,
+      facebook_page_name: params.facebookPageName,
+      followers_count: params.followersCount,
+      media_count: params.mediaCount,
+      page_access_token: null,
+      is_active: true,
+      connected_at: new Date().toISOString(),
+      expires_at: params.expiresAt,
+    };
+
+    if (existing?.id) {
+      const upd = await admin
+        .from('instagram_integrations')
+        .update(payload)
+        .eq('id', existing.id)
+        .select('id')
+        .single();
+      data = upd.data;
+      error = upd.error;
+    } else {
+      const ins = await admin
+        .from('instagram_integrations')
+        .insert(payload)
+        .select('id')
+        .single();
+      data = ins.data;
+      error = ins.error;
+    }
+  }
 
   if (error || !data?.id) return { integrationId: null, error: error?.message || 'upsert failed' };
   await writeToken(admin, String(data.id), params.pageAccessToken);

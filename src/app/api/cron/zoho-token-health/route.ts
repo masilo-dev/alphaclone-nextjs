@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const admin = createSupabaseAdminClient();
   const { data: rows } = await admin
     .from('integrations')
-    .select('user_id, config, enabled')
+    .select('user_id, tenant_id, config, enabled')
     .eq('type', 'zoho')
     .eq('enabled', true)
     .order('updated_at', { ascending: false })
@@ -26,10 +26,10 @@ export async function GET(req: NextRequest) {
   let healthy = 0;
 
   for (const row of rows || []) {
-    if (!row.user_id) continue;
+    if (!row.user_id || !row.tenant_id) continue;
     checked++;
     try {
-      const zoho = new ZohoService(String(row.user_id));
+      const zoho = new ZohoService(String(row.user_id), String(row.tenant_id));
       const config = await zoho.getConfig();
       if (!config?.refreshToken) {
         expired++;

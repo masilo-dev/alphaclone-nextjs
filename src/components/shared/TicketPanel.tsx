@@ -19,8 +19,12 @@ const PRIORITY_COLORS: Record<TicketPriority, string> = {
 };
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
+    new: 'bg-blue-500',
     open: 'bg-blue-500',
     in_progress: 'bg-yellow-500',
+    waiting_on_customer: 'bg-amber-500',
+    waiting_on_business: 'bg-orange-500',
+    escalated: 'bg-red-500',
     resolved: 'bg-green-500',
     closed: 'bg-gray-500',
     reopened: 'bg-purple-500',

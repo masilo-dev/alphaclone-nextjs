@@ -62,9 +62,9 @@ export const hubspotService = {
     /**
      * Get HubSpot integration tokens for a user
      */
-    async getTokens(userId: string) {
+    async getTokens(userId: string, tenantId: string) {
         const admin = createSupabaseAdminClient();
-        const tokens = await getHubSpotTokens(admin, userId);
+        const tokens = await getHubSpotTokens(admin, userId, tenantId);
         if (!tokens) return null;
         return {
             accessToken: tokens.accessToken,
@@ -77,25 +77,25 @@ export const hubspotService = {
     /**
      * Refresh HubSpot access token
      */
-    async refreshAccessToken(userId: string, _refreshToken?: string) {
+    async refreshAccessToken(userId: string, tenantId: string, _refreshToken?: string) {
         const admin = createSupabaseAdminClient();
-        return refreshHubSpotAccessToken(admin, userId);
+        return refreshHubSpotAccessToken(admin, userId, tenantId);
     },
 
     /**
      * Get valid access token (refreshes if needed)
      */
-    async getValidToken(userId: string) {
+    async getValidToken(userId: string, tenantId: string) {
         const admin = createSupabaseAdminClient();
-        return getValidHubSpotAccessToken(admin, userId);
+        return getValidHubSpotAccessToken(admin, userId, tenantId);
     },
 
     /**
      * Fetch contacts from HubSpot
      */
-    async getContacts(userId: string, limit = 100) {
+    async getContacts(userId: string, tenantId: string, limit = 100) {
         try {
-            const token = await this.getValidToken(userId);
+            const token = await this.getValidToken(userId, tenantId);
             const response = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts?limit=${limit}&properties=firstname,lastname,email,phone,company`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -113,8 +113,8 @@ export const hubspotService = {
         }
     },
 
-    async findContactByEmail(userId: string, email: string) {
-        const token = await this.getValidToken(userId);
+    async findContactByEmail(userId: string, tenantId: string, email: string) {
+        const token = await this.getValidToken(userId, tenantId);
         const response = await fetch('https://api.hubapi.com/crm/v3/objects/contacts/search', {
             method: 'POST',
             headers: {
@@ -143,8 +143,8 @@ export const hubspotService = {
         return data.results?.[0] || null;
     },
 
-    async updateContact(userId: string, contactId: string, properties: Record<string, any>) {
-        const token = await this.getValidToken(userId);
+    async updateContact(userId: string, tenantId: string, contactId: string, properties: Record<string, any>) {
+        const token = await this.getValidToken(userId, tenantId);
         const response = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`, {
             method: 'PATCH',
             headers: {
@@ -162,9 +162,9 @@ export const hubspotService = {
     /**
      * Create or update contact in HubSpot
      */
-    async syncLeadToHubSpot(userId: string, lead: any) {
+    async syncLeadToHubSpot(userId: string, tenantId: string, lead: any) {
         try {
-            const token = await this.getValidToken(userId);
+            const token = await this.getValidToken(userId, tenantId);
             const normalized = normalizeHubSpotLead(lead);
 
             if (!normalized.email) {
@@ -192,12 +192,12 @@ export const hubspotService = {
             const data = await response.json();
             
             if (response.status === 409) {
-                const existing = await this.findContactByEmail(userId, normalized.email);
+                const existing = await this.findContactByEmail(userId, tenantId, normalized.email);
                 if (!existing?.id) {
                     return { success: true, message: 'Contact already exists' };
                 }
 
-                const updated = await this.updateContact(userId, existing.id, properties);
+                const updated = await this.updateContact(userId, tenantId, existing.id, properties);
                 return { success: true, data: updated, message: 'Contact updated' };
             }
 
@@ -210,7 +210,7 @@ export const hubspotService = {
         }
     },
 
-    async syncContactToHubSpot(userId: string, contact: any) {
+    async syncContactToHubSpot(userId: string, tenantId: string, contact: any) {
         try {
             const normalized = normalizeHubSpotLead(contact);
             const properties = {
@@ -226,21 +226,21 @@ export const hubspotService = {
                 throw new Error('Contact email is required for HubSpot sync');
             }
 
-            const existing = await this.findContactByEmail(userId, properties.email);
+            const existing = await this.findContactByEmail(userId, tenantId, properties.email);
             if (existing?.id) {
-                const updated = await this.updateContact(userId, existing.id, properties);
+                const updated = await this.updateContact(userId, tenantId, existing.id, properties);
                 return { success: true, data: updated, message: 'Contact updated' };
             }
 
-            return await this.syncLeadToHubSpot(userId, properties);
+            return await this.syncLeadToHubSpot(userId, tenantId, properties);
         } catch (error) {
             console.error('HubSpot Sync Contact Error:', error);
             throw error;
         }
     },
 
-    async findCompany(userId: string, company: { website?: string; name?: string }) {
-        const token = await this.getValidToken(userId);
+    async findCompany(userId: string, tenantId: string, company: { website?: string; name?: string }) {
+        const token = await this.getValidToken(userId, tenantId);
         const filters = [];
         const domain = String(company.website || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0];
 
@@ -278,8 +278,8 @@ export const hubspotService = {
         return data.results?.[0] || null;
     },
 
-    async createCompany(userId: string, properties: Record<string, any>) {
-        const token = await this.getValidToken(userId);
+    async createCompany(userId: string, tenantId: string, properties: Record<string, any>) {
+        const token = await this.getValidToken(userId, tenantId);
         const response = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
             method: 'POST',
             headers: {
@@ -294,8 +294,8 @@ export const hubspotService = {
         return data;
     },
 
-    async updateCompany(userId: string, companyId: string, properties: Record<string, any>) {
-        const token = await this.getValidToken(userId);
+    async updateCompany(userId: string, tenantId: string, companyId: string, properties: Record<string, any>) {
+        const token = await this.getValidToken(userId, tenantId);
         const response = await fetch(`https://api.hubapi.com/crm/v3/objects/companies/${companyId}`, {
             method: 'PATCH',
             headers: {
@@ -310,7 +310,7 @@ export const hubspotService = {
         return data;
     },
 
-    async syncCompanyToHubSpot(userId: string, company: any) {
+    async syncCompanyToHubSpot(userId: string, tenantId: string, company: any) {
         try {
             const domain = String(company.website || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').split('/')[0];
             const properties = {
@@ -325,13 +325,13 @@ export const hubspotService = {
                 throw new Error('Company name is required for HubSpot sync');
             }
 
-            const existing = await this.findCompany(userId, { website: company.website, name: properties.name });
+            const existing = await this.findCompany(userId, tenantId, { website: company.website, name: properties.name });
             if (existing?.id) {
-                const updated = await this.updateCompany(userId, existing.id, properties);
+                const updated = await this.updateCompany(userId, tenantId, existing.id, properties);
                 return { success: true, data: updated, message: 'Company updated' };
             }
 
-            const created = await this.createCompany(userId, properties);
+            const created = await this.createCompany(userId, tenantId, properties);
             return { success: true, data: created, message: 'Company created' };
         } catch (error) {
             console.error('HubSpot Sync Company Error:', error);
@@ -342,9 +342,9 @@ export const hubspotService = {
     /**
      * Create or update deal in HubSpot
      */
-    async syncDealToHubSpot(userId: string, deal: any) {
+    async syncDealToHubSpot(userId: string, tenantId: string, deal: any) {
         try {
-            const token = await this.getValidToken(userId);
+            const token = await this.getValidToken(userId, tenantId);
             const dealName = String(deal?.name || deal?.title || 'AlphaClone Deal').trim();
             const amount = Number(deal?.value ?? deal?.amount ?? 0) || 0;
             const stage = String(deal?.stage || 'appointmentscheduled');
@@ -398,9 +398,9 @@ export const hubspotService = {
     /**
      * Delete contact from HubSpot
      */
-    async deleteContact(userId: string, contactId: string) {
+    async deleteContact(userId: string, tenantId: string, contactId: string) {
         try {
-            const token = await this.getValidToken(userId);
+            const token = await this.getValidToken(userId, tenantId);
             const response = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/${contactId}`, {
                 method: 'DELETE',
                 headers: {

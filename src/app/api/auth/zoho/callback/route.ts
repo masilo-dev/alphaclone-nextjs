@@ -1,21 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
-import { parseOAuthState } from '@/lib/oauth/oauthState';
-import { isProduction } from '@/lib/security/productionGuard';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
-function getAppUrl(req: NextRequest) {
-    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-    const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '');
-    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    return host ? `${proto}://${host}` : 'https://alphaclonesystems.com';
+function getAppUrl(_req: NextRequest) {
+    return PUBLIC_APP_ORIGIN;
 }
 
-function getZohoRedirectUri(req: NextRequest) {
-    const appUrl = getAppUrl(req).replace(/\/$/, '');
+function getZohoRedirectUri(_req: NextRequest) {
     const configured = String(ENV.ZOHO_REDIRECT_URI || '').trim();
     if (configured) return configured.replace(/\/$/, '');
-    return `${appUrl}/api/auth/zoho/callback`;
+    return OAUTH_CALLBACKS.zoho;
 }
 
 type ZohoTokenResponse = {
@@ -24,6 +21,10 @@ type ZohoTokenResponse = {
     expires_in?: number;
     error?: string;
     error_description?: string;
+};
+
+type ZohoMailAccountsResponse = {
+    data?: Array<{ accountId?: string | number }>;
 };
 
 function resolveZohoCredentials(region: string): { clientId: string; clientSecret: string } {
@@ -73,32 +74,43 @@ export async function GET(req: NextRequest) {
     const zohoMailReturnUrl = `${appUrl}/dashboard/mail`;
 
     if (error) {
-        return NextResponse.redirect(`${zohoMailReturnUrl}?error=${encodeURIComponent(error)}`);
+        const description = searchParams.get('error_description');
+        const redirectUrl = new URL(zohoMailReturnUrl);
+        redirectUrl.searchParams.set('error', error);
+        if (description) redirectUrl.searchParams.set('reason', description);
+        return NextResponse.redirect(redirectUrl);
     }
 
     if (!code || !stateStr) {
-        return NextResponse.json({ error: 'Missing code or state' }, { status: 400 });
+        return NextResponse.redirect(`${zohoMailReturnUrl}?error=zoho_callback_failed&reason=Missing%20authorization%20code%20or%20state`);
     }
 
     try {
-        let region = 'US';
-        let userId = '';
-        const parsedState = parseOAuthState<{ region?: string; state?: string }>(stateStr);
-        if (parsedState) {
-            region = typeof parsedState.region === 'string' && parsedState.region ? parsedState.region : 'US';
-            userId = typeof parsedState.state === 'string' ? parsedState.state : '';
-        } else if (!isProduction()) {
-            try {
-                const legacy = JSON.parse(stateStr);
-                region = typeof legacy?.region === 'string' && legacy.region ? legacy.region : 'US';
-                userId = typeof legacy?.state === 'string' ? legacy.state : '';
-            } catch {
-                userId = stateStr;
+        const admin = createSupabaseAdminClient();
+        let { data: stateData, error: stateError } = await admin.from('oauth_states')
+            .delete().eq('id', stateStr).select('user_id, tenant_id, metadata, created_at').single();
+        
+        // Fallback lookup if state was already deleted by a browser pre-fetch or race condition
+        if (stateError || !stateData) {
+            const { data: maybeState } = await admin.from('oauth_states')
+                .select('user_id, tenant_id, metadata, created_at')
+                .eq('id', stateStr)
+                .maybeSingle();
+            if (maybeState) {
+                stateData = maybeState;
+                stateError = null;
+                await admin.from('oauth_states').delete().eq('id', stateStr);
             }
         }
-        if (!userId || typeof userId !== 'string') {
-            throw new Error('Invalid OAuth state payload');
+
+        const stateCreatedAt = stateData?.created_at ? new Date(stateData.created_at).getTime() : 0;
+        if (stateError || !stateData?.user_id || !stateData?.tenant_id || stateData.metadata?.provider !== 'zoho' || !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60_000) {
+            console.error('[zoho/callback] Invalid or expired OAuth state:', { stateStr, stateError, stateData });
+            return NextResponse.redirect(`${zohoMailReturnUrl}?error=zoho_callback_failed&reason=Invalid%20or%20expired%20OAuth%20state`);
         }
+        const userId = String(stateData.user_id);
+        const tenantId = String(stateData.tenant_id);
+        const region = typeof stateData.metadata?.region === 'string' ? stateData.metadata.region : 'US';
 
         const redirectUri = getZohoRedirectUri(req);
         const candidateRegions = [
@@ -134,20 +146,38 @@ export async function GET(req: NextRequest) {
         const hosts = ZohoService.getHostsByRegion(resolvedRegion);
 
         // Initialize ZohoService to read/save config
-        const zohoService = new ZohoService(userId);
+        const zohoService = new ZohoService(userId, tenantId);
         const existingConfig = await zohoService.getConfig();
         const refreshToken = data.refresh_token || existingConfig?.refreshToken;
         if (!refreshToken) {
             throw new Error('Missing refresh token from Zoho response');
         }
         
-        // Also fetch Zoho Mail account ID while we have the fresh token
+        // Discover the Mail account while the access token is fresh. A Zoho
+        // account can authorize the shared OAuth client without having Mail
+        // provisioned, so this optional product lookup must not discard valid
+        // tokens or fail the entire callback.
         const mailHost = ZohoService.normalizeHost(hosts.mail) || hosts.mail;
-        const mailAccountRes = await fetch(`https://${mailHost}/api/accounts`, {
-            headers: { Authorization: `Zoho-oauthtoken ${data.access_token}` }
-        });
-        const mailAccountData = await mailAccountRes.json();
-        const accountId = mailAccountData?.data?.[0]?.accountId ? String(mailAccountData.data[0].accountId) : undefined;
+        let accountId: string | undefined;
+        let mailSetupReason: string | undefined;
+        try {
+            const mailAccountRes = await fetch(`https://${mailHost}/api/accounts`, {
+                headers: { Authorization: `Zoho-oauthtoken ${data.access_token}` },
+            });
+            const mailAccountData = (await mailAccountRes.json().catch(() => ({}))) as ZohoMailAccountsResponse;
+            const discoveredAccountId = mailAccountData.data?.[0]?.accountId;
+            if (mailAccountRes.ok && discoveredAccountId != null) {
+                accountId = String(discoveredAccountId);
+            } else {
+                mailSetupReason = mailAccountRes.ok
+                    ? 'No Zoho Mail account was found for this user.'
+                    : `Zoho Mail account discovery returned HTTP ${mailAccountRes.status}.`;
+                console.warn('[zoho/callback] Mail account discovery incomplete:', mailSetupReason);
+            }
+        } catch (mailError) {
+            mailSetupReason = 'Zoho Mail account discovery was temporarily unavailable.';
+            console.warn('[zoho/callback] Mail account discovery failed:', mailError);
+        }
 
         // Fetch Zoho Books org ID while we have the fresh token
         let booksOrgId: string | undefined;
@@ -176,7 +206,30 @@ export async function GET(req: NextRequest) {
             ...(booksOrgId ? { booksOrgId } : {}),
         });
 
-        return NextResponse.redirect(`${zohoMailReturnUrl}?success=zoho_connected`);
+        const { error: connectionError } = await admin.from('tenant_integrations').upsert({
+            tenant_id: tenantId,
+            integration_id: 'zoho-mail',
+            status: 'connected',
+            connected_at: new Date().toISOString(),
+            configured_by: userId,
+            metadata: {
+                region: resolvedRegion,
+                mailReady: Boolean(accountId),
+                booksReady: Boolean(booksOrgId),
+                ...(mailSetupReason ? { mailSetupReason } : {}),
+            },
+        }, { onConflict: 'tenant_id,integration_id' });
+        if (connectionError) throw connectionError;
+        await admin.from('business_automation_events').insert({
+            tenant_id: tenantId,
+            event_type: 'integration_connected',
+            payload: { integrationId: 'zoho-mail', actorUserId: userId },
+        });
+
+        const successUrl = new URL(zohoMailReturnUrl);
+        successUrl.searchParams.set('success', 'zoho_connected');
+        if (!accountId) successUrl.searchParams.set('mail', 'setup_required');
+        return NextResponse.redirect(successUrl);
     } catch (err: unknown) {
         console.error('Zoho Auth Callback Error:', err);
         const reason = err instanceof Error ? err.message : 'zoho_callback_failed';

@@ -59,8 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId, phone, and message are required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
     const cleanTo = cleanPhone(phone);
     const providerState = await resolveProvider(tenantId);
     const type = messageType || 'text';

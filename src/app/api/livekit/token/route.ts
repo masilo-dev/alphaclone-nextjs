@@ -39,18 +39,10 @@ async function getAuthUser() {
     } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data: tenantUser } = await supabase
-        .from('tenant_users')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle();
-
     return {
         supabase,
         id: user.id,
         name: (user.user_metadata?.name as string | undefined) || user.email?.split('@')[0] || 'User',
-        tenantId: tenantUser?.tenant_id as string | undefined,
     };
 }
 
@@ -62,7 +54,6 @@ async function assertCallAccessStrict(
     supabase: SupabaseClient,
     callId: string,
     userId: string,
-    tenantId: string | undefined
 ): Promise<boolean> {
     const { data: call, error } = await supabase
         .from('video_calls')
@@ -73,7 +64,10 @@ async function assertCallAccessStrict(
     if (error || !call) return false;
     if (call.status === 'ended' || call.status === 'cancelled') return false;
     if (call.host_id === userId) return true;
-    if (call.tenant_id && tenantId && call.tenant_id === tenantId) return true;
+    if (call.tenant_id) {
+        const { data: membership } = await supabase.from('tenant_users').select('user_id').eq('tenant_id', call.tenant_id).eq('user_id', userId).maybeSingle();
+        if (membership) return true;
+    }
     return false;
 }
 
@@ -95,6 +89,11 @@ async function verifyPublicMeetingAccess(callId: string, meetingAccessPin: strin
             call.metadata && typeof call.metadata === 'object'
                 ? (call.metadata as { meeting_pin?: string }).meeting_pin
                 : undefined;
+        const meetingStartedAt =
+            call.metadata && typeof call.metadata === 'object'
+                ? Number((call.metadata as { meeting_started_at?: number }).meeting_started_at || 0)
+                : 0;
+        if (meetingStartedAt && Date.now() - meetingStartedAt > 35 * 60 * 1000) return false;
         if (expectedPin && String(expectedPin) !== String(meetingAccessPin || '')) {
             return false;
         }
@@ -109,7 +108,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'LiveKit is not configured on the server' }, { status: 503 });
     }
 
-    let body: { callId?: string; meetingAccessPin?: string };
+    let body: { callId?: string; meetingAccessPin?: string; meetingAccessToken?: string; guestName?: string };
     try {
         body = await req.json();
     } catch {
@@ -122,18 +121,29 @@ export async function POST(req: Request) {
     }
 
     const pin = typeof body.meetingAccessPin === 'string' ? body.meetingAccessPin.trim() : undefined;
+    const accessToken = typeof body.meetingAccessToken === 'string' ? body.meetingAccessToken.trim() : undefined;
+    let validAccessToken = false;
+    if (accessToken) {
+        const admin = createSupabaseAdminClient();
+        const { data: link } = await admin.from('meeting_links').select('meeting_id, expires_at').eq('link_token', accessToken).eq('meeting_id', callId).maybeSingle();
+        validAccessToken = Boolean(link && new Date(link.expires_at).getTime() > Date.now());
+    }
 
     const authUser = await getAuthUser();
+    const strictOk = authUser ? await assertCallAccessStrict(authUser.supabase, callId, authUser.id) : false;
+    const admin = createSupabaseAdminClient();
+    const { data: lockState } = await admin.from('video_calls').select('metadata').eq('id', callId).maybeSingle();
+    const locked = Boolean(lockState?.metadata && typeof lockState.metadata === 'object' && (lockState.metadata as { meeting_locked?: boolean }).meeting_locked);
+    if (locked && !strictOk) return NextResponse.json({ error: 'This meeting is locked to new guests' }, { status: 423 });
 
     if (authUser) {
-        const strictOk = await assertCallAccessStrict(authUser.supabase, callId, authUser.id, authUser.tenantId);
-        if (!strictOk) {
+        if (!strictOk && !validAccessToken) {
             const publicOk = await verifyPublicMeetingAccess(callId, pin);
             if (!publicOk) {
                 return NextResponse.json({ error: 'Not allowed to join this meeting room' }, { status: 403 });
             }
         }
-    } else {
+    } else if (!validAccessToken) {
         const publicOk = await verifyPublicMeetingAccess(callId, pin);
         if (!publicOk) {
             return NextResponse.json({ error: 'Meeting not found or access denied' }, { status: 403 });
@@ -141,8 +151,9 @@ export async function POST(req: Request) {
     }
 
     const roomName = `alphaclone-${callId}`;
-    const identity = authUser ? authUser.id : `guest-${callId}-${Math.random().toString(36).slice(2, 10)}`;
-    const displayName = authUser ? authUser.name : 'Guest';
+    const identity = authUser ? authUser.id : `guest-${callId}-${crypto.randomUUID()}`;
+    const requestedGuestName = typeof body.guestName === 'string' ? body.guestName.trim().slice(0, 80) : '';
+    const displayName = authUser ? authUser.name : requestedGuestName || 'Guest';
 
     const token = new AccessToken(LIVEKIT.apiKey, LIVEKIT.apiSecret, {
         identity,

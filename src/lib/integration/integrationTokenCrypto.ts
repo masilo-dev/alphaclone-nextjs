@@ -1,21 +1,26 @@
-import { ENV } from '@/config/env';
 import { decrypt, encrypt } from '@/lib/encryption';
+import {
+  requireCredentialEncryptionSecret,
+  resolveAllCredentialEncryptionSecrets,
+  resolveCredentialEncryptionSecret,
+} from '@/lib/integration/credentialEncryptionSecret';
 import { isProduction } from '@/lib/security/productionGuard';
 
 export function getIntegrationEncryptionSecret(): string | null {
-  const secret = ENV.ENCRYPTION_SECRET || ENV.ZOHO_ENCRYPTION_SECRET || null;
-  return secret && secret.length === 32 ? secret : null;
+  return resolveCredentialEncryptionSecret()?.secret ?? null;
 }
 
 export function requireIntegrationEncryptionSecret(): string {
-  const secret = getIntegrationEncryptionSecret();
-  if (!secret) {
+  try {
+    return requireCredentialEncryptionSecret().secret;
+  } catch (err) {
     if (isProduction()) {
-      throw new Error('ENCRYPTION_SECRET (32 chars) is required in production');
+      throw new Error(
+        err instanceof Error ? err.message : 'Credential encryption secret (32+ chars) is required in production',
+      );
     }
-    throw new Error('ENCRYPTION_SECRET is not configured');
+    throw err;
   }
-  return secret;
 }
 
 export function isEncryptedToken(value: string): boolean {
@@ -48,23 +53,42 @@ export async function encryptIntegrationToken(token: string): Promise<string> {
   const secret = getIntegrationEncryptionSecret();
   if (!secret) {
     if (isProduction()) {
-      throw new Error('ENCRYPTION_SECRET (32 chars) is required in production');
+      throw new Error('INTEGRATION_TOKEN_ENCRYPTION_SECRET (32+ chars) is required in production');
     }
     return token;
   }
   return encrypt(token, secret);
 }
 
+let warnedUndecryptable = false;
+
+/**
+ * Decrypt with the canonical secret, falling back to every other configured
+ * secret so a key rotation/re-ordering does not orphan stored tokens. On total
+ * failure the ciphertext is returned unchanged (callers detect it via
+ * `isEncryptedToken`) and a value-free warning is logged once per process.
+ */
 export async function decryptIntegrationToken(stored: string): Promise<string> {
   if (!stored) return '';
   if (!isEncryptedToken(stored)) return stored;
-  const secret = getIntegrationEncryptionSecret();
-  if (!secret) return stored;
-  try {
-    return await decrypt(stored, secret);
-  } catch {
-    return stored;
+  const candidates = resolveAllCredentialEncryptionSecrets();
+  if (candidates.length === 0) return stored;
+  for (const candidate of candidates) {
+    try {
+      return await decrypt(stored, candidate.secret);
+    } catch {
+      // try the next configured secret
+    }
   }
+  if (!warnedUndecryptable) {
+    warnedUndecryptable = true;
+    console.warn(
+      `[integrationTokenCrypto] Stored token could not be decrypted with any configured secret (${candidates
+        .map((c) => c.source)
+        .join(', ')}). The encryption key changed since it was saved; affected integrations must be reconnected.`
+    );
+  }
+  return stored;
 }
 
 export async function encryptIntegrationConfig(

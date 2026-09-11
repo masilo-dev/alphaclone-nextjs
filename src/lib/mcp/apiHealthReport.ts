@@ -9,6 +9,19 @@ type SessionRow = {
   tool_latency_ms?: number | null;
 };
 
+export function deriveApiErrorRate(report: Record<string, unknown> | null | undefined): number {
+  if (!report) return 0;
+  const explicit = report.error_rate ??
+    (report.summary as Record<string, unknown> | undefined)?.error_rate;
+  if (explicit != null) {
+    const value = Number(explicit);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+  }
+  const total = Number(report.total_calls ?? 0);
+  const failures = Number(report.failures ?? 0);
+  return total > 0 && Number.isFinite(failures) ? Math.max(0, failures / total) : 0;
+}
+
 function isToolExecutionRow(row: SessionRow): boolean {
   return Boolean(row.tool_name && String(row.tool_name).trim());
 }

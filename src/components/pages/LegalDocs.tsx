@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Shield, FileText, Cookie, ChevronDown, ChevronRight, ExternalLink, Mail, Lock, Eye, Database, AlertTriangle, Clock, Users } from 'lucide-react';
-import PublicNavigation from '@/components/PublicNavigation';
+import MarketingShell from '@/components/marketing/system/MarketingShell';
 import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
 
 // ---------------------------------------------------------------------------
@@ -15,49 +15,45 @@ function LegalLayout({
    lastUpdated,
    children,
    icon: Icon,
-   color,
 }: {
    title: string;
    subtitle: string;
    lastUpdated: string;
    children: React.ReactNode;
    icon: React.ElementType;
-   color: string;
+   color?: string;
 }) {
-   const [, setIsLoginOpen] = useState(false);
    return (
-      <div className="min-h-screen bg-transparent text-slate-200 font-sans selection:bg-teal-500/30">
-         <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-         <div className="pt-20 max-w-4xl mx-auto px-4 py-16">
-            {/* Header */}
-            <div className={`flex items-center gap-3 mb-4`}>
-               <div className={`w-10 h-10 rounded-xl bg-${color}-500/10 border border-${color}-500/20 flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 text-${color}-400`} />
+      <MarketingShell>
+         <div className="max-w-4xl mx-auto px-4 py-16">
+            <div className="flex items-center gap-3 mb-4">
+               <div className="mkt-icon-wrap">
+                  <Icon className="w-5 h-5" aria-hidden="true" />
                </div>
-               <span className={`text-${color}-400 text-sm font-semibold uppercase tracking-widest`}>Legal</span>
+               <span className="text-[var(--marketing-accent-hover)] text-sm font-semibold tracking-wide">Legal</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{title}</h1>
-            <p className="text-slate-400 mb-2">{subtitle}</p>
-            <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-slate-800">
-               <span className="text-xs text-slate-500">Last updated: {lastUpdated}</span>
-               <span className="text-xs text-slate-500">•</span>
-               <span className="text-xs text-slate-500">Alphaclone Systems, LLC</span>
-               <span className="text-xs text-slate-500">•</span>
-               <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-teal-400 hover:underline flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> legal@alphaclonesystems.com
+            <h1 className="text-3xl md:text-4xl font-bold text-[var(--marketing-text-primary)] mb-3">{title}</h1>
+            <p className="text-[var(--marketing-text-secondary)] mb-2">{subtitle}</p>
+            <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-[var(--marketing-border)]">
+               <span className="text-xs text-[var(--marketing-text-muted)]">Last updated: {lastUpdated}</span>
+               <span className="text-xs text-[var(--marketing-text-muted)]">•</span>
+               <span className="text-xs text-[var(--marketing-text-muted)]">{COMPANY_LEGAL.legalName}</span>
+               <span className="text-xs text-[var(--marketing-text-muted)]">•</span>
+               <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-[var(--marketing-accent-hover)] hover:underline flex items-center gap-1">
+                  <Mail className="w-3 h-3" aria-hidden="true" /> legal@alphaclonesystems.com
                </a>
             </div>
             <div className="prose-legal space-y-12">
                {children}
             </div>
-            <div className="mt-16 pt-8 border-t border-slate-800 flex flex-wrap gap-4 text-xs text-slate-500">
-               <Link href="/privacy-policy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link>
-               <Link href="/terms-of-service" className="hover:text-teal-400 transition-colors">Terms of Service</Link>
-               <Link href="/cookie-policy" className="hover:text-teal-400 transition-colors">Cookie Policy</Link>
-               <a href="mailto:legal@alphaclonesystems.com" className="hover:text-teal-400 transition-colors">Contact Legal</a>
+            <div className="mt-16 pt-8 border-t border-[var(--marketing-border)] flex flex-wrap gap-4 text-xs text-[var(--marketing-text-muted)]">
+               <Link href="/privacy-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Privacy Policy</Link>
+               <Link href="/terms-of-service" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Terms of Service</Link>
+               <Link href="/cookie-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Cookie Policy</Link>
+               <a href="mailto:legal@alphaclonesystems.com" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Contact Legal</a>
             </div>
          </div>
-      </div>
+      </MarketingShell>
    );
 }
 
@@ -172,16 +168,44 @@ export function PrivacyPolicy() {
                ]} />
                <p className="mt-3">Gmail data is retrieved in real time via Google's API and displayed only to the authenticated user. You can revoke AlphaClone's Gmail access at any time from your <a href="https://myaccount.google.com/permissions" className="text-teal-400 hover:underline" target="_blank" rel="noreferrer">Google Account Permissions page</a>.</p>
             </Sub>
-            <Sub title="2.4 Usage & Technical Data">
+            <Sub title="2.4 LinkedIn API & Lead Gen Forms Data">
+               <InfoBox>
+                  AlphaClone integrates with LinkedIn APIs to manage organization and profile publishing, retrieve engagement analytics, and automatically synchronize Lead Gen Form responses directly into your workspace CRM.
+               </InfoBox>
+               <p className="mt-3">When you authorize LinkedIn OAuth integration, AlphaClone requests access to requested product scopes including: openid, profile, email, r_basicprofile, r_profile_basicinfo, w_member_social, w_organization_social, r_organization_social, r_organization_admin, rw_organization_admin, r_ads, rw_ads, r_ads_reporting, r_events, rw_events, r_1st_connections_size, and r_verify.</p>
+               <p className="mt-3"><strong className="text-white">LinkedIn Lead Gen Forms & Lead Data Processing:</strong></p>
+               <BulletList items={[
+                  'When prospects submit a LinkedIn Lead Gen Form connected to your account, form responses (such as full name, email address, company name, job title, and phone number) are securely received via real-time webhooks or API sync.',
+                  'Lead data is mapped directly into your AlphaClone CRM leads table to enable automated follow-ups and lead management.',
+                  'We do not sell, share, or monetize LinkedIn lead data with any unauthorized third parties.',
+                  'You retain full control to modify, export, or delete lead records at any time within your workspace.',
+               ]} />
+            </Sub>
+            <Sub title="2.5 Calendly Integration & Scheduling Data">
+               <p>When you connect Calendly via OAuth, AlphaClone retrieves event types, scheduled meetings, invitee names, email addresses, and event details solely to sync booking availability and auto-ingest meeting invitees into your CRM leads and calendar. OAuth access tokens are stored using AES-256 encryption at rest.</p>
+            </Sub>
+            <Sub title="2.6 Microsoft 365, Outlook, Calendar & Tasks Data">
+               <p>When you connect Microsoft 365, AlphaClone may process mailbox metadata, selected email content, calendar events, meeting details, task lists, user profile information, and OAuth tokens solely to provide inbox sync, email sending, calendar scheduling, task sync, CRM matching, and user-requested automation. Microsoft data is scoped to your connected account and workspace, and access can be revoked from your Microsoft account or AlphaClone integration settings.</p>
+            </Sub>
+            <Sub title="2.7 Meta, Facebook, Instagram & WhatsApp Business Data">
+               <p>When you connect Meta products, AlphaClone may process Facebook Page details, Instagram business profile data, post content, media assets, comments, direct business messages, Lead Ads form responses, WhatsApp Business message metadata, delivery status, phone numbers, and consent/opt-out signals. This data is used only for publishing, inbox sync, lead capture, CRM updates, and user-requested customer communication workflows.</p>
+            </Sub>
+            <Sub title="2.8 AI Assistant, Bonnie & Hermes Runtime Data">
+               <InfoBox>
+                  Bonnie AI and the Hermes durable agent runtime operate inside AlphaClone to help users complete workspace tasks. They process only the tenant-scoped data needed for the requested task, such as CRM records, invoices, tasks, messages, social posts, files, audit logs, and integration status.
+               </InfoBox>
+               <p className="mt-3">AI prompts, tool calls, execution logs, approvals, task plans, and agent run metadata may be stored in your workspace for auditability, recovery, debugging, and user-visible history. External actions such as sending messages, publishing posts, billing changes, or sensitive data access are governed by platform policy, user permissions, and approval controls where applicable. We do not use your workspace data to train third-party foundation models unless you separately agree in writing.</p>
+            </Sub>
+            <Sub title="2.9 Usage & Technical Data">
                <p>We automatically collect technical data when you use the platform: IP address, browser type and version, operating system, device type, pages visited, features used, session duration, and error logs. This data is used for platform security, debugging, and improving the user experience.</p>
             </Sub>
-            <Sub title="2.5 Payment Data">
+            <Sub title="2.10 Payment Data">
                <p>Payment processing is handled entirely by Stripe, Inc. AlphaClone never stores, processes, or has access to your credit card details. What we retain is limited to: Stripe Customer ID, subscription plan details, billing address, and payment history (invoice amounts and dates). See <a href="https://stripe.com/privacy" className="text-teal-400 hover:underline" target="_blank" rel="noreferrer">Stripe's Privacy Policy</a> for how they handle payment data.</p>
             </Sub>
-            <Sub title="2.6 AI Growth Agent Data">
+            <Sub title="2.11 AI Growth Agent Data">
                <p>The AI Growth Agent uses publicly available business directory data to identify prospective leads. We do not scrape private data or use data obtained through unauthorized means. Outreach conversations managed by the AI agent are stored in your workspace and are not accessible to other users or AlphaClone staff without your consent.</p>
             </Sub>
-            <Sub title="2.7 Model Context Protocol (MCP) AI Agent Data">
+            <Sub title="2.12 Model Context Protocol (MCP) AI Agent Data">
                <InfoBox variant="warn">
                   When you connect an external AI agent (e.g. Anthropic Claude Desktop, Manus AI) to AlphaClone via the Model Context Protocol (MCP), your workspace data — including client names, project details, task records, and revenue summaries — is transmitted to that AI agent over an encrypted SSE channel. AlphaClone does not control how the receiving AI provider processes or retains this data. You must review the privacy policy of any external AI agent before enabling MCP access.
                </InfoBox>
@@ -235,10 +259,16 @@ export function PrivacyPolicy() {
                      {[
                         { p: 'Supabase (US)', pu: 'Database & authentication', d: 'All platform data (encrypted at rest)' },
                         { p: 'Stripe, Inc. (US)', pu: 'Payment processing', d: 'Email, billing address, Stripe customer ID' },
-                        { p: 'Google LLC (US)', pu: 'Gmail API, OAuth sign-in', d: 'Google account OAuth token, email actions only' },
+                        { p: 'Google LLC (US)', pu: 'Gmail API, OAuth sign-in, calendar where enabled', d: 'OAuth tokens, account profile, email/calendar actions you authorize' },
+                        { p: 'Microsoft Corporation (US)', pu: 'Microsoft 365, Outlook, Calendar, Teams, To Do sync', d: 'OAuth tokens, profile data, selected mailbox/calendar/task records' },
+                        { p: 'LinkedIn Corporation (US)', pu: 'OAuth, social publishing, organization analytics, Lead Gen Forms', d: 'OAuth tokens, profile/page data, post data, lead form submissions' },
+                        { p: 'Meta Platforms, Inc. (US)', pu: 'Facebook/Instagram publishing, Page inbox, Lead Ads, analytics', d: 'OAuth tokens, page/profile data, posts, media, comments, lead forms' },
+                        { p: 'WhatsApp Business / Meta (US)', pu: 'Customer messaging and delivery status', d: 'Phone numbers, messages, templates, delivery/read status' },
+                        { p: 'Calendly LLC (US)', pu: 'Scheduling and invitee sync', d: 'OAuth tokens, event types, invitee names/emails, booking metadata' },
                         { p: 'Cloudflare, Inc. (US)', pu: 'Bot protection & security (Turnstile)', d: 'IP address, browser metadata, telemetry' },
-                        { p: 'Vercel, Inc. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
+                        { p: 'Railway Corp. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
                         { p: 'Resend / SendGrid', pu: 'Transactional email delivery', d: 'Email address, email content (transactional only)' },
+                        { p: 'AI model providers configured for the workspace', pu: 'Bonnie AI assistance, drafting, summarization, classification, and task execution', d: 'Task prompts and tenant-scoped records needed to complete user-requested actions' },
                         { p: 'Anthropic / Manus AI (optional)', pu: 'MCP AI agent integration (user-initiated)', d: 'CRM data transmitted only when user activates MCP integration' },
                      ].map((row, i) => (
                         <tr key={i}>
@@ -547,7 +577,6 @@ const cookieCategories = [
       desc: 'These cookies help us understand how users interact with the platform. Data is anonymized and aggregated — we cannot identify individual users from analytics data. We use this to improve the platform experience.',
       cookies: [
          { name: '_ga, _ga_[ID]', purpose: 'Google Analytics — tracks page views and navigation patterns (anonymized).', duration: '2 years', party: 'Google LLC' },
-         { name: '_vercel_*', purpose: 'Vercel analytics for page performance measurement.', duration: 'Session', party: 'Vercel, Inc.' },
          { name: 'ac_webvitals', purpose: 'AlphaClone Core Web Vitals monitoring — measures LCP, CLS, INP.', duration: 'Session', party: 'First party' },
       ]
    },
@@ -621,7 +650,7 @@ export function CookiePolicy() {
 
          <Section id="what-are-cookies" title="1. What Are Cookies?">
             <p>Cookies are small text files that websites place on your device when you visit them. They are widely used to make websites work correctly, to store your preferences, and to help website owners understand how their site is being used.</p>
-            <p>Cookies set by AlphaClone ("first-party cookies") are only readable by us. Some features use cookies set by third-party service providers (Google, Stripe, Vercel) which those providers can also read.</p>
+            <p>Cookies set by AlphaClone ("first-party cookies") are only readable by us. Some features use cookies set by third-party service providers (Google, Stripe) which those providers can also read.</p>
             <p>Cookies can be "session cookies" (deleted when you close your browser) or "persistent cookies" (remain on your device for a set period or until you delete them).</p>
          </Section>
 
@@ -702,7 +731,7 @@ export function CookiePolicy() {
             <BulletList items={[
                'Google (Gmail integration, Analytics, OAuth) — google.com/privacy',
                'Stripe (payment processing) — stripe.com/privacy',
-               'Vercel (hosting infrastructure) — vercel.com/legal/privacy-policy',
+               'Railway (hosting infrastructure) — railway.com/legal/privacy',
                'Meta/Facebook (advertising, only if marketing cookies enabled) — facebook.com/policy',
                'LinkedIn (advertising, only if marketing cookies enabled) — linkedin.com/legal/privacy-policy',
             ]} />
@@ -927,7 +956,7 @@ export function DPA() {
                                 { sp: 'Supabase, Inc.', pu: 'Database & authentication', loc: 'US (AWS us-east-1)', sg: 'SCCs + DPA' },
                                 { sp: 'Stripe, Inc.', pu: 'Payment processing', loc: 'US', sg: 'SCCs + DPA' },
                                 { sp: 'Cloudflare, Inc.', pu: 'CDN, DDoS, bot protection', loc: 'Global (US HQ)', sg: 'SCCs + DPA' },
-                                { sp: 'Vercel, Inc.', pu: 'Application hosting', loc: 'US (AWS)', sg: 'SCCs + DPA' },
+                                { sp: 'Railway Corp.', pu: 'Application hosting', loc: 'US (AWS)', sg: 'SCCs + DPA' },
                                 { sp: 'Resend / SendGrid', pu: 'Transactional email', loc: 'US', sg: 'SCCs + DPA' },
                                 { sp: 'Sentry, Inc.', pu: 'Error monitoring', loc: 'US', sg: 'SCCs + DPA' },
                             ].map((row, i) => (
@@ -1033,7 +1062,7 @@ export function PrivacyChoices() {
                 <InfoBox>
                     AlphaClone Systems does not sell your personal information to third parties for money. We do not share your personal information with third parties for cross-context behavioural advertising. No opt-out action is required for the sale of personal data because we do not engage in this practice.
                 </InfoBox>
-                <p className="mt-3">We do share certain data with our service providers (Supabase, Stripe, Vercel, Cloudflare, Resend) to operate our platform. These are service relationships governed by data processing agreements, not data sales. See our <a href="/privacy-policy#data-sharing" className="text-teal-400 hover:underline">Privacy Policy — Section 5</a> for the full list.</p>
+                <p className="mt-3">We do share certain data with our service providers (Supabase, Stripe, Railway, Cloudflare, Resend) to operate our platform. These are service relationships governed by data processing agreements, not data sales. See our <a href="/privacy-policy#data-sharing" className="text-teal-400 hover:underline">Privacy Policy — Section 5</a> for the full list.</p>
                 <p className="mt-3">If you believe we have incorrectly categorised any data sharing as non-sale, or if you wish to formally record an opt-out preference, contact us at the address below.</p>
             </Section>
 

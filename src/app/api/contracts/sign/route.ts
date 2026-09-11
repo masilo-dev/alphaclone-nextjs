@@ -6,6 +6,8 @@ import { contractServerService } from '@/services/server/contractServerService';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
 import { resolveContractDealId } from '@/lib/contracts/contractCoherenceServer';
+import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
+import { fileContractPdfDocument, queueDocumentIntelligence } from '@/lib/documents/fileDocument';
 
 function getClientIpAddress(req: NextRequest): string {
     const forwarded = req.headers.get('x-forwarded-for');
@@ -47,7 +49,7 @@ export async function GET(req: NextRequest) {
 
         const { data: contract, error: contractError } = await admin
             .from('contracts')
-            .select('id, title, content, status, client_signed_at, tenant:tenants(name)')
+            .select('id, title, content, status, client_signed_at, payment_amount, metadata, tenant:tenants(name, logo_url, settings)')
             .eq('id', signingToken.contract_id)
             .eq('tenant_id', signingToken.tenant_id)
             .single();
@@ -55,6 +57,45 @@ export async function GET(req: NextRequest) {
         if (contractError || !contract) {
             return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
         }
+
+        const now = new Date().toISOString();
+        const signerEmail = String(signingToken.signer_email || '').trim().toLowerCase();
+        const { data: party } = await admin
+            .from('contract_parties')
+            .select('id, signing_order')
+            .eq('tenant_id', signingToken.tenant_id)
+            .eq('contract_id', signingToken.contract_id)
+            .contains('party_snapshot', { email: signerEmail })
+            .maybeSingle();
+
+        await Promise.all([
+            admin.from('contract_signature_events').insert({
+                tenant_id: signingToken.tenant_id,
+                contract_id: signingToken.contract_id,
+                party_id: party?.id || null,
+                event_type: 'viewed',
+                signer_email: signerEmail,
+                signing_order: party?.signing_order || null,
+                provider: 'bonnie_esign',
+                ip_address: getClientIpAddress(req),
+                user_agent: req.headers.get('user-agent') || 'unknown',
+                evidence: { token_expires_at: signingToken.expires_at },
+                occurred_at: now,
+            }),
+            admin.from('contract_audit_trail').insert({
+                tenant_id: signingToken.tenant_id,
+                contract_id: signingToken.contract_id,
+                action: 'contract_viewed',
+                actor_role: signingToken.signer_role,
+                actor_email: signerEmail,
+                ip_address: getClientIpAddress(req),
+                user_agent: req.headers.get('user-agent') || 'unknown',
+            }),
+            admin.from('contracts').update({
+                viewed_at: contract.client_signed_at ? undefined : now,
+                lifecycle_status: ['draft', 'review', 'sent'].includes(String(contract.status)) ? 'viewed' : undefined,
+            }).eq('id', signingToken.contract_id).eq('tenant_id', signingToken.tenant_id),
+        ]);
 
         return NextResponse.json({
             success: true,
@@ -141,6 +182,18 @@ export async function POST(req: NextRequest) {
                 String(updatedContract.client_name || updatedContract.signer_name || 'Signer').trim();
             const fullySigned = updatedContract.status === 'fully_signed';
 
+            if (!fullySigned) {
+                const { sendOrderedContractSignatureReminders } = await import(
+                    '@/services/contractSignatureReminderService'
+                );
+                await sendOrderedContractSignatureReminders({
+                    tenantId: updatedContract.tenant_id,
+                    contractId: updatedContract.id,
+                    actorUserId: updatedContract.created_by || undefined,
+                    force: true,
+                }).catch((err) => console.error('Next ordered signer notification failed:', err));
+            }
+
             if (
                 signerEmailForMail &&
                 (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed')
@@ -164,7 +217,11 @@ export async function POST(req: NextRequest) {
                 }).catch((err) => console.error('Contract signer confirmation email failed:', err));
             }
 
-            if (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed') {
+            const executed =
+              updatedContract.status === 'fully_signed' ||
+              updatedContract.lifecycle_status === 'signed' ||
+              updatedContract.lifecycle_status === 'active';
+            if (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed' || executed) {
                 const { onContractSignedSideEffects } = await import('@/services/contractNotificationService');
                 await onContractSignedSideEffects({
                     tenantId: updatedContract.tenant_id,
@@ -176,14 +233,98 @@ export async function POST(req: NextRequest) {
                     createdBy: updatedContract.created_by,
                 }).catch((err) => console.error('Contract signed side effects failed:', err));
             }
-            if (updatedContract.status === 'fully_signed') {
+            if (executed) {
                 const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
                 await emitBusinessEvent(updatedContract.tenant_id, 'contract_signed', {
                     contractId: updatedContract.id,
                     title: updatedContract.title,
                     clientId: updatedContract.client_id,
-                    projectId: updatedContract.project_id
+                    projectId: updatedContract.project_id,
+                    actorUserId: updatedContract.created_by,
                 }).catch(err => console.error('Failed to emit contract_signed event:', err));
+
+                const contentHash =
+                    String(updatedContract.metadata?.content_hash || '') ||
+                    String(updatedContract.content || updatedContract.title || '');
+                const { generateContractAuditTrailPdf } = await import(
+                    '@/lib/contracts/generateContractAuditTrailPdf'
+                );
+                await generateContractAuditTrailPdf({
+                    tenantId: updatedContract.tenant_id,
+                    contractId: updatedContract.id,
+                    title: updatedContract.title,
+                    contentHash,
+                    status: updatedContract.status,
+                }).catch((err) => console.error('Contract audit trail PDF failed:', err));
+
+                try {
+                    const adminClient = createSupabaseAdminClient();
+
+                    let client: { name?: string; email?: string } | undefined;
+                    if (updatedContract.client_id) {
+                        const { data: clientRow } = await adminClient
+                            .from('business_clients')
+                            .select('name, email')
+                            .eq('id', updatedContract.client_id)
+                            .maybeSingle();
+                        if (clientRow) client = { name: clientRow.name, email: clientRow.email };
+                    }
+
+                    const { data: tenant } = await adminClient
+                        .from('tenants')
+                        .select('name, logo_url, settings')
+                        .eq('id', updatedContract.tenant_id)
+                        .maybeSingle();
+
+                    const pdfContent = await generateThemedContractPdfBuffer(updatedContract, tenant, client);
+                    const filePath = `contracts/${updatedContract.tenant_id}/${updatedContract.id}.pdf`;
+                    await adminClient.storage.from('contracts').upload(filePath, pdfContent, {
+                        contentType: 'application/pdf',
+                        upsert: true,
+                    });
+
+                    const { data: publicUrlData } = adminClient.storage.from('contracts').getPublicUrl(filePath);
+                    await adminClient
+                        .from('contracts')
+                        .update({ pdf_url: publicUrlData?.publicUrl || null, updated_at: new Date().toISOString() })
+                        .eq('id', updatedContract.id)
+                        .eq('tenant_id', updatedContract.tenant_id);
+
+                    const filingUserId = String(updatedContract.created_by || updatedContract.owner_id || '');
+                    if (filingUserId) {
+                        await fileContractPdfDocument(adminClient, {
+                            tenantId: updatedContract.tenant_id,
+                            userId: filingUserId,
+                            contract: {
+                                id: updatedContract.id,
+                                title: updatedContract.title,
+                                client_id: updatedContract.client_id,
+                                project_id: updatedContract.project_id,
+                                document_id: updatedContract.document_id,
+                                status: updatedContract.status,
+                            },
+                            storagePath: filePath,
+                            storageBucket: 'contracts',
+                            sizeBytes: pdfContent.byteLength,
+                        });
+
+                        if (updatedContract.document_id) {
+                            await adminClient
+                                .from('documents')
+                                .update({ status: 'active', updated_at: new Date().toISOString() })
+                                .eq('tenant_id', updatedContract.tenant_id)
+                                .eq('id', updatedContract.document_id);
+                            await queueDocumentIntelligence(
+                                adminClient,
+                                updatedContract.tenant_id,
+                                updatedContract.document_id,
+                                filingUserId
+                            );
+                        }
+                    }
+                } catch (err) {
+                    console.error('Signed contract catalog filing failed:', err);
+                }
             }
         }
 

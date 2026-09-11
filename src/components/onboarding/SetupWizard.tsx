@@ -148,7 +148,7 @@ const StripeConnectSetup: React.FC<SetupComponentProps> = ({ tenant, onComplete 
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      const response = await fetch('/api/stripe/connect/create', {
+      const response = await fetch('/api/stripe/connect/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

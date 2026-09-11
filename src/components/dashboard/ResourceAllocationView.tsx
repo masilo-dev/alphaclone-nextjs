@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { Card, Button, Modal, Input } from '../ui/UIComponents';
+import { Card, Button, Modal } from '../ui/UIComponents';
 import { teamService } from '../../services/teamService';
 import { projectService } from '../../services/projectService';
 import { useTenant } from '../../contexts/TenantContext';
 import { TableSkeleton } from '../ui/Skeleton';
 import { User, Project } from '../../types';
-import { Plus, Edit, Briefcase, Users, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Edit, Briefcase, Users, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Avatar } from '@/components/ui/Avatar';
 import toast from 'react-hot-toast';
 
 interface TeamMember {
@@ -24,13 +24,6 @@ interface ResourceAllocationViewProps {
     initialProjects?: Project[];
 }
 
-/**
- * FULLY FUNCTIONAL Resource Allocation with:
- * - Assign/unassign team members to projects
- * - View current assignments per member
- * - Quick status toggle
- * - Auto-calculated capacity based on workload
- */
 const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, initialProjects }) => {
     const { currentTenant } = useTenant();
     const [members, setMembers] = useState<TeamMember[]>([]);
@@ -44,17 +37,16 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
 
     useEffect(() => {
         fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialProjects]);
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            // Always fetch team members for current tenant
             const teamResult = await teamService.getTeamMembers(currentTenant?.id);
 
             let activeProjects = initialProjects || [];
 
-            // Fetch projects only if not provided
             if (!initialProjects) {
                 const projectsResult = await projectService.getProjects(user.id, user.role);
                 if (projectsResult.error) {
@@ -67,13 +59,10 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
             if (teamResult.error) {
                 setError(teamResult.error);
             } else {
-                // Calculate capacity based on actual project assignments
                 const membersWithCapacity = teamResult.team.map(member => {
-                    // Use activeProjects for calculation
                     const assignedProjects = activeProjects.filter(p =>
                         p.team && p.team.includes(member.id)
                     );
-                    // Each project = ~20% capacity, capped at 100%
                     const calculatedCapacity = Math.min(assignedProjects.length * 20, 100);
                     return {
                         ...member,
@@ -83,9 +72,8 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                 setMembers(membersWithCapacity);
             }
 
-            // Filter for active projects only for the state
             setProjects(activeProjects.filter(p => p.status === 'Active'));
-        } catch (err) {
+        } catch {
             setError('Failed to load team data');
         } finally {
             setIsLoading(false);
@@ -107,9 +95,8 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
         setSelectedProjects(prev => {
             if (prev.includes(projectId)) {
                 return prev.filter(id => id !== projectId);
-            } else {
-                return [...prev, projectId];
             }
+            return [...prev, projectId];
         });
     };
 
@@ -119,17 +106,11 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
         setIsAssigning(true);
 
         try {
-            // Get current project assignments for this member
             const currentProjects = getProjectsForMember(selectedMember.id);
             const currentProjectIds = currentProjects.map(p => p.id);
-
-            // Find projects to add (in selectedProjects but not in current)
             const projectsToAdd = selectedProjects.filter(id => !currentProjectIds.includes(id));
-
-            // Find projects to remove (in current but not in selectedProjects)
             const projectsToRemove = currentProjectIds.filter(id => !selectedProjects.includes(id));
 
-            // Update projects: add member
             for (const projectId of projectsToAdd) {
                 const project = projects.find(p => p.id === projectId);
                 if (project) {
@@ -138,7 +119,6 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                 }
             }
 
-            // Update projects: remove member
             for (const projectId of projectsToRemove) {
                 const project = projects.find(p => p.id === projectId);
                 if (project) {
@@ -149,7 +129,7 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
 
             toast.success('Assignments updated successfully!');
             setIsAssignModalOpen(false);
-            fetchData(); // Refresh data to show updated assignments
+            fetchData();
         } catch (err) {
             console.error('Failed to update assignments:', err);
             toast.error('Failed to update assignments');
@@ -161,16 +141,13 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
     const handleQuickStatusToggle = async (member: TeamMember) => {
         const newStatus = member.status === 'Available' ? 'Busy' : 'Available';
 
-        // Optimistic update
         setMembers(prev => prev.map(m =>
             m.id === member.id ? { ...m, status: newStatus } : m
         ));
 
-        // Persist to database
         teamService.updateMemberStatus(member.id, newStatus).then(({ error }) => {
             if (error) {
                 toast.error('Failed to update status');
-                // Revert implementation if needed
             }
         });
 
@@ -224,7 +201,6 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
         );
     }
 
-    // Calculate team stats
     const totalMembers = members.length;
     const availableMembers = members.filter(m => m.status === 'Available').length;
     const totalCapacity = members.reduce((sum: number, m: TeamMember) => sum + m.capacity, 0);
@@ -232,20 +208,18 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
 
     return (
             <div className="space-y-6 animate-fade-in">
-                {/* Header */}
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-3 flex-wrap">
                     <div>
                         <h2 className="text-2xl font-bold text-white">Studio Talent & Resource Allocation</h2>
                         <p className="text-slate-400 mt-1">Manage team assignments and workload</p>
                     </div>
-                    <Button onClick={fetchData} variant="outline" className="flex items-center gap-2">
+                    <Button onClick={fetchData} variant="outline" className="flex items-center gap-2 min-h-11">
                         <Loader2 className="w-4 h-4" />
                         Refresh
                     </Button>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <Card className="p-4">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-teal-500/10 rounded-lg">
@@ -281,30 +255,26 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                     </Card>
                 </div>
 
-                {/* Team Members Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {members.map((member) => {
                         const assignedProjects = getProjectsForMember(member.id);
                         return (
                             <Card key={member.id} className="flex flex-col gap-4 p-4 hover:border-teal-500/50 transition-all">
-                                {/* Header */}
                                 <div className="flex items-center gap-4">
-                                    <div className="relative w-12 h-12 flex-shrink-0">
-                                        <Image
-                                            src={member.avatar}
-                                            fill
-                                            className="rounded-full border border-slate-700 object-cover"
-                                            alt={member.name}
-                                            unoptimized
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-white">{member.name}</h3>
-                                        <p className="text-xs text-slate-400">{member.role}</p>
+                                    <Avatar
+                                        src={member.avatar}
+                                        name={member.name}
+                                        size={48}
+                                        className="flex-shrink-0"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-bold text-white truncate">{member.name}</h3>
+                                        <p className="text-xs text-slate-400 truncate">{member.role}</p>
                                     </div>
                                     <button
+                                        type="button"
                                         onClick={() => handleQuickStatusToggle(member)}
-                                        className={`px-2 py-0.5 text-xs rounded-full transition-colors ${member.status === 'Available'
+                                        className={`min-h-11 px-2 py-0.5 text-xs rounded-full transition-colors ${member.status === 'Available'
                                             ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
                                             : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                                             }`}
@@ -313,7 +283,6 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                     </button>
                                 </div>
 
-                                {/* Capacity Bar */}
                                 <div className="mt-2">
                                     <div className="flex justify-between text-xs mb-1">
                                         <span className="text-slate-400">Workload</span>
@@ -337,7 +306,6 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                     </div>
                                 </div>
 
-                                {/* Current Assignments */}
                                 <div>
                                     <div className="text-xs text-slate-400 mb-2 flex items-center gap-2">
                                         <Briefcase className="w-3 h-3" />
@@ -369,7 +337,6 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                     )}
                                 </div>
 
-                                {/* Skills */}
                                 <div className="flex gap-2 flex-wrap">
                                     {member.skills.slice(0, 3).map(skill => (
                                         <span
@@ -381,11 +348,10 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                     ))}
                                 </div>
 
-                                {/* Actions */}
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full mt-auto text-xs"
+                                    className="w-full mt-auto text-xs min-h-11"
                                     onClick={() => handleManageAssignment(member)}
                                 >
                                     <Edit className="w-3 h-3 mr-2" />
@@ -396,7 +362,6 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                     })}
                 </div>
 
-                {/* Assignment Modal */}
                 {isAssignModalOpen && selectedMember && (
                     <Modal
                         isOpen={isAssignModalOpen}
@@ -420,8 +385,9 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                         return (
                                             <button
                                                 key={project.id}
+                                                type="button"
                                                 onClick={() => handleToggleProject(project.id)}
-                                                className={`w-full p-3 rounded-lg border transition-all text-left ${isAssigned
+                                                className={`w-full p-3 rounded-lg border transition-all text-left min-h-11 ${isAssigned
                                                     ? 'border-teal-500 bg-teal-500/10'
                                                     : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
                                                     }`}
@@ -466,14 +432,14 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
                                 <div className="flex gap-3">
                                     <Button
                                         onClick={() => setIsAssignModalOpen(false)}
-                                        className="flex-1 bg-slate-700 hover:bg-slate-600"
+                                        className="flex-1 bg-slate-700 hover:bg-slate-600 min-h-11"
                                         disabled={isAssigning}
                                     >
                                         Cancel
                                     </Button>
                                     <Button
                                         onClick={handleSaveAssignments}
-                                        className="flex-1 bg-teal-600 hover:bg-teal-500"
+                                        className="flex-1 bg-teal-600 hover:bg-teal-500 min-h-11"
                                         disabled={isAssigning}
                                     >
                                         {isAssigning ? (
@@ -495,4 +461,3 @@ const ResourceAllocationView: React.FC<ResourceAllocationViewProps> = ({ user, i
 };
 
 export default ResourceAllocationView;
-

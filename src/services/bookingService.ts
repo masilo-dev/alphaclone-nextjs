@@ -1,10 +1,3 @@
-import { supabase } from '../lib/supabase';
-import { tenantService } from './tenancy/TenantService';
-import { calendarService } from './calendarService';
-import { dailyService } from './dailyService';
-import { taskService } from './taskService';
-import { Tenant } from './tenancy/types';
-import { addMinutes, format, parse, startOfDay, isValid } from 'date-fns';
 
 export interface BookingSlot {
     start: string; // ISO string
@@ -15,31 +8,6 @@ export interface BookingSlot {
 const BUFFER_MINUTES = 15; // 15-minute buffer between meetings
 
 export const bookingService = {
-    /**
-     * Get tenant public booking profile by slug
-     */
-    async getBookingProfile(slug: string): Promise<{ tenant: Tenant | null; error: string | null }> {
-        try {
-            // We use the existing getTenantBySlug. 
-            // NOTE: In a real app, strict RLS might block this for public users.
-            // We might need a specific RPC or "security definer" function if RLS is strict.
-            // For now, assuming public read access to 'tenants' table or specific fields is allowed.
-            const tenant = await tenantService.getTenantBySlug(slug);
-
-            if (!tenant) {
-                return { tenant: null, error: 'Booking profile not found' };
-            }
-
-            if (!tenant.settings.booking?.enabled) {
-                return { tenant: null, error: 'Booking is currently disabled for this user' };
-            }
-
-            return { tenant, error: null };
-        } catch (err) {
-            return { tenant: null, error: String(err) };
-        }
-    },
-
     /**
      * Get available slots for a specific date and duration
      */
@@ -122,5 +90,73 @@ export const bookingService = {
             console.error('[createBooking] Error:', err);
             return { bookingId: null, roomUrl: null, error: String(err) };
         }
+    },
+
+    /**
+     * Update booking status (Scheduled, Confirmed, Completed, Cancelled, Rescheduled, No-show)
+     */
+    async updateStatus(
+        bookingId: string,
+        status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled' | 'no_show',
+        options?: { tenantId?: string; reason?: string }
+    ): Promise<{ success: boolean; booking?: any; error?: string }> {
+        try {
+            const res = await fetch('/api/booking/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bookingId,
+                    status,
+                    reason: options?.reason,
+                    tenantId: options?.tenantId
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                return { success: false, error: data.error || 'Failed to update booking status' };
+            }
+
+            const data = await res.json();
+            return { success: true, booking: data.booking };
+        } catch (err: any) {
+            return { success: false, error: String(err) };
+        }
+    },
+
+    /**
+     * Reschedule an existing booking (updates original record & retains history)
+     */
+    async rescheduleBooking(
+        bookingId: string,
+        newStartTime: string,
+        newEndTime: string,
+        options?: { tenantId?: string; reason?: string }
+    ): Promise<{ success: boolean; booking?: any; error?: string }> {
+        try {
+            const res = await fetch('/api/booking/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bookingId,
+                    status: 'rescheduled',
+                    newStartTime,
+                    newEndTime,
+                    reason: options?.reason,
+                    tenantId: options?.tenantId
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                return { success: false, error: data.error || 'Failed to reschedule booking' };
+            }
+
+            const data = await res.json();
+            return { success: true, booking: data.booking };
+        } catch (err: any) {
+            return { success: false, error: String(err) };
+        }
     }
 };
+

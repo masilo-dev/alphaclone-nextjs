@@ -28,6 +28,13 @@ export async function resumeApprovedTool(params: {
     return { success: false, error: fetchError?.message || 'Approval not found' };
   }
 
+  if (approval.status !== 'pending') {
+    return {
+      success: false,
+      error: `Approval is already ${approval.status}. Refresh to see the latest workflow state.`,
+    };
+  }
+
   const payload = (approval.payload || {}) as ApprovalPayload;
   const toolName =
     payload.tool_name ||

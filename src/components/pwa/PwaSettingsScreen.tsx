@@ -64,7 +64,7 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
     [subscribeToPush, unsubscribeFromPush, updatePrefs],
   );
 
-  const preview = resolveBottomNavItems(user.role, prefs.bottomNavModuleIds);
+  const preview = resolveBottomNavItems(user.role, prefs.bottomNavModuleIds, { isPwa: true });
   const permission =
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
 
@@ -148,7 +148,7 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
       </NativeSection>
 
       <p className="px-6 pb-8 text-[11px] text-white/35 leading-relaxed">
-        Pick up to four modules for your bottom bar. More opens the full menu.
+        Pick up to five destinations for your bottom bar. More opens the full menu.
       </p>
     </NativeScreen>
   );

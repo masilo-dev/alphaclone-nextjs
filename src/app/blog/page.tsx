@@ -1,6 +1,22 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { ArrowLeft, ArrowRight, Calendar } from 'lucide-react';
 import { getPublishedSeoArticles, type SeoArticleRecord } from '@/services/seoServerService';
+import { SITE_URL } from '@/lib/siteUrl';
+
+export const metadata: Metadata = {
+    title: 'Business Automation and AI Operations Blog',
+    description: 'Practical guidance for founders and service teams using CRM, contracts, invoicing, automation, and AI agents in one operating system.',
+    alternates: { canonical: `${SITE_URL}/blog` },
+    robots: { index: true, follow: true },
+    openGraph: {
+        title: 'AlphaClone Business Operations Blog',
+        description: 'Guides for running sales, delivery, finance, and customer operations with connected AI workflows.',
+        url: `${SITE_URL}/blog`,
+        type: 'website',
+        images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    },
+};
 
 export default async function BlogPage() {
     let articles: SeoArticleRecord[] = [];

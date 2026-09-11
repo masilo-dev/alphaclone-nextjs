@@ -19,9 +19,10 @@ interface InsightsHubProps {
 export default function InsightsHub({ children }: InsightsHubProps) {
   return (
     <HubShell
-      title="Insights Hub"
+      title="Reports"
       description="KPIs, performance metrics, and business reports"
       tabs={INSIGHTS_TABS}
+      moduleId="reports"
       accent="violet"
     >
       {children}

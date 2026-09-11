@@ -1,23 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callDeepSeek } from '@/lib/ai/deepseek';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
-    const prompt = typeof body?.prompt === 'string' ? body.prompt : '';
-    if (!prompt.trim()) {
-      return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
-    }
-
-    const options = typeof body?.options === 'object' && body.options ? body.options : {};
+    await requireAuthenticatedUser(req);
+    const body = z.object({
+      prompt: z.string().trim().min(1).max(20_000),
+      options: z.object({
+        model: z.enum(['deepseek-chat', 'deepseek-reasoner']).optional(),
+        maxTokens: z.number().int().min(1).max(8_000).optional(),
+        temperature: z.number().min(0).max(2).optional(),
+        systemPrompt: z.string().max(20_000).optional(),
+      }).optional(),
+    }).parse(await req.json().catch(() => ({})));
+    const { prompt, options = {} } = body;
     const content = await callDeepSeek(prompt, options);
 
     return NextResponse.json({ content });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'DeepSeek request failed';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return routeErrorResponse(error, 'DeepSeek request failed', req);
   }
 }

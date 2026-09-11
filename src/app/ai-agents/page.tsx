@@ -1,26 +1,38 @@
 import type { Metadata } from 'next';
 import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
-import MarketingRelatedLinks from '@/components/landing/MarketingRelatedLinks';
-import MarketingProductCta from '@/components/marketing/MarketingProductCta';
+import ProductPageTemplate from '@/components/marketing/system/ProductPageTemplate';
+import {
+  MARKETING_PRODUCT_FEATURES,
+  type MarketingProductFeature,
+} from '@/lib/marketing/productFeatures';
 import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
 import { absoluteUrl } from '@/lib/siteUrl';
 
+function getFeature(slug: string): MarketingProductFeature {
+  const feature = MARKETING_PRODUCT_FEATURES.find((item) => item.slug === slug);
+  if (!feature) {
+    throw new Error(`Missing ${slug} marketing feature content.`);
+  }
+  return feature;
+}
+
+const feature = getFeature('ai-agents');
+
 export const metadata: Metadata = {
-  title: 'AlphaClone AI Agents | Business Automation Agents',
-  description:
-    'AlphaClone AI agents execute business workflows across CRM, lead operations, project delivery, and communication tasks with policy controls. Integrated with DeepSeek V3/R1 for intelligent automation.',
+  title: 'AlphaClone Bonnie AI | Reviewable Business Automation',
+  description: feature.summary,
   keywords: [
-    'AlphaClone AI agents',
+    'AlphaClone Bonnie AI',
     'business AI agents',
     'AI workflow automation',
-    'autonomous business agents',
+    'reviewable business automation',
     'AlphaClone AI automation',
-    'DeepSeek',
   ],
   alternates: { canonical: absoluteUrl('/ai-agents') },
-  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-    title: 'AlphaClone AI Agents',
-    description: 'Automate business workflows with AlphaClone AI agents powered by DeepSeek V3/R1.',
+  openGraph: {
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    title: 'AlphaClone Bonnie AI | Reviewable Business Automation',
+    description: feature.summary,
     url: absoluteUrl('/ai-agents'),
     type: 'website',
   },
@@ -40,30 +52,7 @@ export default function AiAgentsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <MarketingLandingShell>
-        <main className="min-h-screen bg-[#040A12] text-slate-200">
-          <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <h1 className="text-4xl font-black text-white mb-4">AlphaClone AI Agents</h1>
-            <p className="text-slate-300 mb-6">
-              Run automation agents for lead qualification, follow-up preparation, and operational execution inside one platform. Powered by DeepSeek V3/R1 for intelligent reasoning.
-            </p>
-            <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-6 text-sm text-slate-300">
-              <ul className="space-y-2">
-                <li>Agent-assisted lead workflows and routing</li>
-                <li>Task generation with due-date awareness</li>
-                <li>Workflow execution from conversational commands</li>
-                <li>Controlled automation with approval and policy gating</li>
-                <li>Powered by DeepSeek V3/R1 for intelligent reasoning</li>
-              </ul>
-            </div>
-            <MarketingRelatedLinks
-              links={[
-                { label: 'Claude and Manus Integrations', href: '/claude-manus-integrations' },
-                { label: 'Lead Management', href: '/lead-management' },
-              ]}
-            />
-            <MarketingProductCta />
-          </section>
-        </main>
+        <ProductPageTemplate feature={feature} />
       </MarketingLandingShell>
     </>
   );

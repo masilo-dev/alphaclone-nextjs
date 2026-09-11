@@ -8,8 +8,10 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 import type { WorkflowCondition, WorkflowAction, TriggerType, ActionType } from '@/services/engine/WorkflowExecutor';
 
 interface WorkflowDef {
@@ -210,6 +212,7 @@ const EMPTY_FORM = {
 
 export default function WorkflowDashboard() {
     const { currentTenant: tenant } = useTenant();
+    const { confirm } = useConfirmDialog();
     const [workflows, setWorkflows] = useState<WorkflowDef[]>([]);
     const [executions, setExecutions] = useState<WorkflowExecution[]>([]);
     const [loading, setLoading] = useState(true);
@@ -223,17 +226,33 @@ export default function WorkflowDashboard() {
     const loadData = useCallback(async () => {
         if (!tenant?.id) return;
         setLoading(true);
+        // `workflow_executions.workflow_id` references `workflows`, not
+        // `workflow_definitions`, so PostgREST rejects an embedded
+        // `workflow_definitions(name)` (400). Resolve names from the definitions
+        // loaded alongside instead.
         const [wfRes, execRes] = await Promise.all([
             supabase.from('workflow_definitions').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase
                 .from('workflow_executions')
-                .select('*, workflow_definitions(name)')
+                .select('*')
                 .eq('tenant_id', tenant.id)
                 .order('created_at', { ascending: false })
                 .limit(50),
         ]);
         if (!wfRes.error) setWorkflows(wfRes.data || []);
-        if (!execRes.error) setExecutions(execRes.data || []);
+        if (!execRes.error) {
+            const nameById = new Map<string, string>(
+                ((wfRes.data || []) as Array<{ id: string; name?: string }>).map((w) => [w.id, w.name || '']),
+            );
+            setExecutions(
+                ((execRes.data || []) as Array<Record<string, any>>).map((ex) => ({
+                    ...ex,
+                    workflow_definitions: nameById.has(ex.workflow_id)
+                        ? { name: nameById.get(ex.workflow_id) || '' }
+                        : ex.workflow_definitions,
+                })) as WorkflowExecution[],
+            );
+        }
         setLoading(false);
     }, [tenant]);
 
@@ -242,29 +261,32 @@ export default function WorkflowDashboard() {
     const seedDefaults = async () => {
         if (!tenant?.id) return;
         setSeeding(true);
-        for (const wf of DEFAULT_WORKFLOWS) {
-            await supabase.from('workflow_definitions').insert({ ...wf, tenant_id: tenant.id, is_active: false });
-        }
+        await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflows: DEFAULT_WORKFLOWS }) });
         toast.success('Default workflows added');
         loadData();
         setSeeding(false);
     };
 
     const handleToggle = async (wf: WorkflowDef) => {
-        const { error } = await supabase
-            .from('workflow_definitions')
-            .update({ is_active: !wf.is_active })
-            .eq('id', wf.id);
-        if (!error) {
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant!.id)}/workflows`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowId: wf.id, isActive: !wf.is_active }) });
+        if (response.ok) {
             setWorkflows(prev => prev.map(w => w.id === wf.id ? { ...w, is_active: !wf.is_active } : w));
             toast.success(wf.is_active ? 'Workflow paused' : 'Workflow activated');
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Delete this workflow?')) return;
-        const { error } = await supabase.from('workflow_definitions').delete().eq('id', id);
-        if (!error) {
+        const ok = await confirm({
+            title: 'Delete workflow?',
+            description: 'This will remove the workflow definition. Execution history remains in your activity logs.',
+            confirmLabel: 'Delete workflow',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows?workflowId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (response.ok) {
             setWorkflows(prev => prev.filter(w => w.id !== id));
             toast.success('Deleted');
         }
@@ -274,12 +296,9 @@ export default function WorkflowDashboard() {
         if (!tenant?.id || !form.name || !form.trigger_type) return toast.error('Name and trigger required');
         if (form.actions.length === 0) return toast.error('Add at least one action');
         setSaving(true);
-        const { error } = await supabase.from('workflow_definitions').insert({
-            ...form,
-            tenant_id: tenant.id,
-            is_active: false,
-        });
-        if (error) { toast.error(error.message); } else {
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) { toast.error(result.error || 'Workflow could not be created'); } else {
             toast.success('Workflow created (activate to enable)');
             setShowForm(false);
             setForm({ ...EMPTY_FORM });
@@ -290,18 +309,18 @@ export default function WorkflowDashboard() {
 
     const handleTestRun = async (wf: WorkflowDef) => {
         const toastId = toast.loading('Running test...');
-        const res = await fetch('/api/engine/execute', {
-            method: 'POST',
+        if (!tenant?.id) return;
+        const res = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                trigger_type: wf.trigger_type,
-                tenant_id: tenant?.id,
-                data: { intent_label: 'high', intent_score: 75, source: 'test', contact_name: 'Test Lead', phone: '+10000000000' },
+                workflowId: wf.id,
+                sample: { intent_label: 'high', intent_score: 75, source: 'dry-run', contact_name: 'Sample Lead', phone: '+10000000000' },
             }),
         });
-        const result = await res.json();
-        toast.success(`Test: ${result.executed} workflow(s) executed`, { id: toastId });
-        loadData();
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) { toast.error(result.error || 'Dry run failed', { id: toastId }); return; }
+        toast.success(result.conditionsMet ? `Dry run passed: ${result.actions?.length || 0} action(s) previewed` : 'Dry run complete: conditions did not match', { id: toastId });
     };
 
     const addCondition = () => setForm(f => ({
@@ -341,26 +360,22 @@ export default function WorkflowDashboard() {
 
     return (
         <div className="space-y-6 ac-scroll-full ac-enterprise-module">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-xl font-bold text-white">AlphaClone Flow Engine</h2>
-                    <p className="text-sm text-slate-400">Automated orchestration for leads, forms, SMS, and ingestion events</p>
-                </div>
-                <div className="flex gap-2">
-                    {workflows.length === 0 && (
-                        <button onClick={seedDefaults} disabled={seeding}
-                            className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-xl text-sm transition-colors">
-                            {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                            Add Defaults
-                        </button>
-                    )}
-                    <button onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold text-sm transition-colors">
-                        <Plus className="w-4 h-4" /> New Workflow
-                    </button>
-                </div>
-            </div>
+            <EnterprisePageHeader
+                moduleKey="workflows"
+                primaryAction={{
+                    label: 'New Workflow',
+                    onClick: () => setShowForm(true),
+                }}
+                secondaryActions={
+                    workflows.length === 0
+                        ? [{
+                            label: seeding ? 'Adding…' : 'Add Defaults',
+                            onClick: seedDefaults,
+                            disabled: seeding,
+                        }]
+                        : undefined
+                }
+            />
 
             {(workflows.length > 0 || executions.length > 0) && (
                 <ModuleStatCards stats={workflowStats} />

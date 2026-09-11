@@ -13,6 +13,13 @@ export const calendlyService = {
         }
 
         if (resolvedId) {
+            if (typeof window === 'undefined') {
+                const [{ getCalendlyConfig }, { createSupabaseAdminClient }] = await Promise.all([
+                    import('@/services/calendly/calendlyIntegrationService'),
+                    import('@/lib/supabase-admin'),
+                ]);
+                return getCalendlyConfig(createSupabaseAdminClient(), resolvedId);
+            }
             const { data: tenant } = await supabase
                 .from('tenants')
                 .select('settings')

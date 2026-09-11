@@ -37,8 +37,7 @@ export async function GET(request: NextRequest) {
     if (!tenantId) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
 
     const [{ data: contacts }, { data: clients }] = await Promise.all([
       admin
@@ -81,8 +80,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = actionSchema.parse(await request.json());
-    await requireTenantAccess(body.tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(body.tenantId);
 
     if (body.action === 'restore') {
       const result =

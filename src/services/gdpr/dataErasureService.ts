@@ -93,14 +93,24 @@ export const dataErasureService = {
             retainedTables.push('contracts (anonymized)');
 
             // 11. ANONYMIZE: Invoices (must retain for tax/legal - 7 years)
-            await supabase.from('invoices')
-                .update({
-                    client_email: '[REDACTED]',
-                    client_name: '[REDACTED - User Deleted]',
-                })
-                .eq('client_id', userId);
-            anonymizedTables.push('invoices');
-            retainedTables.push('invoices (anonymized)');
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            const userEmail = authUser?.user?.email || null;
+            const { data: linkedClients } = userEmail
+                ? await supabase.from('business_clients').select('id').eq('email', userEmail)
+                : { data: [] as { id: string }[] };
+            const clientIds = (linkedClients || []).map((client: { id: string }) => client.id);
+            const anonymizePayload = {
+                client_email: '[REDACTED]',
+                client_name: '[REDACTED - User Deleted]',
+            };
+            if (clientIds.length) {
+                await supabase.from('business_invoices').update(anonymizePayload).in('client_id', clientIds);
+            }
+            if (userEmail) {
+                await supabase.from('business_invoices').update(anonymizePayload).eq('client_email', userEmail);
+            }
+            anonymizedTables.push('business_invoices');
+            retainedTables.push('business_invoices (anonymized)');
 
             // 12. ANONYMIZE: Audit logs (must retain for compliance - 7 years)
             await supabase.from('audit_logs')
@@ -221,11 +231,21 @@ export const dataErasureService = {
         }
 
         // Check for unpaid invoices
-        const { data: unpaidInvoices } = await supabase
-            .from('invoices')
-            .select('id')
-            .eq('client_id', userId)
-            .in('status', ['Pending', 'Overdue']);
+        const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+        const userEmail = authUser?.user?.email || null;
+        const { data: linkedClients } = userEmail
+            ? await supabase.from('business_clients').select('id').eq('email', userEmail)
+            : { data: [] as { id: string }[] };
+        const clientIds = (linkedClients || []).map((client: { id: string }) => client.id);
+        let unpaidInvoices: { id: string }[] | null = null;
+        if (clientIds.length) {
+            const result = await supabase
+                .from('business_invoices')
+                .select('id')
+                .in('client_id', clientIds)
+                .in('status', ['sent', 'overdue', 'partially_paid', 'draft']);
+            unpaidInvoices = result.data;
+        }
 
         if (unpaidInvoices && unpaidInvoices.length > 0) {
             reasons.push(`User has ${unpaidInvoices.length} unpaid invoice(s). Settle them first.`);

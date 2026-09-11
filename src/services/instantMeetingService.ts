@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase';
 import { dailyService, type VideoCall } from '@/services/dailyService';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { microsoftGraphService } from '@/services/microsoftGraphService';
@@ -40,11 +39,13 @@ export function resolveMeetingProvider(call: MeetingProviderInput): PlatformMeet
 
 export function resolveMeetingJoinUrl(call: MeetingProviderInput): string | null {
   const metadata = (call.metadata || {}) as Record<string, unknown>;
-  return (
+  const externalUrl = (
     call.daily_room_url ||
     (typeof metadata.teams_join_url === 'string' ? metadata.teams_join_url : null) ||
     null
   );
+  if (externalUrl) return externalUrl;
+  return typeof metadata.invitation_path === 'string' ? metadata.invitation_path : null;
 }
 
 export function getMeetingProviderDisplay(provider: PlatformMeetingProvider): {
@@ -102,37 +103,27 @@ export async function createInstantMeeting(input: {
         };
       }
 
-      const { data, error } = await supabase
-        .from('video_calls')
-        .insert({
-          tenant_id: tenantId,
-          host_id: input.hostId,
+      const response = await fetch('/api/meetings/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId,
           title: input.title,
-          status: 'active',
-          scheduled_at: now.toISOString(),
-          daily_room_url: teamsMeeting.joinUrl,
-          video_provider: 'external',
-          provider_metadata: {
-            teams_meeting_id: teamsMeeting.id,
-            teams_join_url: teamsMeeting.joinUrl,
-          },
-          metadata: {
-            video_provider: 'teams',
-            teams_meeting_id: teamsMeeting.id,
-            teams_join_url: teamsMeeting.joinUrl,
-          },
-          is_public: false,
-          screen_share_enabled: true,
-          chat_enabled: true,
-        })
-        .select('*')
-        .single();
-
-      if (error || !data) {
-        return { call: null, provider: null, error: error?.message || 'Failed to save Teams meeting.' };
+          hostId: input.hostId,
+          durationMinutes: MAX_MEETING_DURATION_MINUTES,
+          scheduledAt: now.toISOString(),
+          provider: 'teams',
+          providerMeetingId: teamsMeeting.id,
+          joinUrl: teamsMeeting.joinUrl,
+          isPublic: false,
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.call) {
+        return { call: null, provider: null, error: payload.error || 'Failed to save Teams meeting.' };
       }
 
-      return { call: mapVideoCall(data), provider: 'teams', error: null };
+      return { call: mapVideoCall(payload.call), provider: 'teams', error: null };
     }
 
     const { call, error } = await dailyService.createVideoCall({
@@ -190,18 +181,18 @@ export async function startClientVideoCall(input: {
   error: string | null;
 }> {
   let recipientUserId: string | null = null;
-  if (input.clientEmail?.trim()) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', input.clientEmail.trim())
-      .maybeSingle();
-    recipientUserId = profile?.id || null;
+  const tenantId = input.tenantId || tenantService.getCurrentTenantId();
+  if (input.clientEmail?.trim() && tenantId) {
+    const response = await fetch(`/api/tenant/${tenantId}/members/resolve?email=${encodeURIComponent(input.clientEmail.trim())}`, { cache: 'no-store' });
+    if (response.ok) {
+      const payload = await response.json();
+      recipientUserId = payload.userId || null;
+    }
   }
 
   const { call, provider, error } = await createInstantMeeting({
     hostId: input.hostId,
-    tenantId: input.tenantId,
+    tenantId,
     title: `Call with ${input.clientName}`,
   });
 
@@ -219,7 +210,7 @@ export async function startClientVideoCall(input: {
     });
     void dispatchPushNotification({
       userId: recipientUserId,
-      tenantId: input.tenantId ?? undefined,
+      tenantId: tenantId ?? undefined,
       type: 'call',
       title: 'Incoming call',
       message: `${input.hostName} is calling`,

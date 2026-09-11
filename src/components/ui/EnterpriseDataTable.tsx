@@ -72,7 +72,9 @@ export function EnterpriseDataTable<T>({
 
   if (data.length === 0) {
     return (
-      <p className="text-center py-12 text-sm text-slate-500">{emptyMessage}</p>
+      <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/40 px-4 py-12 text-center">
+        <p className="text-sm text-slate-400">{emptyMessage}</p>
+      </div>
     );
   }
 

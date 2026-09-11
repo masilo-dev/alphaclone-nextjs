@@ -1,26 +1,38 @@
 import type { Metadata } from 'next';
 import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
-import MarketingRelatedLinks from '@/components/landing/MarketingRelatedLinks';
-import MarketingProductCta from '@/components/marketing/MarketingProductCta';
+import ProductPageTemplate from '@/components/marketing/system/ProductPageTemplate';
+import {
+  MARKETING_PRODUCT_FEATURES,
+  type MarketingProductFeature,
+} from '@/lib/marketing/productFeatures';
 import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
 import { absoluteUrl } from '@/lib/siteUrl';
 
+function getFeature(slug: string): MarketingProductFeature {
+  const feature = MARKETING_PRODUCT_FEATURES.find((item) => item.slug === slug);
+  if (!feature) {
+    throw new Error(`Missing ${slug} marketing feature content.`);
+  }
+  return feature;
+}
+
+const feature = getFeature('project-management');
+
 export const metadata: Metadata = {
-  title: 'AlphaClone Project Management | Tasks and Delivery',
-  description:
-    'AlphaClone project management helps teams plan execution, track tasks, monitor due dates, and deliver client work with operational visibility. Integrated with email notifications via Zoho, Outlook, and Gmail.',
+  title: 'AlphaClone Project Management | Delivery Connected to CRM',
+  description: feature.summary,
   keywords: [
     'AlphaClone project management',
     'project management platform',
     'task scheduler',
     'team delivery software',
     'business task management',
-    'email notifications',
   ],
   alternates: { canonical: absoluteUrl('/project-management') },
-  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-    title: 'AlphaClone Project Management',
-    description: 'Manage tasks, milestones, and delivery workflows in AlphaClone with email notifications via Zoho, Outlook, and Gmail.',
+  openGraph: {
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    title: 'AlphaClone Project Management | Delivery Connected to CRM',
+    description: feature.summary,
     url: absoluteUrl('/project-management'),
     type: 'website',
   },
@@ -40,30 +52,7 @@ export default function ProjectManagementPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <MarketingLandingShell>
-        <main className="min-h-screen bg-[#040A12] text-slate-200">
-          <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <h1 className="text-4xl font-black text-white mb-4">AlphaClone Project Management</h1>
-            <p className="text-slate-300 mb-6">
-              Coordinate projects with business context from CRM, billing, and communication flows. Receive email notifications via Zoho, Outlook, or Gmail.
-            </p>
-            <div className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-6 text-sm text-slate-300">
-              <ul className="space-y-2">
-                <li>Task scheduling and due-date intelligence</li>
-                <li>Milestone tracking and workload visibility</li>
-                <li>Delivery alignment with deals, contracts, and invoices</li>
-                <li>Unified workspace for execution teams</li>
-                <li>Email notifications via Zoho, Outlook, or Gmail</li>
-              </ul>
-            </div>
-            <MarketingRelatedLinks
-              links={[
-                { label: 'CRM', href: '/crm' },
-                { label: 'Video Meetings', href: '/video-meetings' },
-              ]}
-            />
-            <MarketingProductCta />
-          </section>
-        </main>
+        <ProductPageTemplate feature={feature} />
       </MarketingLandingShell>
     </>
   );

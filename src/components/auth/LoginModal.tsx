@@ -7,6 +7,7 @@ import { UserPlus, LogIn, AlertCircle, ShieldCheck } from 'lucide-react';
 import { LOGO_URL } from '../../constants';
 import { useTenant } from '../../contexts/TenantContext';
 import SocialAuthButtons from './SocialAuthButtons';
+import { bootstrapTenantViaApi } from '../../lib/tenant/bootstrapTenantClient';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -110,16 +111,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 
         if (user) {
           try {
-            const { tenantService } = await import('../../services/tenancy/TenantService');
             const orgName = businessName.trim() || `${name}'s Organization`;
-            const randomSuffix = Array.from({ length: 5 }, () =>
-              String.fromCharCode(97 + Math.floor(Math.random() * 26))
-            ).join('');
+            const randomSuffix = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
             const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + randomSuffix;
-            await tenantService.createTenant({
+            await bootstrapTenantViaApi({
               name: orgName,
               slug,
-              adminUserId: user.id,
+              mode: 'ensure',
+              idempotencyKey: 'initial-workspace-v1',
             });
             await refreshTenants();
           } catch (tenantErr) {

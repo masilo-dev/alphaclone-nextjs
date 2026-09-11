@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import DOMPurify from 'dompurify';
 import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
@@ -130,6 +130,46 @@ const QUICK_STARTS = [
     },
 ] as const;
 
+type EducationSequenceEmail = {
+    day: number;
+    slot: 1 | 2 | 3;
+    subject: string;
+    bodyHtml: string;
+};
+
+const DAILY_EDUCATION_SEQUENCE: EducationSequenceEmail[] = [
+    {
+        day: 1,
+        slot: 1,
+        subject: 'One small shift for a calmer workday',
+        bodyHtml: `<h2>One clear next step is enough.</h2><p>Most people do not need more pressure. They need one clear next step.</p><p>Today, pick one repeated task that drains your time and write down the exact moment it should happen automatically.</p><p>Reply with that one task and we will help turn it into a simple system.</p>`,
+    },
+    {
+        day: 1,
+        slot: 2,
+        subject: 'The daily habit that keeps momentum alive',
+        bodyHtml: `<h2>Make progress visible.</h2><p>Momentum comes from seeing progress, not from carrying everything in your head.</p><p>Before the day ends, choose the three outcomes that would make tomorrow easier. Keep them visible, short, and realistic.</p><p>That is how motivation becomes a system instead of a mood.</p>`,
+    },
+    {
+        day: 1,
+        slot: 3,
+        subject: 'A useful question before tomorrow starts',
+        bodyHtml: `<h2>A better question creates better work.</h2><p>Ask this before tomorrow starts: what would make this easier for the person receiving the work?</p><p>That question improves the message, the offer, and the follow-up. It also helps people feel guided instead of pushed.</p><p>Reply with the current offer and we will tighten the next step.</p>`,
+    },
+    {
+        day: 2,
+        slot: 1,
+        subject: 'Make the next action obvious',
+        bodyHtml: `<h2>Make the next action obvious.</h2><p>People respond faster when the next action is obvious.</p><p>Try this structure today: one sentence for the problem, one sentence for the benefit, one sentence for the next step.</p><p>Clear beats clever when someone is busy.</p>`,
+    },
+    {
+        day: 2,
+        slot: 2,
+        subject: 'Keep helping after the first message',
+        bodyHtml: `<h2>Keep adding value.</h2><p>A good follow-up does not repeat the same pitch. It adds another useful angle.</p><p>Share a lesson, a checklist, a short example, or a question that helps the reader make progress.</p><p>That is how email becomes education, motivation, and trust.</p>`,
+    },
+];
+
 const PROVIDER_DELIVERY_NOTES: Partial<Record<DeliveryEmailProvider, string>> = {
     zoho: 'Zoho Mail sends directly from the connected mailbox. This is AlphaClone direct delivery, not the separate Zoho Campaigns hub.',
     brevo: 'Brevo uses the connected API key and sender identity. Verify sender/domain settings in Brevo if delivery fails.',
@@ -163,10 +203,17 @@ type ComposeAudit = {
     info: string[];
 };
 
-const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
+type CampaignBuilderProps = {
+    userId: string;
+    initialCampaignId?: string | null;
+    onCampaignChanged?: () => void;
+};
+
+const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampaignId = null, onCampaignChanged }) => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { isMobile } = useBreakpoint();
-    
+    const [recoveryBanner, setRecoveryBanner] = useState<Array<{ title?: string; reason?: string; amount?: number }>>([]);
     // View state: 'list' is main feed list, 'detail' is single detail view, 'compose' is wizard flow
     const [viewMode, setViewMode] = useState<'list' | 'detail' | 'compose'>('list');
     const [campaignMode, setCampaignMode] = useState<'simple' | 'advanced'>('simple');
@@ -182,6 +229,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 
     // Selected single campaign for detail mode
     const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
+    const openedInitialCampaignId = useRef<string | null>(null);
     const [selectedCampaignRecipients, setSelectedCampaignRecipients] = useState<Awaited<ReturnType<typeof emailCampaignService.getCampaignRecipients>>['recipients']>([]);
     const [loadingSelectedRecipients, setLoadingSelectedRecipients] = useState(false);
 
@@ -203,6 +251,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         abTestEnabled: false,
         subjectB: '',
         abSplitPercent: 50,
+        sequenceEnabled: false,
+        sequenceDailyLimit: 3,
+        sequenceEmails: DAILY_EDUCATION_SEQUENCE,
     });
 
     const previewRecipient = useMemo(() => {
@@ -273,6 +324,42 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const [retryingFailedRecipients, setRetryingFailedRecipients] = useState(false);
 
     useEffect(() => { loadData(); }, []);
+
+    useEffect(() => {
+        if (!initialCampaignId || loading || openedInitialCampaignId.current === initialCampaignId) return;
+
+        const campaign = campaigns.find((item) => item.id === initialCampaignId);
+        if (!campaign) return;
+
+        openedInitialCampaignId.current = initialCampaignId;
+        setSelectedCampaign(campaign);
+        setViewMode('detail');
+    }, [campaigns, initialCampaignId, loading]);
+
+    useEffect(() => {
+        const source = searchParams?.get('source');
+        if (source !== 'recovery') return;
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return;
+        void fetch(`/api/platform-advantage/snapshot?tenantId=${encodeURIComponent(tenantId)}`)
+            .then((res) => res.json())
+            .then((data) => {
+                const raw = data.snapshot?.revenueRecovery;
+                const items = Array.isArray(raw) ? raw : Array.isArray(raw?.actions) ? raw.actions : [];
+                setRecoveryBanner(items.slice(0, 4));
+                if (items[0]?.recommended_action || items[0]?.reason) {
+                    setForm((prev) => ({
+                        ...prev,
+                        name: 'Revenue recovery follow-up',
+                        subject: 'Payment reminder',
+                        bodyHtml: htmlFromPlain(String(items[0]?.recommended_action || items[0]?.reason || '')),
+                    }));
+                    setViewMode('compose');
+                    setActiveStep(2);
+                }
+            })
+            .catch(() => undefined);
+    }, [searchParams]);
 
     useEffect(() => {
         const loadSender = async () => {
@@ -381,6 +468,10 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             warnings.push('This campaign also uses WhatsApp delivery. Make sure recipients have phone numbers if you expect WhatsApp sends.');
         }
 
+        if (form.sequenceEnabled) {
+            info.push(`Daily education sequence enabled: ${form.sequenceEmails.length} emails, max ${form.sequenceDailyLimit} per day, same sender identity.`);
+        }
+
         return { issues, warnings, info };
     }, [
         campaignsProviderNote,
@@ -391,6 +482,9 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         form.fromEmail,
         form.fromName,
         form.name,
+        form.sequenceDailyLimit,
+        form.sequenceEmails,
+        form.sequenceEnabled,
         form.subject,
         recipientType,
         resolvedProvider,
@@ -465,6 +559,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         if (!campsResult.error) setCampaigns(campsResult.campaigns);
         if (!contactsResult.error) setContacts(contactsResult.contacts);
         setLoading(false);
+        onCampaignChanged?.();
     };
 
     const handleImportLeads = async () => {
@@ -667,6 +762,15 @@ Request: ${userMsg}`,
                     selectedProviders: form.selectedProviders.filter((p) => CAMPAIGN_SUPPORTED_EMAIL_PROVIDERS.includes(p as any)),
                     balanceByDailyLimit: form.balanceByDailyLimit,
                 },
+                dailyEducationSequence: form.sequenceEnabled
+                    ? {
+                        enabled: true,
+                        dailyLimit: form.sequenceDailyLimit,
+                        reuseSameSender: true,
+                        totalEmails: form.sequenceEmails.length,
+                        emails: form.sequenceEmails,
+                    }
+                    : { enabled: false },
                 abTest: form.abTestEnabled
                     ? {
                         enabled: true,
@@ -841,13 +945,46 @@ Subject: "${form.subject}"
 ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}
 
 Voice & rules:
+- STRICT 100+ WORD MINIMUM in the body. Email MUST contain no less than 100 natural words — no short one-paragraph stub responses ever. Target 130–170 words minimum.
 - Open with a first line that hooks instantly — a bold statement, a relatable pain, or a curiosity gap. NEVER "I hope this email finds you well" or generic corporate intros.
 - Sound like a real person, not a press release. No stiff jargon. Short, skimmable paragraphs. One clear call to action.
-- Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.`,
+- Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.
+- If the user message or goal is short, expand naturally: explain the context, add a concrete example, outline what happens next, then propose one clear next step — all so the final email crosses the 100+ word threshold.`,
                 })
             });
             const data = await response.json();
-            if (data.text) setForm(f => ({ ...f, bodyHtml: data.text }));
+            if (data.text) {
+                const raw = String(data.text);
+                const wordCount = (t: string) =>
+                    String(t || '')
+                        .replace(/<[^>]+>/g, ' ')
+                        .replace(/&nbsp;/gi, ' ')
+                        .replace(/&amp;/gi, '&')
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean).length;
+                const padHtmlMinWords = (html: string, min: number) => {
+                    if (wordCount(html) >= min) return html;
+                    const expansionP = [
+                        '<p>We have found that the teams that get the most value out of this approach are the ones who take one small step first, then adjust from there. You do not need to have everything perfectly figured out before you begin.</p>',
+                        '<p>If reviewing this by email feels slow, a 15 minute call is often faster. Reply with your preferred window and we will lock it in.</p>',
+                        '<p>Our approach focuses on clarity over cleverness — one obvious next step, one clear promise, and no pressure to decide today.</p>',
+                        '<p>Should anything need clarification, a quick reply is all it takes — we monitor this inbox closely and respond within one business day.</p>',
+                    ];
+                    let out = html;
+                    let guard = 0;
+                    while (wordCount(out) < min && guard < expansionP.length * 3) {
+                        out += `\n${expansionP[guard % expansionP.length]}`;
+                        guard += 1;
+                    }
+                    return out;
+                };
+                const padded = padHtmlMinWords(raw, 100);
+                const actualWords = wordCount(padded);
+                setForm(f => ({ ...f, bodyHtml: padded }));
+                if (actualWords < 100) toast.success(`Draft generated (${actualWords}w)`);
+                else toast.success(`Draft generated! ${actualWords} words`);
+            }
         } catch {
             toast.error('AI writer generation failed');
         } finally {
@@ -923,6 +1060,11 @@ Voice & rules:
             abTestEnabled: !!abTest.enabled,
             subjectB: String(abTest.subjectB || ''),
             abSplitPercent: Number(abTest.splitPercent) || 50,
+            sequenceEnabled: Boolean((meta.dailyEducationSequence as any)?.enabled),
+            sequenceDailyLimit: Number((meta.dailyEducationSequence as any)?.dailyLimit) || 3,
+            sequenceEmails: Array.isArray((meta.dailyEducationSequence as any)?.emails)
+                ? (meta.dailyEducationSequence as any).emails
+                : DAILY_EDUCATION_SEQUENCE,
         });
         setViewMode('compose');
         setActiveStep(1);
@@ -962,6 +1104,9 @@ Voice & rules:
             abTestEnabled: false,
             subjectB: '',
             abSplitPercent: 50,
+            sequenceEnabled: false,
+            sequenceDailyLimit: 3,
+            sequenceEmails: DAILY_EDUCATION_SEQUENCE,
         });
         setCampaignMode('simple');
         setCampaignGoal('');
@@ -986,9 +1131,25 @@ Voice & rules:
         toast.success(`${preset.label} ready`);
     };
 
+    const applyDailyEducationSequence = () => {
+        setCampaignGoal('Educate and motivate people with a five-email daily nurture sequence from the same sender.');
+        setForm((f) => ({
+            ...f,
+            name: 'Daily education motivation sequence',
+            subject: DAILY_EDUCATION_SEQUENCE[0].subject,
+            bodyHtml: DAILY_EDUCATION_SEQUENCE[0].bodyHtml,
+            skipPreviouslyContacted: false,
+            sequenceEnabled: true,
+            sequenceDailyLimit: 3,
+            sequenceEmails: DAILY_EDUCATION_SEQUENCE,
+        }));
+        setEditorTab('preview');
+        toast.success('5-email daily sequence loaded');
+    };
+
     if (loading) {
         return (
-            <BonnieModulePageShell>
+            <BonnieModulePageShell showBonnieDock={false}>
                 <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
                     <div className="flex flex-1 items-center justify-center p-8 text-slate-400 text-center">
                         <div>
@@ -1002,8 +1163,22 @@ Voice & rules:
     }
 
     return (
-        <BonnieModulePageShell>
+        <BonnieModulePageShell showBonnieDock={false}>
         <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
+
+            {recoveryBanner.length > 0 && (
+                <div className="border-b border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-300">Revenue recovery queue</p>
+                    <p className="mt-1 text-sm text-slate-300">Bonnie surfaced overdue invoices and stale quotes. Review the draft below, then approve send when ready.</p>
+                    <ul className="mt-2 space-y-1">
+                        {recoveryBanner.map((item, idx) => (
+                            <li key={`${item.title}-${idx}`} className="text-xs text-slate-400">
+                                {item.title || 'Recovery action'} — {item.reason}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             
             {/* Header bar */}
             <div className="h-16 border-b border-white/5 bg-slate-900 px-4 flex items-center justify-between shrink-0">
@@ -1252,6 +1427,33 @@ Voice & rules:
                                 </div>
                             </div>
 
+                            {(selectedCampaign.metadata as any)?.dailyEducationSequence?.enabled && (
+                                <div className="rounded-3xl border border-teal-500/20 bg-teal-500/5 p-5 space-y-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-teal-300">Daily education sequence</p>
+                                            <h3 className="mt-1 text-sm font-bold text-white">
+                                                {(selectedCampaign.metadata as any).dailyEducationSequence.totalEmails || 5} emails from the same sender
+                                            </h3>
+                                            <p className="mt-1 text-xs text-slate-400">
+                                                Up to {(selectedCampaign.metadata as any).dailyEducationSequence.dailyLimit || 3} emails per day using {selectedCampaign.fromEmail}.
+                                            </p>
+                                        </div>
+                                        <span className="rounded-full border border-teal-500/20 bg-slate-950 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-teal-200">
+                                            saved plan
+                                        </span>
+                                    </div>
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                        {(((selectedCampaign.metadata as any).dailyEducationSequence.emails || []) as EducationSequenceEmail[]).map((email, index) => (
+                                            <div key={`${email.subject}-${index}`} className="rounded-2xl border border-white/5 bg-slate-950/70 p-3">
+                                                <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Day {email.day} · Email {email.slot}</p>
+                                                <p className="mt-1 text-xs font-bold text-white">{email.subject}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             {selectedCampaignDeliverySummary ? (
                                 <div className="rounded-3xl border border-white/5 bg-slate-900 p-5 space-y-4">
                                     <div className="flex items-start justify-between gap-3">
@@ -1436,6 +1638,13 @@ Voice & rules:
                                                     {preset.label}
                                                 </button>
                                             ))}
+                                            <button
+                                                type="button"
+                                                onClick={applyDailyEducationSequence}
+                                                className="px-3 py-2 rounded-xl border border-teal-500/30 bg-teal-500/10 text-teal-200 text-xs font-bold hover:border-teal-400 hover:text-white transition-all"
+                                            >
+                                                5-email daily sequence
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
@@ -1527,6 +1736,50 @@ Voice & rules:
                                                         />
                                                     </div>
                                                 </>
+                                            )}
+                                        </div>
+
+                                        <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4 space-y-3">
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.sequenceEnabled}
+                                                    onChange={(e) => setForm((f) => ({ ...f, sequenceEnabled: e.target.checked }))}
+                                                    className="rounded border-teal-500/50"
+                                                />
+                                                <span className="text-sm font-bold text-white">Use daily education sequence</span>
+                                            </label>
+                                            <div className="grid gap-3 md:grid-cols-[160px_1fr]">
+                                                <div>
+                                                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Emails per day</label>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        max={3}
+                                                        value={form.sequenceDailyLimit}
+                                                        onChange={(e) => setForm((f) => ({ ...f, sequenceDailyLimit: Math.max(1, Math.min(3, Number(e.target.value) || 1)) }))}
+                                                        className="mt-1 w-full h-10 rounded-xl border border-white/5 bg-slate-950 px-3 text-sm text-white outline-none"
+                                                    />
+                                                </div>
+                                                <p className="self-end text-xs leading-relaxed text-slate-400">
+                                                    The saved plan reuses the same sender identity and caps the nurture at three emails per day. The first email is loaded into the campaign body for the existing send flow.
+                                                </p>
+                                            </div>
+                                            {form.sequenceEnabled && (
+                                                <div className="grid gap-2 md:grid-cols-2">
+                                                    {form.sequenceEmails.map((email, index) => (
+                                                        <button
+                                                            key={`${email.day}-${email.slot}-${email.subject}`}
+                                                            type="button"
+                                                            onClick={() => setForm((f) => ({ ...f, subject: email.subject, bodyHtml: email.bodyHtml }))}
+                                                            className="rounded-2xl border border-white/5 bg-slate-950 p-3 text-left hover:border-teal-500/40"
+                                                        >
+                                                            <p className="text-[10px] font-black uppercase tracking-wider text-teal-300">Day {email.day} · Email {email.slot}</p>
+                                                            <p className="mt-1 text-xs font-bold text-white">{email.subject}</p>
+                                                            <p className="mt-1 line-clamp-2 text-[11px] text-slate-500">{plainFromHtml(email.bodyHtml)}</p>
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             )}
                                         </div>
 
@@ -1713,7 +1966,9 @@ Voice & rules:
 
                                         {recipientType === 'specific' && (
                                             <>
-                                            <SegmentBuilder />
+                                            <SegmentBuilder
+                                                onApply={(ids) => setSelectedContactIds(ids)}
+                                            />
                                             <div className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
                                                 <span className="text-[10px] font-bold text-slate-500 uppercase">Select Industry Target</span>
                                                 {Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).length === 0 && (
@@ -1936,8 +2191,40 @@ Voice & rules:
                                                                         : 'Not selected'}
                                                     </p>
                                                 </div>
+                                                <div>
+                                                    <span className="text-[9px] text-slate-500 font-bold uppercase">Sequence</span>
+                                                    <p className="text-xs text-white font-bold">
+                                                        {form.sequenceEnabled
+                                                            ? `${form.sequenceEmails.length} emails · ${form.sequenceDailyLimit}/day`
+                                                            : 'Single campaign'}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {form.sequenceEnabled && (
+                                            <div className="rounded-3xl border border-teal-500/20 bg-teal-500/5 p-5 space-y-3">
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <div>
+                                                        <span className="block text-[10px] font-bold uppercase tracking-widest text-teal-300">Sequence preview</span>
+                                                        <p className="mt-1 text-sm text-slate-300">
+                                                            Five educational/motivational emails will be saved with this campaign plan and tied to {form.fromEmail || 'the selected sender'}.
+                                                        </p>
+                                                    </div>
+                                                    <span className="rounded-full border border-teal-500/20 bg-slate-950 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-teal-200">
+                                                        max {form.sequenceDailyLimit}/day
+                                                    </span>
+                                                </div>
+                                                <div className="grid gap-2 md:grid-cols-2">
+                                                    {form.sequenceEmails.map((email, index) => (
+                                                        <div key={`${email.subject}-${index}`} className="rounded-2xl border border-white/5 bg-slate-950/70 p-3">
+                                                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Day {email.day} · Email {email.slot}</p>
+                                                            <p className="mt-1 text-xs font-bold text-white">{email.subject}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className="space-y-2">
                                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Final Visual Content</span>

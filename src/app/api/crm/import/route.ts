@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import * as Sentry from '@sentry/nextjs';
-import { requireTenantAccess, routeErrorResponse, createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
+import { requireTenantRole, routeErrorResponse, createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 
 function splitCsvLine(line: string): string[] {
     const cells: string[] = [];
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
         // "?"? SECURITY CHECK "?"?
         // Verifies user is authenticated and belongs to the requested tenant
-        await requireTenantAccess(tenantId);
+        await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
         
         // Use the admin client for cross-RLS import operations
         const supabaseAdmin = createAdminSupabaseClientOrThrow();

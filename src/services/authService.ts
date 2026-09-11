@@ -1,8 +1,19 @@
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE, supabase } from '../lib/supabase';
 import { User, UserRole } from '../types';
 import { signInSchema, signUpSchema } from '../schemas/validation';
 import { z } from 'zod';
+import { getOAuthRedirectOrigin } from '../lib/config/public-origin';
+
+/** Always apex for production OAuth — www.alphaclonesystems.com is NXDOMAIN. */
+function buildAuthCallbackRedirect(nextPath?: string): string {
+  const origin = getOAuthRedirectOrigin(
+    typeof window !== 'undefined' ? window.location.origin : undefined
+  );
+  return nextPath
+    ? `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+    : `${origin}/auth/callback`;
+}
 
 /**
  * Utility to forcefully break Supabase internal storage/Web Locks API deadlocks.
@@ -26,14 +37,34 @@ async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 30000)
     });
 }
 
+function clearAuthStorage(): void {
+    if (typeof window === 'undefined') return;
+    try {
+        Object.keys(localStorage)
+            .filter((k) => k.startsWith('sb-') || k.includes('auth-token'))
+            .forEach((k) => localStorage.removeItem(k));
+    } catch {
+        // ignore
+    }
+}
+
 // In-flight deduplication: if getCurrentUser() is already running, return the same promise
 let _getCurrentUserInflight: Promise<{ user: User | null; error: string | null }> | null = null;
+
+function supabaseConfigError(): string | null {
+    return isSupabaseConfigured() ? null : SUPABASE_NOT_CONFIGURED_MESSAGE;
+}
 
 export const authService = {
     /**
      * Sign in with email and password
      */
     async signIn(email: string, password: string): Promise<{ user: User | null; error: string | null; needsMfa?: boolean }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { user: null, error: configError };
+        }
+
         try {
             // Validate input
             const validated = signInSchema.parse({ email: email.trim().toLowerCase(), password });
@@ -74,63 +105,37 @@ export const authService = {
                 return { user: null, error: 'No user data returned' };
             }
 
-            // OPTIMIZED: Try to use cached metadata first, then fall back to DB query
-            // This reduces login time by avoiding unnecessary database calls
-            let user: User;
-
-            // Check if we have complete user data in metadata (faster)
             const metadata = data.user.user_metadata;
-            if (metadata?.name && metadata?.role) {
-                user = {
-                    id: data.user.id,
-                    email: data.user.email || '',
-                    name: metadata.name,
-                    role: metadata.role,
-                    avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.email}`,
-                };
-            } else {
-                // Fallback: Fetch user profile from database (slower, but needed for old users)
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', data.user.id)
-                    .maybeSingle();
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('id, email, name, role, avatar, account_status, scheduled_deletion_at')
+                .eq('id', data.user.id)
+                .maybeSingle();
 
-                if (profileError) {
-                    console.error("AuthService: Profile fetch error", profileError);
-                    return { user: null, error: 'Failed to fetch user profile' };
-                }
-
-                if (!profile) {
-                    // If no profile yet, don't fail immediately, try to return a basic user 
-                    // and let background sync handle creation
-                    console.warn("AuthService: No profile found for user during sign in", data.user.id);
-                    user = {
-                        id: data.user.id,
-                        email: data.user.email || '',
-                        name: metadata?.name || data.user.email?.split('@')[0] || 'User',
-                        role: (metadata?.role as UserRole) || 'tenant_admin',
-                        avatar: metadata?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.email}`,
-                    };
-                } else {
-                    user = {
-                        id: profile.id,
-                        email: profile.email,
-                        name: profile.name,
-                        role: profile.role,
-                        avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
-                    };
-                }
-
-                // Update metadata for next login (optimization)
-                supabase.auth.updateUser({
-                    data: {
-                        name: user.name,
-                        role: user.role,
-                        avatar: user.avatar,
-                    }
-                }).catch(() => { }); // Non-blocking, silent fail
+            if (profileError || !profile) {
+                console.error("AuthService: Canonical profile fetch failed", profileError);
+                await supabase.auth.signOut().catch(() => undefined);
+                return { user: null, error: 'Your account profile could not be verified. Please try again.' };
             }
+
+            if (['deleted', 'suspended', 'pending_deletion'].includes(String(profile.account_status))) {
+                await supabase.auth.signOut().catch(() => undefined);
+                return { user: null, error: 'This account is not currently active.' };
+            }
+
+            const user: User = {
+                id: profile.id,
+                email: profile.email,
+                name: profile.name,
+                role: profile.role,
+                avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
+                account_status: profile.account_status,
+                scheduled_deletion_at: profile.scheduled_deletion_at,
+            };
+
+            supabase.auth.updateUser({
+                data: { name: user.name, avatar: user.avatar }
+            }).catch(() => { });
 
             // 5. Create Login Session & Log Activity (NON-BLOCKING)
             // Defer this to background so login returns immediately
@@ -171,7 +176,7 @@ export const authService = {
             return { user, error: null, needsMfa };
         } catch (err: any) {
             if (err.name === 'ZodError') {
-                return { user: null, error: err.errors[0]?.message || 'Validation failed', needsMfa: false };
+                return { user: null, error: err.errors?.[0]?.message || 'Validation failed', needsMfa: false };
             }
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error', needsMfa: false };
         }
@@ -185,11 +190,29 @@ export const authService = {
         password: string,
         name: string,
         role: UserRole = 'tenant_admin',
-        options?: { businessName?: string; plan?: string; referralCode?: string }
+        options?: {
+            businessName?: string;
+            plan?: string;
+            referralCode?: string;
+            marketingOptIn?: boolean;
+            euConsent?: boolean;
+            ageConfirmed?: boolean;
+            legalAccepted?: boolean;
+        }
     ): Promise<{ user: User | null; error: string | null; needsEmailConfirmation?: boolean }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { user: null, error: configError };
+        }
+
         try {
             // Validate input
             const validated = signUpSchema.parse({ email: email.toLowerCase(), password, name });
+            const { assertPasswordAllowed } = await import('@/lib/security/passwordPolicy');
+            const passwordCheck = await assertPasswordAllowed(validated.password);
+            if (!passwordCheck.ok) {
+                return { user: null, error: passwordCheck.error };
+            }
 
             try {
                 const eligibilityResponse = await fetch('/api/auth/signup-eligibility', {
@@ -217,32 +240,56 @@ export const authService = {
                 console.warn('Failed to fetch location for registration', e);
             }
 
+            // Email confirmation links must land on /auth/callback so workspace + prefs can finish.
+            const emailRedirectTo = buildAuthCallbackRedirect('/dashboard');
+
             const { data, error } = await withAuthTimeout(supabase.auth.signUp({
                 email: validated.email,
                 password: validated.password,
                 options: {
+                    emailRedirectTo,
                     data: {
                         name: validated.name,
+                        full_name: validated.name,
                         role,
                         account_type: 'business_owner',
                         registration_country: registrationCountry,
                         business_name: options?.businessName?.trim() || undefined,
                         plan: options?.plan || 'free',
                         referral_code: options?.referralCode?.trim() || undefined,
+                        // Persist consent through email-confirmation (no session until confirmed).
+                        marketing_opt_in: Boolean(options?.marketingOptIn),
+                        legal_accepted: options?.legalAccepted !== false,
+                        eu_consent: Boolean(options?.euConsent),
+                        age_confirmed: Boolean(options?.ageConfirmed),
+                        signup_method: 'email',
                     },
                 },
             }));
 
             if (error) {
                 console.error("SignUp Error:", error);
-                if (String(error.message || '').toLowerCase().includes('permanently blocked')) {
+                const msg = String(error.message || '').toLowerCase();
+                if (msg.includes('permanently blocked')) {
                     return { user: null, error: 'This email address is permanently blocked after account deletion.' };
+                }
+                if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('already exists')) {
+                    return { user: null, error: 'An account with this email already exists. Please sign in instead, or reset your password.' };
                 }
                 return { user: null, error: error.message };
             }
 
             if (!data.user) {
                 return { user: null, error: 'No user data returned' };
+            }
+
+            // Supabase anti-enumeration: existing emails return a user with empty identities and no error.
+            const identities = Array.isArray(data.user.identities) ? data.user.identities : [];
+            if (identities.length === 0) {
+                return {
+                    user: null,
+                    error: 'An account with this email already exists. Please sign in instead, or reset your password.',
+                };
             }
 
             const user: User = {
@@ -287,7 +334,7 @@ export const authService = {
             return { user, error: null, needsEmailConfirmation: !data.session };
         } catch (err: any) {
             if (err.name === 'ZodError') {
-                return { user: null, error: err.errors[0]?.message || 'Validation failed' };
+                return { user: null, error: err.errors?.[0]?.message || 'Validation failed' };
             }
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -297,9 +344,16 @@ export const authService = {
      * Send password reset email
      */
     async resetPassword(email: string): Promise<{ error: string | null }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { error: configError };
+        }
+
         try {
             const { error } = await withAuthTimeout(supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/auth/reset-password`,
+                redirectTo: `${getOAuthRedirectOrigin(
+                    typeof window !== 'undefined' ? window.location.origin : undefined
+                )}/auth/reset-password`,
             }));
 
             if (error) {
@@ -320,13 +374,18 @@ export const authService = {
         try {
             // Use the same validation as sign up for consistency
             const passwordSchema = z.string()
-                .min(8, 'Password must be at least 8 characters')
+                .min(12, 'Password must be at least 12 characters')
                 .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
                 .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
                 .regex(/[0-9]/, 'Password must contain at least one number')
                 .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
 
             passwordSchema.parse(password);
+            const { assertPasswordAllowed } = await import('@/lib/security/passwordPolicy');
+            const passwordCheck = await assertPasswordAllowed(password);
+            if (!passwordCheck.ok) {
+                return { error: passwordCheck.error };
+            }
 
             const { error } = await withAuthTimeout(supabase.auth.updateUser({ password }));
 
@@ -338,7 +397,7 @@ export const authService = {
             return { error: null };
         } catch (err: any) {
             if (err.name === 'ZodError') {
-                return { error: err.errors[0]?.message || 'Validation failed' };
+                return { error: err.errors?.[0]?.message || 'Validation failed' };
             }
             return { error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -372,6 +431,11 @@ export const authService = {
      * Sign in with Google OAuth
      */
     async signInWithGoogle(nextPath?: string): Promise<{ error: string | null }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { error: configError };
+        }
+
         try {
             // Set a flag to help AuthContext/AuthService identify that we are in a callback loop
             // and should be more persistent with session discovery.
@@ -379,9 +443,7 @@ export const authService = {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
-            const redirectTo = nextPath
-                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
-                : `${window.location.origin}/auth/callback`;
+            const redirectTo = buildAuthCallbackRedirect(nextPath);
 
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -415,14 +477,17 @@ export const authService = {
      * Sign in with LinkedIn OAuth
      */
     async signInWithLinkedIn(nextPath?: string): Promise<{ error: string | null }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { error: configError };
+        }
+
         try {
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
-            const redirectTo = nextPath
-                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
-                : `${window.location.origin}/auth/callback`;
+            const redirectTo = buildAuthCallbackRedirect(nextPath);
 
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'linkedin_oidc',
@@ -513,14 +578,17 @@ export const authService = {
      * Sign in with Facebook OAuth
      */
     async signInWithFacebook(nextPath?: string): Promise<{ error: string | null }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { error: configError };
+        }
+
         try {
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
-            const redirectTo = nextPath
-                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
-                : `${window.location.origin}/auth/callback`;
+            const redirectTo = buildAuthCallbackRedirect(nextPath);
 
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'facebook',
@@ -595,6 +663,10 @@ export const authService = {
     },
 
     async _doGetCurrentUser(): Promise<{ user: User | null; error: string | null }> {
+        if (!isSupabaseConfigured()) {
+            return { user: null, error: null };
+        }
+
         try {
             let session = null;
             let lastError = null;
@@ -624,6 +696,16 @@ export const authService = {
             console.log(`auth:getSession: ${Date.now() - t0}ms`);
 
             if (lastError) {
+                const message = lastError.message || '';
+                const staleRefresh =
+                    /refresh token not found/i.test(message) ||
+                    /invalid refresh token/i.test(message);
+                if (staleRefresh) {
+                    console.warn('AuthService: stale refresh token — clearing local session');
+                    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+                    clearAuthStorage();
+                    return { user: null, error: null };
+                }
                 console.error("AuthService: getSession error", lastError);
                 return { user: null, error: lastError.message };
             }
@@ -641,53 +723,6 @@ export const authService = {
 
             const startTime = Date.now();
             console.log(`AuthService: Fetching profile for ${session.user.id}...`);
-
-            let user: User;
-
-            const metadata = session.user.user_metadata;
-
-            // FAST PATH: If we have basic metadata, return immediately and sync in background
-            if (metadata?.name && metadata?.role) {
-                console.log("AuthService: Fast-path hit (metadata exists)");
-                const { data: statusRow } = await supabase
-                    .from('profiles')
-                    .select('account_status, scheduled_deletion_at')
-                    .eq('id', session.user.id)
-                    .maybeSingle();
-
-                if (!statusRow) {
-                    console.warn('AuthService: Profile missing for active session');
-                    return { user: null, error: 'Account no longer exists' };
-                }
-
-                if (statusRow.account_status === 'deleted' || statusRow.account_status === 'suspended') {
-                    return { user: null, error: 'Account is not active' };
-                }
-
-                const fastUser: User = {
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    name: metadata.name,
-                    role: metadata.role,
-                    avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
-                    account_status: statusRow.account_status,
-                    scheduled_deletion_at: statusRow.scheduled_deletion_at,
-                };
-
-                // Sync profile in background to ensure database is up to date
-                supabase.from('profiles').select('name, role, avatar').eq('id', session.user.id).single()
-                    .then(({ data: p }: { data: any }) => {
-                        if (p && (p.name !== fastUser.name || p.role !== fastUser.role)) {
-                            console.log("AuthService: Background sync found profile update needed");
-                        }
-                    }).catch(() => { });
-
-                console.log(`auth:getProfile: ${Date.now() - startTime}ms (fast-path)`);
-                return { user: fastUser, error: null };
-            }
-
-            // If metadata is incomplete, we still want to avoid blocking for too long
-            console.log("AuthService: Metadata incomplete, entering fallback fetch/transient mode");
 
             let profile = null;
             lastError = null;
@@ -728,30 +763,45 @@ export const authService = {
             }
 
             if (!profile) {
-                console.warn("AuthService: Profile retrieval failed. Using transient profile.", lastError);
-                const fallbackRole: UserRole = (session.user.user_metadata.role as UserRole) || 'tenant_admin';
+                console.warn("AuthService: Canonical profile retrieval failed.", lastError);
+                // After Google OAuth, profile/tenant bootstrap can lag — heal via server bootstrap.
+                if (isAuthCallback || typeof window !== 'undefined') {
+                    try {
+                        const ensureRes = await fetch('/api/tenant/bootstrap', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ mode: 'ensure' }),
+                        });
+                        if (ensureRes.ok) {
+                            const { data: p2 } = await withAuthTimeout(
+                                supabase
+                                    .from('profiles')
+                                    .select('*, account_status, scheduled_deletion_at')
+                                    .eq('id', session.user.id)
+                                    .maybeSingle(),
+                                3000
+                            );
+                            if (p2) profile = p2;
+                        }
+                    } catch (ensureErr) {
+                        console.warn('AuthService: tenant bootstrap fallback failed', ensureErr);
+                    }
+                }
+            }
 
-                user = {
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
-                    role: fallbackRole,
-                    avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}`,
-                };
+            if (!profile) {
+                console.warn("AuthService: Canonical profile retrieval failed.", lastError);
+                return { user: null, error: 'Your account profile could not be verified. Please sign in again.' };
+            }
 
-                import('./userService').then(({ userService }) => {
-                    userService.syncUserProfile(session.user).catch(err =>
-                        console.warn('Background profile sync failed:', err)
-                    );
-                });
-
-                console.log(`auth:getProfile: ${Date.now() - startTime}ms (fallback)`);
-                return { user, error: null };
+            if (['deleted', 'suspended', 'pending_deletion'].includes(String(profile.account_status))) {
+                return { user: null, error: 'Account is not active' };
             }
 
             console.log("AuthService: Profile retrieved successfully", profile.role);
 
-            user = {
+            const user: User = {
                 id: profile.id,
                 email: profile.email,
                 name: profile.name,
@@ -763,13 +813,11 @@ export const authService = {
 
             if (
                 session.user.user_metadata.name !== user.name ||
-                session.user.user_metadata.role !== user.role ||
                 session.user.user_metadata.avatar !== user.avatar
             ) {
                 supabase.auth.updateUser({
                     data: {
                         name: user.name,
-                        role: user.role,
                         avatar: user.avatar,
                     }
                 }).catch(() => { });

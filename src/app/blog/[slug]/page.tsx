@@ -132,7 +132,7 @@ export default async function BlogPost({ params }: PageProps) {
                             <p className="text-slate-300 mb-8 max-w-xl mx-auto">
                                 Start a 14-day trial and test the CRM, billing, contracts, meetings, and workflow modules in one workspace.
                             </p>
-                            <Link href="/register" className="inline-flex items-center px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/20">
+                            <Link href="/auth/login?register=true&type=business&plan=starter" className="inline-flex items-center px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-teal-500/20">
                                 Start Free Trial <ArrowRight className="w-4 h-4 ml-2" />
                             </Link>
                         </div>

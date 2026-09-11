@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
+import { getPublicAppUrl } from '@/lib/server/appUrl';
 
 type AdapterName =
   | 'calendar_booking'
@@ -77,11 +78,7 @@ type LogPayload = {
 
 class BusinessAdapterService {
   private getInternalApiBaseUrl(): string {
-    const baseUrl =
-      ENV.NEXT_PUBLIC_APP_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
-    return String(baseUrl || '').replace(/\/+$/, '');
+    return getPublicAppUrl(ENV.NEXT_PUBLIC_APP_URL || '');
   }
 
   private async logAdapterRun(payload: LogPayload): Promise<void> {

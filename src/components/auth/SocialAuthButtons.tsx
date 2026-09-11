@@ -5,6 +5,8 @@ import React from 'react';
 type SocialAuthButtonsProps = {
   isLoading?: boolean;
   disabled?: boolean;
+  /** Preserve OAuth return path (e.g. /authorize?...) through Google/LinkedIn/Facebook. */
+  nextPath?: string | null;
   onError: (message: string) => void;
   onLoadingChange?: (loading: boolean) => void;
   className?: string;
@@ -13,6 +15,7 @@ type SocialAuthButtonsProps = {
 export default function SocialAuthButtons({
   isLoading = false,
   disabled = false,
+  nextPath,
   onError,
   onLoadingChange,
   className = '',
@@ -22,12 +25,13 @@ export default function SocialAuthButtons({
     onError('');
     try {
       const { authService } = await import('@/services/authService');
+      const path = nextPath || undefined;
       const result =
         provider === 'google'
-          ? await authService.signInWithGoogle()
+          ? await authService.signInWithGoogle(path)
           : provider === 'linkedin'
-            ? await authService.signInWithLinkedIn()
-            : await authService.signInWithFacebook();
+            ? await authService.signInWithLinkedIn(path)
+            : await authService.signInWithFacebook(path);
       if (result.error) {
         onError(result.error);
         onLoadingChange?.(false);
@@ -87,7 +91,7 @@ export default function SocialAuthButtons({
           className={`${btnClass} bg-[#1877F2] hover:bg-[#166FE5] text-white border-[#1877F2]`}
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.03 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.32l-.53 3.49h-2.79V24C19.61 23.09 24 18.1 24 12.07z" />
+            <path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.79-4.7 4.54-4.7 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.5 0-1.96.93-1.96 1.89v2.26h3.34l-.53 3.49h-2.81V24C19.61 23.09 24 18.1 24 12.07z" />
           </svg>
           <span className="truncate">Facebook</span>
         </button>

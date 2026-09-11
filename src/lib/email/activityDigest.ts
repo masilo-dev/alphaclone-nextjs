@@ -31,9 +31,9 @@ async function countSince(
   table: string,
   tenantId: string,
   since: string,
-  extra?: (q: ReturnType<typeof admin.from>) => ReturnType<typeof admin.from>
+  extra?: (q: any) => any
 ): Promise<number> {
-  let query = admin
+  let query: any = admin
     .from(table)
     .select('id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId)

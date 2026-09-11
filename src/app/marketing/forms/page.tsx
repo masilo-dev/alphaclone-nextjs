@@ -7,7 +7,7 @@ import { SITE_URL } from '@/lib/siteUrl';
 const f = MARKETING_FEATURES.forms;
 
 export const metadata: Metadata = {
-  title: `${f.title} | Alphaclone`,
+  title: `${f.title} | AlphaClone`,
   description: f.description,
   alternates: { canonical: `${SITE_URL}/marketing/forms` },
 };

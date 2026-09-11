@@ -17,6 +17,8 @@ import {
     LayoutDashboard,
 } from 'lucide-react';
 import MissionControl from '@/components/alpha/MissionControl';
+import { useTenant } from '@/contexts/TenantContext';
+import toast from 'react-hot-toast';
 
 interface MissionExecution {
     id: string;
@@ -27,6 +29,7 @@ interface MissionExecution {
 }
 
 export default function AlphaConsole() {
+    const { currentTenant } = useTenant();
     const [missions, setMissions] = useState<MissionExecution[]>([]);
     const [prompt, setPrompt] = useState('');
     const [isExecuting, setIsExecuting] = useState(false);
@@ -34,7 +37,7 @@ export default function AlphaConsole() {
     const [view, setView] = useState<'terminal' | 'fleet'>('terminal');
     const logsEndRef = useRef<HTMLDivElement>(null);
 
-    const fullText = 'SYSTEM_ALPHA_BETA // ASSISTED_EXECUTION_ENABLED // PERSISTENCE_LIMITED';
+    const fullText = 'SYSTEM_ALPHA // ASSISTED_EXECUTION_ENABLED // DURABLE_MISSION_HISTORY';
 
     useEffect(() => {
         let i = 0;
@@ -47,14 +50,16 @@ export default function AlphaConsole() {
     }, []);
 
     useEffect(() => {
+        if (!currentTenant?.id) return;
         fetchStatus();
         const interval = setInterval(fetchStatus, 3000);
         return () => clearInterval(interval);
-    }, []);
+    }, [currentTenant?.id]);
 
     const fetchStatus = async () => {
         try {
-            const res = await fetch('/api/alpha');
+            if (!currentTenant?.id) return;
+            const res = await fetch(`/api/alpha?tenantId=${encodeURIComponent(currentTenant.id)}`);
             const data = await res.json();
             if (Array.isArray(data)) setMissions(data);
         } catch (e) {
@@ -64,18 +69,24 @@ export default function AlphaConsole() {
 
     const runMission = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!prompt.trim() || isExecuting) return;
+        if (!prompt.trim() || isExecuting || !currentTenant?.id) return;
 
         setIsExecuting(true);
         try {
-            await fetch('/api/alpha', {
+            const response = await fetch('/api/alpha', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ description: prompt })
+                body: JSON.stringify({ description: prompt, tenantId: currentTenant.id })
             });
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.error || 'Mission could not be started');
+            }
             setPrompt('');
+            await fetchStatus();
         } catch (e) {
             console.error(e);
+            toast.error(e instanceof Error ? e.message : 'Mission could not be started');
         } finally {
             setIsExecuting(false);
         }
@@ -123,7 +134,7 @@ export default function AlphaConsole() {
                         </div>
                         <div className="flex items-center gap-2">
                             <Database className="w-3 h-3 text-blue-400" />
-                            <span>LATENCY: 14MS</span>
+                            <span>MISSION_STORE: CONNECTED</span>
                         </div>
                     </div>
                 </div>
@@ -133,9 +144,8 @@ export default function AlphaConsole() {
                 {view === 'terminal' ? (
                     <>
                         <div className="md:col-span-4 border-r border-[#00FFD1]/10 p-4 md:p-6 flex flex-col gap-6 bg-[#00080D] min-h-0">
-                            <div className="border border-yellow-500/20 bg-yellow-500/10 p-4 text-xs leading-relaxed text-yellow-100">
-                                Alpha is usable for assisted task execution and tool-triggered actions, but autonomous mission persistence is still beta.
-                                Mission history is not durable enough yet to present this as a fully production-hardened agent console.
+                            <div className="border border-[#00FFD1]/20 bg-[#00FFD1]/5 p-4 text-xs leading-relaxed text-[#00FFD1]/80">
+                                Alpha runs authorized tools inside the selected workspace. Mission state and completion logs are stored durably and remain available after restarts.
                             </div>
 
                             <div className="space-y-4">
@@ -233,11 +243,10 @@ export default function AlphaConsole() {
                     </>
                 ) : (
                     <div className="col-span-12 h-full overflow-y-auto custom-scrollbar">
-                        <MissionControl />
+                        <MissionControl missions={missions} />
                     </div>
                 )}
             </div>
         </div>
     );
 }
-

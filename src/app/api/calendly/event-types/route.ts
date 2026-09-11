@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { refreshCalendlyTokenIfNeeded } from '@/services/calendly/calendlyIntegrationService';
 
 export async function GET(req: Request) {
     try {
@@ -11,21 +12,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing tenant ID' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId);
-
-        const supabase = createSupabaseAdminClient();
-        const { data: tenant, error } = await supabase
-            .from('tenants')
-            .select('settings')
-            .eq('id', tenantId)
-            .single();
-
-        if (error || !tenant) {
-            return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
-        }
-
-        const config = tenant.settings?.calendly;
-        if (!config || !config.accessToken || !config.calendlyUserUri) {
+        const { admin: supabase } = await requireTenantAccess(tenantId, req);
+        const config = await refreshCalendlyTokenIfNeeded(supabase, tenantId);
+        if (!config?.accessToken || !config.calendlyUserUri) {
             return NextResponse.json({ error: 'Calendly OAuth is not configured for this tenant' }, { status: 400 });
         }
 

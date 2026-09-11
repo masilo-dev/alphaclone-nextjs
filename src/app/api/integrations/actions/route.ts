@@ -10,11 +10,8 @@ import {
   getFacebookIntegrationWithToken,
   upsertFacebookIntegration,
 } from '@/services/facebook/facebookIntegrationService';
-import { upsertHubSpotIntegration, getValidHubSpotAccessToken } from '@/services/hubspot/hubspotIntegrationService';
-import {
-  upsertGoogleCalendarTokens,
-  getGoogleCalendarTokens,
-} from '@/services/google/googleCalendarIntegrationService';
+import { getValidHubSpotAccessToken } from '@/services/hubspot/hubspotIntegrationService';
+import { getValidGoogleAccessToken } from '@/services/google/googleAccessTokenService';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -29,11 +26,17 @@ export async function POST(req: NextRequest) {
     }
     const { tenantId, integrationType, action, config } = parsed.data;
 
-    await requireTenantAccess(tenantId);
+    const { membership } = await requireTenantAccess(tenantId);
+    if ((action === 'connect' || action === 'disconnect') && !['owner', 'admin', 'tenant_admin', 'super_admin'].includes(membership.role)) {
+      return NextResponse.json({ error: 'Insufficient workspace permissions' }, { status: 403 });
+    }
     const supabase = createSupabaseAdminClient();
 
     // Set tenant context for RLS
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
     let result: any = { success: false, data: null, error: null };
 
@@ -187,7 +190,7 @@ async function handleFacebookAction(tenantId: string, action: string, config: an
         }
 
         const leadsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${integration.page_id}/leadgen_forms?access_token=${integration.pageAccessToken}`
+          `https://graph.facebook.com/v21.0/${integration.page_id}/leadgen_forms?access_token=${integration.pageAccessToken}`
         );
         
         const leadsData = await leadsResponse.json();
@@ -320,25 +323,12 @@ async function handleGoogleCalendarAction(tenantId: string, action: string, conf
   try {
     switch (action) {
       case 'connect': {
-        await upsertGoogleCalendarTokens({
-          userId,
-          accessToken: config.accessToken,
-          refreshToken: config.refreshToken || null,
-          expiresAt: config.expiresAt,
-        });
-
-        const testResult = await testGoogleCalendarIntegration(config.accessToken);
-
-        return {
-          success: true,
-          data: { userId, test: testResult },
-          message: 'Google Calendar integration connected successfully',
-        };
+        return { success: false, error: 'Connect Google Calendar through its secure OAuth setup.' };
       }
 
       case 'sync_events': {
-        const tokens = await getGoogleCalendarTokens(supabase, userId);
-        if (!tokens.accessToken) {
+        const accessToken = await getValidGoogleAccessToken({ admin: supabase, userId, tenantId });
+        if (!accessToken) {
           return { success: false, error: 'Google Calendar integration not found' };
         }
 
@@ -346,7 +336,7 @@ async function handleGoogleCalendarAction(tenantId: string, action: string, conf
           'https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=10',
           {
             headers: {
-              Authorization: `Bearer ${tokens.accessToken}`,
+              Authorization: `Bearer ${accessToken}`,
             },
           }
         );
@@ -361,11 +351,13 @@ async function handleGoogleCalendarAction(tenantId: string, action: string, conf
       }
 
       case 'disconnect': {
-        await supabase.from('google_calendar_secrets').delete().eq('user_id', userId);
+        const { error: secretError } = await supabase.from('google_calendar_secrets').delete().eq('user_id', userId).eq('tenant_id', tenantId);
+        if (secretError) throw secretError;
         const { error: disconnectError } = await supabase
           .from('google_calendar_tokens')
           .delete()
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .eq('tenant_id', tenantId);
 
         if (disconnectError) throw disconnectError;
 
@@ -384,51 +376,10 @@ async function handleStripeAction(tenantId: string, action: string, config: any,
   try {
     switch (action) {
       case 'connect':
-        // Save Stripe integration
-        const { data, error } = await supabase
-          .from('integrations')
-          .upsert({
-            tenant_id: tenantId,
-            type: 'stripe',
-            name: 'Stripe Connect',
-            config: {
-              account_id: config.accountId,
-              publishable_key: config.publishableKey,
-              secret_key: config.secretKey
-            },
-            enabled: true
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        return { 
-          success: true, 
-          data: data,
-          message: 'Stripe integration connected successfully'
-        };
+        return { success: false, error: 'Connect Stripe through the secure Stripe Connect onboarding flow.' };
 
       case 'create_payment_intent':
-        // Create payment intent
-        const stripeIntegration = await supabase
-          .from('integrations')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('type', 'stripe')
-          .eq('enabled', true)
-          .single();
-
-        if (!stripeIntegration.data) {
-          return { success: false, error: 'Stripe integration not found' };
-        }
-
-        // This would use Stripe SDK - for now return mock response
-        return { 
-          success: true, 
-          data: { client_secret: 'pi_test_client_secret' },
-          message: 'Payment intent created successfully'
-        };
+        return { success: false, error: 'Create payments from a canonical invoice payment action.' };
 
       default:
         return { success: false, error: 'Unsupported Stripe action' };
@@ -442,23 +393,11 @@ async function handleHubSpotAction(tenantId: string, action: string, config: any
   try {
     switch (action) {
       case 'connect': {
-        await upsertHubSpotIntegration({
-          userId,
-          tenantId,
-          accessToken: config.accessToken,
-          refreshToken: config.refreshToken || null,
-          expiryDate: config.expiresAt || config.expiryDate || null,
-          portalId: config.portalId || null,
-        });
-
-        return {
-          success: true,
-          message: 'HubSpot integration connected successfully',
-        };
+        return { success: false, error: 'Connect HubSpot through its secure OAuth setup.' };
       }
 
       case 'sync_contacts': {
-        const accessToken = await getValidHubSpotAccessToken(supabase, userId);
+        const accessToken = await getValidHubSpotAccessToken(supabase, userId, tenantId);
 
         const contactsResponse = await fetch(
           'https://api.hubapi.com/crm/v3/objects/contacts?limit=10',
@@ -610,7 +549,7 @@ async function testSlackIntegration(webhookUrl: string) {
 async function testFacebookIntegration(accessToken: string) {
   try {
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/me?access_token=${accessToken}&fields=id,name`
+      `https://graph.facebook.com/v21.0/me?access_token=${accessToken}&fields=id,name`
     );
     
     const data = await response.json();
