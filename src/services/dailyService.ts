@@ -10,20 +10,6 @@ import { MAX_MEETING_DURATION_MINUTES } from '@/lib/meetingLimits';
  * Handles video room creation, management, and meeting coordination using Daily.co
  */
 
-export interface DailyRoom {
-    id: string;
-    name: string;
-    url: string;
-    config: {
-        nbf?: number; // Not before (unix timestamp)
-        exp?: number; // Expiration (unix timestamp)
-        enable_screenshare?: boolean;
-        enable_chat?: boolean;
-        enable_recording?: string;
-        max_participants?: number;
-    };
-}
-
 export interface VideoCall {
     id: string;
     room_id: string;
@@ -67,91 +53,14 @@ class DailyService {
     }
 
     /**
-     * Finds Daily.co URLs in text and replaces them with a branded version or placeholder.
-     */
-    maskMeetingLinks(text: string): string {
-        if (!text) return text;
-
-        // Match daily.co URLs
-        const dailyRegex = /https:\/\/[a-z0-9-]+\.daily\.co\/[a-z0-9-]+/gi;
-
-        return text.replace(dailyRegex, (url) => {
-            // We can't easily look up the DB ID synchronously here, 
-            // so we'll point to a general redirector or a "Coming Soon" placeholder if requested
-            // For now, let's use the branding requested.
-            const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
-            return `${baseUrl}/meet/active`; // Placeholder redirector or just the domain
-        });
-    }
-
-    /**
-     * Create a new Daily.co room via backend API
-     */
-    async createRoom(options: {
-        title: string;
-        maxParticipants?: number;
-        enableScreenshare?: boolean;
-        enableChat?: boolean;
-        enableRecording?: boolean;
-        startTime?: Date;
-        duration?: number; // minutes
-    }): Promise<{ room: DailyRoom | null; error: string | null }> {
-        try {
-            // Generate a unique room name
-            const roomName = `room-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-
-            // Build properties object
-            const properties: Record<string, any> = {
-                enable_screenshare: options.enableScreenshare !== false,
-                enable_chat: options.enableChat !== false,
-                max_participants: options.maxParticipants || 10,
-            };
-
-            // Only include recording if enabled
-            if (options.enableRecording) {
-                properties.enable_recording = 'cloud';
-            }
-
-            // Only include nbf if startTime is provided
-            if (options.startTime) {
-                properties.nbf = Math.floor(options.startTime.getTime() / 1000);
-            }
-
-            // Only include exp if both duration and startTime are provided
-            if (options.duration && options.startTime) {
-                properties.exp = Math.floor((options.startTime.getTime() + options.duration * 60000) / 1000);
-            } else if (options.duration) {
-                // Set exp relative to now if start time not fixed
-                properties.exp = Math.floor((Date.now() + options.duration * 60000) / 1000);
-            }
-
-            const response = await fetch('/api/daily/create-room', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: roomName, properties })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                return { room: null, error: errorData.error || 'Failed to create room' };
-            }
-
-            const room = await response.json();
-            return { room, error: null };
-        } catch (err) {
-            return { room: null, error: err instanceof Error ? err.message : 'Failed to create room' };
-        }
-    }
-
-    /**
      * Get a meeting token for a room
      */
-    async getMeetingToken(roomName: string, userName: string, isOwner: boolean = false): Promise<{ token: string | null; roomUrl?: string | null; error: string | null }> {
+    async getMeetingToken(callId: string, guestName: string, meetingAccessPin?: string, meetingAccessToken?: string): Promise<{ token: string | null; roomUrl?: string | null; error: string | null }> {
         try {
             const response = await fetch('/api/daily/token', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ roomName, userName, isOwner })
+                body: JSON.stringify({ callId, guestName, meetingAccessPin, meetingAccessToken })
             });
 
             if (!response.ok) {
@@ -185,81 +94,29 @@ class DailyService {
         tenantId?: string;
     }): Promise<{ call: VideoCall | null; error: string | null }> {
         try {
-            const tenantId = tenantService.getCurrentTenantId();
+            const tenantId = data.tenantId || tenantService.getCurrentTenantId();
             if (!tenantId) throw new Error('No tenant context found');
-
-            const { data: tenantData } = await supabase
-                .from('tenants')
-                .select('subscription_status, subscription_plan, slug')
-                .eq('id', tenantId)
-                .single();
-
-            const isSuperAdminTenant = tenantData?.slug === 'default' || tenantId === '51772ee6-dee8-4c42-81f7-0fee297e5b27';
-            const isUnlimitedUser = data.hostId === 'df841125-59ce-4e09-aa2d-5b746ec03d9b';
-
-            const plan = (tenantData?.subscription_plan as any) || 'free';
-            const { PLAN_PRICING } = await import('./tenancy/types');
-            const planFeatures = { ...PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features };
-
-            // During the free launch window (and for super-admin / unlimited users),
-            // meetings are uncapped. After the window closes, plan limits apply.
-            const { isLaunchFreeWindow } = await import('../lib/launchWindow');
-            const limitsWaived = isSuperAdminTenant || isUnlimitedUser || isLaunchFreeWindow();
-
-            if (!limitsWaived && plan === 'free') {
-                const { count } = await supabase
-                    .from('video_calls')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('host_id', data.hostId);
-
-                const maxMeetings = planFeatures.maxVideoMeetingsPerMonth;
-                if (maxMeetings !== -1 && count !== null && count >= maxMeetings) {
-                    return { call: null, error: 'LIMIT_EXCEEDED_TEASER' };
-                }
-            }
-
-            const requestedDuration = data.duration || MAX_MEETING_DURATION_MINUTES;
-            const durationLimit = limitsWaived || planFeatures.maxVideoMinutesPerMeeting === -1
-                ? Math.min(requestedDuration, MAX_MEETING_DURATION_MINUTES)
-                : Math.min(requestedDuration, planFeatures.maxVideoMinutesPerMeeting, MAX_MEETING_DURATION_MINUTES);
-
-            const roomName =
-                typeof crypto !== 'undefined' && 'randomUUID' in crypto
-                    ? `alphaclone-${crypto.randomUUID()}`
-                    : `alphaclone-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-
-            // Insert into database
-            const { data: dbData, error: dbError } = await supabase
-                .from('video_calls')
-                .insert({
-                    room_id: roomName,
-                    tenant_id: data.tenantId || tenantId,
-                    daily_room_url: null,
-                    daily_room_name: null,
-                    host_id: data.hostId,
-                    calendar_event_id: data.calendarEventId,
+            const response = await fetch('/api/meetings/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    hostId: data.hostId,
                     title: data.title,
-                    status: 'scheduled',
                     participants: data.participants || [],
-                    max_participants: data.maxParticipants || 10,
-                    recording_enabled: data.recordingEnabled || false,
-                    screen_share_enabled: data.screenShareEnabled !== false,
-                    chat_enabled: data.chatEnabled !== false,
-                    cancellation_policy_hours: data.cancellationPolicyHours || 3,
-                    allow_client_cancellation: data.allowClientCancellation !== false,
-                    is_public: data.isPublic || false,
-                    duration_limit_minutes: durationLimit,
-                    metadata: {
-                        provider: 'livekit',
-                        provider_room_name: roomName,
-                    },
-                })
-                .select()
-                .single();
-
-            if (dbError) {
-                return { call: null, error: dbError.message };
-            }
+                    maxParticipants: data.maxParticipants || 10,
+                    recordingEnabled: Boolean(data.recordingEnabled),
+                    screenShareEnabled: data.screenShareEnabled !== false,
+                    chatEnabled: data.chatEnabled !== false,
+                    cancellationPolicyHours: data.cancellationPolicyHours ?? 3,
+                    allowClientCancellation: data.allowClientCancellation !== false,
+                    durationMinutes: data.duration || MAX_MEETING_DURATION_MINUTES,
+                    isPublic: Boolean(data.isPublic),
+                }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.call) return { call: null, error: payload.error || 'Failed to create video call' };
+            const dbData = payload.call;
 
             const call: VideoCall = {
                 ...dbData,
@@ -421,16 +278,13 @@ class DailyService {
      */
     async startVideoCall(callId: string): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase
-                .from('video_calls')
-                .update({
-                    status: 'active',
-                    started_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', callId);
-
-            return { error: error ? error.message : null };
+            const response = await fetch(`/api/meetings/${encodeURIComponent(callId)}/state`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'start' }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Failed to start video call' };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Failed to start video call' };
         }
@@ -439,19 +293,15 @@ class DailyService {
     /**
      * End a video call
      */
-    async endVideoCall(callId: string, durationSeconds?: number): Promise<{ error: string | null }> {
+    async endVideoCall(callId: string, durationSeconds?: number, rotatePin = false): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase
-                .from('video_calls')
-                .update({
-                    status: 'ended',
-                    ended_at: new Date().toISOString(),
-                    duration_seconds: durationSeconds,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', callId);
-
-            return { error: error ? error.message : null };
+            const response = await fetch(`/api/meetings/${encodeURIComponent(callId)}/state`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'end', durationSeconds, rotatePin }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Failed to end video call' };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Failed to end video call' };
         }

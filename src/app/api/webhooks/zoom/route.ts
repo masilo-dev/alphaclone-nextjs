@@ -164,6 +164,10 @@ export async function POST(req: Request) {
 
       try {
         await admin
+          .from('zoom_integration_secrets')
+          .delete()
+          .eq('tenant_id', row.tenant_id);
+        await admin
           .from('tenant_zoom_settings')
           .update({
             integration_mode: 'none',

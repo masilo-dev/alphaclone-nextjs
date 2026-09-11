@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { generateMessengerReply } from '@/services/unifiedAIService';
 import toast from 'react-hot-toast';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
 
 interface WhatsAppMessage {
@@ -95,15 +95,11 @@ export default function WhatsAppChatHub() {
 
     const fetchChatbotSettings = async () => {
         try {
-            const { data } = await supabase
-                .from('whatsapp_chatbot_settings')
-                .select('chatbot_enabled')
-                .eq('tenant_id', currentTenant?.id)
-                .maybeSingle();
-            
-            if (data) {
-                setChatbotEnabled(data.chatbot_enabled);
-            }
+            if (!currentTenant?.id) return;
+            const response = await fetch(`/api/tenant/${currentTenant.id}/whatsapp-chatbot`, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Failed to load chatbot settings');
+            setChatbotEnabled(Boolean(payload.chatbotEnabled));
         } catch (err) {
             console.error('Failed to fetch chatbot settings', err);
         }
@@ -114,15 +110,10 @@ export default function WhatsAppChatHub() {
         setSavingSettings(true);
         try {
             const nextState = !chatbotEnabled;
-            const { error } = await supabase
-                .from('whatsapp_chatbot_settings')
-                .upsert({
-                    tenant_id: currentTenant.id,
-                    chatbot_enabled: nextState
-                }, { onConflict: 'tenant_id' });
-
-            if (error) throw error;
-            setChatbotEnabled(nextState);
+            const response = await fetch(`/api/tenant/${currentTenant.id}/whatsapp-chatbot`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chatbot_enabled: nextState }) });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Failed to update chatbot settings');
+            setChatbotEnabled(Boolean(payload.chatbotEnabled));
             toast.success(`AI Chatbot Auto-Reply ${nextState ? 'Enabled' : 'Disabled'}`);
         } catch (err) {
             toast.error('Failed to update chatbot settings');
@@ -463,11 +454,13 @@ export default function WhatsAppChatHub() {
 
                 {/* Thread list */}
                 <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
-                    {filteredThreads.length === 0 ? (
+                    {threads.length === 0 ? (
+                        <EmptyStateFromPreset moduleId="messages" className="py-16" />
+                    ) : filteredThreads.length === 0 ? (
                         <EmptyState
                             icon={MessageCircle}
                             title="No conversations found"
-                            description="Inbound WhatsApp conversations will appear here when customers message your workspace."
+                            description="Try a different search term."
                             className="py-16"
                         />
                     ) : (

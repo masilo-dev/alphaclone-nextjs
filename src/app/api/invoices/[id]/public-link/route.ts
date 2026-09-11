@@ -14,8 +14,7 @@ export async function GET(
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const url = await getPublicInvoicePaymentUrl(admin, invoiceId, tenantId, req.nextUrl.origin);
 
     return NextResponse.json({ success: true, url });

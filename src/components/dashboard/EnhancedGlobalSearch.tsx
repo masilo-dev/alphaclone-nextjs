@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
-import { Search, X, FileText, MessageSquare, DollarSign, User, Filter } from 'lucide-react';
+import { Search, X, FileText, MessageSquare, DollarSign, User, Filter, Mail } from 'lucide-react';
 import { searchService, SearchResult, SearchFilters } from '../../services/searchService';
 import { User as UserType } from '../../types';
 import { Card } from '../ui/UIComponents';
+import { useTenant } from '@/contexts/TenantContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface EnhancedGlobalSearchProps {
     user: UserType;
@@ -11,6 +13,8 @@ interface EnhancedGlobalSearchProps {
 }
 
 const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNavigate }) => {
+    const { currentTenant } = useTenant();
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -34,7 +38,8 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
             query,
             user.id,
             role,
-            filters
+            filters,
+            currentTenant?.id
         );
 
         if (!error && searchResults) {
@@ -42,7 +47,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
             await searchService.saveSearchHistory(user.id, query, searchResults.length);
         }
         setIsSearching(false);
-    }, [query, user.id, user.role, filters]);
+    }, [query, user.id, user.role, filters, currentTenant?.id]);
 
     const loadSuggestions = useCallback(async () => {
         const role = user.role === 'admin' || user.role === 'tenant_admin' ? 'admin' : 'client';
@@ -57,11 +62,6 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                setIsOpen(true);
-                setTimeout(() => inputRef.current?.focus(), 100);
-            }
             if (e.key === 'Escape') {
                 setIsOpen(false);
                 setQuery('');
@@ -121,6 +121,11 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                 return <MessageSquare className="w-4 h-4" />;
             case 'invoice':
                 return <DollarSign className="w-4 h-4" />;
+            case 'contract':
+            case 'document':
+                return <FileText className="w-4 h-4" />;
+            case 'campaign':
+                return <Mail className="w-4 h-4" />;
             case 'user':
                 return <User className="w-4 h-4" />;
             default:
@@ -152,14 +157,15 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                 <div className="relative h-4 w-4 opacity-70 transition-opacity group-hover:opacity-100">
                     <Image
                         src="/logo.png"
-                        alt="AlphaClone"
+                        alt="Alphaclone Systems"
                         fill
+                        sizes="40px"
                         className="object-contain"
                     />
                 </div>
-                <span className="hidden text-sm font-medium sm:inline">Search anything...</span>
+                <span className="hidden text-sm font-medium sm:inline">{t('Search anything...')}</span>
                 <kbd className="ml-auto hidden rounded-lg border border-white/5 bg-black/20 px-2 py-0.5 text-xs text-slate-400 sm:inline-block">
-                    ⌘K
+                    {t('Search')}
                 </kbd>
             </button>
         );
@@ -182,7 +188,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Search projects, messages, invoices, users..."
+                            placeholder="Search contacts, contracts, documents, invoices and campaigns..."
                             className="flex-1 bg-transparent text-white placeholder-slate-400 outline-none"
                             autoFocus
                         />
@@ -221,6 +227,9 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                                         <option value="project">Projects</option>
                                         <option value="message">Messages</option>
                                         <option value="invoice">Invoices</option>
+                                        <option value="contract">Contracts</option>
+                                        <option value="document">Documents</option>
+                                        <option value="campaign">Campaigns</option>
                                         {user.role === 'admin' && <option value="user">Users</option>}
                                         <option value="all">All</option>
                                     </select>
@@ -303,7 +312,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                             <div className="p-8 text-center text-slate-400">
                                 <p className="text-sm">Start typing to search...</p>
                                 <div className="mt-4 text-xs space-y-1">
-                                    <p>• Search across projects, messages, invoices</p>
+                                    <p>• Search across projects, messages, contracts, documents, invoices and campaigns</p>
                                     <p>• Use filters to narrow results</p>
                                     <p>• Press ⌘K anytime to search</p>
                                 </div>

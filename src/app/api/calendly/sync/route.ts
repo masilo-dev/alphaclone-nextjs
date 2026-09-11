@@ -1,32 +1,18 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { pullAndSyncCalendlyEvents, type CalendlyTenantConfig } from '@/lib/calendly/syncToNative';
+import { requireTenantRole } from '@/lib/apiAuth';
+import { refreshCalendlyTokenIfNeeded } from '@/services/calendly/calendlyIntegrationService';
+import { z } from 'zod';
 
 export async function POST(req: Request) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
-        const { tenantId } = await req.json();
-        if (!tenantId) {
-            return NextResponse.json({ error: 'Missing tenant ID' }, { status: 400 });
-        }
+        const { tenantId } = z.object({ tenantId: z.string().uuid() }).parse(await req.json());
+        const { user } = await requireTenantRole(tenantId, ['owner','admin','tenant_admin','super_admin'], req);
 
         const supabase = createSupabaseAdminClient();
-        const { data: tenant, error } = await supabase
-            .from('tenants')
-            .select('settings')
-            .eq('id', tenantId)
-            .single();
-
-        if (error || !tenant) {
-            return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
-        }
-
-        const config = tenant.settings?.calendly as CalendlyTenantConfig | undefined;
+        const config = await refreshCalendlyTokenIfNeeded(supabase, tenantId) as CalendlyTenantConfig | null;
         if (!config?.accessToken || !config.calendlyUserUri) {
             return NextResponse.json({ error: 'Calendly OAuth is not configured for this tenant' }, { status: 400 });
         }

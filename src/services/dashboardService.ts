@@ -14,6 +14,25 @@ export interface Notification {
     metadata?: Record<string, any>;
     created_at: string;
     updated_at: string;
+    /**
+     * Notification priority — 5 tiers across the platform:
+     * - low     : informational digest items, no OS push
+     * - normal  : default for routine events (alias: 'medium' — also accepted for DB rows written by workflow executor)
+     * - medium  : same as 'normal' (DB insert sites sometimes use this label)
+     * - high    : action-required → show OS push even if app focused
+     * - urgent  : sticky OS notification (requireInteraction=true) until dismissed
+     */
+    priority?: 'low' | 'normal' | 'medium' | 'high' | 'urgent';
+    /** Optional avatar image (e.g. sender profile picture). */
+    avatar_url?: string;
+    /** Explicit dismissal flag (distinct from read). */
+    dismissed?: boolean;
+    /** ISO timestamp of when the user dismissed the notification. */
+    dismissed_at?: string;
+    /** ISO timestamp until which the notification should be hidden (snooze). */
+    snooze_until?: string;
+    /** Explicit seen flag (distinct from read; used for badge-increment logic). */
+    seen?: boolean;
 }
 
 export interface ActivityLog {
@@ -49,61 +68,70 @@ export interface UserPreferences {
 
 export const notificationService = {
     async getNotifications(userId: string, tenantId: string, limit = 50) {
-        const { data, error } = await supabase
-            .from('notifications')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('tenant_id', tenantId)
-            .order('created_at', { ascending: false })
-            .limit(limit);
-
-        // DB stores the destination in `action_url`; expose it as `link` for the UI.
-        const notifications = (data || []).map((n: any) => ({
-            ...n,
-            link: n.link ?? n.action_url ?? undefined,
-        }));
-
-        return { notifications, error };
+        const response = await fetch(`/api/notifications?tenantId=${encodeURIComponent(tenantId)}`, {
+            cache: 'no-store',
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            return { notifications: [], error: payload.error || 'Notifications could not be loaded' };
+        }
+        const notifications = ((payload.notifications as Notification[]) || [])
+            .filter((n) => n.user_id === userId)
+            .slice(0, limit)
+            .map((n: any) => ({
+                ...n,
+                link: n.link ?? n.action_url ?? undefined,
+            }));
+        return { notifications, error: undefined };
     },
 
     async getUnreadCount(userId: string, tenantId: string) {
-        const { count, error } = await supabase
-            .from('notifications')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', userId)
-            .eq('tenant_id', tenantId)
-            .eq('read', false);
-
-        return { count: count || 0, error };
+        const { notifications, error } = await this.getNotifications(userId, tenantId, 100);
+        if (error) return { count: 0, error };
+        return { count: notifications.filter((n) => !n.read).length, error: undefined };
     },
 
     async markAsRead(notificationId: string) {
-        const { error } = await supabase
-            .from('notifications')
-            .update({ read: true })
-            .eq('id', notificationId);
-
-        return { error };
+        const tenantId =
+            typeof window !== 'undefined'
+                ? (await import('./tenancy/TenantService')).tenantService.getCurrentTenantId()
+                : null;
+        if (!tenantId) return { error: 'No active workspace selected' };
+        const response = await fetch('/api/notifications', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tenantId, ids: [notificationId], read: true }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? undefined : payload.error || 'Notification could not be updated' };
     },
 
     async markAllAsRead(userId: string, tenantId: string) {
-        const { error } = await supabase
-            .from('notifications')
-            .update({ read: true })
-            .eq('user_id', userId)
-            .eq('tenant_id', tenantId)
-            .eq('read', false);
-
-        return { error };
+        const { notifications, error: loadError } = await this.getNotifications(userId, tenantId, 200);
+        if (loadError) return { error: loadError };
+        const ids = notifications.filter((n) => !n.read).map((n) => n.id);
+        if (!ids.length) return { error: undefined };
+        const response = await fetch('/api/notifications', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tenantId, ids, read: true }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? undefined : payload.error || 'Notifications could not be updated' };
     },
 
     async deleteNotification(notificationId: string) {
-        const { error } = await supabase
-            .from('notifications')
-            .delete()
-            .eq('id', notificationId);
-
-        return { error };
+        const tenantId =
+            typeof window !== 'undefined'
+                ? (await import('./tenancy/TenantService')).tenantService.getCurrentTenantId()
+                : null;
+        if (!tenantId) return { error: 'No active workspace selected' };
+        const response = await fetch(
+            `/api/notifications?tenantId=${encodeURIComponent(tenantId)}&notificationId=${encodeURIComponent(notificationId)}`,
+            { method: 'DELETE' }
+        );
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? undefined : payload.error || 'Notification could not be deleted' };
     },
 
     async createNotification(notification: Omit<Notification, 'id' | 'created_at' | 'updated_at'>) {

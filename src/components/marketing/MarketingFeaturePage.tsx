@@ -1,5 +1,6 @@
-import Link from 'next/link';
 import type { ComparisonRow } from '@/config/marketingCopy';
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import { MarketingContainer, MarketingSection, SectionHeading } from '@/components/marketing/system/LayoutPrimitives';
 
 type Props = {
   title: string;
@@ -11,45 +12,68 @@ type Props = {
 
 export default function MarketingFeaturePage({ title, description, bullets, comparison, competitorName }: Props) {
   return (
-    <main className="max-w-4xl mx-auto px-4 py-16 space-y-10">
-      <div>
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{title}</h1>
-        <p className="text-lg text-slate-400">{description}</p>
-      </div>
-      <ul className="space-y-3">
-        {bullets.map((b) => (
-          <li key={b} className="flex items-start gap-3 text-slate-300">
-            <span className="mt-1.5 w-2 h-2 rounded-full bg-teal-400 flex-shrink-0" />
-            {b}
-          </li>
-        ))}
-      </ul>
-      <div className="overflow-x-auto rounded-2xl border border-white/10">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-white/10 bg-slate-900/80">
-              <th className="text-left p-4 text-slate-400 font-medium">Feature</th>
-              <th className="text-left p-4 text-teal-400 font-bold">Alphaclone</th>
-              <th className="text-left p-4 text-slate-400">{competitorName}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {comparison.map((row) => (
-              <tr key={row.feature} className="border-b border-white/5">
-                <td className="p-4 text-white">{row.feature}</td>
-                <td className="p-4 text-teal-300 font-medium">{row.alphaclone}</td>
-                <td className="p-4 text-slate-400">{row.competitor}</td>
-              </tr>
+    <main className="bg-[var(--marketing-bg-primary)]">
+      <MarketingSection className="relative overflow-hidden pt-16 sm:pt-20">
+        <div className="marketing-glow-hero" aria-hidden="true" />
+        <MarketingContainer className="relative z-10">
+          <SectionHeading
+            eyebrow="Marketing workflows"
+            title={title}
+            description={description}
+          />
+          <div className="flex flex-col justify-center gap-3 sm:flex-row">
+            <PrimaryCTA />
+            <SecondaryCTA href="/pricing">See pricing</SecondaryCTA>
+          </div>
+        </MarketingContainer>
+      </MarketingSection>
+
+      <MarketingSection tone="muted" className="pt-0">
+        <MarketingContainer>
+          <div className="grid gap-4 md:grid-cols-2">
+            {bullets.map((bullet) => (
+              <div key={bullet} className="mkt-surface p-5">
+                <span className="mkt-icon-wrap mb-4" aria-hidden="true">
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--marketing-accent-hover)]" />
+                </span>
+                <p className="text-sm leading-relaxed text-[var(--marketing-text-secondary)]">
+                  {bullet}
+                </p>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
-      <Link
-        href="/auth/login?register=true&type=business&plan=starter"
-        className="inline-flex px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-white font-bold transition-colors"
-      >
-        Start free trial
-      </Link>
+          </div>
+        </MarketingContainer>
+      </MarketingSection>
+
+      <MarketingSection>
+        <MarketingContainer>
+          <SectionHeading
+            eyebrow="Comparison"
+            title={`AlphaClone compared with ${competitorName}`}
+            description="A concise view of where the marketing workflow fits inside the broader operating workspace."
+          />
+          <div className="overflow-x-auto rounded-[var(--marketing-radius-lg)] border border-[var(--marketing-border)]">
+            <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] text-sm">
+              <thead>
+                <tr className="border-b border-[var(--marketing-border)]">
+                  <th className="p-4 text-left font-semibold text-[var(--marketing-text-primary)]">Feature</th>
+                  <th className="p-4 text-left font-semibold text-[var(--marketing-accent-hover)]">AlphaClone</th>
+                  <th className="p-4 text-left font-semibold text-[var(--marketing-text-primary)]">{competitorName}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.map((row) => (
+                  <tr key={row.feature} className="border-b border-[var(--marketing-border)] last:border-0">
+                    <td className="p-4 text-[var(--marketing-text-primary)]">{row.feature}</td>
+                    <td className="p-4 font-medium text-[var(--marketing-accent-hover)]">{row.alphaclone}</td>
+                    <td className="p-4 text-[var(--marketing-text-secondary)]">{row.competitor}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </MarketingContainer>
+      </MarketingSection>
     </main>
   );
 }

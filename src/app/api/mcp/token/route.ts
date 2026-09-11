@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { ENV } from '@/config/env';
-import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl } from '@/lib/mcp/oauthRedirect';
+import { createHash, timingSafeEqual } from 'crypto';
+import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl, PLATFORM_MCP_OAUTH_CLIENT_IDS } from '@/lib/mcp/oauthRedirect';
+import { oauthClientsAreEquivalent, resolveCanonicalOAuthClientId, getOAuthClientDisplayName } from '@/lib/mcp/resolveCanonicalOAuthClient';
+import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
+import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
+import { formatScopeString } from '@/lib/mcp/scopes';
+import { loadMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
+import { logOAuthTokenIssuance } from '@/lib/mcp/oauthTokenIsolation';
+import { assertRefreshClientBindingAsync } from '@/lib/mcp/lookupOAuthClientRedirectUris';
+import { encryptIntegrationToken } from '@/lib/integration/integrationTokenCrypto';
+import { validateCredentialEncryptionForOAuth } from '@/lib/integration/credentialEncryptionSecret';
+import { createSupabaseAdminClient, hasSupabaseServiceRole } from '@/lib/supabase-admin';
+import { createMcpOAuthRequestId, logMcpOAuthEvent } from '@/lib/mcp/oauthObservability';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -24,10 +34,74 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
 };
 
-function getBaseUrl(req: NextRequest): string {
-  const protocol = req.headers.get('x-forwarded-proto') || 'https';
-  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || 'alphaclonesystems.com';
-  return `${protocol}://${host}`;
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+type ActiveOAuthSession = Record<string, any>;
+
+function buildRefreshTokenResponse(session: ActiveOAuthSession, expectedResource: string) {
+  const boundResource = session.resource || expectedResource;
+  return NextResponse.json(
+    {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+      token_type: 'Bearer',
+      expires_in: 3600,
+      scope: formatScopeString(session.scopes || ['read', 'write']),
+      resource: boundResource,
+    },
+    { headers: CORS_HEADERS }
+  );
+}
+
+/** Return already-rotated tokens when ChatGPT retries with a superseded refresh token. */
+async function findIdempotentRefreshReplacement(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  refreshHash: string,
+  refreshToken: string
+): Promise<ActiveOAuthSession | null> {
+  const queries = [
+    supabase
+      .from('mcp_oauth_tokens')
+      .select('*')
+      .eq('refresh_token_hash', refreshHash)
+      .eq('revoked', true)
+      .eq('revoke_reason', 'refresh_rotation')
+      .maybeSingle(),
+    supabase
+      .from('mcp_oauth_tokens')
+      .select('*')
+      .eq('refresh_token', refreshToken)
+      .eq('revoked', true)
+      .eq('revoke_reason', 'refresh_rotation')
+      .maybeSingle(),
+  ];
+
+  for (const query of queries) {
+    const { data: rotated } = await query;
+    if (!rotated?.replaced_by_token_id) continue;
+
+    const { data: replacement } = await supabase
+      .from('mcp_oauth_tokens')
+      .select('*')
+      .eq('id', rotated.replaced_by_token_id)
+      .eq('revoked', false)
+      .maybeSingle();
+
+    if (replacement?.access_token && replacement?.refresh_token) {
+      return replacement;
+    }
+  }
+
+  return null;
+}
+
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
 }
 
 function tokenError(
@@ -68,31 +142,28 @@ async function authenticateClient(
   clientSecret: string | undefined,
   supabase: any
 ): Promise<ClientAuthResult> {
-  // If no client_id provided, we'll accept but log (for public clients)
   if (!clientId) {
     return { valid: true };
   }
 
-  // Look up the client
-  const { data: client, error } = await supabase
-    .from('mcp_oauth_clients')
-    .select('id, client_id, is_public, client_secret')
-    .eq('client_id', clientId)
-    .eq('is_active', true)
-    .maybeSingle();
+  const loaded = await loadMcpOAuthClient(supabase, clientId);
+  const client = loaded.client;
 
-  if (error || !client) {
+  if (!client) {
     console.warn('[MCP Token] Client authentication failed - client not found:', clientId);
     return { valid: false, error: 'invalid_client' };
   }
 
-  // Public clients don't need to authenticate (they use PKCE)
-  if (client.is_public) {
+  // Public clients / placeholder secrets don't need client_secret (PKCE).
+  const placeholderSecret =
+    !client.client_secret ||
+    client.client_secret === 'public' ||
+    client.client_secret === 'dynamic';
+  if (client.is_public || placeholderSecret || PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId)) {
     return { valid: true, client: { id: clientId, is_public: true } };
   }
 
   // Confidential clients MUST provide client_secret
-  // Try Authorization header first (Basic auth)
   const authHeader = req.headers.get('authorization');
   let providedSecret: string | null = clientSecret || null;
 
@@ -108,7 +179,6 @@ async function authenticateClient(
     }
   }
 
-  // Verify client_secret for confidential clients
   if (!providedSecret || providedSecret !== client.client_secret) {
     console.warn('[MCP Token] Confidential client authentication failed - invalid secret:', {
       client_id: clientId,
@@ -138,9 +208,9 @@ async function verifyPKCE(codeVerifier: string, codeChallenge: string): Promise<
       .replace(/\//g, '_')
       .replace(/=/g, '');
       
-    const match = base64url === codeChallenge;
+    const match = timingSafeStringEqual(base64url, codeChallenge);
     if (!match) {
-        console.warn('[PKCE] Mismatch. Expected:', codeChallenge, 'Got:', base64url);
+      console.warn('[PKCE] Mismatch (verifier does not match challenge)');
     }
     return match;
   } catch (err) {
@@ -150,6 +220,9 @@ async function verifyPKCE(codeVerifier: string, codeChallenge: string): Promise<
 }
 
 export async function POST(req: NextRequest) {
+  const requestId = createMcpOAuthRequestId();
+  const startedAt = Date.now();
+
   try {
     const contentType = req.headers.get('content-type') || '';
     let body: Record<string, string> = {};
@@ -175,24 +248,43 @@ export async function POST(req: NextRequest) {
     } = body;
     const client_id = normalizeMcpClientId(rawClientId) ?? rawClientId;
 
-    console.log('[MCP Token] grant_type:', grant_type, 'client_id:', client_id);
-
-    if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      return tokenError('server_error', 'Server configuration error', 500);
-    }
-
-    const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
-      global: {
-        headers: {
-          'Accept': 'application/json',
-          'X-Client-Info': 'mcp-token-endpoint-v3'
-        }
-      }
+    logMcpOAuthEvent({
+      event: 'mcp.oauth.token.requested',
+      requestId,
+      grantType: grant_type || null,
+      clientId: client_id || null,
+      stage: 'start',
     });
 
-    // Expected resource identifier for this MCP server
-    const baseUrl = getBaseUrl(req);
-    const expectedResource = `${baseUrl}/api/mcp`;
+    if (!hasSupabaseServiceRole()) {
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.token.failed',
+        requestId,
+        stage: 'config',
+        errorClass: 'missing_service_role',
+        grantType: grant_type || null,
+        durationMs: Date.now() - startedAt,
+      });
+      return tokenError('server_error', 'Server configuration error (database admin unavailable)', 503);
+    }
+
+    const encryptionConfig = validateCredentialEncryptionForOAuth();
+    if (!encryptionConfig.ok) {
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.token.failed',
+        requestId,
+        stage: 'encryption_config',
+        errorClass: 'missing_encryption_secret',
+        grantType: grant_type || null,
+        durationMs: Date.now() - startedAt,
+      });
+      return tokenError('server_error', encryptionConfig.message, 503);
+    }
+
+    const supabase = createSupabaseAdminClient();
+
+    // Expected resource identifier — configured public MCP URL (never container host)
+    const expectedResource = PUBLIC_MCP_RESOURCE;
     const normalizedResource = normalizeMcpResourceUrl(resource);
 
     // Authenticate the client (required for confidential clients)
@@ -227,50 +319,56 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Look up the authorization code
-      const { data: authCode, error: codeError } = await supabase
+      // Look up code first (do not reveal existence differences in error text)
+      const { data: pendingCode, error: codeLookupError } = await supabase
         .from('mcp_oauth_codes')
         .select('*')
         .eq('code', code)
-        .single();
+        .maybeSingle();
 
-      if (codeError || !authCode) {
-        console.warn('[MCP Token] Auth code not found:', code);
+      if (codeLookupError || !pendingCode) {
+        console.warn('[MCP Token] Auth code invalid, expired, or already used');
         return tokenError(
-          'invalid_grant', 
-          'Authorization code is invalid or expired', 
+          'invalid_grant',
+          'Authorization code is invalid, expired, or already used.',
           401,
           'Bearer realm="alphaclone-mcp", error="invalid_grant"'
         );
       }
 
-      // Verify code hasn't been used (single-use)
-      if (authCode.used) {
-        console.warn('[MCP Token] Code replay attack detected:', code);
+      if (pendingCode.used || pendingCode.consumed_at) {
+        console.warn('[MCP Token] Code replay attack detected');
         return tokenError(
-          'invalid_grant', 
-          'Authorization code has already been used', 
+          'invalid_grant',
+          'Authorization code is invalid, expired, or already used.',
           401,
           'Bearer realm="alphaclone-mcp", error="invalid_grant"'
         );
       }
 
-      // Verify not expired
-      if (new Date(authCode.expires_at) < new Date()) {
-        console.warn('[MCP Token] Auth code expired:', code);
+      if (new Date(pendingCode.expires_at) < new Date()) {
+        console.warn('[MCP Token] Auth code expired');
         return tokenError(
-          'invalid_grant', 
-          'Authorization code has expired', 
+          'invalid_grant',
+          'Authorization code is invalid, expired, or already used.',
           401,
           'Bearer realm="alphaclone-mcp", error="invalid_grant"'
         );
       }
+
+      let authCode = pendingCode;
 
       // Verify client_id (if code was issued to a specific client)
-      // For confidential clients, strict matching is required
       const storedClientId = normalizeMcpClientId(authCode.client_id) ?? authCode.client_id;
-      if (storedClientId && client_id && storedClientId !== client_id) {
-        console.warn('[MCP Token] client_id mismatch. Code client:', authCode.client_id, 'Request client:', client_id);
+      const redirectUris = [redirect_uri, authCode.redirect_uri].filter(
+        (u): u is string => typeof u === 'string' && u.length > 0
+      );
+      if (
+        storedClientId &&
+        client_id &&
+        !oauthClientsAreEquivalent(client_id, storedClientId, redirectUris, redirectUris)
+      ) {
+        console.warn('[MCP Token] client_id mismatch');
         return tokenError(
           'invalid_client',
           'client_id does not match the authorization code',
@@ -279,8 +377,11 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Confidential clients MUST authenticate and match the code's client
-      if (!clientAuth.client?.is_public && storedClientId && (!client_id || storedClientId !== client_id)) {
+      if (
+        !clientAuth.client?.is_public &&
+        storedClientId &&
+        !client_id
+      ) {
         console.warn('[MCP Token] Confidential client must authenticate with matching client_id');
         return tokenError(
           'invalid_client',
@@ -290,51 +391,41 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Verify redirect_uri matches (Relaxed comparison to avoid common OAuth URL issues)
       const cleanUrl = (u: string) => u.toLowerCase().replace(/\/$/, '').replace(/^http:/, 'https:');
-      const requestRedirect = cleanUrl(redirect_uri);
-      const storedRedirect = cleanUrl(authCode.redirect_uri);
-      
-      if (requestRedirect !== storedRedirect) {
-        console.warn('[MCP Token] redirect_uri mismatch.', {
-          expected: authCode.redirect_uri,
-          received: redirect_uri,
-          code: authCode.code
-        });
+      if (cleanUrl(redirect_uri) !== cleanUrl(authCode.redirect_uri)) {
+        console.warn('[MCP Token] redirect_uri mismatch');
         return tokenError(
-          'invalid_grant', 
-          'redirect_uri does not match', 
+          'invalid_grant',
+          'redirect_uri does not match',
           401,
           'Bearer realm="alphaclone-mcp", error="invalid_grant"'
         );
       }
 
-      // Verify PKCE if challenge was stored
-      // Per MCP 2025-11-25: S256 is REQUIRED, 'plain' is NOT supported
       if (authCode.code_challenge) {
         if (!code_verifier) {
-          console.warn('[MCP Token] Missing code_verifier for PKCE-enabled code');
-          return tokenError(
-            'invalid_request', 
-            'code_verifier is required for PKCE'
-          );
+          return tokenError('invalid_request', 'code_verifier is required for PKCE');
         }
-        
-        // Only S256 is supported - 'plain' is not permitted per MCP spec
         if (authCode.code_challenge_method === 'S256') {
           const valid = await verifyPKCE(code_verifier, authCode.code_challenge);
           if (!valid) {
-            console.warn('[MCP Token] PKCE S256 verification failed');
+            console.warn('[MCP Token] PKCE S256 verification failed', { request_id: requestId });
             return tokenError(
-              'invalid_grant', 
-              'code_verifier does not match code_challenge', 
+              'invalid_grant',
+              'code_verifier does not match code_challenge',
               401,
               'Bearer realm="alphaclone-mcp", error="invalid_grant"'
             );
           }
+          logMcpOAuthEvent({
+            event: 'mcp.oauth.pkce.validated',
+            requestId,
+            clientId: client_id || null,
+            userId: authCode.user_id || null,
+            tenantId: authCode.tenant_id || null,
+            grantType: 'authorization_code',
+          });
         } else if (authCode.code_challenge_method === 'plain') {
-          // Reject 'plain' method - not secure and not supported per MCP spec
-          console.warn('[MCP Token] Rejected PKCE plain method - not supported per MCP 2025-11-25 spec');
           return tokenError(
             'invalid_grant',
             'PKCE code_challenge_method "plain" is not supported. Use S256 only.',
@@ -342,8 +433,6 @@ export async function POST(req: NextRequest) {
             'Bearer realm="alphaclone-mcp", error="invalid_grant"'
           );
         } else {
-          // Unknown method
-          console.warn('[MCP Token] Unknown PKCE method:', authCode.code_challenge_method);
           return tokenError(
             'invalid_grant',
             `Unsupported PKCE code_challenge_method: ${authCode.code_challenge_method}`,
@@ -353,56 +442,207 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Validate tenant context exists
       if (!authCode.tenant_id) {
-        console.error('[MCP Token] Auth code has no associated tenant_id:', authCode.id);
+        console.error('[MCP Token] Auth code missing tenant_id');
         return tokenError('server_error', 'Invalid authorization context (missing tenant)', 500);
       }
 
-      // Mark code as used (single-use enforcement)
-      await supabase
+      // Atomic single-use consume after all validations
+      const nowIso = new Date().toISOString();
+      const consumeUpdate: Record<string, unknown> = { used: true, consumed_at: nowIso };
+      let consumed = await supabase
         .from('mcp_oauth_codes')
-        .update({ used: true })
-        .eq('code', code);
+        .update(consumeUpdate)
+        .eq('code', code)
+        .eq('used', false)
+        .gt('expires_at', nowIso)
+        .select('*')
+        .maybeSingle();
 
-      // Generate new access + refresh tokens
+      if (consumed.error?.code === '42703' || consumed.error?.message?.includes('consumed_at')) {
+        consumed = await supabase
+          .from('mcp_oauth_codes')
+          .update({ used: true })
+          .eq('code', code)
+          .eq('used', false)
+          .gt('expires_at', nowIso)
+          .select('*')
+          .maybeSingle();
+      }
+
+      if (consumed.error || !consumed.data) {
+        console.warn('[MCP Token] Code replay race or already used');
+        return tokenError(
+          'invalid_grant',
+          'Authorization code is invalid, expired, or already used.',
+          401,
+          'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+        );
+      }
+      authCode = consumed.data;
+
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.code.consumed',
+        requestId,
+        clientId: storedClientId || client_id || null,
+        userId: authCode.user_id || null,
+        tenantId: authCode.tenant_id || null,
+        grantType: 'authorization_code',
+      });
+
+      // Generate new access + refresh tokens (store hashes + plaintext for compatibility)
       const accessToken = `mcp_at_${crypto.randomUUID().replace(/-/g, '')}`;
       const refreshToken = `mcp_rt_${crypto.randomUUID().replace(/-/g, '')}`;
       const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString(); // 1 hour
+      const refreshExpiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
 
-      // Include resource indicator in token metadata for audience validation
-      const { error: tokenInsertError } = await supabase
-        .from('mcp_oauth_tokens')
+      const issuedClientId = await resolveCanonicalOAuthClientId(
+        supabase,
+        storedClientId || client_id || null,
+        redirectUris
+      );
+
+      // Every authorization creates an independent grant. Reconnecting a client
+      // or adding a second device must not replace any existing connection.
+      const { data: oauthClient } = issuedClientId
+        ? await supabase.from('mcp_oauth_clients').select('id, client_name').eq('client_id', issuedClientId).maybeSingle()
+        : { data: null };
+      const connectionLabel = getOAuthClientDisplayName(issuedClientId, redirectUris);
+      const { data: grant, error: grantError } = await supabase
+        .from('mcp_oauth_grants')
         .insert({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-          client_id: storedClientId || client_id || null,
-          user_id: authCode.user_id,
           tenant_id: authCode.tenant_id,
-          scopes: authCode.scopes || ['read', 'write'],
-          expires_at: expiresAt,
-          // Store the resource this token is intended for (RFC 8707)
-          resource: expectedResource,
+          user_id: authCode.user_id,
+          oauth_client_id: oauthClient?.id || null,
+          external_client_key: `${issuedClientId || 'generic'}:${crypto.randomUUID()}`,
+          connection_name: connectionLabel,
+          scopes: authCode.scopes || ['workspace:read'],
+          status: 'active',
+          metadata: { authorization_code_id: authCode.id, raw_client_id: client_id || storedClientId || null },
+        })
+        .select('id')
+        .single();
+      if (grantError || !grant) {
+        console.error('[MCP Token] Failed to create grant:', { code: grantError?.code });
+        return tokenError('server_error', 'Failed to create OAuth grant', 500);
+      }
+      const tokenFamilyId = crypto.randomUUID();
+
+      let accessTokenEncrypted: string;
+      let refreshTokenEncrypted: string;
+      try {
+        accessTokenEncrypted = await encryptIntegrationToken(accessToken);
+        refreshTokenEncrypted = await encryptIntegrationToken(refreshToken);
+      } catch (encryptErr) {
+        logMcpOAuthEvent({
+          event: 'mcp.oauth.token.failed',
+          requestId,
+          stage: 'encrypt',
+          errorClass: 'encryption_failed',
+          clientId: issuedClientId,
+          userId: authCode.user_id || null,
+          tenantId: authCode.tenant_id || null,
+          grantType: 'authorization_code',
+          durationMs: Date.now() - startedAt,
         });
+        console.error('[MCP Token] Token encryption failed', {
+          request_id: requestId,
+          code: encryptErr instanceof Error ? encryptErr.message : 'unknown',
+        });
+        return tokenError('server_error', 'Failed to secure issued tokens', 503);
+      }
+
+      const tokenRow: Record<string, unknown> = {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        access_token_hash: hashToken(accessToken),
+        refresh_token_hash: hashToken(refreshToken),
+        access_token_encrypted: accessTokenEncrypted,
+        refresh_token_encrypted: refreshTokenEncrypted,
+        token_type: 'Bearer',
+        client_id: issuedClientId,
+        user_id: authCode.user_id,
+        tenant_id: authCode.tenant_id,
+        scopes: authCode.scopes || ['read', 'write'],
+        expires_at: expiresAt,
+        refresh_expires_at: refreshExpiresAt,
+        revoked: false,
+        resource: expectedResource,
+        grant_id: grant.id,
+        token_family_id: tokenFamilyId,
+        access_expires_at: expiresAt,
+      };
+
+      let tokenInsertError = (await supabase.from('mcp_oauth_tokens').insert(tokenRow)).error;
+
+      // Compatibility: older schemas / stale PostgREST cache without hash columns
+      // PGRST204 = column missing from schema cache; 42703 = undefined_column
+      if (
+        tokenInsertError?.code === '42703' ||
+        tokenInsertError?.code === 'PGRST204' ||
+        /access_token_hash|refresh_token_hash|refresh_expires_at|token_type/i.test(tokenInsertError?.message || '')
+      ) {
+        const { access_token_hash: _a, refresh_token_hash: _r, refresh_expires_at: _e, token_type: _t, ...legacy } = tokenRow;
+        tokenInsertError = (await supabase.from('mcp_oauth_tokens').insert(legacy)).error;
+      }
 
       if (tokenInsertError) {
+        logMcpOAuthEvent({
+          event: 'mcp.oauth.token.failed',
+          requestId,
+          stage: 'persist',
+          errorClass: 'database_insert',
+          errorCode: tokenInsertError.code,
+          clientId: issuedClientId,
+          userId: authCode.user_id || null,
+          tenantId: authCode.tenant_id || null,
+          grantType: 'authorization_code',
+          durationMs: Date.now() - startedAt,
+        });
         console.error('[MCP Token] Failed to store tokens in DB:', {
-          error: tokenInsertError,
+          request_id: requestId,
+          code: tokenInsertError.code,
           userId: authCode.user_id,
-          tenantId: authCode.tenant_id
+          tenantId: authCode.tenant_id,
+          client_id: issuedClientId,
         });
         return tokenError('server_error', 'Failed to issue tokens (database error)', 500);
       }
 
-      console.log('[MCP Token] SUCCESS. Issued for user:', authCode.user_id, 'tenant:', authCode.tenant_id);
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.token.persisted',
+        requestId,
+        clientId: issuedClientId,
+        userId: authCode.user_id || null,
+        tenantId: authCode.tenant_id || null,
+        grantType: 'authorization_code',
+        encryptionSource: encryptionConfig.source,
+        durationMs: Date.now() - startedAt,
+      });
+
+      logOAuthTokenIssuance({
+        grantType: 'authorization_code',
+        clientId: issuedClientId,
+        userId: authCode.user_id,
+        tenantId: authCode.tenant_id,
+      });
+
+      logMcpOAuthEvent({
+        event: 'mcp.oauth.token.issued',
+        requestId,
+        clientId: issuedClientId,
+        userId: authCode.user_id || null,
+        tenantId: authCode.tenant_id || null,
+        grantType: 'authorization_code',
+        durationMs: Date.now() - startedAt,
+      });
 
       return NextResponse.json({
         access_token: accessToken,
         refresh_token: refreshToken,
         token_type: 'Bearer',
         expires_in: 3600,
-        scope: (authCode.scopes || ['read', 'write']).join(' '),
-        // RFC 8707: Include the resource indicator in the response
+        scope: formatScopeString(authCode.scopes || ['read', 'write']),
         resource: expectedResource,
       }, { headers: CORS_HEADERS });
     }
@@ -424,37 +664,261 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const { data: session, error: sessionError } = await supabase
+      const refreshHash = hashToken(refresh_token);
+      let session: Record<string, any> | null = null;
+
+      // Prefer hash lookup; fall back to plaintext
+      const byHash = await supabase
         .from('mcp_oauth_tokens')
         .select('*')
-        .eq('refresh_token', refresh_token)
-        .single();
+        .eq('refresh_token_hash', refreshHash)
+        .eq('revoked', false)
+        .maybeSingle();
 
-      if (sessionError || !session) {
+      if (!byHash.error && byHash.data) {
+        session = byHash.data;
+      } else {
+        const idempotent = await findIdempotentRefreshReplacement(supabase, refreshHash, refresh_token);
+        if (idempotent) {
+          logOAuthTokenIssuance({
+            grantType: 'refresh_token',
+            clientId: idempotent.client_id,
+            userId: idempotent.user_id,
+            tenantId: idempotent.tenant_id,
+            tokenId: idempotent.id,
+          });
+          return buildRefreshTokenResponse(idempotent, expectedResource);
+        }
+
+        const byPlain = await supabase
+          .from('mcp_oauth_tokens')
+          .select('*')
+          .eq('refresh_token', refresh_token)
+          .maybeSingle();
+        session = byPlain.data;
+        if (byPlain.error || !session) {
+          return tokenError(
+            'invalid_grant',
+            'Refresh token is invalid or revoked',
+            401,
+            'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+          );
+        }
+        if (session.revoked === true) {
+          const rotated = await findIdempotentRefreshReplacement(supabase, refreshHash, refresh_token);
+          if (rotated) {
+            logOAuthTokenIssuance({
+              grantType: 'refresh_token',
+              clientId: rotated.client_id,
+              userId: rotated.user_id,
+              tenantId: rotated.tenant_id,
+              tokenId: rotated.id,
+            });
+            return buildRefreshTokenResponse(rotated, expectedResource);
+          }
+          return tokenError(
+            'invalid_grant',
+            'Refresh token is invalid or revoked',
+            401,
+            'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+          );
+        }
+      }
+
+      if (!session) {
         return tokenError(
-          'invalid_grant', 
-          'Refresh token is invalid or revoked', 
+          'invalid_grant',
+          'Refresh token is invalid or revoked',
           401,
           'Bearer realm="alphaclone-mcp", error="invalid_grant"'
         );
       }
 
-      // Rotate tokens
+      if (session.refresh_expires_at && new Date(session.refresh_expires_at) < new Date()) {
+        return tokenError(
+          'invalid_grant',
+          'Refresh token is invalid or revoked',
+          401,
+          'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+        );
+      }
+
+      const sessionClientId = normalizeMcpClientId(session.client_id) ?? session.client_id;
+
+      // Legacy tokens issued without client_id cannot be safely refreshed — require reauthorization.
+      if (!sessionClientId) {
+        console.warn('[MCP Token] Refresh rejected: token missing client_id (legacy)');
+        return tokenError(
+          'invalid_grant',
+          'Refresh token requires reauthorization. Please reconnect the MCP integration.',
+          401,
+          'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+        );
+      }
+
+      const clientBind = await assertRefreshClientBindingAsync({
+        supabase,
+        requestClientId: client_id,
+        tokenClientId: sessionClientId,
+        requestRedirectUri: redirect_uri ? String(redirect_uri) : null,
+      });
+      if (!clientBind.ok) {
+        console.warn('[MCP Token] Refresh client binding failed:', clientBind.reason);
+        return tokenError(
+          'invalid_grant',
+          'client_id does not match the refresh token',
+          401,
+          'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+        );
+      }
+
+      // Rotate: revoke previous refresh atomically, issue new pair for THIS client only
       const newAccessToken = `mcp_at_${crypto.randomUUID().replace(/-/g, '')}`;
       const newRefreshToken = `mcp_rt_${crypto.randomUUID().replace(/-/g, '')}`;
       const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
+      const refreshExpiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+      const boundResource = session.resource || expectedResource;
 
-      // Delete old token entry and insert fresh one
-      await supabase.from('mcp_oauth_tokens').delete().eq('refresh_token', refresh_token);
-      await supabase.from('mcp_oauth_tokens').insert({
+      let claimed: Record<string, any> | null = null;
+      if (session.id) {
+        const claim = await supabase
+          .from('mcp_oauth_tokens')
+          .update({ revoked: true, revoked_at: new Date().toISOString(), revoke_reason: 'refresh_rotation' })
+          .eq('id', session.id)
+          .eq('revoked', false)
+          .select('id')
+          .maybeSingle();
+        claimed = claim.data;
+        if (claim.error || !claimed) {
+          const rotated = await findIdempotentRefreshReplacement(supabase, refreshHash, refresh_token);
+          if (rotated) {
+            logOAuthTokenIssuance({
+              grantType: 'refresh_token',
+              clientId: rotated.client_id,
+              userId: rotated.user_id,
+              tenantId: rotated.tenant_id,
+              tokenId: rotated.id,
+            });
+            return buildRefreshTokenResponse(rotated, expectedResource);
+          }
+          return tokenError(
+            'invalid_grant',
+            'The refresh token is expired, revoked, malformed, or belongs to another client.',
+            401,
+            'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+          );
+        }
+      } else {
+        await supabase.from('mcp_oauth_tokens').delete().eq('refresh_token', refresh_token);
+      }
+
+      let newAccessTokenEncrypted: string;
+      let newRefreshTokenEncrypted: string;
+      try {
+        newAccessTokenEncrypted = await encryptIntegrationToken(newAccessToken);
+        newRefreshTokenEncrypted = await encryptIntegrationToken(newRefreshToken);
+      } catch (encryptErr) {
+        if (session.id) {
+          await supabase.from('mcp_oauth_tokens').update({
+            revoked: false, revoked_at: null, revoke_reason: null,
+          }).eq('id', session.id).eq('revoke_reason', 'refresh_rotation');
+        }
+        logMcpOAuthEvent({
+          event: 'mcp.oauth.token.failed',
+          requestId,
+          stage: 'encrypt',
+          errorClass: 'encryption_failed',
+          clientId: sessionClientId,
+          userId: session.user_id || null,
+          tenantId: session.tenant_id || null,
+          grantType: 'refresh_token',
+          durationMs: Date.now() - startedAt,
+        });
+        console.error('[MCP Token] Refresh token encryption failed', {
+          request_id: requestId,
+          code: encryptErr instanceof Error ? encryptErr.message : 'unknown',
+        });
+        return tokenError('server_error', 'Failed to secure rotated tokens', 503);
+      }
+
+      const rotatedClientId =
+        clientBind.requestCanonical ??
+        (await resolveCanonicalOAuthClientId(
+          supabase,
+          sessionClientId,
+          redirect_uri ? [String(redirect_uri)] : null
+        )) ??
+        sessionClientId;
+
+      const rotateRow: Record<string, unknown> = {
         access_token: newAccessToken,
         refresh_token: newRefreshToken,
-        client_id: normalizeMcpClientId(session.client_id) ?? session.client_id,
+        access_token_hash: hashToken(newAccessToken),
+        refresh_token_hash: hashToken(newRefreshToken),
+        access_token_encrypted: newAccessTokenEncrypted,
+        refresh_token_encrypted: newRefreshTokenEncrypted,
+        token_type: 'Bearer',
+        client_id: rotatedClientId,
         user_id: session.user_id,
         tenant_id: session.tenant_id,
         scopes: session.scopes,
         expires_at: expiresAt,
-        resource: expectedResource,
+        refresh_expires_at: refreshExpiresAt,
+        revoked: false,
+        resource: boundResource,
+        token_family_id: session.token_family_id || session.id || null,
+        grant_id: session.grant_id,
+        previous_token_id: session.id,
+        access_expires_at: expiresAt,
+      };
+
+      let rotateError = (await supabase.from('mcp_oauth_tokens').insert(rotateRow)).error;
+      if (
+        rotateError?.code === '42703' ||
+        rotateError?.code === 'PGRST204' ||
+        /access_token_hash|refresh_token_hash|refresh_expires_at|token_type|token_family_id/i.test(rotateError?.message || '')
+      ) {
+        const {
+          access_token_hash: _a,
+          refresh_token_hash: _r,
+          refresh_expires_at: _e,
+          token_type: _t,
+          token_family_id: _f,
+          ...legacy
+        } = rotateRow;
+        rotateError = (await supabase.from('mcp_oauth_tokens').insert(legacy)).error;
+      }
+
+      if (rotateError) {
+        if (session.id) {
+          await supabase.from('mcp_oauth_tokens').update({
+            revoked: false, revoked_at: null, revoke_reason: null,
+          }).eq('id', session.id).eq('revoke_reason', 'refresh_rotation');
+        }
+        console.error('[MCP Token] Refresh rotation failed:', {
+          error: rotateError.message,
+          client_id: sessionClientId,
+          user_id: session.user_id,
+        });
+        return tokenError('server_error', 'Failed to rotate tokens', 500);
+      }
+
+      const { data: replacement } = await supabase
+        .from('mcp_oauth_tokens')
+        .select('id')
+        .eq('refresh_token_hash', hashToken(newRefreshToken))
+        .maybeSingle();
+      if (replacement?.id && session.id) {
+        await supabase.from('mcp_oauth_tokens')
+          .update({ replaced_by_token_id: replacement.id })
+          .eq('id', session.id);
+      }
+
+      logOAuthTokenIssuance({
+        grantType: 'refresh_token',
+        clientId: sessionClientId,
+        userId: session.user_id,
+        tenantId: session.tenant_id,
       });
 
       return NextResponse.json({
@@ -462,8 +926,8 @@ export async function POST(req: NextRequest) {
         refresh_token: newRefreshToken,
         token_type: 'Bearer',
         expires_in: 3600,
-        scope: (session.scopes || ['read', 'write']).join(' '),
-        resource: expectedResource,
+        scope: formatScopeString(session.scopes || ['read', 'write']),
+        resource: boundResource,
       }, { headers: CORS_HEADERS });
     }
 
@@ -484,13 +948,9 @@ export async function POST(req: NextRequest) {
 
       const apiKey = client_secret || client_id;
 
-      const { data: keyData, error: keyError } = await supabase
-        .from('mcp_api_keys')
-        .select('tenant_id, user_id')
-        .eq('api_key', apiKey)
-        .single();
+      const keyData = await lookupMcpApiKey(supabase, String(apiKey || ''));
 
-      if (keyError || !keyData) {
+      if (!keyData) {
         return tokenError(
           'invalid_client', 
           'Invalid API key', 
@@ -504,14 +964,24 @@ export async function POST(req: NextRequest) {
         access_token: apiKey,
         token_type: 'Bearer',
         expires_in: 3600,
-        scope: 'read write',
+        scope: formatScopeString(['read', 'write', 'mcp:tools', 'mcp:resources']),
         resource: expectedResource,
       }, { headers: CORS_HEADERS });
     }
 
     return tokenError('unsupported_grant_type', `grant_type '${grant_type}' is not supported`);
   } catch (err) {
-    console.error('[MCP Token] Unexpected error:', err);
+    logMcpOAuthEvent({
+      event: 'mcp.oauth.token.failed',
+      requestId,
+      stage: 'unexpected',
+      errorClass: err instanceof Error ? err.name : 'unknown',
+      durationMs: Date.now() - startedAt,
+    });
+    console.error('[MCP Token] Unexpected error:', {
+      request_id: requestId,
+      message: err instanceof Error ? err.message : String(err),
+    });
     return tokenError('server_error', 'An unexpected error occurred', 500);
   }
 }

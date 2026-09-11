@@ -24,7 +24,21 @@ export async function GET(req: NextRequest) {
         error: 'Your X developer account has no API credits. Add credits at developer.x.com to load tweets.',
       }, { status: 402 });
     }
-    return routeErrorResponse(err, 'Failed to load X timeline', req);
+    // Upstream X failures should not hard-fail the UI — return a soft error payload.
+    const message =
+      err instanceof Error ? err.message : 'Failed to load X timeline';
+    console.error('[x/tweets]', message);
+    return NextResponse.json(
+      {
+        success: false,
+        connected: true,
+        data: null,
+        error: message.includes('X API')
+          ? 'X could not return your timeline right now. Try reconnecting the account or check developer.x.com.'
+          : message,
+      },
+      { status: 200 }
+    );
   }
 }
 

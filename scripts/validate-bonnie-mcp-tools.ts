@@ -3,8 +3,12 @@
  * Usage: npm run validate:mcp
  * Optional: npm run validate:mcp -- --http  (hits production /api/mcp; needs MCP_TOKEN in env)
  */
+import { createRequire } from 'node:module';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+
+// CLI/tsx loads tool modules outside Next — stub before any server-only imports.
+createRequire(import.meta.url)('./stub-server-only.cjs');
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -30,6 +34,20 @@ function resolveContext(): { tenantId: string; userId: string } {
   return { tenantId: DEFAULT_TENANT_ID, userId: DEFAULT_USER_ID };
 }
 
+/** Provider/env gaps that are not product regressions in local validation. */
+function isExpectedEnvironmentGap(tool: string, text: string): string | null {
+  if (tool === 'create_linkedin_post' && /LINKEDIN_NOT_CONNECTED/i.test(text)) {
+    return 'Skipped — LinkedIn not connected for validation tenant';
+  }
+  if (
+    (tool === 'get_zoho_mail_messages' || tool === 'reply_to_zoho_mail') &&
+    /ZOHO_ENCRYPTION_SECRET|not connected|ZOHO_/i.test(text)
+  ) {
+    return 'Skipped — Zoho mail env/connection not configured locally';
+  }
+  return null;
+}
+
 async function runToolLocal(
   tool: string,
   args: Record<string, unknown>,
@@ -41,11 +59,15 @@ async function runToolLocal(
     const result = await executeBonnieMcpTool(tool, args, tenantId, userId);
     const text = previewText(result);
     if (result.isError || text.includes('"error":true')) {
+      const skip = isExpectedEnvironmentGap(tool, text);
+      if (skip) return { tool, ok: false, skipped: true, error: skip };
       return { tool, ok: false, error: text };
     }
     return { tool, ok: true, preview: text };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
+    const skip = isExpectedEnvironmentGap(tool, message);
+    if (skip) return { tool, ok: false, skipped: true, error: skip };
     return { tool, ok: false, error: message };
   }
 }
@@ -312,12 +334,29 @@ async function main() {
       stage: 'qualified',
     })
   );
+  // Prefer facebook — create_social_post already validated against it; resolve identity when multi-account.
+  let scheduleIdentityId: string | undefined;
+  try {
+    const idRes = await run('get_social_identities', { ...base, provider: 'facebook' });
+    if (idRes.ok && idRes.preview) {
+      const parsed = JSON.parse(idRes.preview);
+      const list = parsed?.identities || parsed?.data?.identities || [];
+      const pick =
+        list.find((i: { can_publish?: boolean; is_default?: boolean }) => i.can_publish && i.is_default) ||
+        list.find((i: { can_publish?: boolean }) => i.can_publish) ||
+        list[0];
+      scheduleIdentityId = pick?.identity_id;
+    }
+  } catch {
+    /* optional probe */
+  }
   results.push(
     await run('schedule_social_post', {
       ...base,
-      platform: 'linkedin',
+      platform: 'facebook',
       content: 'MCP validation scheduled post — no publish.',
       scheduled_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+      ...(scheduleIdentityId ? { identity_id: scheduleIdentityId } : {}),
     })
   );
   results.push(

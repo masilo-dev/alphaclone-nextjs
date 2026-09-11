@@ -24,6 +24,10 @@ import {
 import toast from 'react-hot-toast';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { EmptyStatePlaceholder } from '../../ui/EmptyStatePlaceholder';
+import { EmptyStateFromPreset } from '../../ui/EmptyState';
+import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
+import { isFinishedProject } from '@/lib/projects/projectEnums';
 
 interface CalendarPageProps {
     user: User;
@@ -36,7 +40,7 @@ interface CalendarEvent {
     date: string; // ISO date string
     startTime?: string;
     endTime?: string;
-    source: 'event' | 'task' | 'project' | 'deal' | 'booking' | 'google';
+    source: 'event' | 'task' | 'project' | 'deal' | 'booking' | 'google' | 'lead';
     priority?: string;
     status?: string;
     description?: string;
@@ -50,46 +54,53 @@ interface CalendarEvent {
 
 const SOURCE_CONFIG = {
     booking: {
-        label: 'Calendly Booking',
-        bg: 'bg-purple-500/20',
-        text: 'text-purple-400',
-        dot: 'bg-purple-500',
-        border: 'border-purple-500/30',
+        label: 'Booking',
+        bg: 'bg-violet-500/15',
+        text: 'text-violet-300',
+        dot: 'bg-violet-500',
+        border: 'border-violet-500/30',
     },
     task: {
         label: 'Task',
-        bg: 'bg-orange-500/20',
-        text: 'text-orange-400',
-        dot: 'bg-orange-500',
-        border: 'border-orange-500/30',
+        bg: 'bg-[var(--brand-blue-500)]/15',
+        text: 'text-[var(--brand-blue-300)]',
+        dot: 'bg-[var(--brand-blue-500)]',
+        border: 'border-[var(--brand-blue-500)]/30',
     },
     project: {
         label: 'Project',
-        bg: 'bg-blue-500/20',
-        text: 'text-blue-400',
+        bg: 'bg-blue-500/15',
+        text: 'text-blue-300',
         dot: 'bg-blue-500',
         border: 'border-blue-500/30',
     },
     deal: {
         label: 'Deal',
-        bg: 'bg-green-500/20',
-        text: 'text-green-400',
-        dot: 'bg-green-500',
-        border: 'border-green-500/30',
+        bg: 'bg-amber-500/15',
+        text: 'text-amber-300',
+        dot: 'bg-amber-500',
+        border: 'border-amber-500/30',
     },
-    event: {
-        label: 'Event',
-        bg: 'bg-teal-500/20',
-        text: 'text-teal-400',
+    lead: {
+        label: 'Lead',
+        bg: 'bg-teal-500/15',
+        text: 'text-teal-300',
         dot: 'bg-teal-500',
         border: 'border-teal-500/30',
     },
+    event: {
+        label: 'Meeting',
+        bg: 'bg-sky-500/15',
+        text: 'text-sky-300',
+        dot: 'bg-sky-500',
+        border: 'border-sky-500/30',
+    },
     google: {
-        label: 'Google Calendar',
-        bg: 'bg-red-500/20',
-        text: 'text-red-400',
-        dot: 'bg-red-500',
-        border: 'border-red-500/30',
+        label: 'Connected calendar',
+        bg: 'bg-rose-500/15',
+        text: 'text-rose-300',
+        dot: 'bg-rose-500',
+        border: 'border-rose-500/30',
     },
 };
 
@@ -103,7 +114,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeFilters, setActiveFilters] = useState<Set<CalendarEvent['source']>>(
-        new Set(['event', 'task', 'project', 'booking'])
+        new Set(['event', 'task', 'project', 'deal', 'lead', 'booking'])
     );
     const [isGoogleConnected, setIsGoogleConnected] = useState(false);
 
@@ -194,7 +205,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         try {
             const { projects } = await projectService.getProjects(user.id, user.role as any, 200);
             (projects || []).forEach((p: Project) => {
-                if (p.dueDate && p.status !== 'Completed') {
+                if (p.dueDate && !isFinishedProject({ status: p.status, currentStage: p.currentStage })) {
                     unified.push({
                         id: `project-${p.id}`,
                         title: `📁 ${p.name}`,
@@ -226,17 +237,31 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
             });
         } catch (_) { /* silent */ }
 
+        // 5b. Open leads (sit on the day they last moved)
+        try {
+            const { data: leads } = await supabase
+                .from('leads')
+                .select('id, business_name, contact_name, email, stage, status, created_at, updated_at')
+                .eq('tenant_id', currentTenant.id)
+                .in('stage', ['new', 'lead', 'qualified'])
+                .limit(200);
+            (leads || []).forEach((lead: any) => {
+                unified.push({
+                    id: `lead-${lead.id}`,
+                    title: `🎯 ${lead.business_name || lead.contact_name || lead.email || 'Lead'}`,
+                    date: lead.updated_at || lead.created_at,
+                    source: 'lead',
+                    status: lead.stage || lead.status,
+                    description: lead.email || undefined,
+                });
+            });
+        } catch (_) { /* silent */ }
+
         // 6. Google Calendar events
         try {
-            const { data: tokenData } = await supabase
-                .from('google_calendar_tokens')
-                .select('id')
-                .eq('user_id', user.id)
-                .single();
-
-            if (tokenData) {
-                setIsGoogleConnected(true);
-                const googleEvents = await googleCalendarService.listEvents(user.id);
+            if (currentTenant?.id) {
+                const { connected, events: googleEvents } = await googleCalendarService.listEvents(currentTenant.id);
+                setIsGoogleConnected(connected);
                 googleEvents.forEach((ge: GoogleCalendarEvent) => {
                     unified.push({
                         id: `google-${ge.id}`,
@@ -248,9 +273,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         description: ge.description,
                     });
                 });
-            } else {
-                setIsGoogleConnected(false);
-            }
+            } else setIsGoogleConnected(false);
         } catch (_) { /* silent */ }
 
         setAllEvents(unified);
@@ -261,7 +284,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
     const handleUpdateEvent = useCallback(async (eventId: string, updates: Partial<BusinessEvent>) => {
         try {
-            const { error } = await businessEventService.updateEvent(eventId, updates);
+            if (!currentTenant?.id) return;
+            const { error } = await businessEventService.updateEvent(currentTenant.id, eventId, updates);
             if (!error) {
                 toast.success('Event updated');
                 loadAllEvents();
@@ -273,12 +297,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         } catch (_) {
             toast.error('An error occurred');
         }
-    }, [loadAllEvents]);
+    }, [currentTenant?.id, loadAllEvents]);
 
     const handleDeleteEvent = useCallback(async (eventId: string) => {
         if (!confirm('Are you sure you want to delete this event?')) return;
         try {
-            const { error } = await businessEventService.deleteEvent(eventId);
+            if (!currentTenant?.id) return;
+            const { error } = await businessEventService.deleteEvent(currentTenant.id, eventId);
             if (!error) {
                 toast.success('Event deleted');
                 loadAllEvents();
@@ -289,7 +314,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         } catch (_) {
             toast.error('An error occurred');
         }
-    }, [loadAllEvents]);
+    }, [currentTenant?.id, loadAllEvents]);
 
     const handleAddEvent = useCallback(async (eventData: Partial<BusinessEvent>) => {
         if (!currentTenant) return;
@@ -313,7 +338,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     }, [currentTenant, loadAllEvents]);
 
     const handleGoogleConnect = () => {
-        window.location.href = `/api/auth/google/calendar/connect?userId=${user.id}`;
+        if (!currentTenant?.id) return;
+        window.location.href = `/api/auth/google/calendar/connect?tenantId=${encodeURIComponent(currentTenant.id)}`;
     };
 
     const toggleFilter = (source: CalendarEvent['source']) => {
@@ -365,10 +391,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     };
 
     const getEventsForDate = (date: Date) => {
-        return filteredEvents.filter(event => {
-            const eventDate = new Date(event.date);
-            return eventDate.toDateString() === date.toDateString();
-        });
+        return filteredEvents
+            .filter(event => {
+                const eventDate = new Date(event.date);
+                return eventDate.toDateString() === date.toDateString();
+            })
+            .sort((a, b) => a.title.localeCompare(b.title));
     };
 
     const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
@@ -377,11 +405,16 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
     if (loading) {
         return (
-            <div className="space-y-4 ac-scroll-full ac-enterprise-module">
+            <div className="space-y-4 ac-scroll-full ac-enterprise-module" data-module="calendar">
+                <SubNavigation
+                    moduleId="calendar"
+                    items={getModuleSubnav('calendar')}
+                    activeHref="/dashboard/business/calendar"
+                />
                 <div className="flex items-center justify-center min-h-[320px]">
                     <div className="flex flex-col items-center gap-3">
-                        <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-slate-400 text-sm">Loading calendar...</span>
+                        <div className="w-8 h-8 border-2 border-[var(--brand-violet-500)] border-t-transparent rounded-full animate-spin" />
+                        <span className="text-[var(--ws-text-muted)] text-sm">Loading calendar...</span>
                     </div>
                 </div>
             </div>
@@ -389,13 +422,18 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="space-y-4 ac-scroll-full ac-enterprise-module">
-            <ModuleStatCards stats={calendarStats} />
+        <div className="space-y-4 ac-scroll-full ac-enterprise-module" data-module="calendar">
+            <SubNavigation
+                moduleId="calendar"
+                items={getModuleSubnav('calendar')}
+                activeHref="/dashboard/business/calendar"
+            />
+            <ModuleStatCards stats={calendarStats} hub="calendar" />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-4">
-                    <h2 className="text-xl sm:text-2xl font-bold">
-                        {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    <h2 className="text-xl sm:text-2xl font-semibold text-[var(--ws-text-primary)]">
+                        {currentDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
                     </h2>
                     <div className="flex gap-2">
                         <button
@@ -429,7 +467,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors font-semibold text-slate-950"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg transition-colors font-semibold text-slate-950"
                     >
                         <Plus className="w-4 h-4" />
                         Add Event
@@ -457,16 +495,19 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                 </span>
             </div>
 
-            {filteredEvents.length === 0 && (
+            {allEvents.length === 0 ? (
+                <EmptyStateFromPreset
+                    moduleId="calendar"
+                    onAction={() => setShowAddModal(true)}
+                />
+            ) : filteredEvents.length === 0 ? (
                 <EmptyStatePlaceholder
                     icon={CalendarIcon}
-                    title="No events scheduled"
-                    description="Add a meeting, task, or booking to bring this calendar to life."
+                    title="No events match filters"
+                    description="Turn on more event sources or add something new."
                     action={{ label: 'Add Event', onClick: () => setShowAddModal(true) }}
-                    secondaryAction={{ label: 'Connect Google Calendar', onClick: () => router.push(`/api/auth/google/calendar/connect?userId=${user.id}`) }}
                 />
-            )}
-
+            ) : null}
 
             {/* Desktop Calendar Grid */}
             <div className="hidden md:block bg-slate-900/50 border border-slate-800 rounded-xl overflow-hidden">
@@ -500,7 +541,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                                     setShowAddModal(true);
                                 }}
                             >
-                                <div className={`text-sm font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-teal-500 text-slate-950' : 'text-slate-300'
+                                <div className={`text-sm font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950' : 'text-slate-300'
                                     }`}>
                                     {day}
                                 </div>
@@ -607,7 +648,7 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
     return (
         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
             <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-teal-400" />
+                <Clock className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 Upcoming
             </h3>
             <div className="space-y-2">
@@ -657,17 +698,40 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${cfg.bg} ${cfg.text} font-medium`}>
-                            {cfg.label}
-                        </span>
+                    <div className="min-w-0 flex-1 pr-2">
+                        <RecordHeader
+                            moduleId="calendar"
+                            title={event.title}
+                            status={
+                                <span className={`text-xs px-2 py-1 rounded-full ${cfg.bg} ${cfg.text} font-medium`}>
+                                    {cfg.label}
+                                </span>
+                            }
+                            meta={
+                                <>
+                                    <span>
+                                        {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                    </span>
+                                    {event.clientName ? <span>{event.clientName}</span> : null}
+                                    {event.status ? <span className="capitalize">{event.status.replace(/_/g, ' ')}</span> : null}
+                                </>
+                            }
+                            actions={
+                                <AskBonnieButton
+                                    compact
+                                    mode="summarise"
+                                    contexts={[
+                                        { type: 'CalendarEvent', id: event.id, label: event.title },
+                                        ...(event.clientName ? [{ type: 'Client', label: event.clientName }] : []),
+                                    ]}
+                                />
+                            }
+                        />
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded-lg transition-colors shrink-0">
                         <X className="w-5 h-5 text-slate-400" />
                     </button>
                 </div>
-
-                <h3 className="text-lg font-bold text-white mb-4">{event.title}</h3>
 
                 <div className="space-y-3">
                     <div className="flex items-center gap-3 text-sm text-slate-300">
@@ -806,17 +870,17 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                 if (!isToday && dayEvents.length === 0) return null;
 
                 return (
-                    <div key={day} className={`bg-slate-900/40 border ${isToday ? 'border-teal-500/30' : 'border-white/5'} rounded-2xl backdrop-blur-sm`}>
-                        <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-teal-500/5' : ''}`}>
+                    <div key={day} className={`bg-slate-900/40 border ${isToday ? 'border-[var(--brand-blue-500)]/30' : 'border-white/5'} rounded-2xl backdrop-blur-sm`}>
+                        <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-[var(--brand-blue-500)]/5' : ''}`}>
                             <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-teal-500 text-slate-950 border-teal-400' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                                <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950 border-[var(--brand-blue-400)]' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
                                     <span className="text-lg font-black leading-none">{day}</span>
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                                         {date.toLocaleDateString('en-US', { weekday: 'long' })}
                                     </span>
-                                    {isToday && <span className="text-xs font-black text-teal-400 uppercase tracking-widest">Today</span>}
+                                    {isToday && <span className="text-xs font-black text-[var(--brand-blue-400)] uppercase tracking-widest">Today</span>}
                                 </div>
                             </div>
                             <button
@@ -915,7 +979,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -925,7 +989,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -936,7 +1000,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.startTime}
                             onChange={e => setFormData({ ...formData, startTime: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -947,7 +1011,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.endTime}
                             onChange={e => setFormData({ ...formData, endTime: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -956,7 +1020,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                         <select
                             value={formData.eventType}
                             onChange={e => setFormData({ ...formData, eventType: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         >
                             <option value="meeting">Meeting</option>
                             <option value="deadline">Deadline</option>
@@ -975,7 +1039,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors font-semibold text-slate-950"
+                            className="flex-1 px-4 py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg transition-colors font-semibold text-slate-950"
                         >
                             {initialData ? 'Update Event' : 'Add Event'}
                         </button>

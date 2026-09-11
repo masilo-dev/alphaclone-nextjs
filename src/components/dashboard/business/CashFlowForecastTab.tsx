@@ -6,7 +6,6 @@ import {
   Trash2, Sparkles, Loader2, RefreshCw, ChevronRight,
   ArrowUpRight, ArrowDownRight, Lightbulb, AlertTriangle, Check
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
@@ -31,6 +30,7 @@ export default function CashFlowForecastTab() {
   const [saving, setSaving] = useState(false);
   const [runningAi, setRunningAi] = useState(false);
   const [aiInsights, setAiInsights] = useState<string>('');
+  const [startingCash, setStartingCash] = useState(0);
   
   const [form, setForm] = useState({
     projection_date: new Date().toISOString().split('T')[0],
@@ -45,14 +45,11 @@ export default function CashFlowForecastTab() {
     if (!tenant?.id) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('cash_flow_projections')
-        .select('*')
-        .eq('tenant_id', tenant.id)
-        .order('projection_date', { ascending: true });
-
-      if (error) throw error;
-      setProjections(data || []);
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/financial-planning`, { credentials: 'include' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Financial planning data could not be loaded');
+      setProjections(payload.projections || []);
+      setStartingCash(Number(payload.openingCash || 0));
     } catch (err: any) {
       toast.error('Failed to load projections: ' + err.message);
     } finally {
@@ -73,19 +70,9 @@ export default function CashFlowForecastTab() {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('cash_flow_projections')
-        .insert({
-          tenant_id: tenant.id,
-          projection_date: form.projection_date,
-          type: form.type,
-          amount: parseFloat(form.amount),
-          category: form.category || (form.type === 'inflow' ? 'Revenue' : 'Expenses'),
-          description: form.description || null,
-          status: form.status
-        });
-
-      if (error) throw error;
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/financial-planning`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'cash', date: form.projection_date, type: form.type, amount: parseFloat(form.amount), category: form.category || (form.type === 'inflow' ? 'Revenue' : 'Expenses'), description: form.description, status: form.status }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Projection could not be saved');
       
       toast.success('Projection recorded successfully');
       setShowModal(false);
@@ -108,12 +95,9 @@ export default function CashFlowForecastTab() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this cash flow item?')) return;
     try {
-      const { error } = await supabase
-        .from('cash_flow_projections')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/financial-planning?kind=cash&id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Projection could not be deleted');
       toast.success('Item deleted');
       setProjections(prev => prev.filter(p => p.id !== id));
     } catch (err: any) {
@@ -143,7 +127,6 @@ export default function CashFlowForecastTab() {
   };
 
   // Math metrics
-  const startingCash = 25000; // Hypothetical starting treasury
   const totalInflow = projections
     .filter(p => p.type === 'inflow')
     .reduce((sum, p) => sum + p.amount, 0);
@@ -169,7 +152,7 @@ export default function CashFlowForecastTab() {
 
     // Map to width=500, height=120
     const points = cashTimeline.map((val, index) => {
-      const x = (index / (cashTimeline.length - 1)) * 480 + 10;
+      const x = (index / Math.max(1, cashTimeline.length - 1)) * 480 + 10;
       const y = 110 - ((val - minCash) / spread) * 100;
       return `${x},${y}`;
     });

@@ -298,7 +298,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 content: contractText,
                             });
 
-                            if (error) throw new Error(error);
+                            if (error) throw new Error(String(error));
 
                             if (contract) {
                                 // If pre-signed, apply signature

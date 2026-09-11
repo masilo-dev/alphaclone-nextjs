@@ -3,7 +3,10 @@ import { ENV } from '@/config/env';
 import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 
 export function isProduction(): boolean {
-  return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+  return (
+    process.env.NODE_ENV === 'production' ||
+    process.env.RAILWAY_ENVIRONMENT === 'production'
+  );
 }
 
 /** Block dev-only inbox test injectors in production. */
@@ -30,7 +33,9 @@ export function denyUnlessInternalApiKey(req: Request): NextResponse | null {
 export function assertProductionEncryptionConfigured(): void {
   if (!isProduction()) return;
   if (!getIntegrationEncryptionSecret()) {
-    throw new Error('ENCRYPTION_SECRET (32 chars) is required in production');
+    throw new Error(
+      'Credential encryption secret (32+ chars) is required in production — set ENCRYPTION_SECRET, ZOHO_ENCRYPTION_SECRET, or INTEGRATION_TOKEN_ENCRYPTION_SECRET',
+    );
   }
 }
 

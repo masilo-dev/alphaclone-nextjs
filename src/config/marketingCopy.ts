@@ -1,10 +1,12 @@
+import { MARKETING_PRICING } from '@/config/pricingPlans';
+
 export type ComparisonRow = { feature: string; alphaclone: string; competitor: string };
 
 export const HUBSPOT_COMPARISON: ComparisonRow[] = [
   { feature: 'CRM pipeline', alphaclone: 'Included', competitor: 'Sales Hub required' },
   { feature: 'Email campaigns', alphaclone: 'Included', competitor: 'Marketing Hub add-on' },
   { feature: 'Forms', alphaclone: 'Included', competitor: 'Included' },
-  { feature: 'Starting price', alphaclone: '$15/mo', competitor: '$20+/mo per seat' },
+  { feature: 'Starting price', alphaclone: MARKETING_PRICING.startingPriceLine, competitor: '$20+/mo per seat' },
   { feature: 'Invoicing', alphaclone: 'Native', competitor: 'Third-party only' },
   { feature: 'Video meetings', alphaclone: 'Built-in', competitor: 'Not included' },
 ];
@@ -14,7 +16,7 @@ export const QUICKBOOKS_COMPARISON: ComparisonRow[] = [
   { feature: 'CRM', alphaclone: 'Native', competitor: 'Not included' },
   { feature: 'Bank reconciliation', alphaclone: 'Included', competitor: 'Included' },
   { feature: 'Email marketing', alphaclone: 'Included', competitor: 'Not included' },
-  { feature: 'Starting price', alphaclone: '$15/mo', competitor: '$30+/mo' },
+  { feature: 'Starting price', alphaclone: MARKETING_PRICING.startingPriceLine, competitor: '$30+/mo' },
 ];
 
 export const SALESFORCE_COMPARISON: ComparisonRow[] = [

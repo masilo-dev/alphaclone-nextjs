@@ -18,7 +18,7 @@ const DashboardClientPage = dynamic(
     {
         ssr: false,
         loading: () => (
-            <div className="flex h-screen bg-[#05070b] overflow-hidden animate-pulse">
+            <div className="flex h-screen bg-[#05070b] overflow-hidden">
                 <div className="hidden md:flex w-72 flex-col border-r border-white/5 bg-[#05070b] p-4 shrink-0">
                     <div className="h-12 w-40 rounded-2xl bg-white/6 mb-6" />
                     <div className="space-y-2">

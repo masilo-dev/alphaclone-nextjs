@@ -31,6 +31,13 @@ function isWelcomeSeen(userId: string) {
   );
 }
 
+/** Inline welcome banner after welcome modal or onboarding is complete. */
+export function canShowPlatformWelcomeBanner(userId: string): boolean {
+  if (typeof window === 'undefined' || !userId) return false;
+  const onboardingDone = localStorage.getItem(onboardingKey(userId)) === 'true';
+  return isWelcomeSeen(userId) || onboardingDone;
+}
+
 /** Sync profile/auth onboarding flags into localStorage for returning users. */
 export async function resolveOnboardingGate(
   userId: string,
@@ -69,12 +76,19 @@ export async function resolveOnboardingGate(
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', tenantId);
 
-    establishedWorkspace = (clientCount ?? 0) > 0 || (invoiceCount ?? 0) > 0;
+    const { count: leadCount } = await supabase
+      .from('leads')
+      .select('*', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId);
+
+    establishedWorkspace =
+      (clientCount ?? 0) > 0 || (invoiceCount ?? 0) > 0 || (leadCount ?? 0) > 0;
   }
 
   if (establishedWorkspace) {
     markWelcomeSeen(userId);
     localStorage.setItem(onboardingKey(userId), 'true');
+    localStorage.setItem(tourKey(userId), '1');
   }
 
   return {

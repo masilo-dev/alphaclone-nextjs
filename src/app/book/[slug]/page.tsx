@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchTenantBookingPage, BookingType } from '@/actions/booking';
 import { Tenant } from '@/services/tenancy/types';
-import { Clock, ArrowRight, Video, Calendar, MapPin, Loader2 } from 'lucide-react';
-import { PLATFORM_CALENDLY_URL } from '@/constants';
+import { Clock, ArrowRight, Video, Calendar, Loader2 } from 'lucide-react';
+import { PLATFORM_BOOKING_URL } from '@/constants';
 import Image from 'next/image';
 
 export default function BookingLandingPage() {
@@ -80,9 +80,7 @@ export default function BookingLandingPage() {
                     <div className="space-y-2">
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">{tenant.name}</h1>
                         <p className="text-slate-500 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
-                            {(tenant.settings as any)?.calendly?.enabled
-                                ? 'Select a time below to schedule your session.'
-                                : 'Our automated booking system is being updated. Please check back soon.'}
+                            Select a service below to schedule directly with {tenant.name}.
                         </p>
                     </div>
                 </div>
@@ -130,12 +128,10 @@ export default function BookingLandingPage() {
                     ) : (
                         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-4">
                             <p className="text-slate-500 dark:text-slate-400 text-sm">
-                                {(tenant.settings as any)?.calendly?.enabled
-                                    ? 'Book directly — Calendly events sync to your AlphaClone calendar.'
-                                    : 'Online booking is being set up. Schedule a call below.'}
+                                Online booking is being set up for this workspace.
                             </p>
                             <a
-                                href={(tenant.settings as any)?.calendly?.eventUrl || PLATFORM_CALENDLY_URL}
+                                href={(tenant.settings as any)?.calendly?.eventUrl || PLATFORM_BOOKING_URL}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-2xl transition-colors"

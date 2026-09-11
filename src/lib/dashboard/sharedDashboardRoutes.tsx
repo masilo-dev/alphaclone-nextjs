@@ -23,6 +23,7 @@ export const SHARED_DASHBOARD_EXTENSION_ROUTES = [
   '/dashboard/notifications',
   '/dashboard/help',
   '/dashboard/business/invoices',
+  '/dashboard/invoices',
 ] as const;
 
 export type SharedDashboardExtensionRoute = (typeof SHARED_DASHBOARD_EXTENSION_ROUTES)[number];
@@ -80,6 +81,7 @@ export function renderSharedDashboardRoute(route: string, user: User): React.Rea
         </React.Suspense>
       );
     case '/dashboard/business/invoices':
+    case '/dashboard/invoices':
       return (
         <React.Suspense fallback={<TabSkeleton />}>
           <InvoicesTab />

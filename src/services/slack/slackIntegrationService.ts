@@ -110,16 +110,13 @@ export async function getSlackIntegrationWithSecrets(
 ): Promise<(SlackIntegrationRow & { botAccessToken: string | null; webhookUrl: string | null }) | null> {
   const { data, error } = await admin
     .from('slack_integrations')
-    .select(`${SAFE_COLUMNS}, bot_access_token, user_access_token, webhook_url`)
+    .select(SAFE_COLUMNS)
     .eq('tenant_id', tenantId)
     .eq('is_active', true)
     .maybeSingle();
   if (error || !data) return null;
   const row = data as SlackIntegrationRow;
-  let secrets = await readSecrets(admin, row.id);
-  if (!secrets.botToken && !secrets.webhookUrl && (row.bot_access_token || row.webhook_url)) {
-    secrets = await migrateLegacyTokens(admin, row);
-  }
+  const secrets = await readSecrets(admin, row.id);
   return { ...row, botAccessToken: secrets.botToken, webhookUrl: secrets.webhookUrl };
 }
 
@@ -135,14 +132,13 @@ export async function upsertSlackIntegration(params: {
   scope?: string | null;
 }): Promise<{ integrationId: string | null; error?: string }> {
   const admin = createSupabaseAdminClient();
+  // Keep tokens out of slack_integrations — secrets live in slack_integration_secrets.
+  // Do not write legacy plaintext columns that may be missing on older schemas.
   const row = {
     tenant_id: params.tenantId,
     team_id: params.teamId,
     team_name: params.teamName,
     bot_user_id: params.botUserId,
-    bot_access_token: null,
-    user_access_token: null,
-    webhook_url: null,
     default_channel: params.defaultChannel || '#general',
     scope: params.scope || null,
     is_active: true,
@@ -173,7 +169,7 @@ export async function runSlackTokenHealthCheck(limit = 50): Promise<{
   const admin = createSupabaseAdminClient();
   const { data: rows } = await admin
     .from('slack_integrations')
-    .select(`${SAFE_COLUMNS}, bot_access_token, webhook_url`)
+    .select(SAFE_COLUMNS)
     .eq('is_active', true)
     .limit(limit);
 

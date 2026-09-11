@@ -5,16 +5,21 @@ import { isProduction } from '@/lib/security/productionGuard';
 const STATE_TTL_MS = 10 * 60 * 1000;
 
 function getStateSecret(): string {
-  const secret =
-    process.env.OAUTH_STATE_SECRET ||
-    ENV.ENCRYPTION_SECRET ||
-    process.env.ZOHO_ENCRYPTION_SECRET ||
-    '';
-  if (secret.length !== 32) {
+  const candidates = [
+    process.env.OAUTH_STATE_SECRET,
+    ENV.ENCRYPTION_SECRET,
+    process.env.ZOHO_ENCRYPTION_SECRET,
+  ];
+  const secret = candidates.find((value) => typeof value === 'string' && value.trim().length === 32)?.trim();
+  if (!secret) {
     if (isProduction()) {
-      throw new Error('OAuth state requires a 32-character OAUTH_STATE_SECRET or ENCRYPTION_SECRET in production');
+      throw new Error(
+        'OAuth state requires a 32-character OAUTH_STATE_SECRET, ENCRYPTION_SECRET, or ZOHO_ENCRYPTION_SECRET in production'
+      );
     }
-    throw new Error('OAuth state requires a 32-character OAUTH_STATE_SECRET or ENCRYPTION_SECRET');
+    throw new Error(
+      'OAuth state requires a 32-character OAUTH_STATE_SECRET, ENCRYPTION_SECRET, or ZOHO_ENCRYPTION_SECRET'
+    );
   }
   return secret;
 }

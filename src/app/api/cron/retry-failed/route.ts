@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,12 +36,30 @@ export async function GET(request: NextRequest) {
   try {
     // 1. Find failed runs that are eligible for retry
     // Eligibility: status='failed', retries < 3, updated_at < (now - delay)
-    const { data: failedRuns, error: fetchError } = await supabase
-      .from('automation_runs')
-      .select('*')
-      .eq('status', 'failed')
-      .lt('retries', 3)
-      .order('updated_at', { ascending: true });
+    // Prefer retries column when present; fall back to filtering in memory for older schemas.
+    let failedRuns: any[] | null = null;
+    let fetchError: { message?: string } | null = null;
+
+    {
+      const primary = await supabase
+        .from('automation_runs')
+        .select('*')
+        .eq('status', 'failed')
+        .lt('retries', 3)
+        .order('updated_at', { ascending: true });
+      failedRuns = primary.data;
+      fetchError = primary.error;
+    }
+
+    if (fetchError && /retries/i.test(fetchError.message || '')) {
+      const fallback = await supabase
+        .from('automation_runs')
+        .select('*')
+        .eq('status', 'failed')
+        .order('updated_at', { ascending: true });
+      failedRuns = (fallback.data || []).filter((run) => Number(run.retries || 0) < 3);
+      fetchError = fallback.error;
+    }
 
     if (fetchError) throw fetchError;
 
@@ -49,9 +68,10 @@ export async function GET(request: NextRequest) {
     }
 
     const retriedCount = [];
+    const abandoned: Array<{ runId: string; reason: string }> = [];
 
     for (const run of failedRuns) {
-      const retryCount = run.retries || 0;
+      const retryCount = Number(run.retries || 0);
       const delayMinutes = [1, 5, 15][retryCount] || 60;
       const lastAttempt = new Date(run.updated_at).getTime();
       const now = Date.now();
@@ -60,9 +80,33 @@ export async function GET(request: NextRequest) {
         continue; // Not yet time for retry
       }
 
+      const guard = await guardCronTenantRow(run, 'automation_runs', {
+        workflow_type: run.workflow_type,
+      });
+      if (!guard.ok) {
+        continue;
+      }
+
       try {
-        const workflow = WORKFLOW_MAP[run.workflow_type];
-        if (!workflow) throw new Error(`Unknown workflow type: ${run.workflow_type}`);
+        const workflow = run.workflow_type ? WORKFLOW_MAP[run.workflow_type] : undefined;
+        if (!workflow) {
+          // Nothing can ever re-run this row (legacy/null workflow_type). Park it
+          // instead of logging the same error every hour forever.
+          const reason = `Unknown workflow type: ${run.workflow_type ?? 'null'}`;
+          await supabase
+            .from('automation_runs')
+            .update({
+              status: 'abandoned',
+              retries: 3,
+              last_error: reason,
+              finished_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', run.id);
+          console.warn(`[Automation] Abandoned run ${run.id}: ${reason}`);
+          abandoned.push({ runId: run.id, reason });
+          continue;
+        }
 
         // Re-start the workflow
         // In a real system, you might want to resume from the last failed step, 
@@ -93,8 +137,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    await logCron('retry-failed', 'success', { retriedCount }, ranAt);
-    return NextResponse.json({ success: true, retried_count: retriedCount.length, results: retriedCount });
+    await logCron('retry-failed', 'success', { retriedCount, abandoned }, ranAt);
+    return NextResponse.json({
+      success: true,
+      retried_count: retriedCount.length,
+      abandoned_count: abandoned.length,
+      results: retriedCount,
+      abandoned,
+    });
 
   } catch (error: any) {
     console.error('[Automation] Retry sweeper failed:', error.message);

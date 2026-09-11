@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         title: 'Login | AlphaClone',
         description: 'Sign in to your AlphaClone workspace.',
     },
-    robots: { index: true, follow: true },
+    robots: { index: false, follow: true },
 };
 
 export default function LoginLayout({

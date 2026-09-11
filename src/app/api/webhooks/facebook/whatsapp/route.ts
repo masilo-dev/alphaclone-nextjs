@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { ENV } from '@/config/env';
 import { persistInboundWhatsAppMessage } from '@/lib/whatsapp/webhookProcessing';
+import { persistMessengerWebhookEntries } from '@/lib/messenger/webhookProcessing';
 
 const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
 const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
@@ -164,7 +165,7 @@ export async function POST(req: NextRequest) {
                     }
 
                     // Handle message status updates
-                    if (change.field === 'message_status') {
+                    if (change.field === 'messages') {
                         const statuses = change.value?.statuses || [];
                         
                         for (const status of statuses) {
@@ -177,7 +178,8 @@ export async function POST(req: NextRequest) {
                             await supabaseAdmin
                                 .from('whatsapp_messages')
                                 .update({ status: status.status })
-                                .eq('provider_message_id', status.id);
+                                .eq('provider_message_id', status.id)
+                                .eq('tenant_id', waIntegration?.tenant_id || '');
                         }
                     }
                 }
@@ -186,35 +188,11 @@ export async function POST(req: NextRequest) {
 
         // Handle Facebook Page messages (Messenger)
         if (body.object === 'page') {
-            const supabaseAdmin = createSupabaseAdminClient();
-
-            for (const entry of body.entry || []) {
-                const pageId = entry.id;
-
-                for (const event of entry.messaging || []) {
-                    if (event.message) {
-                        console.log('[Messenger] Message received:', {
-                            senderId: event.sender.id,
-                            pageId,
-                            messageId: event.message.mid
-                        });
-
-                        // Store messenger message
-                        // You can customize this to match your database schema
-                        await supabaseAdmin.from('messenger_messages').insert({
-                            message_id: event.message.mid,
-                            sender_id: event.sender.id,
-                            recipient_id: event.recipient.id,
-                            page_id: pageId,
-                            text: event.message.text || null,
-                            timestamp: event.timestamp,
-                            received_at: new Date().toISOString()
-                        });
-
-                        // TODO: Add your business logic here
-                    }
-                }
-            }
+            await persistMessengerWebhookEntries({
+                supabase: createSupabaseAdminClient() as any,
+                objectType: 'page',
+                entries: Array.isArray(body.entry) ? body.entry : [],
+            });
         }
 
         return NextResponse.json({ status: 'ok' });

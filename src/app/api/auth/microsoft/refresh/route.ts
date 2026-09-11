@@ -5,6 +5,7 @@ import { ENV } from '@/config/env';
 import { stripOAuthTokens } from '@/lib/security/productionGuard';
 import {
   getMicrosoftTokens,
+  MicrosoftReconnectRequiredError,
   refreshMicrosoftAccessToken,
 } from '@/services/microsoft/microsoftConnectionService';
 
@@ -68,6 +69,9 @@ export async function POST(req: NextRequest) {
       connection: publicConnection((updatedConnection || connection) as Record<string, unknown>),
     });
   } catch (err: unknown) {
+    if (err instanceof MicrosoftReconnectRequiredError) {
+      return NextResponse.json({ error: err.message, code: err.code, success: false }, { status: 401 });
+    }
     console.error('[Microsoft Refresh] Error:', err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Failed to refresh Microsoft access token' },

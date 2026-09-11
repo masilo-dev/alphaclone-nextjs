@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Cron job that publishes due LinkedIn posts specifically.
- * Runs every 15 minutes as defined in vercel.json.
+ * Runs every 15 minutes via Railway Cron (see railway.crons.json).
  */
 export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);

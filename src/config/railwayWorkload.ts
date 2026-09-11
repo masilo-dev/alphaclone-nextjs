@@ -20,6 +20,7 @@ export const RAILWAY_HEAVY_ROUTES = [
   '/api/internal/leads/mcp-sync',
   '/api/cron/process-events',
   '/api/cron/sequence-worker',
+  '/api/cron/webhook-deliveries',
   '/api/cron/sync-zoho-inbox',
   '/api/cron/lead-nurture',
   '/api/cron/scraper-campaign-poll',

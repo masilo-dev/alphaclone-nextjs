@@ -10,6 +10,13 @@ import {
   Clock,
   AlertTriangle,
   RefreshCw,
+  Calendar,
+  Facebook,
+  Linkedin,
+  Instagram,
+  Bot,
+  KeyRound,
+  Mail,
 } from 'lucide-react';
 import BusinessSendGridIntegration from '../business/SendGridIntegration';
 import BusinessResendIntegration from '../business/ResendIntegration';
@@ -29,6 +36,19 @@ const PREF_ROWS = [
   { id: 'errorReporting', label: 'Error reporting', sub: 'Share anonymous error data to improve reliability', defaultChecked: false },
   { id: 'apiKeyRotation', label: 'API key rotation', sub: 'Auto-rotate API keys every 90 days', defaultChecked: false },
   { id: 'require2fa', label: 'Require 2FA for actions', sub: 'Extra confirmation before connecting or disconnecting', defaultChecked: false },
+] as const;
+
+const INTEGRATION_OVERVIEW = [
+  { label: 'Calendly', status: 'Available', detail: 'OAuth and booking-link scheduling sync', Icon: Calendar },
+  { label: 'LinkedIn', status: 'Available', detail: 'OAuth, posting, company pages, lead forms', Icon: Linkedin },
+  { label: 'Facebook', status: 'Available', detail: 'Pages, publishing, lead capture, inbox hooks', Icon: Facebook },
+  { label: 'DeepSeek API', status: 'Available', detail: 'Bonnie planning and cost-efficient agent loops', Icon: Bot },
+  { label: 'Claude API', status: 'Available', detail: 'AI fallback and agent reasoning provider', Icon: Bot },
+  { label: 'OpenAI API', status: 'Available', detail: 'AI fallback, generation, and compatible agent work', Icon: Bot },
+  { label: 'OpenRouter API', status: 'Available', detail: 'Optional model routing provider', Icon: KeyRound },
+  { label: 'Microsoft 365', status: 'Available', detail: 'Outlook, calendar, Teams, and To Do', Icon: Mail },
+  { label: 'WhatsApp', status: 'Coming soon', detail: 'Dashboard connection is being finalized', Icon: MessageCircle },
+  { label: 'Instagram', status: 'Coming soon', detail: 'Business publishing and inbox controls are being finalized', Icon: Instagram },
 ] as const;
 
 type PrefId = (typeof PREF_ROWS)[number]['id'];
@@ -197,6 +217,48 @@ export function IntegrationSettings() {
         {activeTab === 'providers' && (
           <div className="space-y-6">
             <div className="ac-workspace-panel rounded-lg p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Provider map</div>
+                  <h2 className="text-lg font-semibold text-white mt-1">Connected app framework</h2>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Core OAuth and API providers used by Bonnie, Hermes, social, scheduling, mail, and automation.
+                  </p>
+                </div>
+                <span className="inline-flex w-fit items-center rounded-md border border-teal-500/20 bg-teal-500/10 px-2.5 py-1 text-xs font-bold text-teal-200">
+                  Same workspace policy
+                </span>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {INTEGRATION_OVERVIEW.map(({ label, status, detail, Icon }) => {
+                  const comingSoon = status === 'Coming soon';
+                  return (
+                    <div key={label} className="rounded-lg border border-white/5 bg-slate-950/45 p-3">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-md border border-white/10 bg-white/5 p-2 text-slate-200">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="truncate text-sm font-semibold text-white">{label}</h3>
+                            <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                              comingSoon
+                                ? 'border border-amber-500/20 bg-amber-500/10 text-amber-200'
+                                : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-200'
+                            }`}>
+                              {status}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-400">{detail}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="ac-workspace-panel rounded-lg p-4">
               <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Email providers</div>
               <h2 className="text-lg font-semibold text-white mt-1">Provider credentials & sender identity</h2>
               <p className="text-sm text-slate-400 mt-1">
@@ -215,8 +277,24 @@ export function IntegrationSettings() {
         {/* ── WhatsApp ── */}
         {activeTab === 'whatsapp' && (
           <div className="space-y-6">
-            <WhatsAppIntegration />
-            <ZernioIntegration />
+            <div className="ac-workspace-panel rounded-lg p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-md border border-amber-500/20 bg-amber-500/10 p-2 text-amber-200">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-widest text-amber-300">Coming soon</div>
+                  <h2 className="mt-1 text-lg font-semibold text-white">WhatsApp dashboard connection</h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    The send/webhook engine exists, but the self-serve dashboard connection is marked coming soon until provider onboarding is finalized.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="opacity-60">
+              <WhatsAppIntegration />
+              <ZernioIntegration />
+            </div>
           </div>
         )}
 

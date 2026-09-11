@@ -14,13 +14,26 @@ import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { CommunicationModal } from './crm/CommunicationModal';
 import { DetailDrawer } from '../ui/DetailDrawer';
+import { QuoteVersionPanel } from '@/components/documents/QuoteVersionPanel';
 import { ModulePageLayout } from '../ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
 import { StatusBadge, quoteStatusVariant } from '../ui/StatusBadge';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
+import { EmptyStateFromPreset } from '../ui/EmptyState';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { EmailRecipient } from './crm/emailRecipient';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
+import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import {
+  buildQuoteDocumentInput,
+  resolveDocumentThemeId,
+} from '@/lib/documents/documentBuilders';
+import type { DocumentThemeId } from '@/lib/documents/renderDocument';
+import { QuoteDocumentPreview } from '@/components/documents/QuoteDocumentPreview';
 
 type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
 
@@ -66,7 +79,7 @@ const STATUS_COLORS: Record<QuoteStatus, string> = {
   accepted: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
   rejected: 'bg-red-500/15 text-red-400 border-red-500/20',
   expired:  'bg-slate-500/15 text-slate-300 border-slate-500/20',
-  converted: 'bg-teal-500/15 text-teal-300 border-teal-500/20',
+  converted: 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)] border-[var(--brand-blue-500)]/20',
 };
 
 const FILTERS: QuoteStatus[] = ['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'];
@@ -126,7 +139,7 @@ const QuoteDetail: React.FC<{
         <span className="text-[11px] font-bold">Send</span>
       </button>
       <button onClick={() => onConvert(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
-        <CheckCircle className="w-4 h-4 text-teal-400" />
+        <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
         <span className="text-[11px] font-bold">Convert</span>
       </button>
       <button onClick={() => onDelete(quote.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-red-500/10 text-red-400">
@@ -139,41 +152,59 @@ const QuoteDetail: React.FC<{
   return (
     <div className={inDrawer ? 'space-y-4 pb-2' : 'relative flex flex-col min-h-0 ac-scroll-full overflow-hidden'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
-        <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-slate-300" /></button>
-        <span className="text-[15px] font-bold text-white">Quote Detail</span>
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--ws-border)]">
+        <button onClick={onBack} className="w-8 h-8 rounded-full bg-[var(--ws-surface-tertiary)] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[var(--ws-text-secondary)]" /></button>
+        <span className="text-[15px] font-semibold text-[var(--ws-text-primary)]">Quotation</span>
       </div>
       )}
       <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-4 pb-28 space-y-4'}>
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 text-center space-y-2">
-          <div className="text-[13px] text-slate-500">Quote #{quote.number || quote.id.slice(0,8)}</div>
-          <div className="text-[32px] font-bold text-teal-400">{amountDisplay}</div>
-          <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
-        </div>
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-          <div className="text-[15px] font-bold text-white">{clientName}</div>
-          {quote.client_email && (
-            <div className="flex items-center justify-between gap-2 mt-1">
-              <div className="text-[13px] text-slate-400">{quote.client_email}</div>
-              {onComposeEmail && (
+        <RecordHeader
+          moduleId="quotations"
+          title={`Quote #${quote.number || quote.id.slice(0, 8)}`}
+          subtitle={clientName}
+          status={<StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>}
+          meta={
+            <>
+              <span className="tabular-nums font-semibold text-[var(--ws-text-primary)]">{amountDisplay}</span>
+              {quote.valid_until ? (
+                <span>Valid until {new Date(quote.valid_until).toLocaleDateString('en-GB')}</span>
+              ) : null}
+            </>
+          }
+          actions={
+            <>
+              {onComposeEmail && quote.client_email ? (
                 <button
                   type="button"
                   onClick={() => onComposeEmail(
                     { name: clientName, email: quote.client_email! },
                     `Quote ${quote.number || quote.id.slice(0, 8)} — ${clientName}`
                   )}
-                  className="text-xs font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1"
+                  className="inline-flex items-center gap-1.5 min-h-8 px-2.5 rounded-[8px] text-xs font-semibold text-[var(--brand-blue-500)] border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]"
                 >
                   <Mail className="w-3.5 h-3.5" /> Compose
                 </button>
-              )}
-            </div>
-          )}
-          {quote.valid_until && <div className="text-[13px] text-slate-400 opacity-55 mt-0.5">Valid until {new Date(quote.valid_until).toLocaleDateString()}</div>}
+              ) : null}
+              <AskBonnieButton
+                compact
+                mode="draft"
+                contexts={[
+                  { type: 'Quotation', id: quote.id, label: `Quote #${quote.number || quote.id.slice(0, 8)}` },
+                  { type: 'Customer', label: clientName },
+                ]}
+              />
+            </>
+          }
+        />
+        <div className="ac-workspace-panel p-5 text-center space-y-2">
+          <div className="text-[13px] text-[var(--ws-text-muted)]">Quote value</div>
+          <div className="text-[28px] font-bold text-[var(--ws-text-primary)] tabular-nums">{amountDisplay}</div>
+          <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
         </div>
+        <QuoteDocumentPreview quoteId={quote.id} />
         {quote.status === 'accepted' && (
-          <button onClick={() => onConvert(quote)} className="w-full h-[52px] bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-wider rounded-2xl text-[13px] transition-colors flex items-center justify-center gap-2">
-            <ArrowRight className="w-5 h-5" /> Convert to Invoice
+          <button onClick={() => onConvert(quote)} className="w-full min-h-[52px] bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-semibold rounded-[14px] text-[13px] transition-colors flex items-center justify-center gap-2">
+            <ArrowRight className="w-5 h-5" /> Convert to invoice
           </button>
         )}
       </div>
@@ -186,12 +217,38 @@ const CreateQuoteModal: React.FC<{
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
-  userId: string;
-}> = ({ open, onClose, onCreated, userId }) => {
+  tenantId: string;
+}> = ({ open, onClose, onCreated, tenantId }) => {
+  const { currentTenant } = useTenant();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
+  const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
   const [saving, setSaving] = useState(false);
+
+  const previewInput = useMemo(() => {
+    if (!currentTenant || !name.trim()) return null;
+    return buildQuoteDocumentInput(
+      {
+        quote_number: 'DRAFT',
+        name: name.trim(),
+        created_at: new Date().toISOString(),
+        total_amount: parseFloat(amount) || 0,
+        status: 'draft',
+        metadata: { document_theme: documentTheme, client_email: email || undefined },
+      },
+      amount
+        ? [{
+            product_name: name.trim(),
+            description: 'Professional services',
+            quantity: 1,
+            unit_price: parseFloat(amount) || 0,
+            line_total: parseFloat(amount) || 0,
+          }]
+        : [],
+      currentTenant
+    );
+  }, [amount, currentTenant, documentTheme, email, name]);
 
   if (!open) return null;
 
@@ -203,35 +260,24 @@ const CreateQuoteModal: React.FC<{
     }
     setSaving(true);
     try {
-      const { quote, error } = await quoteService.createQuote(userId, {
-        name: name.trim(),
-        notes: email.trim() ? `Recipient: ${email.trim()}` : undefined,
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/quotes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim() || undefined,
+          amount: parseFloat(amount) || 0,
+          documentTheme,
+        }),
       });
-      if (error || !quote) throw new Error(error || 'Failed to create quote');
-
-      const amt = parseFloat(amount) || 0;
-      const metaPatch: Record<string, unknown> = {
-        ...(quote.metadata || {}),
-        ...(email.trim() ? { client_email: email.trim() } : {}),
-      };
-      await supabase.from('quotes').update({
-        ...(amt > 0 ? { total_amount: amt, subtotal: amt } : {}),
-        metadata: metaPatch,
-      }).eq('id', quote.id);
-
-      if (amt > 0) {
-        await quoteService.addQuoteItem(quote.id, {
-          productName: name.trim(),
-          description: 'Professional services',
-          quantity: 1,
-          unitPrice: amt,
-        });
-      }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to create quote');
 
       toast.success('Quote created');
       setName('');
       setEmail('');
       setAmount('');
+      setDocumentTheme('executive');
       onCreated();
       onClose();
     } catch (err: unknown) {
@@ -269,10 +315,22 @@ const CreateQuoteModal: React.FC<{
           placeholder="Amount (USD)"
           className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
         />
+        <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+        <DocumentQualityPanel
+          input={{
+            type: 'quote',
+            hasClientName: Boolean(name.trim()),
+            hasPricing: Number(amount) > 0,
+            hasTerms: true,
+            clientEmail: email,
+            hasLogo: Boolean(currentTenant && ((currentTenant as { logo_url?: string }).logo_url)),
+          }}
+        />
+        {previewInput ? <DocumentPreview input={previewInput} /> : null}
         <button
           type="submit"
           disabled={saving}
-          className="w-full min-h-11 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold disabled:opacity-50"
+          className="w-full min-h-11 rounded-xl bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-bold disabled:opacity-50"
         >
           {saving ? 'Creating...' : 'Create Quote'}
         </button>
@@ -296,7 +354,10 @@ const QuoteEditModal: React.FC<{
   quote: QuoteRow | null;
   onClose: () => void;
   onSaved: () => void;
-}> = ({ open, quote, onClose, onSaved }) => {
+  tenantId: string;
+  userId: string;
+}> = ({ open, quote, onClose, onSaved, tenantId, userId }) => {
+  const { currentTenant } = useTenant();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<QuoteStatus>('draft');
@@ -305,8 +366,10 @@ const QuoteEditModal: React.FC<{
   const [notes, setNotes] = useState('');
   const [terms, setTerms] = useState('');
   const [currency, setCurrency] = useState('USD');
+  const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
   const [items, setItems] = useState<EditableQuoteItem[]>([]);
-  const [originalItemIds, setOriginalItemIds] = useState<string[]>([]);
+  const [quoteNumber, setQuoteNumber] = useState('');
+  const [createdAt, setCreatedAt] = useState('');
 
   useEffect(() => {
     if (!open || !quote) return;
@@ -335,6 +398,9 @@ const QuoteEditModal: React.FC<{
       setNotes(fullQuote.notes || '');
       setTerms(fullQuote.termsAndConditions || '');
       setCurrency(fullQuote.currency || 'USD');
+      setDocumentTheme(resolveDocumentThemeId(fullQuote.metadata));
+      setQuoteNumber(fullQuote.quoteNumber || quote.number || '');
+      setCreatedAt(fullQuote.createdAt || quote.created_at);
 
       const loadedItems = (quoteItemsResult.items || []).map((item) => ({
         id: item.id,
@@ -353,7 +419,6 @@ const QuoteEditModal: React.FC<{
         discountPercent: '0',
         taxPercent: '0',
       }]);
-      setOriginalItemIds((quoteItemsResult.items || []).map((item) => item.id));
       setLoading(false);
     })().catch((err) => {
       if (!cancelled) {
@@ -367,8 +432,6 @@ const QuoteEditModal: React.FC<{
     };
   }, [open, quote?.id]);
 
-  if (!open || !quote) return null;
-
   const total = items.reduce((sum, item) => {
     const quantity = Number(item.quantity || 0);
     const unitPrice = Number(item.unitPrice || 0);
@@ -378,6 +441,41 @@ const QuoteEditModal: React.FC<{
     const lineNet = lineBase * (1 - discountPercent / 100);
     return sum + (lineNet * (1 + taxPercent / 100));
   }, 0);
+
+  const previewInput = useMemo(() => {
+    if (!currentTenant || !quote) return null;
+    return buildQuoteDocumentInput(
+      {
+        quote_number: quoteNumber || quote.number,
+        name,
+        created_at: createdAt || quote.created_at,
+        valid_until: validUntil || undefined,
+        notes,
+        status,
+        total_amount: total,
+        metadata: { document_theme: documentTheme },
+      },
+      items.map((item) => {
+        const quantity = Number(item.quantity || 0);
+        const unitPrice = Number(item.unitPrice || 0);
+        const discountPercent = Number(item.discountPercent || 0);
+        const taxPercent = Number(item.taxPercent || 0);
+        const lineBase = quantity * unitPrice;
+        const lineNet = lineBase * (1 - discountPercent / 100);
+        const lineTotal = lineNet * (1 + taxPercent / 100);
+        return {
+          product_name: item.productName,
+          description: item.description,
+          quantity,
+          unit_price: unitPrice,
+          line_total: lineTotal,
+        };
+      }),
+      currentTenant
+    );
+  }, [createdAt, currentTenant, documentTheme, items, name, notes, quote, quoteNumber, status, total, validUntil]);
+
+  if (!open || !quote) return null;
 
   const updateItem = (index: number, patch: Partial<EditableQuoteItem>) => {
     setItems((prev) => prev.map((item, idx) => idx === index ? { ...item, ...patch } : item));
@@ -405,49 +503,31 @@ const QuoteEditModal: React.FC<{
     }
     setSaving(true);
     try {
-      const { error } = await quoteService.updateQuote(quote.id, {
+      const normalizedItems = items.filter((item) => item.productName.trim()).map((item, index) => ({
+        productName: item.productName.trim(),
+        description: item.description.trim() || undefined,
+        quantity: Number(item.quantity || 0) || 1,
+        unitPrice: Number(item.unitPrice || 0) || 0,
+        discountPercent: Number(item.discountPercent || 0) || 0,
+        taxPercent: Number(item.taxPercent || 0) || 0,
+        itemOrder: index + 1,
+      }));
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/quotes`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        quoteId: quote.id,
         name: name.trim(),
         status,
-        validUntil: validUntil || undefined,
+        validUntil: validUntil || null,
         notes,
         termsAndConditions: terms,
         currency,
-      });
-      if (error) throw new Error(error);
-
-      const seenIds = new Set<string>();
-      for (let i = 0; i < items.length; i += 1) {
-        const item = items[i];
-        if (!item.productName.trim()) continue;
-        const payload = {
-          productName: item.productName.trim(),
-          description: item.description.trim() || undefined,
-          quantity: Number(item.quantity || 0) || 1,
-          unitPrice: Number(item.unitPrice || 0) || 0,
-          discountPercent: Number(item.discountPercent || 0) || 0,
-          taxPercent: Number(item.taxPercent || 0) || 0,
-          itemOrder: i + 1,
-        };
-
-        if (item.id) {
-          seenIds.add(item.id);
-          const { error: updateError } = await quoteService.updateQuoteItem(item.id, payload);
-          if (updateError) throw new Error(updateError);
-        } else {
-          const { item: created, error: createError } = await quoteService.addQuoteItem(quote.id, payload);
-          if (createError) throw new Error(createError);
-          if (created?.id) seenIds.add(created.id);
-        }
-      }
-
-      for (const itemId of originalItemIds) {
-        if (!seenIds.has(itemId)) {
-          const { error: deleteError } = await quoteService.deleteQuoteItem(itemId);
-          if (deleteError) throw new Error(deleteError);
-        }
-      }
-
-      await quoteService.recalculateQuoteTotals(quote.id);
+        items: normalizedItems,
+        documentTheme,
+      }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to update quote');
       toast.success('Quote updated');
       onSaved();
       onClose();
@@ -529,6 +609,8 @@ const QuoteEditModal: React.FC<{
           </div>
 
           <div className="space-y-4">
+            <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+            {previewInput ? <DocumentPreview input={previewInput} /> : null}
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Notes</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white resize-none" />
@@ -550,10 +632,11 @@ const QuoteEditModal: React.FC<{
               type="button"
               onClick={handleSave}
               disabled={saving || loading}
-              className="w-full min-h-11 rounded-2xl bg-teal-500 px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
+              className="w-full min-h-11 rounded-2xl bg-[var(--brand-blue-500)] px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Quote'}
             </button>
+            <QuoteVersionPanel quoteId={quote.id} userId={userId} />
           </div>
       </div>
     </DetailDrawer>
@@ -588,7 +671,10 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   useEffect(() => { load(); }, [load]);
 
   const deleteQuote = async (id: string) => {
-    await supabase.from('quotes').delete().eq('id', id);
+    if (!currentTenant?.id) return;
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/quotes?quoteId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) { toast.error(result.error || 'Quote could not be deleted'); return; }
     setQuotes(p => p.filter(q => q.id !== id));
     setSelected(null);
     toast.success('Quote deleted');
@@ -718,7 +804,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
           aria-label={allVisibleSelected ? 'Deselect all visible quotes' : 'Select all visible quotes'}
         >
           {allVisibleSelected ? (
-            <CheckCircle className="w-4 h-4 text-teal-400" />
+            <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
           ) : (
             <Plus className="w-4 h-4" />
           )}
@@ -735,7 +821,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
           aria-label={selectedQuoteIds.has(q.id) ? 'Deselect quote' : 'Select quote'}
         >
           {selectedQuoteIds.has(q.id) ? (
-            <CheckCircle className="w-4 h-4 text-teal-400" />
+            <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
           ) : (
             <Plus className="w-4 h-4" />
           )}
@@ -777,55 +863,65 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   ], [allVisibleSelected, selectedQuoteIds, toggleQuoteSelection, visibleQuotes]);
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="quotations">
+      <div className="px-4 pt-3 shrink-0">
+        <SubNavigation
+          moduleId="quotations"
+          items={getModuleSubnav('quotations')}
+          activeHref="/dashboard/business/quotes"
+        />
+      </div>
       <ModulePageLayout
-        showBonnieDock
         header={(
-          <div className="px-4 pt-3">
+          <div className="px-4 pt-2">
             <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
           </div>
         )}
         toolbar={(
-          <div className="flex flex-wrap gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5 items-center">
+          <div className="flex flex-wrap gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-[var(--ws-border)] items-center">
         {selectedQuoteIds.size > 0 && (
-          <div className="flex items-center gap-1.5 mr-1 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
+          <div className="flex items-center gap-1.5 mr-1 rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-1">
             <button
               type="button"
               onClick={() => setSelectedQuoteIds(new Set())}
-              className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
+              className="h-7 px-3 rounded-[8px] text-[11px] font-semibold text-[var(--ws-text-muted)] border border-[var(--ws-border)] transition-colors hover:text-[var(--ws-text-secondary)]"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={handleBulkEmailQuotes}
-              className="h-7 px-3 rounded-full text-[11px] font-bold text-indigo-300 border border-indigo-500/30 transition-colors hover:text-indigo-200"
+              className="h-7 px-3 rounded-[8px] text-[11px] font-semibold text-[var(--brand-blue-500)] border border-[var(--ws-border)] transition-colors"
             >
               Follow-up ({selectedQuoteIds.size})
             </button>
           </div>
         )}
         {(['all', ...FILTERS] as (QuoteStatus | 'all')[]).map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${filter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
+          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 min-h-[34px] px-3.5 rounded-[8px] text-[12px] font-semibold capitalize transition-all ${filter === f ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}>{f}</button>
         ))}
           </div>
         )}
         stats={!loading && quotes.length > 0 ? (
-          <div className="p-4 border-b border-white/5 bg-slate-900/20">
-            <ModuleStatCards stats={quoteStats} />
+          <div className="p-4 border-b border-[var(--ws-border)]">
+            <ModuleStatCards stats={quoteStats} hub="quotes" />
           </div>
         ) : null}
       >
-      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 bg-slate-950 px-2">
+      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 px-2">
         {loading ? (
           <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+        ) : quotes.length === 0 && filter === 'all' ? (
+          <div className="p-6">
+            <EmptyStateFromPreset moduleId="quotes" onAction={() => setShowCreate(true)} />
+          </div>
         ) : (
           <EnterpriseDataTable
             columns={quoteColumns}
             data={visibleQuotes}
             getRowId={(q) => q.id}
             onRowClick={setSelected}
-            emptyMessage="No quotes in this workspace yet."
+            emptyMessage="No quotes match this filter."
           />
         )}
       </div>
@@ -833,12 +929,12 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       <button
         type="button"
         onClick={() => setShowCreate(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-teal-600 rounded-full flex items-center justify-center shadow-lg shadow-teal-600/30 z-30"
+        className="fixed bottom-20 right-4 w-14 h-14 bg-[var(--brand-blue-500)] rounded-full flex items-center justify-center shadow-md z-30"
       >
         <FilePlus className="w-6 h-6 text-white" />
       </button>
-      <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} userId={user.id} />
-      <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} />
+      {currentTenant?.id && <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} tenantId={currentTenant.id} />}
+      {currentTenant?.id && <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} tenantId={currentTenant.id} userId={user.id} />}
 
       <DetailDrawer
         open={Boolean(selected)}

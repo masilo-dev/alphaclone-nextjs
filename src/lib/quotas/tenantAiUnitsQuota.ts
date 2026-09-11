@@ -40,6 +40,28 @@ export async function consumeTenantAiUnits(
     plan: string | null | undefined,
     units: number
 ): Promise<TenantAiUnitsConsumeResult> {
+    const { data: tenant } = await admin
+        .from('tenants')
+        .select('subscription_status, trial_ends_at, legacy_access_until, created_at, stripe_subscription_id, subscription_plan')
+        .eq('id', tenantId)
+        .maybeSingle();
+
+    const now = Date.now();
+    const trialActive =
+        tenant?.subscription_status === 'trial' &&
+        tenant?.trial_ends_at &&
+        new Date(tenant.trial_ends_at).getTime() > now;
+    const legacyActive =
+        tenant?.legacy_access_until &&
+        new Date(tenant.legacy_access_until).getTime() >= now;
+    const premiumPlan = ['premium', 'enterprise', 'custom'].includes(
+        String(tenant?.subscription_plan || plan || '').toLowerCase()
+    );
+
+    if (trialActive || legacyActive || premiumPlan) {
+        return { ok: true, used: 0, limit: -1, remaining: -1 };
+    }
+
     const limit = getDailyAiUnitsLimit(plan);
     const { data, error } = await admin.rpc('consume_tenant_ai_units', {
         p_tenant_id: tenantId,

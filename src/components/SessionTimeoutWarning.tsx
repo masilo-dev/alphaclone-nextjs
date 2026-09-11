@@ -57,11 +57,33 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
     );
 };
 
+const DEFAULT_IDLE_TIMEOUT_MINUTES = 30;
+
+/**
+ * Idle timeout before auto sign-out. Tunable per deployment with
+ * NEXT_PUBLIC_SESSION_IDLE_TIMEOUT_MINUTES (minimum 3, so the 2-minute warning
+ * still has room to show). Previously hard-coded to 10 minutes, which signed
+ * people out after a short call or meeting.
+ */
+export function resolveIdleTimeoutMs(raw: string | undefined = process.env.NEXT_PUBLIC_SESSION_IDLE_TIMEOUT_MINUTES): number {
+    const minutes = Number(raw);
+    const safe = Number.isFinite(minutes) && minutes >= 3 ? minutes : DEFAULT_IDLE_TIMEOUT_MINUTES;
+    return safe * 60 * 1000;
+}
+
+/**
+ * Events that prove the person is still here. `scroll` does not bubble, and the
+ * dashboard scrolls inside a fixed-height shell, so it is registered in the
+ * capture phase; `wheel` covers trackpad scrolling that never moves the pointer.
+ */
+export const SESSION_ACTIVITY_EVENTS = ['mousedown', 'keydown', 'scroll', 'wheel', 'touchstart', 'click', 'mousemove', 'pointerdown'] as const;
+
 // Hook to manage the timeout logic
 export const useSessionTimeoutWarning = (
     onLogout: () => void,
-    timeoutMs: number = 10 * 60 * 1000, // 10 minutes
-    warningMs: number = 2 * 60 * 1000 // 2 minutes before timeout
+    timeoutMs: number = resolveIdleTimeoutMs(),
+    warningMs: number = 2 * 60 * 1000, // 2 minutes before timeout
+    enabled = true,
 ) => {
     const [showWarning, setShowWarning] = useState(false);
     const [lastActivity, setLastActivity] = useState(Date.now());
@@ -78,9 +100,7 @@ export const useSessionTimeoutWarning = (
     }, [resetActivity]);
 
     useEffect(() => {
-        // Activity listeners
-        const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click', 'mousemove'];
-
+        if (!enabled) return;
         // Only add listeners if warning is NOT showing (don't auto-reset if they're just moving mouse over warning)
         const handleActivity = () => {
             if (!showWarning) {
@@ -88,8 +108,10 @@ export const useSessionTimeoutWarning = (
             }
         };
 
-        events.forEach(event => {
-            document.addEventListener(event, handleActivity, { passive: true });
+        // Capture phase so scrolls inside nested containers count as activity.
+        const listenerOptions: AddEventListenerOptions = { passive: true, capture: true };
+        SESSION_ACTIVITY_EVENTS.forEach(event => {
+            document.addEventListener(event, handleActivity, listenerOptions);
         });
 
         // Check for inactivity
@@ -116,13 +138,12 @@ export const useSessionTimeoutWarning = (
         }, 1000);
 
         return () => {
-            events.forEach(event => {
-                document.removeEventListener(event, handleActivity);
+            SESSION_ACTIVITY_EVENTS.forEach(event => {
+                document.removeEventListener(event, handleActivity, listenerOptions);
             });
             clearInterval(checkInterval);
         };
-    }, [lastActivity, timeoutMs, warningMs, showWarning, onLogout, resetActivity]);
+    }, [lastActivity, timeoutMs, warningMs, showWarning, onLogout, resetActivity, enabled]);
 
     return { showWarning, countdown, extendSession };
 };
-

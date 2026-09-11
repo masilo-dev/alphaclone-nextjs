@@ -3,18 +3,7 @@ import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { securityLogService } from '../services/securityLogService';
-
-
-// Initialize Redis client from environment variables
-// Add these to your .env:
-// UPSTASH_REDIS_REST_URL=your_url
-// UPSTASH_REDIS_REST_TOKEN=your_token
-const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL!,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    })
-    : null;
+import { getActiveRedisBackend, getRedisAsync, isRedisConfigured } from '@/lib/redis/client';
 
 // Fallback to in-memory rate limiting if Redis is not configured
 // WARNING: This will not work across multiple server instances
@@ -33,7 +22,8 @@ export const rateLimitConfigs: {
     api: {
         standard: { limit: number; window: Duration };
         heavy: { limit: number; window: Duration };
-
+        /** MCP JSON-RPC + OAuth — Anthropic/OpenAI share egress IPs */
+        mcp: { limit: number; window: Duration };
     };
     public: {
         contact: { limit: number; window: Duration };
@@ -55,7 +45,9 @@ export const rateLimitConfigs: {
     api: {
         standard: { limit: 100, window: '1m' }, // 100 requests per minute
         heavy: { limit: 20, window: '1m' }, // 20 requests per minute (AI, exports)
-
+        // Claude/ChatGPT connectors share egress IPs; 20/min caused McpAuthorizationError
+        // ("integration rejected the credentials it just issued") on post-token initialize.
+        mcp: { limit: 300, window: '1m' },
     },
 
     // Public endpoints - lenient limits
@@ -69,21 +61,6 @@ export const rateLimitConfigs: {
         standard: { limit: 120, window: '1m' },
     },
 };
-
-/**
- * Create a rate limiter with specific configuration
- */
-function createRateLimiter(limit: number, window: Duration) {
-    if (redis) {
-        return new Ratelimit({
-            redis,
-            limiter: Ratelimit.slidingWindow(limit, window),
-            analytics: true,
-            prefix: 'alphaclone',
-        });
-    }
-    return null;
-}
 
 /**
  * In-memory fallback rate limiter
@@ -160,11 +137,40 @@ export async function rateLimit(
     // 1. Determine identifier (IP address or provided custom identifier)
     const id = identifier || (request as any)?.ip || request?.headers.get('x-forwarded-for') || '127.0.0.1';
 
-    // 2. Try Redis rate limiter if configured
-    if (redis) {
+    // 2. Railway / standard Redis uses a shared fixed-window counter.
+    const backend = getActiveRedisBackend();
+    if (backend === 'railway' || backend === 'upstash') {
         try {
+            const sharedRedis = await getRedisAsync();
+            if (!sharedRedis) throw new Error('Redis unavailable');
+            const windowMs = parseWindow(config.window);
+            const key = `alphaclone:rl:${id}`;
+            const count = await sharedRedis.incr(key);
+            if (count === 1) await sharedRedis.pexpire(key, windowMs);
+            const ttl = await sharedRedis.pttl(key);
+            const result = {
+                success: count <= config.limit,
+                remaining: Math.max(config.limit - count, 0),
+                reset: Date.now() + (ttl > 0 ? ttl : windowMs),
+                limit: config.limit,
+            };
+            if (!result.success && request) {
+                await logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname);
+            }
+            return result;
+        } catch (error) {
+            console.error('Railway Redis rate limit error, falling back:', error);
+        }
+    }
+
+    // 3. Try Upstash sliding-window rate limiter when REST credentials are set
+    const upstashUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+    const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+    if (upstashUrl && upstashToken && backend !== 'railway') {
+        try {
+            const upstashRedis = new Redis({ url: upstashUrl, token: upstashToken });
             const ratelimit = new Ratelimit({
-                redis,
+                redis: upstashRedis,
                 limiter: Ratelimit.slidingWindow(config.limit, config.window),
                 analytics: true,
                 prefix: 'alphaclone',
@@ -191,7 +197,7 @@ export async function rateLimit(
         }
     }
 
-    // 3. Fallback to In-Memory rate limiting
+    // 4. Fallback to In-Memory rate limiting
     // Note: window is a string (e.g. '15m'), we need to parse it to ms
     const windowMs = parseWindow(config.window);
     const result = checkInMemoryRateLimit(id, config.limit, windowMs);
@@ -314,41 +320,4 @@ export async function rateLimitMiddleware(
 
     // Return null to indicate "pass through"
     return null;
-}
-
-/**
- * Get rate limit status for a key (useful for dashboards)
- */
-export async function getRateLimitStatus(identifier: string): Promise<{
-    remaining: number;
-    reset: number;
-    limit: number;
-} | null> {
-    if (!redis) return null;
-
-    try {
-        // This would require additional implementation with Upstash
-        // For now, return null (would need custom Redis commands)
-        return null;
-    } catch (error) {
-        return null;
-    }
-}
-
-/**
- * Reset rate limit for a specific identifier (admin function)
- */
-export async function resetRateLimit(identifier: string): Promise<boolean> {
-    if (!redis) {
-        inMemoryStore.delete(identifier);
-        return true;
-    }
-
-    try {
-        await redis.del(`alphaclone:${identifier}`);
-        return true;
-    } catch (error) {
-        console.error('Failed to reset rate limit:', error);
-        return false;
-    }
 }

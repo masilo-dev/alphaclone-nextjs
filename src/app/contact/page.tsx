@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import ContactPage from '@/components/pages/ContactPage';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
 
@@ -17,5 +18,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-    return <ContactPage />;
+    return (
+        <MarketingLandingShell>
+            <ContactPage />
+        </MarketingLandingShell>
+    );
 }

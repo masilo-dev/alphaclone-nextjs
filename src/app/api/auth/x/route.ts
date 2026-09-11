@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/pkce';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 const X_CLIENT_ID = process.env.X_CLIENT_ID;
-// Always use the canonical non-www origin — X Developer Portal callback must match exactly.
-const CANONICAL_APP_URL = 'https://alphaclonesystems.com';
-const REDIRECT_URI = `${CANONICAL_APP_URL}/api/auth/callback/x`;
+const REDIRECT_URI = OAUTH_CALLBACKS.x;
 
 export const runtime = 'nodejs';
 

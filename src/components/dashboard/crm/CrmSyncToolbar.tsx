@@ -13,9 +13,10 @@ export function CrmSyncToolbar({ className = '' }: { className?: string }) {
   const [reconciling, setReconciling] = useState(false);
 
   const handlePull = async () => {
+    if (!currentTenant?.id) return;
     setPulling(true);
     try {
-      const result = await UnifiedCRMService.pullDeals();
+      const result = await UnifiedCRMService.pullDeals(currentTenant.id);
       if (result?.success) {
         toast.success(`CRM pull complete (${result.syncedCount ?? 0} records)`);
       } else {

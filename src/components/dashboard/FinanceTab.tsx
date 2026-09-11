@@ -12,12 +12,14 @@ import { useTenant } from '../../contexts/TenantContext';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { offlineService } from '@/services/offlineService';
 import { DetailDrawer } from '../ui/DetailDrawer';
 import { StatusBadge, invoiceStatusVariant, expenseStatusVariant } from '../ui/StatusBadge';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
 import { Input } from '../ui/UIComponents';
-import EmptyState from '@/components/ui/EmptyState';
+import { EmptyStateFromPreset } from '../ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
+import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 
 type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
 type ExpenseStatus = 'pending' | 'approved' | 'rejected';
@@ -42,14 +44,32 @@ const InvoiceDetailContent: React.FC<{
 
   return (
     <div className="space-y-4 pb-6">
+      <RecordHeader
+        moduleId="invoicing"
+        title={`Invoice #${invoice.number || invoice.id.slice(0, 8)}`}
+        subtitle={clientName}
+        status={<StatusBadge variant={invoiceStatusVariant(invoice.status)}>{invoice.status}</StatusBadge>}
+        meta={
+          <>
+            <span className="font-mono text-[var(--brand-blue-400)]">{amountDisplay}</span>
+            {invoice.due_date ? <span>Due {new Date(invoice.due_date).toLocaleDateString()}</span> : null}
+            {invoice.client_email ? <span>{invoice.client_email}</span> : null}
+          </>
+        }
+        actions={
+          <AskBonnieButton
+            compact
+            mode="summarise"
+            contexts={[
+              { type: 'Invoice', id: invoice.id, label: `Invoice #${invoice.number || invoice.id.slice(0, 8)}` },
+              { type: 'Client', label: clientName },
+            ]}
+          />
+        }
+      />
       <div className={`space-y-2 p-5 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-        <div className="text-[13px] text-slate-500">Invoice #{invoice.number || invoice.id.slice(0,8)}</div>
-        <div className="text-[32px] font-bold text-teal-400">{amountDisplay}</div>
-        <StatusBadge variant={invoiceStatusVariant(invoice.status)}>{invoice.status}</StatusBadge>
-      </div>
-      <div className={`space-y-1 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-        <div className="text-[15px] font-bold text-white">{clientName}</div>
-        {invoice.client_email && <div className="text-[13px] text-slate-400 opacity-55">{invoice.client_email}</div>}
+        <div className="text-[13px] text-slate-500">Amount due</div>
+        <div className="text-[32px] font-bold text-[var(--brand-blue-400)]">{amountDisplay}</div>
       </div>
       <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
         <div className="flex justify-between py-1.5 border-b border-white/5">
@@ -58,7 +78,7 @@ const InvoiceDetailContent: React.FC<{
         </div>
         <div className="flex justify-between pt-2">
           <span className="text-[17px] font-bold text-white">Total</span>
-          <span className="text-[20px] font-bold text-teal-400 font-mono">{amountDisplay}</span>
+          <span className="text-[20px] font-bold text-[var(--brand-blue-400)] font-mono">{amountDisplay}</span>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -121,16 +141,57 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
     if (!currentTenant?.id || !newExpense.description.trim()) return;
     setSavingExpense(true);
     try {
-      const { error } = await supabase.from('expenses').insert({
-        tenant_id: currentTenant.id,
-        description: newExpense.description.trim(),
-        amount: Number(newExpense.amount) || 0,
-        category: newExpense.category.toLowerCase(),
-        vendor: newExpense.vendor.trim() || null,
-        status: 'pending',
-        date: new Date().toISOString().split('T')[0],
-      });
-      if (error) throw error;
+      const amount = Number(newExpense.amount) || 0;
+      const date = new Date().toISOString().split('T')[0];
+      const description = newExpense.description.trim();
+
+      if (!offlineService.isOnline()) {
+        await offlineService.init();
+        const record = await offlineService.enqueueMutation(
+          { tenantId: currentTenant.id, userId: user.id },
+          'expense.draft',
+          {
+            date,
+            amount,
+            description,
+            vendor_name: newExpense.vendor.trim() || undefined,
+            currency: 'USD',
+            payment_method: 'card',
+          },
+        );
+        setExpenses((prev) => [
+          {
+            id: `offline-${record.id}`,
+            description,
+            amount,
+            category: newExpense.category,
+            vendor: newExpense.vendor.trim() || undefined,
+            date,
+            status: 'pending',
+            tenant_id: currentTenant.id,
+            created_at: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+        toast.success('Expense saved offline — it will sync when you reconnect.');
+        setShowAddExpense(false);
+        setNewExpense({ description: '', amount: '', category: 'other', vendor: '' });
+        return;
+      }
+
+      const response = await fetch('/api/finance/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        action: 'create',
+        tenantId: currentTenant.id,
+        description,
+        amount,
+        vendor_name: newExpense.vendor.trim() || undefined,
+        date,
+      }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to add expense');
       toast.success('Expense added');
       setShowAddExpense(false);
       setNewExpense({ description: '', amount: '', category: 'other', vendor: '' });
@@ -209,16 +270,19 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
     toast.success('Invoice deleted');
   };
   const markPaid = async (id: string) => {
-    const { error } = await businessInvoiceService.updateInvoice(id, { status: 'paid' });
+    const { error } = await businessInvoiceService.markAsPaid(id);
     if (error) {
       toast.error(error);
       return;
     }
     setInvoices(prev => prev.map(i => i.id === id ? { ...i, status: 'paid' as InvoiceStatus } : i));
-    toast.success('Invoice marked paid');
+    toast.success('Payment recorded');
   };
   const deleteExpense = async (id: string) => {
-    await supabase.from('expenses').delete().eq('id', id);
+    if (!currentTenant?.id) return;
+    const response = await fetch(`/api/finance/expenses?tenantId=${encodeURIComponent(currentTenant.id)}&expenseId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) { toast.error(result.error || 'Expense could not be deleted'); return; }
     setExpenses(prev => prev.filter(e => e.id !== id));
     toast.success('Expense deleted');
   };
@@ -310,7 +374,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
       {/* Main tabs */}
       <div className="flex border-b border-white/5 bg-slate-950">
         {(['invoices', 'expenses'] as MainTab[]).map(t => (
-          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 text-[13px] font-bold capitalize ${mainTab === t ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}>{t}</button>
+          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 text-[13px] font-bold capitalize ${mainTab === t ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}>{t}</button>
         ))}
       </div>
 
@@ -320,11 +384,15 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             {/* Filter pills */}
             <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
               {(['all', ...INV_FILTERS] as (InvoiceStatus | 'all')[]).map(f => (
-                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${invFilter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
+                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${invFilter === f ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
               ))}
             </div>
             {loading ? (
               <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+            ) : invoices.length === 0 && invFilter === 'all' ? (
+              <div className="p-6">
+                <EmptyStateFromPreset moduleId="invoices" onAction={handleFabClick} />
+              </div>
             ) : (
               <div className="px-2">
                 <EnterpriseDataTable
@@ -370,7 +438,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             {/* Category filter */}
             <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
               {EXP_CATS.map(c => (
-                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold transition-all ${expCat === c ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{c}</button>
+                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold transition-all ${expCat === c ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{c}</button>
               ))}
             </div>
             <div className="px-2">

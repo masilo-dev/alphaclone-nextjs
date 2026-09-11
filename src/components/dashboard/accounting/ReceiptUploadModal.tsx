@@ -96,9 +96,9 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                 amount: extractedData.amount,
                 category: extractedData.category,
                 accountId: selectedAccountId || undefined,
-                status: isPaid ? 'paid' : 'pending',
+                status: 'pending',
                 assetAccountId: isPaid ? (selectedAssetAccountId || undefined) : undefined,
-                imageUrl: preview || undefined, // In production, this would be a permanent URL
+                imageUrl: extractedData.receiptUrl || undefined,
                 rawAiData: extractedData
             });
 

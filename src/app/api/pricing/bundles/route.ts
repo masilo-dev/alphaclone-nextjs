@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 const bundleItemSchema = z.object({
     catalogItemId: z.string().uuid(),
@@ -44,8 +44,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId);
-        const admin = createAdminSupabaseClientOrThrow();
+        const { admin } = await requireTenantAccess(tenantId, req);
 
         let query = admin
             .from('tenant_service_bundles')
@@ -84,8 +83,7 @@ export async function POST(req: NextRequest) {
         }
 
         const payload = parsed.data;
-        const { user } = await requireTenantAccess(payload.tenantId);
-        const admin = createAdminSupabaseClientOrThrow();
+        const { user, admin } = await requireTenantAccess(payload.tenantId, req);
 
         const { data: bundle, error: bundleError } = await admin
             .from('tenant_service_bundles')
@@ -132,8 +130,7 @@ export async function PATCH(req: NextRequest) {
         }
 
         const payload = parsed.data;
-        await requireTenantAccess(payload.tenantId);
-        const admin = createAdminSupabaseClientOrThrow();
+        const { admin } = await requireTenantAccess(payload.tenantId, req);
 
         const updateData: Record<string, unknown> = {};
         if (payload.name !== undefined) updateData.name = payload.name;
@@ -189,8 +186,7 @@ export async function DELETE(req: NextRequest) {
         }
 
         const payload = parsed.data;
-        await requireTenantAccess(payload.tenantId);
-        const admin = createAdminSupabaseClientOrThrow();
+        const { admin } = await requireTenantAccess(payload.tenantId, req);
 
         const { error } = await admin
             .from('tenant_service_bundles')

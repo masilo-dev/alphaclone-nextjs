@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
+import {
+  validateMCPAuthApp,
+  MCP_CORS_HEADERS,
+  handleCorsApp,
+  getMcpCorsHeaders,
+  createUnauthorizedResponse,
+} from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { touchMcpApiKeyLastUsed } from '@/lib/security/mcpApiKeyLookup';
 import { getInitialBusinessAIStateForTenant } from '@/lib/mcp/getInitialBusinessAIStateForTenant';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -13,10 +20,8 @@ export const revalidate = 0;
 
 const MCP_PROTOCOL_VERSION = '2025-11-25';
 
-function getBaseUrl(req: NextRequest) {
-  const protocol = req.headers.get('x-forwarded-proto')?.split(',')[0] ?? 'https';
-  const host = req.headers.get('x-forwarded-host')?.split(',')[0] ?? req.headers.get('host') ?? '';
-  return `${protocol}://${host}`;
+function getBaseUrl(_req: NextRequest) {
+  return PUBLIC_APP_ORIGIN;
 }
 
 function buildForwardHeaders(req: NextRequest) {
@@ -49,7 +54,7 @@ export async function GET(req: NextRequest) {
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
       console.warn('[MCP SSE GET] Auth failed:', auth.error);
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+      return createUnauthorizedResponse(req, 'invalid_token', auth.error);
     }
 
     const { tenant_id, user_id, apiKey, supabaseAdmin } = auth;
@@ -83,9 +88,21 @@ export async function GET(req: NextRequest) {
 
     const endpointUrl = `${getBaseUrl(req)}/api/mcp/messages`;
 
+    let streamCleanup: (() => void) | null = null;
+
     const stream = new ReadableStream({
       start(controller) {
         const encoder = new TextEncoder();
+        let heartbeat: ReturnType<typeof setInterval> | null = null;
+
+        streamCleanup = () => {
+          if (heartbeat) {
+            clearInterval(heartbeat);
+            heartbeat = null;
+          }
+          try { controller.close(); } catch {}
+        };
+
         try {
             controller.enqueue(encoder.encode(`event: endpoint\ndata: ${endpointUrl}\n\n`));
             if (sessionData?.id) {
@@ -93,21 +110,22 @@ export async function GET(req: NextRequest) {
             }
         } catch (err) {
             console.error('[MCP SSE GET] Initial stream enqueue failed:', err);
+            streamCleanup();
+            return;
         }
 
-        const heartbeat = setInterval(() => {
+        heartbeat = setInterval(() => {
           try {
             controller.enqueue(encoder.encode(':\n\n'));
-          } catch (e) {
-            clearInterval(heartbeat);
-            try { controller.close(); } catch {}
+          } catch {
+            streamCleanup?.();
           }
         }, 15000);
 
-        req.signal.addEventListener('abort', () => {
-          clearInterval(heartbeat);
-          try { controller.close(); } catch {}
-        });
+        req.signal.addEventListener('abort', () => streamCleanup?.(), { once: true });
+      },
+      cancel() {
+        streamCleanup?.();
       },
     });
 

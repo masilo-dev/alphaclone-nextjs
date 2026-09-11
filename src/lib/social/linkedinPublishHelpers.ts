@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { linkedInFetch, LinkedInApiError } from '@/lib/linkedin/linkedinClient';
 
 /** Collapse whitespace for duplicate caption detection. */
 export function normalizeCaptionForDedupe(caption: string): string {
@@ -98,5 +99,37 @@ export async function enqueueSocialPostSync(
   });
   if (error) {
     console.error('[enqueueSocialPostSync]', error.message, params);
+  }
+}
+
+/** GET the published URN. A create response alone is never treated as verified. */
+export async function confirmLinkedInPublish(params: {
+  accessToken: string;
+  postUrn: string;
+}): Promise<{ verified: boolean; verifiedAt: string | null }> {
+  const urn = String(params.postUrn || '').trim();
+  if (!urn || !params.accessToken) {
+    return { verified: false, verifiedAt: null };
+  }
+  try {
+    const res = await linkedInFetch(
+      `https://api.linkedin.com/v2/ugcPosts/${encodeURIComponent(urn)}`,
+      params.accessToken,
+      { method: 'GET' },
+      { timeoutMs: 15000, retries: 1 }
+    );
+    if (res.ok) {
+      return { verified: true, verifiedAt: new Date().toISOString() };
+    }
+    return { verified: false, verifiedAt: null };
+  } catch (error) {
+    if (error instanceof LinkedInApiError && error.code === 'NOT_FOUND') {
+      return { verified: false, verifiedAt: null };
+    }
+    console.warn(
+      '[confirmLinkedInPublish]',
+      error instanceof Error ? error.message : 'LinkedIn GET failed'
+    );
+    return { verified: false, verifiedAt: null };
   }
 }

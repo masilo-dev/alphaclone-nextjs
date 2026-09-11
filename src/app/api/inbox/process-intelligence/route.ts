@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { aiService } from '@/services/ai/aiService';
 import { cleanAIJSONResponse } from '@/lib/utils';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { messageId } = body;
-
-    if (!messageId) {
-      return NextResponse.json({ error: 'messageId is required' }, { status: 400 });
-    }
+    await requireAuthenticatedUser(req);
+    const { messageId } = z.object({ messageId: z.string().uuid() }).parse(await req.json());
 
     const supabase = await createSupabaseServerClient();
     const { data: msg, error } = await supabase
@@ -81,8 +79,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, intelligence: result, message: updatedMsg });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[ProcessIntelligenceAPI] Error:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    return routeErrorResponse(err, 'Message analysis failed', req);
   }
 }

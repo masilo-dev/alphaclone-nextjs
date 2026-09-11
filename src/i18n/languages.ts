@@ -242,3 +242,68 @@ export function onLanguageChange(callback: (lang: SupportedLanguage) => void): (
         }
     };
 }
+
+/**
+ * Map AlphaClone 2-letter language codes to BCP-47 locale tags used by
+ * `Intl.DateTimeFormat`, `Intl.NumberFormat`, `Date.prototype.toLocaleString`
+ * and `.toLocaleDateString` across the dashboard.
+ *
+ *   en → ['en-US', 'en']  (US as primary English regional reference;
+ *                           fallback generic 'en' preserves user OS defaults.)
+ *   es → ['es-ES', 'es']
+ *   pl → ['pl-PL', 'pl']
+ */
+export function languageToBcp47(lang: SupportedLanguage): Intl.LocalesArgument {
+    switch (lang) {
+        case 'es': return ['es-ES', 'es'];
+        case 'pl': return ['pl-PL', 'pl'];
+        default:   return ['en-US', 'en'];
+    }
+}
+
+/**
+ * Format a numeric value as locale-aware currency for the user's active language
+ * and a given ISO currency code (USD/EUR/GBP/PLN etc.). Returns a string.
+ *
+ * Example:
+ *   formatLocaleCurrency(1234.56, 'en', 'USD') → "$1,234.56"
+ *   formatLocaleCurrency(1234.56, 'es', 'EUR') → "1.234,56 €"
+ */
+export function formatLocaleCurrency(
+    value: number,
+    lang: SupportedLanguage,
+    currencyCode: string = 'USD',
+    opts: Intl.NumberFormatOptions = {},
+): string {
+    if (!Number.isFinite(value)) return '';
+    try {
+        return new Intl.NumberFormat(languageToBcp47(lang), {
+            style: 'currency',
+            currency: currencyCode,
+            maximumFractionDigits: 2,
+            ...opts,
+        }).format(value);
+    } catch {
+        // Invalid currency code fallback
+        return `${value.toFixed(2)} ${currencyCode}`;
+    }
+}
+
+/**
+ * Format an ISO date string / timestamp for the user's active language.
+ * Defaults show the long date + short time; override via `opts`.
+ */
+export function formatLocaleDate(
+    date: Date | number | string | null | undefined,
+    lang: SupportedLanguage,
+    opts: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' },
+): string {
+    if (date === null || date === undefined || date === '') return '';
+    const d = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(d.getTime())) return '';
+    try {
+        return new Intl.DateTimeFormat(languageToBcp47(lang), opts).format(d);
+    } catch {
+        return d.toLocaleString();
+    }
+}

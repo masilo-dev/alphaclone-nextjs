@@ -4,7 +4,9 @@ export function isPushSupported(): boolean {
     if (!('Notification' in window)) return false;
     if (!('serviceWorker' in navigator)) return false;
     if (!('PushManager' in window)) return false;
-    if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return false;
+    const publicKey =
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VITE_VAPID_PUBLIC_KEY;
+    if (!publicKey) return false;
 
     // Cursor's embedded browser reports APIs but push service is unavailable.
     const ua = navigator.userAgent.toLowerCase();

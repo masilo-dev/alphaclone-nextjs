@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Database, Zap, Video, Users, Activity, Check, ShoppingCart } from 'lucide-react';
-import { subscriptionService, ADDON_PRICING } from '../services/subscriptionService';
+import { subscriptionService } from '../services/subscriptionService';
 import { useTenant } from '../contexts/TenantContext';
 import { toast } from 'react-hot-toast';
 
@@ -28,8 +28,9 @@ export function AddonsMarketplace() {
         if (!tenant) return;
 
         setLoading(true);
-        const addons = await subscriptionService.getActiveAddons(tenant.id);
-        setActiveAddons(addons);
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/addons`, { cache: 'no-store' });
+        const payload = await response.json();
+        setActiveAddons(response.ok ? payload.addons || [] : []);
         setLoading(false);
     }
 
@@ -42,27 +43,13 @@ export function AddonsMarketplace() {
         setPurchasing(addonType);
 
         try {
-            const addonConfig = ADDON_PRICING[addonType as keyof typeof ADDON_PRICING];
-
-            // In production, this would create a Stripe checkout session
-            // For now, we'll simulate the purchase
-            const result = await subscriptionService.purchaseAddon(
-                tenant.id,
-                {
-                    addonType: addonType as any,
-                    addonName: addonConfig.name,
-                    quantity: addonConfig.quantity,
-                    priceCents: addonConfig.priceCents,
-                    billingCycle: 'billingCycle' in addonConfig ? addonConfig.billingCycle : 'one_time',
-                }
-            );
-
-            if (result.success) {
-                toast.success(`Successfully purchased ${addonConfig.name}!`);
-                loadActiveAddons();
-            } else {
-                toast.error(result.error || 'Failed to purchase add-on');
-            }
+            const response = await fetch('/api/stripe/create-addon-session', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: tenant.id, addonType }),
+            });
+            const result = await response.json();
+            if (!response.ok || !result.url) throw new Error(result.error || 'Failed to start checkout');
+            window.location.assign(result.url);
         } catch (error) {
             toast.error('An error occurred while purchasing');
             console.error('Purchase error:', error);

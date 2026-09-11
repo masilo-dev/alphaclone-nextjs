@@ -1,0 +1,357 @@
+/*
+ * AlphaClone Fluid Interface Layer
+ *
+ * Applies Apple-inspired interaction discipline without copying Apple's visual identity.
+ * AlphaClone remains navy / teal / coral / blue / violet. This layer improves response,
+ * depth, hierarchy, touch feedback, motion, typography and accessibility across the
+ * authenticated product and the public marketing experience.
+ */
+
+:root {
+  --ac-fluid-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ac-fluid-ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ac-fluid-press-scale: 0.975;
+  --ac-fluid-hover-lift: -1px;
+  --ac-fluid-control-duration: 140ms;
+  --ac-fluid-surface-duration: 220ms;
+  --ac-fluid-page-duration: 300ms;
+  --ac-fluid-blur-sm: 12px;
+  --ac-fluid-blur-md: 20px;
+  --ac-fluid-blur-lg: 28px;
+}
+
+/* --------------------------------------------------------------------------
+   1. PRODUCT: ALPHACLONE OS
+   -------------------------------------------------------------------------- */
+
+.ac-business-root {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-optical-sizing: auto;
+}
+
+/* Large headings tighten as they grow; small interface copy keeps clarity. */
+.ac-business-root h1,
+.ac-business-root h2,
+.ac-business-root [data-page-title] {
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.ac-business-root h3,
+.ac-business-root h4 {
+  letter-spacing: -0.012em;
+}
+
+.ac-business-root label,
+.ac-business-root caption,
+.ac-business-root [data-caption] {
+  letter-spacing: 0.01em;
+}
+
+/* Keep content panels solid/readable. Depth belongs primarily to chrome. */
+.ac-workspace-panel {
+  transition:
+    background-color var(--ac-fluid-surface-duration) var(--ac-fluid-ease-soft),
+    border-color var(--ac-fluid-surface-duration) var(--ac-fluid-ease-soft),
+    box-shadow var(--ac-fluid-surface-duration) var(--ac-fluid-ease),
+    transform var(--ac-fluid-surface-duration) var(--ac-fluid-ease);
+}
+
+/* Interactive panels react, but do not float excessively. */
+button.ac-workspace-panel:hover,
+a.ac-workspace-panel:hover,
+[role="button"].ac-workspace-panel:hover,
+.ac-workspace-panel[data-interactive="true"]:hover {
+  transform: translateY(var(--ac-fluid-hover-lift));
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.10);
+}
+
+html.dark button.ac-workspace-panel:hover,
+html.dark a.ac-workspace-panel:hover,
+html.dark [role="button"].ac-workspace-panel:hover,
+html.dark .ac-workspace-panel[data-interactive="true"]:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.30);
+}
+
+/* Immediate physical response on press. Commit still happens on pointer-up/click. */
+.ac-business-root button:not(:disabled):active,
+.ac-business-root [role="button"]:not([aria-disabled="true"]):active,
+.ac-business-root a.ac-workspace-action-btn:active,
+.ac-business-root .ac-workspace-nav-item:active,
+.ac-business-root .ac-workspace-nav-subitem:active,
+.ac-business-root .ac-workspace-tab:active {
+  transform: scale(var(--ac-fluid-press-scale));
+  transition-duration: 90ms;
+}
+
+/* Interactive controls should animate compositor-friendly properties first. */
+.ac-workspace-action-btn,
+.ac-workspace-nav-item,
+.ac-workspace-nav-subitem,
+.ac-workspace-tab,
+.ac-business-root button,
+.ac-business-root [role="button"] {
+  transition-timing-function: var(--ac-fluid-ease);
+}
+
+/* Structural chrome gets material treatment; content cards do not. */
+.ac-business-root header,
+.ac-business-root [data-workspace-toolbar],
+.ac-business-root [data-sticky-toolbar],
+.ac-business-root .ac-workspace-toolbar {
+  -webkit-backdrop-filter: blur(var(--ac-fluid-blur-md)) saturate(150%);
+  backdrop-filter: blur(var(--ac-fluid-blur-md)) saturate(150%);
+}
+
+.ac-business-root aside[data-drawer],
+.ac-business-root [role="dialog"],
+.ac-business-root [data-sheet],
+.ac-business-root [data-popover-content] {
+  -webkit-backdrop-filter: blur(var(--ac-fluid-blur-lg)) saturate(145%);
+  backdrop-filter: blur(var(--ac-fluid-blur-lg)) saturate(145%);
+  transform-origin: var(--ac-fluid-origin, center);
+}
+
+/* Let sticky chrome separate by depth instead of heavy hard dividers. */
+.ac-business-root [data-sticky-toolbar],
+.ac-business-root .ac-workspace-toolbar,
+.ac-business-root header.sticky {
+  box-shadow: 0 10px 28px -24px rgba(15, 23, 42, 0.55);
+}
+
+/* Better target acquisition and native-feeling controls. */
+.ac-business-root button,
+.ac-business-root input,
+.ac-business-root select,
+.ac-business-root textarea,
+.ac-business-root [role="button"],
+.ac-business-root [role="tab"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ac-business-root button:not(.h-auto),
+.ac-business-root [role="button"]:not(.h-auto) {
+  touch-action: manipulation;
+}
+
+/* Inputs feel integrated with the OS and keep focus unmistakable. */
+.ac-business-root input,
+.ac-business-root textarea,
+.ac-business-root select {
+  transition:
+    border-color var(--ac-fluid-control-duration) var(--ac-fluid-ease),
+    background-color var(--ac-fluid-control-duration) var(--ac-fluid-ease),
+    box-shadow var(--ac-fluid-control-duration) var(--ac-fluid-ease);
+}
+
+.ac-business-root input:focus-visible,
+.ac-business-root textarea:focus-visible,
+.ac-business-root select:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Tables preserve density but gain quiet spatial feedback. */
+.ac-business-root table tbody tr {
+  transition:
+    background-color var(--ac-fluid-control-duration) var(--ac-fluid-ease-soft),
+    box-shadow var(--ac-fluid-control-duration) var(--ac-fluid-ease-soft);
+}
+
+.ac-business-root table tbody tr:hover {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--ac-accent) 60%, transparent);
+}
+
+/* Dialogs/sheets use a consistent materialize/de-materialize motion. */
+@keyframes ac-fluid-materialize {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes ac-fluid-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(18px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.ac-business-root [role="dialog"][data-state="open"],
+.ac-business-root [data-sheet][data-state="open"],
+.ac-business-root [data-popover-content][data-state="open"] {
+  animation: ac-fluid-materialize var(--ac-fluid-page-duration) var(--ac-fluid-ease) both;
+}
+
+.ac-business-root [data-side="right"][data-state="open"] {
+  animation: ac-fluid-slide-in-right var(--ac-fluid-page-duration) var(--ac-fluid-ease) both;
+}
+
+/* Skeletons remain calm; avoid visual noise during long operations. */
+.ac-business-root .animate-pulse,
+.ac-business-root .ac-skeleton-pulse {
+  animation-duration: 1.8s;
+}
+
+/* --------------------------------------------------------------------------
+   2. PUBLIC MARKETING / LANDING EXPERIENCE
+   -------------------------------------------------------------------------- */
+
+.marketing-theme {
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  --mkt-material: rgba(13, 24, 38, 0.62);
+  --mkt-material-strong: rgba(11, 22, 34, 0.78);
+}
+
+.marketing-theme h1 {
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.marketing-theme h2 {
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.marketing-theme p {
+  text-wrap: pretty;
+}
+
+/* Preserve AlphaClone colors; refine the material hierarchy. */
+.marketing-theme .mkt-surface {
+  background: color-mix(in srgb, var(--background-card) 88%, transparent);
+  -webkit-backdrop-filter: blur(var(--ac-fluid-blur-sm)) saturate(145%);
+  backdrop-filter: blur(var(--ac-fluid-blur-sm)) saturate(145%);
+  transition:
+    transform var(--ac-fluid-surface-duration) var(--ac-fluid-ease),
+    border-color var(--ac-fluid-surface-duration) var(--ac-fluid-ease),
+    background-color var(--ac-fluid-surface-duration) var(--ac-fluid-ease),
+    box-shadow var(--ac-fluid-surface-duration) var(--ac-fluid-ease);
+}
+
+.marketing-theme .mkt-surface-elevated {
+  background: color-mix(in srgb, var(--background-elevated) 92%, transparent);
+  -webkit-backdrop-filter: blur(var(--ac-fluid-blur-md)) saturate(150%);
+  backdrop-filter: blur(var(--ac-fluid-blur-md)) saturate(150%);
+}
+
+.marketing-theme .mkt-surface:hover,
+.marketing-theme .mkt-surface-elevated:hover {
+  border-color: color-mix(in srgb, var(--brand-cyan-soft) 32%, var(--border-default));
+}
+
+/* CTAs should react immediately, not float around by default. */
+.marketing-theme .mkt-btn {
+  transform: translateZ(0);
+  transition:
+    background-color var(--ac-fluid-control-duration) var(--ac-fluid-ease),
+    color var(--ac-fluid-control-duration) var(--ac-fluid-ease),
+    border-color var(--ac-fluid-control-duration) var(--ac-fluid-ease),
+    box-shadow var(--ac-fluid-control-duration) var(--ac-fluid-ease),
+    transform var(--ac-fluid-control-duration) var(--ac-fluid-ease);
+}
+
+.marketing-theme .mkt-btn:hover {
+  transform: translateY(-1px);
+}
+
+.marketing-theme .mkt-btn:active {
+  transform: translateY(0) scale(var(--ac-fluid-press-scale));
+  transition-duration: 90ms;
+}
+
+.marketing-theme nav,
+.marketing-theme header[class*="sticky"],
+.marketing-theme header[class*="fixed"] {
+  -webkit-backdrop-filter: blur(var(--ac-fluid-blur-md)) saturate(155%);
+  backdrop-filter: blur(var(--ac-fluid-blur-md)) saturate(155%);
+}
+
+/* Product screenshots/previews should feel like substantial objects, not glowing cards. */
+.marketing-theme [data-product-preview],
+.marketing-theme .mkt-product-preview {
+  box-shadow:
+    0 0 0 1px rgba(109, 232, 226, 0.16),
+    0 30px 80px rgba(0, 5, 24, 0.42);
+  transform: translateZ(0);
+}
+
+/* --------------------------------------------------------------------------
+   3. ACCESSIBILITY / USER PREFERENCES
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ac-fluid-hover-lift: 0px;
+    --ac-fluid-press-scale: 1;
+  }
+
+  .ac-business-root *,
+  .marketing-theme * {
+    scroll-behavior: auto !important;
+  }
+
+  .ac-business-root [role="dialog"][data-state="open"],
+  .ac-business-root [data-sheet][data-state="open"],
+  .ac-business-root [data-popover-content][data-state="open"],
+  .ac-business-root [data-side="right"][data-state="open"] {
+    animation: none !important;
+  }
+
+  .ac-business-root button,
+  .ac-business-root [role="button"],
+  .marketing-theme .mkt-btn,
+  .marketing-theme .mkt-surface,
+  .marketing-theme .mkt-surface-elevated {
+    transform: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ac-business-root header,
+  .ac-business-root [data-workspace-toolbar],
+  .ac-business-root [data-sticky-toolbar],
+  .ac-business-root .ac-workspace-toolbar,
+  .ac-business-root [role="dialog"],
+  .ac-business-root [data-sheet],
+  .marketing-theme nav,
+  .marketing-theme .mkt-surface,
+  .marketing-theme .mkt-surface-elevated {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .marketing-theme .mkt-surface,
+  .marketing-theme .mkt-surface-elevated {
+    background: var(--mkt-material-strong) !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .ac-business-root .ac-workspace-panel,
+  .marketing-theme .mkt-surface,
+  .marketing-theme .mkt-surface-elevated {
+    border-color: currentColor;
+  }
+
+  .ac-business-root [role="dialog"],
+  .ac-business-root [data-sheet],
+  .marketing-theme nav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

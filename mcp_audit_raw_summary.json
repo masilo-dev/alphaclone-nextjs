@@ -1,0 +1,2390 @@
+{
+  "registryToolsCount": 503,
+  "manifestToolsCount": 245,
+  "supplementalToolsCount": 17,
+  "discoveryControlCount": 5,
+  "fullCatalogCount": 504,
+  "progressiveCatalogCount": 42,
+  "payloadSizeBytes": 366319,
+  "totalDescChars": 43330,
+  "totalSchemaChars": 121511,
+  "maxDescTool": {
+    "name": "run_chief_of_staff_routine",
+    "length": 419
+  },
+  "maxSchemaTool": {
+    "name": "publish_post",
+    "length": 2014
+  },
+  "duplicatesCount": 266,
+  "duplicatesList": [
+    {
+      "name": "get_contacts",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_clients",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "search_contacts",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_client",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_leads",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_deals",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_deal",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_deal",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_projects",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_project",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_project_details",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_invoices",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_invoice",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_invoice",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_invoice",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_contract",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_linkedin_identities",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "upload_media_asset",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_social_post_with_media",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "publish_facebook_reel",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "publish_facebook_multi_photo",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "trigger_bonnie_dream",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_dream_sessions",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "approve_dream_update",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "orchestrate_task",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_orchestration_history",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "define_outcome",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "export_to_google_workspace",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_get_emails",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_send_email",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_create_meeting",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_get_calendar",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_create_event",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_get_tasks",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_create_task",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_get_contacts",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_upload_file",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "microsoft_get_teams_messages",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_revenue_summary",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_finance_snapshot",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_accounts_receivable_aging",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_accounts_payable_aging",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_business_ai_state",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_business_ai_state",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "evaluate_business_ai_readiness",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "solo_owner_operator_brief",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "solo_owner_value_map",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "owner_autopilot_queue",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "revenue_recovery_agent",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "business_memory_graph",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "trust_ledger",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "solo_owner_time_savings_meter",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "deal_to_cash_flow",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "ai_business_readiness_score",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "client_pulse",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_api_health",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_document_to_claude",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "analyze_workspace_document_url",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_lead",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_lead",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "search_documents",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "upload_document",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_transactional_email",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "upload_media",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_post",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "search_tools",
+      "sources": [
+        "registry",
+        "discovery_control"
+      ]
+    },
+    {
+      "name": "load_module_tools",
+      "sources": [
+        "registry",
+        "discovery_control"
+      ]
+    },
+    {
+      "name": "list_modules",
+      "sources": [
+        "registry",
+        "discovery_control"
+      ]
+    },
+    {
+      "name": "list_capabilities",
+      "sources": [
+        "registry",
+        "discovery_control"
+      ]
+    },
+    {
+      "name": "execute_internal_tool",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "summarize_workspace",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "get_bank_accounts",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_bank_account",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_reconciliation_sessions",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_reconciliation_session",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_vendor_bills",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_vendor_bill",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "automate_expense_entry",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_contract_templates",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_contract_template",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_contract_version",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "request_contract_approval",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "review_contract_approval",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_ticket",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "get_tickets",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "update_ticket",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "get_ticket_stats",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "escalate_ticket",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "summarize_ticket",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "find_and_qualify_leads",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "parse_lead_criteria",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "qualify_crm_leads",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "get_scraper_leads",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "search_facebook_leads",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "draft_reply",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "generate_outreach_draft",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "get_account_overview",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "run_autonomous_scan",
+      "sources": [
+        "registry",
+        "supplemental"
+      ]
+    },
+    {
+      "name": "get_pnl_statement",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_balance_sheet",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_cash_flow_statement",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_expense",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_expenses",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "generate_expense_report",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_journal_entry",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_invoice_line_items",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_quote",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_quotes",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_quote",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_quote",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_receipt",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "reconcile_payment",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_subscription_checkout",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_client_by_id",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_client_history",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_client_email_history",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_client_metadata",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_client_status_batch",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "segment_clients_by_criteria",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_current_user",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_business_events",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_business_event",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_client_portal_event",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_task",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_tasks",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_task",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "add_task_dependency",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_tasks_batch",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "set_task_recurrence",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_project_milestones",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_project_timeline",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "kickoff_project_automation",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "gmail_list_threads",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "gmail_get_thread",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "sync_all_inboxes",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_whatsapp_message",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "enable_whatsapp_chatbot",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "generate_ai_image",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "generate_image",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_contract_approvals",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_contract_versions",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "analyze_document_intelligence",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "execute_strategic_intelligence",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_momentum_score",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_calendly_status",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "search_clients",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_client",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "gmail_send_email",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "backfill_contact_phone_country_codes",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "list_playbooks",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "run_playbook",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_run_status",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "retry_run_step",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "cancel_run",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "verify_lead_created",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "verify_outreach_delivery",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "verify_social_post_published",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "verify_invoice_sent",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_automation_health",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_failure_report",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_throughput_report",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "reconcile_outreach_vs_logs",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_lead_status",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_business_snapshot",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "generate_business_report",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_strategic_plan",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_bulk_email_campaign",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_batch_outreach",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "queue_email_campaign_send",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_email_campaign_delivery_status",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_message",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_facebook_identities",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_facebook_page_capabilities",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_facebook_post_insights",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "delete_facebook_post",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_social_post",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_linkedin_post",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_linkedin_posts",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_linkedin_post_stats",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "capture_linkedin_comment_leads",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_linkedin_comment",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_linkedin_reaction",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_linkedin_event",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_linkedin_ad_accounts",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_linkedin_ad_campaigns",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_linkedin_member_profile",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_project_summary",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_project_status",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_task_email",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "write_task_note",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "generate_contract_draft",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "save_contract",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "read_url_content",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_recent_messages",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_zoho_mail_messages",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_zoho_mail_thread",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "reply_to_zoho_mail",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_email_campaign_stats",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "subscribe_events",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "list_event_subscriptions",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "unsubscribe_event",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_bulk_email_campaign",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "auto_create_lead_from_message",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "score_deal",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "voice_action_router",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "write_audit_log",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "plan_social_calendar",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "create_post_with_ai_image",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "autonomous_reply",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "book_calendar_meeting",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "sync_calendly_events",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "start_invoice_lifecycle",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "start_contract_lifecycle",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "start_lead_campaign",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "start_lead_nurture",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "trigger_deal_automation",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "schedule_social_automation",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "start_email_campaign",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "orchestrate_meeting_workflow",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "onboard_user_automation",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "run_mcp_agent_workflow",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "generate_viral_video_script",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "generate_grok_video",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_x_profile",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "search_x_tweets",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "post_x_tweet",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "reply_to_x_tweet",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_x_dm",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_x_timeline",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "search_x_users",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_payroll_sync",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_invoice_chasing",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_month_end_close",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_lead_enrichment",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_sales_campaign",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_contract_drafter",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_content_synthesis",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_market_pulse",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_design_audit",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_project_architect",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_calendar_nexus",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_email_triage",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_support_triage",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_onboarding_flow",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_meeting_intelligence",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_documents",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "send_project_email",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "task_create",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "task_list",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "task_get_results",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "task_pause",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "task_resume",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "task_delete",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "nexus_strategic_orchestrator",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "generate_market_authority_report",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "disable_whatsapp_chatbot",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "train_chatbot",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_chatbot_persona",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "update_chatbot_persona",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_chatbot_conversations",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_whatsapp_status",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "set_chatbot_handoff_rules",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "enable_lead_auto_outreach",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "set_outreach_limits",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "get_chatbot_performance",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    },
+    {
+      "name": "run_chief_of_staff_routine",
+      "sources": [
+        "registry",
+        "manifest"
+      ]
+    }
+  ],
+  "fullToolNames": [
+    "accept_document",
+    "accounting_snapshot",
+    "activate_skill_for_session",
+    "add_note",
+    "add_task_dependency",
+    "ai_business_readiness_score",
+    "AI_usage_report",
+    "amend_document",
+    "analytics",
+    "analyze_document",
+    "analyze_document_intelligence",
+    "analyze_workspace_document_url",
+    "appointments",
+    "approve_document",
+    "approve_dream_update",
+    "approve_pending_action",
+    "approve_workflow_step",
+    "archive_document",
+    "audit_platform",
+    "auto_create_lead_from_message",
+    "automate_expense_entry",
+    "autonomous_reply",
+    "award_points",
+    "backfill_contact_phone_country_codes",
+    "book_calendar_meeting",
+    "business_memory_graph",
+    "calendly_health",
+    "campaign_brief",
+    "campaign_diagnose",
+    "campaign_metrics",
+    "campaigns",
+    "cancel_meeting",
+    "cancel_run",
+    "capture_linkedin_comment_leads",
+    "change_pipeline_stage",
+    "chase_contract_signature",
+    "check_mcp_execution_readiness",
+    "classify_outreach_reply",
+    "client_pulse",
+    "compare_contract_versions",
+    "compare_document_versions",
+    "compare_versions",
+    "connected_accounts",
+    "conversions",
+    "convert_quote_to_invoice",
+    "create_bank_account",
+    "create_bulk_email_batch",
+    "create_bulk_email_campaign",
+    "create_business_event",
+    "create_client",
+    "create_client_portal_event",
+    "create_contact",
+    "create_contract",
+    "create_contract_template",
+    "create_contract_version",
+    "create_deal",
+    "create_document",
+    "create_document_version",
+    "create_email_draft",
+    "create_email_sequence",
+    "create_expense",
+    "create_follow_up",
+    "create_in_app_notification",
+    "create_invoice",
+    "create_invoice_collection_mission",
+    "create_journal_entry",
+    "create_lead",
+    "create_linkedin_comment",
+    "create_linkedin_event",
+    "create_linkedin_post",
+    "create_linkedin_reaction",
+    "create_meeting",
+    "create_post",
+    "create_post_with_ai_image",
+    "create_project",
+    "create_project_task",
+    "create_quote",
+    "create_reconciliation_session",
+    "create_social_post",
+    "create_social_post_with_ai_image",
+    "create_social_post_with_media",
+    "create_subscription_checkout",
+    "create_task",
+    "create_tasks_batch",
+    "create_ticket",
+    "create_vendor_bill",
+    "customer_report",
+    "dashboard_metrics",
+    "deal_to_cash_flow",
+    "decline_document",
+    "deepseek_health",
+    "define_outcome",
+    "delete_contact",
+    "delete_facebook_post",
+    "delete_lead",
+    "delete_media",
+    "delete_media_asset",
+    "delete_post",
+    "delete_social_post",
+    "disable_whatsapp_chatbot",
+    "dispatch_tool",
+    "document_qa",
+    "document_url_qa",
+    "document_versions",
+    "draft_reply",
+    "drafts",
+    "email_campaigns",
+    "enable_lead_auto_outreach",
+    "enable_whatsapp_chatbot",
+    "engagement_report",
+    "enroll_contact_in_sequence",
+    "escalate_ticket",
+    "evaluate_business_ai_readiness",
+    "events",
+    "execute_action",
+    "execute_internal_tool",
+    "execute_strategic_intelligence",
+    "export_document_record",
+    "export_to_google_workspace",
+    "fetch",
+    "find_and_qualify_leads",
+    "funnels",
+    "generate_ai_image",
+    "generate_business_report",
+    "generate_contract_draft",
+    "generate_contract_signing_token",
+    "generate_expense_report",
+    "generate_grok_video",
+    "generate_image",
+    "generate_market_authority_report",
+    "generate_outreach_draft",
+    "generate_viral_video_script",
+    "get_account_overview",
+    "get_accounts_payable_aging",
+    "get_accounts_receivable_aging",
+    "get_action_status",
+    "get_agentic_os_status",
+    "get_api_health",
+    "get_audit_logs",
+    "get_automation_health",
+    "get_balance_sheet",
+    "get_bank_accounts",
+    "get_batch_job_status",
+    "get_business_ai_state",
+    "get_business_digital_twin",
+    "get_business_events",
+    "get_business_snapshot",
+    "get_calendly_status",
+    "get_cash_flow_statement",
+    "get_chatbot_conversations",
+    "get_chatbot_performance",
+    "get_chatbot_persona",
+    "get_client_by_id",
+    "get_client_email_history",
+    "get_client_history",
+    "get_clients",
+    "get_contact_activity",
+    "get_contacts",
+    "get_contract_approvals",
+    "get_contract_templates",
+    "get_contract_versions",
+    "get_contracts",
+    "get_conversation",
+    "get_current_user",
+    "get_dashboard_stats",
+    "get_deals",
+    "get_delivery_status",
+    "get_document",
+    "get_document_timeline",
+    "get_documents",
+    "get_dream_sessions",
+    "get_email_campaign_delivery_status",
+    "get_email_campaign_stats",
+    "get_environment",
+    "get_expenses",
+    "get_facebook_identities",
+    "get_facebook_page_capabilities",
+    "get_facebook_post_insights",
+    "get_facebook_token",
+    "get_failure_report",
+    "get_feature_flags",
+    "get_file_download_url",
+    "get_finance_snapshot",
+    "get_gamification_leaderboard",
+    "get_inventory_items",
+    "get_invoice_line_items",
+    "get_invoices",
+    "get_leads",
+    "get_linkedin_ad_accounts",
+    "get_linkedin_ad_campaigns",
+    "get_linkedin_identities",
+    "get_linkedin_member_profile",
+    "get_linkedin_post_stats",
+    "get_linkedin_posts",
+    "get_media",
+    "get_media_asset",
+    "get_meetings",
+    "get_momentum_score",
+    "get_nexus_memory",
+    "get_orchestration_history",
+    "get_pipeline_summary",
+    "get_platform_status",
+    "get_pnl_statement",
+    "get_post_analytics",
+    "get_post_status",
+    "get_project_details",
+    "get_project_milestones",
+    "get_project_summary",
+    "get_project_tasks",
+    "get_project_timeline",
+    "get_projects",
+    "get_quotes",
+    "get_recent_errors",
+    "get_recent_messages",
+    "get_reconciliation_sessions",
+    "get_revenue_summary",
+    "get_run_status",
+    "get_scheduled_posts",
+    "get_scraper_leads",
+    "get_sequence_stats",
+    "get_signature_status",
+    "get_social_accounts",
+    "get_social_identities",
+    "get_social_post",
+    "get_social_post_insights",
+    "get_social_posts",
+    "get_strategic_plan",
+    "get_system_health",
+    "get_tasks",
+    "get_tenant_messages",
+    "get_throughput_report",
+    "get_ticket_stats",
+    "get_tickets",
+    "get_user_points",
+    "get_vendor_bills",
+    "get_version",
+    "get_whatsapp_status",
+    "get_workflow",
+    "get_workflow_run",
+    "get_workspace_widgets",
+    "get_x_profile",
+    "get_x_timeline",
+    "get_zoho_mail_messages",
+    "get_zoho_mail_thread",
+    "github_health",
+    "gmail_get_thread",
+    "gmail_health",
+    "gmail_list_threads",
+    "gmail_send_email",
+    "google_calendar_health",
+    "growth_report",
+    "inspect_agent_reasoning",
+    "inspect_embeddings",
+    "inspect_executor",
+    "inspect_memory",
+    "inspect_planner",
+    "inspect_prompts",
+    "inspect_rag",
+    "inspect_scheduler",
+    "inspect_task_queue",
+    "inspect_tools",
+    "inspect_vector_store",
+    "integrations_status",
+    "invoices",
+    "kickoff_project_automation",
+    "landing_pages",
+    "list_capabilities",
+    "list_companies",
+    "list_contacts",
+    "list_conversations",
+    "list_department_agents",
+    "list_document_versions",
+    "list_email_accounts",
+    "list_event_subscriptions",
+    "list_files",
+    "list_leads",
+    "list_media_assets",
+    "list_modules",
+    "list_pending_approvals",
+    "list_playbooks",
+    "list_skills",
+    "list_tools",
+    "list_workflows",
+    "load_module_tools",
+    "load_skill",
+    "log_contact_activity",
+    "mark_invoice_paid",
+    "mark_message_read",
+    "microsoft_connection_diagnostic",
+    "microsoft_create_chat",
+    "microsoft_create_event",
+    "microsoft_create_meeting",
+    "microsoft_create_task",
+    "microsoft_get_calendar",
+    "microsoft_get_chats",
+    "microsoft_get_contacts",
+    "microsoft_get_emails",
+    "microsoft_get_joined_teams",
+    "microsoft_get_tasks",
+    "microsoft_get_team_channels",
+    "microsoft_get_teams_messages",
+    "microsoft_send_channel_message",
+    "microsoft_send_chat_message",
+    "microsoft_send_email",
+    "microsoft_upload_file",
+    "monitor_campaign_health",
+    "move_deal_stage",
+    "negotiate_capabilities",
+    "nexus_calendar_nexus",
+    "nexus_content_synthesis",
+    "nexus_contract_drafter",
+    "nexus_design_audit",
+    "nexus_email_triage",
+    "nexus_invoice_chasing",
+    "nexus_lead_enrichment",
+    "nexus_market_pulse",
+    "nexus_meeting_intelligence",
+    "nexus_month_end_close",
+    "nexus_onboarding_flow",
+    "nexus_payroll_sync",
+    "nexus_project_architect",
+    "nexus_sales_campaign",
+    "nexus_strategic_orchestrator",
+    "nexus_support_triage",
+    "onboard_user_automation",
+    "openai_health",
+    "opportunities",
+    "orchestrate_meeting_workflow",
+    "orchestrate_task",
+    "owner_autopilot_queue",
+    "parse_lead_criteria",
+    "payments",
+    "pipeline_status",
+    "place_legal_hold",
+    "plan_social_calendar",
+    "post_x_tweet",
+    "predict_deal_win_probability",
+    "prepare_contract_renewal",
+    "preview_document",
+    "publish_facebook_album",
+    "publish_facebook_multi_photo",
+    "publish_facebook_photo",
+    "publish_facebook_reel",
+    "publish_facebook_video",
+    "publish_instagram_carousel",
+    "publish_instagram_photo",
+    "publish_instagram_reel",
+    "publish_linkedin_document",
+    "publish_linkedin_image",
+    "publish_now",
+    "publish_post",
+    "publish_social_post",
+    "publish_x_image",
+    "publish_x_video",
+    "qualify_crm_leads",
+    "queue_email_campaign_send",
+    "quotes",
+    "railway_health",
+    "read_url_content",
+    "recommend_next_steps",
+    "reconcile_outreach_vs_logs",
+    "reconcile_payment",
+    "record_document_view",
+    "refresh_business_digital_twin",
+    "reject_document",
+    "reject_pending_action",
+    "reject_workflow_step",
+    "release_legal_hold",
+    "reminders",
+    "render_document",
+    "reorder_widgets",
+    "reply_to_email",
+    "reply_to_x_tweet",
+    "reply_to_zoho_mail",
+    "request_changes",
+    "request_contract_approval",
+    "restart_service",
+    "restore_document",
+    "resume_workflow",
+    "retrieve_document",
+    "retry_run_step",
+    "retry_social_post",
+    "revenue_dashboard",
+    "revenue_recovery_agent",
+    "revenue_report",
+    "review_contract_approval",
+    "run_autonomous_scan",
+    "run_chief_of_staff_routine",
+    "run_cognitive_loop",
+    "run_growth_lifecycle",
+    "run_mcp_agent_workflow",
+    "run_playbook",
+    "run_strategic_pnl_audit",
+    "run_workflow",
+    "save_contract",
+    "schedule_post",
+    "schedule_social_automation",
+    "schedule_social_post",
+    "scheduled_posts",
+    "score_deal",
+    "search",
+    "search_clients",
+    "search_contacts",
+    "search_documents",
+    "search_documents_os",
+    "search_facebook_leads",
+    "search_leads",
+    "search_tools",
+    "search_x_tweets",
+    "search_x_users",
+    "segment_clients_by_criteria",
+    "send_batch_outreach",
+    "send_bulk_email_campaign",
+    "send_contract",
+    "send_document",
+    "send_document_to_claude",
+    "send_email",
+    "send_for_signature",
+    "send_invoice",
+    "send_message",
+    "send_project_email",
+    "send_quote",
+    "send_receipt",
+    "send_task_email",
+    "send_tenant_message",
+    "send_transactional_email",
+    "send_whatsapp_message",
+    "send_x_dm",
+    "set_chatbot_handoff_rules",
+    "set_outreach_limits",
+    "set_task_recurrence",
+    "show_related_records",
+    "solo_owner_operator_brief",
+    "solo_owner_time_savings_meter",
+    "solo_owner_value_map",
+    "start_contract_lifecycle",
+    "start_email_campaign",
+    "start_invoice_lifecycle",
+    "start_lead_campaign",
+    "start_lead_nurture",
+    "stop_workflow",
+    "store_facebook_token",
+    "stripe_health",
+    "submit_for_review",
+    "subscribe_events",
+    "subscriptions",
+    "summarize_ticket",
+    "summarize_workspace",
+    "supabase_health",
+    "supersede_document",
+    "supervise_task",
+    "sync_all_inboxes",
+    "sync_calendly_events",
+    "sync_knowledge_graph",
+    "task_create",
+    "task_delete",
+    "task_get_results",
+    "task_list",
+    "task_pause",
+    "task_resume",
+    "tasks",
+    "toggle_widget_visibility",
+    "train_chatbot",
+    "trigger_bonnie_dream",
+    "trigger_deal_automation",
+    "trust_ledger",
+    "unsubscribe_event",
+    "update_business_ai_state",
+    "update_chatbot_persona",
+    "update_client",
+    "update_client_metadata",
+    "update_client_status_batch",
+    "update_company",
+    "update_contact",
+    "update_contract_status",
+    "update_deal",
+    "update_document",
+    "update_inventory_stock",
+    "update_invoice",
+    "update_invoice_status",
+    "update_lead",
+    "update_lead_status",
+    "update_project",
+    "update_project_status",
+    "update_project_task",
+    "update_quote",
+    "update_task",
+    "update_ticket",
+    "upload_document",
+    "upload_media",
+    "upload_media_asset",
+    "upload_social_media",
+    "upsert_nexus_memory",
+    "validate_document",
+    "verify_invoice_sent",
+    "verify_lead_created",
+    "verify_outreach_delivery",
+    "verify_social_post_published",
+    "voice_action_router",
+    "void_document",
+    "write_audit_log",
+    "write_task_note",
+    "x_connection_diagnostic",
+    "zoho_health"
+  ]
+}

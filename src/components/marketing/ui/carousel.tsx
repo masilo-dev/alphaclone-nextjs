@@ -105,7 +105,7 @@ const CarouselPrevious = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAtt
         onClick={scrollPrev}
         disabled={!canScrollPrev}
         className={cn(
-          'absolute left-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700/80 bg-slate-950/90 text-slate-300 transition-colors hover:border-cyan-500/40 hover:text-cyan-300 disabled:opacity-30',
+          'absolute left-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700/80 bg-slate-950/90 text-slate-300 transition-colors hover:border-teal-500/40 hover:text-teal-300 disabled:opacity-30',
           className
         )}
         aria-label="Previous slide"
@@ -128,7 +128,7 @@ const CarouselNext = React.forwardRef<HTMLButtonElement, React.ButtonHTMLAttribu
         onClick={scrollNext}
         disabled={!canScrollNext}
         className={cn(
-          'absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700/80 bg-slate-950/90 text-slate-300 transition-colors hover:border-cyan-500/40 hover:text-cyan-300 disabled:opacity-30',
+          'absolute right-0 top-1/2 z-10 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-700/80 bg-slate-950/90 text-slate-300 transition-colors hover:border-teal-500/40 hover:text-teal-300 disabled:opacity-30',
           className
         )}
         aria-label="Next slide"
@@ -175,7 +175,7 @@ export function MarketingTestimonialsCarousel({
                 <blockquote className="text-lg sm:text-xl text-slate-200 leading-relaxed">
                   &ldquo;{item.quote}&rdquo;
                 </blockquote>
-                <cite className="mt-6 block text-sm font-semibold not-italic text-cyan-400">{item.persona}</cite>
+                <cite className="mt-6 block text-sm font-semibold not-italic text-teal-400">{item.persona}</cite>
               </article>
             </CarouselItem>
           ))}

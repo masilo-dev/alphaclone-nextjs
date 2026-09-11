@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   title: 'Search | AlphaClone Systems',
   description: 'Search AlphaClone public pages, guides, and policy content.',
   alternates: { canonical: 'https://alphaclonesystems.com/search' },
-  robots: { index: true, follow: true },
+  robots: { index: false, follow: true },
 };
 
 export default async function Page({

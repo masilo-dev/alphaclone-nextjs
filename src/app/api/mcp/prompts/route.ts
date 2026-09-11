@@ -23,8 +23,13 @@ async function handleDiscovery(req: NextRequest, method: string) {
     }
 
     if (method === 'tools/list') {
-      const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
-      return NextResponse.json({ tools: MCP_TOOLS }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
+      const { getUnifiedMcpTools, getCatalogChecksum } = await import('@/lib/mcp/listAllTools');
+      const tools = await getUnifiedMcpTools({ catalogMode: 'full' });
+      const checksum = getCatalogChecksum(tools);
+      return NextResponse.json(
+        { tools, metadata: { registry_version: '2.0.0', catalog_checksum: checksum, total_tools: tools.length } },
+        { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0', 'X-Catalog-Checksum': checksum } }
+      );
     }
 
     return NextResponse.json({ error: 'Method Not Supported' }, { status: 400, headers: getMcpCorsHeaders(req) });

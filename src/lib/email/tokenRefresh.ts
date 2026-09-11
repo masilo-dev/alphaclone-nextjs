@@ -13,13 +13,13 @@ export async function refreshMicrosoftTokenIfNeeded(force = false): Promise<bool
   }
 }
 
-export async function refreshZohoTokenIfNeeded(force = false): Promise<boolean> {
+export async function refreshZohoTokenIfNeeded(force = false, tenantId?: string): Promise<boolean> {
   try {
     const res = await fetch('/api/auth/zoho/refresh', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ force }),
+      body: JSON.stringify({ force, tenantId }),
     });
     const data = await res.json().catch(() => ({}));
     return res.ok && data.success === true;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import DashboardCard from '../components/DashboardCard';
 import StatCard from '../components/StatCard';
@@ -11,6 +12,7 @@ import type { MobileActivity, MobileDashboardStats } from '../types';
 
 export default function DashboardScreen() {
   const { user, activeTenant } = useAuth();
+  const navigation = useNavigation();
   const [dashboard, setDashboard] = useState<MobileDashboardStats>({
     activeProjects: 0,
     totalLeads: 0,
@@ -64,8 +66,13 @@ export default function DashboardScreen() {
               <Text style={styles.userName}>{user?.name || user?.email || 'User'}</Text>
               <Text style={styles.workspaceName}>{activeTenant?.name || 'Setting up workspace'}</Text>
             </View>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Ionicons name="notifications" size={24} color="#FFFFFF" />
+            <TouchableOpacity
+              style={styles.notificationButton}
+              accessibilityRole="button"
+              accessibilityLabel="Open settings"
+              onPress={() => navigation.navigate('Settings' as never)}
+            >
+              <Ionicons name="settings-outline" size={24} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
 
@@ -76,21 +83,36 @@ export default function DashboardScreen() {
             ))}
           </View>
 
-          {/* Quick Actions */}
+          {/* Quick Actions — every visible action must navigate */}
           <BlurView intensity={80} style={styles.quickActions}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
             <View style={styles.actionsRow}>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Open projects"
+                onPress={() => navigation.navigate('Projects' as never)}
+              >
                 <Ionicons name="add-circle" size={32} color="#00D2A0" />
-                <Text style={styles.actionText}>New Project</Text>
+                <Text style={styles.actionText}>Projects</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Open CRM"
+                onPress={() => navigation.navigate('CRM' as never)}
+              >
                 <Ionicons name="person-add" size={32} color="#0077FF" />
-                <Text style={styles.actionText}>Add Lead</Text>
+                <Text style={styles.actionText}>CRM</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton}>
-                <Ionicons name="calendar" size={32} color="#FFA500" />
-                <Text style={styles.actionText}>Schedule</Text>
+              <TouchableOpacity
+                style={styles.actionButton}
+                accessibilityRole="button"
+                accessibilityLabel="Open finance"
+                onPress={() => navigation.navigate('Finance' as never)}
+              >
+                <Ionicons name="cash-outline" size={32} color="#FFA500" />
+                <Text style={styles.actionText}>Finance</Text>
               </TouchableOpacity>
             </View>
           </BlurView>

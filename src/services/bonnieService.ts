@@ -31,6 +31,16 @@ function humanizeBonnieError(message: string, status?: number): string {
   const raw = String(message || '').trim();
   const normalized = raw.toLowerCase();
 
+  // Schema / Zod dumps — never show to operators
+  if (
+    normalized.includes('invalid_type') ||
+    normalized.includes('invalid_value') ||
+    normalized.includes('invalid_format') ||
+    (normalized.includes('"code"') && normalized.includes('"path"'))
+  ) {
+    return 'Bonnie couldn’t finish that step — the details weren’t clear enough. Ask again in plain language.';
+  }
+
   const providerCreditsIssue =
     normalized.includes('all ai providers failed') ||
     normalized.includes('insufficient credits') ||
@@ -43,18 +53,18 @@ function humanizeBonnieError(message: string, status?: number): string {
     normalized.includes('payment required');
 
   if (providerCreditsIssue || status === 402) {
-    return 'Bonnie could not execute that because the AI provider layer is out of credits or billing is inactive. Restore at least one provider or OpenRouter account, then try again.';
+    return 'Bonnie couldn’t run that because the AI service is out of credits or billing is inactive. Restore a provider, then try again.';
   }
 
   if (normalized.includes('no endpoints found')) {
-    return 'Bonnie could not execute that because the configured model endpoint is unavailable. Update the AI provider model mapping and try again.';
+    return 'Bonnie couldn’t reach the AI model that’s configured. An admin needs to update the model settings.';
   }
 
   if (normalized.includes('invalid api key') || normalized.includes('forbidden') || normalized.includes('suspended')) {
-    return 'Bonnie could not execute that because an AI provider key is invalid, suspended, or missing access.';
+    return 'Bonnie couldn’t run that because an AI key is missing, suspended, or doesn’t have access.';
   }
 
-  return raw || `Bonnie could not process that instruction${status ? ` (${status})` : ''}.`;
+  return raw || 'Bonnie couldn’t process that request. Please try again.';
 }
 
 function isMissingBonnieLogsTable(error: { code?: string; message?: string } | null | undefined): boolean {
@@ -85,10 +95,11 @@ export function resolveBonnieNavIntent(
   // [keywords, businessRoute, adminRoute, label]
   const map: Array<[RegExp, string, string, string]> = [
     [/\b(crm|customers?|contacts?|client list)\b/, '/dashboard/crm', '/dashboard/crm', 'CRM'],
+    [/\b(lead finder|lead search|prospect search|find leads)\b/, '/dashboard/leads/finder', '/dashboard/leads/finder', 'Lead Finder'],
     [/\b(leads?|lead board|pipeline of leads)\b/, '/dashboard/leads', '/dashboard/leads', 'Leads'],
     [/\b(deals?|sales pipeline|opportunit)/, '/dashboard/deals', '/dashboard/deals', 'Deals'],
     [/\b(ticket|support|help ?desk|deep ?desk)/, '/dashboard/business/tickets', '/dashboard/tickets', 'Tickets'],
-    [/\b(campaign|marketing|email blast|newsletter)/, '/dashboard/business/campaigns', '/dashboard/campaigns', 'Marketing Campaigns'],
+    [/\b(campaign|marketing|email blast|newsletter)/, '/dashboard/business/campaigns', '/dashboard/business/campaigns', 'Marketing Campaigns'],
     [/\b(account(ing)?|book ?keep|quickbooks|ledger|journal|chart of accounts)/, '/dashboard/accounting', '/dashboard/finance', 'Accounting'],
     [/\b(invoice|billing|payment)/, '/dashboard/business/billing', '/dashboard/finance', 'Billing'],
     [/\b(quote|proposal)/, '/dashboard/business/quotes', '/dashboard/contracts', 'Quotes & Proposals'],
@@ -159,16 +170,7 @@ export const bonnieService = {
       return data.rules;
     } catch (error) {
       console.error('Error fetching Bonnie rules:', error);
-      // Return default rules if error/missing
-      return {
-        tenant_id: tenantId,
-        enabled: true,
-        auto_send_enabled: false,
-        auto_send_confidence_threshold: 85,
-        high_risk_approval_required: true,
-        stale_deal_days: 7,
-        social_inactivity_days: 3,
-      };
+      throw error;
     }
   },
 
@@ -364,7 +366,14 @@ export const bonnieService = {
     tenantId: string,
     instruction: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> | undefined,
-    options: { pathname?: string; moduleContext?: string; onToken?: (token: string) => void; onPhase?: (phase: string) => void }
+    options: {
+      pathname?: string;
+      moduleContext?: string;
+      onToken?: (token: string) => void;
+      onPhase?: (phase: string, meta?: Record<string, unknown>) => void;
+      onTools?: (tools: BonnieToolExecuted[]) => void;
+      signal?: AbortSignal;
+    }
   ): Promise<BonnieInstructionResult> {
     const response = await fetch('/api/bonnie/stream', {
       method: 'POST',
@@ -376,6 +385,7 @@ export const bonnieService = {
         pathname: options.pathname,
         moduleContext: options.moduleContext,
       }),
+      signal: options.signal,
     });
 
     if (!response.ok || !response.body) {
@@ -423,7 +433,13 @@ export const bonnieService = {
         }
 
         if (event === 'phase' && data.phase) {
-          options.onPhase?.(String(data.phase));
+          const { phase, ...meta } = data;
+          options.onPhase?.(String(phase), meta);
+        }
+        if (event === 'tools' && Array.isArray(data.tools)) {
+          const tools = data.tools as BonnieToolExecuted[];
+          options.onTools?.(tools);
+          options.onPhase?.('tools', { tools });
         }
         if (event === 'token' && data.text) {
           streamedText += String(data.text);

@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square, PenTool } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -15,6 +15,36 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
 import { ContractAuditLog } from './ContractAuditLog';
+import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { BulkActions } from '@/components/BulkActions';
+import CustomContextMenu from '@/components/common/CustomContextMenu';
+import {
+    buildContractDocumentInput,
+    resolveDocumentThemeId,
+} from '@/lib/documents/documentBuilders';
+import type { DocumentThemeId } from '@/lib/documents/renderDocument';
+import { ContractLifecycleDrawer } from '@/components/contracts/ContractLifecycleDrawer';
+import {
+    contractMatchesListFilter,
+    contractStatusBucket,
+    contractStatusLabel,
+    type ContractListFilter,
+} from '@/lib/contracts/contractManagerDomain';
+import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
+import { ContractTemplateLibrary, ContractTemplate } from './ContractTemplateLibrary';
+import { ContractRenewalAlertsPanel } from './ContractRenewalAlertsPanel';
+import { SignerProfileModal } from './SignerProfileModal';
+import { JurisdictionFields } from './JurisdictionFields';
+import { contractSignerProfileService } from '../../services/contractSignerProfileService';
+import {
+    EMPTY_SIGNER_PROFILE,
+    applySignerProfileDefaults,
+    type ContractSignerProfile,
+} from '@/lib/contracts/signerProfile';
+import { resolveContractGoverningLaw } from '@/lib/contracts/contractGoverningLaw';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -24,7 +54,6 @@ import {
 } from '../../services/universalServiceCatalog';
 import { generateEmailDraft } from '../../services/unifiedAIService';
 import { contractLifecycleService } from '../../services/contractLifecycleService';
-import { EU_JURISDICTIONS } from '../../config/euJurisdictions';
 
 interface ContractDashboardProps {
     user: UserType;
@@ -127,18 +156,28 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'GHS'];
 const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const router = useRouter();
     const { currentTenant } = useTenant();
+    const { confirm: confirmDialog } = useConfirmDialog();
     const [projectTypeOptions, setProjectTypeOptions] = useState<string[]>(() => getContractProjectTypeOptions());
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [step, setStep] = useState<'form' | 'preview' | 'sign' | 'saved'>('form');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [aiSuggesting, setAiSuggesting] = useState(false);
+    const [signatureModalOpen, setSignatureModalOpen] = useState(false);
+    // Owner's reusable signer profile: provider details, default governing law
+    // and the adopted signature. Pre-fills every new contract.
+    const [signerProfile, setSignerProfile] = useState<ContractSignerProfile>(EMPTY_SIGNER_PROFILE);
     const [generatedContract, setGeneratedContract] = useState('');
     const [contractId, setContractId] = useState<string>('');
     const [savedContracts, setSavedContracts] = useState<any[]>([]);
         const [loadingContracts, setLoadingContracts] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer'>('new');
+    const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer' | 'templates' | 'alerts'>('new');
     const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
     const [bulkDeletingContracts, setBulkDeletingContracts] = useState(false);
+    const [listQuery, setListQuery] = useState('');
+    const [listStatusFilter, setListStatusFilter] = useState<ContractListFilter>('all');
+    const [listSort, setListSort] = useState<'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'value_desc' | 'value_asc'>('newest');
+    const [lifecycleContractId, setLifecycleContractId] = useState<string | null>(null);
     
     // AI Lawyer Chat States
     const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
@@ -299,8 +338,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 content: html,
                 status: 'draft',
                 client_id: selectedClientIdForLawyer || form.clientId || undefined,
+                metadata: {
+                    document_theme: documentTheme,
+                    client_name: form.clientName,
+                    client_email: form.clientEmail,
+                    source: 'lawyer_assistant',
+                },
             });
-            if (error || !contract) throw new Error(error || 'Failed to save contract');
+            if (error || !contract) throw new Error(typeof error === 'object' && error && 'message' in error ? String((error as any).message) : String(error || 'Failed to save contract'));
 
             setGeneratedContract(cleaned);
             setEditedHtml(html);
@@ -331,7 +376,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [sendingContract, setSendingContract] = useState(false);
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
     const [aiSendInstructions, setAiSendInstructions] = useState('');
-    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '', provider: 'auto' as string });
+    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '', provider: 'auto' as string, jurisdiction: '', governingLaw: '' });
+    const [resendForSignature, setResendForSignature] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedHtml, setEditedHtml] = useState('');
     const [previewTab, setPreviewTab] = useState<'document' | 'audit'>('document');
@@ -372,6 +418,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         contractLength: 'full',
         outputLanguage: 'en',
     });
+    const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -394,6 +441,51 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             });
         }
     }, [currentTenant?.id]);
+
+    // Load the saved signer profile once and pre-fill the provider block +
+    // governing law so the owner never retypes them.
+    useEffect(() => {
+        let cancelled = false;
+        contractSignerProfileService.load().then((profile) => {
+            if (cancelled) return;
+            setSignerProfile(profile);
+            setForm((prev) => applySignerProfileDefaults(prev, profile, { tenantFallbackName: currentTenant?.name || '' }));
+        });
+        return () => { cancelled = true; };
+    }, [currentTenant?.name, user.id]);
+
+    const applySignerProfile = (profile: ContractSignerProfile) => {
+        setSignerProfile(profile);
+        setForm((prev) => applySignerProfileDefaults(prev, profile, { tenantFallbackName: currentTenant?.name || '' }));
+    };
+
+    /** Persist the provider block + governing law from the current form (fire-and-forget). */
+    const rememberSignerDetails = (f: ContractForm) => {
+        const patch = {
+            providerName: f.providerName,
+            providerAddress: f.providerAddress,
+            providerEmail: f.providerEmail,
+            providerPhone: f.providerPhone,
+            providerRegistration: f.providerRegistration,
+            jurisdiction: f.jurisdiction,
+            governingLaw: f.governingLaw,
+        };
+        const unchanged = (Object.keys(patch) as (keyof typeof patch)[]).every((key) => (signerProfile[key] || '') === (patch[key] || '').trim());
+        if (unchanged) return;
+        contractSignerProfileService.save(patch).then(setSignerProfile).catch((error) => {
+            console.warn('[contracts] signer details were not remembered', error);
+        });
+    };
+
+    const rememberSignature = async (cleanDataUrl: string, fullName: string) => {
+        try {
+            const saved = await contractSignerProfileService.save({ signature: { dataUrl: cleanDataUrl, fullName } });
+            setSignerProfile(saved);
+            toast.success('Signature saved — next time you can sign with one click.');
+        } catch (error) {
+            toast.error((error as Error).message || 'Signature could not be saved for reuse');
+        }
+    };
 
     useEffect(() => {
         if (!currentTenant?.id) return;
@@ -443,9 +535,24 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         if (!form.clientName.trim()) { toast.error('Client name is required'); return; }
         if (!form.projectName.trim()) { toast.error('Project name is required'); return; }
         if (!form.totalAmount.trim()) { toast.error('Contract value is required'); return; }
+        if (!form.jurisdiction.trim() || !form.governingLaw.trim()) {
+            toast.error('Governing jurisdiction and governing law are required — a contract cannot be sent for signature without them.');
+            return;
+        }
 
+        rememberSignerDetails(form);
         setIsGenerating(true);
         setGeneratedContract('');
+        // A fresh draft has no saved row, no signature and no manual edits.
+        // Reset here, before streaming starts — never after it finishes, or a
+        // signature adopted while the text was still arriving would be wiped.
+        setEditedHtml('');
+        setIsEditing(false);
+        setContractId('');
+        setIsSigned(false);
+        setSignatureName('');
+        setSignatureData('');
+        setPreviewTab('document');
         setStep('preview');
 
         try {
@@ -481,23 +588,15 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 if (doneReading) break;
             }
 
-            const finalHtml = contractToHTML(accumulated);
-            setEditedHtml(finalHtml);
-            setContractId('');
-            setIsSigned(false);
-            setSignatureName('');
-            setSignatureData('');
-            setIsGenerating(false);
-            return;
+            setEditedHtml(contractToHTML(accumulated));
         } catch (err) {
             console.error('Streaming error:', err);
             toast.error('AI Streaming failed, using template...');
             // Fallback: generate from template
-            setGeneratedContract(buildTemplateContract(form, form.contractLength));
-            setContractId('');
-            setIsSigned(false);
-            setSignatureName('');
-            setSignatureData('');
+            const template = buildTemplateContract(form, form.contractLength);
+            setGeneratedContract(template);
+            setEditedHtml(contractToHTML(template));
+        } finally {
             setIsGenerating(false);
         }
     };
@@ -506,20 +605,61 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         if (!currentTenant?.id) return;
         setIsSaving(true);
         try {
-            const { contract, error } = await contractService.createContract({
-                title: `${form.projectName} — ${form.clientName}`,
-                content: isEditing ? editedHtml : (editedHtml || contractToHTML(generatedContract)),
-                client_id: form.clientId || undefined,
-                status: isSigned ? 'sent' : 'draft',
-                payment_amount: parseFloat(form.totalAmount) || 0,
-                admin_signature: isSigned ? signatureData : undefined,
-                admin_signed_at: isSigned ? new Date().toISOString() : undefined,
+            const content = isEditing ? editedHtml : (editedHtml || contractToHTML(generatedContract));
+            const legal = resolveContractGoverningLaw({
+                provided: { governingLaw: form.governingLaw, jurisdiction: form.jurisdiction },
+                content,
             });
-            if (error) throw new Error(error);
-            toast.success('Contract saved successfully!');
-            if (contract?.id) setContractId(contract.id);
+            const metadata = {
+                document_theme: documentTheme,
+                client_name: form.clientName,
+                client_email: form.clientEmail,
+                client_address: form.clientAddress,
+                project_name: form.projectName,
+                provider_name: form.providerName,
+                supplier_legal_name: form.providerName,
+                admin_signer_name: isSigned ? signatureName : undefined,
+            };
+            const existing = contractId ? savedContracts.find((c) => c.id === contractId) : undefined;
+            let saved: any;
+            if (existing) {
+                // Re-saving a contract that was opened from the list: update it in
+                // place instead of creating a duplicate row.
+                const { contract, error } = await contractService.updateContract(contractId, {
+                    content,
+                    status: isSigned && existing.status === 'draft' ? 'sent' : undefined,
+                    payment_amount: parseFloat(form.totalAmount) || existing.payment_amount || 0,
+                    admin_signature: isSigned ? signatureData : undefined,
+                    admin_signed_at: isSigned ? (existing.admin_signed_at || new Date().toISOString()) : undefined,
+                    governing_law: legal.governingLaw || undefined,
+                    jurisdiction: legal.jurisdiction || undefined,
+                    metadata: { ...(existing.metadata || {}), ...metadata },
+                });
+                if (error) throw new Error(error.message);
+                saved = contract;
+                setSavedContracts((prev) => prev.map((c) => (c.id === contractId ? { ...c, ...saved } : c)));
+                toast.success('Contract updated');
+            } else {
+                const { contract, error } = await contractService.createContract({
+                    title: `${form.projectName} — ${form.clientName}`,
+                    content,
+                    client_id: form.clientId || undefined,
+                    status: isSigned ? 'sent' : 'draft',
+                    payment_amount: parseFloat(form.totalAmount) || 0,
+                    admin_signature: isSigned ? signatureData : undefined,
+                    admin_signed_at: isSigned ? new Date().toISOString() : undefined,
+                    governing_law: legal.governingLaw || undefined,
+                    jurisdiction: legal.jurisdiction || undefined,
+                    metadata,
+                });
+                if (error) throw new Error(String(error.message || error));
+                saved = contract;
+                toast.success('Contract saved successfully!');
+                if (contract?.id) setContractId(contract.id);
+                setSavedContracts(prev => [contract, ...prev]);
+            }
+            rememberSignerDetails(form);
             showActionNextSteps(isSigned ? 'contract_signed' : 'contract_saved', (path) => router.push(path));
-            setSavedContracts(prev => [contract, ...prev]);
             setStep('saved');
             setIsEditing(false);
         } catch (e: any) {
@@ -546,18 +686,97 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
-    const openSendContractModal = () => {
-        const targetEmail = form.clientEmail || '';
+    const resolveContractClientContact = (contract?: any | null) => {
+        const meta = (contract?.metadata || {}) as Record<string, unknown>;
+        const linkedClient =
+            (contract?.client_id && clients.find((c) => c.id === contract.client_id)) ||
+            (form.clientId && clients.find((c) => c.id === form.clientId)) ||
+            null;
+
+        const emailCandidates = [
+            contract?.client_email,
+            meta.client_email,
+            meta.clientEmail,
+            meta.signer_email,
+            linkedClient?.email,
+            form.clientEmail,
+        ]
+            .map((value) => String(value || '').trim())
+            .filter((value) => value.includes('@'));
+
+        const nameCandidates = [
+            meta.client_name,
+            meta.clientName,
+            linkedClient?.name,
+            form.clientName,
+            contract?.client_name,
+        ]
+            .map((value) => String(value || '').trim())
+            .filter(Boolean);
+
+        return {
+            email: emailCandidates[0] || '',
+            name: nameCandidates[0] || 'the client',
+            clientId: String(contract?.client_id || linkedClient?.id || form.clientId || ''),
+        };
+    };
+
+    /**
+     * True when the contract being sent has no governing law on its row and
+     * none can be recovered from its text — the server would reject the send,
+     * so the modal asks for it up front instead.
+     */
+    const sendNeedsGoverningLaw = useMemo(() => {
+        if (!showSendModal || !contractId) return false;
+        const target = savedContracts.find((c) => c.id === contractId);
+        if (!target) return false;
+        return resolveContractGoverningLaw({ row: target, content: target.content }).source === 'none';
+    }, [showSendModal, contractId, savedContracts]);
+
+    const openSendContractModal = (options?: { resend?: boolean; contract?: any }) => {
+        const targetContract = options?.contract;
+        const isResend = Boolean(options?.resend);
+        const contractTitle = targetContract?.title || form.projectName || 'Service Agreement';
+        const contact = resolveContractClientContact(targetContract);
+        const targetEmail = contact.email;
+        const projectLabel =
+            form.projectName ||
+            String((targetContract?.metadata as Record<string, unknown> | undefined)?.project_name || '') ||
+            contractTitle;
+
+        setResendForSignature(isResend);
         setSendForm({
             recipientEmail: targetEmail,
-            subject: `Contract: ${form.projectName || 'Service Agreement'}`,
-            message: `Hello,\n\nPlease review and sign the attached contract for ${form.projectName || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
+            subject: isResend
+                ? `Action required: Sign contract — ${contractTitle} (your process is on hold)`
+                : `Contract: ${contractTitle}`,
+            message: isResend
+                ? `We still need your signature on "${contractTitle}". Until this contract is signed, we cannot move your project forward. Please review and sign using the secure link as soon as possible.`
+                : `Hello${contact.name && contact.name !== 'the client' ? ` ${contact.name}` : ''},\n\nPlease review and sign the attached contract for ${projectLabel || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
             provider: 'auto',
+            jurisdiction: form.jurisdiction || signerProfile.jurisdiction,
+            governingLaw: form.governingLaw || signerProfile.governingLaw,
         });
         setAiSendInstructions(
-            `Write a professional contract delivery email for ${form.clientName || 'the client'} about ${form.projectName || 'our engagement'}. Keep it concise and clear.`
+            isResend
+                ? `Write an urgent but professional follow-up asking ${contact.name} to sign "${contractTitle}" because the project cannot proceed until signed.`
+                : `Write a professional contract delivery email for ${contact.name} about ${projectLabel || 'our engagement'}. Keep it concise and clear.`
         );
+        if (targetContract?.id) {
+            setContractId(targetContract.id);
+        }
+        if (contact.email && !form.clientEmail) {
+            setForm((prev) => ({
+                ...prev,
+                clientEmail: contact.email,
+                clientName: contact.name !== 'the client' ? contact.name : prev.clientName,
+                clientId: contact.clientId || prev.clientId,
+            }));
+        }
         setShowSendModal(true);
+        if (!targetEmail) {
+            toast.error('No client email on this contract yet — pick the client or type their email before sending.');
+        }
     };
 
     const handleAiDraftSendMessage = async () => {
@@ -590,6 +809,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             toast.error('Save the contract first before sending');
             return;
         }
+        if (sendNeedsGoverningLaw && (!sendForm.jurisdiction.trim() || !sendForm.governingLaw.trim())) {
+            toast.error('Pick the governing jurisdiction and law — the contract cannot be sent without them.');
+            return;
+        }
 
         setSendingContract(true);
         try {
@@ -607,6 +830,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         format: 'pdf',
                         userId: user.id,
                         provider: sendForm.provider !== 'auto' ? sendForm.provider : undefined,
+                        resendForSignature,
+                        jurisdiction: sendForm.jurisdiction.trim() || undefined,
+                        governingLaw: sendForm.governingLaw.trim() || undefined,
                     },
                 }),
             });
@@ -614,8 +840,19 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             if (!res.ok || !payload?.success) {
                 throw new Error(payload?.error || 'Failed to send contract');
             }
-            toast.success('Contract sent successfully');
+            const sentAt = new Date().toISOString();
+            setSavedContracts((prev) => prev.map((c) => (c.id === contractId
+                ? {
+                    ...c,
+                    status: c.status === 'draft' ? 'sent' : c.status,
+                    updated_at: sentAt,
+                    governing_law: c.governing_law || sendForm.governingLaw.trim() || c.governing_law,
+                    jurisdiction: c.jurisdiction || sendForm.jurisdiction.trim() || c.jurisdiction,
+                }
+                : c)));
+            toast.success(resendForSignature ? 'Signature request resent' : 'Contract sent successfully');
             setShowSendModal(false);
+            setResendForSignature(false);
         } catch (error: any) {
             toast.error(error?.message || 'Failed to send contract');
         } finally {
@@ -641,18 +878,88 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         });
     };
 
-    const handleBulkDeleteContracts = async () => {
-        const ids = [...selectedContractIds];
-        if (!ids.length) return;
-        if (!confirm(`Delete ${ids.length} draft contract(s)? This cannot be undone.`)) return;
+    const parseContractValue = (c: any) => {
+        if (typeof c.value === 'number') return c.value;
+        const raw = c.value ?? c.payment_amount ?? c.total_amount ?? 0;
+        const num = typeof raw === 'number' ? raw : parseFloat(String(raw));
+        return Number.isFinite(num) ? num : 0;
+    };
 
+    const listContracts = useMemo(() => {
+        const q = listQuery.trim().toLowerCase();
+        const base = savedContracts.filter((c) => {
+            if (!contractMatchesListFilter(c.lifecycle_status || c.status, listStatusFilter)) return false;
+            if (!q) return true;
+            const contact = resolveContractClientContact(c);
+            const hay = [
+                String(c.title || ''),
+                String(c.status || ''),
+                String(c.currency || ''),
+                String(contact.name || ''),
+                String(contact.email || ''),
+            ]
+                .join(' ')
+                .toLowerCase();
+            return hay.includes(q);
+        });
+
+        const sorted = [...base];
+        sorted.sort((a, b) => {
+            const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+            const aTitle = String(a.title || '');
+            const bTitle = String(b.title || '');
+            const aVal = parseContractValue(a);
+            const bVal = parseContractValue(b);
+            switch (listSort) {
+                case 'oldest':
+                    return aCreated - bCreated;
+                case 'title_asc':
+                    return aTitle.localeCompare(bTitle);
+                case 'title_desc':
+                    return bTitle.localeCompare(aTitle);
+                case 'value_asc':
+                    return aVal - bVal;
+                case 'value_desc':
+                    return bVal - aVal;
+                case 'newest':
+                default:
+                    return bCreated - aCreated;
+            }
+        });
+
+        return sorted;
+    }, [listQuery, listSort, listStatusFilter, savedContracts]);
+
+    const handleBulkDeleteContracts = async (
+        idsOverride?: string[] | React.MouseEvent<HTMLButtonElement>
+    ) => {
+        if (idsOverride && !Array.isArray(idsOverride)) {
+            idsOverride.preventDefault();
+        }
+        const ids = Array.isArray(idsOverride) ? idsOverride : [...selectedContractIds];
+        if (!ids.length) return;
+        const ok = await confirmDialog({
+            title: 'Delete draft contracts?',
+            description: `Delete ${ids.length} draft contract(s)? This cannot be undone.`,
+            confirmLabel: 'Delete drafts',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
+
+        const deleteSet = new Set(ids);
         setBulkDeletingContracts(true);
         const toastId = toast.loading(`Deleting ${ids.length} contract(s)...`);
         try {
             const { error, count, skipped } = await contractService.bulkDeleteContracts(ids);
-            if (error) throw new Error(error);
-            setSavedContracts((prev) => prev.filter((c) => !selectedContractIds.has(c.id)));
-            setSelectedContractIds(new Set());
+            if (error) throw new Error(String(error));
+            setSavedContracts((prev) => prev.filter((c) => !deleteSet.has(c.id)));
+            setSelectedContractIds((prev) => {
+                const next = new Set(prev);
+                ids.forEach((id) => next.delete(id));
+                return next;
+            });
             if (skipped > 0) {
                 toast.success(`Deleted ${count} draft(s). ${skipped} signed contract(s) were skipped.`, { id: toastId });
             } else {
@@ -665,6 +972,38 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
+    const handleDeleteSingleDraft = async (contractIdToDelete: string) => {
+        const target = savedContracts.find((c) => c.id === contractIdToDelete);
+        if (!target) return;
+        if (target.status !== 'draft') {
+            toast.error('Only draft contracts can be deleted.');
+            return;
+        }
+        const ok = await confirmDialog({
+            title: 'Delete draft contract?',
+            description: `Delete "${target.title || 'Draft contract'}"? This cannot be undone.`,
+            confirmLabel: 'Delete draft',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
+
+        const toastId = toast.loading('Deleting draft...');
+        try {
+            const { error } = await contractService.bulkDeleteContracts([contractIdToDelete]);
+            if (error) throw new Error(String(error));
+            setSavedContracts((prev) => prev.filter((c) => c.id !== contractIdToDelete));
+            setSelectedContractIds((prev) => {
+                const next = new Set(prev);
+                next.delete(contractIdToDelete);
+                return next;
+            });
+            toast.success('Draft deleted', { id: toastId });
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Delete failed', { id: toastId });
+        }
+    };
+
     return (
         <div className="min-h-full text-white px-1 sm:px-0">
             <OperationalWorkflowStrip moduleId="contracts" userRole={user.role} className="mb-3 sm:mb-4" />
@@ -674,7 +1013,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     <h1 className="text-xl sm:text-2xl font-bold text-white">Contract Generator</h1>
                     <p className="text-slate-400 text-xs sm:text-sm mt-1 leading-relaxed">AI-assisted contracts tailored to your client and scope.</p>
                 </div>
-                <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                <div className="flex gap-2 shrink-0 w-full sm:w-auto flex-wrap">
                     <button
                         type="button"
                         onClick={() => setActiveView('new')}
@@ -691,10 +1030,32 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     </button>
                     <button
                         type="button"
+                        onClick={() => setActiveView('templates')}
+                        className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'templates' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                    >
+                        Templates
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveView('alerts')}
+                        className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'alerts' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                    >
+                        Renewal Alerts
+                    </button>
+                    <button
+                        type="button"
                         onClick={() => setActiveView('lawyer')}
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'lawyer' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
                     >
                         AI Lawyer
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setSignatureModalOpen(true)}
+                        className="flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30 hover:bg-teal-500/30 transition-all flex items-center justify-center gap-1.5"
+                        title="Your saved signature and signer details, reused on every contract"
+                    >
+                        <PenTool className="w-3 h-3" /> My signature
                     </button>
                 </div>
             </div>
@@ -712,51 +1073,134 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 ))}
             </div>
 
-            {/* Saved Contracts List */}
+            {activeView === 'templates' && (
+                <ContractTemplateLibrary
+                    onUseTemplate={(tmpl: ContractTemplate) => {
+                        set('projectName', tmpl.title);
+                        set('projectScope', tmpl.body);
+                        setActiveView('new');
+                        toast.success(`Loaded "${tmpl.title}" into draft form`);
+                    }}
+                />
+            )}
+
+            {activeView === 'alerts' && (
+                <ContractRenewalAlertsPanel
+                    onOpenContract={(id: string) => {
+                        setLifecycleContractId(id);
+                    }}
+                />
+            )}
             {activeView === 'list' && (
                 <div className="space-y-2 sm:space-y-3">
-                    {draftContracts.length > 0 && (
-                        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-                            <p className="text-xs text-slate-500">
-                                Select draft contracts to remove. Signed contracts are kept for compliance.
-                            </p>
-                            {selectedContractIds.size > 0 && (
-                                <div className="flex items-center gap-1.5 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedContractIds(new Set())}
-                                        className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="flex-1 min-w-0">
+                                <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1.5">
+                                    Search
+                                </label>
+                                <input
+                                    className={inputCls}
+                                    value={listQuery}
+                                    onChange={(e) => setListQuery(e.target.value)}
+                                    placeholder="Search by title, client, email, status…"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end sm:justify-end sm:gap-3">
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1.5">
+                                        Status
+                                    </label>
+                                    <select
+                                        className={inputCls}
+                                        value={listStatusFilter}
+                                        onChange={(e) => setListStatusFilter(e.target.value as any)}
                                     >
-                                        Clear
-                                    </button>
-                                    <button
-                                        type="button"
-                                        disabled={bulkDeletingContracts}
-                                        onClick={handleBulkDeleteContracts}
-                                        className="h-7 px-3 rounded-full text-[11px] font-bold text-rose-300 border border-rose-500/30 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                        {bulkDeletingContracts ? 'Deleting…' : `Delete (${selectedContractIds.size})`}
-                                    </button>
+                                        <option value="all">All</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="needs_approval">Needs approval</option>
+                                        <option value="awaiting_signature">Awaiting signature</option>
+                                        <option value="active">Active</option>
+                                        <option value="expiring">Expiring</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
                                 </div>
-                            )}
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1.5">
+                                        Sort
+                                    </label>
+                                    <select
+                                        className={inputCls}
+                                        value={listSort}
+                                        onChange={(e) => setListSort(e.target.value as any)}
+                                    >
+                                        <option value="newest">Newest</option>
+                                        <option value="oldest">Oldest</option>
+                                        <option value="title_asc">Title A–Z</option>
+                                        <option value="title_desc">Title Z–A</option>
+                                        <option value="value_desc">Value high–low</option>
+                                        <option value="value_asc">Value low–high</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                    )}
+                        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-xs text-slate-500">
+                                Tip: select drafts to delete. Signed contracts remain for compliance.
+                            </p>
+                            <p className="text-xs text-slate-500">
+                                Showing <span className="text-slate-300 font-semibold">{listContracts.length}</span> of{' '}
+                                <span className="text-slate-300 font-semibold">{savedContracts.length}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <BulkActions
+                        items={listContracts.filter((c) => c.status === 'draft')}
+                        selectedIds={selectedContractIds}
+                        onSelectionChange={setSelectedContractIds}
+                        actions={[
+                            {
+                                label: 'Delete drafts',
+                                icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
+                                variant: 'danger',
+                                onClick: async (selected) => {
+                                    await handleBulkDeleteContracts(selected.map((s) => s.id));
+                                },
+                            },
+                        ]}
+                    />
                     {loadingContracts ? (
                         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-teal-400 animate-spin" /></div>
                     ) : savedContracts.length === 0 ? (
+                        <div className="px-4 py-6">
+                            <EmptyStateFromPreset
+                                moduleId="contracts"
+                                onAction={() => setActiveView('new')}
+                            />
+                        </div>
+                    ) : listContracts.length === 0 ? (
                         <div className="text-center py-14 sm:py-16 text-slate-500 text-xs px-4">
                             <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 opacity-30" />
-                            <p>No saved contracts yet. Generate your first one.</p>
+                            <p>No contracts match your filters.</p>
+                            <button
+                                type="button"
+                                onClick={() => { setListQuery(''); setListStatusFilter('all'); setListSort('newest'); }}
+                                className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold border border-white/5"
+                            >
+                                Reset filters
+                            </button>
                         </div>
-                    ) : savedContracts.map((c: any) => {
+                    ) : listContracts.map((c: any) => {
+                        const statusBucket = contractStatusBucket(c.lifecycle_status || c.status);
                         const statusBadgeStyles = {
-                            fully_signed: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
-                            client_signed: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-                            sent: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+                            active: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
+                            awaiting_signature: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+                            needs_approval: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+                            expiring: 'text-orange-400 bg-orange-500/10 border-orange-500/20',
                             draft: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
-                            rejected: 'text-rose-400 bg-rose-500/10 border-rose-500/20'
-                        }[c.status as string] || 'text-slate-400 bg-slate-500/10 border-slate-500/20';
+                            archived: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+                        }[statusBucket];
 
                         const getExpiry = () => {
                             const date = c.created_at ? new Date(c.created_at) : new Date();
@@ -764,8 +1208,78 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             return format(date, 'MMM d, yyyy');
                         };
 
+                        const contextItems = [
+                            {
+                                label: 'View',
+                                icon: <Eye className="w-4 h-4" aria-hidden="true" />,
+                                onClick: () => {
+                                    const html = c.content.startsWith('<') ? c.content : contractToHTML(c.content);
+                                    setEditedHtml(html);
+                                    setGeneratedContract(c.content);
+                                    setContractId(c.id);
+                                    setSignatureData(c.admin_signature || '');
+                                    setSignatureName(
+                                        c.admin_signature
+                                            ? String(c.metadata?.admin_signer_name || signerProfile.signature?.fullName || signerProfile.providerName || 'Administrator')
+                                            : '',
+                                    );
+                                    setIsSigned(!!c.admin_signature);
+                                    setDocumentTheme(resolveDocumentThemeId(c.metadata || {}));
+
+                                    const contact = resolveContractClientContact(c);
+                                    const linked = c.client_id
+                                        ? clients.find((cl) => cl.id === c.client_id)
+                                        : undefined;
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        clientId: c.client_id || prev.clientId,
+                                        clientName: contact.name !== 'the client' ? contact.name : prev.clientName,
+                                        clientEmail: contact.email || prev.clientEmail,
+                                        clientCompany: linked?.name || prev.clientCompany,
+                                        clientPhone: linked?.phone || prev.clientPhone,
+                                        clientAddress: linked?.location || prev.clientAddress,
+                                        projectName: prev.projectName || String(c.title || '').split('—')[0]?.trim() || prev.projectName,
+                                        totalAmount:
+                                            prev.totalAmount ||
+                                            (c.payment_amount != null ? String(c.payment_amount) : prev.totalAmount),
+                                        jurisdiction: c.jurisdiction || prev.jurisdiction,
+                                        governingLaw: c.governing_law || prev.governingLaw,
+                                    }));
+
+                                    if (c.document_url) {
+                                        c.document_url = fileUploadService.convertToProxiedUrl(c.document_url);
+                                    }
+
+                                    setStep('preview');
+                                    setIsEditing(false);
+                                    setPreviewTab('document');
+                                    setActiveView('new');
+                                },
+                            },
+                            ...(c.status !== 'fully_signed' && c.status !== 'rejected'
+                                ? [{
+                                    label: c.status === 'draft' ? 'Send to client' : 'Resend for signature',
+                                    icon: <Send className="w-4 h-4" aria-hidden="true" />,
+                                    onClick: () =>
+                                        openSendContractModal({
+                                            resend: c.status !== 'draft',
+                                            contract: c,
+                                        }),
+                                }]
+                                : []),
+                            ...(c.status === 'draft'
+                                ? [{
+                                    label: 'Delete draft',
+                                    icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
+                                    onClick: () => handleDeleteSingleDraft(c.id),
+                                    destructive: true,
+                                }]
+                                : []),
+                        ];
+
                         return (
-                            <div key={c.id} className={`bg-slate-900/60 border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all ${
+                            <CustomContextMenu key={c.id} items={contextItems}>
+                            <div className={`bg-slate-900/60 border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all ${
                                 selectedContractIds.has(c.id) ? 'border-teal-500/40' : 'border-white/5'
                             }`}>
                                 <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
@@ -786,7 +1300,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         <div className="flex flex-wrap items-center gap-2">
                                             <p className="font-semibold text-white text-sm sm:text-base truncate">{c.title}</p>
                                             <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${statusBadgeStyles}`}>
-                                                {c.status?.replace('_', ' ')}
+                                                {contractStatusLabel(c.lifecycle_status || c.status)}
                                             </span>
                                         </div>
                                         <p className="text-[11px] sm:text-xs text-slate-500">
@@ -795,9 +1309,24 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             Created: <span className="text-slate-300">{c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : 'Recent'}</span>
                                             <span className="mx-1.5">·</span>
                                             Expiry: <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Expires {getExpiry()}</span>
+                                            {(() => {
+                                                const contact = resolveContractClientContact(c);
+                                                if (!contact.email && contact.name === 'the client') return null;
+                                                return (
+                                                    <>
+                                                        <span className="mx-1.5">·</span>
+                                                        <span className="text-teal-300/90">
+                                                            {contact.name !== 'the client' ? contact.name : 'Client'}
+                                                            {contact.email ? ` · ${contact.email}` : ''}
+                                                        </span>
+                                                    </>
+                                                );
+                                            })()}
                                         </p>
                                     </div>
                                 </div>
+                                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                <button type="button" onClick={() => setLifecycleContractId(c.id)} className="w-full sm:w-auto justify-center px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"><Scale className="w-3.5 h-3.5 text-violet-300" /> Obligations</button>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -808,6 +1337,25 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         setSignatureData(c.admin_signature || '');
                                         setSignatureName(c.admin_signature ? 'Administrator' : '');
                                         setIsSigned(!!c.admin_signature);
+                                        setDocumentTheme(resolveDocumentThemeId(c.metadata || {}));
+
+                                        const contact = resolveContractClientContact(c);
+                                        const linked = c.client_id
+                                            ? clients.find((cl) => cl.id === c.client_id)
+                                            : undefined;
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            clientId: c.client_id || prev.clientId,
+                                            clientName: contact.name !== 'the client' ? contact.name : prev.clientName,
+                                            clientEmail: contact.email || prev.clientEmail,
+                                            clientCompany: linked?.name || prev.clientCompany,
+                                            clientPhone: linked?.phone || prev.clientPhone,
+                                            clientAddress: linked?.location || prev.clientAddress,
+                                            projectName: prev.projectName || String(c.title || '').split('—')[0]?.trim() || prev.projectName,
+                                            totalAmount:
+                                                prev.totalAmount ||
+                                                (c.payment_amount != null ? String(c.payment_amount) : prev.totalAmount),
+                                        }));
 
                                         // Use proxied URL if available
                                         if (c.document_url) {
@@ -823,7 +1371,28 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 >
                                     <Eye className="w-3.5 h-3.5 text-teal-400" /> View
                                 </button>
+                                {c.status !== 'fully_signed' && c.status !== 'rejected' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            openSendContractModal({
+                                                resend: c.status !== 'draft',
+                                                contract: c,
+                                            })
+                                        }
+                                        className={`w-full sm:w-auto justify-center px-3.5 py-2 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border ${
+                                            c.status === 'draft'
+                                                ? 'bg-teal-500/10 hover:bg-teal-500/20 text-teal-200 border-teal-500/30'
+                                                : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 border-amber-500/30'
+                                        }`}
+                                    >
+                                        <Send className="w-3.5 h-3.5" />
+                                        {c.status === 'draft' ? 'Send to client' : 'Resend for signature'}
+                                    </button>
+                                ) : null}
+                                </div>
                             </div>
+                            </CustomContextMenu>
                         );
                     })}
                 </div>
@@ -1032,36 +1601,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         <label className={labelCls}>Estimated Completion Date</label>
                                         <input className={inputCls} value={form.endDate} onChange={e => set('endDate', e.target.value)} placeholder="e.g. June 1, 2026" />
                                     </div>
-                                    <div>
-                                        <label className={labelCls}>Governing Jurisdiction</label>
-                                        <select
-                                            className={inputCls}
-                                            value={form.jurisdiction}
-                                            onChange={(e) => {
-                                                const picked = EU_JURISDICTIONS.find((j) => j.label === e.target.value);
-                                                set('jurisdiction', e.target.value);
-                                                if (picked) set('governingLaw', picked.governingLaw);
-                                            }}
-                                        >
-                                            <option value="">— Select EU / EEA jurisdiction —</option>
-                                            {EU_JURISDICTIONS.map((j) => (
-                                                <option key={j.code} value={j.label}>{j.label}</option>
-                                            ))}
-                                            <option value="custom">Other (type below)</option>
-                                        </select>
-                                        {(form.jurisdiction === 'custom' || (form.jurisdiction && !EU_JURISDICTIONS.some((j) => j.label === form.jurisdiction))) && (
-                                            <input
-                                                className={`${inputCls} mt-2`}
-                                                value={form.jurisdiction === 'custom' ? '' : form.jurisdiction}
-                                                onChange={(e) => set('jurisdiction', e.target.value)}
-                                                placeholder="e.g. State of California, USA"
-                                            />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className={labelCls}>Governing Law</label>
-                                        <input className={inputCls} value={form.governingLaw} onChange={e => set('governingLaw', e.target.value)} placeholder="e.g. Laws of the State of California" />
-                                    </div>
+                                    <JurisdictionFields
+                                        jurisdiction={form.jurisdiction}
+                                        governingLaw={form.governingLaw}
+                                        required
+                                        onChange={(next) => setForm((prev) => ({ ...prev, ...next }))}
+                                        hint="Required — the contract cannot be sent for signature without a governing law. Saved to your signer profile for next time."
+                                    />
                                     <div className="md:col-span-2">
                                         <label className={labelCls}>Additional Terms (optional)</label>
                                         <textarea className={`${inputCls} min-h-[80px] resize-y`} value={form.additionalTerms} onChange={e => set('additionalTerms', e.target.value)} placeholder="Any special clauses, NDA requirements, exclusivity terms, etc." />
@@ -1101,7 +1647,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     {!isSigned && (
                                         <button
                                             onClick={() => setIsEditing(!isEditing)}
-                                            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all ${isEditing ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
+                                            disabled={isGenerating}
+                                            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isEditing ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                                         >
                                             <Edit3 className="w-3.5 h-3.5" /> {isEditing ? 'Save Refinements' : 'Refine Text'}
                                         </button>
@@ -1111,19 +1658,24 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             <button onClick={handlePrint} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
                                                 <Printer className="w-3.5 h-3.5" /> Print / PDF
                                             </button>
-                                            <button onClick={openSendContractModal} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
+                                            <button onClick={() => openSendContractModal()} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
                                                 <FileText className="w-3.5 h-3.5" /> Send Contract
                                             </button>
                                         </>
                                     )}
                                     {step !== 'saved' && (
-                                        <button onClick={saveContract} disabled={isSaving} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-bold text-white transition-all hover:bg-teal-500 disabled:opacity-60">
+                                        <button
+                                            onClick={saveContract}
+                                            disabled={isSaving || isGenerating}
+                                            title={isGenerating ? 'Wait for the draft to finish writing' : undefined}
+                                            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-bold text-white transition-all hover:bg-teal-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
                                             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                                             Save Contract
                                         </button>
                                     )}
                                 </div>
-                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
+                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); setDocumentTheme('executive'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
                                     <RotateCcw className="w-3.5 h-3.5" /> New Contract
                                 </button>
                             </div>
@@ -1143,6 +1695,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     >
                                         Audit Trail & Compliance
                                     </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLifecycleContractId(contractId)}
+                                        className="h-8 px-3 rounded-full text-[11px] font-bold text-slate-500 hover:text-slate-300"
+                                    >
+                                        Obligations & reminders
+                                    </button>
                                 </div>
                             )}
 
@@ -1153,8 +1712,23 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 />
                             ) : (
                                 <>
+                                    {/* Still streaming: the text below is incomplete, so signing/saving wait. */}
+                                    {isGenerating && (
+                                        <div
+                                            className="bg-slate-900/60 border border-teal-500/20 rounded-2xl p-4 flex items-center gap-3"
+                                            role="status"
+                                            data-testid="contract-generating"
+                                        >
+                                            <Loader2 className="w-5 h-5 text-teal-400 animate-spin flex-shrink-0" />
+                                            <div>
+                                                <p className="text-white font-semibold text-sm">Drafting your contract…</p>
+                                                <p className="text-slate-400 text-xs">The text below is still being written. Signing and saving unlock as soon as it finishes.</p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Signature Panel — shown when not yet signed */}
-                                    {!isSigned && !isEditing && (
+                                    {!isSigned && !isEditing && !isGenerating && (
                                 <div className="bg-gradient-to-br from-teal-900/30 to-slate-900/60 border border-teal-500/30 rounded-2xl p-6">
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center">
@@ -1162,10 +1736,17 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         </div>
                                         <div>
                                             <h3 className="text-white font-bold text-base">Sign to Proceed</h3>
-                                            <p className="text-slate-400 text-sm">Draw your signature and type your name to sign this contract before saving or printing.</p>
+                                            <p className="text-slate-400 text-sm">
+                                                {signerProfile.signature
+                                                    ? 'Apply your saved signature with one click, or draw a new one.'
+                                                    : 'Draw your signature and type your name once — tick "Remember" and future contracts sign with one click.'}
+                                            </p>
                                         </div>
                                     </div>
                                     <SignaturePad
+                                        savedSignature={signerProfile.signature}
+                                        onRememberSignature={rememberSignature}
+                                        initialFullName={signerProfile.signature?.fullName || ''}
                                         onSave={(sig, name) => {
                                             setSignatureData(sig);
                                             setSignatureName(name);
@@ -1192,8 +1773,57 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             )}
 
                             <p className="text-slate-500 text-xs">
-                                {isEditing ? 'Editing mode enabled. Your changes will be saved to the final contract.' : 'On-screen preview uses responsive layout. The PDF export uses standard A4 typography and adds a title block and signature area.'}
+                                {isEditing
+                                    ? 'Editing mode enabled. Your changes will be saved to the final contract.'
+                                    : 'Pick a brand theme below — preview and PDF export use the same colorful design as quotes and invoices.'}
                             </p>
+
+                            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-4">
+                                <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+                                <DocumentQualityPanel
+                                    input={{
+                                        type: 'contract',
+                                        hasClientName: Boolean(form.clientName?.trim()),
+                                        hasSignature: Boolean(isSigned || signatureName),
+                                        hasTerms: Boolean(editedHtml || generatedContract),
+                                        clientEmail: form.clientEmail,
+                                        hasLogo: Boolean(
+                                            currentTenant &&
+                                                ((currentTenant as { logo_url?: string }).logo_url ||
+                                                    (currentTenant as { settings?: { logo_url?: string } }).settings?.logo_url)
+                                        ),
+                                        hasPricing: Number(form.totalAmount) > 0,
+                                    }}
+                                />
+                                <DocumentPreview
+                                    input={buildContractDocumentInput(
+                                        {
+                                            id: contractId || undefined,
+                                            title: `${form.projectName || 'Service Agreement'} — ${form.clientName || 'Client'}`,
+                                            content: isEditing
+                                                ? editedHtml
+                                                : (editedHtml || generatedContract || contractToHTML(generatedContract)),
+                                            status: isSigned ? 'sent' : 'draft',
+                                            payment_amount: parseFloat(form.totalAmount) || 0,
+                                            created_at: new Date().toISOString(),
+                                            metadata: {
+                                                document_theme: documentTheme,
+                                                client_name: form.clientName,
+                                                client_email: form.clientEmail,
+                                            },
+                                        },
+                                        currentTenant
+                                            ? {
+                                                name: currentTenant.name,
+                                                logo_url: (currentTenant as { logo_url?: string }).logo_url,
+                                                brand_color_primary: (currentTenant as { brand_color_primary?: string }).brand_color_primary,
+                                                settings: (currentTenant as { settings?: unknown }).settings,
+                                            }
+                                            : null,
+                                        { name: form.clientName, email: form.clientEmail }
+                                    )}
+                                />
+                            </div>
 
                             {/* Contract Document */}
                             <div className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden min-h-[600px]">
@@ -1473,94 +2103,150 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             )}
 
             {showSendModal && (
-                <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[1100] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
-                    <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                        <h3 className="text-lg font-semibold text-white">Send Contract by Email</h3>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Email</label>
-                            <input
-                                className={inputCls}
-                                value={sendForm.recipientEmail}
-                                onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
-                                placeholder="client@example.com"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
-                            <input
-                                className={inputCls}
-                                value={sendForm.subject}
-                                onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Send via</label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                                {[
-                                    { value: 'auto', label: 'Auto', icon: '🔄', desc: 'Best available' },
-                                    { value: 'zoho', label: 'Zoho Mail', icon: '📧', desc: 'Zoho' },
-                                    { value: 'gmail', label: 'Gmail', icon: '✉️', desc: 'Google' },
-                                    { value: 'brevo', label: 'Brevo', icon: '📨', desc: 'Brevo' },
-                                    { value: 'sendgrid', label: 'SendGrid', icon: '📬', desc: 'SendGrid' },
-                                    { value: 'resend', label: 'Resend', icon: '🚀', desc: 'Resend' },
-                                ].map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => setSendForm(prev => ({ ...prev, provider: opt.value }))}
-                                        className={`flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-2 py-2 text-[11px] font-medium transition-all ${
-                                            sendForm.provider === opt.value
-                                                ? 'bg-teal-600/20 border-teal-500 text-teal-300'
-                                                : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
-                                        }`}
-                                    >
-                                        <span className="text-sm sm:text-base">{opt.icon}</span>
-                                        <span>{opt.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                            {sendForm.provider !== 'auto' && (
-                                <p className="text-xs text-slate-500 mt-1.5">Will attempt <span className="text-teal-400 font-medium">{sendForm.provider}</span> first, then fall back to other configured services if unavailable.</p>
+                    <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-h-[calc(100vh-2rem)] flex flex-col">
+                        <div className="px-5 sm:px-6 py-4 border-b border-slate-800">
+                            <h3 className="text-lg font-semibold text-white">
+                                {resendForSignature ? 'Resend contract for signature' : 'Send Contract by Email'}
+                            </h3>
+                            {resendForSignature ? (
+                                <p className="text-sm text-amber-300/90 mt-1.5">
+                                    The recipient will get an urgent subject line explaining their project cannot proceed until the contract is signed.
+                                </p>
+                            ) : (
+                                <p className="text-sm text-slate-400 mt-1.5">
+                                    Send the signing link with a clear subject and message. The entire form is scrollable.
+                                </p>
                             )}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>
-                            <textarea
-                                className={`${inputCls} min-h-[90px]`}
-                                value={aiSendInstructions}
-                                onChange={(e) => setAiSendInstructions(e.target.value)}
-                                placeholder="Example: Write a friendly follow-up, mention delivery timeline and ask them to sign by Friday."
-                            />
+
+                        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Email</label>
+                                <input
+                                    className={inputCls}
+                                    value={sendForm.recipientEmail}
+                                    onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
+                                    placeholder="client@example.com"
+                                />
+                                <p className="text-[11px] text-slate-500 mt-1.5">
+                                    Auto-filled from the client this contract is for
+                                    {sendForm.recipientEmail ? ` (${sendForm.recipientEmail})` : ' — add their email on the client record if empty'}.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
+                                <input
+                                    className={inputCls}
+                                    value={sendForm.subject}
+                                    onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
+                                />
+                            </div>
+                            {sendNeedsGoverningLaw && (
+                                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3" data-testid="send-governing-law">
+                                    <p className="text-sm text-amber-200 font-semibold">This contract has no governing law recorded yet.</p>
+                                    <p className="text-[12px] text-slate-400">
+                                        It cannot be sent for signature without one. Pick it here and it will be recorded on the contract before sending.
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <JurisdictionFields
+                                            jurisdiction={sendForm.jurisdiction}
+                                            governingLaw={sendForm.governingLaw}
+                                            required
+                                            onChange={(next) => setSendForm((prev) => ({ ...prev, ...next }))}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Send via</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {[
+                                        { value: 'auto', label: 'Auto', icon: '🔄' },
+                                        { value: 'zoho', label: 'Zoho Mail', icon: '📧' },
+                                        { value: 'gmail', label: 'Gmail', icon: '✉️' },
+                                        { value: 'brevo', label: 'Brevo', icon: '📨' },
+                                        { value: 'sendgrid', label: 'SendGrid', icon: '📬' },
+                                        { value: 'resend', label: 'Resend', icon: '🚀' },
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setSendForm(prev => ({ ...prev, provider: opt.value }))}
+                                            className={`flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-2 py-2 text-[11px] font-medium transition-all ${
+                                                sendForm.provider === opt.value
+                                                    ? 'bg-teal-600/20 border-teal-500 text-teal-300'
+                                                    : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+                                            }`}
+                                        >
+                                            <span className="text-sm sm:text-base">{opt.icon}</span>
+                                            <span>{opt.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                {sendForm.provider !== 'auto' && (
+                                    <p className="text-xs text-slate-500 mt-1.5">
+                                        Will attempt <span className="text-teal-400 font-medium">{sendForm.provider}</span> first, then fall back to other configured services if unavailable.
+                                    </p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>
+                                <textarea
+                                    className={`${inputCls} min-h-[110px]`}
+                                    value={aiSendInstructions}
+                                    onChange={(e) => setAiSendInstructions(e.target.value)}
+                                    placeholder="Example: Write a friendly follow-up, mention delivery timeline and ask them to sign by Friday."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
+                                <textarea
+                                    className={`${inputCls} min-h-[180px]`}
+                                    value={sendForm.message}
+                                    onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
-                            <textarea
-                                className={`${inputCls} min-h-[140px]`}
-                                value={sendForm.message}
-                                onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between">
+
+                        <div className="px-5 sm:px-6 py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <button
                                 type="button"
                                 onClick={handleAiDraftSendMessage}
                                 disabled={aiDraftingSend}
-                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm"
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm w-full sm:w-auto"
                             >
                                 {aiDraftingSend ? 'Drafting...' : 'AI Draft Message'}
                             </button>
-                            <div className="flex items-center gap-2">
-                                <button type="button" onClick={() => setShowSendModal(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm">
+                            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSendModal(false)}
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm w-full sm:w-auto"
+                                >
                                     Cancel
                                 </button>
-                                <button type="button" onClick={handleSendContract} disabled={sendingContract} className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold">
-                                    {sendingContract ? 'Sending...' : 'Send Contract'}
+                                <button
+                                    type="button"
+                                    onClick={handleSendContract}
+                                    disabled={sendingContract}
+                                    className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold w-full sm:w-auto disabled:opacity-50"
+                                >
+                                    {sendingContract ? 'Sending...' : resendForSignature ? 'Resend for signature' : 'Send Contract'}
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
+            )}
+            <ContractLifecycleDrawer contractId={lifecycleContractId} tenantId={currentTenant?.id} open={Boolean(lifecycleContractId)} onOpenChange={(open) => !open && setLifecycleContractId(null)} />
+            {signatureModalOpen && (
+                <SignerProfileModal
+                    profile={signerProfile}
+                    onSaved={applySignerProfile}
+                    onClose={() => setSignatureModalOpen(false)}
+                />
             )}
         </div>
     );
@@ -1641,6 +2327,11 @@ function safeParseFloat(val: any, fallback: number = 0): number {
     return isNaN(parsed) ? fallback : parsed;
 }
 
+function unresolvedField(value: string | undefined, label: string): string {
+    const trimmed = String(value || '').trim();
+    return trimmed ? `${label}: ${trimmed}` : `${label}: UNRESOLVED`;
+}
+
 function buildAIPrompt(f: ContractForm): string {
     const total = safeParseFloat(f.totalAmount, 0);
     const depPercent = safeParseFloat(f.depositPercent, 50);
@@ -1653,24 +2344,24 @@ function buildAIPrompt(f: ContractForm): string {
 ${wordHint}
 
 SERVICE PROVIDER:
-- Name: ${f.providerName}
-- Address: ${f.providerAddress || 'On file with the parties'}
-- Email: ${f.providerEmail}
-- Phone: ${f.providerPhone || 'On file'}
-- Registration: ${f.providerRegistration || 'N/A'}
+- ${unresolvedField(f.providerName, 'Name')}
+- ${unresolvedField(f.providerAddress, 'Address')}
+- ${unresolvedField(f.providerEmail, 'Email')}
+- ${unresolvedField(f.providerPhone, 'Phone')}
+- ${unresolvedField(f.providerRegistration, 'Registration')}
 
 CLIENT:
-- Full Name: ${f.clientName}
-- Company: ${f.clientCompany || 'N/A'}
-- Address: ${f.clientAddress || 'On file with the parties'}
-- Email: ${f.clientEmail || 'On file'}
-- Phone: ${f.clientPhone || 'On file'}
+- ${unresolvedField(f.clientName, 'Full Name')}
+- ${unresolvedField(f.clientCompany, 'Company')}
+- ${unresolvedField(f.clientAddress, 'Address')}
+- ${unresolvedField(f.clientEmail, 'Email')}
+- ${unresolvedField(f.clientPhone, 'Phone')}
 
 PROJECT:
-- Name: ${f.projectName}
-- Type: ${f.projectType}
-- Scope: ${f.projectScope || f.projectType + ' services as mutually agreed'}
-- Deliverables: ${f.deliverables || 'All project deliverables as described in the scope'}
+- ${unresolvedField(f.projectName, 'Name')}
+- ${unresolvedField(f.projectType, 'Type')}
+- ${unresolvedField(f.projectScope, 'Scope')}
+- ${unresolvedField(f.deliverables, 'Deliverables')}
 
 FINANCIAL:
 - Total Value: ${f.currency} ${total.toLocaleString()}
@@ -1682,8 +2373,8 @@ TIMELINE:
 - Completion: ${f.endDate}
 
 LEGAL:
-- Jurisdiction: ${f.jurisdiction || 'the parties\' agreed jurisdiction'}
-- Governing Law: ${f.governingLaw || 'applicable law'}
+- ${unresolvedField(f.jurisdiction, 'Jurisdiction')}
+- ${unresolvedField(f.governingLaw, 'Governing Law')}
 ${f.additionalTerms ? `- Additional Terms: ${f.additionalTerms}` : ''}
 
 STRUCTURE AND SECTIONS:

@@ -6,6 +6,7 @@ import {
     Trash2, Shield, AlertTriangle, CheckCircle2, Clock,
     Mail, User, MessageSquare, Loader2, ExternalLink, Info
 } from 'lucide-react';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 function DataDeletionContent() {
     const searchParams = useSearchParams();
@@ -18,6 +19,9 @@ function DataDeletionContent() {
     const [result, setResult] = useState<{ success: boolean; confirmation_code?: string; message?: string; already_exists?: boolean } | null>(null);
     const [statusCheck, setStatusCheck] = useState<{ status: string; source?: string; created_at?: string; processed_at?: string } | null>(null);
     const [loadingStatus, setLoadingStatus] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [verifying, setVerifying] = useState(false);
+    const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
     const checkStatus = async (code: string) => {
         setLoadingStatus(true);
@@ -40,14 +44,24 @@ function DataDeletionContent() {
         const res = await fetch('/api/data-deletion', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, name, reason }),
+            body: JSON.stringify({ email, name, reason, turnstileToken: turnstileToken || undefined }),
         });
         const data = await res.json();
         setResult(data);
-        if (data.success && data.confirmation_code) {
-            checkStatus(data.confirmation_code);
-        }
+        setTurnstileToken('');
         setSubmitting(false);
+    };
+
+    const verifyRequest = async () => {
+        if (!codeFromUrl) return;
+        setVerifying(true);
+        const res = await fetch('/api/data-deletion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'verify', code: codeFromUrl }),
+        });
+        if (res.ok) await checkStatus(codeFromUrl);
+        setVerifying(false);
     };
 
     return (
@@ -141,6 +155,11 @@ function DataDeletionContent() {
                                     <code className="text-sm font-mono text-teal-400">{codeFromUrl || result?.confirmation_code}</code>
                                     <p className="text-xs text-slate-600 mt-1">Save this code to check status later.</p>
                                 </div>
+                                {statusCheck.status === 'verification_pending' && codeFromUrl && (
+                                    <button type="button" onClick={verifyRequest} disabled={verifying} className="w-full rounded-lg bg-teal-500 px-4 py-2 font-semibold text-slate-950 disabled:opacity-50">
+                                        {verifying ? 'Verifying…' : 'Verify and queue deletion request'}
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <p className="text-slate-500">Unable to load status. Please save your confirmation code.</p>
@@ -213,9 +232,18 @@ function DataDeletionContent() {
                                 </p>
                             </div>
 
+                            {turnstileEnabled && (
+                                <TurnstileWidget
+                                    className="flex justify-center"
+                                    onTokenChange={setTurnstileToken}
+                                    onExpire={() => setTurnstileToken('')}
+                                    onError={() => setTurnstileToken('')}
+                                />
+                            )}
+
                             <button
                                 type="submit"
-                                disabled={submitting || !email.trim()}
+                                disabled={submitting || !email.trim() || (turnstileEnabled && !turnstileToken)}
                                 className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-400 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-colors"
                             >
                                 {submitting ? (

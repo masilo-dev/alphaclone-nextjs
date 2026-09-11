@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { callScraperService } from '@/lib/scraper/scraperServiceClient';
-import { parseLeadIntentFromChat, type ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
+import {
+  parseLeadIntentHeuristic,
+  parseLeadIntentFromChat,
+  type ParsedLeadIntent,
+} from '@/lib/scraper/parseLeadIntent';
 import { filterSmbLeads } from '@/lib/scraper/smbLeadFilters';
 import {
   broadenIntentForRetry,
   getNicheSearchAdvice,
 } from '@/lib/scraper/nicheSearchAdvisor';
 import {
-  fallbackLocalSearch,
   logLeadRun,
-  scraperRunAccepted,
   saveLeadsToCrm,
   startLeadOutreachAutomation,
   triggerNexusAutomation,
@@ -23,34 +24,78 @@ import {
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
+function normalizeRunIntent(intent: Partial<ParsedLeadIntent> | undefined): ParsedLeadIntent {
+  const seed = parseLeadIntentHeuristic(
+    intent?.search_query ||
+      intent?.summary ||
+      intent?.niche ||
+      intent?.industry?.[0] ||
+      'local business leads'
+  );
+  const location = { ...(seed.location || {}), ...(intent?.location || {}) };
+
+  return {
+    ...seed,
+    ...intent,
+    name: intent?.name || seed.name,
+    sources: Array.isArray(intent?.sources) && intent.sources.length ? intent.sources : ['website', 'directory'],
+    industry: Array.isArray(intent?.industry) ? intent.industry : seed.industry,
+    location: {
+      ...location,
+      radius_km: Math.min(Math.max(Number(location.radius_km || 25), 1), 100),
+    },
+    title_keywords: Array.isArray(intent?.title_keywords) && intent.title_keywords.length
+      ? intent.title_keywords
+      : seed.title_keywords,
+    company_size_range: intent?.company_size_range || seed.company_size_range,
+    exclude_domains: Array.isArray(intent?.exclude_domains) ? intent.exclude_domains : seed.exclude_domains,
+    exclude_keywords: Array.isArray(intent?.exclude_keywords) ? intent.exclude_keywords : seed.exclude_keywords,
+    min_score_threshold: Number(intent?.min_score_threshold || seed.min_score_threshold || 45),
+    daily_limit: Math.min(Math.max(Number(intent?.daily_limit || seed.daily_limit || 40), 1), 80),
+    enrichment_level: intent?.enrichment_level === 'basic' ? 'basic' : 'full',
+    target_language: intent?.target_language || seed.target_language || 'en',
+    summary: intent?.summary || seed.summary,
+    search_query: intent?.search_query || seed.search_query,
+    niche: intent?.niche || seed.niche,
+    smb_only: intent?.smb_only !== false,
+  };
+}
+
 async function createAndRunCampaign(
   tenantId: string,
   userId: string,
   intent: ParsedLeadIntent
 ) {
   const supabase = createSupabaseAdminClient();
+  const safeIntent = normalizeRunIntent(intent);
+  const sources = safeIntent.sources.length ? safeIntent.sources : ['website', 'directory'];
 
   const { data: campaign, error } = await supabase
     .from('scraper_campaigns')
     .insert({
       tenant_id: tenantId,
-      name: intent.name,
+      name: safeIntent.name,
       status: 'active',
-      source: intent.sources[0],
-      sources: intent.sources,
-      location: intent.location,
-      industry: intent.industry,
-      title_keywords: intent.title_keywords,
-      company_size_range: intent.company_size_range,
-      exclude_domains: intent.exclude_domains,
-      daily_limit: intent.daily_limit,
-      min_score_threshold: intent.min_score_threshold,
-      enrichment_level: intent.enrichment_level,
+      source: sources[0] || 'directory',
+      sources,
+      location: {
+        ...safeIntent.location,
+        radius_km: safeIntent.location?.radius_km || 25,
+      },
+      industry: safeIntent.industry,
+      title_keywords: safeIntent.title_keywords,
+      company_size_range: safeIntent.company_size_range,
+      exclude_domains: safeIntent.exclude_domains,
+      daily_limit: safeIntent.daily_limit || 40,
+      min_score_threshold: safeIntent.min_score_threshold,
+      enrichment_level: safeIntent.enrichment_level,
       scoring_rules: {
-        target_language: intent.target_language,
-        exclude_keywords: intent.exclude_keywords,
-        smb_only: intent.smb_only,
-        niche: intent.niche,
+        target_language: safeIntent.target_language,
+        exclude_keywords: safeIntent.exclude_keywords,
+        smb_only: safeIntent.smb_only,
+        niche: safeIntent.niche,
+        free_only: true,
+        reach_based: true,
       },
       created_by: userId,
     })
@@ -64,65 +109,57 @@ async function createAndRunCampaign(
   await logLeadRun({
     tenantId,
     campaignId: campaign.id,
-    market: formatSearchLocation(intent),
-    category: formatSearchNiche(intent),
+    market: formatSearchLocation(safeIntent),
+    category: formatSearchNiche(safeIntent),
     status: 'running',
     sourceCount: 0,
     enrichedCount: 0,
     createdCount: 0,
   });
 
-  let scraperStarted = false;
-  try {
-    const scraperRes = await callScraperService('/api/scraper/campaign/run', {
-      method: 'POST',
-      body: {
-        campaign_id: campaign.id,
-        tenant_id: tenantId,
-        user_id: userId,
-      },
-    });
-    scraperStarted = await scraperRunAccepted(scraperRes);
-    if (!scraperStarted) {
-      console.warn('[chat] Scraper service unavailable or invalid response');
-    }
-  } catch (err) {
-    console.warn('[chat] Scraper service call failed:', err);
-  }
-
-  let fallbackCount = 0;
-  try {
-    fallbackCount = await fallbackLocalSearch(tenantId, campaign.id, intent);
-  } catch (err) {
-    console.warn('[chat] Local fallback search failed:', err);
-  }
-
-  const completed = fallbackCount > 0 && !scraperStarted;
-  await logLeadRun({
-    tenantId,
-    campaignId: campaign.id,
-    market: formatSearchLocation(intent),
-    category: formatSearchNiche(intent),
-    status: completed ? 'completed' : 'running',
-    sourceCount: fallbackCount,
-    enrichedCount: fallbackCount,
-    createdCount: fallbackCount,
+  // The chat UI is a compatibility surface, not a second scraper. Its legacy
+  // campaign only records the conversation and points at the canonical queue.
+  const searchSources = ['openstreetmap', 'wikidata', 'searxng', 'website'] as const;
+  const { data: search, error: searchError } = await supabase.from('lead_searches').insert({
+    workspace_id: tenantId, created_by: userId, name: safeIntent.name,
+    search_type: 'businesses_by_location', query: safeIntent.search_query || safeIntent.niche || safeIntent.name,
+    business_keywords: [safeIntent.niche, ...safeIntent.industry].filter(Boolean),
+    location: [safeIntent.location?.city, safeIntent.location?.country].filter(Boolean).join(', '),
+    city: safeIntent.location?.city || null, country: safeIntent.location?.country || null,
+    industry: safeIntent.industry[0] || null, source_filters: searchSources,
+    exclusions: { keywords: safeIntent.exclude_keywords, domains: safeIntent.exclude_domains, locations: [] },
+    result_limit: safeIntent.daily_limit, status: 'queued',
+  }).select().single();
+  if (searchError || !search) throw new Error(searchError?.message || 'Failed to queue canonical lead search');
+  const { error: jobError } = await supabase.from('lead_search_jobs').insert({
+    tenant_id: tenantId, user_id: userId, workspace_id: tenantId, created_by: userId, search_id: search.id,
+    niche: safeIntent.niche || safeIntent.name, location: [safeIntent.location?.city, safeIntent.location?.country].filter(Boolean).join(', ') || null,
+    sort_by: 'default', use_playwright: false, job_type: 'lead.search.start', source_type: 'orchestrator',
+    idempotency_key: `chat.lead.search:${search.id}`, metadata: { source: 'chat_assistant', free_only: true },
   });
-  await supabase.from('lead_campaign_runs').insert({
-    campaign_id: campaign.id,
-    tenant_id: tenantId,
-    status: completed ? 'completed' : scraperStarted ? 'running' : fallbackCount > 0 ? 'completed' : 'running',
-    current_step: fallbackCount > 0 ? (scraperStarted ? 'scraping' : 'done') : 'scraping',
-    progress: fallbackCount > 0 ? (scraperStarted ? 40 : 100) : scraperStarted ? 15 : 10,
-    source_count: fallbackCount,
-    enriched_count: fallbackCount,
-  });
+  if (jobError) throw new Error(jobError.message);
+  await supabase.from('scraper_campaigns').update({ canonical_search_id: search.id, status: 'active' }).eq('id', campaign.id).eq('tenant_id', tenantId);
 
-  return campaign;
+  return {
+    ...campaign,
+    leadCount: 0,
+    mode: 'queued',
+    searchStatus: 'queued',
+  };
 }
 
 async function fetchCampaignLeads(tenantId: string, campaignId: string, minScore?: number) {
   const supabase = createSupabaseAdminClient();
+  const { data: campaign } = await supabase.from('scraper_campaigns').select('canonical_search_id')
+    .eq('tenant_id', tenantId).eq('id', campaignId).maybeSingle();
+  if (campaign?.canonical_search_id) {
+    let canonical = supabase.from('lead_candidates').select('*').eq('workspace_id', tenantId)
+      .eq('search_id', campaign.canonical_search_id).order('final_score', { ascending: false }).limit(100);
+    if (minScore) canonical = canonical.gte('final_score', minScore);
+    const { data, error } = await canonical;
+    if (error) throw error;
+    return data || [];
+  }
   let query = supabase
     .from('scraper_leads')
     .select('*')
@@ -162,17 +199,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    const { user } = await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { user, admin: supabase } = await requireTenantAccess(tenantId);
 
     if (action === 'status' && campaignId) {
-      try {
-        const scraperRes = await callScraperService(`/api/scraper/status/${campaignId}`);
-        if (scraperRes.ok) {
-          return NextResponse.json({ status: await scraperRes.json() });
-        }
-      } catch {
-        // DB fallback
+      const { data: bridge } = await supabase.from('scraper_campaigns').select('canonical_search_id')
+        .eq('tenant_id', tenantId).eq('id', campaignId).maybeSingle();
+      if (bridge?.canonical_search_id) {
+        const { data: canonical } = await supabase.from('lead_searches').select('*')
+          .eq('workspace_id', tenantId).eq('id', bridge.canonical_search_id).maybeSingle();
+        if (canonical) return NextResponse.json({ status: canonical });
       }
       const { data: run } = await supabase
         .from('lead_campaign_runs')
@@ -212,11 +247,12 @@ export async function POST(req: NextRequest) {
     if (action === 'qualify' && campaignId) {
       const leadIds = (body.leadIds as string[]) || [];
       if (!leadIds.length) return NextResponse.json({ error: 'No lead IDs' }, { status: 400 });
-      const { error } = await supabase
-        .from('scraper_leads')
-        .update({ status: 'qualified' })
-        .eq('tenant_id', tenantId)
-        .in('id', leadIds);
+      const { data: bridge } = await supabase.from('scraper_campaigns').select('canonical_search_id')
+        .eq('tenant_id', tenantId).eq('id', campaignId).maybeSingle();
+      const target = bridge?.canonical_search_id
+        ? supabase.from('lead_candidates').update({ review_status: 'reviewing', updated_at: new Date().toISOString() }).eq('workspace_id', tenantId).eq('search_id', bridge.canonical_search_id).in('id', leadIds)
+        : supabase.from('scraper_leads').update({ status: 'qualified' }).eq('tenant_id', tenantId).in('id', leadIds);
+      const { error } = await target;
       if (error) throw error;
       return NextResponse.json({ success: true, qualified: leadIds.length });
     }
@@ -253,7 +289,7 @@ export async function POST(req: NextRequest) {
       const result = await startLeadOutreachAutomation(tenantId, user.id, leadIds, channel);
       return NextResponse.json({
         success: true,
-        message: `Automation queued: ${channel} outreach via Nexus + event bus (works on Vercel & Railway crons)`,
+        message: `Automation queued: ${channel} outreach (event bus + cron). Send still requires review unless you approved it.`,
         result,
       });
     }
@@ -267,7 +303,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'retry_niche' && providedIntent) {
-      const broadened = broadenIntentForRetry(providedIntent, retryAttempt);
+      const broadened = broadenIntentForRetry(normalizeRunIntent(providedIntent), retryAttempt);
       const campaign = await createAndRunCampaign(tenantId, user.id, broadened);
       const advice = getNicheSearchAdvice(broadened, 0, retryAttempt);
       return NextResponse.json({
@@ -280,14 +316,23 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'run') {
-      const intent = providedIntent;
+      const intent = normalizeRunIntent(providedIntent);
       if (!intent) return NextResponse.json({ error: 'Missing intent' }, { status: 400 });
       const campaign = await createAndRunCampaign(tenantId, user.id, intent);
+      const nicheLabel = intent.niche || intent.industry?.[0] || 'businesses';
+      const radius = intent.location?.radius_km || 25;
+      const count = campaign.leadCount || 0;
       return NextResponse.json({
-        reply: `Searching SMB ${intent.niche || intent.industry?.[0] || 'businesses'} — skipping big corporations. Sources: ${intent.sources.join(', ')}.`,
+        reply:
+          count > 0
+            ? `Found ${count} contactable ${nicheLabel} leads within ~${radius} km — phone/email required, auto-enriched with decision makers where possible. Select → Save to CRM.`
+            : `Searching ${nicheLabel} within ~${radius} km, then auto-enriching websites for emails, phones, and decision makers (Railway Playwright). Vague website-only rows are dropped.`,
         campaignId: campaign.id,
         intent,
-        status: 'running',
+        status: campaign.searchStatus || (count > 0 ? 'completed' : 'running'),
+        leadCount: count,
+        mode: campaign.mode,
+        sourceStats: undefined,
       });
     }
 

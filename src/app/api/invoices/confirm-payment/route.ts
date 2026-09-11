@@ -50,6 +50,22 @@ export async function POST(req: NextRequest) {
       })
       .eq('id', invoice.id);
 
+    const { error: automationError } = await admin.from('business_automation_events').insert({
+      tenant_id: invoice.tenant_id,
+      event_type: 'invoice_payment_pending_review',
+      payload: {
+        invoiceId: invoice.id,
+        invoiceNumber: invoice.invoice_number,
+        reference,
+        note,
+        payerName,
+        submittedAt: new Date().toISOString(),
+      },
+    });
+    if (automationError) {
+      console.warn('[confirm-payment] automation event skipped', automationError.message);
+    }
+
     const origin = req.nextUrl.origin;
     await notifyTenantOwners({
       tenantId: invoice.tenant_id,

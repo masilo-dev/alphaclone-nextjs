@@ -45,6 +45,7 @@
     "supabase",
     "mobile",
     "demo_data_fix.ts",
+    "scratch_*.ts",
     "scratch",
     "scripts",
     "tmp",

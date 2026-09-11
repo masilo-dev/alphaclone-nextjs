@@ -1,18 +1,27 @@
 'use client';
 
 import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { readStoredAcTheme, applyAcThemeClass } from '@/lib/applyAcTheme';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
+import { BonnieDrawerProvider } from '@/contexts/BonnieDrawerContext';
 import { ToastProvider } from '@/components/Toast';
+import { SuccessFeedbackProvider } from '@/components/ui/SuccessFeedback';
+import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialog';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { UserPreferencesBootstrap } from '@/components/UserPreferencesBootstrap';
 import ServiceWorkerBootstrap from '@/components/common/ServiceWorkerBootstrap';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
+import { registerPlatformQueryClient } from '@/lib/platformReset';
+import { alphacloneChakraTheme } from '@/theme/chakraTheme';
+import { BonnieDrawer } from '@/components/ui/os/BonnieDrawer';
+import { BookingModalProvider } from '@/contexts/BookingModalContext';
+import AlphaCloneBookingModal from '@/components/marketing/system/AlphaCloneBookingModal';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create QueryClient inside component to avoid server/client hydration mismatch
@@ -34,27 +43,43 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return cleanup;
   }, []);
 
+  useEffect(() => registerPlatformQueryClient(queryClient), [queryClient]);
+
   useLayoutEffect(() => {
     applyAcThemeClass(readStoredAcTheme());
   }, []);
 
   return (
     <GlobalErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <AuthProvider>
-            <ThemeProvider>
-              <LanguageProvider>
-                <UserPreferencesBootstrap />
-                <ServiceWorkerBootstrap />
-                <TenantProvider>
-                  <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
-                </TenantProvider>
-              </LanguageProvider>
-            </ThemeProvider>
-          </AuthProvider>
-        </ToastProvider>
-      </QueryClientProvider>
+      <ChakraProvider theme={alphacloneChakraTheme} resetCSS={false}>
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <SuccessFeedbackProvider>
+              <ConfirmDialogProvider>
+                <AuthProvider>
+                  <ThemeProvider>
+                    <LanguageProvider>
+                      <UserPreferencesBootstrap />
+                      <ServiceWorkerBootstrap />
+                      <TenantProvider>
+                        <BackgroundTaskProvider>
+                          <BonnieDrawerProvider>
+                            <BookingModalProvider>
+                              {children}
+                              <AlphaCloneBookingModal />
+                              <BonnieDrawer />
+                            </BookingModalProvider>
+                          </BonnieDrawerProvider>
+                        </BackgroundTaskProvider>
+                      </TenantProvider>
+                    </LanguageProvider>
+                  </ThemeProvider>
+                </AuthProvider>
+              </ConfirmDialogProvider>
+            </SuccessFeedbackProvider>
+          </ToastProvider>
+        </QueryClientProvider>
+      </ChakraProvider>
     </GlobalErrorBoundary>
   );
 }

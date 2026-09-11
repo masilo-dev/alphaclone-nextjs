@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'No active Zoho integration found' }, { status: 400 });
       }
 
-      const zohoService = new ZohoMailService(userId);
+      const zohoService = new ZohoMailService(userId, zohoIntegration.tenant_id);
       await zohoService.triageIncomingEmail(messageId, folderId);
       
       return NextResponse.json({ success: true });

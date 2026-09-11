@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import WhoWeServeContent from './WhoWeServeContent';
 
 export const metadata: Metadata = {
@@ -29,5 +30,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-    return <WhoWeServeContent />;
+    return (
+        <MarketingLandingShell>
+            <WhoWeServeContent />
+        </MarketingLandingShell>
+    );
 }

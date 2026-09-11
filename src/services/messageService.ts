@@ -604,7 +604,7 @@ export const messageService = {
     async uploadAttachment(file: File): Promise<{ url: string; id: string; type: 'image' | 'file'; name: string; error: string | null }> {
         try {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+            const fileName = `${crypto.randomUUID()}_${Date.now()}.${fileExt}`;
             const filePath = `${fileName}`;
 
             const { error } = await supabase.storage

@@ -1,4 +1,5 @@
 import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
+import { renderEmail, type EmailTemplateType } from '@/lib/email/renderEmail';
 
 const DEFAULT_SYSTEM_FOOTER_LINES: string[] = [
   `${COMPANY_LEGAL.legalName} — a Wyoming registered company`,
@@ -25,14 +26,11 @@ const HTML_FOOTER_STYLE = [
 
 const FOOTER_MARKERS = [
   'alphaclonesystems.com',
-  'Sent on behalf of',
-  'Sent through AlphaClone Systems',
-  'Alphaclone Systems',
-  'Simple. Efficient.',
-  'The unified AI business operating system',
-  'If you received this email in error',
+  'AlphaClone Systems LLC',
   'Privacy Policy',
-  'Unsubscribe',
+  'Privacy Request',
+  'Manage Preferences',
+  'If you received this email in error',
   COMPANY_LEGAL.legalName,
 ];
 
@@ -158,17 +156,25 @@ export function ensureFooter(content: string, ctx?: FooterContext): string {
   const body = String(content || '').trim();
   if (!body) return getSystemFooter().trim();
 
-  if (hasEmailComplianceFooter(body)) {
+  if (hasEmailComplianceFooter(body) || isFullEmailDocument(body)) {
     return body;
+  }
+
+  const isHtml = /<[a-z][\s\S]*>/i.test(body);
+  if (isHtml) {
+    const wrapped = renderEmail({
+      type: (ctx?.unsubscribeUrl ? 'outreach' : 'transactional') as EmailTemplateType,
+      subject: 'Message from AlphaClone Systems',
+      content: body,
+      contentIsHtml: true,
+      footerType: ctx?.unsubscribeUrl ? 'outreach' : 'transactional',
+      unsubscribeUrl: ctx?.unsubscribeUrl,
+    });
+    return wrapped.html;
   }
 
   let footer = getSystemFooter().trim();
   if (!footer) return body;
   footer = resolveUnsubscribePlaceholder(footer, ctx);
-
-  if (/<[a-z][\s\S]*>/i.test(body)) {
-    return `${body}${buildHtmlFooter(footer.split('\n'))}`;
-  }
-
   return `${body}\n\n${footer}`;
 }

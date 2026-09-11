@@ -103,21 +103,19 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
         const [campRes, msgRes, twilioRes] = await Promise.all([
             supabase.from('sms_campaigns').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase.from('sms_messages').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(100),
-            supabase.from('twilio_integrations').select('is_active, phone_number').eq('tenant_id', tenant.id).maybeSingle(),
+            fetch(`/api/twilio/credentials?tenantId=${encodeURIComponent(tenant.id)}`).then(async (response) => ({
+                ok: response.ok,
+                data: await response.json().catch(() => ({})),
+            })),
         ]);
         
         if (!campRes.error) setCampaigns(campRes.data || []);
         if (!msgRes.error) setMessages(msgRes.data || []);
         
-        if (twilioRes.data) {
-            setTwilioIntegration({ 
-                active: !!twilioRes.data.is_active, 
-                phone: twilioRes.data.phone_number 
-            });
-            // Auto-fill form from_number if empty
-            if (twilioRes.data.phone_number) {
-                setForm(f => ({ ...f, from_number: f.from_number || twilioRes.data.phone_number }));
-            }
+        if (twilioRes.ok && twilioRes.data.connected) {
+            // The browser only receives masked credential status; unmasked
+            // Twilio credentials and phone numbers stay server-side.
+            setTwilioIntegration({ active: true, phone: twilioRes.data.phoneNumberMasked });
         } else {
             setTwilioIntegration(null);
         }
@@ -178,7 +176,9 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this campaign?')) return;
-        await supabase.from('sms_campaigns').delete().eq('id', id);
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/sms/campaign?tenantId=${encodeURIComponent(tenant.id)}&campaignId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Campaign could not be deleted');
         setCampaigns(prev => prev.filter(c => c.id !== id));
         toast.success('Deleted');
     };
@@ -637,4 +637,3 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
         </div>
     );
 }
-

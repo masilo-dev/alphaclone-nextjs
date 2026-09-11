@@ -1,5 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { cronService } from '../cronService';
+import { aiService } from '@/services/ai/aiService';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { absoluteUrl } from '@/lib/siteUrl';
 
 export interface ScheduledAiTask {
     id: string;
@@ -18,6 +20,31 @@ export interface ScheduledAiTask {
     updated_at: string;
 }
 
+function cronFieldMatches(field: string, value: number): boolean {
+    if (field === '*') return true;
+    return field.split(',').some((part) => Number(part) === value);
+}
+
+export function isValidCronSchedule(schedule: string): boolean {
+    const parts = schedule.trim().split(/\s+/);
+    return parts.length === 5 && parts.every((part) => /^(?:\*|\d{1,2}(?:,\d{1,2})*)$/.test(part));
+}
+
+export function getNextTaskRun(schedule: string, after = new Date()): Date {
+    const parts = schedule.trim().split(/\s+/);
+    if (!isValidCronSchedule(schedule)) throw new Error('Schedule must be a supported five-field cron expression');
+    const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+    const candidate = new Date(after.getTime());
+    candidate.setUTCSeconds(0, 0);
+    candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
+    const maximum = 366 * 24 * 60;
+    for (let attempt = 0; attempt < maximum; attempt += 1) {
+        if (cronFieldMatches(minute, candidate.getUTCMinutes()) && cronFieldMatches(hour, candidate.getUTCHours()) && cronFieldMatches(dayOfMonth, candidate.getUTCDate()) && cronFieldMatches(month, candidate.getUTCMonth() + 1) && cronFieldMatches(dayOfWeek, candidate.getUTCDay())) return candidate;
+        candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
+    }
+    throw new Error('Schedule has no run time within the next year');
+}
+
 export const taskAutomationService = {
     /**
      * Create a new scheduled AI task
@@ -33,9 +60,7 @@ export const taskAutomationService = {
     }) {
         const supabase = createSupabaseAdminClient();
         
-        // Calculate initial next_run_at (Simplified for now, in prod we'd use cron-parser)
-        const nextRunAt = new Date();
-        nextRunAt.setHours(nextRunAt.getHours() + 24); // Default to tomorrow same time if not parsed
+        const nextRunAt = getNextTaskRun(params.schedule);
 
         const { data, error } = await supabase
             .from('scheduled_ai_tasks')
@@ -126,13 +151,33 @@ export const taskAutomationService = {
      */
     async executeTask(task: ScheduledAiTask) {
         const supabase = createSupabaseAdminClient();
-        
+
+        if (!isValidCronSchedule(task.schedule)) {
+            const message = `Invalid cron schedule "${task.schedule}" — task paused until schedule is fixed`;
+            console.error(`[scheduled-ai-task] ${task.id}: ${message}`);
+            await supabase
+                .from('scheduled_ai_tasks')
+                .update({ status: 'paused', updated_at: new Date().toISOString() })
+                .eq('id', task.id);
+            await supabase.from('scheduled_ai_task_results').insert({
+                task_id: task.id,
+                tenant_id: task.tenant_id,
+                status: 'failure',
+                error: message,
+                ran_at: new Date().toISOString(),
+            });
+            return { success: false, error: message };
+        }
+
         try {
-            // 1. Call AI to run the prompt
-            // In a real implementation, we'd use the aiRouter or a specific agent
-            console.log(`Executing AI Task: ${task.name} with prompt: ${task.prompt}`);
-            
-            const output = `AI Result for "${task.name}": This is a simulated result based on your prompt: ${task.prompt}`;
+            const completion = await aiService.complete({
+                prompt: task.prompt,
+                systemPrompt: `Execute the scheduled workspace task named "${task.name}". Return a concise, actionable result.`,
+                provider: 'auto',
+                temperature: 0.2,
+            });
+            const output = String(completion.content || '').trim();
+            if (!output) throw new Error('AI provider returned an empty result');
 
             // 2. Store Result
             await supabase.from('scheduled_ai_task_results').insert({
@@ -144,8 +189,7 @@ export const taskAutomationService = {
             });
 
             // 3. Update Task Last Run and Next Run
-            const nextRunAt = new Date();
-            nextRunAt.setHours(nextRunAt.getHours() + 24); // Simple +24h for now
+            const nextRunAt = getNextTaskRun(task.schedule);
 
             await supabase
                 .from('scheduled_ai_tasks')
@@ -154,6 +198,8 @@ export const taskAutomationService = {
                     next_run_at: nextRunAt.toISOString()
                 })
                 .eq('id', task.id);
+
+            await notifyScheduledTaskByEmail(task, output);
 
             return { success: true, output };
         } catch (error) {
@@ -167,7 +213,57 @@ export const taskAutomationService = {
                 ran_at: new Date().toISOString()
             });
 
+            const nextRunAt = isValidCronSchedule(task.schedule)
+                ? getNextTaskRun(task.schedule, new Date())
+                : null;
+
+            await supabase
+                .from('scheduled_ai_tasks')
+                .update({
+                    last_run_at: new Date().toISOString(),
+                    ...(nextRunAt ? { next_run_at: nextRunAt.toISOString() } : { status: 'paused' }),
+                })
+                .eq('id', task.id);
+
             return { success: false, error };
         }
     }
 };
+
+async function notifyScheduledTaskByEmail(task: ScheduledAiTask, output: string): Promise<void> {
+    const prefs = (task.notification_preference || {}) as { email?: boolean };
+    if (prefs.email === false) return;
+    if (!task.user_id) return;
+
+    const supabase = createSupabaseAdminClient();
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, name')
+        .eq('id', task.user_id)
+        .maybeSingle();
+    if (!profile?.email) return;
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', task.tenant_id)
+        .maybeSingle();
+
+    const snippet = output.length > 1200 ? `${output.slice(0, 1200)}…` : output;
+    const workspaceName = tenant?.name || 'Your Workspace';
+    const actionUrl = absoluteUrl('/dashboard/automation');
+
+    await sendEmailServer({
+        tenantId: task.tenant_id,
+        to: profile.email,
+        subject: `Scheduled task complete: ${task.name}`,
+        html: `
+          <p>Hi ${profile.name || 'there'},</p>
+          <p>Your scheduled workspace task <strong>${task.name}</strong> finished successfully in <strong>${workspaceName}</strong>.</p>
+          <pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;background:#0f172a;color:#e2e8f0;padding:16px;border-radius:12px;">${snippet.replace(/</g, '&lt;')}</pre>
+          <p><a href="${actionUrl}">Open automation dashboard</a></p>
+        `,
+        isPlatformNotification: true,
+        templateName: 'scheduledAiTaskComplete',
+    });
+}

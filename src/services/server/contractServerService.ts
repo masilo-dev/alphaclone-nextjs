@@ -73,6 +73,29 @@ export const contractServerService = {
             throw new Error('Contract is not available for client signature');
         }
 
+        const signerEmail = String(req.signerEmail || '').trim().toLowerCase();
+        const { data: signerParty } = await supabaseAdmin
+            .from('contract_parties')
+            .select('id, signing_order, signature_required, signature_status, party_snapshot')
+            .eq('tenant_id', contract.tenant_id)
+            .eq('contract_id', req.contractId)
+            .contains('party_snapshot', { email: signerEmail })
+            .maybeSingle();
+        if (signerParty?.signing_order) {
+            const { data: pendingEarlier } = await supabaseAdmin
+                .from('contract_parties')
+                .select('id')
+                .eq('tenant_id', contract.tenant_id)
+                .eq('contract_id', req.contractId)
+                .eq('signature_required', true)
+                .lt('signing_order', signerParty.signing_order)
+                .neq('signature_status', 'signed')
+                .limit(1);
+            if (pendingEarlier?.length) {
+                throw new Error('An earlier signer must complete their signature first');
+            }
+        }
+
         // 3. Verify Content Integrity
         const currentHash = this.generateHash(contract.content || '');
         // If the contract has a metadata.content_hash, we could verify against it.
@@ -113,6 +136,43 @@ export const contractServerService = {
 
         if (sigError) throw sigError;
 
+        await supabaseAdmin.from('contract_signature_events').insert({
+            tenant_id: contract.tenant_id,
+            contract_id: req.contractId,
+            party_id: signerParty?.id || null,
+            event_type: 'signed',
+            signer_email: signerEmail,
+            signing_order: signerParty?.signing_order || null,
+            provider: 'bonnie_esign',
+            ip_address: req.ipAddress,
+            user_agent: req.userAgent,
+            document_hash: currentHash,
+            evidence: {
+                signature_event_id: sigEvent.id,
+                authentication_method: req.userId ? 'session' : 'email_token',
+                consent_given: Boolean(req.consentGiven),
+                tamper_seal: tamperSeal,
+            },
+        });
+
+        if (signerParty?.id) {
+            await supabaseAdmin
+                .from('contract_parties')
+                .update({ signature_status: 'signed' })
+                .eq('id', signerParty.id)
+                .eq('tenant_id', contract.tenant_id);
+        }
+
+        const { data: requiredParties } = await supabaseAdmin
+            .from('contract_parties')
+            .select('id, signature_status')
+            .eq('tenant_id', contract.tenant_id)
+            .eq('contract_id', req.contractId)
+            .eq('signature_required', true);
+        const hasCanonicalParties = Boolean(requiredParties?.length);
+        const allCanonicalPartiesSigned =
+            hasCanonicalParties && requiredParties!.every((party: any) => party.signature_status === 'signed');
+
         // 4.5 Record Consent (Compliance)
         if (req.consentGiven) {
             const { error: consentError } = await supabaseAdmin
@@ -140,11 +200,19 @@ export const contractServerService = {
         if (req.role === 'client') {
             updates.client_signature = req.signatureDataUrl;
             updates.client_signed_at = now;
-            updates.status = contract.admin_signature ? 'fully_signed' : 'client_signed';
         } else {
             updates.admin_signature = req.signatureDataUrl;
             updates.admin_signed_at = now;
+        }
+        if (hasCanonicalParties) {
+            updates.status = allCanonicalPartiesSigned ? 'fully_signed' : 'sent';
+            updates.lifecycle_status = allCanonicalPartiesSigned ? 'signed' : 'sent';
+        } else if (req.role === 'client') {
+            updates.status = contract.admin_signature ? 'fully_signed' : 'client_signed';
+            updates.lifecycle_status = contract.admin_signature ? 'signed' : 'sent';
+        } else {
             updates.status = contract.client_signature ? 'fully_signed' : 'sent';
+            updates.lifecycle_status = contract.client_signature ? 'signed' : 'sent';
         }
 
         // Add audit fields directly to contract for redundancy/readability
@@ -169,6 +237,7 @@ export const contractServerService = {
 
         // 6. Log to Audit Trail
         await supabaseAdmin.from('contract_audit_trail').insert({
+            tenant_id: contract.tenant_id,
             contract_id: req.contractId,
             action: `contract_signed_by_${req.role}`,
             actor_id: req.userId || null,

@@ -81,7 +81,7 @@ export const dataExportService = {
 
             // Get invoices
             const { data: invoices } = await supabase
-                .from('invoices')
+                .from('business_invoices')
                 .select('*')
                 .in('tenant_id', tenantIds);
 

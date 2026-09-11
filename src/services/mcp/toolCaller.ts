@@ -22,7 +22,7 @@ export async function callMcpTool(
     },
     body: JSON.stringify({
       jsonrpc: '2.0',
-      id: Math.random().toString(36).substring(7),
+      id: crypto.randomUUID(),
       method: 'tools/call',
       params: {
         name: method,

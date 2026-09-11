@@ -1,6 +1,5 @@
-import { start } from 'workflow/api';
+import { queueContractLifecycle } from '@/lib/contracts/durableContractRouter';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { contractLifecycleWorkflow } from './contract-lifecycle';
 
 /** Normalize legacy stage names to canonical deal stages. */
 function normalizeDealStage(stage: string): string {
@@ -61,7 +60,7 @@ async function closedWonActions(dealId: string, tenantId: string) {
     .single();
 
   if (contract) {
-    await start(contractLifecycleWorkflow, [{ contractId: contract.id, tenantId }]);
+    await queueContractLifecycle({ contractId: contract.id, tenantId });
   }
 }
 

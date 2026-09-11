@@ -497,7 +497,7 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
         supabase.from('projects').select('*').eq('tenant_id', tenantId).limit(5),
         supabase.from('deals').select('*').eq('tenant_id', tenantId).limit(5),
         supabase.from('business_clients').select('*').eq('tenant_id', tenantId).limit(5),
-        supabase.from('invoices').select('*').eq('tenant_id', tenantId).eq('status', 'pending').limit(5)
+        supabase.from('business_invoices').select('*').eq('tenant_id', tenantId).in('status', ['sent', 'overdue', 'partially_paid', 'draft']).limit(5)
       ]);
 
       return `
@@ -542,7 +542,7 @@ Return a JSON array of objects with:
 - description: 1 sentence explanation
 - priority: "low", "medium", "high"
 - actionLabel: Button text (e.g., "Draft Contract", "Follow-up")
-- actionType: Identifier for the action (e.g., "DRAFT_CONTRACT", "CLIENT_FOLLOWUP")
+- actionType: one of "DRAFT_CONTRACT", "REVIEW_OVERDUE_INVOICES", "REVIEW_STALE_LEADS", or "REVIEW_TASKS". Use DRAFT_CONTRACT only when metadata includes a real projectId.
 - metadata: Relevant IDs
 
 Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handle any industry contextually.
