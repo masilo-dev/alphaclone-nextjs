@@ -29,6 +29,10 @@ export const ACTIVE_CHASE_STATES: ReadonlySet<ChaseState> = new Set(
 export const CHASE_POLICY_KEYS = [
   'task_chaser',
   'project_chaser',
+  'approval_chaser',
+  'milestone_chaser',
+  'payment_chaser',
+  'client_response_chaser',
   'lead_chaser',
   'prospect_deal_chaser',
   'contact_chaser',
@@ -49,6 +53,8 @@ export type ChasePolicyKey = (typeof CHASE_POLICY_KEYS)[number];
 export type ChaseEntityType =
   | 'task'
   | 'project'
+  | 'approval'
+  | 'milestone'
   | 'lead'
   | 'deal'
   | 'contact'
