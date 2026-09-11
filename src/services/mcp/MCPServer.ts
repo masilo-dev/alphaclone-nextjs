@@ -4636,8 +4636,8 @@ class AlphaCloneMCPServer {
         // â”€â”€ send_invoice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'send_invoice': {
           const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { invoice_id } = a;
+          const tenant_id = String(this.requireTenant(a) || '').trim();
+          const invoice_id = String(a.invoice_id || '').trim();
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
           }

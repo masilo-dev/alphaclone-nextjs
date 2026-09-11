@@ -256,11 +256,42 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
         sequenceEmails: DAILY_EDUCATION_SEQUENCE,
     });
 
+    const previewRecipient = useMemo(() => {
+        const firstContact = contacts[0];
+        if (firstContact) {
+            return {
+                id: firstContact.id,
+                email: firstContact.email,
+                firstName: firstContact.firstName || firstContact.name?.split(/\s+/)[0] || 'John',
+                lastName: firstContact.lastName || firstContact.name?.split(/\s+/).slice(1).join(' ') || 'Doe',
+                company: firstContact.company || 'Acme Corp',
+                fromName: form.fromName || 'AlphaClone Systems',
+                senderName: form.fromName || 'AlphaClone Systems',
+            };
+        }
+        return {
+            id: 'mock-id',
+            email: 'john.doe@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            company: 'Acme Corp',
+            fromName: form.fromName || 'AlphaClone Systems',
+            senderName: form.fromName || 'AlphaClone Systems',
+        };
+    }, [contacts, form.fromName]);
+
+    const previewSubject = useMemo(() => {
+        const rawSubject = String(form.subject || '').trim();
+        if (!rawSubject) return '';
+        return emailCampaignService.injectVariables(rawSubject, previewRecipient);
+    }, [form.subject, previewRecipient]);
+
     const sanitizedBodyHtml = useMemo(() => {
         const html = String(form.bodyHtml || '').trim();
         if (!html) return '';
-        return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
-    }, [form.bodyHtml]);
+        const interpolated = emailCampaignService.injectVariables(html, previewRecipient);
+        return DOMPurify.sanitize(interpolated, { USE_PROFILES: { html: true } });
+    }, [form.bodyHtml, previewRecipient]);
 
     const previewRecipient = useMemo(() => {
         if (selectedContactIds.length > 0) {
@@ -2164,7 +2195,7 @@ Voice & rules:
                                                 <div className="bg-slate-950 border border-white/5 rounded-3xl overflow-hidden p-5 flex flex-col gap-4">
                                                     <div className="bg-slate-900 rounded-xl p-3 border border-white/5 text-[11px] space-y-1">
                                                         <div className="text-slate-400"><span className="font-bold text-slate-600">From:</span> {form.fromName}</div>
-                                                        <div className="text-slate-400"><span className="font-bold text-slate-600">Subject:</span> {form.subject || '(No Subject)'}</div>
+                                                        <div className="text-slate-400"><span className="font-bold text-slate-600">Subject:</span> {previewSubject || '(No Subject)'}</div>
                                                     </div>
                                                     <div 
                                                         className="p-5 bg-white text-slate-800 rounded-2xl min-h-[220px] prose prose-sm max-w-none shadow-inner overflow-y-auto"
@@ -2189,7 +2220,7 @@ Voice & rules:
                                                 </div>
                                                 <div>
                                                     <span className="text-[9px] text-slate-500 font-bold uppercase">Subject</span>
-                                                    <p className="text-xs text-white font-bold truncate">{form.subject || 'Empty'}</p>
+                                                    <p className="text-xs text-white font-bold truncate">{previewSubject || 'Empty'}</p>
                                                 </div>
                                                 <div>
                                                     <span className="text-[9px] text-slate-500 font-bold uppercase">Provider</span>
@@ -2269,13 +2300,14 @@ Voice & rules:
                                             </div>
                                         </div>
 
-                                        <div className="grid gap-6 lg:grid-cols-2">
-                                            {/* Desktop preview */}
-                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4 shadow-xl">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <div>
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Desktop inbox</p>
-                                                        <p className="text-[11px] text-slate-400">{form.fromName || 'Sender'} · {form.fromEmail || 'from@example.com'}</p>
+                                        <div className="grid gap-4 lg:grid-cols-3">
+                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Desktop inbox</p>
+                                                <p className="mt-1 text-[11px] text-slate-500">{form.fromName || 'Sender'} · {form.fromEmail || 'from@example.com'}</p>
+                                                <div className="mt-3 rounded-2xl bg-white p-4 text-slate-800 shadow-inner">
+                                                    <div className="mb-3 rounded-xl bg-slate-100 px-3 py-2 text-[11px]">
+                                                        <div><span className="font-bold">From:</span> {form.fromName || 'Sender'} &lt;{form.fromEmail || 'from@example.com'}&gt;</div>
+                                                        <div className="mt-1"><span className="font-bold">Subject:</span> {previewSubject || '(No subject yet)'}</div>
                                                     </div>
                                                     <button
                                                         type="button"
@@ -2285,24 +2317,15 @@ Voice & rules:
                                                         Edit
                                                     </button>
                                                 </div>
-
-                                                {/* Browser framing */}
-                                                <div className="mt-3 rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-2xl text-slate-800">
-                                                    {/* Browser title/chrome bar */}
-                                                    <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 flex items-center gap-3 select-none">
-                                                        <div className="flex gap-1.5">
-                                                            <span className="w-2.5 h-2.5 rounded-full bg-rose-400 block" />
-                                                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 block" />
-                                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 block" />
-                                                        </div>
-                                                        <div className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-0.5 text-[10px] text-slate-400 font-mono truncate">
-                                                            https://mail.google.com/u/0/#inbox/preview
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-4">
-                                                        <div className="mb-3 rounded-xl bg-slate-50 border border-slate-100 px-3 py-2 text-[11px]">
-                                                            <div><span className="font-bold text-slate-500">From:</span> <span className="font-bold">{form.fromName || 'Sender'}</span> &lt;{form.fromEmail || 'from@example.com'}&gt;</div>
-                                                            <div className="mt-1"><span className="font-bold text-slate-500">Subject:</span> <span className="font-semibold text-slate-900">{previewSubject || '(No subject yet)'}</span></div>
+                                            </div>
+                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Mobile preview</p>
+                                                <p className="mt-1 text-[11px] text-slate-500">Shorter lines and tighter spacing for phone inboxes.</p>
+                                                <div className="mt-3 mx-auto w-[220px] rounded-[28px] border border-slate-700 bg-slate-950 p-3">
+                                                    <div className="rounded-[22px] bg-white p-3 text-slate-800 shadow-inner">
+                                                        <div className="mb-2 text-[10px] text-slate-500">
+                                                            <div>{form.fromName || 'Sender'}</div>
+                                                            <div className="font-semibold text-slate-700">{previewSubject || '(No subject yet)'}</div>
                                                         </div>
                                                         <div
                                                             className="prose prose-sm max-w-none text-slate-800"
