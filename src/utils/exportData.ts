@@ -101,13 +101,16 @@ export function exportToPDF(
     </html>
   `;
 
-    // Open in new window for printing
-    const printWindow = window.open('', '_blank');
+    // Open in new window for printing via Blob URL
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const printWindow = window.open(url, '_blank');
+    
     if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
         printWindow.onload = () => {
             printWindow.print();
+            // Optional: revoke after print, but many browsers handle this better if left temporarily
+            // setTimeout(() => URL.revokeObjectURL(url), 1000);
         };
     }
 }

@@ -1,23 +1,42 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, X, Check, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Mic, X, Check, Loader2, Sparkles, AlertCircle, PlayCircle, StopCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 import { voiceCommandService } from '../../services/voiceCommandService';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface VoiceCaptureFABProps {
     onCapture?: (text: string) => void;
+    isActive?: boolean;
+    onClose?: () => void;
 }
 
-const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
+const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: controlledActive, onClose }) => {
     const { user } = useAuth();
-    const [isActive, setIsActive] = useState(false);
+    const router = useRouter();
+    const [internalActive, setInternalActive] = useState(false);
+    const isActive = controlledActive !== undefined ? controlledActive : internalActive;
+
+    const setIsActive = (val: boolean) => {
+        if (controlledActive !== undefined) {
+            if (!val && onClose) onClose();
+        } else {
+            setInternalActive(val);
+        }
+    };
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [summary, setSummary] = useState<string | null>(null);
+    const [isContinuous, setIsContinuous] = useState(false);
     const recognitionRef = useRef<any>(null);
+
+    // Text-to-Speech ref
+    const synthRef = useRef<SpeechSynthesis | null>(null);
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     useEffect(() => {
         // Initialize Speech Recognition
@@ -61,8 +80,27 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
             if (recognitionRef.current) {
                 recognitionRef.current.stop();
             }
+            if (synthRef.current) {
+                synthRef.current.cancel();
+            }
         };
     }, []);
+
+    const speak = (text: string) => {
+        if (!window.speechSynthesis) return;
+        
+        window.speechSynthesis.cancel(); // Stop any current speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        utterance.onstart = () => setIsSpeaking(true);
+        utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = () => setIsSpeaking(false);
+        
+        window.speechSynthesis.speak(utterance);
+    };
 
     const startListening = () => {
         if (!recognitionRef.current) return;
@@ -108,6 +146,7 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
         if (!transcript || !user) return;
 
         setIsProcessing(true);
+        setSummary(null);
         try {
             // Process with AI
             const intent = await voiceCommandService.processTranscript(transcript);
@@ -124,7 +163,30 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
             if (result.success) {
                 toast.success(result.message);
                 if (onCapture) onCapture(transcript);
-                setIsActive(false);
+                
+                // Handle Redirect (only if not continuous)
+                if (result.redirect && !isContinuous) {
+                    router.push(result.redirect);
+                    setIsActive(false);
+                }
+                
+                // Handle Summary Response
+                if (result.data && result.data.summary) {
+                    setSummary(result.data.summary);
+                    speak(result.data.summary);
+                    
+                    if (isContinuous) {
+                        // Reset for next command
+                        setTimeout(() => {
+                            setTranscript('');
+                            setSummary(null);
+                            startListening();
+                        }, 2000);
+                    }
+                } else if (!isContinuous) {
+                    setIsActive(false);
+                }
+                
                 setTranscript('');
             } else {
                 toast.error(result.message);
@@ -141,16 +203,16 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
         return (
             <button
                 onClick={toggleVoice}
-                className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-slate-900 border border-teal-500/50 text-teal-400 rounded-full shadow-2xl shadow-teal-500/20 flex items-center justify-center active:scale-95 transition-transform group"
+                className="fixed bottom-6 left-6 z-50 w-12 h-12 bg-slate-900 border border-teal-500/50 text-teal-400 rounded-full shadow-2xl shadow-teal-500/20 flex items-center justify-center active:scale-95 transition-transform group"
             >
-                <Mic className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse border-2 border-slate-900"></div>
+                <Mic className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border-2 border-slate-900"></div>
             </button>
         );
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center pb-24 px-4 sm:items-center sm:pb-0">
+        <div className="fixed inset-0 z-[1100] flex items-end justify-center pb-24 px-4 sm:items-center sm:pb-0">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsActive(false)} />
 
             <div className="relative w-full max-w-sm bg-slate-950 border border-teal-500/30 rounded-[2.5rem] p-8 shadow-[0_0_100px_-20px_rgba(20,184,166,0.5)] overflow-hidden animate-in zoom-in-95 duration-200">
@@ -173,12 +235,18 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
 
                     <div className="space-y-2">
                         <h3 className="text-sm font-black text-slate-500 uppercase tracking-[0.2em]">
-                            {isListening ? 'Neural Link Active' : isProcessing ? 'Processing Intel' : error ? 'Signal Disruption' : 'Capture Verified'}
+                            {isListening ? 'Neural Link Active' : isProcessing ? 'Processing Intel' : error ? 'Signal Disruption' : summary ? 'Analysis Complete' : 'Capture Verified'}
                         </h3>
                         {error ? (
                             <div className="flex items-center gap-2 text-rose-500 justify-center">
                                 <AlertCircle className="w-4 h-4" />
                                 <span className="text-xs font-bold">{error}</span>
+                            </div>
+                        ) : summary ? (
+                            <div className="text-left bg-slate-900/50 p-4 rounded-xl border border-white/10 max-h-60 overflow-y-auto">
+                                <p className="text-sm text-slate-300 leading-relaxed font-mono whitespace-pre-wrap">
+                                    {summary}
+                                </p>
                             </div>
                         ) : (
                             <p className={`text-lg font-bold min-h-[3rem] transition-all duration-300 ${isListening ? 'text-teal-400/70 italic' : 'text-white'}`}>
@@ -189,12 +257,16 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
 
                     <div className="flex items-center gap-4 w-full">
                         <button
-                            onClick={() => setIsActive(false)}
+                            onClick={() => {
+                                if (isSpeaking) window.speechSynthesis.cancel();
+                                setIsActive(false);
+                                setSummary(null);
+                            }}
                             className="flex-1 py-4 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
                         >
-                            Abort
+                            {summary ? 'Close' : 'Abort'}
                         </button>
-                        {!isListening && !isProcessing && transcript && !error && (
+                        {!isListening && !isProcessing && transcript && !error && !summary && (
                             <button
                                 onClick={handleConfirm}
                                 className="flex-1 py-4 bg-gradient-to-r from-teal-600 to-teal-400 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-teal-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
@@ -205,9 +277,18 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
                     </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-center gap-2 overflow-hidden">
-                    <Sparkles className="w-3 h-3 text-teal-500/50" />
-                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-[0.4em]">Advanced Vocal Recognition v5.0</span>
+                <div className="mt-8 pt-6 border-t border-white/5 flex flex-col items-center gap-4">
+                    <button
+                        onClick={() => setIsContinuous(!isContinuous)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-[10px] font-black uppercase tracking-widest ${isContinuous ? 'bg-teal-500/20 border-teal-500/50 text-teal-400' : 'bg-slate-900 border-white/5 text-slate-500 hover:text-slate-300'}`}
+                    >
+                        <RefreshCw className={`w-3 h-3 ${isContinuous ? 'animate-spin' : ''}`} />
+                        Continuous Listening: {isContinuous ? 'ON' : 'OFF'}
+                    </button>
+                    <div className="flex items-center justify-center gap-2 overflow-hidden">
+                        <Sparkles className="w-3 h-3 text-teal-500/50" />
+                        <span className="text-xs font-black text-slate-600 uppercase tracking-[0.4em]">Advanced Vocal Recognition v5.0</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -215,4 +296,5 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture }) => {
 };
 
 export default VoiceCaptureFAB;
+
 

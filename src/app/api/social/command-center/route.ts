@@ -1,0 +1,152 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { AlphaNexus } from '@/lib/social/alphaNexus';
+import { runNexusIntelligenceSession } from '@/lib/automation/nexusIntelligenceTask';
+
+function isUnavailableSchema(error: unknown): boolean {
+    const candidate = error as { code?: string; message?: string } | null;
+    const message = String(candidate?.message || '').toLowerCase();
+    return candidate?.code === '42P01'
+        || candidate?.code === 'PGRST205'
+        || message.includes('schema cache')
+        || message.includes('does not exist');
+}
+
+export async function GET(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const tenantId = String(searchParams.get('tenantId') || '').trim();
+        if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+
+        const { admin } = await requireTenantAccess(tenantId, request);
+
+        const [bmRes, wlRes, xRes, siRes] = await Promise.all([
+            admin.from('social_bookmarks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            admin.from('social_watchlist').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+            admin.from('x_integrations').select('id, x_username, x_user_id, created_at').eq('tenant_id', tenantId).maybeSingle(),
+            admin.from('social_interactions').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(5),
+        ]);
+
+        const results = [bmRes, wlRes, xRes, siRes];
+        return NextResponse.json({ 
+            success: true, 
+            bookmarks: bmRes.error ? [] : (bmRes.data || []),
+            watchlist: wlRes.error ? [] : (wlRes.data || []),
+            xIntegration: xRes.error ? null : (xRes.data || null),
+            recentInteractions: siRes.error ? [] : (siRes.data || []),
+            available: !results.some((result) => Boolean(result.error)),
+            notice: results.some((result) => result.error && isUnavailableSchema(result.error))
+                ? 'Some social workspace collections are still being prepared.'
+                : undefined,
+        });
+    } catch (error) {
+        return routeErrorResponse(error, 'Failed to load social workspace', request);
+    }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const tenantId = String(body.tenantId || '').trim();
+        const mode = String(body.mode || '').trim();
+        if (!tenantId || !mode) return NextResponse.json({ error: 'tenantId and mode are required' }, { status: 400 });
+
+        const { admin } = await requireTenantAccess(tenantId, request);
+
+        if (mode === 'add_bookmark') {
+            const payload = {
+                tenant_id: tenantId,
+                title: String(body.title || '').trim(),
+                url: String(body.url || '').trim(),
+                platform: String(body.platform || 'facebook').trim(),
+                category: String(body.category || 'group').trim(),
+                notes: String(body.notes || '').trim(),
+            };
+            const { data, error } = await admin.from('social_bookmarks').insert(payload).select('*').single();
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ success: true, bookmark: data });
+        }
+
+        if (mode === 'add_watchlist') {
+            const payload = {
+                tenant_id: tenantId,
+                name: String(body.name || '').trim(),
+                url: String(body.url || '').trim(),
+                platform: String(body.platform || 'linkedin').trim(),
+            };
+            const { data, error } = await admin.from('social_watchlist').insert(payload).select('*').single();
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ success: true, watchlistItem: data });
+        }
+
+        if (mode === 'start_lead_hunt') {
+            const nexus = new AlphaNexus(tenantId);
+            const result = await nexus.huntLeads();
+            return NextResponse.json({ success: true, ...result });
+        }
+
+        if (mode === 'evaluate_outcome') {
+            const nexus = new AlphaNexus(tenantId);
+            const { content, platform } = body;
+            const result = await nexus.evaluateInteraction(content, platform);
+            return NextResponse.json({ success: true, evaluation: result });
+        }
+
+        if (mode === 'trigger_nexus_intelligence') {
+            const result = await runNexusIntelligenceSession(tenantId);
+            return NextResponse.json({ success: true, nexusLog: result });
+        }
+
+        if (mode === 'nexus_system_action') {
+            const nexus = new AlphaNexus(tenantId);
+            const { systemKey, params } = body;
+            const result = await nexus.executeSystemAction(systemKey, params);
+            return NextResponse.json({ success: true, result });
+        }
+
+        if (mode === 'strategic_orchestrator') {
+            const objective = String(body.objective || '').trim();
+            if (!objective) return NextResponse.json({ error: 'objective is required' }, { status: 400 });
+
+            const nexus = new AlphaNexus(tenantId);
+            const result = await nexus.strategicOrchestrator(objective);
+            return NextResponse.json({
+                success: result.orchestration_status === 'complete',
+                result,
+            });
+        }
+
+        return NextResponse.json({ error: 'Unsupported mode' }, { status: 400 });
+    } catch (error) {
+        return routeErrorResponse(error, 'Failed to update social workspace', request);
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const tenantId = String(body.tenantId || '').trim();
+        const mode = String(body.mode || '').trim();
+        const id = String(body.id || '').trim();
+        if (!tenantId || !mode || !id) return NextResponse.json({ error: 'tenantId, mode and id are required' }, { status: 400 });
+
+        const { admin } = await requireTenantAccess(tenantId, request);
+
+        if (mode === 'delete_bookmark') {
+            const { error } = await admin.from('social_bookmarks').delete().eq('id', id).eq('tenant_id', tenantId);
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ success: true });
+        }
+
+        if (mode === 'delete_watchlist') {
+            const { error } = await admin.from('social_watchlist').delete().eq('id', id).eq('tenant_id', tenantId);
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+            return NextResponse.json({ success: true });
+        }
+
+        return NextResponse.json({ error: 'Unsupported mode' }, { status: 400 });
+    } catch (error) {
+        return routeErrorResponse(error, 'Failed to remove item', request);
+    }
+}

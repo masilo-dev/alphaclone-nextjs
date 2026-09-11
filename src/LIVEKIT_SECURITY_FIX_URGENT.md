@@ -7,8 +7,8 @@ Your `.env` file has **CRITICAL SECURITY VULNERABILITIES** that must be fixed im
 ### ❌ Current Configuration (INSECURE)
 ```env
 VITE_LIVEKIT_URL=wss://alphaclone-systems-6klanimr.livekit.cloud
-VITE_LIVEKIT_API_KEY=APImFRQhfaKprTy
-VITE_LIVEKIT_API_SECRET=AePpOuJ7Eqa... # ⚠️ EXPOSED TO BROWSER!
+VITE_LIVEKIT_API_KEY=your-livekit-api-key
+VITE_LIVEKIT_API_SECRET=your-livekit-api-secret # ⚠️ EXPOSED TO BROWSER!
 ```
 
 **Problem**: The `VITE_` prefix makes the secret visible to anyone who opens your website's JavaScript console. This allows attackers to:
@@ -35,8 +35,8 @@ VITE_LIVEKIT_URL=wss://alphaclone-systems-6klanimr.livekit.cloud
 
 # Server-side ONLY (for API routes)
 # ⚠️ NO VITE_ PREFIX - These stay on the server!
-LIVEKIT_API_KEY=APImFRQhfaKprTy
-LIVEKIT_API_SECRET=AePpOuJ7Eqa14GprmYuZ99UM9TdAPcGoNeRhQG6tqcj
+LIVEKIT_API_KEY=your-livekit-api-key
+LIVEKIT_API_SECRET=your-livekit-api-secret
 ```
 
 ### Step 2: Remove Old Client-Side Variables
@@ -56,8 +56,8 @@ If deployed on Vercel:
    - `VITE_LIVEKIT_API_KEY`
    - `VITE_LIVEKIT_API_SECRET`
 3. Add (if not already present):
-   - `LIVEKIT_API_KEY` = `APImFRQhfaKprTy`
-   - `LIVEKIT_API_SECRET` = `AePpOuJ7Eqa14GprmYuZ99UM9TdAPcGoNeRhQG6tqcj`
+   - `LIVEKIT_API_KEY` = `your-livekit-api-key`
+   - `LIVEKIT_API_SECRET` = `your-livekit-api-secret`
 4. Redeploy
 
 ---
@@ -90,9 +90,9 @@ Here's your complete `.env` file with all required variables:
 # ==========================================
 # SUPABASE DATABASE
 # ==========================================
-VITE_SUPABASE_URL=https://ehekzoioqvtweugemktn.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvcXZ0d2V1Z2Vta3RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDcxNjIsImV4cCI6MjA4MDY4MzE2Mn0.vBx4tSM4L8Rh_VTzYCdvz9bMMyjcfkkvv9y_2vT02ek
-VITE_SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvcXZ0d2V1Z2Vta3RuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTEwNzE2MiwiZXhwIjoyMDgwNjgzMTYyfQ.your_service_key_here
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 # ==========================================
 # GEMINI AI - REQUIRED FOR AI FEATURES
@@ -103,19 +103,19 @@ VITE_GEMINI_API_KEY=your_gemini_api_key_here
 # LIVEKIT VIDEO CONFERENCING - SECURE
 # ==========================================
 VITE_LIVEKIT_URL=wss://alphaclone-systems-6klanimr.livekit.cloud
-LIVEKIT_API_KEY=APImFRQhfaKprTy
-LIVEKIT_API_SECRET=AePpOuJ7Eqa14GprmYuZ99UM9TdAPcGoNeRhQG6tqcj
+LIVEKIT_API_KEY=your-livekit-api-key
+LIVEKIT_API_SECRET=your-livekit-api-secret
 
 # ==========================================
 # STRIPE PAYMENTS
 # ==========================================
-VITE_STRIPE_PUBLIC_KEY=pk_live_51RnnoTLlh7pjiLW9HTpywx3qEHx6neozDZZqzFXaYbJpTEpJDiJt2cYNCjKgz0UDJfOeoC5hsApNMErM4LktSUvq00D5Je2YNM
+VITE_STRIPE_PUBLIC_KEY=pk_live_your_publishable_key
 STRIPE_SECRET_KEY=your_stripe_secret_key_here
 
 # ==========================================
 # EMAIL SERVICE
 # ==========================================
-VITE_RESEND_API_KEY=re_QeWpKcSk_Gopimybtfo8G3JmJTk7BCasFr
+VITE_RESEND_API_KEY=re_your_resend_key
 
 # ==========================================
 # OPTIONAL
@@ -202,7 +202,6 @@ vercel --prod
 **Time to Fix**: 5 minutes
 
 **Difficulty**: Easy - just update environment variables
-
 
 
 

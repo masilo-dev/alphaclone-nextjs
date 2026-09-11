@@ -40,15 +40,21 @@ export const TIER_PRICING = {
     },
     starter: {
         monthly: 2900, // $29
-        annual: 27840, // $232/year (20% discount from $348)
+        annual: 27800, // $278/year
+        monthlyPriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
+        annualPriceId: process.env.STRIPE_STARTER_ANNUAL_PRICE_ID || 'price_1T0PCcCCIq5cPz4HF47biusi',
     },
     pro: {
-        monthly: 9900, // $99
-        annual: 95040, // $792/year (20% discount from $1188)
+        monthly: 5900, // $59
+        annual: 56600, // $566/year
+        monthlyPriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1T0PChCCIq5cPz4HiD85RMtD',
+        annualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID || 'price_1T0PChCCIq5cPz4HVpwBieMq',
     },
     enterprise: {
-        monthly: 29900, // $299
-        annual: 287040, // $2392/year (20% discount from $3588)
+        monthly: 14900, // $149
+        annual: 143000, // $1430/year
+        monthlyPriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
+        annualPriceId: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID || 'price_1T0PCqCCIq5cPz4HNiqbW1Sp',
     },
 };
 

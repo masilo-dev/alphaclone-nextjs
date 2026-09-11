@@ -1,24 +1,86 @@
-import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Phone, CheckCircle2, Bot, Send, Trash2, Upload, FileSpreadsheet, X, Mail, Settings, ExternalLink, FileText, Zap } from 'lucide-react';
-import { generateLeads, chatWithAI, isAnyAIConfigured } from '../../services/unifiedAIService';
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Bot, Search, Play, Pause, Settings, RefreshCw, Plus, Filter, Database, MessageSquare, ArrowRight, CheckCircle2, AlertCircle, UserPlus, Phone, Send, Trash2, Upload, FileSpreadsheet, X, Mail, ExternalLink, FileText, Zap, Layout, CheckSquare, Clock, ShieldCheck, Globe } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { generateLeads, chatWithGrowthAgent, isAnyAIConfigured } from '../../services/unifiedAIService';
 import { leadService, Lead } from '../../services/leadService';
 import { fileImportService } from '../../services/fileImportService';
 import LeadDetailModal from './leads/LeadDetailModal';
 import { Button, Input, Card, Modal } from '../ui/UIComponents';
 import { TableSkeleton } from '../ui/Skeleton';
-import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
+import { AerialLeadNavigator } from './leads/AerialLeadNavigator';
+import { auditService, AuditResult } from '../../services/auditService';
+import { LeadAuditReport } from './leads/LeadAuditReport';
+import OmniLeadFinder from '../leads/OmniLeadFinder';
+import KanbanBoard from './crm/KanbanBoard';
+import AutomationBuilder from './workflows/AutomationBuilder';
+import { launchFunnelService } from '@/services/launchFunnelService';
+import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
+import { BonnieModulePageShell } from './bonnie/BonnieModulePageShell';
+import { useTenant } from '@/contexts/TenantContext';
+
+interface ParsedContact {
+    name?: string;
+    email?: string;
+    phone?: string;
+    industry?: string;
+    location?: string;
+    description?: string;
+}
 
 const SalesAgent: React.FC = () => {
+    const { currentTenant } = useTenant();
     const aiConfigured = isAnyAIConfigured();
-    const [activeTab, setActiveTab] = useState<'leads' | 'agent'>('leads');
-    const [searchParams, setSearchParams] = useState({ industry: '', location: '' });
+    const { startTask } = useBackgroundTasks();
+    const router = useRouter();
+    const { t } = useLanguage();
+    const searchParams = useSearchParams();
+    // Map URL ?tab= param to internal tab names
+    const getInitialTab = (): 'leads' | 'agent' | 'omni' | 'kanban' | 'automation' => {
+        const tab = searchParams?.get('tab');
+        if (tab === 'chat') return 'agent';
+        if (tab === 'leads' || tab === 'omni') return 'omni';
+        return 'omni';
+    };
+    const [activeTab, setActiveTab] = useState<'leads' | 'agent' | 'omni' | 'kanban' | 'automation'>(getInitialTab);
+
+    useEffect(() => {
+        const tab = searchParams?.get('tab');
+        if (tab === 'finder') {
+            router.replace('/dashboard/leads/campaigns');
+            return;
+        }
+        if (tab === 'leads' || tab === 'omni') setActiveTab('omni');
+        else if (tab === 'chat' || tab === 'agent') setActiveTab('agent');
+    }, [searchParams, router]);
+    const [searchCriteria, setSearchCriteria] = useState({ industry: '', location: '' });
     const [leads, setLeads] = useState<Lead[]>([]);
+    
+    // Validate that required functions are available
+    useEffect(() => {
+        if (typeof generateLeads !== 'function') {
+            console.error('generateLeads function is not available. AI leads generation will not work.');
+        }
+        if (typeof startTask !== 'function') {
+            console.error('startTask function is not available. Background tasks will not work.');
+        }
+    }, []);
     const [isSearching, setIsSearching] = useState(false);
+    const [isVisualSearchActive, setIsVisualSearchActive] = useState(false);
+    const [visualSearchParams, setVisualSearchParams] = useState({ industry: '', location: '' });
     const [isLoading, setIsLoading] = useState(true);
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+    const [filters, setFilters] = useState({ businessSize: '', employeeCount: '' });
 
     const [showUpload, setShowUpload] = useState(false);
+    const [contacts, setContacts] = useState<ParsedContact[]>([]);
 
     const [selectedLeadForDetail, setSelectedLeadForDetail] = useState<Lead | null>(null);
     const [viewingMessage, setViewingMessage] = useState<{ title: string; body: string } | null>(null);
@@ -33,6 +95,13 @@ const SalesAgent: React.FC = () => {
         location: '',
         value: ''
     });
+
+    // Audit State
+    const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
+    const [showAudit, setShowAudit] = useState(false);
+
+    // Filter leads for dashboard
+    const filteredLeads = leads.filter(l => !l.client_id);
 
     const handleManualAddLead = async () => {
         if (!manualLead.businessName) {
@@ -57,13 +126,170 @@ const SalesAgent: React.FC = () => {
             toast.success('Lead added successfully');
             setShowManualModal(false);
             setManualLead({ businessName: '', email: '', phone: '', industry: '', location: '', value: '' });
+
+            // Manual entries stay in lead status so a human can verify them before conversion.
             loadLeads();
         }
     };
 
+    // Helper to process a single lead into CRM and Quote
+    const processLeadHelper = async (lead: Lead, userId: string, tenantId: string) => {
+        try {
+            // 0. Dynamic imports
+            const { businessClientService } = await import('../../services/businessClientService');
+            const { quoteService } = await import('../../services/quoteService');
+            const { dealService } = await import('../../services/dealService');
 
+            // 1. Qualify Lead
+            await leadService.updateLead(lead.id, { stage: 'qualified' });
 
-    // Initial Load
+            // 2. Create Client
+            const { client, error: clientError } = await businessClientService.createClient(tenantId, {
+                name: lead.businessName,
+                email: lead.email || '',
+                phone: lead.phone,
+                salesStage: 'customer',
+                industry: lead.industry,
+                value: lead.value || 0,
+                location: lead.location,
+                description: lead.notes
+            });
+
+            if (clientError || !client) return { success: false, error: clientError || 'Failed to create client' };
+
+            // 3. Link Lead to Client
+            await leadService.updateLead(lead.id, { client_id: client.id });
+
+            // 4. Create Draft Quote
+            const { quote, error: quoteError } = await quoteService.createQuote(userId, {
+                name: `Quote for ${lead.businessName}`,
+                validForDays: 30,
+                currency: 'USD',
+                contactId: client.id,
+                notes: 'Auto-generated draft quote from AI Agent'
+            });
+
+            if (quoteError || !quote) return { success: false, error: quoteError || 'Failed to create quote' };
+
+            // 5. Create Deal (NEW)
+            const { error: dealError } = await dealService.createDeal(userId, {
+                name: `${lead.businessName} - Opportunity`,
+                contactId: client.id,
+                value: lead.value || 0,
+                currency: 'USD',
+                stage: 'lead',
+                source: 'other',
+                sourceDetails: 'AI Growth Agent',
+                description: lead.notes || 'Auto-generated deal'
+            });
+
+            if (dealError) {
+                console.error("Deal creation failed after quote creation:", dealError);
+                // We don't fail the whole process if just the deal fails, but we log it
+            }
+
+            // 6. Add default line item
+            await quoteService.addQuoteItem(quote.id, {
+                productName: 'Consultation Services',
+                description: 'Initial consultation and requirements gathering',
+                quantity: 1,
+                unitPrice: 0 // User to edit
+            });
+
+            // 7. Sync to HubSpot (NEW)
+            try {
+                if (currentTenant?.id) {
+                    console.log(`[SalesAgent] HubSpot connected, syncing lead ${lead.businessName}...`);
+                    await fetch('/api/hubspot/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tenantId: currentTenant.id, leads: [lead] })
+                    });
+                }
+            } catch (hsErr) {
+                console.error('HubSpot background sync failed:', hsErr);
+                // We don't fail the whole process if HubSpot fails
+            }
+
+            return { success: true };
+        } catch (err: any) {
+            console.error("Auto-process error", err);
+            return { success: false, error: err.message };
+        }
+    };
+    const handleExecuteLead = async (lead: Lead) => {
+        const { supabase } = await import('../../lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            toast.error("You must be logged in to execute leads");
+            return;
+        }
+
+        const { tenantService } = await import('../../services/tenancy/TenantService');
+        const tenantId = tenantService.getCurrentTenantId();
+
+        if (!tenantId) {
+            toast.error("No active organization found");
+            return;
+        }
+
+        const toastId = toast.loading(`Executing flow for ${lead.businessName}...`);
+
+        const result = await processLeadHelper(lead, user.id, tenantId);
+
+        if (result.success) {
+            toast.success(`Successfully converted ${lead.businessName} to Client with Deal and Draft Quote!`, { id: toastId });
+            loadLeads();
+        } else {
+            toast.error(`Execution failed: ${result.error}`, { id: toastId });
+        }
+    };
+
+    const handleBulkExecute = async () => {
+        if (selectedLeads.length === 0) {
+            toast.error("Please select leads to execute");
+            return;
+        }
+
+        const { supabase } = await import('../../lib/supabase');
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            toast.error("You must be logged in to execute leads");
+            return;
+        }
+
+        const { tenantService } = await import('../../services/tenancy/TenantService');
+        const tenantId = tenantService.getCurrentTenantId();
+
+        if (!tenantId) {
+            toast.error("No active organization found");
+            return;
+        }
+
+        const toastId = toast.loading(`Executing flow for ${selectedLeads.length} leads...`);
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const leadId of selectedLeads) {
+            const lead = leads.find(l => l.id === leadId);
+            if (lead) {
+                const result = await processLeadHelper(lead, user.id, tenantId);
+                if (result.success) successCount++;
+                else failCount++;
+            }
+        }
+
+        if (failCount === 0) {
+            toast.success(`Successfully executed all ${successCount} leads!`, { id: toastId });
+        } else {
+            toast.success(`Execution complete. Success: ${successCount}, Failed: ${failCount}`, { id: toastId });
+        }
+
+        setSelectedLeads([]);
+        loadLeads();
+    };
     useEffect(() => {
         loadLeads();
     }, []);
@@ -82,62 +308,166 @@ const SalesAgent: React.FC = () => {
 
     // Chat State
     const [messages, setMessages] = useState([
-        { id: 1, sender: 'agent', text: 'Hello! I am your AI Sales Agent. I can help you find leads, draft outreach messages, or manage your CRM. What would you like to do today?' }
+        { id: 1, sender: 'agent', text: 'Hello. I can find and qualify leads, draft outreach, save CRM follow-up, and dispatch durable Alpha missions for longer-running work.' }
     ]);
     const [inputText, setInputText] = useState('');
+    const [pendingSearch, setPendingSearch] = useState<{ industry: string, location: string, filters?: string } | null>(null);
 
     const handleSearch = async () => {
         // Validate inputs
-        if (!searchParams.industry.trim()) {
+        if (!searchCriteria.industry.trim()) {
             toast.error('Please enter a target industry');
             return;
         }
-        if (!searchParams.location.trim()) {
+        if (!searchCriteria.location.trim()) {
             toast.error('Please enter a location');
+            return;
+        }
+        
+        if (contacts.length === 0) {
+            toast.error("No valid contacts found in file.");
+            return;
+        }
+
+        // Map ParsedContact to Lead
+        const leadsToAdd = contacts.map(c => ({
+            businessName: c.name || 'Unknown Business',
+            email: c.email,
+            phone: c.phone,
+            industry: c.industry || 'Imported',
+            location: c.location || 'Unknown',
+            notes: c.description,
+            source: 'CSV Import'
+            // value: c.value // Pending DB support for value
+        }));
+
+        const { count, error: dbError } = await leadService.addBulkLeads(leadsToAdd);
+
+        if (dbError) {
+            toast.error(`Database error: ${dbError}`);
+            return;
+        }
+
+        toast.success(`Successfully added ${count} leads from CSV`);
+        setShowUpload(false);
+        setContacts([]);
+    };
+
+    const handleVisualSearch = async () => {
+        if (!searchCriteria.industry || !searchCriteria.location) {
+            toast.error('Please enter both industry and location for AI lead search');
+            return;
+        }
+        
+        // Validate functions are available before proceeding
+        if (typeof generateLeads !== 'function') {
+            toast.error('AI leads generation service is not available. Please contact support.');
+            return;
+        }
+        
+        if (typeof startTask !== 'function') {
+            toast.error('Background task service is not available. Please refresh the page.');
             return;
         }
 
         setIsSearching(true);
-        try {
-            console.log('🚀 Starting AI lead generation...');
-            // Pass API key if available
-            const results = await generateLeads(searchParams.industry, searchParams.location, '', 'tenant');
+        const taskName = `AI Senior SDR & Data Scientist Lead Search for ${searchCriteria.industry} in ${searchCriteria.location}`;
 
-            if (results && results.length > 0) {
-                console.log(`✅ Generated ${results.length} leads, saving to database...`);
+        setVisualSearchParams({ industry: searchCriteria.industry, location: searchCriteria.location });
+        setIsVisualSearchActive(true);
 
-                // Bulk add to DB
-                const leadsToAdd = results.map((r: any) => ({
-                    businessName: r.businessName,
-                    industry: r.industry,
-                    location: r.location,
-                    phone: r.phone,
-                    email: r.email,
-                    value: r.value,
-                    source: r.leadSource || 'AI Agent'
-                }));
-
-                const { count, error } = await leadService.addBulkLeads(leadsToAdd);
-                if (error) {
-                    console.error('❌ Database error:', error);
-                    toast.error(`AI found leads but failed to save them: ${error}`);
-                } else {
-                    toast.success(`🎉 AI discovered and saved ${count} new leads!`);
-                    loadLeads(); // Reload from DB
+        startTask(
+            `lead_search_${Date.now()}`,
+            taskName,
+            async () => {
+                console.log('Starting AI lead generation...');
+                
+                // Check if generateLeads is available
+                if (typeof generateLeads !== 'function') {
+                    throw new Error('generateLeads function is not available. Please check AI service configuration.');
                 }
-            } else {
-                toast.error("No leads found. Try different search criteria.");
-            }
-        } catch (error: any) {
-            console.error('❌ Lead generation error:', error);
-            const errorMessage = error?.message || 'AI Generation failed. Please try again.';
-            toast.error(errorMessage, { duration: 5000 });
+                
+                // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
+                const res = await generateLeads(searchCriteria.industry, searchCriteria.location, '', 'tenant');
 
-            // Show helpful message if it's an API key issue
-            if (errorMessage.includes('API key') || errorMessage.includes('not configured')) {
-                toast.error('Please check your Gemini API key in Vercel settings.', { duration: 7000 });
+                if (res && res.leads && res.leads.length > 0) {
+                    console.log(`✅ Generated ${res.leads.length} leads, saving to database...`);
+
+                    // 2. Perform Audit
+                    if (res.rawMapsData && res.rawMapsData.length > 0) {
+                        const audit = auditService.performLeadAudit(res.leads, res.rawMapsData, searchCriteria.industry);
+                        setAuditResult(audit);
+                        setShowAudit(true);
+                    }
+
+                    // 3. Save leads to state and DB
+                    const leadsToAdd = res.leads.map((r: any) => ({
+                        businessName: r.businessName || r.business_name || r.name || r.company || 'Unknown Business',
+                        industry: r.industry || r.category || 'Discovery',
+                        location: r.location || r.city || r.address || 'Unknown',
+                        phone: r.phone || r.phone_number || r.contact_phone || '',
+                        email: r.email || r.contact_email || '',
+                        website: r.website || r.url || r.websiteUri || r.link || '',
+                        fb: r.facebook || r.fb || '',
+                        notes: r.notes || r.aiAnalysis || r.description || r.intelligence || '',
+                        outreachMessage: r.outreachMessage || r.emailDraft || r.message || '',
+                        value: r.estimatedValue || r.value || 0,
+                        source: r.leadSource || r.source || 'AI Agent',
+                        isVerified: r.isVerified || false,
+                        trustScore: r.trustScore || 0,
+                        verificationNotes: r.verificationNotes || r.reasoning || '',
+                        sdrInsight: r.sdrInsight || r.insight || ''
+                    }));
+
+                    const { count, error } = await leadService.addBulkLeads(leadsToAdd);
+                    if (error) {
+                        throw new Error(`AI found leads but failed to save them: ${error}`);
+                    }
+
+                    const { leads: newLeads } = await leadService.getLeads();
+                    const leadsToProcess = newLeads.slice(0, res.leads.length);
+                    let processed = 0;
+
+                    const { supabase } = await import('../../lib/supabase');
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    if (user) {
+                        const { tenantService } = await import('../../services/tenancy/TenantService');
+                        const tenantId = tenantService.getCurrentTenantId();
+
+                        if (tenantId) {
+                            for (const lead of leadsToProcess) {
+                                try {
+                                    const result = await processLeadHelper(lead, user.id, tenantId);
+                                    if (result.success) {
+                                        processed++;
+                                    } else {
+                                        console.error(`Conversion failed for ${lead.businessName}:`, result.error);
+                                        toast.error(`CRM sync failed for ${lead.businessName}. The lead was saved but conversion aborted.`, { duration: 3000 });
+                                    }
+                                } catch (innerErr) {
+                                    console.error(`Unexpected conversion error for ${lead.businessName}:`, innerErr);
+                                }
+                            }
+                        }
+                    }
+                    return { count, processed };
+                } else {
+                    throw new Error("No matching leads for this search. Try a clearer niche, a broader location, or fewer filters.");
+                }
+            },
+            (result) => {
+                toast.success(`Added ${result.count} leads, created ${result.processed} clients and draft quotes.`, { duration: 5000 });
+                if (result.count > 0) {
+                    void launchFunnelService.completeStep('first_lead_found');
+                    userLearningPreferencesService.recordLeadSearch(searchCriteria.industry, searchCriteria.location);
+                }
+                loadLeads();
+                setIsVisualSearchActive(false);
             }
-        }
+        );
+
+        toast.success(`Task started: ${taskName}. You can safely navigate away!`);
         setIsSearching(false);
     };
 
@@ -160,12 +490,12 @@ const SalesAgent: React.FC = () => {
 
             // Map ParsedContact to Lead
             const leadsToAdd = contacts.map(c => ({
-                businessName: c.name || c.company || 'Unknown Business',
+                businessName: c.name || 'Unknown Business',
                 email: c.email,
                 phone: c.phone,
-                industry: 'Imported',
-                location: 'Unknown',
-                notes: c.notes,
+                industry: c.industry || 'Imported',
+                location: c.location || 'Unknown',
+                notes: c.description,
                 source: 'CSV Import'
                 // value: c.value // Pending DB support for value
             }));
@@ -211,22 +541,241 @@ const SalesAgent: React.FC = () => {
         setSelectedLeads([]);
     };
 
-    const addToCRM = async (id: string, currentStage: string) => {
+    const handleEnrich = async (leadId: string) => {
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) return;
+
+        toast.loading('Researching business...', { id: 'enriching' });
         try {
-            const { error } = await leadService.updateLead(id, {
-                stage: 'qualified',
-                status: 'Qualified'
+            const { notes, error } = await leadService.enrichLead(leadId, user.id);
+            if (error) throw new Error(error);
+            toast.success('Business intelligence gathered!', { id: 'enriching' });
+            loadLeads();
+        } catch (error: any) {
+            toast.error('Research failed: ' + error.message, { id: 'enriching' });
+        }
+    };
+
+    const handleCreateProject = async (lead: Lead) => {
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) return;
+
+        const name = window.prompt('Enter Project Name:', `Project: ${lead.businessName}`);
+        if (!name) return;
+
+        try {
+            const { projectService } = await import('../../services/projectService');
+            const { contactService } = await import('../../services/contactService');
+
+            // STEP 1: Ensure we have a contact
+            const { contactId, error: convertError } = await contactService.convertLeadToContact(lead.id, {
+                createCompany: true,
+                companyName: lead.businessName
             });
 
-            if (error) {
-                toast.error(`Failed to qualify lead: ${error}`);
-            } else {
-                toast.success("Lead marked as Qualified");
-                // Update local state
-                setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified', status: 'Qualified' } : l));
+            if (convertError || !contactId) throw new Error(convertError || 'Failed to prepare contact/company');
+
+            // STEP 2: Create project
+            const { error: projectError } = await projectService.createProject({
+                ownerId: user.id,
+                ownerName: user.email?.split('@')[0] || 'User',
+                name,
+                category: 'Client Project',
+                status: 'Active',
+                currentStage: 'Initiation',
+                progress: 0,
+                team: [user.id],
+                description: `Project initialized from lead discovery. \n\nIndustry: ${lead.industry}\nIntelligence: ${lead.notes || 'None'}`,
+                clientId: contactId,
+                contractStatus: 'None',
+                startDate: new Date().toISOString().split('T')[0]
+            });
+
+            if (projectError) throw new Error(projectError);
+
+            toast.success(`Project "${name}" initialized!`);
+            loadLeads();
+        } catch (error: any) {
+            toast.error('Failed to create project: ' + error.message);
+        }
+    };
+
+    const handleCreateTask = async (lead: Lead) => {
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) return;
+
+        const title = window.prompt('What needs to be done?', `Follow up with ${lead.businessName}`);
+        if (!title) return;
+
+        try {
+            const { taskService } = await import('../../services/taskService');
+            const { error } = await taskService.createTask(user.id, {
+                title,
+                relatedToLead: lead.id,
+                priority: 'medium',
+                status: 'todo'
+            });
+
+            if (error) throw new Error(error);
+            toast.success('Task created successfully');
+        } catch (error: any) {
+            toast.error('Failed to create task: ' + error.message);
+        }
+    };
+
+    const handleCreateDeal = async (lead: Lead) => {
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        if (!user) return;
+
+        const name = window.prompt('Enter Deal Name:', lead.businessName);
+        if (!name) return;
+
+        toast.loading(`Creating deal "${name}"...`, { id: 'create_deal' });
+
+        try {
+            const { contactService } = await import('../../services/contactService');
+            const { dealService } = await import('../../services/dealService');
+
+            const { contactId, error: convertError } = await contactService.convertLeadToContact(lead.id);
+            if (convertError || !contactId) throw new Error(convertError || 'Failed to create contact');
+
+            const { error: dealError } = await dealService.createDeal(user.id, {
+                name,
+                contactId: contactId,
+                value: lead.value,
+                stage: 'qualified',
+                probability: 25,
+                metadata: {
+                    originalLeadId: lead.id,
+                    convertedAt: new Date().toISOString()
+                }
+            });
+
+            if (dealError) throw new Error(dealError);
+
+            toast.success(`✅ Deal "${name}" created!`, { id: 'create_deal' });
+            void launchFunnelService.completeStep('first_deal_created', user.id);
+            loadLeads();
+        } catch (error: any) {
+            toast.error('Failed to create deal: ' + error.message, { id: 'create_deal' });
+        }
+    };
+
+    const addToCRM = async (id: string, currentStage: string) => {
+        try {
+            // Get the lead details first
+            const lead = leads.find(l => l.id === id);
+            if (!lead) {
+                toast.error('Lead not found');
+                return;
             }
+
+            // Step 1: Mark lead as qualified
+            const { error: updateError } = await leadService.updateLead(id, {
+                stage: 'qualified'
+            });
+
+            if (updateError) {
+                toast.error(`Failed to qualify lead: ${updateError}`);
+                return;
+            }
+
+            // Step 2: Create client record in CRM
+            const { businessClientService } = await import('../../services/businessClientService');
+            const { tenantService } = await import('../../services/tenancy/TenantService');
+            const tenantId = tenantService.getCurrentTenantId();
+
+            if (!tenantId) {
+                toast.error('No active organization session');
+                return;
+            }
+
+            const { client, error: clientError } = await businessClientService.createClient(tenantId, {
+                name: lead.businessName,
+                email: lead.email || '',
+                phone: lead.phone,
+                value: lead.value || 0,
+                salesStage: 'customer', // Qualified leads become customers in CRM
+                industry: lead.industry,
+                location: lead.location,
+                description: lead.notes
+            });
+
+            if (clientError) {
+                toast.error(`Lead qualified but failed to create client: ${clientError}`);
+                // Still update local state to show qualified
+                setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified' } : l));
+                return;
+            }
+
+            // Step 3: Link the lead to the client
+            if (client) {
+                await leadService.updateLead(id, {
+                    client_id: client.id
+                });
+            }
+
+            // Success!
+            toast.success(`✅ ${lead.businessName} added to CRM as client!`, { duration: 4000 });
+
+            // Update local state
+            setLeads(prev => prev.map(l => l.id === id ? { ...l, stage: 'qualified' } : l));
+
         } catch (err) {
+            console.error('Add to CRM error:', err);
             toast.error("An unexpected error occurred");
+        }
+    };
+
+    const bulkAddLeadsToCRM = async () => {
+        if (selectedLeads.length === 0) return;
+
+        const toastId = toast.loading(`Converting ${selectedLeads.length} leads to CRM clients...`);
+        try {
+            const { businessClientService } = await import('../../services/businessClientService');
+            const { tenantService } = await import('../../services/tenancy/TenantService');
+            const tenantId = tenantService.getCurrentTenantId();
+
+            if (!tenantId) {
+                toast.error('No active organization session', { id: toastId });
+                return;
+            }
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const id of selectedLeads) {
+                const lead = leads.find(l => l.id === id);
+                if (!lead) continue;
+
+                // Mark lead as qualified
+                await leadService.updateLead(id, { stage: 'qualified' });
+
+                // Create client
+                const { client, error: clientError } = await businessClientService.createClient(tenantId, {
+                    name: lead.businessName,
+                    email: lead.email || '',
+                    phone: lead.phone,
+                    value: lead.value || 0,
+                    salesStage: 'customer',
+                    industry: lead.industry,
+                    location: lead.location,
+                    description: lead.notes
+                });
+
+                if (client && !clientError) {
+                    await leadService.updateLead(id, { client_id: client.id });
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            }
+
+            toast.success(`Successfully converted ${successCount} leads to CRM!`, { id: toastId });
+            setSelectedLeads([]);
+            loadLeads();
+        } catch (err: any) {
+            toast.error(`Bulk conversion failed: ${err.message}`, { id: toastId });
         }
     };
 
@@ -245,289 +794,395 @@ const SalesAgent: React.FC = () => {
                 text: m.text
             }));
 
-            // Get AI response
-            const { text } = await chatWithAI(history, userMessage);
+            // Get specialized Growth Agent response
+            const { text, commands } = await chatWithGrowthAgent(history, userMessage);
+
+            if (!text) throw new Error("No response from AI");
 
             setMessages(prev => [...prev, {
                 id: prev.length + 1,
                 sender: 'agent',
-                text: text || 'I apologize, but I encountered an issue processing your request. Please try again.'
+                text: text
             }]);
-        } catch (error) {
+
+            // --- Command Handling (AlphaClone AI Style) ---
+            if (commands.search) {
+                const { industry, location, filters } = commands.search;
+                if (industry && location) {
+                    toast.success(`Intent detected: searching for ${industry}...`);
+                    handleAutoSearch(industry, location, filters);
+                }
+            }
+
+            if (commands.research) {
+                const { businessName, context } = commands.research;
+                // Find visible lead with this name if possible
+                const matchingLead = leads.find(l =>
+                    (l.businessName || '').toLowerCase().includes((businessName || '').toLowerCase())
+                );
+
+                if (matchingLead) {
+                    toast.success(`Researching "${businessName}"...`);
+                    handleEnrich(matchingLead.id);
+                } else {
+                    setMessages(prev => [...prev, {
+                        id: prev.length + 1,
+                        sender: 'agent',
+                        text: `I'd love to research ${businessName} for you, but I don't see them in your current lead list. Would you like me to find them first?`
+                    }]);
+                }
+            }
+        } catch (error: any) {
             console.error('❌ AI Chat Error:', error);
+            const errorMessage = error?.message || 'I apologize, but I encountered a technical issue. Please try again or contact support if the problem persists.';
             setMessages(prev => [...prev, {
                 id: prev.length + 1,
                 sender: 'agent',
-                text: 'I apologize, but I encountered a technical issue. Please try again or contact support if the problem persists.'
+                text: errorMessage.includes('Failed to fetch')
+                    ? 'I am having trouble connecting to the AI core. Please check your internet connection or try again later.'
+                    : errorMessage
             }]);
         }
     };
 
+    // Specialized auto-search that bypasses toast.loading if needed or just reuses handleSearch
+    const handleAutoSearch = async (industry: string, location: string, filters?: string) => {
+        // Validate inputs
+        if (!industry.trim() || !location.trim()) return;
+
+        // CHECK LEAD LIMIT BEFORE GENERATING
+        const { data: { user } } = await (await import('../../lib/supabase')).supabase.auth.getUser();
+        const limitCheck = await leadService.checkLeadLimit((user as any)?.role);
+        if (!limitCheck.allowed) {
+            toast.error(limitCheck.error || 'Daily lead limit reached.');
+            return;
+        }
+
+        const taskName = `AI Agent Search for ${industry} in ${location}`;
+
+        setVisualSearchParams({ industry, location });
+        setIsVisualSearchActive(true);
+
+        startTask(
+            `auto_search_${Date.now()}`,
+            taskName,
+            async () => {
+                // Check if generateLeads is available
+                if (typeof generateLeads !== 'function') {
+                    throw new Error('generateLeads function is not available. Please check AI service configuration.');
+                }
+                
+                // Assuming generateLeads now returns { leads: Lead[], rawMapsData: any[] }
+                const res = await generateLeads(industry, location, '', 'tenant', filters);
+
+                if (res && res.leads && res.leads.length > 0) {
+                    // 2. Perform Audit
+                    if (res.rawMapsData && res.rawMapsData.length > 0) {
+                        const audit = auditService.performLeadAudit(res.leads, res.rawMapsData, industry);
+                        setAuditResult(audit);
+                        setShowAudit(true);
+                    }
+
+                    const leadsToAdd = res.leads.map((r: any) => ({
+                        businessName: r.businessName || r.business_name || r.name || r.company || 'Unknown Business',
+                        industry: r.industry || r.category || 'Discovery',
+                        location: r.location || r.city || r.address || 'Unknown',
+                        phone: r.phone || r.phone_number || r.contact_phone || '',
+                        email: r.email || r.contact_email || '',
+                        website: r.website || r.url || r.websiteUri || r.link || '',
+                        fb: r.facebook || r.fb || '',
+                        notes: r.notes || r.aiAnalysis || r.description || r.intelligence || '',
+                        outreachMessage: r.outreachMessage || r.emailDraft || r.message || '',
+                        value: r.estimatedValue || r.value || 0,
+                        source: r.leadSource || r.source || 'AI Agent',
+                        isVerified: r.isVerified || false,
+                        trustScore: r.trustScore || 0,
+                        verificationNotes: r.verificationNotes || r.reasoning || '',
+                        sdrInsight: r.sdrInsight || r.insight || ''
+                    }));
+
+                    const { count, error } = await leadService.addBulkLeads(leadsToAdd);
+                    if (error) {
+                        throw new Error(`AI found leads but failed to save them: ${error}`);
+                    }
+
+                    const { leads: newLeads } = await leadService.getLeads();
+                    const leadsToProcess = newLeads.slice(0, res.leads.length);
+                    let processed = 0;
+
+                    const { supabase } = await import('../../lib/supabase');
+                    const { data: { user } } = await supabase.auth.getUser();
+
+                    if (user) {
+                        const { tenantService } = await import('../../services/tenancy/TenantService');
+                        const tenantId = tenantService.getCurrentTenantId();
+
+                        if (tenantId) {
+                            for (const lead of leadsToProcess) {
+                                const result = await processLeadHelper(lead, user.id, tenantId);
+                                if (result.success) processed++;
+                            }
+                        }
+                    }
+
+                    return { count, processed, industry, location };
+                } else {
+                    throw new Error("No matching leads for this search. Try a broader niche or location.");
+                }
+            },
+            (result) => {
+                toast.success(`Process complete. Created ${result.processed} draft quotes ready for review.`, { duration: 5000 });
+                if (result.count > 0) {
+                    void launchFunnelService.completeStep('first_lead_found');
+                    userLearningPreferencesService.recordLeadSearch(result.industry, result.location);
+                }
+                loadLeads();
+
+                setMessages(prev => [...prev, {
+                    id: prev.length + 1,
+                    sender: 'agent',
+                    text: `Done! I've discovered ${result.count} high-quality leads for ${result.industry} in ${result.location} and added them to your Lead Finder. Would you like me to analyze any of them or draft a specific outreach?`
+                }]);
+                setIsVisualSearchActive(false);
+            }
+        );
+
+        toast.success(`Task started: ${taskName}. You can safely navigate away!`);
+        setIsSearching(false);
+    };
+
+    // New Function: Process Pending Leads
+    const handleProcessPendingLeads = async () => {
+        const toastId = toast.loading('Scanning for pending leads...');
+        try {
+            const { leads: allLeads, error } = await leadService.getLeads();
+            if (error) throw new Error(error);
+
+            const pendingLeads = allLeads.filter(l => !l.client_id);
+
+            if (pendingLeads.length === 0) {
+                toast.success('No pending leads found! All leads are processed.', { id: toastId });
+                return;
+            }
+
+            toast.loading(`Found ${pendingLeads.length} pending leads. Processing...`, { id: toastId });
+
+            const { supabase } = await import('../../lib/supabase');
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                toast.error('User not authenticated', { id: toastId });
+                return;
+            }
+
+            const { tenantService } = await import('../../services/tenancy/TenantService');
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                toast.error('No active tenant', { id: toastId });
+                return;
+            }
+
+            let successCount = 0;
+            let failCount = 0;
+
+            // Process in chunks to avoid overwhelming? Or just loop. Loop is fine for < 500.
+            for (const lead of pendingLeads) {
+                const result = await processLeadHelper(lead, user.id, tenantId);
+                if (result.success) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+                // Update toast every 5 leads
+                if ((successCount + failCount) % 5 === 0) {
+                    toast.loading(`Processing... ${successCount + failCount}/${pendingLeads.length}`, { id: toastId });
+                }
+            }
+
+            toast.success(`Complete! Processed ${successCount} leads. (${failCount} failed)`, { id: toastId, duration: 5000 });
+            loadLeads(); // Refresh UI
+
+        } catch (err: any) {
+            console.error('Error processing pending leads:', err);
+            toast.error(`Failed: ${err.message}`, { id: toastId });
+        }
+    };
+
     return (
-        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col">
+        <BonnieModulePageShell showBonnieDock={false}>
+        <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col px-4 py-4 sm:px-6 sm:py-6 lg:p-8 overflow-y-auto custom-scrollbar min-w-0">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
                 <div className="min-w-0">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500 flex items-center gap-2 sm:gap-3">
                         <Bot className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-teal-400 flex-shrink-0" />
-                        <span className="truncate">AlphaClone Growth Agent</span>
+                        <span className="truncate">{t('Growth Agent')}</span>
                     </h2>
-                    <p className="text-slate-400 mt-1 text-xs sm:text-sm flex items-center gap-2">
-                        <span>Lead Generation Powered by Gemini AI</span>
-                        <Zap className="w-3 h-3 text-teal-400 animate-pulse" />
-                    </p>
                 </div>
-                <div className="flex bg-slate-800 p-1 rounded-lg self-start sm:self-auto">
+                <div className="hidden md:flex flex-wrap bg-slate-800 p-1 rounded-lg self-start sm:self-auto max-w-full overflow-x-auto custom-scrollbar">
                     <button
-                        onClick={() => setActiveTab('leads')}
-                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                        type="button"
+                        onClick={() => setActiveTab('omni')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'omni' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
-                        Lead Finder
+                        <Globe className="w-3.5 h-3.5" />
+                        {t('AlphaClone System Lead')}
                     </button>
                     <button
+                        type="button"
                         onClick={() => setActiveTab('agent')}
                         className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'agent' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                     >
-                        Agent Chat
+                        {t('Agent Chat')}
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('automation')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        {t('Automation')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/dashboard/deals')}
+                        className="px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap text-slate-400 hover:text-white"
+                    >
+                        {t('Pipeline')}
+                    </button>
+                </div>
+                <div className="md:hidden w-full min-w-0">
+                    <label htmlFor="growth-agent-view" className="sr-only">
+                        {t('Select Growth Agent mode')}
+                    </label>
+                    <select
+                        id="growth-agent-view"
+                        className="w-full max-w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-100 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        value={activeTab === 'agent' ? 'agent' : 'omni'}
+                        onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === 'marketplace') {
+                                router.push('/dashboard/marketplace');
+                                return;
+                            }
+                            if (v === 'omni' || v === 'agent') {
+                                setActiveTab(v);
+                            }
+                        }}
+                    >
+                        <option className="bg-slate-900 text-slate-100" value="omni">{t('Lead search')}</option>
+                        <option className="bg-slate-900 text-slate-100" value="agent">{t('Agent chat')}</option>
+                        <option className="bg-slate-900 text-slate-100" value="marketplace">{t('Integration marketplace')}</option>
+                    </select>
                 </div>
             </div>
 
-            {activeTab === 'leads' ? (
-                <div className="space-y-6">
-                    {/* Search Bar */}
-                    <Card className="bg-slate-900 border-slate-800">
-                        <div className="flex flex-col gap-3 sm:gap-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="w-full">
-                                    <Input
-                                        label="Target Industry"
-                                        placeholder="e.g. Construction, Tech"
-                                        value={searchParams.industry}
-                                        onChange={e => setSearchParams({ ...searchParams, industry: e.target.value })}
-                                    />
-                                </div>
-                                <div className="w-full">
-                                    <Input
-                                        label="Location / Region"
-                                        placeholder="e.g. Zimbabwe, Harare"
-                                        value={searchParams.location}
-                                        onChange={e => setSearchParams({ ...searchParams, location: e.target.value })}
-                                    />
-                                </div>
-                            </div>
+            <div className="rounded-2xl border border-white/5 bg-slate-900/50 px-4 py-2 text-xs uppercase tracking-widest font-bold text-slate-500 flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                {t('Finding Leads & Autonomous SDR System Active')}
+            </div>
+            {/* Aerial View - Mini Widget during search or navigation - Hidden as per user request to eliminate map visuals */}
+            {/* 
+            {activeTab === 'leads' && (isVisualSearchActive || leads.length > 0) && (
+                <div className="fixed bottom-6 right-6 w-72 sm:w-80 h-48 sm:h-64 z-40 rounded-2xl overflow-hidden shadow-2xl border border-teal-500/30 bg-slate-950 pointer-events-none sm:pointer-events-auto">
+                    <AerialLeadNavigator
+                        leads={leads}
+                        isSearching={isVisualSearchActive}
+                        searchTopic={visualSearchParams.industry || searchCriteria.industry}
+                        searchLocation={visualSearchParams.location || searchCriteria.location}
+                    />
+                </div>
+            )}
+            */}
 
 
 
-                            <div className="flex flex-wrap gap-2 sm:gap-3">
-                                <Button onClick={handleSearch} className="flex-1 sm:flex-initial bg-teal-500 hover:bg-teal-400" isLoading={isSearching} disabled={!aiConfigured}>
-                                    <Search className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">{aiConfigured ? 'Find Leads' : 'AI core offline'}</span>
-                                </Button>
-
-                                <Button onClick={() => setShowManualModal(true)} variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400">
-                                    <UserPlus className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Add Lead</span>
-                                </Button>
-
-                                <Button variant="outline" className="flex-1 sm:flex-initial border-dashed border-slate-600 hover:border-teal-500 hover:text-teal-400" onClick={() => setShowUpload(!showUpload)}>
-                                    <Upload className="w-4 h-4 sm:mr-2" /> <span className="hidden sm:inline">Import</span>
-                                </Button>
-
-                                {selectedLeads.length > 0 && (
-                                    <Button onClick={deleteSelected} variant="danger" className="flex-1 sm:flex-initial bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/50">
-                                        <Trash2 className="w-4 h-4 sm:mr-2" /> ({selectedLeads.length})
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Dropzone */}
-                        {showUpload && (
-                            <div className="mt-4 p-8 border-2 border-dashed border-slate-700 rounded-xl bg-slate-950/50 text-center animate-fade-in relative">
-                                <button onClick={() => setShowUpload(false)} className="absolute top-2 right-2 text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
-                                <FileSpreadsheet className="w-10 h-10 text-teal-500 mx-auto mb-3" />
-                                <p className="text-white font-medium mb-1">Drag and drop Excel/CSV file</p>
-                                <p className="text-xs text-slate-500 mb-4">Supported columns: Name, Email, Phone, Industry, Location</p>
-                                <input
-                                    type="file"
-                                    accept=".xlsx, .xls, .csv"
-                                    onChange={handleFileUpload}
-                                    className="hidden"
-                                    id="file-upload"
-                                />
-                                <label htmlFor="file-upload" className="inline-block px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded cursor-pointer transition-colors text-sm">
-                                    Select File
-                                </label>
-                            </div>
-                        )}
-                    </Card>
-
-                    {/* Results */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl min-h-[400px]">
-                        {isLoading || isSearching ? (
-                            <div className="p-4 sm:p-6">
-                                <TableSkeleton rows={5} />
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-xs sm:text-sm text-slate-400">
-                                    <thead className="bg-slate-950/50 text-[10px] sm:text-xs uppercase font-semibold text-slate-500">
-                                        <tr>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedLeads.length === leads.length && leads.length > 0}
-                                                    onChange={toggleSelectAll}
-                                                    className="rounded border-slate-700 bg-slate-900"
-                                                />
-                                            </th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Business</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">Industry</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">Location</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Contact</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">Source</th>
-                                            <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-800">
-                                        {leads.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
-                                                    No leads found. Try searching or uploading a file.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            leads.map((lead) => (
-                                                <tr key={lead.id} className="hover:bg-slate-800/40 transition-colors">
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedLeads.includes(lead.id)}
-                                                            onChange={() => toggleSelectLead(lead.id)}
-                                                            className="rounded border-slate-700 bg-slate-900"
-                                                        />
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 font-medium text-white max-w-[120px] sm:max-w-none truncate hover:text-teal-400 cursor-pointer" onClick={() => setSelectedLeadForDetail(lead)}>
-                                                        {lead.businessName}
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden md:table-cell">{lead.industry || '-'}</td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden lg:table-cell">{lead.location || '-'}</td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                        <div className="flex flex-col gap-1">
-                                                            {lead.phone && <span className="flex items-center gap-1 text-[10px] sm:text-xs truncate max-w-[100px] sm:max-w-none"><Phone className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{lead.phone}</span></span>}
-                                                            {lead.email && <span className="text-[10px] sm:text-xs text-blue-400 truncate max-w-[100px] sm:max-w-none">{lead.email}</span>}
-                                                            {lead.website && <a href={lead.website} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] sm:text-xs text-teal-400 hover:underline"><ExternalLink className="w-3 h-3" /> Website</a>}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 hidden sm:table-cell">
-                                                        <div className="flex flex-col gap-2">
-                                                            <span className={`text-[10px] sm:text-xs px-2 py-1 rounded-full border w-fit font-bold uppercase tracking-wider ${lead.source === 'Manus AI' ? 'bg-teal-500/20 text-teal-400 border-teal-500/30' :
-                                                                lead.source === 'Google Places' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                                                                    'bg-slate-800 text-slate-400 border-slate-700'
-                                                                }`}>
-                                                                {lead.source === 'Manus AI' ? 'Premium' : lead.source}
-                                                            </span>
-                                                            {lead.outreachMessage && (
-                                                                <button
-                                                                    onClick={() => setViewingMessage({ title: `Email for ${lead.businessName}`, body: lead.outreachMessage! })}
-                                                                    className="flex items-center gap-1 text-[10px] text-purple-400 hover:text-purple-300 w-fit"
-                                                                >
-                                                                    <Mail className="w-3 h-3" /> View Draft
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
-                                                        {lead.status === 'Added to CRM' || lead.stage === 'qualified' || lead.stage === 'converted' ? (
-                                                            <span className="flex items-center gap-1 text-green-400 text-[10px] sm:text-xs font-bold">
-                                                                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Qualified</span>
-                                                            </span>
-                                                        ) : (
-                                                            <div className="relative group">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => addToCRM(lead.id, lead.stage)}
-                                                                    className="text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3"
-                                                                >
-                                                                    <UserPlus className="w-3 h-3" /> <span className="hidden sm:inline ml-1">Add to CRM</span>
-                                                                </Button>
-
-                                                                {/* Dropdown Menu on Hover */}
-                                                                <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden">
-                                                                    <div className="p-2 space-y-1">
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                addToCRM(lead.id, 'qualified');
-                                                                                toast.success('Lead qualified!');
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <CheckCircle2 className="w-3 h-3 text-green-400" />
-                                                                            Qualify Lead
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                // Navigate to deals with lead pre-selected
-                                                                                window.location.href = `/dashboard/deals?leadId=${lead.id}`;
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <UserPlus className="w-3 h-3 text-blue-400" />
-                                                                            Create Deal
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => setSelectedLeadForDetail(lead)}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <CheckCircle2 className="w-3 h-3 text-purple-400" />
-                                                                            Manage Lead
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                toast('Quote creation coming soon!', { icon: 'ℹ️' });
-                                                                            }}
-                                                                            className="w-full text-left px-3 py-2 text-xs text-white hover:bg-slate-800 rounded flex items-center gap-2"
-                                                                        >
-                                                                            <FileText className="w-3 h-3 text-yellow-400" />
-                                                                            Create Quote
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
+            {activeTab === 'automation' ? (
+                <div className="flex-1 bg-transparent w-full p-4">
+                    <AutomationBuilder />
+                </div>
+            ) : activeTab === 'omni' ? (
+                <div className="flex-1 bg-transparent w-full">
+                    <OmniLeadFinder />
                 </div>
             ) : (
-                <div className="flex-1 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
+                <div className="flex-1 bg-transparent flex flex-col">
                     {/* Chat Area */}
                     <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto">
                         {messages.map((msg) => (
                             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-4 rounded-xl text-sm sm:text-base ${msg.sender === 'user' ? 'bg-teal-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'}`}>
-                                    {msg.text}
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                            ul: ({ node, ...props }) => <ul className="list-disc pl-4 mb-2" {...props} />,
+                                            ol: ({ node, ...props }) => <ol className="list-decimal pl-4 mb-2" {...props} />,
+                                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                            strong: ({ node, ...props }) => <strong className="font-bold text-teal-400" {...props} />,
+                                        }}
+                                    >
+                                        {msg.text}
+                                    </ReactMarkdown>
                                 </div>
                             </div>
                         ))}
                     </div>
                     {/* Input Area */}
-                    <div className="p-4 bg-slate-950 border-t border-slate-800 flex gap-4">
-                        <input
-                            type="text"
-                            className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
-                            placeholder={aiConfigured ? "Type a message to the agent..." : "AI core offline..."}
-                            disabled={!aiConfigured}
-                            value={inputText}
-                            onChange={(e) => setInputText(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                        />
-                        <Button onClick={handleSendMessage} className="bg-teal-500" disabled={!aiConfigured}><Send className="w-4 h-4" /></Button>
+                    <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col gap-4">
+                        {pendingSearch && (
+                            <div className="bg-slate-900 border border-teal-500/30 p-4 rounded-xl shadow-lg">
+                                <h4 className="text-white font-bold mb-3 flex items-center gap-2">
+                                    <Search className="w-4 h-4 text-teal-400" /> Confirm AI Lead Search
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                                    <Input
+                                        label="Target Industry"
+                                        value={pendingSearch.industry}
+                                        onChange={e => setPendingSearch(prev => prev ? { ...prev, industry: e.target.value } : null)}
+                                    />
+                                    <Input
+                                        label="Target Location"
+                                        value={pendingSearch.location}
+                                        onChange={e => setPendingSearch(prev => prev ? { ...prev, location: e.target.value } : null)}
+                                    />
+                                    <div className="sm:col-span-2">
+                                        <Input
+                                            label="Additional Filters (optional)"
+                                            placeholder="e.g., 'no website', 'size > 10'"
+                                            value={pendingSearch.filters || ''}
+                                            onChange={e => setPendingSearch(prev => prev ? { ...prev, filters: e.target.value } : null)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 justify-end items-center mt-2">
+                                    <span className="text-xs text-slate-400 mr-auto flex items-center gap-1">
+                                        <AlertCircle className="w-3 h-3" /> Verify filters before searching
+                                    </span>
+                                    <Button variant="outline" size="sm" onClick={() => setPendingSearch(null)}>Cancel</Button>
+                                    <Button size="sm" className="bg-teal-600 hover:bg-teal-500" onClick={() => {
+                                        if (!pendingSearch) return;
+                                        setSearchCriteria({
+                                            industry: pendingSearch.industry,
+                                            location: pendingSearch.location
+                                        });
+                                        setActiveTab('omni');
+                                        handleAutoSearch(pendingSearch.industry, pendingSearch.location, pendingSearch.filters);
+                                        setPendingSearch(null);
+                                    }}>Confirm & Start Search</Button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex gap-4">
+                            <input
+                                type="text"
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-teal-500 disabled:opacity-50"
+                                placeholder={aiConfigured ? "Type a message to the agent..." : "AI core offline..."}
+                                disabled={!aiConfigured}
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                            />
+                            <Button onClick={handleSendMessage} className="bg-teal-500" disabled={!aiConfigured}><Send className="w-4 h-4" /></Button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -575,7 +1230,7 @@ const SalesAgent: React.FC = () => {
                         onChange={e => setManualLead({ ...manualLead, businessName: e.target.value })}
                         required
                     />
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input
                             label="Email Address"
                             type="email"
@@ -590,7 +1245,7 @@ const SalesAgent: React.FC = () => {
                             onChange={e => setManualLead({ ...manualLead, phone: e.target.value })}
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input
                             label="Industry"
                             placeholder="e.g. Technology"
@@ -612,19 +1267,18 @@ const SalesAgent: React.FC = () => {
             </Modal>
 
             {/* Lead Detail Modal */}
-            {
-                selectedLeadForDetail && (
-                    <LeadDetailModal
-                        isOpen={!!selectedLeadForDetail}
-                        onClose={() => setSelectedLeadForDetail(null)}
-                        lead={selectedLeadForDetail}
-                        onLeadUpdate={() => {
-                            // Optional: refresh list
-                        }}
-                    />
-                )
-            }
-        </div >
+            {selectedLeadForDetail && (
+                <LeadDetailModal
+                    isOpen={!!selectedLeadForDetail}
+                    onClose={() => setSelectedLeadForDetail(null)}
+                    lead={selectedLeadForDetail}
+                    onLeadUpdate={() => {
+                        // Optional: refresh list
+                    }}
+                />
+            )}
+        </div>
+        </BonnieModulePageShell>
     );
 };
 

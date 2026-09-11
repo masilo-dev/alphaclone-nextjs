@@ -1,10 +1,15 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
+import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { withCronJob } from '@/lib/cron/withCronJob';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+    const denied = denyIfCronUnauthorized(req);
+    if (denied) return denied;
+
+    return withCronJob('workflows', async () => {
     try {
         console.log('Workflow sweep cron triggered');
 
@@ -25,6 +30,14 @@ export async function GET(req: Request) {
 
         const result = await response.json();
 
+        if (!response.ok) {
+            return NextResponse.json({
+                success: false,
+                timestamp: new Date().toISOString(),
+                error: result?.error || `Workflow engine returned ${response.status}`,
+            }, { status: 502 });
+        }
+
         return NextResponse.json({
             success: true,
             timestamp: new Date().toISOString(),
@@ -38,4 +51,5 @@ export async function GET(req: Request) {
             error: String(error)
         }, { status: 500 });
     }
+    }, { maxDurationMs: 25_000 });
 }

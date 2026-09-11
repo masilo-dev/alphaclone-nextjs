@@ -1,23 +1,13 @@
-import OpenAI from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
+import {
+    routeAIRequest,
+    streamAIRequest,
+    getRecommendedModel,
+    estimateCost,
+} from '../aiRouter';
 
-/**
- * Unified AI Service
- * Integrates OpenAI and Anthropic (Claude) APIs
- * Smart routing based on task type and availability
- */
+export type AIProvider = 'openai' | 'anthropic' | 'xai' | 'auto';
 
-export type AIProvider = 'openai' | 'anthropic' | 'auto';
-
-export type AIModel =
-    // OpenAI models
-    | 'gpt-4-turbo'
-    | 'gpt-4'
-    | 'gpt-3.5-turbo'
-    // Anthropic models
-    | 'claude-opus-4'
-    | 'claude-sonnet-3.5'
-    | 'claude-haiku-3';
+export type AIModel = string;
 
 export interface AIRequest {
     prompt: string;
@@ -30,289 +20,77 @@ export interface AIRequest {
 
 export interface AIResponse {
     content: string;
-    provider: 'openai' | 'anthropic';
+    provider: 'openai' | 'anthropic' | 'xai' | 'gemini' | 'openrouter';
     model: string;
     tokens: {
         prompt: number;
         completion: number;
         total: number;
     };
-    cost: number; // in dollars
+    cost: number;
 }
-
-// Model pricing (per 1M tokens)
-const MODEL_PRICING = {
-    // OpenAI (per 1M tokens)
-    'gpt-4-turbo': { input: 10, output: 30 },
-    'gpt-4': { input: 30, output: 60 },
-    'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
-
-    // Anthropic (per 1M tokens)
-    'claude-opus-4': { input: 15, output: 75 },
-    'claude-sonnet-3.5': { input: 3, output: 15 },
-    'claude-haiku-3': { input: 0.25, output: 1.25 },
-};
 
 class AIService {
-    private openai: OpenAI;
-    private anthropic: Anthropic;
-    private defaultProvider: AIProvider = 'auto';
-
-    constructor() {
-        // Initialize OpenAI
-        this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY || '',
-        });
-
-        // Initialize Anthropic
-        this.anthropic = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY || '',
-        });
+    private resolveRequestedModel(request: AIRequest): string {
+        if (request.model) return request.model;
+        if (request.provider === 'anthropic') return 'claude-sonnet-4-6-20260217';
+        if (request.provider === 'xai') return 'grok-4.3';
+        if (request.provider === 'openai') return 'gpt-4o';
+        return 'deepseek-chat';
     }
 
-    /**
-     * Main completion method - automatically routes to best provider
-     */
     async complete(request: AIRequest): Promise<AIResponse> {
-        const provider = this.selectProvider(request);
-
-        try {
-            if (provider === 'openai') {
-                return await this.completeWithOpenAI(request);
-            } else {
-                return await this.completeWithAnthropic(request);
-            }
-        } catch (error) {
-            // Fallback to other provider if primary fails
-            console.error(`${provider} failed, falling back...`, error);
-
-            if (provider === 'openai') {
-                return await this.completeWithAnthropic(request);
-            } else {
-                return await this.completeWithOpenAI(request);
-            }
-        }
-    }
-
-    /**
-     * OpenAI completion
-     */
-    private async completeWithOpenAI(request: AIRequest): Promise<AIResponse> {
-        const model = request.model?.startsWith('gpt-')
-            ? request.model
-            : 'gpt-4-turbo';
-
-        const messages: any[] = [];
-
-        if (request.systemPrompt) {
-            messages.push({
-                role: 'system',
-                content: request.systemPrompt,
-            });
-        }
-
-        messages.push({
-            role: 'user',
-            content: request.prompt,
+        const response = await routeAIRequest({
+            prompt: request.prompt,
+            systemPrompt: request.systemPrompt,
+            maxTokens: request.maxTokens,
+            temperature: request.temperature,
+            model: this.resolveRequestedModel(request)
         });
 
-        const response = await this.openai.chat.completions.create({
-            model,
-            messages,
-            max_tokens: request.maxTokens || 2000,
-            temperature: request.temperature || 0.7,
-        });
-
-        const usage = response.usage!;
-        const pricing = MODEL_PRICING[model as keyof typeof MODEL_PRICING] || MODEL_PRICING['gpt-4-turbo'];
-        const cost = (usage.prompt_tokens * pricing.input + usage.completion_tokens * pricing.output) / 1_000_000;
 
         return {
-            content: response.choices[0].message.content || '',
-            provider: 'openai',
-            model,
-            tokens: {
-                prompt: usage.prompt_tokens,
-                completion: usage.completion_tokens,
-                total: usage.total_tokens,
-            },
-            cost,
+            content: response.content,
+            provider: response.provider as any,
+            model: response.model,
+            tokens: { prompt: 0, completion: 0, total: 0 },
+            cost: estimateCost(request.prompt, response.model)
         };
     }
 
-    /**
-     * Anthropic (Claude) completion
-     */
-    private async completeWithAnthropic(request: AIRequest): Promise<AIResponse> {
-        const model = request.model?.startsWith('claude-')
-            ? request.model
-            : 'claude-sonnet-3.5';
-
-        const response = await this.anthropic.messages.create({
-            model,
-            max_tokens: request.maxTokens || 2000,
-            temperature: request.temperature || 0.7,
-            system: request.systemPrompt,
-            messages: [
-                {
-                    role: 'user',
-                    content: request.prompt,
-                },
-            ],
-        });
-
-        const usage = response.usage;
-        const pricing = MODEL_PRICING[model as keyof typeof MODEL_PRICING] || MODEL_PRICING['claude-sonnet-3.5'];
-        const cost = (usage.input_tokens * pricing.input + usage.output_tokens * pricing.output) / 1_000_000;
-
-        return {
-            content: response.content[0].type === 'text' ? response.content[0].text : '',
-            provider: 'anthropic',
-            model,
-            tokens: {
-                prompt: usage.input_tokens,
-                completion: usage.output_tokens,
-                total: usage.input_tokens + usage.output_tokens,
-            },
-            cost,
-        };
-    }
-
-    /**
-     * Smart provider selection based on task type
-     */
-    private selectProvider(request: AIRequest): 'openai' | 'anthropic' {
-        if (request.provider && request.provider !== 'auto') {
-            return request.provider;
-        }
-
-        // Task-based routing
-        const prompt = request.prompt.toLowerCase();
-
-        // Anthropic (Claude) is better for:
-        // - Long context (100k+ tokens)
-        // - Complex reasoning
-        // - Code analysis
-        // - Document analysis
-        if (
-            request.prompt.length > 10000 || // Long prompts
-            prompt.includes('analyze') ||
-            prompt.includes('reason') ||
-            prompt.includes('explain') ||
-            prompt.includes('code') ||
-            prompt.includes('legal') ||
-            prompt.includes('contract')
-        ) {
-            return 'anthropic';
-        }
-
-        // OpenAI is better for:
-        // - Short/quick tasks
-        // - Creative writing
-        // - JSON output
-        // - Function calling
-        if (
-            prompt.includes('write') ||
-            prompt.includes('create') ||
-            prompt.includes('generate') ||
-            prompt.includes('json') ||
-            prompt.includes('summarize')
-        ) {
-            return 'openai';
-        }
-
-        // Default: Use Anthropic (better value)
-        return 'anthropic';
-    }
-
-    /**
-     * Streaming completion (for real-time responses)
-     */
     async *stream(request: AIRequest): AsyncGenerator<string> {
-        const provider = this.selectProvider(request);
-
-        if (provider === 'openai') {
-            yield* this.streamOpenAI(request);
-        } else {
-            yield* this.streamAnthropic(request);
-        }
-    }
-
-    private async *streamOpenAI(request: AIRequest): AsyncGenerator<string> {
-        const model = request.model?.startsWith('gpt-') ? request.model : 'gpt-4-turbo';
-
-        const messages: any[] = [];
-        if (request.systemPrompt) {
-            messages.push({ role: 'system', content: request.systemPrompt });
-        }
-        messages.push({ role: 'user', content: request.prompt });
-
-        const stream = await this.openai.chat.completions.create({
-            model,
-            messages,
-            max_tokens: request.maxTokens || 2000,
-            temperature: request.temperature || 0.7,
-            stream: true,
+        const response = await streamAIRequest({
+            prompt: request.prompt,
+            systemPrompt: request.systemPrompt,
+            maxTokens: request.maxTokens,
+            temperature: request.temperature,
+            model: this.resolveRequestedModel(request),
         });
-
-        for await (const chunk of stream) {
-            const content = chunk.choices[0]?.delta?.content || '';
-            if (content) {
-                yield content;
+        const reader = response.stream.getReader();
+        const decoder = new TextDecoder();
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                if (chunk) yield chunk;
             }
+            const finalChunk = decoder.decode();
+            if (finalChunk) yield finalChunk;
+        } finally {
+            reader.releaseLock();
         }
     }
 
-    private async *streamAnthropic(request: AIRequest): AsyncGenerator<string> {
-        const model = request.model?.startsWith('claude-') ? request.model : 'claude-sonnet-3.5';
-
-        const stream = await this.anthropic.messages.stream({
-            model,
-            max_tokens: request.maxTokens || 2000,
-            temperature: request.temperature || 0.7,
-            system: request.systemPrompt,
-            messages: [{ role: 'user', content: request.prompt }],
-        });
-
-        for await (const chunk of stream) {
-            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-                yield chunk.delta.text;
-            }
-        }
+    getRecommendedModel(taskType: string) {
+        return getRecommendedModel(taskType);
     }
 
-    /**
-     * Get model recommendations based on task
-     */
-    getRecommendedModel(taskType: string): { provider: AIProvider; model: AIModel } {
-        const recommendations: Record<string, { provider: AIProvider; model: AIModel }> = {
-            'contract_generation': { provider: 'anthropic', model: 'claude-opus-4' },
-            'document_analysis': { provider: 'anthropic', model: 'claude-sonnet-3.5' },
-            'code_generation': { provider: 'anthropic', model: 'claude-sonnet-3.5' },
-            'email_drafting': { provider: 'openai', model: 'gpt-4-turbo' },
-            'summarization': { provider: 'openai', model: 'gpt-4-turbo' },
-            'chat': { provider: 'anthropic', model: 'claude-sonnet-3.5' },
-            'quick_task': { provider: 'anthropic', model: 'claude-haiku-3' },
-            'translation': { provider: 'openai', model: 'gpt-4-turbo' },
-        };
-
-        return recommendations[taskType] || { provider: 'anthropic', model: 'claude-sonnet-3.5' };
-    }
-
-    /**
-     * Estimate cost before making request
-     */
-    estimateCost(prompt: string, model: AIModel): number {
-        // Rough token estimation (1 token ≈ 4 characters)
-        const promptTokens = Math.ceil(prompt.length / 4);
-        const completionTokens = 500; // Assume 500 token response
-
-        const pricing = MODEL_PRICING[model] || MODEL_PRICING['claude-sonnet-3.5'];
-        return (promptTokens * pricing.input + completionTokens * pricing.output) / 1_000_000;
+    estimateCost(prompt: string, model: string) {
+        return estimateCost(prompt, model);
     }
 }
 
-// Singleton instance
 export const aiService = new AIService();
 
 /**
@@ -340,8 +118,7 @@ Include all standard legal clauses and make it ready to sign.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a legal contract expert. Generate professional, legally sound contracts.',
-            provider: 'anthropic',
-            model: 'claude-opus-4',
+            provider: 'auto',
             maxTokens: 4000,
         });
 
@@ -371,8 +148,7 @@ Return as JSON with keys: summary, keyPoints, entities, sentiment`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a document analysis expert. Extract structured information from documents.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-3.5',
+            provider: 'auto',
             temperature: 0.3,
         });
 
@@ -409,8 +185,7 @@ Return as JSON with keys: subject, body`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a professional email writer. Draft clear, concise, and effective emails.',
-            provider: 'openai',
-            model: 'gpt-4-turbo',
+            provider: 'auto',
             temperature: 0.7,
         });
 
@@ -445,8 +220,7 @@ Make it clear, comprehensive, and action-oriented.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a project management expert. Write clear project descriptions.',
-            provider: 'openai',
-            model: 'gpt-4-turbo',
+            provider: 'auto',
         });
 
         return response.content;
@@ -476,8 +250,7 @@ Return as JSON with keys: summary, decisions, actionItems, nextSteps`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a meeting facilitator. Extract structured information from meeting notes.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-3.5',
+            provider: 'auto',
             temperature: 0.3,
         });
 
@@ -509,8 +282,7 @@ Return as JSON with the requested fields.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a data extraction expert. Extract structured data accurately.',
-            provider: 'openai',
-            model: 'gpt-4-turbo',
+            provider: 'auto',
             temperature: 0.2,
         });
 
@@ -532,8 +304,7 @@ ${text}`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a professional translator. Provide accurate translations.',
-            provider: 'openai',
-            model: 'gpt-4-turbo',
+            provider: 'auto',
         });
 
         return response.content;
@@ -550,8 +321,7 @@ ${text}`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a helpful business assistant. Provide clear, actionable advice.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-3.5',
+            provider: 'auto',
         });
 
         return response.content;

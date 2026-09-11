@@ -54,12 +54,14 @@ const InteractiveHeroPreview = () => {
     return (
         <div
             onMouseMove={handleMouseMove}
-            className="relative w-full max-w-4xl mx-auto h-[500px] perspective-1000 hidden md:block"
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+            className="relative w-full max-w-4xl mx-auto h-[500px] perspective-1000 hidden md:block select-none"
         >
             {/* Main Dashboard Frame */}
             <motion.div
                 style={{ rotateX: useTransform(y, [-20, 20], [5, -5]), rotateY: useTransform(x, [-20, 20], [-5, 5]), x, y }}
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl overflow-hidden shadow-2xl flex"
+                className="absolute inset-0 bg-slate-900/60 backdrop-blur-lg border border-slate-700/50 rounded-3xl overflow-hidden shadow-2xl flex transform-gpu"
             >
                 {/* Sidebar */}
                 <div className="w-16 lg:w-48 border-r border-slate-800/50 p-4 hidden lg:flex flex-col gap-6 bg-slate-950/20">
@@ -144,7 +146,7 @@ const InteractiveHeroPreview = () => {
                                         <div className={`w-2 h-2 rounded-full bg-${proj.color}-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]`} />
                                         <span className="text-sm font-medium text-slate-300">{proj.title}</span>
                                     </div>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-${proj.color}-500/10 text-${proj.color}-400 border border-${proj.color}-500/20 uppercase tracking-wider`}>
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-${proj.color}-500/10 text-${proj.color}-400 border border-${proj.color}-500/20 uppercase tracking-wider`}>
                                         {proj.status}
                                     </span>
                                 </motion.div>
@@ -157,12 +159,12 @@ const InteractiveHeroPreview = () => {
             {/* Floating Terminal (AI Agent) */}
             <motion.div
                 style={{ x: useTransform(x, (val) => val * 1.5), y: useTransform(y, (val) => val * 1.5 - 20) }}
-                className="absolute -bottom-10 -right-6 lg:-right-12 w-80 lg:w-96 bg-slate-950/90 backdrop-blur-2xl border border-teal-500/30 rounded-2xl p-4 shadow-2xl z-20 overflow-hidden"
+                className="absolute -bottom-10 -right-6 lg:-right-12 w-80 lg:w-96 bg-slate-950/90 backdrop-blur-xl border border-teal-500/30 rounded-2xl p-4 shadow-2xl z-20 overflow-hidden transform-gpu"
             >
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                        <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Growth Agent Active</span>
+                        <span className="text-xs font-bold text-teal-400 uppercase tracking-widest">Growth Agent Active</span>
                     </div>
                     <div className="flex gap-1">
                         <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />
@@ -183,3 +185,4 @@ const InteractiveHeroPreview = () => {
 };
 
 export default InteractiveHeroPreview;
+

@@ -33,6 +33,17 @@ export function UserLocationTable() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
+            
+            // Get current user role first
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user?.id)
+                .single();
+            
+            const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
+
             // Fetch profiles with registration country
             const { data: profiles, error: profilesError } = await supabase
                 .from('profiles')
@@ -42,22 +53,35 @@ export function UserLocationTable() {
             if (profilesError) throw profilesError;
 
             // Fetch latest activity for each user to get "Live" location/IP
-            // This is a bit expensive, in a real app we might join or have a materialized view
-            // For now, we will fetch the latest login_session for each user
+            // ONLY if the current user is an admin, otherwise skip to avoid 403 errors
+            const enhancedUsers = await Promise.all(profiles.map(async (p: any) => {
+                let last_ip = 'Unknown';
+                let last_location = 'Unknown';
 
-            const enhancedUsers = await Promise.all(profiles.map(async (profile: any) => {
-                const { data: session } = await supabase
-                    .from('login_sessions')
-                    .select('ip_address, country, city')
-                    .eq('user_id', profile.id)
-                    .order('login_time', { ascending: false })
-                    .limit(1)
-                    .single();
+                if (isAdmin) {
+                    try {
+                        const { data: session } = await supabase
+                            .from('login_sessions')
+                            .select('ip_address, country, city')
+                            .eq('user_id', p.id)
+                            .order('login_time', { ascending: false })
+                            .limit(1)
+                            .single();
+
+                        if (session) {
+                            last_ip = session.ip_address || 'Unknown';
+                            last_location = `${session.city || ''}, ${session.country || ''}`;
+                        }
+                    } catch (e) {
+                        // Silent fail for individual session fetch
+                        console.warn(`Could not fetch session for user ${p.id}`);
+                    }
+                }
 
                 return {
-                    ...profile,
-                    last_ip: session?.ip_address || 'Unknown',
-                    last_location: session ? `${session.city || ''}, ${session.country || ''}` : 'Unknown'
+                    ...p,
+                    last_ip,
+                    last_location
                 };
             }));
 

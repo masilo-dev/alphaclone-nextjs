@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     LayoutDashboard,
     Users,
@@ -14,170 +17,514 @@ import {
     TrendingUp,
     Video,
     ShieldCheck,
-    FileCheck
+    FileCheck,
+    BarChart3,
+    BookOpen,
+    Receipt,
+    RefreshCw,
+    MessageCircle,
+    Plus,
+    X,
 } from 'lucide-react';
+import IncomingCallModal from '../video/IncomingCallModal';
+import { DashboardAccountMenu } from '../DashboardAccountMenu';
 import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';
+import { supabase } from '../../../lib/supabase';
+import { resolveOnboardingGate } from '@/lib/onboarding/resolveOnboardingGate';
+import toast from 'react-hot-toast';
+import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
+import { useMeetingSession } from '@/hooks/useMeetingSession';
+import { usePrefetchDashboardStats } from '@/hooks/useDashboardStats';
+import { useCrmDashboardSync } from '@/hooks/useCrmDashboardSync';
+import { startClientVideoCall } from '@/services/instantMeetingService';
+import { WORKSPACE } from '@/constants/design';
+import SkipToMainContent from '@/components/accessibility/SkipToMainContent';
+
 // Components
 import BusinessHome from './BusinessHome';
-import ClientsPage from './ClientsPage';
+import {
+  OverviewDashboard,
+  CrmDashboard,
+  OutreachDashboard,
+  InvoicingDashboard,
+  ContractsDashboard,
+  ProjectsDashboard,
+  SocialDashboard,
+} from '../views/ModuleDashboardView';
+import { OutreachInbox } from '../outreach/OutreachInbox';
 import ProjectsPage from './ProjectsPage';
 import TeamPage from './TeamPage';
-import MessagesPage from './MessagesPage';
-import CalendarPage from './CalendarPage';
-import BillingPage from './BillingPage';
-import ReportsPage from './ReportsPage';
-import SettingsPage from './SettingsPage';
-import MeetingsPage from './MeetingsPage';
-// New CRM Components
+import ClientsPage from './ClientsPage';
 import CRMTab from '../CRMTab';
 import TasksTab from '../TasksTab';
-import SalesAgent from '../SalesAgent';
 import DealsTab from '../DealsTab';
+import QuotesTab from '../QuotesTab';
+import MailTab from '../MailTab';
+import CommunicationHub from '../communication/CommunicationHub';
+import MessagesPage from './MessagesPage';
+// Lazy load heavier tabs that aren't needed on dashboard mount
+const CalendarPage = React.lazy(() => import('./CalendarPage'));
+const EnhancedBillingPage = React.lazy(() => import('./EnhancedBillingPage'));
+const ReportsPage = React.lazy(() => import('./ReportsPage'));
+const SettingsPage = React.lazy(() => import('./SettingsPage'));
+const PwaSettingsScreen = React.lazy(() => import('../../pwa/PwaSettingsScreen'));
+const MeetingsPage = React.lazy(() => import('./MeetingsPage'));
+const ReferralsPage = React.lazy(() => import('./ReferralsPage'));
+const BookingTab = React.lazy(() => import('./BookingTab'));
+const ScraperCampaignsPage = React.lazy(() => import('../leads/ScraperCampaignsPage'));
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
+import SharedDocumentsWorkspace from '../../documents/SharedDocumentsWorkspace';
+// Accounting Components - Lazy loaded to prevent module resolution issues
+const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
+// New Components
+const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
+const UnifiedInbox = React.lazy(() => import('./UnifiedInbox'));
+const BonnieModulePageShell = React.lazy(() =>
+  import('../bonnie/BonnieModulePageShell').then((m) => ({ default: m.BonnieModulePageShell }))
+);
+const OperationsCommandCenter = React.lazy(() => import('../operations/OperationsCommandCenter'));
+const BusinessPerformanceDashboard = React.lazy(() => import('./BusinessPerformanceDashboard'));
+const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration'));
+
+
+const QuotaManager = React.lazy(() => import('./QuotaManager'));
+
+const PagesTab = React.lazy(() => import('@/components/pages/PagesTab'));
+const ContactSubmissionsTab = React.lazy(() => import('../ContactSubmissionsTab'));
+const FormsHub = React.lazy(() => import('./FormsHub'));
+const EmailCampaignsPage = React.lazy(() => import('../marketing/EmailCampaignsPage'));
+const MarketingOverview = React.lazy(() => import('../marketing/MarketingOverview'));
+const MarketingOutreachPage = React.lazy(() => import('../marketing/MarketingOutreachPage'));
+const MarketingDeliveryPage = React.lazy(() => import('../marketing/MarketingDeliveryPage'));
+const FacebookIntegrationTab = React.lazy(() => import('../facebook/FacebookIntegrationTab'));
+const ExpenseTrackerTab = React.lazy(() => import('./ExpenseTrackerTab'));
+const WorkflowDashboard = React.lazy(() => import('../engine/WorkflowDashboard'));
+const SMSCampaignTab = React.lazy(() => import('../engine/SMSCampaignTab'));
+const SocialMediaComposer = React.lazy(() => import('../engine/SocialMediaComposer'));
+const LinkedInManagementTab = React.lazy(() => import('../social/LinkedInManagementTab'));
+const WhatsAppManagementPage = React.lazy(() => import('../WhatsAppManagementPage'));
+const InstagramIntegrationTab = React.lazy(() => import('../social/InstagramIntegrationTab'));
+const XIntegrationTab = React.lazy(() => import('../social/XIntegrationTab'));
+
+const IngestionPanel = React.lazy(() => import('../engine/IngestionPanel'));
+const SocialCommandCenter = React.lazy(() => import('../social/SocialCommandCenter'));
+const MarketplacePage = React.lazy(() => import('../MarketplacePage'));
+const TeamsPage = React.lazy(() => import('./TeamsPage'));
+
+const CashFlowForecastTab = React.lazy(() => import('./CashFlowForecastTab'));
+const ClientOnboardingTab = React.lazy(() => import('./ClientOnboardingTab'));
+const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
+const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
+const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
+const UnifiedActionCenter = React.lazy(() => import('../bonnie/UnifiedActionCenter'));
+const ChaseExecutionInbox = React.lazy(() => import('../bonnie/ChaseExecutionInbox'));
+const AuditTrailPage = React.lazy(() => import('../AuditTrailPage'));
+const SalesForecastTab = React.lazy(() => import('../SalesForecastTab'));
+const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
+const AccountsPage = React.lazy(() => import('../crm/AccountsPage'));
+const SalesConsole = React.lazy(() => import('../crm/SalesConsole'));
+const CRMReportsTab = React.lazy(() => import('../crm/CRMReportsTab'));
+const FollowUpQueue = React.lazy(() => import('../crm/FollowUpQueue'));
+const BankingCenterPage = React.lazy(() => import('../accounting/BankingCenterPage'));
+const BillsPayablePage = React.lazy(() => import('../accounting/BillsPayablePage'));
+const PeriodClosePage = React.lazy(() => import('../accounting/PeriodClosePage'));
+const SequenceBuilder = React.lazy(() => import('../marketing/SequenceBuilder'));
+const DeliverabilityPanel = React.lazy(() => import('../marketing/DeliverabilityPanel'));
+const ZohoCampaignsHub = React.lazy(() => import('../zoho/ZohoCampaignsHub'));
+const ExecutiveDashboard = React.lazy(() => import('../ExecutiveDashboard'));
+import { renderSharedDashboardRoute } from '@/lib/dashboard/sharedDashboardRoutes';
+import { isHubRoute, wrapRouteInHub } from '@/lib/dashboard/hubRoutes';
+
+import { TrialBanner } from '../TrialBanner';
+import BonnieWidget from '../bonnie/BonnieWidget';
+import BonnieFullView from '../bonnie/BonnieFullView';
+
+import Sidebar from '@/components/dashboard/Sidebar';
+import BottomNav from '../BottomNav';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { TabSkeleton } from '@/components/ui/TabSkeleton';
+import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
+import { PLAN_PRICING } from '../../../services/tenancy/types';
+import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
+import { EnterpriseTabWrapper, isEnterpriseFullBleedTab } from '@/components/ui/EnterpriseTabWrapper';
+import NotificationCenter from '../NotificationCenter';
+import { OfflineQueueIndicator } from '@/components/common/OfflineQueueIndicator';
+import CommandPalette from '../CommandPalette';
+import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
+import ProductTour from '../../onboarding/ProductTour';
+import { PLATFORM_TOUR_EVENT } from '../PlatformExecutionWelcome';
+import OnboardingFlow from '../../onboarding/OnboardingFlow';
+import { BusinessWelcomeModal } from './BusinessWelcomeModal';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
+import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
+import { extractTenantBranding } from '@/lib/tenantBranding';
+import { presenceService } from '@/services/presenceService';
+import MissedCallsNotification from '../MissedCallsNotification';
+import { DashboardRouteTransition } from '../DashboardRouteTransition';
+import { DashboardScrollRegion, dispatchPullRefresh } from '@/components/common/DashboardScrollRegion';
+import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
+import { useDashboardScrollRestoration } from '@/hooks/useDashboardScrollRestoration';
+
+/** Full-bleed tabs: no outer padding; child manages its own scroll (mail, projects, etc.). Social pages scroll with the main column like CRM. */
+const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
+    '/dashboard/mail',
+    '/dashboard/comms',
+  '/dashboard/business/projects',
+  '/dashboard/business/projects/manage',
+  '/dashboard/projects/manage',
+  '/dashboard/tasks',
+    '/dashboard/sales-agent',
+    '/dashboard/leads/campaigns',
+    '/dashboard/zoho/mail',
+    '/dashboard/business/messages',
+    '/dashboard/pwa-settings',
+];
+
+const BUSINESS_PULL_SCROLL_ROUTES = new Set([
+    '/dashboard/leads/campaigns',
+    '/dashboard/leads/finder',
+    '/dashboard/business/projects',
+    '/dashboard/business/projects/manage',
+    '/dashboard/projects/manage',
+    '/dashboard/sales-agent',
+]);
+
+function isBusinessMainScrollable(tabRoute: string): boolean {
+    if (!DASHBOARD_EDGE_TO_EDGE_TABS.includes(tabRoute)) return true;
+    return BUSINESS_PULL_SCROLL_ROUTES.has(tabRoute);
+}
 
 interface BusinessDashboardProps {
     user: User;
     onLogout: () => void;
     activeTab: string;
     setActiveTab: (tab: string) => void;
+    currentTenant?: any; // optional — component fetches via useTenant() context
 }
 
-const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, activeTab, setActiveTab }) => {
-    const { currentTenant, isLoading: tenantLoading } = useTenant();
-    const [sidebarOpen, setSidebarOpen] = useState(() => {
-        if (typeof window !== 'undefined') {
-            return window.innerWidth >= 768;
+export default function BusinessDashboard({ currentTenant: propTenant, user, onLogout, setActiveTab, activeTab }: BusinessDashboardProps) {
+    const router = useRouter();
+    const queryClient = useQueryClient();
+    const { t } = useLanguage();
+    const route = useMemo(
+        () => normalizeBusinessRoute(activeTab, user.role),
+        [activeTab, user.role],
+    );
+    useDashboardScrollRestoration(route);
+    const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats, refreshTenants, error: tenantError } = useTenant();
+    const currentTenant = propTenant || contextTenant;
+    const tenantBranding = useMemo(() => extractTenantBranding(currentTenant), [currentTenant]);
+    const tenantBrandStyle = useMemo(
+        () => ({ '--brand-blue-500': tenantBranding.primaryColor || '#356AF4' } as React.CSSProperties),
+        [tenantBranding.primaryColor],
+    );
+    const [bootstrappingOrg, setBootstrappingOrg] = useState(false);
+    usePrefetchDashboardStats(currentTenant?.id);
+    useCrmDashboardSync(currentTenant?.id);
+    const hasBootstrappedRef = useRef(Boolean(propTenant || contextTenant));
+    if (currentTenant) {
+        hasBootstrappedRef.current = true;
+    }
+    const [activeSection, setActiveSection] = useState('profile');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+    const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+    const [todayOpen, setTodayOpen] = useState(false);
+    const [showProductTour, setShowProductTour] = useState(false);
+    const [showBusinessWelcome, setShowBusinessWelcome] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+    const hideBonnieWidget =
+        route === '/dashboard/business/bonnie' ||
+        route === '/dashboard/bonnie' ||
+        route === '/dashboard/bonnie/approvals' ||
+        route.startsWith('/dashboard/bonnie/');
+    const {
+        activeMeetingCallId,
+        startMeeting,
+    } = useMeetingSession(`${user.id}:${currentTenant?.id || 'no-tenant'}`);
+
+    useEffect(() => {
+        if (activeMeetingCallId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/meet/')) {
+            router.replace(`/meet/${activeMeetingCallId}`);
         }
-        return true;
-    });
+    }, [activeMeetingCallId, router]);
+    React.useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // Keep sidebar expanded by default on tablet and desktop so navigation labels stay visible.
+            setSidebarOpen(window.innerWidth >= 768);
+        }
+    }, []);
 
-    // -- PERSISTENT VIDEO CALL STATE --
-    const [activeCallUrl, setActiveCallUrl] = useState<string | null>(null);
-    const [isCallMinimized, setIsCallMinimized] = useState(false);
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const target = document.activeElement?.tagName;
+            const isTyping = target === 'INPUT' || target === 'TEXTAREA' || target === 'SELECT';
+            const commandShortcut = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k';
+            if ((commandShortcut || e.key === '/') && !isTyping) {
+                e.preventDefault();
+                setCommandPaletteOpen(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
-    // Explicitly typed handlers
-    const handleJoinCall = (url: string) => {
-        if (!url) return;
-        setActiveCallUrl(url);
-        setIsCallMinimized(false);
+    React.useEffect(() => {
+        if (!user?.id || typeof window === 'undefined') return;
+
+        let cancelled = false;
+        const tourStorageKey = `business_tour_completed_${user.id}`;
+
+        const resolveGates = async () => {
+            const gate = await resolveOnboardingGate(
+                user.id,
+                currentTenant?.id,
+                (user as { user_metadata?: Record<string, unknown> }).user_metadata
+            );
+
+            if (cancelled) return;
+
+            if (!gate.welcomeSeen && !gate.establishedWorkspace) {
+                setShowBusinessWelcome(true);
+                return;
+            }
+
+            if (!gate.onboardingCompleted) {
+                setShowOnboarding(true);
+                return;
+            }
+
+            if (!gate.tourCompleted && !gate.establishedWorkspace && route === '/dashboard') {
+                const timer = window.setTimeout(() => setShowProductTour(true), 2000);
+                return () => window.clearTimeout(timer);
+            }
+        };
+
+        resolveGates();
+        return () => {
+            cancelled = true;
+        };
+    }, [user?.id, currentTenant?.id, route]);
+
+    const handleBusinessWelcomeClose = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(`business_welcome_seen_${user.id}`, '1');
+            localStorage.setItem(`welcome_seen_${user.id}`, 'true');
+            window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
+        }
+        setShowBusinessWelcome(false);
+        if (typeof window !== 'undefined' && !localStorage.getItem(`onboarding_completed_${user.id}`)) {
+            setShowOnboarding(true);
+            return;
+        }
+        if (typeof window !== 'undefined' && !localStorage.getItem(`business_tour_completed_${user.id}`) && route === '/dashboard') {
+            window.setTimeout(() => setShowProductTour(true), 1500);
+        }
     };
 
-    const handleLeaveCall = () => {
-        setActiveCallUrl(null);
-        setIsCallMinimized(false);
+    const handleOnboardingComplete = () => {
+        setShowOnboarding(false);
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
+        }
+        if (typeof window !== 'undefined' && !localStorage.getItem(`business_tour_completed_${user.id}`) && route === '/dashboard') {
+            window.setTimeout(() => setShowProductTour(true), 1500);
+        }
+    };
+
+    const markTourCompleted = React.useCallback(() => {
+        if (typeof window === 'undefined' || !user?.id) return;
+        localStorage.setItem(`business_tour_completed_${user.id}`, '1');
+        localStorage.setItem(`tour_completed_${user.id}`, '1');
+        setShowProductTour(false);
+    }, [user?.id]);
+
+    // Tour could not find anything to point at: close it WITHOUT marking it
+    // completed, so it still auto-starts on the dashboard home later.
+    const dismissUnavailableTour = React.useCallback(() => setShowProductTour(false), []);
+
+    // Every explicit "Platform tour" press remounts the tour (new key) so it
+    // restarts from step 1 even if a previous run is mid-way or got stuck open.
+    const [tourRunId, setTourRunId] = useState(0);
+    const requestProductTour = React.useCallback(() => {
+        setTourRunId((id) => id + 1);
+        setShowProductTour(true);
+    }, []);
+
+    React.useEffect(() => {
+        if (typeof window === 'undefined') return;
+        window.addEventListener(PLATFORM_TOUR_EVENT, requestProductTour);
+        return () => window.removeEventListener(PLATFORM_TOUR_EVENT, requestProductTour);
+    }, [requestProductTour]);
+
+    // Initialize MS Teams-like Presence
+    React.useEffect(() => {
+        if (user?.id) {
+            presenceService.initializePresence(user.id, 'online');
+            return () => {
+                presenceService.cleanup(user.id);
+            };
+        }
+    }, [user?.id]);
+
+    // Live unread direct-message count for the sidebar/bottom-nav badges.
+    React.useEffect(() => {
+        if (!currentTenant?.id) return;
+        let active = true;
+        const fetchUnread = async () => {
+            const { count } = await supabase
+                .from('messages')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', currentTenant.id)
+                .eq('recipient_id', user.id)
+                .is('read_at', null);
+            if (active) setUnreadMessageCount(count || 0);
+        };
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 30000);
+        return () => { active = false; clearInterval(interval); };
+    }, [currentTenant?.id, user.id]);
+
+    // -- PERSISTENT VIDEO CALL STATE --
+    const { tasks: bgTasks } = useBackgroundTasks();
+    const activeBgTasksCount = (bgTasks || []).filter(t => t.status === 'running').length;
+
+    // Explicitly typed handlers
+    const handleJoinCall = (callId: string) => {
+        startMeeting(callId);
+        router.push(`/meet/${callId}`);
+    };
+    const handleInitiateCallToClient = async (clientId: string) => {
+        const toastId = toast.loading('Initiating secure call...');
+        try {
+            const { client, error: clientError } = await (await import('../../../services/businessClientService')).businessClientService.getClient(clientId);
+            if (clientError || !client) throw new Error(clientError || 'Client not found');
+
+            const { call, provider, error } = await startClientVideoCall({
+                hostId: user.id,
+                hostName: user.name || user.email || 'Host',
+                tenantId: currentTenant?.id,
+                clientName: client.name,
+                clientEmail: client.email,
+            });
+
+            if (error || !call) {
+                throw new Error(error || 'Failed to create meeting');
+            }
+
+            if (provider === 'teams') {
+                toast.success('Teams meeting ready — opening…', { id: toastId });
+            } else if (!client.email) {
+                toast.success('Meeting room ready — client has no email on file.', { id: toastId });
+            } else {
+                toast.success('Calling client…', { id: toastId });
+            }
+
+            handleJoinCall(call.id);
+        } catch (error) {
+            console.error('Call failed:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to start call.', { id: toastId });
+        }
     };
 
     // Contract Modal State
     const [showContractModal, setShowContractModal] = useState(false);
     const [selectedProjectForContract, setSelectedProjectForContract] = useState<any>(null);
 
+    const [notification, setNotification] = useState<string | null>(null);
+
     const handleOpenContract = (project?: any) => {
-        // If no project passed, create dummy one for standalone contract
-        setSelectedProjectForContract(project || {
-            id: 'new',
-            name: 'New Project',
-            ownerId: user.id, // Self as owner proxy if direct
-            ownerName: 'Client Name',
-            budget: 0
-        });
+        setSelectedProjectForContract(project || undefined);
         setShowContractModal(true);
     };
+
+    // Fetch projects using useQuery for caching and sharing with TasksTab
+    const { data: projectData, isLoading: loadingProjects } = useQuery({
+        queryKey: ['projects', user.id],
+        queryFn: () => projectService.getProjects(user.id, user.role),
+        staleTime: 5 * 60 * 1000,
+        enabled: !!user.id && !!currentTenant,
+    });
+
+    const {
+        data: dashboardStats,
+        error: dashboardStatsError,
+    } = useQuery({
+        queryKey: ['dashboard-stats', currentTenant?.id, user.id],
+        queryFn: async () => {
+            if (!currentTenant?.id) return null;
+            const result = await getDashboardStats(currentTenant.id, user.id);
+            if (result.error) {
+                throw new Error(result.error);
+            }
+            return result.stats;
+        },
+        enabled: !!currentTenant?.id && !!user.id,
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        placeholderData: (previousData) => previousData,
+    });
+
+    const projects = projectData?.projects || [];
+    const todayItems = [
+        { label: 'Unread messages', count: Number(dashboardStats?.unreadMessages || 0), href: '/dashboard/comms' },
+        { label: 'Open tasks', count: Math.max(0, Number(dashboardStats?.totalTasks || 0) - Number(dashboardStats?.completedTasks || 0)), href: '/dashboard/tasks' },
+        { label: 'Overdue invoices', count: Number(dashboardStats?.overdueInvoices || 0), href: '/dashboard/business/billing/manage' },
+        { label: 'Active projects', count: Number(dashboardStats?.activeProjects || 0), href: '/dashboard/business/projects' },
+    ];
+
+    const handlePullRefresh = React.useCallback(async () => {
+        await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['dashboard-stats', currentTenant?.id, user.id] }),
+            queryClient.invalidateQueries({ queryKey: ['projects', user.id] }),
+        ]);
+        dispatchPullRefresh(route);
+    }, [queryClient, currentTenant?.id, user.id, route]);
 
     // Check for Due Tasks on Load
     React.useEffect(() => {
         const checkTasks = async () => {
-            // Import services dynamically if needed or assume user context
             if (!user?.id || !currentTenant) return;
 
             try {
-                // Dynamically import task service to avoid circular deps if any
                 const { taskService } = await import('../../../services/taskService');
-
-                // OPTIMIZATION: Fetch in background, verify cache first
                 const { tasks } = await taskService.getUpcomingTasks(user.id);
 
-                // Filter for tasks due today or overdue
                 const today = new Date();
-                const dueTasks = tasks.filter(t => {
+                const dueTasks = (tasks || []).filter(t => {
                     if (!t.dueDate) return false;
                     const due = new Date(t.dueDate);
-                    // Check if due date is today or earlier (and not completed)
                     return due.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0) && t.status !== 'completed';
                 });
 
                 if (dueTasks.length > 0) {
                     setNotification(`You have ${dueTasks.length} tasks due today!`);
                 }
-            } catch (err) {
-                console.error('Failed to checked tasks', err);
+            } catch {
+                console.error('Failed to checked tasks');
             }
         };
 
         checkTasks();
+    }, [user?.id, currentTenant?.id]);
 
-        // Fetch projects for context in other tabs (CRM, etc)
-        const loadProjects = async () => {
-            if (!currentTenant) return;
-            // Don't set loading true if we have cached data to avoid flashing skeleton
-            if (projects.length === 0) {
-                setLoadingProjects(true);
-            }
-
-            try {
-                const { projects: data } = await projectService.getProjects(user.id, user.role);
-                if (data) {
-                    setProjects(data);
-                    // Update cache
-                    localStorage.setItem('dashboard_projects_cache', JSON.stringify(data));
-                }
-            } catch (err) {
-                console.error('Failed to load projects in BusinessDashboard', err);
-            } finally {
-                setLoadingProjects(false);
-            }
-        };
-
-        loadProjects();
-    }, [user, currentTenant]);
-
-    const [notification, setNotification] = useState<string | null>(null);
-    const [projects, setProjects] = useState<Project[]>(() => {
-        // Init from cache
-        if (typeof window !== 'undefined') {
-            const cached = localStorage.getItem('dashboard_projects_cache');
-            if (cached) {
-                try {
-                    return JSON.parse(cached);
-                } catch (e) {
-                    console.error('Failed to parse project cache', e);
-                }
-            }
+    React.useEffect(() => {
+        if (dashboardStatsError) {
+            toast.error('Could not load workspace summary.');
         }
-        return [];
-    });
-    const [loadingProjects, setLoadingProjects] = useState(false);
+    }, [dashboardStatsError]);
 
-    // Trial Logic - DISABLED as per user request for full access
-    const isTrialExpired = React.useMemo(() => {
-        return false; // Force enable full access
-        /*
-        // Safe check: If trialEndsAt is null/undefined, return false (Existing Tenants are SAFE)
-        if (!currentTenant?.trialEndsAt) return false;
 
-        const now = new Date();
-        const trialEnd = new Date(currentTenant.trialEndsAt);
-        return now > trialEnd && currentTenant.subscriptionStatus === 'trial';
-        */
-    }, [currentTenant]);
 
-    // Map routes to display content
-    const renderBusinessContent = () => {
-        const plan = currentTenant?.subscription_plan || 'free';
-        const { PLAN_PRICING } = require('../../../services/tenancy/types');
-        const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
+    // Map routes to display content (uses normalized route — not affected by language changes)
+    const renderBusinessContent = (tab: string) => {
+        // const plan = currentTenant?.subscription_plan || 'free';
+        // const planFeatures = PLAN_PRICING[plan as keyof typeof PLAN_PRICING]?.features;
 
         const LockedFeature = ({ feature }: { feature: string }) => (
             <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
@@ -190,7 +537,7 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 </p>
                 <div className="flex gap-4">
                     <button
-                        onClick={() => setActiveTab('/dashboard/business/billing')}
+                        onClick={() => setActiveTab('/dashboard/business/settings')}
                         className="bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
                     >
                         View Upgrade Options
@@ -199,93 +546,626 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
             </div>
         );
 
-        switch (activeTab) {
+        const sharedRoute = renderSharedDashboardRoute(tab, user);
+        if (sharedRoute) return sharedRoute;
+
+        if (tab === '/dashboard/business/documents' || tab.startsWith('/dashboard/business/documents/')) {
+            const section = tab.slice('/dashboard/business/documents'.length).replace(/^\//, '').split('/')[0];
+            return <SharedDocumentsWorkspace section={section} />;
+        }
+
+        if (/^\/dashboard\/(?:business\/)?projects\/[0-9a-f-]{36}$/i.test(tab)) {
+            return <ProjectsPage user={user} />;
+        }
+
+        if (tab.startsWith('/dashboard/marketing/campaigns')) {
+            return (
+                <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                    <EmailCampaignsPage userId={user.id} />
+                </React.Suspense>
+            );
+        }
+
+        switch (tab) {
+            case '/dashboard/operations':
+            case '/dashboard/operations-command':
+            case '/dashboard/business/operations':
+            case '/dashboard/admin/operations':
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={4} /></div>}>
+                        <OperationsCommandCenter />
+                    </React.Suspense>
+                );
             case '/dashboard':
+            case '/dashboard/business':
                 return <BusinessHome user={user} />;
-            case '/dashboard/business/clients':
-                return <ClientsPage user={user} />;
+            case '/dashboard/projects':
             case '/dashboard/business/projects':
+                return <ProjectsDashboard />;
+            case '/dashboard/projects/manage':
+            case '/dashboard/business/projects/manage':
                 return <ProjectsPage user={user} />;
             case '/dashboard/business/team':
                 return <TeamPage user={user} />;
+            case '/dashboard/messages':
             case '/dashboard/business/messages':
-                return <MessagesPage user={user} />;
+                return <MessagesPage />;
+            case '/dashboard/calendar':
             case '/dashboard/business/calendar':
-                return <CalendarPage user={user} />;
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={10} columns={7} /></div>}>
+                        <CalendarPage user={user} />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/booking':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <BookingTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/teams':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <TeamsPage user={user} setActiveTab={setActiveTab} />
+                    </React.Suspense>
+                );
+            case '/dashboard/billing':
             case '/dashboard/business/billing':
-                return <BillingPage user={user} />;
+                return <InvoicingDashboard />;
+            case '/dashboard/business/billing/manage':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <BonnieModulePageShell showBonnieDock={false}>
+                            <EnhancedBillingPage user={user} />
+                        </BonnieModulePageShell>
+                    </React.Suspense>
+                );
             case '/dashboard/business/reports':
-                return <ReportsPage user={user} />;
+            case '/dashboard/reporting':
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={4} columns={2} /></div>}>
+                        <ReportsPage user={user} />
+                    </React.Suspense>
+                );
+            case '/dashboard/performance':
+                return (
+                    <React.Suspense fallback={<TableSkeleton />}>
+                        <BusinessPerformanceDashboard />
+                    </React.Suspense>
+                );
+            case '/dashboard/settings':
             case '/dashboard/business/settings':
-                return <SettingsPage user={user} />;
+            case '/dashboard/settings/integrations':
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={2} /></div>}>
+                        <SettingsPage user={user} />
+                    </React.Suspense>
+                );
+            case '/dashboard/pwa-settings':
+                return (
+                    <React.Suspense fallback={<div className="min-h-screen bg-[#0a0f1a]" />}>
+                        <PwaSettingsScreen
+                            user={user}
+                            onBack={() => setActiveTab('/dashboard/business')}
+                        />
+                    </React.Suspense>
+                );
             case '/dashboard/business/meetings':
-                return <MeetingsPage user={user} onJoinRoom={handleJoinCall} />;
+            case '/dashboard/meetings':
+            case '/dashboard/conference':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <MeetingsPage user={user} onJoinRoom={handleJoinCall} />
+                    </React.Suspense>
+                );
 
             // New Routes
             case '/dashboard/crm':
-                return <CRMTab
-                    projects={projects}
-                    declineProject={() => { }}
-                    openContractGenerator={handleOpenContract}
-                    openVideoCall={handleJoinCall}
-                />;
-            case '/dashboard/tasks':
-                return <TasksTab userId={user.id} userRole={user.role} />;
-            case '/dashboard/sales-agent':
-                return <SalesAgent />;
+                return <CrmDashboard />;
+            case '/dashboard/crm/workspace':
+                return <CRMTab user={user} />;
+            case '/dashboard/outreach/inbox':
+              return <OutreachInbox />;
+            case '/dashboard/outreach':
+                return <OutreachDashboard />;
+            case '/dashboard/deals':
+                return <DealsTab user={user} />;
+            case '/dashboard/business/referrals':
+                return <ReferralsPage user={user} tenant={currentTenant} />;
             case '/dashboard/leads':
-                return <DealsTab userId={user.id} userRole={user.role} />;
+            case '/dashboard/contacts':
+            case '/dashboard/clients':
+            case '/dashboard/business/clients':
+                return <ClientsPage user={user} />;
+            case '/dashboard/crm/unified-contacts':
+                return <ClientsPage user={user} />;
+            case '/dashboard/forecast':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <SalesForecastTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/analytics':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <AnalyticsTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/executive':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <ExecutiveDashboard />
+                    </React.Suspense>
+                );
+            case '/dashboard/crm/console':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <SalesConsole />
+                    </React.Suspense>
+                );
+            case '/dashboard/crm/accounts':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
+                        <AccountsPage />
+                    </React.Suspense>
+                );
+            case '/dashboard/crm/activities':
+            case '/dashboard/crm/activity':
+            case '/dashboard/crm/follow-ups':
+                return (
+                    <React.Suspense fallback={<TabSkeleton />}>
+                        <FollowUpQueue />
+                    </React.Suspense>
+                );
+            case '/dashboard/crm/reports':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <CRMReportsTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/accounting/banking':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <BankingCenterPage />
+                    </React.Suspense>
+                );
+            case '/dashboard/accounting/bills':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <BillsPayablePage />
+                    </React.Suspense>
+                );
+            case '/dashboard/accounting/period-close':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <PeriodClosePage />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <MarketingOverview />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing/outreach':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
+                        <MarketingOutreachPage />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing/delivery':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <MarketingDeliveryPage />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing/sequences':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <SequenceBuilder />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketing/deliverability':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <div className="p-4">
+                          <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/marketing/deliverability">
+                            <DeliverabilityPanel />
+                          </ModuleOverviewChrome>
+                        </div>
+                    </React.Suspense>
+                );
+            case '/dashboard/tasks':
+                return <TasksTab user={user} />;
+            case '/dashboard/sales-agent':
+            case '/dashboard/leads/campaigns':
+            case '/dashboard/leads/finder':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
+                        <ScraperCampaignsPage />
+                    </React.Suspense>
+                );
+            case '/dashboard/contracts':
             case '/dashboard/business/contracts':
-                return <ContractDashboard user={user} />;
+                return <ContractsDashboard />;
+            case '/dashboard/contracts/manage':
+            case '/dashboard/business/contracts/manage':
+                return <ContractDashboard user={user} initialTab="details" />;
+            // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence
+            case '/dashboard/business/quotes':
+            case '/dashboard/quotes':
+                return <QuotesTab user={user} />;
+            case '/dashboard/business/tasks':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <TaskScheduler />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/quotas':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <QuotaManager />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/pages':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <PagesTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/contact-submissions':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <ContactSubmissionsTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/forms':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <FormsHub />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/campaigns':
+            case '/dashboard/email-campaigns':
+            case '/dashboard/campaigns':
+            case '/dashboard/marketing/campaigns':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <EmailCampaignsPage userId={user.id} />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/campaigns/zoho':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <ZohoCampaignsHub userId={user.id} />
+                    </React.Suspense>
+                );
+            case '/dashboard/marketplace':
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={6} columns={3} /></div>}>
+                        <MarketplacePage />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/facebook':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <FacebookIntegrationTab user={user} tenant={currentTenant} />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/expenses':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
+                        <ExpenseTrackerTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/automations':
+            case '/dashboard/business/workflows':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <WorkflowDashboard />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/sms':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <SMSCampaignTab tenant={currentTenant} />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/social':
+            case '/dashboard/social':
+                return <SocialDashboard />;
+            case '/dashboard/social/compose':
+            case '/dashboard/business/social/compose':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={4} columns={3} />}>
+                        <SocialMediaComposer />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/linkedin':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <LinkedInManagementTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/instagram':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <InstagramIntegrationTab />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/x':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <XIntegrationTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/whatsapp':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <WhatsAppManagementPage />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/ingestion':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
+                        <IngestionPanel />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/social-command':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <BonnieModulePageShell showBonnieDock={false}>
+                            <SocialCommandCenter />
+                        </BonnieModulePageShell>
+                    </React.Suspense>
+                );
+
+            case '/dashboard/comms':
+                return <CommunicationHub user={user} />;
+
+            case '/dashboard/mail':
+                return <CommunicationHub user={user} />;
+
+            case '/dashboard/zoho/mail':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} />}>
+                        <div className="h-full min-h-0">
+                            <UnifiedInbox defaultProvider="zoho" />
+                        </div>
+                    </React.Suspense>
+                );
+
+            case '/dashboard/zoho/crm':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={3} />}>
+                        <ZohoCRMIntegration />
+                    </React.Suspense>
+                );
+
+            // Accounting Routes
+            case '/dashboard/accounting':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={10} columns={5} />}>
+                        <AccountingDashboard />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/unified-inbox':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <div className="h-full min-h-0">
+                            <UnifiedInbox defaultTab="channels" />
+                        </div>
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/cash-flow':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <CashFlowForecastTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/onboarding':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <ClientOnboardingTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/vault':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <DocumentVaultTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/tax-estimator':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <TaxEstimatorTab />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/bonnie':
+            case '/dashboard/bonnie':
+                return (
+                    <React.Suspense fallback={<TableSkeleton />}>
+                        <BonnieFullView />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/bonnie/approvals':
+            case '/dashboard/business/bonnie/approvals':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <UnifiedActionCenter />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/bonnie/chases':
+            case '/dashboard/business/bonnie/chases':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
+                        <ChaseExecutionInbox />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/business/tickets':
+                return (
+                    <React.Suspense fallback={<TableSkeleton />}>
+                        <DeepDeskView />
+                    </React.Suspense>
+                );
+            case '/dashboard/business/audit':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
+                        <AuditTrailPage />
+                    </React.Suspense>
+                );
+
+            // Finance tab for tenant_admin (shared with admin/client via FinanceTab)
+            case '/dashboard/finance':
+                return <InvoicingDashboard />;
+            case '/dashboard/finance/manage':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
+                        <EnhancedBillingPage user={user} />
+                    </React.Suspense>
+                );
 
             default:
-                return <BusinessHome user={user} />;
+                return (
+                    <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+                        <p className="text-slate-400 text-sm mb-4">{t('This section could not be loaded.')}</p>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('/dashboard')}
+                            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold"
+                        >
+                            {t('Back to Dashboard')}
+                        </button>
+                    </div>
+                );
         }
     };
+
+    const moduleContent = useMemo(
+        () => wrapRouteInHub(route, renderBusinessContent(route)),
+        [route, user.id, currentTenant?.id, dashboardStats],
+    );
 
     // Get current page title
     const getPageTitle = () => {
-        switch (activeTab) {
-            case '/dashboard': return 'AlphaClone Home';
-            case '/dashboard/business/clients': return 'Client Directory';
-            case '/dashboard/business/projects': return 'Projects';
-            case '/dashboard/business/team': return 'Team Management';
-            case '/dashboard/business/messages': return 'Messages';
-            case '/dashboard/business/calendar': return 'Calendar';
-            case '/dashboard/business/billing': return 'Invoices & Billing';
-            case '/dashboard/business/reports': return 'Analytics & Reports';
-            case '/dashboard/business/settings': return 'Settings';
-            case '/dashboard/business/contracts': return 'Contracts';
-            case '/dashboard/crm': return 'CRM';
-            case '/dashboard/tasks': return 'Tasks';
-            case '/dashboard/sales-agent': return 'Sales Agent';
-            case '/dashboard/leads': return 'Leads & Pipelines';
-            default: return 'AlphaClone';
+        switch (route) {
+            case '/dashboard': return t('Dashboard');
+            case '/dashboard/crm': return t('CRM');
+            case '/dashboard/outreach/inbox': return t('Outreach Reach Inbox');
+            case '/dashboard/outreach': return t('Outreach');
+            case '/dashboard/leads': return t('Leads');
+            case '/dashboard/deals': return t('Deals');
+            case '/dashboard/contacts':
+            case '/dashboard/business/clients': return t('Contacts');
+            case '/dashboard/crm/unified-contacts': return t('Contacts');
+            case '/dashboard/forecast': return t('Sales Forecast');
+            case '/dashboard/analytics': return t('Insights');
+            case '/dashboard/executive': return t('Executive Dashboard');
+            case '/dashboard/crm/console': return t('Sales Console');
+            case '/dashboard/crm/accounts': return t('Accounts');
+            case '/dashboard/crm/follow-ups': return t('Follow-ups');
+            case '/dashboard/crm/reports': return t('CRM Reports');
+            case '/dashboard/accounting/banking': return t('Banking');
+            case '/dashboard/accounting/bills': return t('Bills Payable');
+            case '/dashboard/accounting/period-close': return t('Period Close');
+            case '/dashboard/marketing': return t('Marketing');
+            case '/dashboard/marketing/outreach': return t('Outreach');
+            case '/dashboard/marketing/delivery': return t('Delivery');
+            case '/dashboard/marketing/sequences': return t('Sequences');
+            case '/dashboard/marketing/deliverability': return t('Deliverability');
+            case '/dashboard/projects':
+            case '/dashboard/business/projects': return t('Projects');
+            case '/dashboard/business/team': return t('Team Management');
+            case '/dashboard/messages':
+            case '/dashboard/business/messages': return t('Messages');
+            case '/dashboard/calendar':
+            case '/dashboard/business/calendar': return t('Calendar');
+            case '/dashboard/billing':
+            case '/dashboard/business/billing': return t('Billing');
+            case '/dashboard/business/reports':
+            case '/dashboard/reporting':
+                return t('Analytics & Reports');
+            case '/dashboard/performance': return t('Business OS Performance');
+            case '/dashboard/settings':
+            case '/dashboard/business/settings':
+            case '/dashboard/settings/integrations':
+                return t('Settings');
+            case '/dashboard/pwa-settings': return t('Mobile app');
+            case '/dashboard/contracts':
+            case '/dashboard/business/contracts': return t('Contracts');
+            case '/dashboard/business/documents': return t('Document Hub');
+            case '/dashboard/business/pages': return t('Pages');
+            case '/dashboard/business/contact-submissions': return t('Contact Submissions');
+            case '/dashboard/business/forms': return t('Branded Forms');
+            case '/dashboard/business/campaigns': return t('Campaigns');
+            case '/dashboard/business/campaigns/zoho': return t('Zoho Campaigns');
+            case '/dashboard/marketing/campaigns': return t('Campaigns');
+            case '/dashboard/business/facebook': return t('Facebook');
+            case '/dashboard/business/expenses': return t('Expense Tracker');
+            case '/dashboard/automations':
+            case '/dashboard/business/workflows': return t('Workflow Builder');
+            case '/dashboard/business/sms': return t('SMS Campaigns');
+            case '/dashboard/business/social': return t('Social Media');
+            case '/dashboard/business/linkedin': return t('LinkedIn Manager');
+            case '/dashboard/business/instagram': return t('Instagram');
+            case '/dashboard/business/x': return t('X (Twitter) Manager');
+            case '/dashboard/business/whatsapp': return t('WhatsApp Accounts');
+
+            case '/dashboard/business/unified-inbox': return t('Unified Inbox');
+            case '/dashboard/business/cash-flow': return t('Cash Flow Forecast');
+            case '/dashboard/business/onboarding': return t('Client Onboarding');
+            case '/dashboard/business/vault': return t('Document Vault');
+            case '/dashboard/business/tax-estimator': return t('Tax Estimator');
+            case '/dashboard/business/invoices': return t('Invoices');
+
+            case '/dashboard/business/ingestion': return t('Lead Ingestion');
+            case '/dashboard/business/quotes':
+            case '/dashboard/quotes': return t('Quotes & Proposals');
+            case '/dashboard/business/booking': return t('Scheduling & Booking');
+            case '/dashboard/business/meetings':
+            case '/dashboard/meetings':
+            case '/dashboard/conference': return t('Meetings');
+            case '/dashboard/business/teams': return t('MS Teams');
+            case '/dashboard/business/social-command': return t('Social Command Center');
+            case '/dashboard/tasks': return t('Tasks');
+            case '/dashboard/sales-agent':
+            case '/dashboard/leads/campaigns':
+            case '/dashboard/leads/finder': return t('Lead Finder');
+            case '/dashboard/business/bonnie':
+            case '/dashboard/bonnie': return t('Bonnie AI Console');
+            case '/dashboard/bonnie/approvals':
+            case '/dashboard/business/bonnie/approvals': return t('Approvals');
+            case '/dashboard/bonnie/chases':
+            case '/dashboard/business/bonnie/chases': return t('Chase inbox');
+            case '/dashboard/business/tickets': return t('Deep-Desk Support');
+            case '/dashboard/business/audit': return t('Audit Trail');
+            case '/dashboard/accounting': return t('Accounting Dashboard');
+            case '/dashboard/mail': return t('Mail');
+            case '/dashboard/zoho/mail': return t('Zoho Mail');
+            case '/dashboard/zoho/crm': return t('Zoho CRM Sync');
+            case '/dashboard/marketplace': return t('Integration Marketplace');
+            default: return t('Alphaclone Systems');
         }
     };
 
-    const navItems = [
-        { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-        { label: 'CRM', href: '/dashboard/crm', icon: Users },
-        { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
-        { label: 'Sales Agent', href: '/dashboard/sales-agent', icon: Bot },
-        { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-        { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
-        { label: 'Projects', href: '/dashboard/business/projects', icon: FileText },
-        { label: 'Contracts', href: '/dashboard/business/contracts', icon: FileCheck },
-        { label: 'Calendar', href: '/dashboard/business/calendar', icon: Briefcase },
-        { label: 'Messages', href: '/dashboard/business/messages', icon: Bell },
-        { label: 'Team', href: '/dashboard/business/team', icon: Users },
-        { label: 'Finance', href: '/dashboard/business/billing', icon: CreditCard },
-        { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
-    ];
-
-    // Show loading state while tenant context initializes
-    if (tenantLoading) {
+    // Show loading state only on first workspace bootstrap (never flash back mid-session).
+    if (!hasBootstrappedRef.current && tenantLoading && !currentTenant) {
         return (
-            <div className="flex items-center justify-center h-screen bg-slate-950">
+            <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
                 <div id="main-content" className="text-center">
-                    <div className="text-slate-400 text-lg">Loading your workspace...</div>
+                    <div className="text-slate-400 text-lg animate-pulse">{t('Loading Workspace...')}</div>
                 </div>
             </div>
         );
@@ -293,109 +1173,93 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
 
     // Show error state if no tenant after loading completes
     if (!currentTenant) {
+        const handleCreateWorkspace = async () => {
+            setBootstrappingOrg(true);
+            try {
+                const orgName = `${user.name || user.email?.split('@')[0] || 'User'}'s Organization`;
+                const { tenant, error } = await bootstrapTenantViaApi({ name: orgName, plan: 'free' });
+                if (!tenant?.id) {
+                    toast.error(error || 'Could not create workspace. Please try again.');
+                    return;
+                }
+                await refreshTenants();
+                window.location.reload();
+            } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Workspace setup failed');
+            } finally {
+                setBootstrappingOrg(false);
+            }
+        };
+
         return (
-            <div className="flex items-center justify-center h-screen bg-slate-950">
+            <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
                 <div id="main-content" className="text-center max-w-md p-8">
-                    <div className="text-slate-300 text-xl mb-4">No Organization Found</div>
+                    <div className="text-slate-300 text-xl mb-4">{t('No Organization Found')}</div>
                     <div className="text-slate-400 mb-6">
-                        Unable to load your organization. This may be a temporary issue.
+                        {tenantError
+                            ? tenantError
+                            : user.role === 'client'
+                            ? t("You don't have access to this business dashboard. If you're a business owner, please contact support.")
+                            : t('Your business workspace was not set up yet. Create one below to continue.')}
                     </div>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
-                    >
-                        Retry
-                    </button>
+                    <div className="flex flex-col gap-3">
+                        {user.role !== 'client' && (
+                            <button
+                                onClick={handleCreateWorkspace}
+                                disabled={bootstrappingOrg}
+                                className="px-6 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white rounded-lg transition-colors font-medium border border-teal-400/20"
+                            >
+                                {bootstrappingOrg ? t('Creating workspace...') : t('Create My Workspace')}
+                            </button>
+                        )}
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium border border-slate-700"
+                        >
+                            {t('Retry Loading')}
+                        </button>
+                        <button
+                            onClick={() => onLogout()}
+                            className="text-slate-500 hover:text-slate-400 text-sm transition-colors py-1"
+                        >
+                            {t('Log out and switch account')}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
+    // Use external nav items instead of local redundant array
+
     return (
-        <div className="flex h-screen bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full">
-            {/* Mobile Overlay */}
-            {sidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
-
-            {/* Sidebar */}
-            <aside className={`${sidebarOpen
-                ? 'w-72 translate-x-0 pb-24 md:pb-0'
-                : 'w-0 -translate-x-full md:w-16 md:translate-x-0'
-                } bg-slate-900 border-r border-slate-800 flex flex-col fixed md:relative z-50 h-full transition-all duration-300 shadow-2xl overflow-hidden`}>
-                <div className="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-900">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                            {/* Replaced Icon with Logo Placeholder if needed, sticking to Briefcase for now but title is AlphaClone */}
-                            <Briefcase className="w-5 h-5 text-teal-400" />
-                        </div>
-                        <span className={`font-bold text-white text-lg tracking-tight transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
-                            AlphaClone
-                        </span>
-                    </div>
-                </div>
-
-                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar">
-                    {navItems.map((item, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => {
-                                setActiveTab(item.href);
-                                // Auto-close sidebar on mobile after navigation
-                                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                                    setSidebarOpen(false);
-                                }
-                            }}
-                            title={!sidebarOpen ? item.label : undefined}
-                            className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden active:scale-95
-                         ${activeTab === item.href
-                                    ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                }`}
-                        >
-                            {activeTab === item.href && <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />}
-                            <item.icon className={`w-5 h-5 flex-shrink-0 ${activeTab === item.href ? 'text-white' : 'group-hover:text-teal-400 transition-colors'}`} />
-                            <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden md:block'} flex-1 text-left whitespace-nowrap text-sm font-medium`}>{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
-
-                <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto">
-                    <button
-                        onClick={onLogout}
-                        className={`flex items-center gap-3 text-slate-400 hover:text-red-400 w-full ${sidebarOpen ? 'px-4' : 'justify-center px-2'} py-3 rounded-xl hover:bg-red-500/10 transition-colors group active:scale-95`}
-                    >
-                        <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                        <span className={`${sidebarOpen ? 'block' : 'hidden md:hidden'} text-sm font-medium`}>Log Out</span>
-                    </button>
-                </div>
-            </aside>
+        <div
+            className="flex min-w-0 ac-workspace-canvas text-[var(--ws-text-primary)] overflow-hidden font-sans selection:bg-[var(--brand-blue-500)]/30 w-full max-w-full ac-business-root [height:100dvh]"
+            style={tenantBrandStyle}
+        >
+            <SkipToMainContent />
+            <div data-tour="navigation" className="flex-shrink-0">
+            <Sidebar
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen}
+                user={user}
+                navItems={TENANT_ADMIN_NAV_ITEMS}
+                activeTab={route}
+                setActiveTab={setActiveTab}
+                unreadMessageCount={unreadMessageCount}
+                onLogout={onLogout}
+                onStartTour={requestProductTour}
+            />
+            </div>
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
-            <main className="flex-1 flex flex-col min-w-0 bg-slate-950">
+            <main id="main-content" className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main">
 
-                {/* Trial Expiration Banner */}
-                {isTrialExpired && (
-                    <div className="bg-red-600/10 border-b border-red-500/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
-                        <div className="flex items-center gap-2 text-red-100 text-sm font-medium">
-                            <CreditCard className="w-4 h-4 text-red-400" />
-                            <span>Trial Expired - View Only Mode</span>
-                        </div>
-                        <button
-                            className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-lg transition-colors font-bold shadow-lg shadow-red-900/20"
-                            onClick={() => setActiveTab('/dashboard/business/billing')}
-                        >
-                            Upgrade Now
-                        </button>
-                    </div>
-                )}
+                <TrialBanner />
 
                 {/* Task Notification Banner (Ephemeral) */}
-                {notification && !isTrialExpired && (
+                {notification && (
                     <div className="bg-teal-600/10 border-b border-teal-500/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
                         <div className="flex items-center gap-2 text-teal-100 text-sm font-medium">
                             <CheckSquare className="w-4 h-4 text-teal-400" />
@@ -414,67 +1278,206 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                 )}
 
                 {/* Header */}
-                <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10">
-                    <div className="flex items-center gap-4 flex-1">
-                        {/* Mobile Menu Toggle */}
-                        <button
-                            onClick={() => setSidebarOpen(!sidebarOpen)}
-                            className="md:hidden p-2 text-white hover:text-teal-400 transition-colors rounded-lg hover:bg-slate-800"
-                        >
-                            <Menu className="w-6 h-6" />
-                        </button>
+                <header className={`min-h-14 h-auto md:h-14 pt-safe md:pt-0 border-b border-[var(--ws-border)] flex items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-10 w-full ac-business-header ac-workspace-toolbar ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
+                    {/* Left: Menu & Mobile Logo */}
+                    <div className="flex items-center gap-4">
+                        {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
-                        <h2 className="text-base sm:text-lg md:text-xl font-semibold text-white truncate max-w-[150px] sm:max-w-none">
-                            {getPageTitle()}
-                        </h2>
+                        <div className="flex items-center gap-2 sm:gap-3 md:hidden">
+                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden relative flex-shrink-0">
+                                {currentTenant?.logo_url ? (
+                                    <Image
+                                        src={currentTenant.logo_url}
+                                        alt="Logo"
+                                        fill
+                                        className="object-cover"
+                                        sizes="32px"
+                                    />
+                                ) : (
+                                    <span className="text-teal-400 font-bold text-lg">{currentTenant?.name?.charAt(0) || 'A'}</span>
+                                )}
+                            </div>
+                            {!isHubRoute(route) && (
+                                <h1 className="pwa-page-title text-white/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-none">{getPageTitle()}</h1>
+                            )}
+                        </div>
+
+                        {/* Breadcrumb or Title for Desktop — hidden inside hubs (HubShell shows title) */}
+                        {!isHubRoute(route) && (
+                        <div className="hidden md:block">
+                            <h1 className="text-lg font-bold text-white/90 tracking-tight">
+                                {getPageTitle()}
+                            </h1>
+                        </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        {/* Removed Assistant Button as requested ("remove the recording button") */}
+                    {/* Right: compact utility cluster + account menu */}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {activeBgTasksCount > 0 && (
+                            <div className="hidden md:flex items-center gap-1.5 text-teal-400 px-2.5 py-1 rounded-full text-[11px] font-medium border border-teal-500/25 bg-teal-500/5">
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                <span>{activeBgTasksCount}</span>
+                            </div>
+                        )}
+                        <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
+                        {activeMeetingCallId && (
+                            <button
+                                onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
+                                className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-teal-500/20 transition-colors"
+                                title="Return to active meeting"
+                            >
+                                <Video className="w-3.5 h-3.5" />
+                                <span className="hidden lg:inline">Live meeting</span>
+                            </button>
+                        )}
 
-                        <div className="hidden md:block w-px h-6 bg-slate-800 mx-2" />
+                        {/* Create button intentionally removed from header – use BottomNav → More on mobile, or Command Palette on desktop */}
+                        <div className="relative hidden md:block">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setQuickCreateOpen((open) => !open);
+                                    setTodayOpen(false);
+                                }}
+                                aria-expanded={quickCreateOpen}
+                                aria-haspopup="menu"
+                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-teal-400/30 bg-teal-500/10 px-3 text-xs font-bold text-teal-300 transition hover:bg-teal-500/20"
+                            >
+                                <Plus className="h-4 w-4" aria-hidden="true" />
+                                Create
+                            </button>
+                            {quickCreateOpen ? (
+                                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-slate-700 bg-[#171A26] p-1.5 shadow-2xl shadow-black/50" role="menu">
+                                    {[
+                                        ['Task', '/dashboard/tasks?create=true'],
+                                        ['Lead', '/dashboard/crm/workspace?quickAdd=true'],
+                                        ['Deal', '/dashboard/deals?create=true'],
+                                        ['Quote', '/dashboard/business/quotes?create=true'],
+                                        ['Invoice', '/dashboard/business/billing/manage?create=true'],
+                                        ['Project', '/dashboard/business/projects/manage?create=true'],
+                                        ['Email', '/dashboard/mail?compose=true'],
+                                    ].map(([label, href]) => (
+                                        <button
+                                            key={label}
+                                            type="button"
+                                            role="menuitem"
+                                            onClick={() => {
+                                                setActiveTab(href);
+                                                setQuickCreateOpen(false);
+                                            }}
+                                            className="flex w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+                                        >
+                                            {t(`Create ${label}`)}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : null}
+                        </div>
+                        <div className="relative hidden lg:block">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setTodayOpen((open) => !open);
+                                    setQuickCreateOpen(false);
+                                }}
+                                aria-expanded={todayOpen}
+                                aria-haspopup="dialog"
+                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[var(--ws-border)] px-3 text-xs font-bold text-[var(--ws-text-secondary)] transition hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+                            >
+                                <CheckSquare className="h-4 w-4" aria-hidden="true" />
+                                Today
+                            </button>
+                            {todayOpen ? (
+                                <section className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-700 bg-[#171A26] p-3 shadow-2xl shadow-black/50" aria-label="Today’s work">
+                                    <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Today</p>
+                                    <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">Start with work that needs a decision or response.</p>
+                                    <div className="mt-2 space-y-1">
+                                        {todayItems.map(({ label, count, href }) => (
+                                            <button
+                                                key={href}
+                                                type="button"
+                                                onClick={() => {
+                                                    setActiveTab(href);
+                                                    setTodayOpen(false);
+                                                }}
+                                                className="flex w-full rounded-lg px-2.5 py-2 text-left text-xs font-semibold text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
+                                            >
+                                                <span>{t(label)}</span>
+                                                <span className="ml-auto rounded-full bg-[var(--ws-hover)] px-2 py-0.5 text-[10px] tabular-nums text-[var(--ws-text-primary)]">{count}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+                            ) : null}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('/dashboard/business/bonnie')}
+                            className="hidden md:inline-flex ac-workspace-action-btn ac-workspace-action-btn--bonnie min-h-9 px-3"
+                            aria-label={t('Open Bonnie AI')}
+                        >
+                            <Bot className="h-4 w-4" aria-hidden="true" />
+                            <span className="hidden xl:inline">{t('Ask Bonnie')}</span>
+                        </button>
 
-                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 overflow-hidden">
-                            <img
-                                src={currentTenant?.logo_url || user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
+                        <div data-tour="global-search" className="hidden md:block">
+                            <EnhancedGlobalSearch
+                                user={user}
+                                onNavigate={(path) => setActiveTab(path)}
                             />
                         </div>
+                        <MissedCallsNotification
+                            userId={user.id}
+                            onCallBack={(callerId) => {
+                                const roomId = `room-${callerId.slice(0, 8)}`;
+                                toast.success('Calling back...');
+                                router.push(`/call/${roomId}`);
+                            }}
+                        />
+                        <div data-tour="business-notifications">
+                            <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
+                        </div>
+                        <DashboardAccountMenu
+                            user={user}
+                            onLogout={onLogout}
+                            onSettings={() => setActiveTab('/dashboard/business/settings')}
+                            onPwaSettings={() => setActiveTab('/dashboard/pwa-settings')}
+                        />
                     </div>
                 </header>
 
                 {/* Dynamic Content Area */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8">
-                    {renderBusinessContent()}
-                </div>
+                <DashboardScrollRegion
+                    scrollable={isBusinessMainScrollable(route)}
+                    onRefresh={handlePullRefresh}
+                    className={`flex-1 min-h-0 ac-workspace-canvas ac-business-scroll ${
+                        isBusinessMainScrollable(route)
+                            ? DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
+                                ? 'overflow-x-hidden p-0'
+                                : `overflow-x-hidden ${WORKSPACE.canvas.padding} dashboard-content-padding`
+                            : 'p-0'
+                    }`}
+                >
+                    <WidgetErrorBoundary title="Business Dashboard Error">
+                        <DashboardRouteTransition
+                            routeKey={route}
+                            className={`w-full min-w-0 ${WORKSPACE.canvas.maxWidth} mx-auto ${
+                                DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
+                                    ? 'h-full min-h-0 max-md:pb-[calc(4.25rem+min(env(safe-area-inset-bottom,0px),20px))]'
+                                    : 'min-h-full'
+                            }`}
+                        >
+                        <EnterpriseTabWrapper fullBleed={isEnterpriseFullBleedTab(route)}>
+                            {moduleContent}
+                        </EnterpriseTabWrapper>
+                        </DashboardRouteTransition>
+                    </WidgetErrorBoundary>
+                </DashboardScrollRegion>
             </main>
 
-            {/* Persistent Video Room Overlay */}
-            {activeCallUrl && (
-                <div className={isCallMinimized ? 'pointer-events-none fixed inset-0 z-[200]' : 'fixed inset-0 z-[100]'}>
-                    <div className={isCallMinimized ? 'pointer-events-auto' : 'h-full w-full'}>
-                        <React.Suspense fallback={null}>
-                            {(() => {
-                                // Dynamic import
-                                const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
-                                return (
-                                    <CustomVideoRoom
-                                        user={user}
-                                        roomUrl={activeCallUrl}
-                                        onLeave={handleLeaveCall}
-                                        // Business Dashboard has simpler sidebar, but we can pass dummy toggles if needed or implement sidebar toggle
-                                        isMinimized={isCallMinimized}
-                                        onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
-                                    />
-                                );
-                            })()}
-                        </React.Suspense>
-                    </div>
-                </div>
-            )}
             {/* Contract Modal */}
-            {showContractModal && selectedProjectForContract && (
+            {showContractModal && (
                 <AlphaCloneContractModal
                     isOpen={showContractModal}
                     onClose={() => setShowContractModal(false)}
@@ -482,8 +1485,47 @@ const BusinessDashboard: React.FC<BusinessDashboardProps> = ({ user, onLogout, a
                     user={user}
                 />
             )}
+
+
+            {/* Mobile Bottom Navigation */}
+            <BottomNav
+                activeTab={route}
+                onNavigate={(href) => setActiveTab(href)}
+                onToggleMenu={() => setSidebarOpen(true)}
+                unreadCount={unreadMessageCount}
+                userRole="tenant_admin"
+            />
+
+            {!hideBonnieWidget && <BonnieWidget />}
+
+            <CommandPalette
+                isOpen={commandPaletteOpen}
+                onClose={() => setCommandPaletteOpen(false)}
+                userId={user.id}
+                userRole={user.role}
+                onCreateTask={() => setActiveTab('/dashboard/tasks')}
+                onCreateProject={() => setActiveTab('/dashboard/business/projects/manage?create=true')}
+                onCreateInvoice={() => setActiveTab('/dashboard/business/billing/manage?create=true')}
+            />
+
+            <IncomingCallModal userId={user.id} userName={user.name} />
+
+            <BusinessWelcomeModal
+                isOpen={showBusinessWelcome}
+                onClose={handleBusinessWelcomeClose}
+                userName={user.name || user.email || 'there'}
+            />
+
+            {showOnboarding ? <OnboardingFlow user={user} onComplete={handleOnboardingComplete} /> : null}
+
+            <ProductTour
+                key={tourRunId}
+                isOpen={showProductTour}
+                onComplete={markTourCompleted}
+                onUnavailable={dismissUnavailableTour}
+                userRole="tenant_admin"
+            />
+
         </div>
     );
-};
-
-export default BusinessDashboard;
+}

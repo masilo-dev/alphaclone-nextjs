@@ -49,16 +49,20 @@ DROP POLICY IF EXISTS "Tenant users can view scans" ON security_scans;
 DROP POLICY IF EXISTS "Tenant users can insert scans" ON security_scans;
 
 -- Policies for notifications
+DROP POLICY IF EXISTS "Users can view their own notifications" ON notifications;
 CREATE POLICY "Users can view their own notifications" ON notifications
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own notifications" ON notifications;
 CREATE POLICY "Users can update their own notifications" ON notifications
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "System can insert notifications" ON notifications;
 CREATE POLICY "System can insert notifications" ON notifications
     FOR INSERT WITH CHECK (true);
 
 -- Policies for tenant_invitations
+DROP POLICY IF EXISTS "Tenant admins can view invitations" ON tenant_invitations;
 CREATE POLICY "Tenant admins can view invitations" ON tenant_invitations
     FOR SELECT USING (
         EXISTS (
@@ -69,6 +73,7 @@ CREATE POLICY "Tenant admins can view invitations" ON tenant_invitations
         )
     );
 
+DROP POLICY IF EXISTS "Tenant admins can create invitations" ON tenant_invitations;
 CREATE POLICY "Tenant admins can create invitations" ON tenant_invitations
     FOR INSERT WITH CHECK (
         EXISTS (
@@ -80,6 +85,7 @@ CREATE POLICY "Tenant admins can create invitations" ON tenant_invitations
     );
 
 -- Policies for security_scans
+DROP POLICY IF EXISTS "Tenant users can view scans" ON security_scans;
 CREATE POLICY "Tenant users can view scans" ON security_scans
     FOR SELECT USING (
         EXISTS (
@@ -89,6 +95,7 @@ CREATE POLICY "Tenant users can view scans" ON security_scans
         )
     );
 
+DROP POLICY IF EXISTS "Tenant users can insert scans" ON security_scans;
 CREATE POLICY "Tenant users can insert scans" ON security_scans
     FOR INSERT WITH CHECK (
         EXISTS (

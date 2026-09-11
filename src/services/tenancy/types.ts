@@ -13,14 +13,25 @@ export interface Tenant {
     settings: TenantSettings;
     subscription_plan: SubscriptionPlan;
     subscription_status: SubscriptionStatus;
+    trial_started_at?: Date;
     trial_ends_at?: Date;
+    legacy_access_until?: Date;
     current_period_end?: Date;
     deletion_pending_at?: Date;
     stripe_customer_id?: string;
+    stripe_connect_id?: string;
+    stripe_connect_onboarded?: boolean;
     admin_user_id?: string;
     cancel_at_period_end?: boolean;
     created_at: Date;
     updated_at: Date;
+    // Branding & Legal
+    legal_name?: string;
+    tax_id?: string;
+    business_address?: string;
+    brand_color_primary?: string;
+    brand_color_secondary?: string;
+    quota_limits?: any;
 }
 
 // Tenant Settings
@@ -76,6 +87,9 @@ export interface TenantSettings {
         eventUrl?: string; // Default event link for the tenant
     };
     billing_email?: string;
+    billing?: {
+        currency: string;
+    };
 }
 
 // Subscription Plans
@@ -166,60 +180,90 @@ export interface PlanFeatures {
 }
 
 // Plan Pricing
-export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: number; features: PlanFeatures; stripePriceId?: string }> = {
+export const PLAN_PRICING: Record<SubscriptionPlan, {
+    monthly: number;
+    yearly: number;
+    description?: string;
+    isDiscountable?: boolean;
+    featureList: string[];
+    features: PlanFeatures;
+    stripePriceId?: string
+}> = {
     free: {
         monthly: 0,
         yearly: 0,
+        description: 'Baseline access to AlphaClone platform and MCP daily capabilities.',
+        featureList: [
+            '50 emails / leads / CRM / outreach / social / documents / automations / MCP per day',
+            '50 bulk lead import max / day',
+            'Read-only CRM, reports & inbox — unlimited',
+            'Bonnie AI assistant & MCP access included',
+        ],
         features: {
             maxUsers: 1,
-            maxProjects: 3,
-            maxStorage: 1,
-            maxVideoMeetingsPerMonth: 2,
-            maxVideoMinutesPerMeeting: 30,
-            contractGeneration: false,
-            paymentProcessing: false,
-            fullCRM: false,
+            maxProjects: 5,
+            maxStorage: 5,
+            maxVideoMeetingsPerMonth: 5,
+            maxVideoMinutesPerMeeting: 45,
+            contractGeneration: true,
+            paymentProcessing: true,
+            fullCRM: true,
             advancedBookings: false,
-            workflows: false,
-            aiAssistant: false,
+            workflows: true,
+            aiAssistant: true,
             videoConferencing: true,
             customDomain: false,
             prioritySupport: false,
-            apiAccess: false
+            apiAccess: true
         }
     },
     starter: {
-        monthly: 25,
-        yearly: 250,
-        stripePriceId: 'price_starter_monthly',
+        monthly: 15,
+        yearly: 144,
+        description: 'For solo founders actively running their business through AlphaClone.',
+        isDiscountable: true,
+        stripePriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
+        featureList: [
+            '300 emails / leads / CRM / outreach / social / documents / automations / MCP per day',
+            '300 bulk lead import max / day',
+            'Read-only actions unlimited',
+            'Legacy Starter tier — same execution limits as Pro',
+        ],
         features: {
             maxUsers: 5,
-            maxProjects: 25,
-            maxStorage: 10,
-            maxVideoMeetingsPerMonth: 10,
+            maxProjects: 50,
+            maxStorage: 25,
+            maxVideoMeetingsPerMonth: 25,
             maxVideoMinutesPerMeeting: 60,
-            contractGeneration: false,
+            contractGeneration: true,
             paymentProcessing: true,
-            fullCRM: false,
+            fullCRM: true,
             advancedBookings: true,
             workflows: true,
-            aiAssistant: false,
+            aiAssistant: true,
             videoConferencing: true,
             customDomain: false,
             prioritySupport: false,
-            apiAccess: false
+            apiAccess: true
         }
     },
     pro: {
-        monthly: 89,
-        yearly: 890,
-        stripePriceId: 'price_pro_monthly',
+        monthly: 45,
+        yearly: 432,
+        description: 'For founders who want AlphaClone to actively execute sales, marketing and business operations.',
+        stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1T0PChCCIq5cPz4HiD85RMtD',
+        featureList: [
+            '300 emails / leads / CRM / outreach / social / documents / automations / MCP per day',
+            '300 bulk lead import max / day',
+            'Read-only actions unlimited',
+            'Priority processing & support',
+        ],
         features: {
-            maxUsers: 20,
-            maxProjects: 100,
-            maxStorage: 50,
-            maxVideoMeetingsPerMonth: 50,
-            maxVideoMinutesPerMeeting: 90,
+            maxUsers: -1,
+            maxProjects: -1,
+            maxStorage: 100,
+            maxVideoMeetingsPerMonth: -1,
+            maxVideoMinutesPerMeeting: -1,
             contractGeneration: true,
             paymentProcessing: true,
             fullCRM: true,
@@ -233,15 +277,23 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         }
     },
     enterprise: {
-        monthly: 200,
-        yearly: 2000,
-        stripePriceId: 'price_enterprise_monthly',
+        monthly: 80,
+        yearly: 768,
+        description: 'For businesses that need maximum AlphaClone execution capacity.',
+        stripePriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
+        featureList: [
+            'Unlimited emails, leads, CRM, outreach, social & documents*',
+            'Unlimited automations, MCP executions & bulk operations*',
+            'Usage tracked for analytics — never capped by AlphaClone',
+            'Custom integrations & SLA support',
+            '* Subject to connected provider API limits and platform safeguards',
+        ],
         features: {
             maxUsers: -1,
             maxProjects: -1,
             maxStorage: 500,
-            maxVideoMeetingsPerMonth: 200,
-            maxVideoMinutesPerMeeting: 180,
+            maxVideoMeetingsPerMonth: -1,
+            maxVideoMinutesPerMeeting: -1,
             contractGeneration: true,
             paymentProcessing: true,
             fullCRM: true,
@@ -255,14 +307,22 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
         }
     },
     custom: {
-        monthly: 0, // Quote based
-        yearly: 0,
+        monthly: 80,
+        yearly: 768,
+        featureList: [
+            'Unrestricted Scale',
+            'Custom Storage Tiers',
+            'Unlimited Video Duration',
+            'Dedicated Migration Support',
+            'Custom API Development',
+            'White-label Branding'
+        ],
         features: {
             maxUsers: -1,
             maxProjects: -1,
             maxStorage: -1,
-            maxVideoMeetingsPerMonth: -1, // Unlimited
-            maxVideoMinutesPerMeeting: -1, // Unlimited
+            maxVideoMeetingsPerMonth: -1,
+            maxVideoMinutesPerMeeting: -1,
             contractGeneration: true,
             paymentProcessing: true,
             fullCRM: true,
@@ -278,9 +338,9 @@ export const PLAN_PRICING: Record<SubscriptionPlan, { monthly: number; yearly: n
 };
 
 export const TRIAL_LIMITS = {
-    MAX_MEETINGS: 2,
-    MAX_MEETING_DURATION_MINS: 50,
-    MAX_LEADS_PER_DAY: 20,
-    MAX_TOTAL_LEADS: 100,
-    TRIAL_DAYS: 14
+    MAX_MEETINGS: 10,
+    MAX_MEETING_DURATION_MINS: 60,
+    MAX_LEADS_PER_DAY: 50,
+    MAX_TOTAL_LEADS: 500,
+    TRIAL_DAYS: 30
 };

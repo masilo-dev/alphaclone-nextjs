@@ -41,6 +41,30 @@ export class ErrorBoundary extends Component<Props, State> {
             errorInfo,
         });
 
+        // Handle ChunkLoadError specifically
+        if (error.name === 'ChunkLoadError' || error.message.includes('Loading chunk')) {
+            console.log('[ErrorBoundary] ChunkLoadError detected, clearing cache and reloading...');
+            
+            // Clear service worker cache if available
+            if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                    return Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                }).then(() => {
+                    console.log('[ErrorBoundary] Cache cleared, reloading...');
+                    window.location.reload();
+                }).catch(err => {
+                    console.error('[ErrorBoundary] Failed to clear cache:', err);
+                    globalThis.location.reload();
+                });
+            } else {
+                // Fallback: just reload
+                globalThis.location.reload();
+            }
+            return;
+        }
+
         // ✅ Log to Sentry with full context
         Sentry.captureException(error, {
             contexts: {
@@ -88,8 +112,8 @@ export class ErrorBoundary extends Component<Props, State> {
                                 <AlertCircle className="w-8 h-8 text-red-400" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-white">Something went wrong</h2>
-                                <p className="text-sm text-slate-400">An unexpected error occurred</p>
+                                <h2 className="text-2xl font-bold text-white">This screen crashed</h2>
+                                <p className="text-sm text-slate-400">Reload the page, or try again to return to the last stable view.</p>
                             </div>
                         </div>
 

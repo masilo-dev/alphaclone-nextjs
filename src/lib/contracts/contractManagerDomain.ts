@@ -1,0 +1,144 @@
+export const CONTRACT_STATUSES = [
+  'request', 'draft', 'internal_review', 'changes_requested', 'pending_approval',
+  'approved', 'ready_to_send', 'sent', 'viewed', 'negotiating',
+  'awaiting_signature', 'partially_signed', 'signed', 'active', 'suspended',
+  'expiring', 'renewal_review', 'renewed', 'completed', 'terminated', 'expired', 'archived',
+] as const;
+
+export type ContractManagerStatus = (typeof CONTRACT_STATUSES)[number];
+
+export const VALID_CONTRACT_TRANSITIONS: Readonly<Record<ContractManagerStatus, readonly ContractManagerStatus[]>> = {
+  request: ['draft'],
+  draft: ['internal_review', 'pending_approval', 'archived'],
+  internal_review: ['draft', 'changes_requested', 'pending_approval'],
+  changes_requested: ['draft', 'internal_review'],
+  pending_approval: ['draft', 'approved'],
+  approved: ['ready_to_send', 'draft'],
+  ready_to_send: ['sent', 'draft'],
+  sent: ['viewed', 'negotiating', 'awaiting_signature'],
+  viewed: ['negotiating', 'awaiting_signature'],
+  negotiating: ['draft', 'awaiting_signature'],
+  awaiting_signature: ['partially_signed', 'signed'],
+  partially_signed: ['signed'],
+  signed: ['active'],
+  active: ['suspended', 'expiring', 'completed', 'terminated'],
+  suspended: ['active', 'terminated'],
+  expiring: ['renewal_review', 'expired', 'completed', 'terminated'],
+  renewal_review: ['renewed', 'expired', 'terminated'],
+  renewed: ['active'],
+  completed: ['archived'],
+  terminated: ['archived'],
+  expired: ['archived'],
+  archived: [],
+};
+
+export const CONTRACT_LIST_FILTERS = [
+  'all',
+  'draft',
+  'needs_approval',
+  'awaiting_signature',
+  'active',
+  'expiring',
+  'archived',
+] as const;
+
+export type ContractListFilter = (typeof CONTRACT_LIST_FILTERS)[number];
+
+const CONTRACT_STATUS_BUCKETS: Record<ContractListFilter, readonly string[]> = {
+  all: [],
+  draft: ['request', 'draft', 'internal_review', 'changes_requested'],
+  needs_approval: ['pending_approval', 'approved'],
+  awaiting_signature: ['ready_to_send', 'sent', 'viewed', 'negotiating', 'awaiting_signature', 'partially_signed'],
+  active: ['signed', 'active', 'renewed', 'completed'],
+  expiring: ['expiring', 'renewal_review'],
+  archived: ['suspended', 'terminated', 'expired', 'archived'],
+};
+
+export function normalizeLegacyContractStatus(status?: string | null): ContractManagerStatus | string {
+  const raw = String(status || '').trim().toLowerCase();
+  const aliases: Record<string, ContractManagerStatus> = {
+    client_signed: 'partially_signed',
+    fully_signed: 'signed',
+    executed: 'signed',
+    rejected: 'terminated',
+    declined: 'terminated',
+    pending_signature: 'awaiting_signature',
+    pending: 'draft',
+    complete: 'completed',
+  };
+  if (aliases[raw]) return aliases[raw];
+  if (CONTRACT_STATUSES.includes(raw as ContractManagerStatus)) return raw as ContractManagerStatus;
+  return String(status || 'draft');
+}
+
+export function contractStatusBucket(status?: string | null): Exclude<ContractListFilter, 'all'> {
+  const canonical = String(normalizeLegacyContractStatus(status));
+  const buckets = CONTRACT_LIST_FILTERS.filter((filter) => filter !== 'all') as Array<Exclude<ContractListFilter, 'all'>>;
+  for (const bucket of buckets) {
+    if (CONTRACT_STATUS_BUCKETS[bucket].includes(canonical)) return bucket;
+  }
+  return 'draft';
+}
+
+export function contractStatusLabel(status?: string | null): string {
+  const labels: Record<Exclude<ContractListFilter, 'all'>, string> = {
+    draft: 'Draft',
+    needs_approval: 'Needs approval',
+    awaiting_signature: 'Awaiting signature',
+    active: 'Active',
+    expiring: 'Expiring',
+    archived: 'Archived',
+  };
+  return labels[contractStatusBucket(status)];
+}
+
+export function contractMatchesListFilter(status: string | null | undefined, filter: string): boolean {
+  if (filter === 'all') return true;
+  return contractStatusBucket(status) === filter;
+}
+
+export function isRenewalWatchStatus(status?: string | null): boolean {
+  const bucket = contractStatusBucket(status);
+  return bucket === 'active' || bucket === 'expiring';
+}
+
+export function canTransitionContract(from: string, to: string): boolean {
+  if (!CONTRACT_STATUSES.includes(from as ContractManagerStatus)) return false;
+  if (!CONTRACT_STATUSES.includes(to as ContractManagerStatus)) return false;
+  return VALID_CONTRACT_TRANSITIONS[from as ContractManagerStatus].includes(to as ContractManagerStatus);
+}
+
+export type ContractRiskSignal = { code: string; reason: string; severity: 'moderate' | 'high' | 'critical' };
+
+export function explainContractRisk(input: {
+  status: string;
+  endDate?: string | null;
+  noticeDeadline?: string | null;
+  signatureStatus?: string | null;
+  overdueObligations?: number;
+  now?: Date;
+}): { level: 'low' | 'moderate' | 'high' | 'critical'; reasons: ContractRiskSignal[] } {
+  const now = input.now ?? new Date();
+  const reasons: ContractRiskSignal[] = [];
+  const daysUntil = (value?: string | null) =>
+    value ? Math.ceil((new Date(value).getTime() - now.getTime()) / 86_400_000) : null;
+  const noticeDays = daysUntil(input.noticeDeadline);
+  const endDays = daysUntil(input.endDate);
+
+  if (input.status === 'active' && input.signatureStatus !== 'signed') {
+    reasons.push({ code: 'active_without_signature', reason: 'Contract is active without a completed signature.', severity: 'critical' });
+  }
+  if ((input.overdueObligations ?? 0) > 0) {
+    reasons.push({ code: 'overdue_obligations', reason: `${input.overdueObligations} obligation(s) are overdue.`, severity: 'high' });
+  }
+  if (noticeDays !== null && noticeDays >= 0 && noticeDays <= 30) {
+    reasons.push({ code: 'notice_deadline', reason: `Notice deadline is in ${noticeDays} day(s).`, severity: noticeDays <= 7 ? 'critical' : 'high' });
+  }
+  if (endDays !== null && endDays >= 0 && endDays <= 60) {
+    reasons.push({ code: 'contract_expiry', reason: `Contract ends in ${endDays} day(s).`, severity: 'moderate' });
+  }
+
+  const rank = { moderate: 1, high: 2, critical: 3 };
+  const highest = reasons.reduce((value, item) => Math.max(value, rank[item.severity]), 0);
+  return { level: highest === 3 ? 'critical' : highest === 2 ? 'high' : highest === 1 ? 'moderate' : 'low', reasons };
+}

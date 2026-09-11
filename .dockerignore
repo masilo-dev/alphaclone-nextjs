@@ -1,0 +1,18 @@
+node_modules
+.next
+.git
+.gitignore
+.cursor
+terminals
+mobile
+alphaclone-scraper
+*.md
+.env
+.env.*
+!.env.example
+# workflow library generates a root app/ dir at build-time; exclude to prevent
+# Next.js webpack from seeing both /app and /src/app simultaneously.
+/app/
+scratch/
+tmp/
+*.log

@@ -22,7 +22,7 @@ class ClientLifecycleService {
                 supabase
                     .from('projects')
                     .select('id, status, budget')
-                    .eq('owner_id', clientId)
+                    .eq('client_id', clientId)
                     .eq('tenant_id', tenantId),
                 supabase
                     .from('business_invoices')
@@ -54,7 +54,7 @@ class ClientLifecycleService {
                 activeDeals: 0, // Would link to deals table if needed
                 totalInvoices: invoices.length,
                 paidInvoices: invoices.filter((inv: any) => inv.status === 'paid').length,
-                totalRevenue: invoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.total || 0), 0),
+                totalRevenue: Math.round(invoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) * 100) / 100,
                 hasSignedContract: (contractsRes.data || []).length > 0,
                 lastActivity: activityRes.data?.[0]?.created_at || null
             };
@@ -70,14 +70,16 @@ class ClientLifecycleService {
      * Bulk fetch summaries for multiple clients to avoid N+1 issues in directory views
      */
     async bulkGetClientLifecycleSummaries(clientIds: string[], tenantId: string): Promise<Record<string, ClientLifecycleSummary>> {
+        if (!clientIds || clientIds.length === 0) return {};
+
         const results: Record<string, ClientLifecycleSummary> = {};
 
         // For directory performance, we fetch all relevant data in chunks and aggregate in memory
         const [projectsRes, invoicesRes] = await Promise.all([
             supabase
                 .from('projects')
-                .select('id, owner_id, status, budget')
-                .in('owner_id', clientIds)
+                .select('id, client_id, status, budget')
+                .in('client_id', clientIds)
                 .eq('tenant_id', tenantId),
             supabase
                 .from('business_invoices')
@@ -90,7 +92,7 @@ class ClientLifecycleService {
         const allInvoices = invoicesRes.data || [];
 
         clientIds.forEach(clientId => {
-            const clientProjects = allProjects.filter((p: any) => p.owner_id === clientId);
+            const clientProjects = allProjects.filter((p: any) => p.client_id === clientId);
             const clientInvoices = allInvoices.filter((inv: any) => inv.client_id === clientId);
 
             results[clientId] = {
@@ -100,7 +102,7 @@ class ClientLifecycleService {
                 activeDeals: 0,
                 totalInvoices: clientInvoices.length,
                 paidInvoices: clientInvoices.filter((inv: any) => inv.status === 'paid').length,
-                totalRevenue: clientInvoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.total || 0), 0),
+                totalRevenue: Math.round(clientInvoices.filter((inv: any) => inv.status === 'paid').reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) * 100) / 100,
                 hasSignedContract: false, // Contract check is better handled individually or via a joined query
                 lastActivity: null
             };

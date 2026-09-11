@@ -6,18 +6,49 @@ export const teamService = {
      * Fetch all team members (admins and employees)
      * This replaces the hardcoded placeholders in the dashboard.
      */
-    async getTeamMembers(): Promise<{ team: any[]; error: string | null }> {
+    async getTeamMembers(tenantId?: string): Promise<{ team: any[]; error: string | null }> {
         try {
-            // Fetch profiles with roles that are not 'client' or 'visitor'
-            // Adjust this fitler based on your actual roles
+            if (tenantId) {
+                // Fetch from tenant_users with profiles joined
+                // Using nested select for user profile details
+                const { data, error } = await supabase
+                    .from('tenant_users')
+                    .select(`
+                        user_id,
+                        role,
+                        user:user_id (
+                            id,
+                            name,
+                            role,
+                            skills,
+                            status,
+                            avatar
+                        )
+                    `)
+                    .eq('tenant_id', tenantId);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    return {
+                        team: data.map((tu: any) => transformProfileToMember({
+                            ...(tu.user as any),
+                            tenantRole: tu.role
+                        })),
+                        error: null
+                    };
+                }
+            }
+
+            // Fallback to profiles with roles that are not 'client' or 'visitor'
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
-                .in('role', ['admin', 'employee', 'manager']); // Assuming these roles exist or will exist
+                .in('role', ['admin', 'employee', 'manager']);
 
             if (error) throw error;
 
-            // If no "employee" roles exist yet, fetch admins to show something real
+            // If no profiles found, return admin as last resort
             if (!data || data.length === 0) {
                 const { data: adminData, error: adminError } = await supabase
                     .from('profiles')

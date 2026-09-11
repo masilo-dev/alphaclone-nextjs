@@ -18,7 +18,45 @@
 
 ---
 
+### 1b. **Zoho Mail Integration** ✅
+**Files:**
+- `src/app/api/zoho/messages/route.ts` - Message endpoints
+- `src/services/server/zohoServerService.ts` - API logic
+
+**Fixed Issues:**
+- ✅ **URL 404 (URL_RULE_NOT_CONFIGURED)**: Fixed incorrect API endpoint construction in proxyRequest.
+- ✅ **Email TypeError**: Fixed `extractEmail` to robustly handle non-string inputs.
+- ✅ **Input Sanitization**: Ensured consistent string types for email addresses.
+- ✅ **Diagnostic Logging**: Enhanced `proxyRequest` to log status text and response body on error.
+- ✅ **Dynamic "From" Selection**: Added a visible and selectable "From" section to AI Outreach, Compose, and Reply views, supporting multiple Zoho aliases.
+- ✅ **Fixed Incorrect Endpoint**: Updated `sendaddresses` to `sendmailaddresses` to resolve 404 errors.
+- ✅ **Verified Sender Logic**: Improved `fromAddress` matching and fallbacks to prevent "Given FromAddress not exists!" errors.
+### 1c. **Security & Performance** ✅
+**Files:**
+- `next.config.ts` - CSP Headers
+- `src/app/sw.ts` - Service Worker
+
+**Fixed Issues:**
+- ✅ **CSP Violation (Cloudflare Turnstile)**: Added `https://challenges.cloudflare.com` to `connect-src` to allow verification calls.
+- ✅ **PWA Service Worker**: Excluded Cloudflare Turnstile from SW interception to ensure stable verification script loading.
+- ✅ **Vercel Safety**: Verified all headers and SW matchers are Vercel-compatible.
+
+### 1d. **Reliability & Stability Fixes** ✅
+**Files:**
+- `src/contexts/AuthContext.tsx` - Auth timeout
+- `src/services/messageService.ts` - Subscription retry
+- `src/components/dashboard/business/EnhancedBillingPage.tsx` - Chart sizing
+- `next.config.ts` - Dicebear CSP
+
+**Fixed Issues:**
+- ✅ **AuthContext Timeout**: Increased safety timeout to 10s to prevent premature loading termination on slow networks.
+- ✅ **Message Subscription Connectivity**: Added retry logic (3s-5s) for `CLOSED` and `CHANNEL_ERROR` states in Supabase real-time.
+- ✅ **Chart Sizing (Recharts)**: Added `minWidth` and `minHeight` to `ResponsiveContainer` to resolve console errors during resizing.
+- ✅ **Dicebear Avatars**: Permitted `*.dicebear.com` in CSP `img-src` and `connect-src` to fix `ERR_FAILED` issues.
+- ✅ **PWA Startup & Transition**: Implemented a premium splash screen and native-like expansion transition for PWA login.
+
 ### 2. **Portfolio Editor FIXED** ✅
+
 **File:** `components/dashboard/PortfolioShowcase.tsx`
 
 **Fixed Issues:**

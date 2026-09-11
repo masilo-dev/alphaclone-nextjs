@@ -1,8 +1,30 @@
+// @ts-nocheck
+import dynamic from 'next/dynamic';
 import React from 'react';
-// @ts-ignore - react-window types may not be installed
-import { FixedSizeList as List } from 'react-window';
-// @ts-ignore - react-virtualized-auto-sizer types may not be installed
-import AutoSizer from 'react-virtualized-auto-sizer';
+
+const List = dynamic(
+    () => import('react-window').then((mod: any) => mod.FixedSizeList),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-64 text-white">
+                <div className="w-6 h-6 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
+            </div>
+        )
+    }
+) as any;
+
+const AutoSizer = dynamic(
+    () => import('react-virtualized-auto-sizer').then((mod: any) => mod.AutoSizer),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-64 text-white">
+                <div className="w-6 h-6 border-2 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
+            </div>
+        )
+    }
+) as any;
 
 interface VirtualListProps<T> {
     items: T[];
@@ -21,7 +43,7 @@ export function VirtualList<T>({
 }: VirtualListProps<T>) {
     if (items.length === 0) {
         return (
-            <div className={`flex items-center justify-center p-8 text-slate-400 ${className}`}>
+            <div className={`flex items-center justify-center p-8 text-white ${className}`}>
                 {emptyMessage}
             </div>
         );

@@ -141,8 +141,8 @@ class AIUsageLimitService {
             }
 
             // Create new quota
-            const nextMonth = new Date();
-            nextMonth.setMonth(nextMonth.getMonth() + 1);
+            const nextReset = new Date();
+            nextReset.setHours(nextReset.getHours() + 12);
 
             const { data: newQuota } = await supabase
                 .from('ai_quotas')
@@ -152,7 +152,7 @@ class AIUsageLimitService {
                     current_usage: 0,
                     cost_limit: this.DEFAULT_COST_LIMIT,
                     current_cost: 0,
-                    reset_date: nextMonth.toISOString(),
+                    reset_date: nextReset.toISOString(),
                 })
                 .select()
                 .single();
@@ -165,18 +165,18 @@ class AIUsageLimitService {
     }
 
     /**
-     * Reset monthly quota
+     * Reset quota (12-hour interval for Beta)
      */
     private async resetQuota(userId: string): Promise<UsageQuota> {
-        const nextMonth = new Date();
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        const nextReset = new Date();
+        nextReset.setHours(nextReset.getHours() + 12);
 
         const { data: quota } = await supabase
             .from('ai_quotas')
             .update({
                 current_usage: 0,
                 current_cost: 0,
-                reset_date: nextMonth.toISOString(),
+                reset_date: nextReset.toISOString(),
             })
             .eq('user_id', userId)
             .select()

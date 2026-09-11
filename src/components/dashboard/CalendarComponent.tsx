@@ -3,13 +3,37 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
-import { format, isBefore } from 'date-fns'; // Added isBefore
-import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard } from 'lucide-react';
+import { format, isBefore, addMinutes } from 'date-fns'; // Added addMinutes
+import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard, AlertTriangle, Sparkles, Briefcase, Target, TrendingUp } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../ui/UIComponents';
 import { calendarService, CalendarEvent } from '../../services/calendarService';
 import { taskService } from '../../services/taskService'; // Added taskService
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { PastEventPromptModal } from './PastEventPromptModal';
+import { useTenant } from '@/contexts/TenantContext';
+import { strategicThinkerService } from '../../services/StrategicThinkerService';
+
+/**
+ * Helper to parse Calendly Q&A JSON
+ */
+const parseEventQA = (description: string) => {
+    if (!description) return null;
+    if (!description.startsWith('[') && !description.startsWith('{')) return null;
+
+    try {
+        const parsed = JSON.parse(description);
+        if (Array.isArray(parsed)) {
+            return parsed.map((item: any) => ({
+                question: item.question || item.name || 'Question',
+                answer: item.answer || item.value || 'No answer provided'
+            }));
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+};
 
 interface CalendarProps {
     user: User;
@@ -23,11 +47,13 @@ interface CalendarProps {
  * - Improved modal UX
  */
 const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
+    const { currentTenant } = useTenant();
     const [events, setEvents] = useState<CalendarEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showEventModal, setShowEventModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [suggestedBlocks, setSuggestedBlocks] = useState<any[]>([]);
     const [newEvent, setNewEvent] = useState<{
         title: string;
         description: string;
@@ -37,6 +63,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         location: string;
         is_all_day: boolean;
         attendees: string[];
+        questions: { id: string; text: string }[];
     }>({
         title: '',
         description: '',
@@ -46,8 +73,12 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         location: '',
         is_all_day: false,
         attendees: [],
+        questions: [{ id: '1', text: '' }] // Added questions support
     });
     const [availableUsers] = useState<any[]>([]);
+    const [pastEventsPrompt, setPastEventsPrompt] = useState<CalendarEvent[]>([]);
+    const [conflictWarning, setConflictWarning] = useState<CalendarEvent | null>(null);
+    const [conflictAction, setConflictAction] = useState<'event' | 'video' | null>(null);
 
     // UseRef to control FullCalendar API
     const calendarRef = useRef<FullCalendar>(null);
@@ -83,7 +114,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         });
 
         return () => {
-            subscription.unsubscribe();
+            calendarService.unsubscribe(subscription);
         };
     }, [user.id]);
 
@@ -93,10 +124,51 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
         if (!error && fetchedEvents) {
             setEvents(fetchedEvents);
-        } else if (error) {
-            toast.error('Failed to load calendar events');
+
+            // Check for past uncompleted real calendar events
+            const now = new Date();
+            const unhandledPast = fetchedEvents.filter(e => {
+                // Only prompt for real calendar events, not tasks, invoices, etc.
+                if (e.id.startsWith('task_') || e.id.startsWith('inv_') || e.id.startsWith('contract_') || e.id.startsWith('project_') || e.id.startsWith('milestone_') || e.id.startsWith('lead_') || e.id.startsWith('deal_')) {
+                    return false;
+                }
+                const endTime = new Date(e.end_time);
+                // Assume past if end time is more than 30 minutes ago
+                const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60000);
+                return isBefore(endTime, thirtyMinutesAgo) && e.metadata?.status !== 'completed' && e.metadata?.status !== 'cancelled' && e.metadata?.status !== 'postponed';
+            });
+
+            if (unhandledPast.length > 0) {
+                setPastEventsPrompt(unhandledPast);
+            }
+        } else {
+            setEvents([]);
         }
         setIsLoading(false);
+
+        // Fetch AI suggestions
+        const { tasks } = await taskService.getTasks({ assignedTo: user.id });
+        const suggestions = strategicThinkerService.suggestTimeBlocks(tasks || [], fetchedEvents || []);
+        setSuggestedBlocks(suggestions);
+    };
+
+    // Check for overlapping events
+    const checkForConflicts = (startTime: Date, endTime: Date): CalendarEvent | null => {
+        for (const event of events) {
+            const eventStart = new Date(event.start_time);
+            const eventEnd = new Date(event.end_time);
+            
+            // Skip events that are completed or cancelled
+            if (event.metadata?.status === 'completed' || event.metadata?.status === 'cancelled') {
+                continue;
+            }
+
+            // Check for overlap
+            if ((startTime < eventEnd && endTime > eventStart)) {
+                return event;
+            }
+        }
+        return null;
     };
 
     const handleDateClick = (arg: DateClickArg) => {
@@ -118,7 +190,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         }
     };
 
-    const handleCreateEvent = async () => {
+    const handleCreateEvent = async (skipConflictCheck = false) => {
         if (!newEvent.title.trim()) {
             toast.error('Title is required');
             return;
@@ -133,10 +205,21 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
         try {
             // -- INDEPENDENT TASK CREATION LOGIC --
+            // Format questions into description if any
+            const questions = (newEvent as any).questions?.filter((q: any) => q.text.trim());
+            let description = newEvent.description || '';
+            if (questions && questions.length > 0) {
+                const qaFormat = questions.map((q: any) => ({
+                    question: q.text,
+                    answer: 'Pending...'
+                }));
+                description = JSON.stringify(qaFormat);
+            }
+
             if (newEvent.type === 'task') {
                 const { error } = await taskService.createTask(user.id, {
                     title: newEvent.title,
-                    description: newEvent.description,
+                    description,
                     assignedTo: user.id, // Assign to self
                     // No project/client needed (Independent)
                     startDate: new Date(newEvent.start_time).toISOString(),
@@ -153,14 +236,25 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     toast.error('Failed to create task');
                 }
             } else {
-                // Standard Calendar Event
+                // Standard Calendar Event - Check for conflicts first
+                const startTime = new Date(newEvent.start_time);
+                const endTime = new Date(newEvent.end_time);
+                const conflict = skipConflictCheck ? null : checkForConflicts(startTime, endTime);
+                
+                if (conflict) {
+                    setConflictWarning(conflict);
+                    setConflictAction('event');
+                    return; // Don't create the event, show warning instead
+                }
+
                 const { error } = await calendarService.createEvent({
                     user_id: user.id,
                     ...newEvent,
+                    description,
                     attendees: newEvent.attendees || [],
                     color: getEventColor(newEvent.type, {}), // Default color
                     reminder_minutes: 15,
-                });
+                } as any);
 
                 if (!error) {
                     toast.success('Event created successfully!');
@@ -178,7 +272,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         }
     };
 
-    const handleCreateVideoCall = async () => {
+    const handleCreateVideoCall = async (skipConflictCheck = false) => {
         if (!newEvent.title.trim()) {
             toast.error('Video call title is required');
             return;
@@ -193,12 +287,42 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
 
         try {
             const startTime = new Date(newEvent.start_time);
-            const { error } = await calendarService.createVideoCallEvent(
-                user.id,
-                newEvent.title || 'Video Call',
-                startTime,
-                60
-            );
+
+            // Format questions into description if any
+            const questions = (newEvent as any).questions?.filter((q: any) => q.text.trim());
+            let description = 'Video call meeting';
+            if (questions && questions.length > 0) {
+                const qaFormat = questions.map((q: any) => ({
+                    question: q.text,
+                    answer: 'Pending...'
+                }));
+                description = JSON.stringify(qaFormat);
+            }
+
+            const endTime = addMinutes(startTime, 60);
+            const videoRoomId = `room_${crypto.randomUUID()}`;
+
+            // Check for conflicts
+            const conflict = skipConflictCheck ? null : checkForConflicts(startTime, endTime);
+            if (conflict) {
+                setConflictWarning(conflict);
+                setConflictAction('video');
+                setIsSaving(false);
+                return;
+            }
+
+            const { error } = await calendarService.createEvent({
+                user_id: user.id,
+                title: newEvent.title,
+                description,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString(),
+                type: 'call',
+                video_room_id: videoRoomId,
+                attendees: newEvent.attendees || [],
+                is_all_day: false,
+                reminder_minutes: 15,
+            } as any);
 
             if (!error) {
                 toast.success('Video call created successfully!');
@@ -215,20 +339,50 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         }
     };
 
-    const handleDeleteEvent = async (eventId: string) => {
+    const handleDeleteEvent = async (eventId: string, isCalendly: boolean = false) => {
         if (!confirm('Are you sure you want to delete this event?')) return;
 
         try {
-            const { error } = await calendarService.deleteEvent(eventId);
-            if (!error) {
-                toast.success('Event deleted successfully!');
-                setShowEventModal(false);
-                loadEvents();
+            if (isCalendly) {
+                // If it's a Calendly event, we use the specific cancellation route
+                const reason = prompt('Please provide a reason for cancellation (sent to the invitee):', 'Canceled via CRM Dashboard');
+                if (reason === null) return; // User canceled the prompt
+
+                if (!currentTenant?.id) {
+                    toast.error('No active organization. Select a workspace and try again.');
+                    return;
+                }
+
+                setIsSaving(true);
+                const res = await fetch('/api/calendly/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenantId: currentTenant.id, eventId, reason })
+                });
+
+                if (res.ok) {
+                    toast.success('Calendly meeting canceled successfully!');
+                    setShowEventModal(false);
+                    loadEvents();
+                } else {
+                    const data = await res.json();
+                    toast.error(data.error || 'Failed to cancel Calendly meeting');
+                }
+                setIsSaving(false);
             } else {
-                toast.error('Failed to delete event');
+                // Standard calendar event deletion
+                const { error } = await calendarService.deleteEvent(eventId);
+                if (!error) {
+                    toast.success('Event deleted successfully!');
+                    setShowEventModal(false);
+                    loadEvents();
+                } else {
+                    toast.error('Failed to delete event');
+                }
             }
         } catch (err) {
             toast.error('Failed to delete event');
+            setIsSaving(false);
         }
     };
 
@@ -242,6 +396,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             location: '',
             is_all_day: false,
             attendees: [],
+            questions: [{ id: '1', text: '' }]
         });
     };
 
@@ -263,8 +418,38 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'reminder': return '#f59e0b'; // Orange
             case 'deadline': return '#ef4444'; // Red
             case 'invoice': return '#ef4444'; // Red (Money Owed)
+            case 'project': return '#8b5cf6';
+            case 'milestone': return '#ec4899';
+            case 'lead': return '#14b8a6';
+            case 'deal': return '#f59e0b';
+            case 'suggestion': return '#6366f1'; // Indigo (AI Suggestion)
             default: return '#3b82f6';
         }
+    };
+
+    const extractMeetingUrl = (event: CalendarEvent) => {
+        // 1. Check video_room_id (Daily.co)
+        if (event.video_room_id) {
+            return `/meet/${event.video_room_id}`;
+        }
+
+        // 2. Check location for URLs
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const locationUrl = event.location?.match(urlRegex)?.[0];
+        if (locationUrl) return locationUrl;
+
+        // 3. Check description for URLs
+        const descriptionUrl = event.description?.match(urlRegex)?.[0];
+        if (descriptionUrl) return descriptionUrl;
+
+        // 4. Check metadata
+        if (event.metadata?.meeting_url) return event.metadata.meeting_url;
+        if (event.metadata?.calendly_event_uri) {
+            // If it's a calendly event, the full payload might have the link
+            // or we just trust the location field if it's there.
+        }
+
+        return null;
     };
 
     const getEventTypeIcon = (type: string) => {
@@ -275,22 +460,41 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'deadline': return <Clock className="w-4 h-4" />;
             case 'task': return <CheckSquare className="w-4 h-4" />;
             case 'invoice': return <CreditCard className="w-4 h-4" />;
+            case 'project': return <Briefcase className="w-4 h-4" />;
+            case 'milestone': return <Target className="w-4 h-4" />;
+            case 'lead': return <UsersIcon className="w-4 h-4" />;
+            case 'deal': return <TrendingUp className="w-4 h-4" />;
             default: return <CalendarIcon className="w-4 h-4" />;
         }
     };
 
     const formatEventsForCalendar = () => {
-        return events.map(event => ({
+        const formattedEvents = events.map(event => ({
             id: event.id,
             title: event.title,
             start: event.start_time,
             end: event.end_time,
-            backgroundColor: getEventColor(event.type, event), // Pass full event for logic
+            backgroundColor: getEventColor(event.type, event),
             borderColor: getEventColor(event.type, event),
             allDay: event.is_all_day,
             textColor: '#ffffff',
-            extendedProps: { ...event } // Pass data for click handling
+            extendedProps: { ...event }
         }));
+
+        const suggestions = suggestedBlocks.map(s => ({
+            id: `sug_${s.title}`,
+            title: `[AI Suggestion] ${s.title}`,
+            start: s.start,
+            end: s.end,
+            backgroundColor: 'transparent',
+            borderColor: '#6366f1',
+            borderStyle: 'dashed',
+            textColor: '#818cf8',
+            className: 'ai-suggestion-event',
+            extendedProps: { ...s, isSuggestion: true }
+        }));
+
+        return [...formattedEvents, ...suggestions];
     };
 
     if (isLoading) {
@@ -314,9 +518,27 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     </h2>
                     <p className="text-slate-400 mt-1">Manage your schedule and meetings</p>
                 </div>
-                <Button onClick={() => setShowEventModal(true)} className="bg-teal-600 hover:bg-teal-500">
-                    + New Event
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={async () => {
+                            toast.loading('Nexus: Optimizing schedule...', { id: 'nexus-calendar' });
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'calendar_nexus' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-calendar' });
+                        }}
+                        className="bg-slate-900 hover:bg-slate-800 text-violet-400 border-white/5"
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Nexus Schedule
+                    </Button>
+                    <Button onClick={() => setShowEventModal(true)} className="bg-teal-600 hover:bg-teal-500">
+                        + New Event
+                    </Button>
+                </div>
             </div>
 
             {/* Calendar with Dark Theme */}
@@ -484,10 +706,78 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     selectMirror={true}
                     dayMaxEvents={3}
                     weekends={true}
+                    eventOrder="title"
                     height="auto"
                     themeSystem="standard"
                 />
             </Card>
+
+            {/* Past Events Follow-up Modal */}
+            {pastEventsPrompt.length > 0 && (
+                <PastEventPromptModal
+                    events={pastEventsPrompt}
+                    onComplete={() => {
+                        setPastEventsPrompt([]);
+                        loadEvents();
+                    }}
+                />
+            )}
+
+            {/* Conflict Warning Modal */}
+            {conflictWarning && (
+                <Modal
+                    isOpen={!!conflictWarning}
+                    onClose={() => {
+                        setConflictWarning(null);
+                        setConflictAction(null);
+                    }}
+                    title="Schedule Conflict Detected"
+                >
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                            <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-red-300 font-semibold mb-1">Overlapping Event</p>
+                                <p className="text-slate-400 text-sm">
+                                    Your new event conflicts with an existing event:
+                                </p>
+                                <div className="mt-2 p-2 bg-slate-900/50 rounded">
+                                    <p className="text-white font-medium">{conflictWarning.title}</p>
+                                    <p className="text-slate-400 text-xs">
+                                        {format(new Date(conflictWarning.start_time), 'MMM d, h:mm a')} - {format(new Date(conflictWarning.end_time), 'h:mm a')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 justify-end">
+                            <Button
+                                variant="secondary"
+                                onClick={() => {
+                                    setConflictWarning(null);
+                                    setConflictAction(null);
+                                }}
+                            >
+                                Reschedule
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    const pendingAction = conflictAction;
+                                    setConflictWarning(null);
+                                    setConflictAction(null);
+                                    if (pendingAction === 'video') {
+                                        void handleCreateVideoCall(true);
+                                    } else if (pendingAction === 'event') {
+                                        void handleCreateEvent(true);
+                                    }
+                                }}
+                                className="bg-red-600 hover:bg-red-700"
+                            >
+                                Create Anyway
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
 
             {/* Event Modal */}
             {showEventModal && (
@@ -532,13 +822,32 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 </div>
                             </div>
 
-                            {/* Event Description */}
-                            {selectedEvent.description && (
-                                <div>
-                                    <div className="text-sm font-semibold text-slate-300 mb-2">Description</div>
-                                    <div className="text-slate-400 leading-relaxed">{selectedEvent.description}</div>
-                                </div>
-                            )}
+                            {/* Event Description & Q&A */}
+                            {selectedEvent.description && (() => {
+                                const qa = parseEventQA(selectedEvent.description);
+                                if (qa) {
+                                    return (
+                                        <div className="space-y-4">
+                                            <div className="text-sm font-semibold text-slate-300 border-b border-slate-700 pb-2">Questions & Answers</div>
+                                            <div className="grid gap-3">
+                                                {qa.map((item, idx) => (
+                                                    <div key={idx} className="bg-slate-900/50 p-3 rounded border border-slate-800">
+                                                        <div className="text-xs font-bold text-teal-400 uppercase tracking-wider mb-1">{item.question}</div>
+                                                        <div className="text-slate-300 text-sm whitespace-pre-wrap">{item.answer}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div>
+                                        <div className="text-sm font-semibold text-slate-300 mb-2">Description</div>
+                                        <div className="text-slate-400 leading-relaxed">{selectedEvent.description}</div>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Time Details */}
                             <div className="grid grid-cols-2 gap-4">
@@ -565,12 +874,31 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                             )}
 
                             {/* Video Call */}
-                            {selectedEvent.video_room_id && (
-                                <div className="flex items-center gap-3 p-4 bg-green-500/10 rounded-lg border border-green-500/30">
-                                    <Video className="w-5 h-5 text-green-400 flex-shrink-0" />
-                                    <span className="text-green-300 font-semibold">Video call enabled</span>
-                                </div>
-                            )}
+                            {(() => {
+                                const meetingUrl = extractMeetingUrl(selectedEvent);
+                                if (!meetingUrl) return null;
+
+                                return (
+                                    <div className="flex flex-col gap-3 p-4 bg-teal-500/10 rounded-lg border border-teal-500/30">
+                                        <div className="flex items-center gap-3">
+                                            <Video className="w-5 h-5 text-teal-400 flex-shrink-0" />
+                                            <span className="text-teal-300 font-semibold">Join the meeting</span>
+                                        </div>
+                                        <Button
+                                            onClick={() => {
+                                                if (meetingUrl.startsWith('/')) {
+                                                    window.location.href = meetingUrl;
+                                                } else {
+                                                    window.open(meetingUrl, '_blank');
+                                                }
+                                            }}
+                                            className="bg-teal-600 hover:bg-teal-500 mt-2"
+                                        >
+                                            Join Meeting Now
+                                        </Button>
+                                    </div>
+                                );
+                            })()}
 
                             {/* Actions */}
                             <div className="flex gap-3 pt-4 border-t border-slate-800">
@@ -591,9 +919,18 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     >
                                         View {selectedEvent.type === 'task' ? 'Task' : 'Invoice'}
                                     </Button>
+                                ) : selectedEvent.metadata?.calendly_event_uri ? (
+                                    <Button
+                                        onClick={() => handleDeleteEvent(selectedEvent.id, true)}
+                                        disabled={isSaving}
+                                        className="flex-1 bg-red-600 hover:bg-red-500"
+                                    >
+                                        {isSaving ? 'Canceling...' : 'Cancel Calendly Meeting'}
+                                    </Button>
                                 ) : (
                                     <Button
-                                        onClick={() => handleDeleteEvent(selectedEvent.id)}
+                                        onClick={() => handleDeleteEvent(selectedEvent.id, false)}
+                                        disabled={isSaving}
                                         className="flex-1 bg-red-600 hover:bg-red-500"
                                     >
                                         Delete Event
@@ -662,6 +999,49 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 placeholder="Meeting location or URL"
                             />
 
+                            {/* Custom Questions Section */}
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-sm font-medium text-slate-300">Intake Questions (Q&A)</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewEvent({
+                                            ...newEvent,
+                                            questions: [...(newEvent as any).questions, { id: Date.now().toString(), text: '' }]
+                                        })}
+                                        className="text-xs text-teal-400 hover:text-teal-300 font-semibold"
+                                    >
+                                        + Add Question
+                                    </button>
+                                </div>
+                                {(newEvent as any).questions?.map((q: any, idx: number) => (
+                                    <div key={q.id} className="flex gap-2">
+                                        <input
+                                            value={q.text}
+                                            onChange={(e) => {
+                                                const newQs = [...(newEvent as any).questions];
+                                                newQs[idx].text = e.target.value;
+                                                setNewEvent({ ...newEvent, questions: newQs } as any);
+                                            }}
+                                            placeholder={`Question ${idx + 1}`}
+                                            className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-teal-500"
+                                        />
+                                        {(newEvent as any).questions.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newQs = (newEvent as any).questions.filter((_: any, i: number) => i !== idx);
+                                                    setNewEvent({ ...newEvent, questions: newQs } as any);
+                                                }}
+                                                className="p-2 text-red-400 hover:text-red-300"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
                             <div className="flex gap-3 pt-4">
                                 <Button
                                     variant="outline"
@@ -676,7 +1056,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 </Button>
                                 {newEvent.type === 'call' ? (
                                     <Button
-                                        onClick={handleCreateVideoCall}
+                                        onClick={() => void handleCreateVideoCall()}
                                         className="flex-1 bg-teal-600 hover:bg-teal-500"
                                         disabled={isSaving}
                                     >
@@ -694,7 +1074,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     </Button>
                                 ) : (
                                     <Button
-                                        onClick={handleCreateEvent}
+                                        onClick={() => void handleCreateEvent()}
                                         className="flex-1 bg-teal-600 hover:bg-teal-500"
                                         disabled={isSaving}
                                     >

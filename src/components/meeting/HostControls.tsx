@@ -6,6 +6,7 @@ interface HostControlsProps {
     callObject: DailyCall | null;
     isHost: boolean;
     onEndMeeting: () => void;
+    callId?: string;
 }
 
 /**
@@ -15,15 +16,10 @@ interface HostControlsProps {
 export const HostControls: React.FC<HostControlsProps> = ({
     callObject,
     isHost,
-    onEndMeeting
+    onEndMeeting,
+    callId,
 }) => {
-    // Host controls are the same as admin controls
-    // Just with different permission check
     return (
-        <AdminControls
-            callObject={callObject}
-            isAdmin={isHost}
-            onEndMeeting={onEndMeeting}
-        />
+        <AdminControls callObject={callObject} isAdmin={isHost} onEndMeeting={onEndMeeting} callId={callId} />
     );
 };

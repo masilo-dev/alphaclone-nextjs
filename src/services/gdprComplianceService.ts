@@ -210,7 +210,7 @@ export const gdprComplianceService = {
         try {
             // Fetch all user-related data
             const [profile, projects, contracts, messages] = await Promise.all([
-                supabase.from('profiles').select('*').eq('id', userId).single(),
+                supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
                 supabase.from('projects').select('*').eq('owner_id', userId),
                 supabase.from('contracts').select('*').eq('user_id', userId),
                 supabase.from('messages').select('*').eq('sender_id', userId),
@@ -239,7 +239,7 @@ export const gdprComplianceService = {
                 .from('privacy_policy_versions')
                 .select('*')
                 .eq('is_current', true)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
 
@@ -259,7 +259,7 @@ export const gdprComplianceService = {
                 .from('terms_of_service_versions')
                 .select('*')
                 .eq('is_current', true)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
 

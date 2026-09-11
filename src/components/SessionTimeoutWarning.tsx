@@ -1,41 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
 interface SessionTimeoutWarningProps {
+    isOpen: boolean;
+    countdown: number;
     onExtendSession: () => void;
     onLogout: () => void;
 }
 
 export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
+    isOpen,
+    countdown,
     onExtendSession,
     onLogout,
 }) => {
-    const [showWarning, setShowWarning] = useState(false);
-    const [countdown, setCountdown] = useState(120); // 2 minutes
-
-    useEffect(() => {
-        if (showWarning) {
-            const interval = setInterval(() => {
-                setCountdown(prev => {
-                    if (prev <= 1) {
-                        clearInterval(interval);
-                        onLogout();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-
-            return () => clearInterval(interval);
-        }
-    }, [showWarning, onLogout]);
-
-    const handleExtend = () => {
-        setShowWarning(false);
-        setCountdown(120);
-        onExtendSession();
-    };
-
-    if (!showWarning) return null;
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
@@ -58,7 +36,7 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
 
                 <div className="flex gap-3">
                     <button
-                        onClick={handleExtend}
+                        onClick={onExtendSession}
                         className="flex-1 px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors"
                     >
                         Stay Logged In
@@ -79,30 +57,61 @@ export const SessionTimeoutWarning: React.FC<SessionTimeoutWarningProps> = ({
     );
 };
 
-// Hook to trigger the warning
+const DEFAULT_IDLE_TIMEOUT_MINUTES = 30;
+
+/**
+ * Idle timeout before auto sign-out. Tunable per deployment with
+ * NEXT_PUBLIC_SESSION_IDLE_TIMEOUT_MINUTES (minimum 3, so the 2-minute warning
+ * still has room to show). Previously hard-coded to 10 minutes, which signed
+ * people out after a short call or meeting.
+ */
+export function resolveIdleTimeoutMs(raw: string | undefined = process.env.NEXT_PUBLIC_SESSION_IDLE_TIMEOUT_MINUTES): number {
+    const minutes = Number(raw);
+    const safe = Number.isFinite(minutes) && minutes >= 3 ? minutes : DEFAULT_IDLE_TIMEOUT_MINUTES;
+    return safe * 60 * 1000;
+}
+
+/**
+ * Events that prove the person is still here. `scroll` does not bubble, and the
+ * dashboard scrolls inside a fixed-height shell, so it is registered in the
+ * capture phase; `wheel` covers trackpad scrolling that never moves the pointer.
+ */
+export const SESSION_ACTIVITY_EVENTS = ['mousedown', 'keydown', 'scroll', 'wheel', 'touchstart', 'click', 'mousemove', 'pointerdown'] as const;
+
+// Hook to manage the timeout logic
 export const useSessionTimeoutWarning = (
     onLogout: () => void,
-    timeoutMs: number = 10 * 60 * 1000, // 10 minutes
-    warningMs: number = 2 * 60 * 1000 // 2 minutes before timeout
+    timeoutMs: number = resolveIdleTimeoutMs(),
+    warningMs: number = 2 * 60 * 1000, // 2 minutes before timeout
+    enabled = true,
 ) => {
     const [showWarning, setShowWarning] = useState(false);
     const [lastActivity, setLastActivity] = useState(Date.now());
+    const [countdown, setCountdown] = useState(Math.floor(warningMs / 1000));
 
     const resetActivity = useCallback(() => {
         setLastActivity(Date.now());
         setShowWarning(false);
-    }, []);
+        setCountdown(Math.floor(warningMs / 1000));
+    }, [warningMs]);
 
     const extendSession = useCallback(() => {
         resetActivity();
     }, [resetActivity]);
 
     useEffect(() => {
-        // Activity listeners
-        const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+        if (!enabled) return;
+        // Only add listeners if warning is NOT showing (don't auto-reset if they're just moving mouse over warning)
+        const handleActivity = () => {
+            if (!showWarning) {
+                resetActivity();
+            }
+        };
 
-        events.forEach(event => {
-            document.addEventListener(event, resetActivity);
+        // Capture phase so scrolls inside nested containers count as activity.
+        const listenerOptions: AddEventListenerOptions = { passive: true, capture: true };
+        SESSION_ACTIVITY_EVENTS.forEach(event => {
+            document.addEventListener(event, handleActivity, listenerOptions);
         });
 
         // Check for inactivity
@@ -110,24 +119,31 @@ export const useSessionTimeoutWarning = (
             const now = Date.now();
             const timeSinceActivity = now - lastActivity;
 
-            // Show warning 2 minutes before timeout
-            if (timeSinceActivity >= timeoutMs - warningMs && !showWarning) {
-                setShowWarning(true);
-            }
+            // Show warning
+            if (timeSinceActivity >= timeoutMs - warningMs) {
+                if (!showWarning) {
+                    setShowWarning(true);
+                }
 
-            // Auto logout at timeout
-            if (timeSinceActivity >= timeoutMs) {
-                onLogout();
+                // Calculate remaining seconds
+                const remaining = Math.max(0, Math.floor((timeoutMs - timeSinceActivity) / 1000));
+                setCountdown(remaining);
+
+                // Auto logout at zero
+                if (remaining <= 0) {
+                    clearInterval(checkInterval);
+                    onLogout();
+                }
             }
         }, 1000);
 
         return () => {
-            events.forEach(event => {
-                document.removeEventListener(event, resetActivity);
+            SESSION_ACTIVITY_EVENTS.forEach(event => {
+                document.removeEventListener(event, handleActivity, listenerOptions);
             });
             clearInterval(checkInterval);
         };
-    }, [lastActivity, timeoutMs, warningMs, showWarning, onLogout, resetActivity]);
+    }, [lastActivity, timeoutMs, warningMs, showWarning, onLogout, resetActivity, enabled]);
 
-    return { showWarning, extendSession };
+    return { showWarning, countdown, extendSession };
 };

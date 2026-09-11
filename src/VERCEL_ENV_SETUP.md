@@ -94,7 +94,7 @@ VITE_GEMINI_API_KEY=AIzaSy... (your key)
 
 ### Required for Database
 ```
-VITE_SUPABASE_URL=https://ehekzoioqvtweugemktn.supabase.co
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 

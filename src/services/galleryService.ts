@@ -108,11 +108,7 @@ export const galleryService = {
                 return { url: null, error: error.message };
             }
 
-            const { data: { publicUrl } } = supabase.storage
-                .from(bucket)
-                .getPublicUrl(data.path);
-
-            return { url: publicUrl, error: null };
+            return { url: `/api/storage/${bucket}/${data.path}`, error: null };
         } catch (err) {
             return { url: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }

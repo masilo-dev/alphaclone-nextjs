@@ -1,53 +1,61 @@
-import { NextResponse } from 'next/server';
-import { geminiService } from '@/services/geminiService';
+import { NextRequest, NextResponse } from 'next/server';
 import unifiedAIService from '@/services/unifiedAIService';
-import { ENV } from '@/config/env';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { rateLimitConfigs, rateLimitMiddleware } from '@/lib/rateLimit';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { isPlatformAdminRole } from '@/lib/platformAdmin';
 
-export async function GET() {
-    const status = {
-        config: {
-            hasGeminiKey: !!ENV.VITE_GEMINI_API_KEY,
-            keyPrefix: ENV.VITE_GEMINI_API_KEY ? ENV.VITE_GEMINI_API_KEY.substring(0, 4) + '...' : 'NONE',
-            providers: unifiedAIService.getAvailableProviders()
-        },
-        tests: {
-            geminiDirect: null as any,
-            unifiedService: null as any
-        },
-        env_dump_keys: Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('GOOGLE') || k.includes('AI') || k.includes('API_KEY'))
-    };
+function getRequestIp(req: NextRequest): string {
+    const forwarded = req.headers.get('x-forwarded-for');
+    const firstForwarded = forwarded?.split(',')[0]?.trim();
+    return firstForwarded || req.headers.get('x-real-ip')?.trim() || 'unknown';
+}
 
-    // Test 1: Direct Gemini Service
+export async function GET(req: NextRequest) {
     try {
-        if (ENV.VITE_GEMINI_API_KEY) {
+        const limited = await rateLimitMiddleware(
+            req,
+            rateLimitConfigs.api.heavy,
+            `${getRequestIp(req)}:debug-ai`
+        );
+        if (limited) return limited;
+        const { user, supabase } = await requireAuthenticatedUser(req);
+        if (process.env.NODE_ENV === 'production') {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .maybeSingle();
+            if (!isPlatformAdminRole(profile?.role)) {
+                return NextResponse.json({ error: 'Not found' }, { status: 404 });
+            }
+        }
+
+        const status = {
+            config: {
+                providers: process.env.NODE_ENV === 'production' ? null : unifiedAIService.getAvailableProviders()
+            },
+            tests: {
+                unifiedService: null as any
+            },
+        };
+
+        try {
             const start = Date.now();
-            const res = await geminiService.generateContent("Say 'Gemini OK'");
-            status.tests.geminiDirect = {
-                success: !res.error && res.text?.includes('OK'),
-                result: res.text,
+            const res = await unifiedAIService.generateText("Say 'AlphaClone AI OK'", 10);
+            status.tests.unifiedService = {
+                success: !res.error && (res.text?.toLowerCase().includes('ok') || res.text?.toLowerCase().includes('alphaclone')),
+                result: process.env.NODE_ENV === 'production' ? null : res.text,
                 error: res.error,
                 latency: Date.now() - start
             };
-        } else {
-            status.tests.geminiDirect = { skipped: true, reason: 'No API Key' };
+        } catch (e: unknown) {
+            console.error('[debug-ai] unifiedService:', e);
+            status.tests.unifiedService = { success: false, error: 'Test failed' };
         }
-    } catch (e: any) {
-        status.tests.geminiDirect = { success: false, error: e.message };
-    }
 
-    // Test 2: Unified AI Service
-    try {
-        const start = Date.now();
-        const res = await unifiedAIService.generateText("Say 'Unified OK'", 10);
-        status.tests.unifiedService = {
-            success: !res.error && res.text?.includes('OK'),
-            result: res.text,
-            error: res.error,
-            latency: Date.now() - start
-        };
-    } catch (e: any) {
-        status.tests.unifiedService = { success: false, error: e.message };
+        return NextResponse.json(status);
+    } catch (err) {
+        return routeErrorResponse(err, 'Failed to run AI diagnostics', req);
     }
-
-    return NextResponse.json(status);
 }

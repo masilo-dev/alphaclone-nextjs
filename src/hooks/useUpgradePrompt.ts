@@ -1,23 +1,17 @@
 import { useState, useEffect } from 'react';
 import { quotaEnforcementService } from '../services/quotaEnforcementService';
 import { subscriptionService } from '../services/subscriptionService';
-import { useAuth } from '../contexts/AuthContext';
+import { useTenant } from '../contexts/TenantContext';
 
 /**
  * Hook to automatically show upgrade prompts when quotas are exceeded
  */
 export function useUpgradePrompt(metric: string) {
-    const { tenant } = useAuth();
+    const { currentTenant: tenant } = useTenant();
     const [showPrompt, setShowPrompt] = useState(false);
     const [currentTier, setCurrentTier] = useState('free');
     const [suggestedTier, setSuggestedTier] = useState('starter');
     const [usagePercent, setUsagePercent] = useState(0);
-
-    useEffect(() => {
-        if (!tenant) return;
-
-        checkQuota();
-    }, [tenant, metric]);
 
     async function checkQuota() {
         if (!tenant) return;
@@ -46,6 +40,12 @@ export function useUpgradePrompt(metric: string) {
         }
     }
 
+    useEffect(() => {
+        if (!tenant) return;
+
+        checkQuota();
+    }, [tenant, metric]);
+
     function hidePrompt() {
         setShowPrompt(false);
     }
@@ -63,13 +63,9 @@ export function useUpgradePrompt(metric: string) {
  * Hook to check if feature is available for current tier
  */
 export function useFeatureAvailable(feature: string) {
-    const { tenant } = useAuth();
+    const { currentTenant: tenant } = useTenant();
     const [isAvailable, setIsAvailable] = useState(true);
     const [requiresTier, setRequiresTier] = useState<string | null>(null);
-
-    useEffect(() => {
-        checkFeatureAvailability();
-    }, [tenant, feature]);
 
     function checkFeatureAvailability() {
         if (!tenant) {
@@ -106,6 +102,10 @@ export function useFeatureAvailable(feature: string) {
         setRequiresTier(requiredTier);
     }
 
+    useEffect(() => {
+        checkFeatureAvailability();
+    }, [tenant, feature]);
+
     return {
         isAvailable,
         requiresTier,
@@ -116,17 +116,11 @@ export function useFeatureAvailable(feature: string) {
  * Hook to track usage and show warning when approaching limit
  */
 export function useQuotaWarning(metric: string, warningThreshold: number = 80) {
-    const { tenant } = useAuth();
+    const { currentTenant: tenant } = useTenant();
     const [showWarning, setShowWarning] = useState(false);
     const [usagePercent, setUsagePercent] = useState(0);
     const [currentUsage, setCurrentUsage] = useState(0);
     const [limit, setLimit] = useState(0);
-
-    useEffect(() => {
-        if (!tenant) return;
-
-        loadUsage();
-    }, [tenant, metric]);
 
     async function loadUsage() {
         if (!tenant) return;
@@ -141,6 +135,12 @@ export function useQuotaWarning(metric: string, warningThreshold: number = 80) {
             setShowWarning(metricUsage.percentage_used >= warningThreshold);
         }
     }
+
+    useEffect(() => {
+        if (!tenant) return;
+
+        loadUsage();
+    }, [tenant, metric]);
 
     return {
         showWarning,
