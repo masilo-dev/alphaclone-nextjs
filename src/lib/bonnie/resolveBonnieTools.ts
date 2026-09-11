@@ -22,7 +22,7 @@ export async function resolveBonnieToolSets(): Promise<{
     };
   }
 
-  const all = await getUnifiedMcpTools({ catalogMode: 'full' });
+  const all = await getUnifiedMcpTools();
   const names = all.map((t) => t.name);
   const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
   initializeRegistry();

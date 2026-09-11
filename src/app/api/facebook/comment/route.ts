@@ -4,7 +4,6 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 
 type CommentRequestBody = {
-    tenantId?: string;
     pageId?: string;
     postId?: string;
     parentCommentId?: string;
@@ -44,23 +43,19 @@ export async function POST(req: NextRequest) {
 
     const body = (await req.json()) as CommentRequestBody;
     const pageId = body.pageId?.trim();
-    const tenantId = body.tenantId?.trim();
     const postId = body.postId?.trim();
     const parentCommentId = body.parentCommentId?.trim();
     const message = body.message?.trim();
 
-    if (!tenantId || !pageId || !message || (!postId && !parentCommentId)) {
+    if (!pageId || !message || (!postId && !parentCommentId)) {
         return NextResponse.json(
-            { error: 'tenantId, pageId, message, and postId or parentCommentId are required' },
+            { error: 'pageId, message, and postId or parentCommentId are required' },
             { status: 400 }
         );
     }
-    const { data: membership } = await supabase.from('tenant_users').select('tenant_id')
-        .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const admin = createSupabaseAdminClient();
-    const integration = await getFacebookIntegrationWithToken(admin, { tenantId, userId: user.id, pageId });
+    const integration = await getFacebookIntegrationWithToken(admin, { userId: user.id, pageId });
 
     const token = integration?.pageAccessToken;
     if (!token) {
@@ -75,7 +70,7 @@ export async function POST(req: NextRequest) {
     }
 
     const targetId = parentCommentId || postId;
-    const endpoint = `https://graph.facebook.com/v21.0/${targetId}/comments`;
+    const endpoint = `https://graph.facebook.com/v19.0/${targetId}/comments`;
 
     const params = new URLSearchParams();
     params.set('message', message);

@@ -33,12 +33,12 @@ export const authSecurityService = {
             const encryptedSecret = await encryptIntegrationToken(secret);
             const encryptedBackupCodes = await encryptIntegrationToken(JSON.stringify(backupCodes));
 
-            // Store secret pending verification — do not enable until TOTP proves possession
+            // Store secret in database (encrypted at rest)
             const { error } = await supabase
                 .from('user_security')
                 .upsert({
                     user_id: userId,
-                    two_factor_enabled: false,
+                    two_factor_enabled: true,
                     two_factor_secret: encryptedSecret,
                     backup_codes: encryptedBackupCodes,
                     updated_at: new Date().toISOString(),
@@ -94,20 +94,9 @@ export const authSecurityService = {
                 const updatedCodes = backupCodes.filter((c: string) => c !== code);
                 await supabase
                     .from('user_security')
-                    .update({
-                      backup_codes: await encryptIntegrationToken(JSON.stringify(updatedCodes)),
-                      two_factor_enabled: true,
-                    })
+                    .update({ backup_codes: await encryptIntegrationToken(JSON.stringify(updatedCodes)) })
                     .eq('user_id', userId);
                 return { valid: true, error: null };
-            }
-
-            if (isValid) {
-                // First successful verify completes enrollment
-                await supabase
-                    .from('user_security')
-                    .update({ two_factor_enabled: true, updated_at: new Date().toISOString() })
-                    .eq('user_id', userId);
             }
 
             return { valid: isValid, error: null };
@@ -191,6 +180,27 @@ export const authSecurityService = {
             return {
                 success: false,
                 error: error instanceof Error ? error.message : 'Failed to setup SSO',
+            };
+        }
+    },
+
+    /**
+     * Authenticate via SSO
+     */
+    async authenticateSSO(_providerId: string, _token: string): Promise<{ user: any; error: string | null }> {
+        try {
+            // Verify SSO token and get user info
+            // This would integrate with the actual SSO provider (Google, Microsoft, etc.)
+            // For now, return a placeholder
+
+            return {
+                user: null,
+                error: 'SSO authentication not fully implemented',
+            };
+        } catch (error) {
+            return {
+                user: null,
+                error: error instanceof Error ? error.message : 'SSO authentication failed',
             };
         }
     },

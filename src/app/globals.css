@@ -1,134 +1,36 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* `dark:` utilities follow the theme class the app manages on <html>
-   (see applyAcThemeClass), not the OS preference. Without this, a user on a
-   dark OS who picks the light theme still gets dark tab bars, inputs and
-   panels wherever `dark:` classes are used. When neither class is present
-   (before hydration) fall back to the OS preference. */
-@custom-variant dark {
-  &:where(html.dark, html.dark *) {
-    @slot;
-  }
-  @media (prefers-color-scheme: dark) {
-    &:where(html:not(.light):not(.dark), html:not(.light):not(.dark) *) {
-      @slot;
-    }
-  }
-}
-
 .ios-scroll {
   -webkit-overflow-scrolling: touch;
 }
 
 @theme {
-  --font-sans: var(--font-space-grotesk-next, "Space Grotesk"), "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
-  --font-inter: var(--font-inter-next, "Inter Variable"), "Inter", system-ui, sans-serif;
-  --font-heading: var(--font-space-grotesk-next, "Space Grotesk"), "Inter Variable", "Inter", system-ui, sans-serif;
-  --font-body: var(--font-space-grotesk-next, "Space Grotesk"), "Inter Variable", "Inter", system-ui, sans-serif;
-  --color-ac-accent: #356AF4;
-  --color-ac-accent-hover: #5F8FFF;
-  --color-ac-accent-deep: #2553DD;
-  --color-ac-dashboard-bg: #0C1220;
-  --color-ac-dashboard-surface: #121A2A;
-  --color-ac-dashboard-surface-2: #172133;
-  --color-ac-dashboard-text: #F4F7FC;
-  --color-ac-dashboard-text-muted: #8491A6;
-  --color-ac-dashboard-mint: #6FE0AD;
-  --color-ac-dashboard-mint-strong: #16A36A;
-  --color-ac-dashboard-electric: #5F8FFF;
-  --color-ac-dashboard-violet: #8950F5;
-  --color-ac-dashboard-peach: #E69222;
+  --font-inter: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-heading: "Space Grotesk", "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-body: "Inter Variable", "Inter", system-ui, sans-serif;
+  --color-ac-accent: #14b8a6;
+  --color-ac-accent-hover: #2dd4bf;
+  --color-ac-accent-deep: #0d9488;
+  --color-ac-dashboard-bg: #0f172a;
+  --color-ac-dashboard-surface: #1a1a1a;
+  --color-ac-dashboard-surface-2: #2f2f2f;
+  --color-ac-dashboard-text: #f5f5f5;
+  --color-ac-dashboard-text-muted: #c0c0c0;
+  --color-ac-dashboard-mint: #adebb3;
+  --color-ac-dashboard-mint-strong: #3eb489;
+  --color-ac-dashboard-electric: #00f0ff;
+  --color-ac-dashboard-violet: #7f00ff;
+  --color-ac-dashboard-peach: #ffb347;
 }
 
 :root {
-  /* Alphaclone Systems semantic foundation */
-  --brand-navy: #212446;
-  --brand-teal: #4199A4;
-  --brand-coral: #FB7268;
-  --background-app: #F6F7F9;
-  --background-subtle: #EFF1F4;
-  --surface-primary: #FFFFFF;
-  --surface-secondary: #F9FAFB;
-  --surface-elevated: #FFFFFF;
-  --surface-hover: #F3F5F7;
-  --text-primary: #171923;
-  --text-secondary: #4A5061;
-  --text-muted: #6B717F;
-  --text-inverse: #FFFFFF;
-  --border-subtle: rgba(33, 36, 70, 0.09);
-  --border-default: rgba(33, 36, 70, 0.14);
-  --border-strong: rgba(33, 36, 70, 0.24);
-  --interactive-primary: #FB7268;
-  --interactive-primary-hover: #F56359;
-  --interactive-secondary: #4199A4;
-  --interactive-secondary-hover: #388A94;
-  --success: #2E9B72;
-  --warning: #D99728;
-  --danger: #D85858;
-  --info: #4199A4;
-  --focus-ring: rgba(65, 153, 164, 0.35);
-  --backlight-idle-opacity: 0.03;
-  --backlight-hover-opacity: 0.07;
-  --backlight-active-opacity: 0.12;
-  --backlight-focus-opacity: 0.15;
-  --duration-fast: 120ms;
-  --duration-standard: 200ms;
-  --duration-slow: 320ms;
-  --duration-ambient: 45000ms;
-
-  /* Alphaclone OS brand */
-  --brand-blue-50: #EEF4FF;
-  --brand-blue-100: #DCE8FF;
-  --brand-blue-200: #BED3FF;
-  --brand-blue-300: #91B5FF;
-  --brand-blue-400: #5F8FFF;
-  --brand-blue-500: #356AF4;
-  --brand-blue-600: #2553DD;
-  --brand-blue-700: #2043B8;
-  --brand-blue-800: #213B91;
-  --brand-blue-900: #203570;
-  --brand-blue-950: #151F42;
-  --brand-violet-50: #F5F1FF;
-  --brand-violet-100: #ECE5FF;
-  --brand-violet-200: #DDD0FF;
-  --brand-violet-300: #C4AAFF;
-  --brand-violet-400: #A77BFF;
-  --brand-violet-500: #8950F5;
-  --brand-violet-600: #7434DE;
-  --brand-violet-700: #6128B9;
-  --brand-violet-800: #512697;
-  --brand-violet-900: #45247B;
-  --brand-violet-950: #2B1253;
-
-  --success-50: #EAFBF3;
-  --success-100: #CCF5E2;
-  --success-500: #16A36A;
-  --success-600: #118557;
-  --success-700: #106A49;
-  --warning-50: #FFF7E8;
-  --warning-100: #FDEBC4;
-  --warning-500: #E69222;
-  --warning-600: #C87516;
-  --warning-700: #A75A15;
-  --error-50: #FFF0F1;
-  --error-100: #FFDADC;
-  --error-500: #D64545;
-  --error-600: #B93636;
-  --error-700: #972E2E;
-  --info-50: #EBF7FF;
-  --info-100: #D5EEFF;
-  --info-500: #3196E8;
-  --info-600: #217CC7;
-  --info-700: #2165A0;
-
-  --ac-accent: #356AF4;
-  --ac-accent-hover: #5F8FFF;
-  --ac-accent-deep: #2553DD;
-  --ac-accent-muted: rgba(53, 106, 244, 0.12);
-  --ac-bonnie: #8950F5;
-  --ac-bonnie-hover: #A77BFF;
+  --ac-accent: #14b8a6;
+  --ac-accent-hover: #2dd4bf;
+  --ac-accent-deep: #0d9488;
+  --ac-accent-muted: rgba(20, 184, 166, 0.12);
   --ac-mobile-nav-offset: calc(5.25rem + env(safe-area-inset-bottom, 0px));
   --surface-1: #f8fafc;
   --dashboard-green: #639922;
@@ -139,13 +41,13 @@
   --dashboard-red-bg: #FCEBEB;
   --dashboard-blue: #378ADD;
   --dashboard-blue-bg: #E6F1FB;
-  --dashboard-bg: rgba(9, 14, 21, 0.24);
-  --dashboard-surface: rgba(18, 25, 34, 0.54);
-  --dashboard-surface-strong: rgba(21, 28, 37, 0.62);
-  --dashboard-surface-soft: rgba(38, 47, 58, 0.5);
+  --dashboard-bg: #0f172a;
+  --dashboard-surface: rgba(15, 23, 42, 0.82);
+  --dashboard-surface-strong: rgba(26, 26, 26, 0.88);
+  --dashboard-surface-soft: rgba(47, 47, 47, 0.72);
   --dashboard-border: rgba(148, 163, 184, 0.16);
-  --dashboard-text: #ffffff;
-  --dashboard-text-muted: #d8dde8;
+  --dashboard-text: #f5f5f5;
+  --dashboard-text-muted: #c0c0c0;
   --dashboard-mint: #adebb3;
   --dashboard-mint-strong: #3eb489;
   --dashboard-electric: #00f0ff;
@@ -159,31 +61,6 @@
 .dark,
 .ac-business-root {
   --surface-1: rgba(30, 41, 59, 0.65);
-}
-
-html.dark {
-  --background-app: #0D0F18;
-  --background-subtle: #121520;
-  --surface-primary: #171A26;
-  --surface-secondary: #1B1E2B;
-  --surface-elevated: #202432;
-  --surface-hover: #252936;
-  --text-primary: #ffffff;
-  --text-secondary: #d8dde8;
-  --text-muted: #a8b0c2;
-  --text-inverse: #171923;
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.18);
-  --interactive-primary: #FB7268;
-  --interactive-primary-hover: #FF837A;
-  --interactive-secondary: #5AAAB3;
-  --interactive-secondary-hover: #71BBC3;
-  --success: #4DB48D;
-  --warning: #E5A84A;
-  --danger: #ED7070;
-  --info: #62B0B9;
-  --focus-ring: rgba(90, 170, 179, 0.42);
 }
 
 /* Marketing Theme Definitions */
@@ -299,103 +176,76 @@ html {
 body {
   background-color: #020D1A;
   background-image:
-    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(125, 211, 252, 0.1), transparent 72%),
-    linear-gradient(180deg, rgba(2, 6, 23, 0.82) 0%, rgba(2, 6, 23, 0.92) 100%);
+    linear-gradient(180deg, rgba(2, 6, 23, 0.80) 0%, rgba(2, 6, 23, 0.88) 45%, rgba(2, 6, 23, 0.94) 100%),
+    url("/marketing-bg-v2.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-attachment: fixed;
   color: var(--foreground);
   scroll-behavior: smooth;
   @apply text-base antialiased;
   overflow-x: clip;
 }
 
-@media (min-width: 1024px) {
-  body {
-    background-attachment: fixed;
-  }
-}
-
 /* Dashboard light theme: main shell surfaces (inner widgets keep their own styles) */
-html.light .ac-dashboard-root,
-[data-theme="light"] .ac-dashboard-root {
-  background-color: #F5F7FB;
-  color: #111827;
+html.light .ac-dashboard-root {
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
 html.light .ac-dashboard-shell-bg,
-html.light .ac-dashboard-main,
-[data-theme="light"] .ac-dashboard-shell-bg,
-[data-theme="light"] .ac-dashboard-main {
-  background-color: #F5F7FB;
+html.light .ac-dashboard-main {
+  background-color: #f1f5f9;
 }
 
-html.light .ac-dashboard-header,
-[data-theme="light"] .ac-dashboard-header {
+html.light .ac-dashboard-header {
   background-color: rgba(255, 255, 255, 0.92);
   border-bottom-color: #e2e8f0;
 }
 
-html.light .ac-dashboard-mobile-title,
-[data-theme="light"] .ac-dashboard-mobile-title {
+html.light .ac-dashboard-mobile-title {
   color: #0f172a;
 }
 
 html.light .ac-business-root,
 html.light .ac-business-main,
-html.light .ac-business-scroll,
-[data-theme="light"] .ac-business-root,
-[data-theme="light"] .ac-business-main,
-[data-theme="light"] .ac-business-scroll {
+html.light .ac-business-scroll {
   background-color: #f1f5f9;
   color: #0f172a;
 }
 
-html.light .ac-business-header,
-[data-theme="light"] .ac-business-header {
+html.light .ac-business-header {
   background-color: rgba(255, 255, 255, 0.95);
   border-bottom-color: #e2e8f0;
 }
 
-html.light .ac-business-header h1,
-[data-theme="light"] .ac-business-header h1 {
+html.light .ac-business-header h1 {
   color: rgb(15 23 42 / 0.9);
 }
 
 /* Broader light surfaces inside dashboard content (cards and panels) */
 html.light #main-content .bg-slate-950,
-html.light .ac-business-scroll .bg-slate-950,
-[data-theme="light"] #main-content .bg-slate-950,
-[data-theme="light"] .ac-business-scroll .bg-slate-950 {
+html.light .ac-business-scroll .bg-slate-950 {
   background-color: #f1f5f9 !important;
 }
 
 html.light #main-content .bg-slate-900,
-html.light .ac-business-scroll .bg-slate-900,
-[data-theme="light"] #main-content .bg-slate-900,
-[data-theme="light"] .ac-business-scroll .bg-slate-900 {
+html.light .ac-business-scroll .bg-slate-900 {
   background-color: #f8fafc !important;
 }
 
 html.light #main-content .border-slate-800,
 html.light .ac-business-scroll .border-slate-800,
 html.light #main-content .border-slate-700,
-html.light .ac-business-scroll .border-slate-700,
-[data-theme="light"] #main-content .border-slate-800,
-[data-theme="light"] .ac-business-scroll .border-slate-800,
-[data-theme="light"] #main-content .border-slate-700,
-[data-theme="light"] .ac-business-scroll .border-slate-700 {
+html.light .ac-business-scroll .border-slate-700 {
   border-color: #e2e8f0 !important;
 }
 
 html.light #main-content .text-slate-200,
 html.light .ac-business-scroll .text-slate-200,
 html.light #main-content .text-slate-300,
-html.light .ac-business-scroll .text-slate-300,
-[data-theme="light"] #main-content .text-slate-200,
-[data-theme="light"] .ac-business-scroll .text-slate-200,
-[data-theme="light"] #main-content .text-slate-300,
-[data-theme="light"] .ac-business-scroll .text-slate-300 {
+html.light .ac-business-scroll .text-slate-300 {
   color: #334155 !important;
 }
 
@@ -444,11 +294,13 @@ html.light .ac-business-scroll .text-slate-300,
   color: #dbe6f4;
 }
 
-/* ─── Unified Dark Dashboard Text Scale ─────────────────────────────────────
-   Single source of truth for all text colours inside .ac-dashboard-root
-   and .ac-business-root. Tailwind utility classes are promoted to this scale
-   so inline classes produce consistent, bright, readable results.
-──────────────────────────────────────────────────────────────────────────── */
+/* Improve readability for low-contrast dashboard helper text */
+.ac-dashboard-root .text-slate-400,
+.ac-business-root .text-slate-400,
+.ac-business-scroll .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
 .ac-dashboard-root,
 .ac-business-root {
   color: var(--dashboard-text);
@@ -459,102 +311,59 @@ html.light .ac-business-scroll .text-slate-300,
     linear-gradient(180deg, #0f172a 0%, #0b1220 58%, #020617 100%);
 }
 
-/* text-white / text-slate-50 → pure white */
 .ac-dashboard-root .text-white,
-.ac-business-root .text-white,
-.ac-dashboard-root .text-slate-50,
-.ac-business-root .text-slate-50 {
-  color: #ffffff !important;
+.ac-business-root .text-white {
+  color: var(--dashboard-text) !important;
 }
 
-/* text-slate-100 / text-slate-200 → near-white (primary body) */
-.ac-dashboard-root .text-slate-100,
-.ac-business-root .text-slate-100,
 .ac-dashboard-root .text-slate-200,
 .ac-business-root .text-slate-200 {
-  color: #f0f2f7 !important;
+  color: #e5e7eb !important;
 }
 
-/* text-slate-300 → secondary text */
 .ac-dashboard-root .text-slate-300,
 .ac-business-root .text-slate-300 {
-  color: #d8dde8 !important;
+  color: #d1d5db !important;
 }
 
-/* text-slate-400 → muted / helper text */
 .ac-dashboard-root .text-slate-400,
-.ac-business-root .text-slate-400,
-.ac-business-scroll .text-slate-400 {
-  color: #a8b0c2 !important;
+.ac-business-root .text-slate-400 {
+  color: #c0c0c0 !important;
 }
 
-/* text-slate-500 → disabled / de-emphasised */
 .ac-dashboard-root .text-slate-500,
 .ac-business-root .text-slate-500 {
-  color: #8891a8 !important;
+  color: #94a3b8 !important;
 }
 
-/* text-slate-600 → timestamps / metadata */
-.ac-dashboard-root .text-slate-600,
-.ac-business-root .text-slate-600 {
-  color: #6e7a96 !important;
-}
-
-/* Accent colours — kept vibrant against dark canvas */
 .ac-dashboard-root [class*="text-teal-"],
 .ac-business-root [class*="text-teal-"] {
-  color: #5eead4 !important;
-}
-
-.ac-dashboard-root [class*="text-cyan-"],
-.ac-business-root [class*="text-cyan-"] {
-  color: #67e8f9 !important;
+  color: #adebb3 !important;
 }
 
 .ac-dashboard-root [class*="text-blue-"],
 .ac-business-root [class*="text-blue-"] {
-  color: #93c5fd !important;
+  color: var(--dashboard-blue) !important;
 }
 
 .ac-dashboard-root [class*="text-violet-"],
 .ac-business-root [class*="text-violet-"] {
-  color: #c4b5fd !important;
+  color: #7f00ff !important;
 }
 
 .ac-dashboard-root [class*="text-emerald-"],
 .ac-business-root [class*="text-emerald-"] {
-  color: #6ee7b7 !important;
+  color: #3eb489 !important;
 }
 
 .ac-dashboard-root [class*="text-amber-"],
 .ac-business-root [class*="text-amber-"] {
-  color: #fcd34d !important;
+  color: #ffb347 !important;
 }
 
 .ac-dashboard-root [class*="text-rose-"],
 .ac-business-root [class*="text-rose-"] {
-  color: #fda4af !important;
-}
-
-.ac-dashboard-root button[aria-pressed="true"],
-.ac-business-root button[aria-pressed="true"],
-.ac-dashboard-root [role="tab"][aria-selected="true"],
-.ac-business-root [role="tab"][aria-selected="true"],
-.ac-dashboard-root [data-state="active"],
-.ac-business-root [data-state="active"],
-.ac-dashboard-root a[aria-current="page"],
-.ac-business-root a[aria-current="page"] {
-  color: var(--ws-text-primary) !important;
-  background: color-mix(in srgb, var(--module-accent, var(--brand-blue-500)) 22%, var(--ws-surface-primary)) !important;
-  border-color: color-mix(in srgb, var(--module-accent, var(--brand-blue-500)) 55%, var(--ws-border)) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px color-mix(in srgb, var(--module-accent, var(--brand-blue-500)) 16%, transparent);
-}
-
-.ac-dashboard-root svg,
-.ac-business-root svg {
-  filter: brightness(1.12);
+  color: #f87171 !important;
 }
 
 .ac-dashboard-root .bg-slate-950,
@@ -640,18 +449,20 @@ html.light .ac-business-scroll .text-slate-300,
 }
 
 .dashboard-panel {
-  background: #0f172a;
-  background: linear-gradient(180deg, #111a2e 0%, #0d1526 100%);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.78) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.14);
   box-shadow:
     0 20px 40px -24px rgba(2, 6, 23, 0.65),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
 }
 
 .dashboard-panel-soft {
-  background: #141c2c;
-  background: linear-gradient(180deg, #162033 0%, #111928 100%);
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  background:
+    linear-gradient(180deg, rgba(26, 26, 26, 0.9) 0%, rgba(20, 24, 31, 0.85) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.12);
   box-shadow:
     0 18px 36px -24px rgba(2, 6, 23, 0.58),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
@@ -677,17 +488,6 @@ html.light .ac-business-scroll .text-slate-300,
   background: linear-gradient(180deg, rgba(45, 212, 191, 0.22) 0%, rgba(20, 184, 166, 0.12) 100%);
   border: 1px solid rgba(45, 212, 191, 0.45);
   color: #ccfbf1;
-}
-
-html.light .next-step-highlight {
-  background: linear-gradient(180deg, rgba(20, 184, 166, 0.14) 0%, rgba(20, 184, 166, 0.06) 100%);
-  border: 1px solid rgba(20, 184, 166, 0.35);
-  color: #0f766e;
-}
-
-/* Auth / marketing pages in light mode — avoid dark-only network bg + card */
-html.light .page-network-bg.marketing-theme {
-  background: linear-gradient(135deg, #f6f7f9 0%, #eef1f4 50%, #f6f7f9 100%);
 }
 
 .marketing-theme button,
@@ -796,11 +596,13 @@ html {
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(15, 30, 54, 0.94) 0%, rgba(8, 20, 40, 0.92) 100%);
-  border: 1px solid rgba(45, 212, 191, 0.16);
+  background: linear-gradient(135deg, rgba(15, 30, 54, 0.85) 0%, rgba(8, 20, 40, 0.75) 100%);
+  border: 1px solid rgba(45, 212, 191, 0.12);
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 
@@ -815,8 +617,10 @@ html {
 
 /* Deeper glassmorphism for modals and floating panels */
 .glass-panel {
-  background: rgba(7, 15, 30, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(7, 15, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
 @keyframes scroll-text {
@@ -990,44 +794,6 @@ a {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 10px;
-}
-
-/* Inbox reading pane: always-visible scrollbar so a long message can be
-   scrolled with the wheel without clicking the message body first. */
-.ac-email-reader-scroll {
-  scrollbar-gutter: stable;
-  scrollbar-width: auto;
-  scrollbar-color: #64748b #1e293b;
-  overscroll-behavior: contain;
-}
-.ac-email-reader-scroll::-webkit-scrollbar {
-  width: 12px;
-}
-.ac-email-reader-scroll::-webkit-scrollbar-track {
-  background: #1e293b;
-  border-radius: 8px;
-}
-.ac-email-reader-scroll::-webkit-scrollbar-thumb {
-  background: #64748b;
-  border-radius: 8px;
-}
-html.light .ac-email-reader-scroll {
-  scrollbar-color: #94a3b8 #e2e8f0;
-}
-html.light .ac-email-reader-scroll::-webkit-scrollbar-track {
-  background: #e2e8f0;
-}
-html.light .ac-email-reader-scroll::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
 }
 
 html,
@@ -1434,12 +1200,16 @@ html.pwa-standalone body,
 html.pwa-standalone,
 .ac-dashboard-root,
 .ac-business-root {
-  height: 100%;
   height: 100dvh;
-  width: 100%;
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-text-size-adjust: 100%;
+}
+
+html.pwa-standalone body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
 }
 
 button, a, select, input, textarea, [role="button"], tr, .clickable-row {
@@ -1546,42 +1316,6 @@ html.pwa-standalone .pwa-page-title {
   box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.35);
 }
 
-/* Installed touch PWAs must not inherit Tailwind's tablet/desktop shell at
-   iPad viewport widths. Keyboard/mouse iPads keep the normal responsive shell. */
-@media (pointer: coarse) and (max-width: 1366px) {
-  html.pwa-standalone .ac-responsive-sidebar {
-    position: fixed !important;
-    width: 240px !important;
-    padding-bottom: min(env(safe-area-inset-bottom, 0px), 20px) !important;
-  }
-
-  html.pwa-standalone .ac-responsive-sidebar[data-open="false"] {
-    width: 0 !important;
-    transform: translateX(-100%) !important;
-  }
-
-  html.pwa-standalone .ac-responsive-sidebar[data-open="true"] {
-    transform: translateX(0) !important;
-  }
-
-  html.pwa-standalone .ac-mobile-sidebar-overlay,
-  html.pwa-standalone .ac-responsive-bottom-nav,
-  html.pwa-standalone .ac-responsive-more-sheet,
-  html.pwa-standalone .ac-pwa-touch-only {
-    display: block !important;
-  }
-
-  html.pwa-standalone .ac-business-scroll,
-  html.pwa-standalone .ac-dashboard-main {
-    padding-bottom: calc(4.25rem + min(env(safe-area-inset-bottom, 0px), 20px));
-  }
-}
-
-.ac-page-transition {
-  min-height: inherit;
-  transform-origin: 50% 12%;
-}
-
 .native-tap {
   min-height: 44px;
   touch-action: manipulation;
@@ -1685,19 +1419,17 @@ html.pwa-standalone .pwa-page-title {
 @media (max-width: 767px) {
   .dashboard-content-padding {
     padding: 0.75rem !important;
-    padding-bottom: calc(4.25rem + min(env(safe-area-inset-bottom, 0px), 20px)) !important;
+    padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .ac-dashboard-header,
   .ac-business-header {
-    min-height: calc(52px + env(safe-area-inset-top, 0px));
-    padding-top: env(safe-area-inset-top, 0.5rem) !important;
-    height: auto !important;
+    min-height: calc(56px + env(safe-area-inset-top, 0px));
   }
 
   .ac-dashboard-main,
   .ac-business-scroll {
-    scroll-padding-bottom: calc(4.5rem + min(env(safe-area-inset-bottom, 0px), 20px));
+    scroll-padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1797,84 +1529,37 @@ html.pwa-standalone .pwa-page-title {
   animation: ac-skeleton-pulse 0.9s ease-in-out infinite;
 }
 
-/* ── Alphaclone OS workspace (dashboard shells) ── */
+/* ── Figma-like workspace (dashboard shells) ── */
 .ac-dashboard-root,
 .ac-business-root {
-  --ws-sidebar: #15182A;
-  --ws-canvas: var(--background-app);
-  /* Sticky workspace headers must be opaque: form text must never show through. */
-  --ws-toolbar: #171A26;
-  /* Panels can carry forms, menus and controls. Keep their reading surface
-     solid so workspace content never competes with text above it. */
-  --ws-panel: #171A26;
-  --ws-panel-hover: #252936;
-  --ws-surface-primary: var(--surface-primary);
-  --ws-surface-secondary: var(--surface-secondary);
-  --ws-surface-tertiary: var(--surface-elevated);
-  --ws-border: var(--border-default);
-  --ws-border-strong: var(--border-strong);
-  --ws-hover: var(--surface-hover);
-  --ws-active: color-mix(in srgb, var(--brand-teal) 16%, var(--surface-primary));
-  --ws-text-primary: var(--text-primary);
-  --ws-text-secondary: var(--text-secondary);
-  --ws-text-tertiary: var(--text-muted);
-  --ws-text-muted: var(--text-muted);
-  --ws-text-disabled: #656A78;
-  --ws-radius: 10px;
-  --ws-radius-lg: 16px;
-  --ws-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
-  --ws-card-shadow-hover: 0 8px 22px rgba(0, 0, 0, 0.28);
-  --success-surface: #102A22;
-  --success-border: #1B5543;
-  --success-text: #6FE0AD;
-  --warning-surface: #302413;
-  --warning-border: #61451B;
-  --warning-text: #F5C46F;
-  --error-surface: #32191D;
-  --error-border: #6A2C32;
-  --error-text: #FF9097;
-  --info-surface: #11283C;
-  --info-border: #235579;
-  --info-text: #77C4FF;
-  font-family: "Space Grotesk", "Inter Variable", "Inter", system-ui, sans-serif;
-  font-feature-settings: "tnum" 1;
-  color: var(--ws-text-primary);
+  --ws-sidebar: #1e1e1e;
+  --ws-canvas: #161616;
+  --ws-toolbar: #1e1e1e;
+  --ws-panel: #262626;
+  --ws-panel-hover: #2e2e2e;
+  --ws-border: rgba(255, 255, 255, 0.08);
+  --ws-border-strong: rgba(255, 255, 255, 0.12);
+  --ws-hover: rgba(255, 255, 255, 0.06);
+  --ws-active: rgba(20, 184, 166, 0.14);
+  --ws-text-secondary: #b3b3b3;
+  --ws-text-tertiary: #8c8c8c;
+  --ws-radius: 6px;
+  --ws-radius-lg: 8px;
 }
 
 html.light .ac-dashboard-root,
 html.light .ac-business-root {
-  /* Sidebar stays deep navy in light mode */
-  --ws-sidebar: #212446;
-  --ws-canvas: var(--background-app);
-  --ws-toolbar: #FFFFFF;
-  --ws-panel: var(--surface-primary);
-  --ws-panel-hover: var(--surface-hover);
-  --ws-surface-primary: var(--surface-primary);
-  --ws-surface-secondary: var(--surface-secondary);
-  --ws-surface-tertiary: var(--background-subtle);
-  --ws-border: var(--border-default);
-  --ws-border-strong: var(--border-strong);
-  --ws-hover: var(--surface-hover);
-  --ws-active: #EAF3F4;
-  --ws-text-primary: var(--text-primary);
-  --ws-text-secondary: var(--text-secondary);
-  --ws-text-tertiary: var(--text-muted);
-  --ws-text-muted: var(--text-muted);
-  --ws-text-disabled: #A0A5B0;
-  --ws-card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-  --ws-card-shadow-hover: 0 6px 18px rgba(16, 24, 40, 0.07);
-  --success-surface: #EAFBF3;
-  --success-border: #CCF5E2;
-  --success-text: #118557;
-  --warning-surface: #FFF7E8;
-  --warning-border: #FDEBC4;
-  --warning-text: #C87516;
-  --error-surface: #FFF0F1;
-  --error-border: #FFDADC;
-  --error-text: #B93636;
-  --info-surface: #EBF7FF;
-  --info-border: #D5EEFF;
-  --info-text: #217CC7;
+  --ws-sidebar: #ffffff;
+  --ws-canvas: #f0f0f0;
+  --ws-toolbar: #ffffff;
+  --ws-panel: #ffffff;
+  --ws-panel-hover: #f5f5f5;
+  --ws-border: rgba(0, 0, 0, 0.08);
+  --ws-border-strong: rgba(0, 0, 0, 0.12);
+  --ws-hover: rgba(0, 0, 0, 0.04);
+  --ws-active: rgba(20, 184, 166, 0.12);
+  --ws-text-secondary: #5c5c5c;
+  --ws-text-tertiary: #8c8c8c;
 }
 
 .ac-workspace-sidebar {
@@ -1885,18 +1570,7 @@ html.light .ac-business-root {
 .ac-workspace-canvas,
 .ac-dashboard-main.ac-workspace-canvas,
 .ac-business-scroll.ac-workspace-canvas {
-  background:
-    radial-gradient(ellipse 62% 42% at 86% 3%, rgba(65, 153, 164, 0.10), transparent 74%),
-    radial-gradient(ellipse 38% 32% at 8% 88%, rgba(251, 114, 104, 0.035), transparent 76%),
-    linear-gradient(180deg, #0D0F18 0%, #10131E 52%, #0D0F18 100%);
-}
-
-html.light .ac-workspace-canvas,
-html.light .ac-dashboard-main.ac-workspace-canvas,
-html.light .ac-business-scroll.ac-workspace-canvas {
-  background:
-    radial-gradient(ellipse 58% 38% at 88% 2%, rgba(65, 153, 164, 0.045), transparent 76%),
-    linear-gradient(180deg, #F8F9FB 0%, var(--background-app) 100%);
+  background-color: var(--ws-canvas);
 }
 
 .ac-workspace-toolbar,
@@ -1911,56 +1585,17 @@ html.light .ac-business-scroll.ac-workspace-canvas {
   background-color: var(--ws-panel);
   border: 1px solid var(--ws-border);
   border-radius: var(--ws-radius-lg);
-  box-shadow: var(--ws-card-shadow);
-  transition: border-color 150ms ease, box-shadow 180ms ease, transform 180ms ease, background-color 150ms ease;
-  backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.03),
+    0 8px 24px rgba(0, 0, 0, 0.22);
+  transition: border-color 140ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
-.ac-module-frame {
-  padding: clamp(0.75rem, 1.8vw, 1.5rem);
-}
-
-.ac-module-frame-body {
-  min-width: 0;
-}
-
-.ac-enterprise-module {
-  background-color: transparent !important;
-}
-
-.ac-enterprise-module > [class*="bg-slate-950"],
-.ac-enterprise-module [class*="bg-slate-950/"] {
-  background-color: rgba(8, 14, 27, 0.26) !important;
-}
-
-@media (max-width: 767px) {
-  .ac-module-frame {
-    padding: 0.75rem;
-  }
-}
-
-.ac-kpi-card--interactive:hover,
 .ac-metric-card:hover {
   transform: translateY(-1px);
-  border-color: var(--ws-border-strong);
-  box-shadow: var(--ws-card-shadow-hover);
-}
-
-html.light .ac-kpi-card--interactive:hover {
-  background: var(--ws-surface-primary);
-}
-
-.ac-dashboard-root .ac-kpi-card--interactive:hover,
-.ac-business-root .ac-kpi-card--interactive:hover {
-  background: var(--ws-panel-hover);
-}
-
-.ac-bonnie-insight {
-  border-color: color-mix(in srgb, var(--brand-violet-500) 22%, var(--ws-border));
-}
-
-.ac-bonnie-insight__icon {
-  background: color-mix(in srgb, var(--brand-violet-500) 14%, transparent);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    0 12px 28px rgba(0, 0, 0, 0.28);
 }
 
 .ac-metric-enter {
@@ -2040,12 +1675,12 @@ html.light .ac-kpi-card--interactive:hover {
 
 .ac-workspace-nav-item:hover {
   background-color: var(--ws-hover);
-  color: #F4F7FC;
+  color: #fff;
 }
 
 .ac-workspace-nav-item--active {
   background-color: var(--ws-active);
-  color: #F4F7FC;
+  color: #fff;
 }
 
 .ac-workspace-nav-item--active::before {
@@ -2056,7 +1691,7 @@ html.light .ac-kpi-card--interactive:hover {
   bottom: 6px;
   width: 2px;
   border-radius: 2px;
-  background: var(--brand-teal);
+  background: var(--ac-accent);
 }
 
 .ac-workspace-nav-subitem {
@@ -2074,7 +1709,7 @@ html.light .ac-kpi-card--interactive:hover {
 
 .ac-workspace-nav-subitem:hover {
   background-color: var(--ws-hover);
-  color: #F4F7FC;
+  color: #fff;
 }
 
 .ac-workspace-nav-subitem--active {
@@ -2101,8 +1736,8 @@ html.light .ac-kpi-card--interactive:hover {
 }
 
 .ac-workspace-tab--active {
-  color: var(--ws-text-primary);
-  border-bottom-color: var(--brand-teal);
+  color: #fff;
+  border-bottom-color: var(--ac-accent);
 }
 
 .ac-workspace-callout {
@@ -2116,99 +1751,29 @@ html.light .ac-kpi-card--interactive:hover {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border-radius: var(--ws-radius);
   border: 1px solid var(--ws-border-strong);
   background: var(--ws-panel-hover);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--ws-text-primary);
-  transition: background-color 150ms ease, border-color 150ms ease;
+  color: #fff;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 
 .ac-workspace-action-btn:hover {
-  background: color-mix(in srgb, var(--ws-panel-hover) 80%, white 12%);
+  background: color-mix(in srgb, var(--ws-panel-hover) 80%, white 20%);
   border-color: color-mix(in srgb, var(--ac-accent) 40%, var(--ws-border-strong));
 }
 
 .ac-workspace-action-btn--primary {
-  background: var(--interactive-primary);
-  border-color: var(--interactive-primary);
-  color: #fff;
+  background: var(--ac-accent-deep);
+  border-color: var(--ac-accent);
 }
 
 .ac-workspace-action-btn--primary:hover {
-  background: var(--interactive-primary-hover);
-  border-color: var(--interactive-primary-hover);
-}
-
-.ac-workspace-action-btn--bonnie {
-  background: var(--interactive-secondary);
-  border-color: var(--interactive-secondary);
-  color: #fff;
-}
-
-.ac-workspace-action-btn--bonnie:hover {
-  background: var(--interactive-secondary-hover);
-  border-color: var(--interactive-secondary-hover);
-}
-
-.ac-backlit-surface {
-  position: relative;
-  isolation: isolate;
-}
-
-.ac-backlit-surface::before {
-  content: "";
-  position: absolute;
-  inset: 14%;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--ac-backlight-color, var(--brand-teal));
-  opacity: var(--backlight-idle-opacity);
-  filter: blur(34px);
-  transform: translateY(8px) scale(0.94);
-  pointer-events: none;
-  transition: opacity var(--duration-standard) ease-out;
-}
-
-.ac-backlit-surface[data-backlight-tone="coral"] {
-  --ac-backlight-color: var(--brand-coral);
-}
-
-.ac-backlit-surface[data-backlight-tone="navy"] {
-  --ac-backlight-color: var(--brand-navy);
-}
-
-.ac-backlit-surface[data-backlight-intensity="hover"]::before {
-  opacity: var(--backlight-hover-opacity);
-}
-
-.ac-backlit-surface[data-backlight-intensity="active"]::before {
-  opacity: var(--backlight-active-opacity);
-}
-
-.ac-backlit-surface[data-backlight-intensity="focus"]::before {
-  opacity: var(--backlight-focus-opacity);
-}
-
-html.light .ac-backlit-surface::before {
-  opacity: min(var(--backlight-idle-opacity), 0.02);
-}
-
-.ac-module-bonnie-action {
-  color: #e9ddff !important;
-  background: rgba(137, 80, 245, 0.18) !important;
-  border-color: rgba(192, 132, 252, 0.42) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-}
-
-.ac-module-bonnie-action:hover,
-.ac-module-bonnie-action:focus-visible {
-  color: #fff !important;
-  background: rgba(137, 80, 245, 0.3) !important;
-  border-color: rgba(216, 180, 254, 0.7) !important;
+  background: var(--ac-accent);
 }
 
 .ac-enterprise-module .ac-workspace-panel,
@@ -2216,527 +1781,18 @@ html.light .ac-backlit-surface::before {
   box-shadow: none;
 }
 
-/* Sidebar remains dark navy in both themes. In light mode the workspace tokens
-   flip to light values (dark text, #EAF3F4 active pill) which made every nav
-   label invisible on navy and the active item white-on-white, so the sidebar
-   re-declares dark-surface tokens for everything rendered inside it. */
-html.light .ac-workspace-sidebar {
-  --ws-hover: rgba(255, 255, 255, 0.07);
-  --ws-active: rgba(15, 159, 143, 0.24);
-  --ws-panel: rgba(255, 255, 255, 0.05);
-  --ws-panel-hover: rgba(255, 255, 255, 0.09);
-  --ws-border: rgba(255, 255, 255, 0.09);
-  --ws-border-strong: rgba(255, 255, 255, 0.16);
-  --ws-text-primary: #F4F7FC;
-  --ws-text-secondary: #C9CFDD;
-  --ws-text-tertiary: #98A1B5;
-  --ws-text-muted: #98A1B5;
-  --ws-text-disabled: #6B7386;
-  color: var(--ws-text-secondary);
-}
-
-html.light .ac-workspace-sidebar .ac-workspace-nav-item,
-html.light .ac-workspace-sidebar .ac-workspace-nav-subitem {
-  color: var(--ws-text-secondary);
-}
-
-html.light .ac-workspace-sidebar .ac-workspace-nav-item:hover,
-html.light .ac-workspace-sidebar .ac-workspace-nav-item--active,
-html.light .ac-workspace-sidebar .ac-workspace-nav-subitem:hover,
-html.light .ac-workspace-sidebar .ac-workspace-nav-subitem--active {
-  color: #F4F7FC;
-}
-
-/* Welcome banner: dark gradient in dark mode, paper gradient in light mode. */
-.ac-welcome-banner {
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.10), rgba(15, 23, 42, 0.8) 50%, rgba(2, 6, 23, 0.9));
-}
-
-html.light .ac-welcome-banner {
-  background: linear-gradient(135deg, #E4F6F3, #FFFFFF 55%, #F2F5F9);
-  border-color: rgba(15, 159, 143, 0.35);
-}
-
-html.light .ac-welcome-banner .text-teal-300,
-html.light .ac-welcome-banner .text-teal-300\/90 {
-  color: #0F766E !important;
+html.light .ac-workspace-nav-item:hover,
+html.light .ac-workspace-nav-item--active {
+  color: #0f172a;
 }
 
 html.light .ac-workspace-tab--active {
-  color: var(--ws-text-primary);
-}
-
-html.light .ac-dashboard-root,
-html.light .ac-business-root {
-  background-color: var(--ws-canvas);
-  color: var(--ws-text-primary);
-}
-
-/* Legacy utility compatibility inside light authenticated content.
-   Keep the permanently navy sidebar untouched. */
-html.light .ac-dashboard-main .text-white,
-html.light .ac-business-main .text-white,
-html.light .ac-dashboard-main .text-slate-50,
-html.light .ac-business-main .text-slate-50,
-html.light .ac-dashboard-main .text-slate-100,
-html.light .ac-business-main .text-slate-100,
-html.light .ac-dashboard-main .text-slate-200,
-html.light .ac-business-main .text-slate-200 {
-  color: var(--text-primary) !important;
-}
-
-html.light .ac-dashboard-main .text-slate-300,
-html.light .ac-business-main .text-slate-300,
-html.light .ac-dashboard-main .text-slate-400,
-html.light .ac-business-main .text-slate-400,
-html.light .ac-dashboard-main .text-slate-500,
-html.light .ac-business-main .text-slate-500 {
-  color: var(--text-secondary) !important;
-}
-
-html.light .ac-dashboard-main .bg-slate-950,
-html.light .ac-business-main .bg-slate-950,
-html.light .ac-dashboard-main .bg-slate-900,
-html.light .ac-business-main .bg-slate-900 {
-  background-color: var(--surface-primary) !important;
-}
-
-/* Translucent slate surfaces (bg-slate-950/30, bg-slate-900/60, bg-slate-800/50 …)
-   are used on ~1,100 dashboard elements. In light mode they render as dark
-   grey blocks under dark text, so map them to a subtle light surface. */
-html.light .ac-dashboard-main [class*="bg-slate-950/"],
-html.light .ac-business-main [class*="bg-slate-950/"],
-html.light .ac-dashboard-main [class*="bg-slate-900/"],
-html.light .ac-business-main [class*="bg-slate-900/"],
-html.light .ac-dashboard-main [class*="bg-slate-800/"],
-html.light .ac-business-main [class*="bg-slate-800/"] {
-  background-color: var(--surface-secondary) !important;
-}
-
-/* Modal / drawer backdrops are also translucent slate. The mapping above turns
-   them into an opaque light sheet, so the page behind a dialog looks blank.
-   Keep them as a dim scrim instead. */
-html.light .ac-dashboard-main .absolute.inset-0[class*="bg-slate-950/"],
-html.light .ac-business-main .absolute.inset-0[class*="bg-slate-950/"],
-html.light .ac-dashboard-main .fixed.inset-0[class*="bg-slate-950/"],
-html.light .ac-business-main .fixed.inset-0[class*="bg-slate-950/"],
-html.light .ac-dashboard-main .absolute.inset-0[class*="bg-slate-900/"],
-html.light .ac-business-main .absolute.inset-0[class*="bg-slate-900/"],
-html.light .ac-dashboard-main .fixed.inset-0[class*="bg-slate-900/"],
-html.light .ac-business-main .fixed.inset-0[class*="bg-slate-900/"] {
-  background-color: rgba(15, 23, 42, 0.45) !important;
-}
-
-/* Quill rich-text editors (compose email, contracts, documents) are themed via
-   arbitrary variants ([&_.ql-editor]:text-white) that the class mappings above
-   cannot see, leaving white text on a white field in light mode. */
-html.light .ql-toolbar.ql-snow {
-  background-color: var(--surface-secondary) !important;
-  border-color: var(--border-default) !important;
-}
-html.light .ql-container.ql-snow {
-  border-color: var(--border-default) !important;
-}
-html.light .ql-editor,
-html.light .ql-editor * {
-  color: var(--text-primary, #0f172a) !important;
-}
-html.light .ql-editor.ql-blank::before {
-  color: #94a3b8 !important;
-}
-html.light .ql-snow .ql-stroke {
-  stroke: #475569 !important;
-}
-html.light .ql-snow .ql-fill {
-  fill: #475569 !important;
-}
-html.light .ql-snow .ql-picker {
-  color: #475569 !important;
-}
-
-html.light .ac-dashboard-main .bg-slate-800,
-html.light .ac-business-main .bg-slate-800 {
-  background-color: var(--surface-secondary) !important;
-}
-
-/* Active pills/toggles use slate-700 with white text; text-white becomes dark
-   in light mode, so the fill must lighten too or the label vanishes. */
-html.light .ac-dashboard-main .bg-slate-700,
-html.light .ac-business-main .bg-slate-700 {
-  background-color: #e2e8f0 !important;
-}
-
-/* Hairline borders drawn with white alpha disappear on a light canvas. */
-html.light .ac-dashboard-main [class*="border-white/"],
-html.light .ac-business-main [class*="border-white/"],
-html.light .ac-dashboard-main [class*="divide-white/"] > :not([hidden]) ~ :not([hidden]),
-html.light .ac-business-main [class*="divide-white/"] > :not([hidden]) ~ :not([hidden]) {
-  border-color: var(--border-default) !important;
-}
-
-/* Crisp Dashboard Loading State (No Blur Bleed) */
-/* Skeleton colours follow the theme: hardcoded slate made every loading
-   block a dark slab on the light dashboard. */
-:root {
-  --ac-skeleton-from: #1e293b;
-  --ac-skeleton-to: #334155;
-  --ac-skeleton-text: #64748b;
-}
-
-html.light {
-  --ac-skeleton-from: #e2e8f0;
-  --ac-skeleton-to: #f1f5f9;
-  --ac-skeleton-text: #94a3b8;
-}
-
-@keyframes ac-skeleton-shimmer {
-  0% {
-    background-color: var(--ac-skeleton-from);
-    opacity: 0.65;
-  }
-  50% {
-    background-color: var(--ac-skeleton-to);
-    opacity: 1;
-  }
-  100% {
-    background-color: var(--ac-skeleton-from);
-    opacity: 0.65;
-  }
-}
-
-html.light .ac-skeleton-pulse,
-html.light .animate-pulse {
-  color: var(--ac-skeleton-text);
-}
-
-/* Chakra is pinned to dark colour mode and paints every ::placeholder
-   whiteAlpha.400, which is invisible on light fields. */
-html.light input::placeholder,
-html.light textarea::placeholder {
-  color: #94a3b8 !important;
-  opacity: 1;
-}
-
-.ac-skeleton-pulse,
-.animate-pulse {
-  animation: ac-skeleton-shimmer 1.4s ease-in-out infinite !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  color: #0f172a;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ac-skeleton-pulse,
-  .animate-pulse,
-  .ac-metric-enter,
-  .ac-chart-enter,
-  .ac-kpi-card--interactive:hover,
-  .ac-metric-card:hover {
+  .animate-pulse {
     animation: none !important;
-    transition: none !important;
-    transform: none !important;
   }
-
-  .ac-backlit-surface::before {
-    transition: none !important;
-  }
-}
-
-/* Mobile rendering performance optimization for >95 Lighthouse/PageSpeed score */
-@media (max-width: 767px) {
-  .mkt-section:not(:first-of-type) {
-    content-visibility: auto;
-    contain-intrinsic-size: 1px 400px;
-  }
-  
-  /* Reduce heavy filter/backdrop work on mobile GPUs */
-  .mkt-surface,
-  .mkt-surface-elevated,
-  .glass-card,
-  .dashboard-panel {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  /* ── Phone Viewport Text Density & PWA Layout Protection (<768px) ── */
-
-  /* Keep html font-size standard (1rem = 16px) so PWA shells, drawers, and grids do not shrink */
-  
-  body {
-    font-size: 13px;
-    line-height: 1.45;
-  }
-
-  /* Target text elements inside cards and body content for 11px-12px density */
-  p, li, td, th, label, figcaption, blockquote, .text-xs, .text-sm {
-    font-size: 11.5px;
-    line-height: 1.4;
-  }
-
-  .marketing-theme p,
-  .ac-dashboard-root p,
-  .ac-business-root p {
-    font-size: 11.5px;
-  }
-
-  /* Compact phone headings for better vertical fit */
-  h1, .h1, .marketing-theme h1 {
-    font-size: 1.4rem !important;
-    line-height: 1.2 !important;
-    letter-spacing: -0.015em !important;
-  }
-
-  h2, .h2, .marketing-theme h2 {
-    font-size: 1.2rem !important;
-    line-height: 1.25 !important;
-    letter-spacing: -0.01em !important;
-  }
-
-  h3, .h3, .marketing-theme h3 {
-    font-size: 1.0rem !important;
-    line-height: 1.3 !important;
-  }
-
-  h4, .h4, .marketing-theme h4 {
-    font-size: 0.88rem !important;
-    line-height: 1.35 !important;
-  }
-
-  /* Compact Card Content (scoped to cards, not outer PWA shell containers) */
-  .mkt-feature-card,
-  .mkt-price-card,
-  .mkt-outcome-card,
-  .mkt-stat-card,
-  .ac-kpi-card,
-  .ac-workspace-callout {
-    padding: 0.75rem 0.85rem !important;
-    border-radius: 12px !important;
-  }
-
-  /* Super Good CTAs on Phone Viewports */
-  .mkt-btn,
-  .mkt-btn-primary,
-  .mkt-btn-secondary,
-  .mkt-btn-large,
-  .ac-workspace-action-btn {
-    font-size: 12px !important;
-    font-weight: 750 !important;
-    padding: 0.5rem 0.9rem !important;
-    min-height: 2.35rem !important;
-    border-radius: 8px !important;
-  }
-
-  .mkt-btn-primary {
-    background: linear-gradient(135deg, #22d9d5 0%, #18c7c8 100%) !important;
-    color: #041027 !important;
-    box-shadow: 0 4px 14px rgba(24, 199, 200, 0.35) !important;
-  }
-
-  .mkt-btn-primary:active {
-    transform: scale(0.97) !important;
-  }
-
-  .mkt-btn-secondary {
-    background: rgba(15, 23, 42, 0.85) !important;
-    border: 1px solid rgba(183, 204, 231, 0.25) !important;
-    color: #f8fafc !important;
-  }
-
-  /* Micro badges & labels */
-  .mkt-eyebrow,
-  .mkt-label,
-  [class*="badge"],
-  [class*="chip"] {
-    font-size: 10.5px !important;
-    padding: 0.2rem 0.5rem !important;
-  }
-}
-
-/* Explicit PWA Standalone Mode Adjustments */
-@media (display-mode: standalone), (display-mode: fullscreen) {
-  html, body {
-    min-height: 100dvh;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .ac-dashboard-shell-bg,
-  .ac-dashboard-main {
-    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  }
-}
-
-
-
-
-/* Inbox: HTML email body rendering */
-.email-html-body {
-  color: #e2e8f0;
-  font-size: 0.875rem;
-  line-height: 1.75;
-  word-break: break-words;
-  max-width: 100%;
-  overflow-x: auto;
-}
-.email-html-body img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 6px;
-}
-.email-html-body a {
-  color: #2dd4bf;
-  text-decoration: underline;
-}
-.email-html-body p { margin-bottom: 0.75rem; }
-.email-html-body blockquote {
-  border-left: 3px solid #334155;
-  padding-left: 1rem;
-  color: #94a3b8;
-  margin: 0.75rem 0;
-}
-.email-html-body table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.8125rem;
-}
-.email-html-body td, .email-html-body th {
-  padding: 0.5rem;
-  border: 1px solid #1e293b;
-}
-
-
-/* ========================================================================
-   ALPHACLONE AUDIT 2026 – APP-SCOPED STANDARDIZATION HELPERS
-   Scope: ONLY .ac-dashboard-root / .ac-business-root
-   → NO IMPACT on public marketing website (/about, /pricing, /blog etc.)
-   ======================================================================== */
-
-/* 1. Universal low-opacity surface helpers (replaces bg-white/[3..8]% chaos — 660 usages) */
-.ac-dashboard-root .ac-surface-subtle,
-.ac-business-root .ac-surface-subtle { background: var(--ws-surface-secondary); }
-.ac-dashboard-root .ac-surface-hover,
-.ac-business-root .ac-surface-hover { background: var(--ws-hover); }
-.ac-dashboard-root .ac-surface-active,
-.ac-business-root .ac-surface-active { background: var(--ws-active); }
-
-/* 2. Universal radius helpers — canonical tokens for panels/controls/chips (replaces 232 random rounded-2xl/3xl) */
-.ac-dashboard-root .ac-radius-panel,
-.ac-business-root .ac-radius-panel { border-radius: var(--ws-radius-lg); }
-.ac-dashboard-root .ac-radius-control,
-.ac-business-root .ac-radius-control { border-radius: var(--ws-radius); }
-.ac-dashboard-root .ac-radius-chip,
-.ac-business-root .ac-radius-chip { border-radius: 999px; }
-
-/* 3. A11Y: Universal focus-visible outline for all interactive elements (WAI-ARIA) */
-.ac-dashboard-root :focus-visible,
-.ac-business-root :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--brand-teal) 80%, transparent);
-  outline-offset: 2px;
-  border-radius: var(--ws-radius);
-}
-.ac-dashboard-root [role="button"]:focus-visible,
-.ac-business-root [role="button"]:focus-visible,
-.ac-dashboard-root button:focus-visible,
-.ac-business-root button:focus-visible { outline-offset: 1px; }
-
-/* 4. Reduce motion support (respects OS preference — audit requirement) */
-@media (prefers-reduced-motion: reduce) {
-  .ac-dashboard-root *,
-  .ac-business-root * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* 5. Semantic severity surface helpers (use existing tokens — don't duplicate definitions) */
-.ac-dashboard-root .ac-sev-success,
-.ac-business-root .ac-sev-success { background: var(--success-surface); border: 1px solid var(--success-border); color: var(--success-text); }
-.ac-dashboard-root .ac-sev-warning,
-.ac-business-root .ac-sev-warning { background: var(--warning-surface); border: 1px solid var(--warning-border); color: var(--warning-text); }
-.ac-dashboard-root .ac-sev-error,
-.ac-business-root .ac-sev-error   { background: var(--error-surface);   border: 1px solid var(--error-border);   color: var(--error-text); }
-.ac-dashboard-root .ac-sev-info,
-.ac-business-root .ac-sev-info     { background: var(--info-surface);    border: 1px solid var(--info-border);    color: var(--info-text); }
-
-/* 6. Row hover + row density for data tables (ENTERPRISE.dataTable token alignment) */
-.ac-dashboard-root .ac-dt-row,
-.ac-business-root .ac-dt-row {
-  height: 48px;
-  transition: background-color 120ms ease;
-}
-.ac-dashboard-root .ac-dt-row:hover,
-.ac-business-root .ac-dt-row:hover { background: var(--ws-hover); }
-.ac-dashboard-root .ac-dt-cell,
-.ac-business-root .ac-dt-cell { padding: 12px; }
-.ac-dashboard-root .ac-dt-cell--num,
-.ac-business-root .ac-dt-cell--num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-
-/* ========================================================================
-   ALPHACLONE AUDIT 2026 — Z-INDEX, MODAL LAYERING & SCROLL LOCK HELPERS
-   Scope: APP-SCOPED. Public marketing website unaffected.
-   ======================================================================== */
-
-/* 7. Modal backdrop: elevated above dashboard chrome + sidebar but below focus traps */
-.ac-dashboard-root [data-dialog-backdrop="true"],
-.ac-business-root [data-dialog-backdrop="true"],
-.ac-dashboard-root [data-sheet-overlay],
-.ac-business-root [data-sheet-overlay] {
-  z-index: 9998 !important;
-}
-.ac-dashboard-root [role="dialog"],
-.ac-business-root [role="dialog"],
-.ac-dashboard-root [data-dialog-content],
-.ac-business-root [data-dialog-content],
-.ac-dashboard-root [role="alertdialog"],
-.ac-business-root [role="alertdialog"] {
-  z-index: 9999 !important;
-}
-
-/* 8. Scroll lock — applied to <html>/<body> when a dialog is open so the page behind
-   cannot be scrolled accidentally via mouse wheel inside form field overflow. */
-html.ac-scroll-lock,
-html.ac-scroll-lock body,
-html.ac-scroll-lock .ac-dashboard-root,
-html.ac-scroll-lock .ac-business-root {
-  overflow: hidden !important;
-  touch-action: none;
-  overscroll-behavior: none;
-}
-
-/* 9. Prevent iframe bleed (email composer iframes, embeds) above modals.
-   The EmailBody iframe has sandbox, but on iOS iframes capture taps — so
-   when a dialog is mounted above, iframes get pointer-events disabled
-   automatically via this CSS plus the JS snippet appended at sheet/dialog mount. */
-.ac-dashboard-root:has([role="dialog"]) iframe,
-.ac-business-root:has([role="dialog"]) iframe,
-.ac-dashboard-root:has([data-dialog-content]) iframe,
-.ac-business-root:has([data-dialog-content]) iframe {
-  pointer-events: none !important;
-}
-
-/* 10. Email composer scrollable bodies — preserve existing .email-html-body baseline
-   but cap to readable max-width so really long nested tables don't explode horizontally */
-.email-html-body table {
-  display: block;
-  overflow-x: auto;
-  white-space: normal;
-}
-.email-html-body pre,
-.email-html-body code {
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-/* 11. iOS PWA safe-area bottom padding for modals/sheets (avoid clipped buttons
-   when the Home Indicator bar overlays a full-height modal's Save button) */
-.ac-dashboard-root [role="dialog"] > :last-child,
-.ac-business-root [role="dialog"] > :last-child,
-.ac-dashboard-root [data-sheet-content],
-.ac-business-root [data-sheet-content] {
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }

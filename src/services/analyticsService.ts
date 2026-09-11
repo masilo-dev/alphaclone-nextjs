@@ -90,8 +90,8 @@ export const analyticsService = {
         const [invoicesRes, expensesRes, payoutsRes] = await Promise.all([
             // 1. Paid Invoices (Revenue) — fetch all and filter in-memory for case-insensitive status match
             supabase
-                .from('business_invoices')
-                .select('total, created_at, status')
+                .from('invoices')
+                .select('amount, created_at, status')
                 .eq('tenant_id', tenantId)
                 .gte('created_at', startDate.toISOString())
                 .lte('created_at', endDate.toISOString()),
@@ -122,11 +122,11 @@ export const analyticsService = {
         // Aggregate Revenue — case-insensitive status comparison
         const paidRevenue = invoices
             .filter((inv: any) => inv.status?.toLowerCase() === 'paid')
-            .reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
+            .reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
         
         const sentRevenue = invoices
             .filter((inv: any) => inv.status?.toLowerCase() === 'sent')
-            .reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
+            .reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
         
         const directRevenue = otherRevenue
             .reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0);
@@ -143,7 +143,7 @@ export const analyticsService = {
             (rec: any) => new Date(rec.created_at) >= thisMonthStart
         );
         const thisMonth = Math.round(
-            (thisMonthInvoices.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) +
+            (thisMonthInvoices.reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0) +
              thisMonthDirect.reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0)) * 100
         ) / 100;
 
@@ -158,8 +158,8 @@ export const analyticsService = {
         
         const [lastMonthInvoicesRes, lastMonthRevenueRes] = await Promise.all([
             supabase
-                .from('business_invoices')
-                .select('total')
+                .from('invoices')
+                .select('amount')
                 .ilike('status', 'paid')
                 .eq('tenant_id', tenantId)
                 .gte('created_at', lastMonthStart.toISOString())
@@ -174,7 +174,7 @@ export const analyticsService = {
             ).catch(() => ({ data: [] as { amount: number }[], error: null }))
         ]);
 
-        const lastMonthRevenue = (lastMonthInvoicesRes.data || []).reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) +
+        const lastMonthRevenue = (lastMonthInvoicesRes.data || []).reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0) +
                                  ((lastMonthRevenueRes as any)?.data || []).reduce((sum: number, rec: any) => sum + (rec.amount || 0), 0);
         
         const lastMonth = Math.round(lastMonthRevenue * 100) / 100;
@@ -386,40 +386,6 @@ export const analyticsService = {
                 statusCounts: (automationHealth as any).status_counts || {},
             },
         };
-    },
-
-    pricingAnalytics: {
-        async trackEvent(
-            eventName: 
-                | 'pricing_page_viewed'
-                | 'plan_selected'
-                | 'checkout_started'
-                | 'checkout_completed'
-                | 'upgrade_started'
-                | 'upgrade_completed'
-                | 'downgrade'
-                | 'cancellation'
-                | 'quota_80_percent'
-                | 'quota_reached',
-            properties: Record<string, any> = {},
-            tenantId?: string,
-            userId?: string
-        ): Promise<void> {
-            try {
-                const effectiveTenantId = tenantId || tenantService.getCurrentTenantId() || null;
-                const { data: { user } } = await supabase.auth.getUser();
-                const effectiveUserId = userId || user?.id || null;
-
-                await supabase.from('pricing_analytics_events').insert({
-                    tenant_id: effectiveTenantId,
-                    user_id: effectiveUserId,
-                    event_name: eventName,
-                    properties,
-                });
-            } catch (err) {
-                console.warn('[pricingAnalytics] Failed to track event:', eventName, err);
-            }
-        },
     },
 };
 

@@ -528,21 +528,20 @@ export default function OmniLeadFinder() {
     const timeout = setTimeout(async () => {
       try {
         setGeocodeLoading(true);
-        const response = await fetch('/api/location/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, limit: 1 }),
-        });
-        const payload = await response.json().catch(() => ({}));
-        const first = Array.isArray(payload?.items) ? payload.items[0] : null;
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+          { headers: { Accept: 'application/json' } }
+        );
+        const data = await response.json();
+        const first = Array.isArray(data) ? data[0] : null;
         if (!first) {
           setGeocodePreview(null);
           return;
         }
         setGeocodePreview({
           lat: Number(first.lat),
-          lng: Number(first.lng),
-          displayName: String(first.displayName || query),
+          lng: Number(first.lon),
+          displayName: String(first.display_name || query),
           type: String(first.type || ''),
         });
       } catch {
@@ -562,14 +561,13 @@ export default function OmniLeadFinder() {
     const timeout = setTimeout(async () => {
       try {
         const q = `${specificCity.trim()}, ${location.trim()}`;
-        const response = await fetch('/api/location/search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: q, limit: 5 }),
-        });
-        const payload = await response.json().catch(() => ({}));
-        const suggestions: string[] = (Array.isArray(payload?.items) ? payload.items : [])
-          .map((item: any) => String(item.displayName || ''))
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(q)}&limit=5`,
+          { headers: { Accept: 'application/json' } }
+        );
+        const data = await response.json();
+        const suggestions = (Array.isArray(data) ? data : [])
+          .map((item: any) => String(item.display_name || ''))
           .filter(Boolean);
         setCitySuggestions(Array.from(new Set(suggestions)).slice(0, 5));
       } catch {
@@ -685,24 +683,14 @@ export default function OmniLeadFinder() {
 
         let done = false;
         let latestJob: any = createData.job;
-        let stepIterations = 0;
-        const MAX_STEP_ITERATIONS = 20;
 
         while (!done) {
-          if (stepIterations >= MAX_STEP_ITERATIONS) {
-            throw new Error('Lead search timed out — too many steps without completion. Please try again.');
-          }
-          stepIterations++;
-
           const stepRes = await fetch(`/api/scraper/jobs/${jobId}/step`, { method: 'POST' });
           if (!stepRes.ok) {
             const errData = await stepRes.json().catch(() => ({}));
             throw new Error(errData.error || 'Lead job processing failed');
           }
           const stepData = await stepRes.json();
-          if (!stepData?.job) {
-            throw new Error('Lead search returned an invalid response. Please try again.');
-          }
           latestJob = stepData.job;
 
           const partialLeads: ScrapedLead[] = Array.isArray(latestJob?.partial_results) ? latestJob.partial_results : [];

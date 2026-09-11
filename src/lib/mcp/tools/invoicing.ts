@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
 import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
 
 // 1. get_invoices
@@ -71,21 +70,32 @@ registerTool('invoicing', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { insertBusinessInvoiceSchemaCompat } = await import('@/lib/mcp/schemaWriteCompat');
+    const issueDate = new Date().toISOString().slice(0, 10);
+    const dueDate =
+      args.due_date?.slice(0, 10) ||
+      new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-    const { data, error } = await insertBusinessInvoiceSchemaCompat(supabase, {
-      tenant_id: args.tenant_id!,
-      client_id: args.client_id,
-      amount: args.amount,
-      status: args.status,
-      due_date: args.due_date,
-      bank_name: args.bank_name,
-      account_number: args.account_number,
-      branch_code: args.branch_code,
-      swift_code: args.swift_code,
-      payment_reference: args.payment_reference,
-      bank_details: args.bank_details,
-    });
+    const { data, error } = await supabase
+      .from('business_invoices')
+      .insert({
+        tenant_id: args.tenant_id,
+        client_id: args.client_id,
+        total: args.amount,
+        total_amount: args.amount,
+        subtotal: args.amount,
+        status: args.status,
+        due_date: dueDate,
+        issue_date: issueDate,
+        invoice_number: `INV-${Date.now().toString().slice(-6)}`,
+        bank_name: args.bank_name || null,
+        account_number: args.account_number || null,
+        branch_code: args.branch_code || null,
+        swift_code: args.swift_code || null,
+        payment_reference: args.payment_reference || null,
+        bank_details: args.bank_details || null,
+      })
+      .select()
+      .single();
 
     if (error) throw error;
 
@@ -231,25 +241,30 @@ registerTool('invoicing', {
       (invoice as any).client_email;
     if (!toEmail) throw new Error('Recipient email is required');
 
-    const queued = await queueInvoiceSend({
-      tenantId: args.tenant_id!,
-      userId: ctx.userId,
-      invoiceId: args.invoice_id,
-      recipients: [toEmail],
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+    const res = await fetch(`${origin}/api/invoices/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tenantId: args.tenant_id,
+        invoiceId: args.invoice_id,
+        recipientEmail: toEmail,
+        userId: ctx.userId,
+      }),
     });
+    const payload = await res.json();
+    if (!res.ok || payload.error) {
+      throw new Error(payload.error || 'Failed to send invoice');
+    }
 
     return {
-      sent: queued.status === 'queued',
-      queued: true,
-      durable: queued.durable,
+      sent: true,
       sent_to: toEmail,
       sent_at: new Date().toISOString(),
-      run_id: queued.run_id,
-      task_id: queued.task_id,
-      poll_tool: queued.poll_tool,
       opened: Boolean(invoice.viewed_at),
       opened_at: invoice.viewed_at || null,
       payment_link: invoice.payment_link || null,
+      ...payload,
     };
   },
 });
@@ -310,38 +325,5 @@ registerTool('invoicing', {
 
     if (error) throw error;
     return data;
-  },
-});
-
-registerTool('invoicing', {
-  name: 'convert_quote_to_invoice',
-  description:
-    'Convert an accepted quote into a business invoice. Optionally auto-send the invoice email to the client.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(),
-    quote_id: z.string().uuid(),
-    auto_send: z.boolean().optional().default(false),
-  }),
-  jsonSchema: {
-    type: 'object',
-    properties: {
-      quote_id: { type: 'string', format: 'uuid' },
-      auto_send: { type: 'boolean', description: 'Send invoice email after conversion' },
-    },
-    required: ['quote_id'],
-  },
-  handler: async (args) => {
-    const { convertQuoteToInvoice } = await import(
-      '@/lib/quotes/convertQuoteToInvoice'
-    );
-    const result = await convertQuoteToInvoice(args.quote_id, args.tenant_id!, {
-      autoSend: args.auto_send,
-    });
-    if (result.error) throw new Error(result.error);
-    return {
-      invoice_id: result.invoiceId,
-      public_token: result.publicToken,
-      converted: true,
-    };
   },
 });

@@ -1,9 +1,6 @@
-import 'server-only';
 import Browserbase from '@browserbasehq/sdk';
-import { isRailwayHost } from '@/config/railwayWorkload';
 import { chromium, Browser, Page } from 'playwright-core';
 import puppeteer, { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer-core';
-
 
 /**
  * Universal Browser Manager for Lead Acquisition
@@ -13,7 +10,7 @@ import puppeteer, { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'p
  * Priority order:
  *  1. Browserbase managed session (BROWSERBASE_API_KEY + BROWSERBASE_PROJECT_ID)
  *  2. Generic CDP endpoint (BROWSER_WS_ENDPOINT) — comma-separated for load balancing
- *  3. Local Chromium — Railway or local development when remote browsers are unavailable
+ *  3. Local Chromium — development only (never runs on Vercel)
  */
 
 export interface BrowserSession {
@@ -67,44 +64,17 @@ async function launchViaCDP(endpoints: string[]): Promise<Browser> {
   throw new Error('All remote CDP endpoints failed');
 }
 
-function resolveLocalChromeExecutable(): string | undefined {
-  const fromEnv = process.env.CHROME_EXECUTABLE_PATH?.trim() || process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
-  if (fromEnv) return fromEnv;
-
-  const candidates = [
-    '/usr/local/bin/google-chrome',
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-  ];
-  for (const candidate of candidates) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const fs = require('fs') as typeof import('fs');
-      if (fs.existsSync(candidate)) return candidate;
-    } catch {
-      /* ignore */
-    }
-  }
-  return undefined;
-}
-
 async function launchLocal(): Promise<Browser> {
-  if (!isRailwayHost() && process.env.NODE_ENV === 'production') {
+  if (process.env.VERCEL) {
     throw new Error(
-      'Local browser fallback requires Railway or development. ' +
+      'Local browser fallback is disabled on Vercel. ' +
         'Set BROWSERBASE_API_KEY + BROWSERBASE_PROJECT_ID.'
     );
   }
-  const executablePath = resolveLocalChromeExecutable();
-  console.log(
-    `[BrowserManager] Using local Chromium${executablePath ? ` (${executablePath})` : ' (Playwright bundled)'}`
-  );
+  console.log('[BrowserManager] Using local Chromium (dev only)');
   return chromium.launch({
     headless: true,
-    ...(executablePath ? { executablePath } : {}),
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 }
 
@@ -206,20 +176,6 @@ export class BrowserManager {
     );
   }
 
-  /**
-   * True when we can launch a browser on this host:
-   * remote Browserbase/CDP, Railway local Chromium, or local development.
-   */
-  static canLaunchBrowser(): boolean {
-    if (BrowserManager.hasRemoteConfigured()) return true;
-    if (isRailwayHost()) return true;
-    if (process.env.NODE_ENV !== 'production') return true;
-    if (process.env.CHROME_EXECUTABLE_PATH?.trim() || process.env.PUPPETEER_EXECUTABLE_PATH?.trim()) {
-      return true;
-    }
-    return false;
-  }
-
   // ---------------------------------------------------------------------------
   // Puppeteer variant — second engine, different fingerprint vs Playwright
   // ---------------------------------------------------------------------------
@@ -251,15 +207,8 @@ export class BrowserManager {
       pBrowser = await puppeteer.connect({ browserWSEndpoint: wsEndpoint });
     } else {
       // Dev fallback
-      if (!isRailwayHost() && process.env.NODE_ENV === 'production') {
-        throw new Error('No remote browser configured for production. Set BROWSERBASE_API_KEY.');
-      }
-      const executablePath = resolveLocalChromeExecutable();
-      pBrowser = await puppeteer.launch({
-        headless: true,
-        ...(executablePath ? { executablePath } : {}),
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      });
+      if (process.env.VERCEL) throw new Error('No remote browser for Puppeteer on Vercel');
+      pBrowser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     }
 
     const page = await pBrowser.newPage();

@@ -94,7 +94,7 @@ export default function CreateBusinessOnboarding() {
 
       if (!tenant) throw new Error('Failed to create tenant');
 
-      // Continue into the newly provisioned workspace.
+      // Success! During Beta, we redirect directly to dashboard
       // The context already handles switching to the new tenant
       router.push('/dashboard');
     } catch (err: any) {

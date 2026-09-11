@@ -12,11 +12,10 @@ export async function POST(req: NextRequest) {
     if (!tenantId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
-    const { user, admin: supabase } = await requireTenantAccess(tenantId);
-    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-    if (tenantContextError) {
-      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
-    }
+    const { user } = await requireTenantAccess(tenantId);
+
+    const supabase = createSupabaseAdminClient();
+    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
     switch (action) {
       case 'create_invoice':
@@ -102,40 +101,38 @@ async function createInvoice(tenantId: string, config: any, supabase: any) {
 
     // Generate invoice number
     const invoiceNumber = await generateInvoiceNumber(tenantId, supabase);
-    const issueDate = new Date().toISOString().slice(0, 10);
-    const lineItems = items.map((item: any) => ({
-      description: item.description || item.name || 'Line item',
-      quantity: Number(item.quantity || 1),
-      unit_price: Number(item.unitPrice ?? item.unit_price ?? 0),
-    }));
 
+    // Create invoice
     const { data: invoice, error } = await supabase
-      .from('business_invoices')
+      .from('invoices')
       .insert({
         tenant_id: tenantId,
         invoice_number: invoiceNumber,
-        client_id: clientId || null,
-        project_id: dealId || null,
-        subtotal,
-        tax: taxAmount,
-        tax_rate: subtotal > 0 ? Math.round((taxAmount / subtotal) * 10000) / 100 : 0,
+        client_id: clientId,
+        lead_id: leadId,
+        deal_id: dealId,
+        items: items,
+        subtotal: subtotal,
+        taxes: taxes,
+        tax_amount: taxAmount,
+        discounts: discounts,
         discount_amount: discountAmount,
-        total,
-        currency,
-        currency_code: currency,
-        issue_date: issueDate,
-        due_date: dueDate?.slice?.(0, 10) || dueDate,
-        notes: [notes, terms ? `Terms: ${terms}` : ''].filter(Boolean).join('\n\n') || null,
+        total: total,
+        currency: currency,
+        due_date: dueDate,
+        notes: notes,
+        terms: terms,
+        template: template,
         bank_details: bankDetails ?? bank_details ?? null,
         mobile_payment_details: mobilePaymentDetails ?? mobile_payment_details ?? null,
         status: 'draft',
-        line_items: lineItems,
-        amount_paid: 0,
-        is_public: false,
+        created_at: new Date().toISOString()
       })
       .select(`
         *,
-        business_clients:client_id(id, name, email, phone)
+        clients:client_id(id, name, email, phone, address),
+        leads:lead_id(id, name, email, phone),
+        deals:deal_id(id, name, value)
       `)
       .single();
 
@@ -400,16 +397,11 @@ async function updateInvoice(tenantId: string, config: any, supabase: any) {
 
       updateData = {
         ...updateData,
-        subtotal,
-        tax: taxAmount,
+        subtotal: subtotal,
+        tax_amount: taxAmount,
         discount_amount: discountAmount,
         total: subtotal + taxAmount - discountAmount,
-        line_items: updates.items.map((item: any) => ({
-          description: item.description || item.name || 'Line item',
-          quantity: Number(item.quantity || 1),
-          unit_price: Number(item.unitPrice ?? item.unit_price ?? 0),
-        })),
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
     }
 
@@ -420,14 +412,21 @@ async function updateInvoice(tenantId: string, config: any, supabase: any) {
       updateData.mobile_payment_details = updates.mobilePaymentDetails ?? updates.mobile_payment_details ?? null;
     }
 
-    const { data: rows, error } = await supabase.rpc('update_business_invoice_atomic', {
-      p_tenant_id: tenantId,
-      p_invoice_id: invoiceId,
-      p_updates: updateData,
-      p_items: updateData.line_items || null,
-    });
+    // Update invoice
+    const { data: invoice, error } = await supabase
+      .from('invoices')
+      .update(updateData)
+      .eq('id', invoiceId)
+      .eq('tenant_id', tenantId)
+      .select(`
+        *,
+        clients:client_id(id, name, email, phone, address),
+        leads:lead_id(id, name, email, phone),
+        deals:deal_id(id, name, value)
+      `)
+      .single();
+
     if (error) throw error;
-    const invoice = Array.isArray(rows) ? rows[0] : rows;
 
     // Update accounting system
     if (updates.status || updates.total) {
@@ -455,11 +454,12 @@ async function getInvoices(tenantId: string, config: any, supabase: any) {
     const { page = 1, limit = 10, status, clientId, dateRange } = config;
 
     let query = supabase
-      .from('business_invoices')
+      .from('invoices')
       .select(`
         *,
-        business_clients:client_id(id, name, email),
-        invoice_line_items(*)
+        clients:client_id(id, name, email),
+        leads:lead_id(id, name),
+        deals:deal_id(id, name, value)
       `, { count: 'exact' })
       .eq('tenant_id', tenantId);
 
@@ -503,12 +503,13 @@ async function getInvoiceDetails(tenantId: string, config: any, supabase: any) {
     const { invoiceId } = config;
 
     const { data: invoice, error } = await supabase
-      .from('business_invoices')
+      .from('invoices')
       .select(`
         *,
-        business_clients:client_id(id, name, email),
-        invoice_line_items(*),
-        business_invoice_payments(*)
+        clients:client_id(*),
+        leads:lead_id(*),
+        deals:deal_id(*),
+        payments:payments(*)
       `)
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId)
@@ -531,11 +532,12 @@ async function downloadInvoice(tenantId: string, config: any, supabase: any) {
 
     // Get invoice details
     const { data: invoice, error } = await supabase
-      .from('business_invoices')
+      .from('invoices')
       .select(`
         *,
-        business_clients:client_id(*),
-        invoice_line_items(*)
+        clients:client_id(*),
+        leads:lead_id(*),
+        deals:deal_id(*)
       `)
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId)
@@ -545,11 +547,22 @@ async function downloadInvoice(tenantId: string, config: any, supabase: any) {
       return { success: false, error: 'Invoice not found' };
     }
 
+    // Generate invoice PDF
     const pdfBuffer = await generateInvoicePDF({
-      invoice: { ...invoice, items: invoice.invoice_line_items || invoice.line_items || [] },
+      invoice: invoice,
       format: format,
-      template: 'standard'
+      template: invoice.template || 'standard'
     });
+
+    // Update download count
+    await supabase
+      .from('invoices')
+      .update({
+        download_count: (invoice.download_count || 0) + 1,
+        last_downloaded: new Date().toISOString()
+      })
+      .eq('id', invoiceId)
+      .eq('tenant_id', tenantId);
 
     return {
       success: true,
@@ -571,11 +584,10 @@ async function sendInvoice(tenantId: string, config: any, supabase: any, origin:
 
     // Get invoice details
     const { data: invoice, error } = await supabase
-      .from('business_invoices')
+      .from('invoices')
       .select(`
         *,
-        business_clients:client_id(*),
-        invoice_line_items(*)
+        clients:client_id(*)
       `)
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId)
@@ -589,9 +601,9 @@ async function sendInvoice(tenantId: string, config: any, supabase: any, origin:
     let pdfBuffer = null;
     if (attachPDF) {
       pdfBuffer = await generateInvoicePDF({
-        invoice: { ...invoice, items: invoice.invoice_line_items || invoice.line_items || [] },
+        invoice: invoice,
         format: 'pdf',
-        template: 'standard'
+        template: invoice.template || 'standard'
       });
     }
 
@@ -620,25 +632,15 @@ async function sendInvoice(tenantId: string, config: any, supabase: any, origin:
       return { success: false, error: 'Failed to send invoice' };
     }
 
-    const sentAt = new Date().toISOString();
+    // Update invoice status
     await supabase
-      .from('business_invoices')
+      .from('invoices')
       .update({
         status: 'sent',
-        lifecycle_status: 'sent',
-        sent_at: sentAt,
-        is_public: true,
-        updated_at: sentAt,
+        sent_at: new Date().toISOString()
       })
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId);
-
-    const { postInvoiceIssueJournalServer } = await import('@/lib/invoices/postInvoiceIssueJournalServer');
-    await postInvoiceIssueJournalServer(supabase, {
-      tenantId,
-      invoiceId,
-      actorUserId,
-    }).catch((journalError) => console.error('[accounting/send_invoice] issue journal failed', journalError));
 
     return {
       success: true,
@@ -652,32 +654,61 @@ async function sendInvoice(tenantId: string, config: any, supabase: any, origin:
 async function recordPayment(tenantId: string, config: any, supabase: any) {
   try {
     const { invoiceId, amount, paymentDate, paymentMethod, reference, notes } = config;
-    const { recordInvoicePaymentServer } = await import('@/lib/invoices/recordInvoicePaymentServer');
 
-    const { data: businessInvoice } = await supabase
-      .from('business_invoices')
-      .select('id')
+    // Record payment
+    const { data: payment, error } = await supabase
+      .from('payments')
+      .insert({
+        tenant_id: tenantId,
+        invoice_id: invoiceId,
+        amount: amount,
+        payment_date: paymentDate,
+        payment_method: paymentMethod,
+        reference: reference,
+        notes: notes,
+        status: 'completed',
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Update invoice status
+    const { data: invoice } = await supabase
+      .from('invoices')
+      .select('total, paid_amount')
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId)
-      .maybeSingle();
+      .single();
 
-    if (!businessInvoice) {
-      return { success: false, error: 'Invoice not found' };
-    }
+    const newPaidAmount = (invoice?.paid_amount || 0) + amount;
+    const newStatus = newPaidAmount >= invoice?.total ? 'paid' : newPaidAmount > 0 ? 'partial' : 'draft';
 
-    const invoice = await recordInvoicePaymentServer(supabase, {
-      tenantId,
-      invoiceId,
-      amount,
-      idempotencyKey: `mgmt:${reference || paymentMethod || 'manual'}:${invoiceId}:${amount}:${paymentDate || ''}`,
-      source: paymentMethod || 'manual',
-      externalReference: reference || notes || paymentDate || null,
-      actorUserId: null,
-    });
+    await supabase
+      .from('invoices')
+      .update({
+        paid_amount: newPaidAmount,
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', invoiceId)
+      .eq('tenant_id', tenantId);
+
+    // Update accounting system
+    await updateAccountingSystem(tenantId, {
+      type: 'payment',
+      invoiceId: invoiceId,
+      paymentId: payment.id,
+      amount: amount,
+      paymentMethod: paymentMethod,
+      status: 'completed'
+    }, supabase);
+
     return {
       success: true,
-      data: invoice,
-      message: 'Payment recorded successfully',
+      data: payment,
+      message: 'Payment recorded successfully'
     };
   } catch (error: any) {
     return operationFailed('accounting/management', error);
@@ -798,8 +829,8 @@ async function getFinancialSummary(tenantId: string, config: any, supabase: any)
 
     // Get revenue from invoices
     const { data: invoices } = await supabase
-      .from('business_invoices')
-      .select('total, amount_paid, status, created_at')
+      .from('invoices')
+      .select('total, paid_amount, status, created_at')
       .eq('tenant_id', tenantId)
       .gte('created_at', startDate)
       .lte('created_at', endDate);
@@ -813,7 +844,7 @@ async function getFinancialSummary(tenantId: string, config: any, supabase: any)
       .lte('date', endDate);
 
     // Calculate totals
-    const totalRevenue = invoices?.reduce((sum: number, inv: any) => sum + (inv.amount_paid || 0), 0) || 0;
+    const totalRevenue = invoices?.reduce((sum: number, inv: any) => sum + (inv.paid_amount || 0), 0) || 0;
     const totalExpenses = expenses?.reduce((sum: number, exp: any) => sum + exp.amount, 0) || 0;
     const netProfit = totalRevenue - totalExpenses;
 
@@ -839,7 +870,7 @@ async function getFinancialSummary(tenantId: string, config: any, supabase: any)
           total: totalRevenue,
           invoiced: invoices?.reduce((sum: number, inv: any) => sum + inv.total, 0) || 0,
           paid: totalRevenue,
-          pending: invoices?.reduce((sum: number, inv: any) => sum + (inv.total - (inv.amount_paid || 0)), 0) || 0
+          pending: invoices?.reduce((sum: number, inv: any) => sum + (inv.total - (inv.paid_amount || 0)), 0) || 0
         },
         expenses: {
           total: totalExpenses,
@@ -870,7 +901,7 @@ async function getFinancialSummary(tenantId: string, config: any, supabase: any)
 
 async function generateInvoiceNumber(tenantId: string, supabase: any) {
   const { data: lastInvoice } = await supabase
-    .from('business_invoices')
+    .from('invoices')
     .select('invoice_number')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })

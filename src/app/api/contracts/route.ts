@@ -1,25 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
-import { queueDocumentIntelligence } from '@/lib/documents/fileDocument';
-import { assessContractContentQuality } from '@/lib/documents/contractContentQuality';
-import { resolveContractGoverningLaw } from '@/lib/contracts/contractGoverningLaw';
+import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 const CreateContractSchema = z.object({
-  title: z.string().trim().min(1).max(300),
-  client_id: z.string().uuid().nullable().optional(),
-  project_id: z.string().uuid().nullable().optional(),
-  content: z.string().min(1).max(500_000),
-  type: z.string().trim().max(100).optional().default('service_agreement'),
-  status: z.enum(['draft', 'pending_approval', 'sent']).optional().default('draft'),
-  admin_signature: z.string().max(2_000_000).nullable().optional(),
-  admin_signed_at: z.string().datetime().nullable().optional(),
-  governing_law: z.string().trim().max(200).nullable().optional(),
-  jurisdiction: z.string().trim().max(200).nullable().optional(),
-  payment_due_date: z.union([z.string().date(), z.string().datetime(), z.null()]).optional(),
-  payment_amount: z.coerce.number().min(0).max(1_000_000_000).nullable().optional(),
-  payment_status: z.enum(['pending', 'paid', 'overdue', 'waived']).optional().default('pending'),
+  title: z.string().min(1),
+  client_id: z.string().uuid(),
+  content: z.string().min(1),
+  type: z.string().optional().default('service_agreement'),
   metadata: z.record(z.string(), z.any()).optional(),
   tenantId: z.string().uuid(),
 });
@@ -32,23 +19,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 422 });
     }
 
-    const { tenantId, client_id, project_id, title, content, type, status, metadata, admin_signature, admin_signed_at, payment_due_date, payment_amount, payment_status, governing_law, jurisdiction } = parsed.data;
-    const { user, admin } = await requireTenantAccess(tenantId, req);
-
-    // The pre-send legal check reads governing_law/jurisdiction from the row.
-    // Persist what the owner chose, or recover it from the text, so a saved
-    // contract can actually be sent later.
-    const legal = resolveContractGoverningLaw({ provided: { governingLaw: governing_law, jurisdiction }, content });
+    const { tenantId, client_id, title, content, type, metadata } = parsed.data;
+    const { user } = await requireTenantAccess(tenantId);
+    const admin = createAdminSupabaseClientOrThrow();
 
     // 1. Verify party belongs to tenant (unified contact or legacy business client)
-    const { data: contact, error: contactError } = client_id ? await admin
+    const { data: contact, error: contactError } = await admin
       .from('contacts')
       .select('id')
       .eq('id', client_id)
       .eq('tenant_id', tenantId)
-      .maybeSingle() : { data: null, error: null };
+      .maybeSingle();
 
-    const { data: businessClient } = client_id && !contact
+    const { data: businessClient } = !contact
       ? await admin
           .from('business_clients')
           .select('id')
@@ -57,64 +40,20 @@ export async function POST(req: NextRequest) {
           .maybeSingle()
       : { data: null };
 
-    if (contactError || (client_id && !contact && !businessClient)) {
+    if (contactError || (!contact && !businessClient)) {
       return NextResponse.json({ error: 'Invalid client_id for this tenant' }, { status: 422 });
     }
-    if (project_id) {
-      const { data: project, error: projectError } = await admin.from('projects').select('id').eq('id', project_id).eq('tenant_id', tenantId).maybeSingle();
-      if (projectError) throw projectError;
-      if (!project) return NextResponse.json({ error: 'Invalid project_id for this tenant' }, { status: 422 });
-    }
-    await validateDailyResourceQuota(tenantId, user.id, 'contracts');
 
-    const quality = assessContractContentQuality(content);
-    if (!quality.ok && quality.issues.some((issue) => issue.severity === 'critical')) {
-      return NextResponse.json(
-        { error: 'Contract content failed quality check', code: 'CONTRACT_CONTENT_QUALITY', issues: quality.issues },
-        { status: 422 },
-      );
-    }
-
-    // 2. Create the canonical shared document first.
-    const { data: sharedDocument, error: documentError } = await admin
-      .from('documents')
-      .insert({
-        tenant_id: tenantId,
-        title,
-        name: title,
-        content,
-        document_type: 'contract',
-        status: 'draft',
-        owner_user_id: user.id,
-        uploaded_by: user.id,
-        metadata: { contract_type: type, source: 'contract_manager' },
-      })
-      .select('id')
-      .single();
-    if (documentError) throw documentError;
-
-    // 3. Insert contract
+    // 2. Insert contract
     const { data: contract, error: contractError } = await admin
       .from('contracts')
       .insert({
         tenant_id: tenantId,
-        client_id: client_id || null,
-        project_id: project_id || null,
-        owner_id: user.id,
-        owner_user_id: user.id,
-        document_id: sharedDocument.id,
+        client_id,
         title,
         content,
         type,
-        status,
-        signing_token: crypto.randomUUID(),
-        admin_signature: admin_signature || null,
-        admin_signed_at: admin_signed_at || null,
-        governing_law: legal.governingLaw,
-        jurisdiction: legal.jurisdiction,
-        payment_due_date: payment_due_date ? payment_due_date.slice(0, 10) : null,
-        payment_amount: payment_amount ?? null,
-        payment_status,
+        status: 'draft',
         metadata: { ...metadata, created_by_api: true },
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -122,48 +61,18 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (contractError) {
-      await admin.from('documents').delete().eq('tenant_id', tenantId).eq('id', sharedDocument.id);
-      throw contractError;
-    }
+    if (contractError) throw contractError;
 
-    await admin.from('document_relationships').insert({
-      tenant_id: tenantId,
-      document_id: sharedDocument.id,
-      entity_type: 'contract',
-      entity_id: contract.id,
-      relationship_type: 'belongs_to',
-      is_primary: true,
-      created_by: user.id,
-    });
-    if (client_id) {
-      await admin.from('document_relationships').insert({
-        tenant_id: tenantId, document_id: sharedDocument.id, entity_type: 'customer',
-        entity_id: client_id, relationship_type: 'signed_agreement', created_by: user.id,
-      });
-    }
-    if (project_id) {
-      await admin.from('document_relationships').insert({
-        tenant_id: tenantId, document_id: sharedDocument.id, entity_type: 'project',
-        entity_id: project_id, relationship_type: 'project_file', created_by: user.id,
-      });
-    }
-
-    // 4. Create initial approval gate record
-    const { error: approvalError } = await admin.from('contract_approvals').insert({
+    // 3. Create initial approval gate record
+    await admin.from('contract_approvals').insert({
       contract_id: contract.id,
       tenant_id: tenantId,
       status: 'pending',
       created_at: new Date().toISOString(),
     });
-    if (approvalError) {
-      await admin.from('contracts').delete().eq('id', contract.id).eq('tenant_id', tenantId);
-      throw approvalError;
-    }
-    await recordDailyResourceQuota(tenantId, user.id, 'contracts', 1, `contract:${contract.id}`);
 
-    // 5. Audit Log
-    const { error: auditError } = await admin.from('audit_logs').insert({
+    // 4. Audit Log
+    await admin.from('audit_logs').insert({
       tenant_id: tenantId,
       user_id: user.id,
       action: 'contract_created',
@@ -172,13 +81,8 @@ export async function POST(req: NextRequest) {
       new_values: contract,
       created_at: new Date().toISOString()
     });
-    if (auditError) console.error('[contracts] create audit could not be recorded', auditError);
 
-    await queueDocumentIntelligence(admin, tenantId, sharedDocument.id, user.id).catch((error) =>
-      console.error('[contracts] auto-index failed', error instanceof Error ? error.message : error)
-    );
-
-    return NextResponse.json({ success: true, data: contract }, { status: 201 });
+    return NextResponse.json({ success: true, data: contract });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to create contract', req);
   }

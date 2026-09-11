@@ -336,13 +336,24 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
 
   const handleCreateDeal = async (dealData: Partial<Deal>) => {
     try {
-      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/deals`, {
-        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: dealData.name, value: dealData.value || 0, stage: dealData.stage || 'lead', probability: dealData.probability || 10, expectedCloseDate: dealData.expected_close_date, contactName: dealData.contact_name, contactEmail: dealData.contact_email, notes: dealData.notes }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Failed to create deal');
-      const data = payload.deal;
+      const { data, error } = await supabase
+        .from('deals')
+        .insert({
+          tenant_id: tenantId,
+          name: dealData.name,
+          value: dealData.value || 0,
+          stage: dealData.stage || 'lead',
+          probability: dealData.probability || 10,
+          expected_close_date: dealData.expected_close_date,
+          contact_name: dealData.contact_name,
+          contact_email: dealData.contact_email,
+          notes: dealData.notes,
+          score: dealData.probability || 10,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
 
       setDeals(prev => [data, ...prev]);
       setIsFormOpen(false);
@@ -357,12 +368,22 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
     if (!editingDeal) return;
 
     try {
-      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/deals`, {
-        method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: editingDeal.id, name: dealData.name, value: dealData.value, stage: dealData.stage, probability: dealData.probability, expectedCloseDate: dealData.expected_close_date, contactName: dealData.contact_name, contactEmail: dealData.contact_email, notes: dealData.notes }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Failed to update deal');
+      const { error } = await supabase
+        .from('deals')
+        .update({
+          name: dealData.name,
+          value: dealData.value,
+          stage: dealData.stage,
+          probability: dealData.probability,
+          expected_close_date: dealData.expected_close_date,
+          contact_name: dealData.contact_name,
+          contact_email: dealData.contact_email,
+          notes: dealData.notes,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', editingDeal.id);
+
+      if (error) throw error;
 
       setDeals(prev =>
         prev.map(d =>
@@ -381,9 +402,8 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
 
   const handleDeleteDeal = async (id: string) => {
     try {
-      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/deals`, { method: 'DELETE', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id] }) });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Failed to delete deal');
+      const { success, error } = await dealService.deleteDeal(id);
+      if (!success || error) throw new Error(error || 'Failed to delete deal');
 
       setDeals(prev => prev.filter(d => d.id !== id));
       toast.success('Deal deleted');
@@ -401,9 +421,12 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
     );
 
     try {
-      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/deals`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, stage: newStage }) });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Failed to move deal');
+      const { error } = await supabase
+        .from('deals')
+        .update({ stage: newStage, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
     } catch (err: any) {
       // Revert on failure
       loadDeals();

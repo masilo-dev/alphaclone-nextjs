@@ -1,16 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
-    CheckCircle2, User, CreditCard, Settings, Mail,
+    CheckCircle2, ArrowRight, User, CreditCard, Settings, Mail,
     Calendar, Users, DollarSign, Bot, Video, Shield, ChevronDown,
     ChevronUp, Globe, Zap, Clock, Star, Terminal, Layers,
     BookOpen, TrendingUp, Lock, Building2
 } from 'lucide-react';
-import { MARKETING_PRICING } from '@/config/pricingPlans';
-import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import { Button } from '../ui/UIComponents';
+import PublicNavigation from '../PublicNavigation';
+import MarketingFooter from '@/components/landing/MarketingFooter';
 
 const PlatformGuide: React.FC = () => {
+    const [, setIsLoginOpen] = React.useState(false);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     const steps = [
@@ -37,16 +40,14 @@ Your account is created with the Pro plan on a 14-day free trial. You won't be c
             color: 'from-blue-500 to-indigo-500',
             step: 2,
             title: 'Activate Your Plan',
-            subtitle: MARKETING_PRICING.startingPriceLine,
-            detail: `After registration, choose the plan that fits your workflow.
+            subtitle: 'One simple public price: $15 per month',
+            detail: `After registration, you will see one public plan for the full platform.
 
-**Free** — full platform access with daily usage limits on execution actions.
+**AlphaClone Platform: $15/month**
 
-**Pro ($45/month)** — higher daily capacity for active teams.
+This includes CRM, deals, projects, tasks, social publishing, messaging, invoicing, documents, and core automations in one workspace.
 
-**Premium ($80/month)** — unlimited execution subject to provider and safety limits.
-
-You start with a 14-day free trial and no credit card is required to begin. Plan details and limits are on the pricing page.
+You start with a 14-day free trial and no credit card is required to begin. At the end of trial, you can continue on the same plan.
 
 There is no founder involvement needed to start. Setup is self-serve and guided directly inside the app.`,
             tips: [
@@ -93,7 +94,7 @@ Once connected, when you click on any client in your CRM, you can see all histor
 **Privacy note:** Your emails are displayed inside AlphaClone but are not stored permanently on our servers. We retrieve them in real time from Gmail's API. If you disconnect Gmail at any time, the email data is immediately removed from your AlphaClone view.`,
             tips: [
                 'You must connect the email address you actually use to communicate with clients',
-                'If you have multiple Gmail accounts, connect the account your workspace should send from',
+                'If you have multiple Gmail accounts, you can connect the primary one for now',
                 'Your personal emails are private — only emails linked to CRM contacts appear contextually',
                 'The connection can be disconnected from Settings > Integrations at any time',
             ],
@@ -122,7 +123,7 @@ You can also configure availability windows directly in AlphaClone without a Cal
         },
         {
             icon: Users,
-            color: 'from-teal-500 to-emerald-500',
+            color: 'from-teal-500 to-cyan-500',
             step: 6,
             title: 'Import Your CRM Contacts',
             subtitle: 'Bring your existing client list in minutes',
@@ -190,7 +191,7 @@ Review the discovered leads and de-select any that aren't relevant. Then click "
         },
         {
             icon: Video,
-            color: 'from-blue-600 to-teal-500',
+            color: 'from-blue-600 to-cyan-500',
             step: 9,
             title: 'Run Client Video Meetings',
             subtitle: 'Built-in HD video — no Zoom account needed',
@@ -291,8 +292,8 @@ The invited person receives an email with a secure invitation link. When they cl
         },
         {
             icon: Clock,
-            title: 'Reduce repetitive admin work',
-            desc: 'Manual invoicing, payment follow-ups, scheduling back-and-forth, and logging client conversations — AlphaClone automates or streamlines many of these steps so you can focus on revenue-generating work.',
+            title: 'Get 15+ Hours of Your Week Back',
+            desc: 'Manual invoicing, chasing payments, scheduling back-and-forth, manually logging client conversations — AlphaClone automates or eliminates all of these. Most users reclaim over 15 hours per week that they can redirect to revenue-generating work.',
         },
         {
             icon: Globe,
@@ -303,7 +304,9 @@ The invited person receives an email with a secure invitation link. When they cl
 
     return (
         <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
-            <div>
+            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
+
+            <div className="pt-20">
                 {/* Hero — BLUF Answer Section */}
                 <section className="bg-gradient-to-b from-slate-900/70 to-slate-950/70 border-b border-slate-800/50 py-20">
                     <div className="max-w-4xl mx-auto px-4">
@@ -368,7 +371,7 @@ The invited person receives an email with a secure invitation link. When they cl
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Why AlphaClone Changes How You Run Your Business</h2>
                         <p className="text-slate-400 leading-relaxed mb-10">
-                            Before diving into setup, here is what changes when you move from a scattered tool stack to a unified business workspace.
+                            Before diving into setup, here's why thousands of business owners made the switch — and what changes the moment you start using a unified Business OS.
                         </p>
                         <div className="space-y-4">
                             {whyPoints.map((point, i) => (
@@ -518,13 +521,23 @@ The invited person receives an email with a secure invitation link. When they cl
                             Create your free account now. The setup wizard inside the platform mirrors this guide step by step so first-time users can onboard without founder involvement.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
-                            <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
+                            <Link href="/register">
+                                <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
+                                    Start Free Trial
+                                    <ArrowRight className="w-5 h-5 ml-2" />
+                                </Button>
+                            </Link>
+                            <Link href="/docs">
+                                <Button variant="outline" className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800">
+                                    View Documentation
+                                </Button>
+                            </Link>
                         </div>
-                        <p className="mt-6 text-slate-500 text-sm">{MARKETING_PRICING.startingPriceLine} · No credit card required to start · Cancel anytime</p>
+                        <p className="mt-6 text-slate-500 text-sm">$15/month after trial · No credit card required to start · Cancel anytime</p>
                     </div>
                 </section>
             </div>
+            <MarketingFooter />
         </div>
     );
 };

@@ -3,18 +3,21 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/pkce';
-import { requireTenantRole } from '@/lib/apiAuth';
-import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     const supabaseAdmin = createSupabaseAdminClient();
     
+    // 1. Get user session (or userId from query for testing/integration)
+    // In a real app, this should come from a secure session
+    // For this implementation, we'll assume the client passes a state that we link to the user
     const { searchParams } = new URL(req.url);
-    const tenantId = searchParams.get('tenantId') || '';
+    const userId = searchParams.get('userId');
+
+    if (!userId) {
+        return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    }
 
     try {
-        const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
-        const userId = user.id;
         const codeVerifier = generateCodeVerifier();
         const codeChallenge = await generateCodeChallenge(codeVerifier);
         const stateNonce = crypto.randomUUID();
@@ -27,7 +30,6 @@ export async function GET(req: NextRequest) {
             .insert({
                 id: stateNonce,
                 user_id: userId,
-                tenant_id: tenantId,
                 metadata: {
                     code_verifier: codeVerifier,
                     provider: 'hubspot'
@@ -38,7 +40,7 @@ export async function GET(req: NextRequest) {
 
         // 3. Build HubSpot authorization URL
         const clientId = ENV.HUBSPOT_CLIENT_ID;
-        const redirectUri = OAUTH_CALLBACKS.hubspot;
+        const redirectUri = ENV.HUBSPOT_REDIRECT_URI;
         
         // Scopes needed for contacts and lead management
         const scopes = [

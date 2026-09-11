@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
+import { getMicrosoftRedirectUri } from '@/config/microsoft';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { upsertMicrosoftConnection } from '@/services/microsoft/microsoftConnectionService';
-import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
-import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 
-function getAppUrl(_req: NextRequest) {
-  return PUBLIC_APP_ORIGIN;
+function getAppUrl(req: NextRequest) {
+  return (ENV.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || 'https://alphaclonesystems.com').replace(
+    /\/$/,
+    ''
+  );
 }
 
 function sanitizeReturnTo(returnTo: string | null | undefined, fallback = '/dashboard/settings') {
@@ -81,7 +83,8 @@ export async function GET(req: NextRequest) {
       (stateData.metadata?.return_to as string | undefined) || defaultReturn,
       defaultReturn
     );
-    const redirectUri = OAUTH_CALLBACKS.microsoft;
+    const redirectUri =
+      (stateData.metadata?.redirect_uri as string | undefined) || getMicrosoftRedirectUri(appUrl);
     const userId = stateData.user_id;
 
     const clientId = ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID;

@@ -11,22 +11,14 @@ const SAFE_INTEGRATION_COLUMNS =
   'id, page_id, page_name, expires_at, is_active, connected_at, updated_at, metadata';
 
 async function resolveFacebookPageForTenant(tenantId: string, pageId?: string) {
-  const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
-  const identity = await resolveTenantIdentityForPublish({
-    tenantId,
-    identityId: pageId,
-    identityType: 'facebook_page',
-    provider: 'facebook',
-    allowDefault: !pageId,
-  });
   const admin = createSupabaseAdminClient();
   const integration = await getFacebookIntegrationWithToken(admin, {
     tenantId,
-    pageId: identity.provider_identity_id,
+    pageId,
     requireActive: true,
   });
-  if (!integration?.pageAccessToken) {
-    throw new Error('No connected Facebook Page found for this tenant. Connect a page first.');
+  if (!integration) {
+    throw new Error('No connected Facebook Page found. Please connect a page first.');
   }
   return {
     page_id: integration.page_id,
@@ -140,7 +132,7 @@ registerTool('facebook', {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-      page_id: { type: 'string', description: 'Facebook Page ID (required when tenant has multiple pages; otherwise tenant default or sole page)' },
+      page_id: { type: 'string', description: 'Facebook Page ID (uses first connected page if omitted)' },
       video_url: { type: 'string', description: 'Public URL of the video to publish as a Reel' },
       video_base64: { type: 'string', description: 'Base64-encoded video content (alternative to video_url)' },
       video_filename: { type: 'string', description: 'Filename for base64 video (default: reel.mp4)', default: 'reel.mp4' },
@@ -301,7 +293,7 @@ registerTool('facebook', {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-      page_id: { type: 'string', description: 'Facebook Page ID (required when tenant has multiple pages; otherwise tenant default or sole page)' },
+      page_id: { type: 'string', description: 'Facebook Page ID (uses first connected page if omitted)' },
       caption: { type: 'string', description: 'Post caption/text' },
       photos: {
         type: 'array',

@@ -1,1 +1,3 @@
-export { default } from './UnifiedInbox';
+'use client';
+
+export { default } from './UnifiedInboxView';

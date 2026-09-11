@@ -1,5 +1,4 @@
 import { createSupabaseAdminClient } from '../../lib/supabase-admin';
-import { resolveMcpSessionUserId } from '../../lib/mcp/resolveMcpSessionUserId';
 import {
   DEFAULT_BUSINESS_AI_STATE,
   mergeBusinessAIState,
@@ -120,15 +119,11 @@ export const mcpStore = {
 
     if (!session?.id) {
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
-      const resolvedUserId = await resolveMcpSessionUserId({ tenantId, userId });
-      if (!resolvedUserId) {
-        return { success: false, error: 'No resolvable user for MCP session' };
-      }
       const { error: insertError } = await supabase
         .from('mcp_sessions')
         .insert({
           tenant_id: tenantId,
-          user_id: resolvedUserId,
+          user_id: userId || null,
           expires_at: expiresAt,
           metadata: {
             ...newMetadata,

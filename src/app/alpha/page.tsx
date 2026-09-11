@@ -3,7 +3,7 @@ import AlphaConsole from '@/components/alpha/AlphaConsole';
 
 export const metadata: Metadata = {
   title: 'Alpha Executive Console | AlphaClone Systems',
-  description: 'Run and monitor tenant-isolated assisted business missions with durable execution history.',
+  description: 'Executive dashboard for AlphaClone Systems. Monitor platform health, compliance status, and business operations.',
   robots: { index: false, follow: false },
 };
 

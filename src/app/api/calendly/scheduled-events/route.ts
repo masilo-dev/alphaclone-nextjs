@@ -11,7 +11,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing tenant ID' }, { status: 400 });
         }
 
-        const { admin: supabase } = await requireTenantAccess(tenantId, req);
+        await requireTenantAccess(tenantId);
+
+        const supabase = createSupabaseAdminClient();
 
         // Fetch calendar events synced from Calendly
         const { data: events, error } = await supabase

@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'tenantId and campaignId are required' }, { status: 400 });
         }
 
-        const { admin } = await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId);
+        const admin = createSupabaseAdminClient();
 
         const issues: string[] = [];
         const warnings: string[] = [];

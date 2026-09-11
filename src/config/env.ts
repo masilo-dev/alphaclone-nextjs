@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { resolveSupabaseServiceRoleKey } from '@/lib/supabase-service-role';
 
 /** Normalize the Railway scraper URL — accepts host-only values and rejects internal hostnames unless running in Railway. */
 function normalizeScraperServiceUrl(value: string | undefined): string | undefined {
@@ -55,7 +54,6 @@ const envSchema = z.object({
     APOLLO_API_KEY: z.string().optional(),
     VITE_GEMINI_API_KEY: z.string().optional(),
     GOOGLE_API_KEY: z.string().optional(),
-    VITE_GOOGLE_API_KEY: z.string().optional(),
     DEEPSEEK_API_KEY: z.string().optional(),
     /** Browser Maps SDK only; use NEXT_PUBLIC_GOOGLE_MAPS_API_KEY with referrer restrictions */
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
@@ -66,16 +64,6 @@ const envSchema = z.object({
 
     CRON_SECRET: z.string().optional(),
     INTERNAL_API_KEY: z.string().optional(),
-
-    // Bonnie Agentic BOS (Railway durable runtime)
-    BONNIE_DURABLE_RUNTIME: z.enum(['true', 'false', '1', '0']).optional(),
-    BONNIE_WORKER_POLL_MS: z.string().optional(),
-    BONNIE_MAX_TASKS_PER_RUN: z.string().optional(),
-    BONNIE_MAX_PARALLEL_TASKS: z.string().optional(),
-    BONNIE_MAX_RETRIES: z.string().optional(),
-    BONNIE_MAX_GRAPH_DEPTH: z.string().optional(),
-    BONNIE_EVENT_SIGNING_SECRET: z.string().optional(),
-    BONNIE_INTERNAL_SERVICE_TOKEN: z.string().optional(),
 
     // Daily.co
     VITE_DAILY_DOMAIN: z.string().optional(),
@@ -110,12 +98,6 @@ const envSchema = z.object({
     CALENDLY_CLIENT_SECRET: z.string().optional(),
     VITE_CALENDLY_REDIRECT_URI: z.string().url().optional(),
     CALENDLY_WEBHOOK_SIGNING_KEY: z.string().optional(),
-    CAL_WEBHOOK_SECRET: z.string().optional(),
-    CALCOM_WEBHOOK_SECRET: z.string().optional(),
-    CAL_BASE_URL: z.string().url().optional(),
-    CAL_OAUTH_CLIENT_ID: z.string().optional(),
-    CAL_OAUTH_CLIENT_SECRET: z.string().optional(),
-    CAL_OAUTH_REDIRECT_URI: z.string().url().optional(),
 
     // Google OAuth
     GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required').optional(),
@@ -141,8 +123,8 @@ const envSchema = z.object({
     // Supabase Admin
     SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
-    // Encryption (allow any length at runtime — strict length breaks deploy when misconfigured)
-    ENCRYPTION_SECRET: z.string().optional(),
+    // Encryption
+    ENCRYPTION_SECRET: z.string().length(32, 'Encryption secret must be exactly 32 characters').optional(),
 
     // Zoho OAuth
     ZOHO_CLIENT_ID: z.string().optional(),
@@ -161,7 +143,7 @@ const envSchema = z.object({
     ZOHO_CLIENT_SECRET_CA: z.string().optional(),
     ZOHO_REDIRECT_URI: z.string().url().optional(),
     ZOHO_REGION: z.enum(['US', 'EU', 'IN', 'AU', 'JP', 'CA']).optional(),
-    ZOHO_ENCRYPTION_SECRET: z.string().optional(),
+    ZOHO_ENCRYPTION_SECRET: z.string().length(32, 'Zoho encryption secret must be exactly 32 characters').optional(),
 
     // LinkedIn OAuth (integration connector)
     LINKEDIN_CLIENT_ID: z.string().optional(),
@@ -172,8 +154,7 @@ const envSchema = z.object({
     QSTASH_TOKEN: z.string().optional(),
     QSTASH_URL: z.string().url().optional(),
 
-    // Redis Infrastructure (Railway TCP preferred; Upstash REST fallback)
-    REDIS_URL: z.string().url().optional(),
+    // Redis Infrastructure (Upstash)
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
@@ -200,35 +181,11 @@ const envSchema = z.object({
  */
 function validateEnv() {
     const rawEnv = {
-        NEXT_PUBLIC_SUPABASE_URL:
-            process.env.NEXT_PUBLIC_SUPABASE_URL ||
-            process.env.VITE_SUPABASE_URL ||
-            process.env.SUPABASE_URL ||
-            process.env.supabase_url ||
-            process.env.superbase_url,
-        VITE_SUPABASE_URL:
-            process.env.NEXT_PUBLIC_SUPABASE_URL ||
-            process.env.VITE_SUPABASE_URL ||
-            process.env.SUPABASE_URL ||
-            process.env.supabase_url ||
-            process.env.superbase_url,
+        NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.supabase_url,
+        VITE_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.supabase_url,
 
-        NEXT_PUBLIC_SUPABASE_ANON_KEY:
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-            process.env.VITE_SUPABASE_ANON_KEY ||
-            process.env.SUPABASE_ANON_KEY ||
-            process.env.SUPABASE_PUBLISHABLE_KEY ||
-            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-            process.env.supabase_anon_public_key ||
-            process.env.superbase_anon_public_key,
-        VITE_SUPABASE_ANON_KEY:
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-            process.env.VITE_SUPABASE_ANON_KEY ||
-            process.env.SUPABASE_ANON_KEY ||
-            process.env.SUPABASE_PUBLISHABLE_KEY ||
-            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-            process.env.supabase_anon_public_key ||
-            process.env.superbase_anon_public_key,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.supabase_anon_public_key,
+        VITE_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.supabase_anon_public_key,
 
         ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY,
         OPENAI_API_KEY: process.env.OPENAI_API_KEY,
@@ -246,12 +203,6 @@ function validateEnv() {
             process.env.GOOGLE_API_KEY,
         GOOGLE_API_KEY:
             process.env.GOOGLE_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_AI_KEY,
-        VITE_GOOGLE_API_KEY:
-            process.env.VITE_GOOGLE_API_KEY ||
-            process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
-            process.env.GOOGLE_API_KEY ||
-            process.env.GOOGLE_AI_API_KEY ||
-            process.env.GOOGLE_AI_KEY,
         DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
         NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
         MANUS_API_KEY: process.env.MANUS_API_KEY,
@@ -263,23 +214,10 @@ function validateEnv() {
         LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET,
         VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
         VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
-        VITE_VAPID_PUBLIC_KEY:
-            process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
-            process.env.VITE_VAPID_PUBLIC_KEY ||
-            '',
         VITE_CALENDLY_CLIENT_ID: process.env.NEXT_PUBLIC_CALENDLY_CLIENT_ID || process.env.VITE_CALENDLY_CLIENT_ID || process.env.CALENDLY_CLIENT_ID,
         CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
         VITE_CALENDLY_REDIRECT_URI: process.env.NEXT_PUBLIC_CALENDLY_REDIRECT_URI || process.env.VITE_CALENDLY_REDIRECT_URI || process.env.CALENDLY_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/calendly/callback`,
         CALENDLY_WEBHOOK_SIGNING_KEY: process.env.CALENDLY_WEBHOOK_SIGNING_KEY || process.env.VITE_CALENDLY_WEBHOOK_SIGNING_KEY || process.env.NEXT_PUBLIC_CALENDLY_WEBHOOK_SIGNING_KEY,
-        CAL_WEBHOOK_SECRET: process.env.CAL_WEBHOOK_SECRET,
-        CALCOM_WEBHOOK_SECRET: process.env.CALCOM_WEBHOOK_SECRET || process.env.CAL_WEBHOOK_SECRET,
-        CAL_BASE_URL: process.env.CAL_BASE_URL || process.env.NEXT_PUBLIC_CAL_BASE_URL,
-        CAL_OAUTH_CLIENT_ID: process.env.CAL_OAUTH_CLIENT_ID || process.env.NEXT_PUBLIC_CAL_OAUTH_CLIENT_ID,
-        CAL_OAUTH_CLIENT_SECRET: process.env.CAL_OAUTH_CLIENT_SECRET,
-        CAL_OAUTH_REDIRECT_URI:
-            process.env.CAL_OAUTH_REDIRECT_URI ||
-            process.env.NEXT_PUBLIC_CAL_OAUTH_REDIRECT_URI ||
-            `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/cal/callback`,
 
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
@@ -308,10 +246,7 @@ function validateEnv() {
         WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
         WHATSAPP_ACCESS_TOKEN: process.env.WHATSAPP_ACCESS_TOKEN || process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
 
-        SUPABASE_SERVICE_ROLE_KEY: resolveSupabaseServiceRoleKey(
-            process.env.SUPABASE_SERVICE_ROLE_KEY,
-            process.env.SUPABASE_KEY,
-        ),
+        SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 
         ENCRYPTION_SECRET: process.env.ENCRYPTION_SECRET,
 
@@ -340,7 +275,6 @@ function validateEnv() {
         QSTASH_TOKEN: process.env.QSTASH_TOKEN,
         QSTASH_URL: process.env.QSTASH_URL,
 
-        REDIS_URL: process.env.REDIS_URL,
         UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
         UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
 
@@ -360,14 +294,6 @@ function validateEnv() {
 
         CRON_SECRET: process.env.CRON_SECRET,
         INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
-        BONNIE_DURABLE_RUNTIME: process.env.BONNIE_DURABLE_RUNTIME,
-        BONNIE_WORKER_POLL_MS: process.env.BONNIE_WORKER_POLL_MS,
-        BONNIE_MAX_TASKS_PER_RUN: process.env.BONNIE_MAX_TASKS_PER_RUN,
-        BONNIE_MAX_PARALLEL_TASKS: process.env.BONNIE_MAX_PARALLEL_TASKS,
-        BONNIE_MAX_RETRIES: process.env.BONNIE_MAX_RETRIES,
-        BONNIE_MAX_GRAPH_DEPTH: process.env.BONNIE_MAX_GRAPH_DEPTH,
-        BONNIE_EVENT_SIGNING_SECRET: process.env.BONNIE_EVENT_SIGNING_SECRET,
-        BONNIE_INTERNAL_SERVICE_TOKEN: process.env.BONNIE_INTERNAL_SERVICE_TOKEN,
         SCRAPER_SERVICE_URL: normalizeScraperServiceUrl(
             process.env.SCRAPER_SERVICE_URL || process.env.RAILWAY_SCRAPER_SERVICE_URL
         ),
@@ -385,45 +311,17 @@ function validateEnv() {
         const parsed = envSchema.parse(rawEnv);
         return {
             ...parsed,
-            VITE_SUPABASE_URL:
-                parsed.NEXT_PUBLIC_SUPABASE_URL ||
-                parsed.VITE_SUPABASE_URL ||
-                process.env.SUPABASE_URL,
-            VITE_SUPABASE_ANON_KEY:
-                parsed.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-                parsed.VITE_SUPABASE_ANON_KEY ||
-                process.env.SUPABASE_ANON_KEY ||
-                process.env.SUPABASE_PUBLISHABLE_KEY,
-            SUPABASE_SERVICE_ROLE_KEY:
-                resolveSupabaseServiceRoleKey(
-                    process.env.SUPABASE_SERVICE_ROLE_KEY,
-                    parsed.SUPABASE_SERVICE_ROLE_KEY,
-                    process.env.SUPABASE_KEY
-                ),
+            VITE_SUPABASE_URL: parsed.NEXT_PUBLIC_SUPABASE_URL || parsed.VITE_SUPABASE_URL,
+            VITE_SUPABASE_ANON_KEY: parsed.NEXT_PUBLIC_SUPABASE_ANON_KEY || parsed.VITE_SUPABASE_ANON_KEY
         };
     } catch (error) {
-        console.error('[env] Validation warnings — using raw env with Supabase fallbacks:', error);
-        const fallback = {
-            ...rawEnv,
-            VITE_SUPABASE_URL:
-                rawEnv.NEXT_PUBLIC_SUPABASE_URL ||
-                rawEnv.VITE_SUPABASE_URL ||
-                process.env.SUPABASE_URL,
-            VITE_SUPABASE_ANON_KEY:
-                rawEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-                rawEnv.VITE_SUPABASE_ANON_KEY ||
-                process.env.SUPABASE_ANON_KEY ||
-                process.env.SUPABASE_PUBLISHABLE_KEY,
-            SUPABASE_SERVICE_ROLE_KEY: resolveSupabaseServiceRoleKey(
-                rawEnv.SUPABASE_SERVICE_ROLE_KEY,
-                process.env.SUPABASE_SERVICE_ROLE_KEY,
-                process.env.SUPABASE_KEY
-            ),
-        } as Environment & {
-            VITE_SUPABASE_URL?: string;
-            VITE_SUPABASE_ANON_KEY?: string;
-        };
-        return fallback;
+        const isServer = typeof window === 'undefined';
+        const isProd = process.env.NODE_ENV === 'production';
+        if (isServer && isProd) {
+            console.error('[env] Invalid environment configuration', error);
+            throw new Error('Invalid environment configuration');
+        }
+        return rawEnv as any;
     }
 }
 

@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  validateMCPAuthApp,
-  handleCorsApp,
-  getMcpCorsHeaders,
-  createUnauthorizedResponse,
-} from '@/services/mcp/authMiddlewareApp';
+import { validateMCPAuthApp, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { negotiateClientCapabilities } from '@/lib/mcp/clientCapabilities';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -57,52 +51,6 @@ function toUtcIso(value: unknown): unknown {
   return value;
 }
 
-async function validateMcpQuota(
-  admin: any,
-  tenantId: string,
-  userId: string,
-  toolName: string,
-  toolArgs: Record<string, unknown> = {},
-): Promise<{ allowed: boolean; reason?: string }> {
-  const {
-    determinePrimaryQuotaMetric,
-    getBulkProjectedAmount,
-    isBulkMeteredTool,
-    shouldPreChargeMcpExecution,
-  } = await import('@/lib/mcp/toolQuotaPolicy');
-  if (!shouldPreChargeMcpExecution(toolName)) {
-    return { allowed: true };
-  }
-
-  const primaryMetric = determinePrimaryQuotaMetric(toolName);
-  if (!primaryMetric) return { allowed: true };
-
-  const amount = isBulkMeteredTool(toolName)
-    ? Math.max(1, getBulkProjectedAmount(toolName, toolArgs))
-    : 1;
-
-  const { data, error } = await admin.rpc('check_daily_resource_quota', {
-    p_tenant_id: tenantId,
-    p_user_id: userId,
-    p_resource: primaryMetric,
-    p_amount: amount,
-  });
-
-  if (error) {
-    console.error('[MCP] quota validation RPC error:', error);
-    return { allowed: false, reason: 'Unable to verify usage allowance' };
-  }
-
-  if (data && data.allowed === false) {
-    return {
-      allowed: false,
-      reason: data.message || `Daily quota would be exceeded for '${primaryMetric}' (${data.currentUsage}/${data.limit}).`,
-    };
-  }
-
-  return { allowed: true };
-}
-
 function negotiateProtocolVersion(requested: unknown): string {
   if (typeof requested === 'string' && (SUPPORTED_MCP_PROTOCOL_VERSIONS as readonly string[]).includes(requested)) {
     return requested;
@@ -130,24 +78,25 @@ async function resolveAuth(req: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (!userError && user) {
-      // Hint is NEVER authoritative — must verify membership first.
-      const hinted =
-        req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId') || '';
+      const tenantIdHeader = req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId');
+      let resolvedTenantId = tenantIdHeader || '';
 
-      try {
-        const { resolveActiveTenantForUser } = await import('@/lib/tenant/platformTenant');
-        const resolved = await resolveActiveTenantForUser({
-          userId: user.id,
-          hintedTenantId: hinted || null,
-        });
+      if (!resolvedTenantId) {
+        const { data: userTenant } = await supabase
+          .from('tenant_users')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        resolvedTenantId = userTenant?.tenant_id || '';
+      }
+
+      if (resolvedTenantId) {
         return {
-          tenant_id: resolved.tenantId,
+          tenant_id: resolvedTenantId,
           user_id: user.id,
-          client_id: undefined as string | undefined,
         };
-      } catch (membershipErr) {
-        console.warn('[MCP Route Auth Fallback] tenant membership rejected:', membershipErr);
-        // Fall through to unauthorized
       }
     }
   } catch (fallbackErr) {
@@ -155,70 +104,6 @@ async function resolveAuth(req: NextRequest) {
   }
 
   return auth;
-}
-
-function authClientIdOf(auth: { client_id?: string } | { error: string }): string | null {
-  if ('error' in auth) return null;
-  return auth.client_id || null;
-}
-
-async function getSessionLoadedModules(mcpSessionId: string | null): Promise<string[]> {
-  if (!mcpSessionId || !ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) return [];
-  try {
-    const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-    const { data } = await supabaseAdmin
-      .from('mcp_sessions')
-      .select('metadata')
-      .eq('id', mcpSessionId)
-      .maybeSingle();
-    const modules = (data?.metadata as Record<string, unknown> | null)?.loaded_modules;
-    return Array.isArray(modules) ? modules.filter((m): m is string => typeof m === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
-async function persistSessionLoadedModule(mcpSessionId: string | null, moduleName: string): Promise<string[]> {
-  const current = await getSessionLoadedModules(mcpSessionId);
-  const normalized = moduleName.trim().toLowerCase();
-  const next = Array.from(new Set([...current, normalized])).filter(Boolean).sort();
-  if (!mcpSessionId || !ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) return next;
-
-  try {
-    const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-    const { data } = await supabaseAdmin
-      .from('mcp_sessions')
-      .select('metadata')
-      .eq('id', mcpSessionId)
-      .maybeSingle();
-    const metadata = { ...((data?.metadata || {}) as Record<string, unknown>), loaded_modules: next };
-    await supabaseAdmin
-      .from('mcp_sessions')
-      .update({ metadata, last_seen_at: new Date().toISOString() })
-      .eq('id', mcpSessionId);
-  } catch (err) {
-    console.warn('[MCP progressive discovery] failed to persist loaded module:', err);
-  }
-  return next;
-}
-
-function unauthorizedFromAuth(req: NextRequest, auth: { error: string; status: number; wwwAuthenticate?: string }) {
-  if (auth.status === 403) {
-    return createUnauthorizedResponse(req, 'insufficient_scope', auth.error, undefined, 403);
-  }
-  if (auth.status === 401) {
-    return createUnauthorizedResponse(req, 'invalid_token', auth.error, undefined, 401);
-  }
-  return NextResponse.json(
-    { error: auth.error },
-    {
-      status: auth.status,
-      headers: {
-        ...mcpJsonHeaders(req),
-        ...(auth.wwwAuthenticate ? { 'WWW-Authenticate': auth.wwwAuthenticate } : {}),
-      },
-    }
-  );
 }
 
 export async function POST(req: NextRequest) {
@@ -263,7 +148,11 @@ export async function POST(req: NextRequest) {
     if (sessionError || !session) {
       const auth = await resolveAuth(req);
       if ('error' in auth) {
-        return unauthorizedFromAuth(req, auth);
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          error: { code: -32001, message: 'Session not found. Please re-initialize.' },
+          id: requestBody.id ?? null,
+        }, { status: 401, headers: mcpJsonHeaders(req) });
       }
       tenantId = auth.tenant_id;
       userId = auth.user_id;
@@ -272,7 +161,11 @@ export async function POST(req: NextRequest) {
       if (expiry < new Date()) {
         const auth = await resolveAuth(req);
         if ('error' in auth) {
-          return unauthorizedFromAuth(req, auth);
+          return NextResponse.json({
+            jsonrpc: '2.0',
+            error: { code: -32001, message: 'Session expired. Please re-initialize.' },
+            id: requestBody.id ?? null,
+          }, { status: 401, headers: mcpJsonHeaders(req) });
         }
         tenantId = auth.tenant_id;
         userId = auth.user_id;
@@ -284,33 +177,15 @@ export async function POST(req: NextRequest) {
   } else {
     const auth = await resolveAuth(req);
     if ('error' in auth) {
-      return unauthorizedFromAuth(req, auth);
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
   }
 
-  // Re-validate active membership for every request (sessions/tokens alone are not enough)
-  try {
-    const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
-    await assertTenantMembership(tenantId, userId);
-  } catch {
-    return NextResponse.json(
-      { error: 'Unauthorized', message: 'Workspace membership is not active' },
-      { status: 401, headers: mcpJsonHeaders(req) }
-    );
-  }
-
   // 2. Short-circuit handshake methods (SDK import crashes in serverless for initialize)
   if (requestBody.method === 'initialize') {
     const protocolVersion = negotiateProtocolVersion(requestBody.params?.protocolVersion);
-    const clientName = String(requestBody.params?.clientInfo?.name || 'generic-mcp');
-    const clientCapabilities = negotiateClientCapabilities({
-      protocolVersion,
-      clientName,
-      userAgent: req.headers.get('user-agent'),
-      advertised: requestBody.params?.capabilities,
-    });
     const headers = new Headers(mcpJsonHeaders(req) as Record<string, string>);
     headers.set('MCP-Protocol-Version', protocolVersion);
 
@@ -319,30 +194,14 @@ export async function POST(req: NextRequest) {
       const initialAiState = await getInitialBusinessAIStateForTenant(tenantId);
       const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
-      let initClientId: string | null = null;
-      try {
-        const auth = await resolveAuth(req);
-        initClientId = authClientIdOf(auth);
-      } catch {
-        // ignore
-      }
       const { data: sessionRow, error: sessionError } = await supabaseAdmin
         .from('mcp_sessions')
         .insert({
           tenant_id: tenantId,
           user_id: userId,
           expires_at: expiresAt,
-          client_name: clientName,
-          client_instance_id: String(requestBody.params?.clientInfo?.version || crypto.randomUUID()),
-          protocol_version: protocolVersion,
-          transport: 'streamable-http',
-          capabilities: clientCapabilities,
-          connected_at: new Date().toISOString(),
-          last_seen_at: new Date().toISOString(),
-          status: 'connected',
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
-            client_id: initClientId,
             protocol_version: protocolVersion,
             business_ai_version: initialAiState.version,
             business_ai_state: initialAiState,
@@ -379,131 +238,14 @@ export async function POST(req: NextRequest) {
 
   // 3. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
   if (requestBody.method === 'tools/list') {
-    try {
-      const { getUnifiedMcpTools, getCatalogChecksum } = await import('@/lib/mcp/listAllTools');
+    const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+    const tools = await getUnifiedMcpTools();
 
-      // Prefer live auth client_id; fall back to session metadata / UA for ChatGPT detection.
-      let clientId: string | null = null;
-      let clientLabel: string | null = null;
-      try {
-        const auth = await resolveAuth(req);
-        clientId = authClientIdOf(auth);
-      } catch {
-        // ignore — cookie/session path may still work below
-      }
-      if (mcpSessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
-        try {
-          const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-          const { data: sessionMeta } = await supabaseAdmin
-            .from('mcp_sessions')
-            .select('metadata')
-            .eq('id', mcpSessionId)
-            .maybeSingle();
-          const meta = (sessionMeta?.metadata || {}) as Record<string, unknown>;
-          if (typeof meta.client_label === 'string') clientLabel = meta.client_label;
-          if (typeof meta.client_id === 'string' && !clientId) clientId = meta.client_id;
-        } catch {
-          // ignore
-        }
-      }
-
-      const { resolveUnifiedCatalogMode } = await import('@/lib/mcp/ensureOAuthClient');
-      const clientDefaultMode = resolveUnifiedCatalogMode(clientId);
-      const rawCatalogMode = requestBody.params?.catalogMode || requestBody.params?.catalog_mode;
-      const requestedCatalogMode = rawCatalogMode === 'stable'
-        ? 'stable'
-        : rawCatalogMode === 'progressive'
-          ? 'progressive'
-          : rawCatalogMode === 'full'
-            ? 'full'
-            : clientDefaultMode;
-
-      const tools = await getUnifiedMcpTools({
-        clientId,
-        clientLabel,
-        userAgent: req.headers.get('user-agent'),
-        loadedModules: await getSessionLoadedModules(mcpSessionId),
-        catalogMode: requestedCatalogMode,
-      });
-
-      let discoveryTools = tools;
-      if (tenantId) {
-        try {
-          const { getTenantIntegrationSnapshot } = await import('@/services/integrationStatusService');
-          const { enrichToolsWithCapabilityMeta } = await import('@/lib/mcp/capabilityFilter');
-          const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
-          initializeRegistry();
-          const executableNames = new Set(listTools(false).map((tool) => tool.name));
-          const integrationSnapshot = await getTenantIntegrationSnapshot(tenantId);
-          discoveryTools = enrichToolsWithCapabilityMeta(tools, {
-            integrationSnapshot,
-            executableNames,
-          });
-        } catch (capErr) {
-          console.warn('[mcp.route tools/list] capability enrichment skipped:', capErr);
-        }
-      }
-
-      const checksum = getCatalogChecksum(discoveryTools);
-
-      console.info(
-        `[mcp.route tools/list] count=${discoveryTools.length} catalogMode=${requestedCatalogMode} checksum=${checksum} clientId=${clientId || '-'} label=${clientLabel || '-'}`
-      );
-
-      if (discoveryTools.length === 0) {
-        console.error('[mcp.route tools/list] CRITICAL: returning empty tool list');
-      }
-
-      const headers = new Headers(mcpJsonHeaders(req) as Record<string, string>);
-      headers.set('X-MCP-Version', '2.0.0');
-      headers.set('X-Catalog-Checksum', checksum);
-
-      const { paginateMcpToolsList } = await import('@/lib/mcp/toolsListPagination');
-      const rawCursor = requestBody.params?.cursor || req.nextUrl.searchParams.get('cursor');
-      const rawLimit = requestBody.params?.limit || requestBody.params?.pageSize || req.nextUrl.searchParams.get('limit');
-      const pagination = paginateMcpToolsList({
-        tools: discoveryTools,
-        catalogMode: requestedCatalogMode,
-        clientId,
-        rawCursor: typeof rawCursor === 'string' ? rawCursor : null,
-        rawLimit,
-      });
-      const paginatedTools = pagination.tools;
-      const { offset, limit, nextCursor } = pagination;
-
-      const result: Record<string, unknown> = {
-        tools: paginatedTools,
-        _meta: {
-          registry_version: '2.0.0',
-          catalog_checksum: checksum,
-          total_tools: discoveryTools.length,
-          returned_tools: paginatedTools.length,
-          catalog_mode: requestedCatalogMode,
-          offset,
-          next_cursor: nextCursor || null,
-        },
-      };
-
-      if (nextCursor) {
-        result.nextCursor = nextCursor;
-      }
-
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        id: requestBody.id,
-        result,
-      }, { headers });
-    } catch (err: any) {
-      console.error('[mcp.route tools/list] error:', err?.message || err);
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        id: requestBody.id,
-        error: {
-          code: -32603,
-          message: `tools/list failed: ${err?.message || 'unknown error'}`,
-        },
-      }, { status: 500, headers: mcpJsonHeaders(req) });
-    }
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: { tools },
+    }, { headers: mcpJsonHeaders(req) });
   }
 
   if (requestBody.method === 'resources/list') {
@@ -543,34 +285,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ jsonrpc: '2.0', id: requestBody.id, result: { prompts } }, { headers: mcpJsonHeaders(req) });
   }
 
-  if (requestBody.method === 'prompts/get') {
-    const { getMcpPrompt } = await import('@/lib/mcp/prompts/review_bonnie_patterns');
-    const name = String(requestBody.params?.name || '');
-    const prompt = getMcpPrompt(name);
-    if (!prompt) {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        id: requestBody.id,
-        error: { code: -32602, message: `Unknown prompt: ${name}` },
-      }, { status: 400, headers: mcpJsonHeaders(req) });
-    }
-    const args = (requestBody.params?.arguments || {}) as Record<string, string>;
-    const text = prompt.template(args);
-    return NextResponse.json({
-      jsonrpc: '2.0',
-      id: requestBody.id,
-      result: {
-        description: prompt.description,
-        messages: [
-          {
-            role: 'user',
-            content: { type: 'text', text },
-          },
-        ],
-      },
-    }, { headers: mcpJsonHeaders(req) });
-  }
-
   if (requestBody.method?.startsWith('notifications/')) {
     return new NextResponse(null, { status: 204, headers: { ...getMcpCorsHeaders(req), 'MCP-Version': MCP_VERSION_HEADER } });
   }
@@ -580,113 +294,19 @@ export async function POST(req: NextRequest) {
     const toolName = requestBody.params?.name;
     const toolArgs = requestBody.params?.arguments || {};
 
-    if (['list_tools', 'list_modules', 'list_capabilities', 'search_tools', 'load_module_tools'].includes(toolName)) {
-      const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-      const { MODULE_KEYWORDS, coreTools, searchToolCatalog } = await import('@/lib/mcp/progressiveDiscovery');
-      const full = await getUnifiedMcpTools({ forChatGPT: false, catalogMode: 'full' });
-      let data: unknown;
-      if (toolName === 'list_modules') data = Object.keys(MODULE_KEYWORDS);
-      else if (toolName === 'list_tools') data = coreTools(full);
-      else if (toolName === 'list_capabilities') data = {
-        progressive_discovery: true,
-        durable_jobs: true,
-        oauth_grants: true,
-        media_transfer: ['base64', 'source_url', 'signed_upload'],
-      };
-      else {
-        const moduleName = String(toolArgs.module || '');
-        const loadedModules = toolName === 'load_module_tools'
-          ? await persistSessionLoadedModule(mcpSessionId, moduleName)
-          : await getSessionLoadedModules(mcpSessionId);
-        const tools = searchToolCatalog(full, {
-          query: toolArgs.query,
-          module: moduleName,
-          action: toolArgs.action,
-          limit: toolArgs.limit,
-        });
-        data = toolName === 'load_module_tools'
-          ? {
-              module: moduleName,
-              loaded_modules: loadedModules,
-              tools,
-              execution_available_after_tools_list_refresh: true,
-            }
-          : tools;
-      }
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        id: requestBody.id,
-        result: { content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: { data } },
-      }, { headers: mcpJsonHeaders(req) });
-    }
-
-    // Enforce OAuth scopes before any tool side effects
-    try {
-      const auth = await resolveAuth(req);
-      if (!('error' in auth)) {
-        const { requiredScopesForTool, hasRequiredScopes } = await import('@/lib/mcp/scopes');
-        const scopes = (auth as { scope?: string[] }).scope || ['read', 'write'];
-        const required = requiredScopesForTool(String(toolName || ''));
-        const check = hasRequiredScopes(scopes, required);
-        if (!check.valid) {
-          return createUnauthorizedResponse(
-            req,
-            'insufficient_scope',
-            `Missing scopes: ${check.missing.join(', ')}`,
-            check.missing,
-            403
-          );
-        }
-      }
-    } catch {
-      // resolveAuth already enforced above for session path; continue
-    }
-
-    const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
-    initializeRegistry();
-
-    if (!hasTool(String(toolName || ''))) {
-      const quotaCheck = await validateMcpQuota(
-        createAdminSupabaseClientOrThrow(),
-        tenantId,
-        userId,
-        String(toolName || ''),
-        toolArgs as Record<string, unknown>,
-      );
-      if (!quotaCheck.allowed) {
-        return NextResponse.json({
-          jsonrpc: '2.0',
-          id: requestBody.id,
-          error: {
-            code: -32600,
-            message: quotaCheck.reason || 'Daily resource quota exceeded.',
-            data: { quotaExceeded: true, upgradeUrl: 'https://alphaclonesystems.com/pricing' },
-          },
-        }, { status: 429, headers: mcpJsonHeaders(req) });
-      }
-    }
-
     if (toolName === 'create_ticket') {
       const admin = createAdminSupabaseClientOrThrow();
       const { data: ticket, error } = await admin
-        .from('tickets')
+        .from('support_tickets')
         .insert({
           tenant_id: tenantId,
           title: toolArgs.title,
           description: toolArgs.description || '',
           priority: toolArgs.priority || 'medium',
+          category: toolArgs.category || 'general',
           source: toolArgs.source || 'bonnie_agent',
-          channel: toolArgs.source || 'bonnie_agent',
-          ticket_type: ['billing', 'technical'].includes(toolArgs.category)
-            ? toolArgs.category
-            : toolArgs.category === 'bug'
-              ? 'incident'
-              : toolArgs.category === 'feature_request'
-                ? 'request'
-                : 'question',
           contact_id: toolArgs.contact_id || null,
           client_id: toolArgs.client_id || null,
-          created_by: userId,
           status: 'open',
         })
         .select()
@@ -710,7 +330,7 @@ export async function POST(req: NextRequest) {
     if (toolName === 'get_tickets') {
       const admin = createAdminSupabaseClientOrThrow();
       let query = admin
-        .from('tickets')
+        .from('support_tickets')
         .select('*')
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
@@ -718,16 +338,7 @@ export async function POST(req: NextRequest) {
 
       if (toolArgs.status) query = query.eq('status', toolArgs.status);
       if (toolArgs.priority) query = query.eq('priority', toolArgs.priority);
-      if (toolArgs.category) {
-        const requestedType = ['billing', 'technical'].includes(toolArgs.category)
-          ? toolArgs.category
-          : toolArgs.category === 'bug'
-            ? 'incident'
-            : toolArgs.category === 'feature_request'
-              ? 'request'
-              : 'question';
-        query = query.eq('ticket_type', requestedType);
-      }
+      if (toolArgs.category) query = query.eq('category', toolArgs.category);
 
       const { data: tickets, error } = await query;
 
@@ -751,6 +362,7 @@ export async function POST(req: NextRequest) {
       const updateData: any = {};
       if (toolArgs.status) updateData.status = toolArgs.status;
       if (toolArgs.priority) updateData.priority = toolArgs.priority;
+      if (toolArgs.resolution_note) updateData.resolution_note = toolArgs.resolution_note;
       if (toolArgs.assigned_to) updateData.assigned_to = toolArgs.assigned_to;
       
       // Auto-set resolved_at if status changes to resolved
@@ -765,7 +377,7 @@ export async function POST(req: NextRequest) {
       updateData.updated_at = new Date().toISOString();
 
       const { data: ticket, error } = await admin
-        .from('tickets')
+        .from('support_tickets')
         .update(updateData)
         .eq('id', toolArgs.ticket_id)
         .eq('tenant_id', tenantId)
@@ -780,25 +392,6 @@ export async function POST(req: NextRequest) {
         }, { status: 500, headers: mcpJsonHeaders(req) });
       }
 
-      if (toolArgs.resolution_note) {
-        const { error: noteError } = await admin.from('ticket_messages').insert({
-          tenant_id: tenantId,
-          ticket_id: ticket.id,
-          author_user_id: userId,
-          message_type: 'internal_note',
-          body_text: String(toolArgs.resolution_note),
-          visibility: 'internal',
-          metadata: { source: 'mcp_update_ticket', resolution_note: true },
-        });
-        if (noteError) {
-          return NextResponse.json({
-            jsonrpc: '2.0',
-            id: requestBody.id,
-            error: { code: -32603, message: 'Ticket updated but its resolution note could not be recorded' },
-          }, { status: 500, headers: mcpJsonHeaders(req) });
-        }
-      }
-
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
@@ -811,7 +404,7 @@ export async function POST(req: NextRequest) {
       
       // Get counts by status
       const { data: allTickets } = await admin
-        .from('tickets')
+        .from('support_tickets')
         .select('status')
         .eq('tenant_id', tenantId);
 
@@ -828,16 +421,16 @@ export async function POST(req: NextRequest) {
 
       // Get SLA breaches
       const { data: slaBreaches } = await admin
-        .from('tickets')
+        .from('support_tickets')
         .select('id, title, sla_due_at, created_at')
         .eq('tenant_id', tenantId)
-        .in('status', ['new', 'open', 'in_progress', 'waiting_on_business', 'escalated', 'reopened'])
+        .eq('status', 'open')
         .lt('sla_due_at', new Date().toISOString())
         .limit(10);
 
       const stats = toUtcIso({
         status_counts: statusCounts || [],
-        avg_resolution_hours: (avgResolution as { avg_hours?: number } | null)?.avg_hours || null,
+        avg_resolution_hours: avgResolution?.avg_hours || null,
         sla_breaches: slaBreaches || [],
         total_open: (statusCounts || []).filter((s: any) => s.status === 'open').reduce((sum: number, s: any) => sum + (s.count || 0), 0),
       });
@@ -853,11 +446,9 @@ export async function POST(req: NextRequest) {
       const admin = createAdminSupabaseClientOrThrow();
       
       const { data: ticket, error } = await admin
-        .from('tickets')
+        .from('support_tickets')
         .update({
           priority: 'urgent',
-          status: 'escalated',
-          escalated_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', toolArgs.ticket_id)
@@ -896,37 +487,19 @@ export async function POST(req: NextRequest) {
     }
 
     // Registry tools — bypass MCPServer (avoids nodemailer / heavy email import chain)
+    const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
+    initializeRegistry();
     if (hasTool(toolName)) {
-      try {
-        const { executeMcpToolWithBudget } = await import('@/lib/mcp/mcpToolExecutionBudget');
-        const rawResult = await executeMcpToolWithBudget(String(toolName), () =>
-          executeTool(tenantId, userId, toolName, {
-            ...toolArgs,
-            tenant_id: tenantId,
-            user_id: userId,
-          })
-        );
-        const isoResult = toUtcIso(rawResult);
-        const result = (isoResult && typeof isoResult === 'object' && Array.isArray((isoResult as any).content))
-          ? isoResult
-          : { content: [{ type: 'text', text: typeof isoResult === 'string' ? isoResult : JSON.stringify(isoResult ?? {}, null, 2) }] };
-
-        return NextResponse.json({
-          jsonrpc: '2.0',
-          id: requestBody.id,
-          result,
-        }, { headers: mcpJsonHeaders(req) });
-      } catch (err: any) {
-        console.error(`[MCP route.ts] Execution error for ${toolName}:`, err);
-        return NextResponse.json({
-          jsonrpc: '2.0',
-          id: requestBody.id,
-          result: {
-            content: [{ type: 'text', text: JSON.stringify({ error: true, message: err?.message || 'Tool execution failed' }) }],
-            isError: true,
-          },
-        }, { headers: mcpJsonHeaders(req) });
-      }
+      const result = await executeTool(tenantId, userId, toolName, {
+        ...toolArgs,
+        tenant_id: tenantId,
+        user_id: userId,
+      });
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result: toUtcIso(result),
+      }, { headers: mcpJsonHeaders(req) });
     }
   }
 
@@ -1002,15 +575,11 @@ export async function GET(req: NextRequest) {
   try {
     const auth = await resolveAuth(req);
     if ('error' in auth) {
-      return unauthorizedFromAuth(req, auth);
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
     }
 
     const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-    const tools = await getUnifiedMcpTools({
-      clientId: authClientIdOf(auth),
-      userAgent: req.headers.get('user-agent'),
-      loadedModules: await getSessionLoadedModules(req.headers.get('mcp-session-id')),
-    });
+    const tools = await getUnifiedMcpTools();
 
     return NextResponse.json({ tools, count: tools.length }, {
       headers: mcpJsonHeaders(req, {
@@ -1039,7 +608,7 @@ export async function DELETE(req: NextRequest) {
 
   const auth = await resolveAuth(req);
   if ('error' in auth) {
-    return unauthorizedFromAuth(req, auth);
+    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
   }
 
   const mcpSessionId = req.headers.get('mcp-session-id');
@@ -1047,12 +616,7 @@ export async function DELETE(req: NextRequest) {
   if (mcpSessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-      await supabaseAdmin
-        .from('mcp_sessions')
-        .delete()
-        .eq('id', mcpSessionId)
-        .eq('tenant_id', auth.tenant_id)
-        .eq('user_id', auth.user_id);
+      await supabaseAdmin.from('mcp_sessions').delete().eq('id', mcpSessionId);
       console.log('[MCP HTTP DELETE] Session terminated:', mcpSessionId);
     } catch (err) {
       console.warn('[MCP HTTP DELETE] Session cleanup failed:', err);

@@ -8,12 +8,12 @@ import {
   type BankAccount,
   type ReconciliationSession,
 } from '@/services/accounting/accountingManagementClient';
-import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
+import EmptyState from '@/components/ui/EmptyState';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { EnterpriseDataTable, type EnterpriseColumn } from '@/components/ui/EnterpriseDataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { Button, Input } from '@/components/ui/UIComponents';
+import { Input } from '@/components/ui/UIComponents';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import toast from 'react-hot-toast';
 
@@ -149,14 +149,13 @@ export default function BankingCenterPage() {
       id: 'actions',
       header: '',
       accessor: (a) => (
-        <Button
+        <button
           type="button"
-          size="sm"
-          variant="primary"
           onClick={(e) => { e.stopPropagation(); void startReconciliation(a.id); }}
+          className="px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-bold hover:bg-teal-500"
         >
           Reconcile
-        </Button>
+        </button>
       ),
     },
   ], []);
@@ -201,30 +200,27 @@ export default function BankingCenterPage() {
         )}
         toolbar={(
           <div className="flex items-center gap-2 px-1 py-2">
-            <Button
+            <button
               type="button"
-              size="sm"
-              variant="primary"
-              icon={<Plus className="w-4 h-4" />}
               onClick={() => setShowAddDrawer(true)}
+              className="h-9 px-3 rounded-xl bg-teal-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-teal-500"
             >
+              <Plus className="w-4 h-4" />
               Add Bank Account
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              size="sm"
-              variant="outline"
-              icon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
               onClick={load}
-              disabled={loading}
+              className="p-2 rounded-xl border border-white/5 text-slate-400 hover:text-teal-400"
+              title="Refresh"
             >
-              Refresh
-            </Button>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         )}
         stats={!loading ? (
           <div className="px-1">
-            <ModuleStatCards stats={bankStats} hub="accounting" />
+            <ModuleStatCards stats={bankStats} />
           </div>
         ) : null}
       >
@@ -233,7 +229,13 @@ export default function BankingCenterPage() {
             <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
           </div>
         ) : accounts.length === 0 ? (
-          <EmptyStateFromPreset moduleId="accounting" onAction={() => setShowAddDrawer(true)} />
+          <EmptyState
+            icon={Landmark}
+            title="No bank accounts"
+            description="Add your operating accounts to reconcile transactions and match payments against invoices."
+            actionLabel="Add Bank Account"
+            onAction={() => setShowAddDrawer(true)}
+          />
         ) : (
           <div className="px-2 pb-6 space-y-6">
             <EnterpriseDataTable
@@ -310,22 +312,20 @@ export default function BankingCenterPage() {
             placeholder="0.00"
           />
           <div className="flex gap-2 pt-2">
-            <Button
+            <button
               type="button"
               onClick={() => setShowAddDrawer(false)}
-              variant="outline"
-              className="flex-1"
+              className="flex-1 min-h-11 rounded-xl border border-white/10 text-slate-300 text-sm font-medium"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
-              variant="primary"
-              isLoading={saving}
-              className="flex-1"
+              disabled={saving}
+              className="flex-1 min-h-11 rounded-xl bg-teal-600 text-white text-sm font-bold disabled:opacity-50"
             >
-              Add account
-            </Button>
+              {saving ? 'Saving…' : 'Add account'}
+            </button>
           </div>
         </form>
       </DetailDrawer>

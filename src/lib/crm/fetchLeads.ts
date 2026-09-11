@@ -73,7 +73,7 @@ export async function fetchLeadsPaginated(
       ? params.fields.split(',').map((f) => f.trim()).filter(Boolean).join(', ')
       : DEFAULT_SELECT;
 
-  const applyFilters = (baseQuery: any) => {
+  const applyFilters = (baseQuery: ReturnType<typeof supabase.from>) => {
     let q = baseQuery.eq('tenant_id', params.tenantId);
     if (params.status) q = q.eq('status', params.status);
     if (params.stage) q = q.eq('stage', params.stage);
@@ -90,10 +90,9 @@ export async function fetchLeadsPaginated(
   );
   const { count: totalCount, error: countError } = await countQuery;
 
-  // Query pageSize + 1 rows to verify has_more accurately and prevent silent truncation/errors.
   let dataQuery = applyFilters(supabase.from('leads').select(selectable))
     .order(orderBy, { ascending: asc })
-    .range(pageOffset, pageOffset + pageSize);
+    .range(pageOffset, pageOffset + pageSize - 1);
 
   let { data, error } = await dataQuery;
 
@@ -103,7 +102,7 @@ export async function fetchLeadsPaginated(
       .select('id, business_name, email, phone, stage, notes, created_at')
       .eq('tenant_id', params.tenantId)
       .order('created_at', { ascending: false })
-      .range(pageOffset, pageOffset + pageSize);
+      .range(pageOffset, pageOffset + pageSize - 1);
     if (params.stage) legacy = legacy.eq('stage', params.stage);
     ({ data, error } = await legacy);
   }
@@ -112,11 +111,7 @@ export async function fetchLeadsPaginated(
     throw new Error(error.message || 'Failed to fetch leads');
   }
 
-  const rawRows = Array.isArray(data) ? data : [];
-  const hasMore = rawRows.length > pageSize;
-  const returnedRows = hasMore ? rawRows.slice(0, pageSize) : rawRows;
-
-  const rows = returnedRows.map((row: Record<string, unknown>) => {
+  const rows = (Array.isArray(data) ? data : []).map((row: Record<string, unknown>) => {
     const phone = row.phone;
     const normalizedPhone = normalizePhoneForStorage(phone);
     return {
@@ -128,6 +123,8 @@ export async function fetchLeadsPaginated(
 
   const missingCountryCode = rows.filter((row) => !row.phone_has_country_code && row.phone).length;
   const total = typeof totalCount === 'number' ? totalCount : null;
+  const hasMore =
+    total !== null ? pageOffset + rows.length < total : rows.length === pageSize;
 
   let truncationWarning: string | undefined;
   if (

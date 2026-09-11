@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { processDueRecurringInvoices } from "@/services/finance/recurringInvoiceService";
 
 /**
  * Recurring Invoices Workflow
@@ -11,7 +12,6 @@ export async function processRecurringInvoices() {
 
 async function processRecurringStep() {
     "use step";
-    const { processDueRecurringInvoices } = await import('@/services/finance/recurringInvoiceService');
     const result = await processDueRecurringInvoices();
     console.log(`[recurring-invoices] processed=${result.processed} errors=${result.errors.length}`);
     if (result.errors.length) {
@@ -27,16 +27,12 @@ export async function processTaskReminders() {
     "use workflow";
 
     const { dueSoon, overdue } = await fetchReminderTasks();
-    const { mapWithConcurrency } = await import('@/lib/concurrency/mapWithConcurrency');
 
-    const allTasks = [
-        ...dueSoon.map((task: any) => ({ task, type: 'dueSoon' as const })),
-        ...overdue.map((task: any) => ({ task, type: 'overdue' as const })),
-    ];
-
-    await mapWithConcurrency(allTasks, 5, async ({ task, type }) => {
-        await sendTaskReminder(task, type);
-    });
+    // Parallel execution using Promise.all for steps
+    await Promise.all([
+        ...dueSoon.map((task: any) => sendTaskReminder(task, "dueSoon")),
+        ...overdue.map((task: any) => sendTaskReminder(task, "overdue"))
+    ]);
 }
 
 async function fetchReminderTasks() {
@@ -46,21 +42,19 @@ async function fetchReminderTasks() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
-    const reminderCooldownIso = new Date(Date.now() - 3 * 86400000).toISOString();
 
     const { data: dueSoon } = await admin
         .from('tasks')
-        .select('id,tenant_id,assigned_to,title,due_date,priority,reminder_at')
+        .select('id,tenant_id,assigned_to,title,due_date,priority')
         .eq('due_date', tomorrowStr)
-        .neq('status', 'completed')
-        .or(`reminder_at.is.null,reminder_at.lt.${reminderCooldownIso}`);
+        .neq('status', 'completed');
 
     const { data: overdue } = await admin
         .from('tasks')
-        .select('id,tenant_id,assigned_to,title,due_date,priority,reminder_at')
+        .select('id,tenant_id,assigned_to,title,due_date,priority')
         .lt('due_date', todayStr)
         .neq('status', 'completed')
-        .or(`reminder_at.is.null,reminder_at.lt.${reminderCooldownIso}`);
+        .eq('reminder_sent', false);
 
     return { dueSoon: dueSoon || [], overdue: overdue || [] };
 }
@@ -130,14 +124,9 @@ async function sendTaskReminder(task: any, type: "dueSoon" | "overdue") {
         return;
     }
 
-    await admin
-        .from('tasks')
-        .update({
-            reminder_sent: true,
-            reminder_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', task.id);
+    if (type === 'overdue') {
+        await admin.from('tasks').update({ reminder_sent: true }).eq('id', task.id);
+    }
 
     console.log(`[task-reminders] sent ${type} reminder for task ${task.id}`);
 }
@@ -249,7 +238,15 @@ export async function processScheduledAiTasks() {
 async function fetchDueAiTasks() {
     "use step";
     const admin = createSupabaseAdminClient();
-    const { data, error } = await admin.rpc('claim_due_scheduled_ai_tasks', { p_limit: 20 });
+    const nowIso = new Date().toISOString();
+
+    const { data, error } = await admin
+        .from('scheduled_ai_tasks')
+        .select('*')
+        .eq('status', 'active')
+        .lte('next_run_at', nowIso)
+        .order('next_run_at', { ascending: true })
+        .limit(20);
 
     if (error) throw error;
     return { tasks: data || [] };
@@ -257,14 +254,6 @@ async function fetchDueAiTasks() {
 
 async function executeAiTaskStep(task: any) {
     "use step";
-    const { taskAutomationService, isValidCronSchedule } = await import("@/services/automation/taskAutomationService");
-    if (!isValidCronSchedule(String(task?.schedule || ''))) {
-        const admin = createSupabaseAdminClient();
-        await admin
-            .from('scheduled_ai_tasks')
-            .update({ status: 'paused', updated_at: new Date().toISOString() })
-            .eq('id', task.id);
-        return { success: false, skipped: true, reason: 'invalid_cron_schedule' };
-    }
+    const { taskAutomationService } = await import("@/services/automation/taskAutomationService");
     return taskAutomationService.executeTask(task);
 }

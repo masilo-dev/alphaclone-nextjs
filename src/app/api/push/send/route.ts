@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuthenticatedUser } from '@/lib/apiAuth';
 import webPush from 'web-push';
-import { getVapidEmail, getVapidPrivateKey, getVapidPublicKey } from '@/lib/push/vapidEnv';
 
-const vapidPublicKey = getVapidPublicKey();
-const vapidPrivateKey = getVapidPrivateKey();
-const vapidEmail = getVapidEmail();
+const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+const vapidEmail = process.env.VAPID_EMAIL || 'mailto:sales@alphaclonesystems.com';
 
 if (vapidPublicKey && vapidPrivateKey) {
     try {

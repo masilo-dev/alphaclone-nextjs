@@ -113,10 +113,7 @@ export default function PrivacyCenterPage() {
   };
 
   const revokeApp = async (label: string) => {
-    setStatus(null);
-    // Route users to the integrations marketplace where real disconnect flows live.
-    const slug = label.toLowerCase();
-    window.location.href = `/dashboard/marketplace?provider=${encodeURIComponent(slug)}&action=disconnect`;
+    setStatus(`${label} revoke request opened. Disconnect flow can be completed from the integrations area.`);
   };
 
   if (loading) {

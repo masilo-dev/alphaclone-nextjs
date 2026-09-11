@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
-import path from "node:path";
 
 import withSerwistInit from "@serwist/next";
 import { withSentryConfig } from "@sentry/nextjs";
+import { withBotId } from "botid/next/config";
 import { withWorkflow } from "workflow/next";
-
-const srcDir = path.resolve(process.cwd(), "src");
 
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
@@ -30,20 +28,8 @@ const nextConfig: NextConfig = {
     '@tiptap/pm'
   ],
   env: {
-    VITE_SUPABASE_URL:
-      process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      process.env.VITE_SUPABASE_URL ||
-      process.env.SUPABASE_URL,
-    VITE_SUPABASE_ANON_KEY:
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-      process.env.VITE_SUPABASE_ANON_KEY ||
-      process.env.SUPABASE_ANON_KEY,
-    NEXT_PUBLIC_SUPABASE_URL:
-      process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY:
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
+    VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_ENABLE_SERWIST: 'true',
     NEXT_PUBLIC_ENABLE_PWA: 'true',
   },
@@ -79,10 +65,7 @@ const nextConfig: NextConfig = {
   experimental: {
     scrollRestoration: true,
     webpackMemoryOptimizations: true,
-    // This project has a substantial custom webpack hook. The isolated build
-    // worker repeatedly stalls during application compilation; compile in the
-    // main build process so failures and progress remain observable.
-    webpackBuildWorker: false,
+    webpackBuildWorker: true,
     optimizePackageImports: [
       '@heroicons/react',
       '@tremor/react',
@@ -120,22 +103,11 @@ const nextConfig: NextConfig = {
         source: '/.well-known/oauth-authorization-server',
         destination: '/api/mcp/well-known/oauth-authorization-server',
       },
-      {
-        source: '/.well-known/microsoft-identity-association',
-        destination: '/.well-known/microsoft-identity-association.json',
-      },
     ];
   },
   webpack: (config, { isServer }) => {
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;
-
-    // Belt-and-suspenders: pin @ -> src even if a conflicting root app/ directory
-    // confuses Next's jsconfig-paths plugin during Railway/Nixpacks builds.
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "@": srcDir,
-    };
 
     if (!isServer) {
       config.resolve.fallback = {
@@ -145,10 +117,6 @@ const nextConfig: NextConfig = {
         child_process: false,
         fs: false,
         tls: false,
-        // Prevent puppeteer-core / @puppeteer/browsers from leaking into
-        // the client bundle via transitive imports.
-        'puppeteer-core': false,
-        '@puppeteer/browsers': false,
       };
     }
     // Explicitly mark playwright-core and its sub-dependencies as external
@@ -163,7 +131,6 @@ const nextConfig: NextConfig = {
       config.externals = [...externalList, /^chromium-bidi\//];
     }
 
-
     return config;
   },
 
@@ -171,8 +138,8 @@ const nextConfig: NextConfig = {
     const isDev = process.env.NODE_ENV === 'development';
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://app.cal.com https://*.cal.com https://www.googletagmanager.com https://www.google-analytics.com;
-      script-src-elem 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://app.cal.com https://*.cal.com https://www.googletagmanager.com https://www.google-analytics.com;
+      script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://www.googletagmanager.com https://www.google-analytics.com;
+      script-src-elem 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://www.googletagmanager.com https://www.google-analytics.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com;
       img-src 'self' blob: data: https: http:;
       media-src 'self' blob: data: https:;
@@ -181,8 +148,8 @@ const nextConfig: NextConfig = {
       base-uri 'self';
       form-action 'self';
       frame-ancestors 'self' https://*.zoom.us https://zoom.us https://alphaclonesystems.com https://*.railway.app;
-      frame-src 'self' blob: data: https://*.stripe.com https://js.stripe.com https://*.daily.co https://challenges.cloudflare.com https://www.loom.com https://*.loom.com https://*.claude.ai https://*.segment.com https://calendly.com https://*.calendly.com https://cal.com https://*.cal.com;
-      connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://*.dicebear.com https://*.daily.co wss://*.daily.co https://*.livekit.cloud wss://*.livekit.cloud https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.hubspot.com https://images.unsplash.com https://api.anthropic.com https://api.openai.com https://openrouter.ai https://*.claude.ai https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org https://screendemos.com https://*.fbcdn.net https://*.xx.fbcdn.net https://*.facebook.com https://*.instagram.com https://*.basemaps.cartocdn.com https://raw.githubusercontent.com https://unpkg.com https://app.cal.com https://*.cal.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://graph.microsoft.com https://login.microsoftonline.com https://*.linkedin.com https://api.linkedin.com https://*.twitter.com https://api.twitter.com https://*.x.com https://api.x.com https://*.googleusercontent.com https://assets.mixkit.co https://files.manuscdn.com https://*.manuscdn.com https://*.zohostatic.eu https://*.zohostatic.com https://mailtrack.io https://*.mailtrack.io https://api.pwnedpasswords.com;
+      frame-src 'self' blob: data: https://*.stripe.com https://js.stripe.com https://*.daily.co https://challenges.cloudflare.com https://www.loom.com https://*.loom.com https://*.claude.ai https://*.segment.com https://calendly.com https://*.calendly.com;
+      connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://*.dicebear.com https://*.daily.co wss://*.daily.co https://*.livekit.cloud wss://*.livekit.cloud https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.hubspot.com https://images.unsplash.com https://api.anthropic.com https://api.openai.com https://openrouter.ai https://*.claude.ai https://nominatim.openstreetmap.org https://screendemos.com https://*.fbcdn.net https://*.xx.fbcdn.net https://*.facebook.com https://*.instagram.com https://*.basemaps.cartocdn.com https://raw.githubusercontent.com https://unpkg.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://graph.microsoft.com https://login.microsoftonline.com https://*.linkedin.com https://api.linkedin.com https://*.twitter.com https://api.twitter.com https://*.x.com https://api.x.com https://*.googleusercontent.com https://assets.mixkit.co https://files.manuscdn.com https://*.manuscdn.com https://*.zohostatic.eu https://*.zohostatic.com https://mailtrack.io https://*.mailtrack.io;
       worker-src 'self' blob: https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;
       upgrade-insecure-requests;
     `.replace(/\s{2,}/g, ' ').trim();
@@ -229,15 +196,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
         source: '/.well-known/:path*',
         headers: [
           {
@@ -261,23 +219,11 @@ const nextConfig: NextConfig = {
 
       {
         source: '/',
-        headers: [
-          ...securityHeaders,
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0',
-          },
-        ],
+        headers: securityHeaders,
       },
       {
         source: '/:path*',
-        headers: [
-          ...securityHeaders,
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0',
-          },
-        ],
+        headers: securityHeaders,
       },
     ];
   },
@@ -285,11 +231,10 @@ const nextConfig: NextConfig = {
 
 // Apply plugins sequentially to resolve type mismatches between various HOC signatures
 const baseConfig = withSerwist(nextConfig);
-const workflowConfig = withWorkflow(baseConfig as any, {
-  workflows: {},
-} as any);
+const workflowConfig = withWorkflow(baseConfig as any);
+const botIdConfig = withBotId(workflowConfig as any);
 
-export default withSentryConfig(workflowConfig as any, {
+export default withSentryConfig(botIdConfig as any, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,

@@ -10,16 +10,13 @@ export async function POST(req: NextRequest) {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { tenantId, pageId, postId } = await req.json();
-  if (!tenantId || !pageId || !postId) {
-    return NextResponse.json({ error: 'tenantId, pageId and postId are required' }, { status: 400 });
+  const { pageId, postId } = await req.json();
+  if (!pageId || !postId) {
+    return NextResponse.json({ error: 'pageId and postId are required' }, { status: 400 });
   }
-  const { data: membership } = await supabase.from('tenant_users').select('tenant_id')
-    .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
-  if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const admin = createSupabaseAdminClient();
-  const integration = await getFacebookIntegrationWithToken(admin, { tenantId, userId: user.id, pageId });
+  const integration = await getFacebookIntegrationWithToken(admin, { userId: user.id, pageId });
 
   if (!integration?.pageAccessToken || integration?.metadata?.no_pages) {
     return NextResponse.json({
@@ -28,7 +25,7 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
-  const url = `https://graph.facebook.com/v21.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`;
+  const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`;
   const res = await fetch(url, { method: 'DELETE' });
   const data = await res.json().catch(() => ({}));
 
@@ -51,10 +48,6 @@ export async function POST(req: NextRequest) {
     .delete()
     .eq('fb_post_id', postId)
     .eq('page_id', pageId);
-
-  // Keep the canonical ledger record; provider deletion must not erase history.
-  await supabase.from('social_posts').update({ status: 'deleted' })
-    .eq('tenant_id', tenantId).eq('facebook_page_id', pageId).eq('facebook_post_id', postId);
 
   return NextResponse.json({ success: true, deleted: Boolean(data?.success ?? true) });
 }

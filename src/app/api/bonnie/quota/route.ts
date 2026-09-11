@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const { admin } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+
+    const admin = createSupabaseAdminClient();
     const { data: tenantRow } = await admin
       .from('tenants')
       .select('subscription_plan')

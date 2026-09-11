@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { hashPortalPassword } from '@/lib/projects/portalPassword';
-import { buildCanonicalProjectPortalUrl, toOpaquePortalToken } from '@/lib/projects/portalLinks';
 import crypto from 'crypto';
 
 const portalShareSchema = z.object({
@@ -26,7 +25,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const { tenantId, password, clearPassword, expiresInDays, neverExpires } = parsed.data;
-    const { admin } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+
+    const admin = createSupabaseAdminClient();
     const { data: project, error: fetchError } = await admin
       .from('projects')
       .select('id, portal_token')
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const dbToken = project.portal_token ? String(project.portal_token) : crypto.randomUUID();
+    const token = project.portal_token || crypto.randomUUID().replace(/-/g, '');
 
     let portalExpiresAt: string | null = null;
     if (neverExpires) {
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     };
 
     if (!project.portal_token) {
-      updatePayload.portal_token = dbToken;
+      updatePayload.portal_token = token;
     }
 
     if (portalExpiresAt !== undefined || neverExpires || expiresInDays) {
@@ -81,13 +82,13 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     if (updateError) throw updateError;
 
-    const url = buildCanonicalProjectPortalUrl(dbToken);
-    const opaqueToken = toOpaquePortalToken(dbToken);
+    const origin = req.nextUrl.origin.replace(/\/$/, '');
+    const url = `${origin}/p/${token}`;
 
     return NextResponse.json({
       success: true,
       url,
-      token: opaqueToken,
+      token,
       expiresAt: portalExpiresAt,
       passwordProtected: clearPassword ? false : Boolean(password) || undefined,
     });

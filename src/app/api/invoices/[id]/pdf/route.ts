@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { generateThemedInvoicePdfBuffer } from '@/lib/documents/themedDocumentPdf';
+import { generateInvoicePDF } from '@/utils/pdfGenerator';
 
 function sanitizeFilename(input: string): string {
   return String(input || 'invoice').replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
-async function loadInvoice(admin: SupabaseClient, id: string, tenantId?: string) {
+async function loadInvoice(admin: ReturnType<typeof createSupabaseAdminClient>, id: string, tenantId?: string) {
   let query = admin
     .from('business_invoices')
     .select('*, tenant:tenants(*)')
@@ -28,22 +27,28 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const tenantId = searchParams.get('tenantId');
     const publicToken = searchParams.get('token');
 
-    let admin: SupabaseClient;
+    const admin = createSupabaseAdminClient();
 
     if (tenantId) {
-      ({ admin } = await requireTenantAccess(tenantId, req));
+      await requireTenantAccess(tenantId);
     } else if (publicToken) {
-      admin = await resolveSupabaseAdminClient();
       const { data: byMetadata } = await admin
         .from('business_invoices')
         .select('*, tenant:tenants(*)')
         .eq('id', id)
         .eq('metadata->>public_token', publicToken)
-        .eq('is_public', true)
         .maybeSingle();
 
       if (!byMetadata) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        try {
+          const decodedId = Buffer.from(publicToken, 'base64url').toString('utf8');
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          if (decodedId !== id || !uuidRegex.test(decodedId)) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+          }
+        } catch {
+          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
       }
     } else {
       return NextResponse.json(
@@ -59,33 +64,53 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     }
 
     const { data: items } = await admin
-      .from('invoice_line_items')
+      .from('invoice_items')
       .select('*')
       .eq('invoice_id', invoice.id)
       .order('created_at', { ascending: true });
 
-    let client: { name?: string; email?: string } | undefined;
-    if (invoice.client_id) {
-      const { data: clientRow } = await admin
-        .from('business_clients')
-        .select('name, email')
-        .eq('id', invoice.client_id)
-        .maybeSingle();
-      if (clientRow) client = { name: clientRow.name, email: clientRow.email };
-    }
+    const { data: businessSettings } = await admin
+      .from('business_settings')
+      .select('trading_name, business_name')
+      .eq('tenant_id', invoice.tenant_id)
+      .maybeSingle();
 
-    const pdfBuffer = await generateThemedInvoicePdfBuffer(
-      invoice,
-      items || [],
-      invoice.tenant,
-      client
+    const doc = generateInvoicePDF(
+      {
+        id: invoice.id,
+        invoiceNumber: invoice.invoice_number,
+        status: invoice.status,
+        subtotal: Number(invoice.subtotal || 0),
+        taxRate: Number(invoice.tax_rate || 0),
+        tax: Number(invoice.tax || 0),
+        discountAmount: Number(invoice.discount_amount || 0),
+        total: Number(invoice.total || 0),
+        currency: invoice.currency || 'USD',
+        dueDate: invoice.due_date || undefined,
+        issueDate: invoice.issue_date || undefined,
+        notes: invoice.notes || undefined,
+        createdAt: invoice.created_at,
+        updatedAt: invoice.updated_at,
+      } as any,
+      (items || []).map((item: any) => ({
+        id: item.id,
+        invoiceId: item.invoice_id,
+        description: item.description,
+        quantity: Number(item.quantity || 0),
+        rate: Number(item.rate || 0),
+        amount: Number(item.amount || 0),
+      })),
+      invoice.tenant as any,
+      businessSettings || undefined
     );
+
+    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
     const filename = sanitizeFilename(`Invoice_${invoice.invoice_number || id}.pdf`);
 
     const isDownload = searchParams.get('download') === 'true';
     const disposition = isDownload ? 'attachment' : 'inline';
 
-    return new NextResponse(new Uint8Array(pdfBuffer), {
+    return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `${disposition}; filename="${filename}"`,

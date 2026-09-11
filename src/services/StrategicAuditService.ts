@@ -90,6 +90,7 @@ export const strategicAuditService = {
                     .from('business_invoices')
                     .select('id, invoice_number, total, due_date, status')
                     .eq('tenant_id', tid)
+                    .eq('is_test_data', false)
                     .not('status', 'eq', 'paid')
                     .order('due_date', { ascending: true })
                     .limit(10),
@@ -99,6 +100,7 @@ export const strategicAuditService = {
                     .from('leads')
                     .select('id, business_name, created_at, status, value, last_activity_at')
                     .eq('tenant_id', tid)
+                    .eq('is_test_data', false)
                     .order('created_at', { ascending: false })
                     .limit(10),
 
@@ -115,6 +117,7 @@ export const strategicAuditService = {
                     .from('tasks')
                     .select('id, title, due_date, status, priority')
                     .eq('tenant_id', tid)
+                    .eq('is_test_data', false)
                     .not('status', 'eq', 'completed')
                     .order('due_date', { ascending: true })
                     .limit(10),
@@ -129,24 +132,15 @@ export const strategicAuditService = {
                 // 7. Aggregate counts (using RPC or separate queries - using separate for simplicity if RPC not available)
                 // In a real scenario, an RPC like get_tenant_stats would be better.
                 Promise.all([
-                    db.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tid),
+                    db.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('is_test_data', false),
                     db.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', tid),
-                    db.from('business_invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tid),
-                    db.from('tasks').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).not('status', 'eq', 'completed'),
-                    db.from('social_posts').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'published'),
-                    db.from('business_invoices')
-                        .select('total, total_amount, amount_paid, paid_at, updated_at, status')
-                        .eq('tenant_id', tid)
-                        .eq('status', 'paid')
-                        .gte('updated_at', format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd'))
+                    db.from('business_invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('is_test_data', false).not('status', 'eq', 'paid'),
+                    db.from('tasks').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('is_test_data', false).not('status', 'eq', 'completed'),
+                    db.from('social_posts').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'published')
                 ])
             ]);
 
-            const [leadsCount, dealsCount, invoicesCount, tasksCount, postsCount, paidInvoicesRes] = countsRes;
-            const monthlyRevenue = (paidInvoicesRes.data || []).reduce((sum: number, invoice: any) => {
-                const amount = invoice.amount_paid ?? invoice.total_amount ?? invoice.total ?? 0;
-                return sum + (Number(amount) || 0);
-            }, 0);
+            const [leadsCount, dealsCount, invoicesCount, tasksCount, postsCount] = countsRes;
 
             const snapshot: BusinessSnapshot = {
                 summary: {
@@ -155,7 +149,7 @@ export const strategicAuditService = {
                     invoices_total: invoicesCount.count || 0,
                     tasks_total: tasksCount.count || 0,
                     posts_total: postsCount.count || 0,
-                    revenue_monthly_actual: monthlyRevenue,
+                    revenue_monthly_actual: 0,
                     weighted_pipeline_value: (dealsRes.data || []).reduce((sum: number, d: any) => sum + ((d.value || 0) * (d.probability || 0) / 100), 0)
                 },
                 deals: (dealsRes.data || []).map((d: any) => ({
@@ -209,6 +203,7 @@ export const strategicAuditService = {
                 .from('business_invoices')
                 .select('total')
                 .eq('tenant_id', tid)
+                .eq('is_test_data', false)
                 .eq('status', 'paid')
                 .gte('created_at', firstOfMonth);
             

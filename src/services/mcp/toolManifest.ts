@@ -1168,7 +1168,6 @@ export const MCP_TOOLS = [
           type: 'boolean',
           description: 'If true, distribute sends across selected providers based on remaining daily limit.',
         },
-        email_category: { type: 'string', enum: ['marketing', 'outreach'], description: 'Marketing requires recorded consent. Outreach uses the permitted outreach policy. Defaults to marketing.' },
         language_mode: {
           type: 'string',
           enum: ['auto', 'ask', 'en', 'es', 'pl', 'fr', 'de', 'it', 'pt', 'nl'],
@@ -1185,7 +1184,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_batch_outreach',
-    description: 'AI-personalized batch outreach to up to 120 leads or clients. Dry run is the default (preflight only); actual sending requires final_confirmation: true and a connected email provider. Sends directly in chat — no background queue unless MCP_BULK_OUTREACH_DURABLE=true.',
+    description: 'Autonomous Strategic Outreach: Orchestrate personalized high-fidelity communications to a cohort of leads or clients using AI-driven relationship intelligence.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -1195,8 +1194,6 @@ export const MCP_TOOLS = [
         tone: { type: 'string', description: 'professional | friendly | direct | creative' },
         custom_context: { type: 'string', description: 'Specific strategic instructions for relationship personalization.' },
         delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'], description: 'Default: sendgrid' },
-        dry_run: { type: 'boolean', default: true, description: 'When true (default without final_confirmation), preflight recipients only — no AI or sends.' },
-        final_confirmation: { type: 'boolean', default: false, description: 'Set true after reviewing dry run to send personalized outreach.' },
         language_mode: {
           type: 'string',
           enum: ['auto', 'ask', 'en', 'es', 'pl', 'fr', 'de', 'it', 'pt', 'nl'],
@@ -1252,29 +1249,6 @@ export const MCP_TOOLS = [
     },
   },
   {
-    name: 'upload_media',
-    description: 'Upload social media asset (image PNG/JPG/JPEG/GIF/WebP, video MP4/MOV/WebM, or document PDF) via base64, data URL, remote HTTPS source URL, or file. Returns media_asset_id and public_url for social publishing.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        filename: { type: 'string', description: 'Original file name e.g. post.png' },
-        file_name: { type: 'string', description: 'Alias for filename' },
-        mime_type: { type: 'string', description: 'MIME type e.g. image/png, video/mp4' },
-        content_type: { type: 'string', description: 'Alias for mime_type' },
-        content_base64: { type: 'string', description: 'Base64 file content string' },
-        file_base64: { type: 'string', description: 'Alias for content_base64' },
-        file: { type: 'string', description: 'Alias for content_base64' },
-        data_url: { type: 'string', description: 'data:image/...;base64,... string' },
-        source_url: { type: 'string', description: 'HTTPS source URL of media to fetch/ingest' },
-        url: { type: 'string', description: 'Alias for source_url' },
-        purpose: { type: 'string', description: 'Defaults to social_post' },
-        alt_text: { type: 'string' },
-      },
-      required: [],
-    },
-  },
-  {
     name: 'upload_media_asset',
     description: 'Upload an image or video file into workspace media storage and return the stored media reference and URL.',
     inputSchema: {
@@ -1293,104 +1267,21 @@ export const MCP_TOOLS = [
   {
     name: 'create_social_post_with_media',
     description:
-      'One-step upload/ingest and publish/schedule for social media posts (Facebook, LinkedIn). Accepts base64 image/video, data URL, source URL, or existing asset ID.',
+      'One-step upload and post for Claude/Manus: attach image or video (base64) and publish or schedule a social post.',
     inputSchema: {
       type: 'object',
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        caption: { type: 'string', description: 'Post caption / text' },
-        content: { type: 'string', description: 'Alias for caption' },
-        text: { type: 'string', description: 'Alias for caption' },
-        filename: { type: 'string', description: 'Original file name' },
-        file_name: { type: 'string', description: 'Alias for filename' },
+        caption: { type: 'string' },
+        file_name: { type: 'string' },
         mime_type: { type: 'string', description: 'image/png, video/mp4, etc.' },
-        content_type: { type: 'string', description: 'Alias for mime_type' },
-        content_base64: { type: 'string', description: 'Base64 file string' },
-        file_base64: { type: 'string', description: 'Alias for content_base64' },
-        file: { type: 'string', description: 'Alias for content_base64' },
-        data_url: { type: 'string' },
-        source_url: { type: 'string' },
-        url: { type: 'string' },
-        asset_id: { type: 'string' },
-        asset_ids: { type: 'array', items: { type: 'string' } },
-        media_asset_ids: { type: 'array', items: { type: 'string' } },
-        platform: { type: 'string', enum: ['facebook', 'linkedin'] },
+        file_base64: { type: 'string' },
         platforms: { type: 'array', items: { type: 'string' } },
         publish_now: { type: 'boolean' },
         scheduled_at: { type: 'string' },
         page_id: { type: 'string' },
-        identity_id: { type: 'string', description: 'Internal UUID from connected_accounts or get_social_identities' },
-        identity_type: {
-          type: 'string',
-          enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
-        },
-        linkedin_organization_id: { type: 'string' },
       },
-      required: [],
-    },
-  },
-  {
-    name: 'publish_post',
-    description:
-      'Publish or schedule a social post to Facebook or LinkedIn. Pass identity_id from connected_accounts when multiple identities exist (LinkedIn personal + organization).',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        platform: { type: 'string', enum: ['facebook', 'linkedin'] },
-        content: { type: 'string', description: 'Post caption / text' },
-        caption: { type: 'string', description: 'Alias for content' },
-        identity_id: {
-          type: 'string',
-          description:
-            'Internal identity UUID from connected_accounts or get_social_identities. Required when multiple identities exist on the platform.',
-        },
-        identity_type: {
-          type: 'string',
-          enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
-          description: 'Disambiguates LinkedIn personal vs organization when uniquely matched.',
-        },
-        scheduled_at: { type: 'string', format: 'date-time' },
-        media_urls: { type: 'array', items: { type: 'string' } },
-        media_asset_ids: { type: 'array', items: { type: 'string' } },
-        publish_now: { type: 'boolean' },
-        status: {
-          type: 'string',
-          enum: ['execute_now', 'publish_now', 'draft', 'scheduled'],
-        },
-        idempotency_key: { type: 'string' },
-        page_id: { type: 'string', description: 'Legacy Facebook page id alias' },
-        linkedin_organization_id: { type: 'string', description: 'Legacy LinkedIn org id alias' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'publish_social_post',
-    description:
-      'Canonical publish tool — same contract as publish_post. Target a specific social identity via identity_id from connected_accounts.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        platform: { type: 'string', enum: ['facebook', 'linkedin'] },
-        content: { type: 'string' },
-        caption: { type: 'string' },
-        identity_id: { type: 'string' },
-        identity_type: {
-          type: 'string',
-          enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
-        },
-        scheduled_at: { type: 'string', format: 'date-time' },
-        media_urls: { type: 'array', items: { type: 'string' } },
-        publish_now: { type: 'boolean' },
-        status: {
-          type: 'string',
-          enum: ['execute_now', 'publish_now', 'draft', 'scheduled'],
-        },
-        idempotency_key: { type: 'string' },
-      },
-      required: [],
+      required: ['caption', 'file_name', 'mime_type', 'file_base64'],
     },
   },
   {
@@ -1471,23 +1362,18 @@ export const MCP_TOOLS = [
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin | instagram | x | tiktok (default: facebook)' },
         page_id: { type: 'string', description: 'Optional connected Facebook Page ID. If omitted, MCP auto-selects a publishable page.' },
-        caption: { type: 'string', description: 'The text content/caption of the social post. Aliases accepted: content, text, message, post, description, prompt.' },
-        content: { type: 'string', description: 'Alias of caption.' },
-        text: { type: 'string', description: 'Alias of caption.' },
-        message: { type: 'string', description: 'Alias of caption.' },
+        caption: { type: 'string' },
         link_url: { type: 'string' },
-        media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image/video URLs. Aliases accepted: image_url, image_urls, media_url, image, file_url.' },
-        image_url: { type: 'string', description: 'Alias of media_urls (single public image URL).' },
-        image_urls: { type: 'array', items: { type: 'string' }, description: 'Alias of media_urls.' },
+        media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs' },
         media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset references uploaded to the workspace library' },
         hashtags: { type: 'array', items: { type: 'string' } },
-        publish_now: { type: 'boolean', description: 'Set true to publish immediately to Facebook/LinkedIn.' },
-        scheduled_at: { type: 'string', description: 'ISO datetime when publish_now is false. Optional: defaults to +5min if omitted.' },
+        publish_now: { type: 'boolean' },
+        scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
         task_id: { type: 'string', description: 'Optional task reference to update with execution notes' },
         task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
         task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
         mark_task_done: { type: 'boolean', description: 'If true, mark task as completed after action.' },
-        executing_agent: { type: 'string', description: 'The AI agent executing the tool: claude | grok | manus | chatgpt (default: auto)' },
+        executing_agent: { type: 'string', description: 'The AI agent executing the tool: claude | grok | manus (default: auto)' },
         media_base64_data: {
           type: 'array',
           items: {
@@ -1499,11 +1385,11 @@ export const MCP_TOOLS = [
             },
             required: ['file_name', 'file_type', 'base64']
           },
-          description: 'Direct base64 media payload to solve uploading issues for Claude/Grok/Manus/ChatGPT.'
+          description: 'Direct base64 media payload to solve uploading issues for Claude/Grok/Manus.'
         },
         auto_refine_with_context: { type: 'boolean', description: 'Automatically read workspace files (e.g. DESIGN.md) and enrich post with corporate safety, OSM maps, and solopreneur trial pricing alignment.' }
       },
-      required: [],
+      required: ['caption'],
     },
   },
   {
@@ -2302,7 +2188,7 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_bulk_email_campaign',
-    description: 'Batch send marketing emails to a client list through the selected provider (including Zoho). Dry run is the default; marketing consent is enforced.',
+    description: 'Batch send transactional emails to client list with dry_run support.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2312,206 +2198,8 @@ export const MCP_TOOLS = [
         html: { type: 'string' },
         text: { type: 'string' },
         dry_run: { type: 'boolean' },
-        confirm_send: { type: 'boolean', description: 'Must be true when dry_run is false.' },
-        idempotency_key: { type: 'string', description: 'Required when dry_run is false.' },
-        provider: { type: 'string', enum: ['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'] },
-        email_category: { type: 'string', enum: ['marketing', 'outreach'], description: 'Marketing requires recorded consent. Defaults to marketing.' },
       },
       required: ['client_ids', 'subject'],
-    },
-  },
-  {
-    name: 'bulk_update_records',
-    description: 'Safely simulate or apply one common patch to up to 250 leads, clients, contacts, invoices, projects, or tasks. Dry run is the default; execution requires explicit confirmation and idempotency.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        record_type: { type: 'string', enum: ['lead', 'client', 'contact', 'invoice', 'project', 'task'] },
-        record_ids: { type: 'array', items: { type: 'string' }, maxItems: 250 },
-        patch: { type: 'object', description: 'One shared patch; supported fields depend on record_type.' },
-        dry_run: { type: 'boolean', description: 'Default true. Returns the proposed changes without writing.' },
-        confirm_execute: { type: 'boolean', description: 'Must be true when dry_run is false.' },
-        idempotency_key: { type: 'string', description: 'Required when dry_run is false.' },
-        reason: { type: 'string' },
-      },
-      required: ['record_type', 'record_ids', 'patch'],
-    },
-  },
-  {
-    name: 'bulk_upsert_contacts',
-    description: 'Bulk upsert up to 500 contacts with deduplication on email/phone, partial success reporting, and audit receipt.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        contacts: {
-          type: 'array',
-          maxItems: 500,
-          items: {
-            type: 'object',
-            properties: {
-              email: { type: 'string' },
-              name: { type: 'string' },
-              phone: { type: 'string' },
-              company: { type: 'string' },
-              notes: { type: 'string' },
-              metadata: { type: 'object' },
-            },
-            required: ['email'],
-          },
-        },
-        idempotency_key: { type: 'string' },
-      },
-      required: ['contacts'],
-    },
-  },
-  {
-    name: 'bulk_create_leads',
-    description: 'Bulk create up to 500 leads with auto-enrichment scheduling and validation.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        leads: {
-          type: 'array',
-          maxItems: 500,
-          items: {
-            type: 'object',
-            properties: {
-              business_name: { type: 'string' },
-              email: { type: 'string' },
-              phone: { type: 'string' },
-              website: { type: 'string' },
-              category: { type: 'string' },
-              source: { type: 'string' },
-              notes: { type: 'string' },
-            },
-            required: ['business_name'],
-          },
-        },
-        idempotency_key: { type: 'string' },
-      },
-      required: ['leads'],
-    },
-  },
-  {
-    name: 'bulk_update_leads',
-    description: 'Bulk update fields on up to 500 leads with filter/ID matching and partial status report.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        lead_ids: { type: 'array', maxItems: 500, items: { type: 'string' } },
-        patch: { type: 'object' },
-        idempotency_key: { type: 'string' },
-      },
-      required: ['lead_ids', 'patch'],
-    },
-  },
-  {
-    name: 'bulk_add_to_segment',
-    description: 'Bulk assign up to 500 leads or contacts to a target tag or segment.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        record_ids: { type: 'array', maxItems: 500, items: { type: 'string' } },
-        record_type: { type: 'string', enum: ['lead', 'contact'] },
-        segment_name: { type: 'string' },
-      },
-      required: ['record_ids', 'record_type', 'segment_name'],
-    },
-  },
-  {
-    name: 'bulk_assign_campaign',
-    description: 'Bulk assign up to 500 qualified leads/contacts to an email or outreach campaign.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        campaign_id: { type: 'string' },
-        record_ids: { type: 'array', maxItems: 500, items: { type: 'string' } },
-      },
-      required: ['campaign_id', 'record_ids'],
-    },
-  },
-  {
-    name: 'bulk_archive_leads',
-    description: 'Bulk archive up to 500 leads with reason tracking.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        lead_ids: { type: 'array', maxItems: 500, items: { type: 'string' } },
-        reason: { type: 'string' },
-      },
-      required: ['lead_ids'],
-    },
-  },
-  {
-    name: 'upload_file',
-    description: 'Upload a file asset into tenant object storage returning file_id and public/storage URL.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string' },
-        filename: { type: 'string' },
-        content_base64: { type: 'string' },
-        mime_type: { type: 'string' },
-      },
-      required: ['filename', 'content_base64'],
-    },
-  },
-  {
-    name: 'ingest_document',
-    description: 'Atomically ingest a document file: uploads to storage, creates file & document records, queues text extraction and vector chunking.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string' },
-        filename: { type: 'string' },
-        content_base64: { type: 'string' },
-        mime_type: { type: 'string' },
-        title: { type: 'string' },
-        category: { type: 'string' },
-      },
-      required: ['filename', 'content_base64'],
-    },
-  },
-  {
-    name: 'bulk_upload_media',
-    description: 'Ingest up to 50 image, video, or document inputs into permanent tenant storage with per-item receipts. Does not publish content.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        files: { type: 'array', maxItems: 50, items: { type: 'object' } },
-      },
-      required: ['files'],
-    },
-  },
-  {
-    name: 'send_bulk_email',
-    description: 'Safely simulate or send one message to up to 100 unique lead, contact, or client recipients. Dry run is the default; bulk sends default to outreach. Set email_category to marketing to require recorded marketing consent.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        lead_ids: { type: 'array', maxItems: 100, items: { type: 'string' } },
-        contact_ids: { type: 'array', maxItems: 100, items: { type: 'string' } },
-        client_ids: { type: 'array', maxItems: 100, items: { type: 'string' } },
-        subject: { type: 'string' },
-        text: { type: 'string' },
-        html: { type: 'string' },
-        provider: { type: 'string', enum: ['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'] },
-        from_name: { type: 'string' },
-        dry_run: { type: 'boolean', description: 'Default true. Returns recipient preview without sending.' },
-        confirm_send: { type: 'boolean', description: 'Must be true when dry_run is false.' },
-        idempotency_key: { type: 'string', description: 'Required when dry_run is false.' },
-        email_category: { type: 'string', enum: ['marketing', 'outreach'], description: 'Defaults to outreach. Marketing requires recorded consent.' },
-      },
-      required: ['subject'],
     },
   },
   {
@@ -2628,7 +2316,7 @@ export const MCP_TOOLS = [
         action: { type: 'string', description: 'Short action key, e.g. mcp_note | integration_sync | user_request' },
         entity_type: { type: 'string', description: 'Category, e.g. mcp | lead | integration' },
         entity_id: { type: 'string', description: 'Optional reference of related entity' },
-        summary: { type: 'string', description: 'Human-readable one-line summary' },
+        summary: { type: 'human-readable one-line summary' },
         payload: {
           type: 'object',
           description: 'Optional JSON object merged into new_values (along with summary and source)',
@@ -2666,36 +2354,6 @@ export const MCP_TOOLS = [
         scheduled_at: { type: 'string', description: 'Optional ISO datetime. If omitted, AI chooses the next best slot.' }
       },
       required: ['topic'],
-    },
-  },
-  {
-    name: 'generate_ai_image',
-    description: 'Autonomous Visual Creator: Generates a high-quality AI visual image using DALL-E 3 (OpenAI) or Grok (xAI), saves it to permanent sovereign CDN storage, and returns the public CDN image URL.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        prompt: { type: 'string', description: 'Detailed prompt/description for the visual image to generate. Aliases: image_prompt, description.' },
-        image_prompt: { type: 'string', description: 'Alias of prompt.' },
-        image_provider: { type: 'string', enum: ['openai', 'xai'], description: 'Default: openai' },
-        size: { type: 'string', description: 'Resolution (e.g. 1024x1024, 1792x1024, 1024x1792). Default: 1024x1024' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'generate_image',
-    description: 'Alias of generate_ai_image for OpenAI ChatGPT and AI agent tool compatibility.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        prompt: { type: 'string', description: 'Detailed prompt/description for the visual image to generate.' },
-        image_prompt: { type: 'string', description: 'Alias of prompt.' },
-        image_provider: { type: 'string', enum: ['openai', 'xai'], description: 'Default: openai' },
-        size: { type: 'string', description: 'Resolution (e.g. 1024x1024). Default: 1024x1024' },
-      },
-      required: [],
     },
   },
   {
@@ -3007,7 +2665,20 @@ export const MCP_TOOLS = [
       required: ['prompt'],
     },
   },
-
+  {
+    name: 'send_batch_outreach',
+    description: 'Trigger personalized outreach to multiple leads simultaneously.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        lead_ids: { type: 'array', items: { type: 'string' }, description: 'List of lead UUIDs' },
+        tone: { type: 'string', description: 'Tone of the message (professional, punchy, etc.)' },
+        custom_context: { type: 'string', description: 'Additional context for personalization' },
+        delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'zoho'], default: 'sendgrid' }
+      },
+      required: ['lead_ids'],
+    },
+  },
   {
     name: 'get_x_profile',
     description: 'Fetch an X (Twitter) user profile by username or ID.',

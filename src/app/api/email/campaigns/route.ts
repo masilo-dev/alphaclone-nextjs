@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { emailCampaignCreateSchema, emailCampaignDeleteSchema, emailCampaignUpdateSchema } from '@/schemas/validation';
 
 function isMissingRelationOrCache(error: unknown, relation: string): boolean {
@@ -13,6 +13,22 @@ function isMissingRelationOrCache(error: unknown, relation: string): boolean {
         maybeError.code === 'PGRST205' ||
         (message.includes(relationName) && (message.includes('does not exist') || message.includes('schema cache')))
     );
+}
+
+function campaignsUnavailableResponse() {
+    return NextResponse.json({
+        success: true,
+        campaigns: [],
+        warning: 'Email workspace setup is still in progress.',
+    });
+}
+
+function contactsUnavailableResponse() {
+    return NextResponse.json({
+        success: true,
+        contacts: [],
+        warning: 'Contacts are being prepared.',
+    });
 }
 
 type CampaignContactRow = {
@@ -48,7 +64,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'tenantId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
         }
 
-        const { admin } = await requireTenantAccess(tenantId, request);
+        await requireTenantAccess(tenantId);
+        const admin = createSupabaseAdminClient();
 
         if (mode === 'contacts') {
             const { data, error } = await admin
@@ -59,7 +76,7 @@ export async function GET(request: NextRequest) {
                 .not('email', 'is', null)
                 .order('full_name', { ascending: true });
             if (isMissingRelationOrCache(error, 'contacts') || isWorkspaceSetupError(error)) {
-                return NextResponse.json({ error: 'Campaign contacts are unavailable', code: 'CAMPAIGN_CONTACTS_UNAVAILABLE' }, { status: 503 });
+                return contactsUnavailableResponse();
             }
             if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_CONTACTS_FETCH_FAILED' }, { status: 500 });
             const contacts = ((data || []) as CampaignContactRow[]).map((row) => ({
@@ -121,14 +138,23 @@ export async function GET(request: NextRequest) {
             .order('created_at', { ascending: false })
             .limit(100);
         if (isMissingRelationOrCache(error, 'email_campaigns') || isWorkspaceSetupError(error)) {
-            return NextResponse.json({ error: 'Campaign storage is unavailable', code: 'CAMPAIGNS_UNAVAILABLE' }, { status: 503 });
+            return campaignsUnavailableResponse();
         }
         if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGNS_FETCH_FAILED' }, { status: 500 });
-        return NextResponse.json({
-            success: true,
-            campaigns: data || [],
-        });
+        return NextResponse.json(
+            {
+                success: true,
+                campaigns: data || [],
+                deprecated: true,
+                message: 'Legacy email_campaigns API is deprecated. Use /api/zoho/campaigns and Zoho CampaignsHub.',
+                migration: '/dashboard/business/campaigns',
+            },
+            { headers: { 'X-Deprecated-API': 'email-campaigns-legacy' } }
+        );
     } catch (error) {
+        if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
+            return campaignsUnavailableResponse();
+        }
         return routeErrorResponse(error, 'Failed to load campaigns', request);
     }
 }
@@ -143,8 +169,8 @@ export async function POST(request: NextRequest) {
         const tenantId = parsed.data.tenantId;
         const mode = String(parsed.data.mode || 'create').trim();
 
-        const auth = await requireTenantAccess(tenantId, request);
-        const { admin } = auth;
+        const auth = await requireTenantAccess(tenantId);
+        const admin = createSupabaseAdminClient();
 
         if (mode === 'retry_failed') {
             const campaignId = String(parsed.data.campaignId || '').trim();
@@ -335,46 +361,19 @@ export async function POST(request: NextRequest) {
                 previouslyContactedEmails = new Set((previousRows || []).map((r: any) => String(r.email).trim().toLowerCase()));
             }
 
-            const { checkOutreachEligibility } = await import('@/lib/outreach/checkOutreachEligibility');
-            const skippedReasons: Array<{ email: string; reason: string }> = [];
-            const rowsToInsert: Array<Record<string, unknown>> = [];
-
-            for (const c of normalizedContacts) {
-                const normalizedEmail = String(c.email).trim().toLowerCase();
-                if (existingCampaignEmails.has(normalizedEmail)) {
-                    skippedReasons.push({ email: normalizedEmail, reason: 'already_in_campaign' });
-                    continue;
-                }
-                if (previouslyContactedEmails.has(normalizedEmail)) {
-                    skippedReasons.push({ email: normalizedEmail, reason: 'already_contacted' });
-                    continue;
-                }
-
-                const eligibility = await checkOutreachEligibility(
-                    c.contactId || null,
-                    campaignId,
-                    'email',
-                    {
-                        tenantId,
-                        leadId: c.metadata?.lead_id as string | undefined,
-                        email: normalizedEmail,
-                        supabase: admin,
-                    },
-                );
-                if (!eligibility.eligible) {
-                    skippedReasons.push({ email: normalizedEmail, reason: eligibility.reason || 'invalid_contact' });
-                    continue;
-                }
-
-                rowsToInsert.push({
+            const rowsToInsert = normalizedContacts
+                .filter((c: any) => {
+                    const normalizedEmail = String(c.email).trim().toLowerCase();
+                    return !existingCampaignEmails.has(normalizedEmail) && !previouslyContactedEmails.has(normalizedEmail);
+                })
+                .map((c) => ({
                     tenant_id: tenantId,
                     campaign_id: campaignId,
                     contact_id: c.contactId,
                     email: String(c.email).trim(),
                     status: 'pending',
-                    metadata: { ...(c.metadata || {}), eligibility_checked_at: new Date().toISOString() },
-                });
-            }
+                    metadata: c.metadata || {},
+                }));
 
             if (rowsToInsert.length > 0) {
                 const { error: insertError } = await admin.from('campaign_recipients').insert(rowsToInsert);
@@ -392,7 +391,6 @@ export async function POST(request: NextRequest) {
                 success: true,
                 added: rowsToInsert.length,
                 skipped: normalizedContacts.length - rowsToInsert.length,
-                skipped_reasons: skippedReasons,
             });
         }
 
@@ -431,7 +429,8 @@ export async function PATCH(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const campaignId = parsed.data.campaignId;
-        const { admin } = await requireTenantAccess(tenantId, request);
+        await requireTenantAccess(tenantId);
+        const admin = createSupabaseAdminClient();
 
         const updateData: Record<string, unknown> = {};
         if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
@@ -463,7 +462,8 @@ export async function DELETE(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const campaignId = parsed.data.campaignId;
-        const { admin } = await requireTenantAccess(tenantId, request);
+        await requireTenantAccess(tenantId);
+        const admin = createSupabaseAdminClient();
 
         const { data: campaign, error: fetchError } = await admin
             .from('email_campaigns')

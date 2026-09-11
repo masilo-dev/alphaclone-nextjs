@@ -26,18 +26,7 @@ export async function intakeExternalFormSubmission(params: {
 
   const settings = (form.settings || {}) as Record<string, unknown>;
   const expectedSecret = String(settings.webhookSecret || '').trim();
-  const isProd = process.env.NODE_ENV === 'production';
-
-  // Production: every external form webhook must have a configured secret.
-  if (!expectedSecret) {
-    if (isProd || process.env.FORM_WEBHOOK_REQUIRE_SECRET === 'true') {
-      return {
-        ok: false as const,
-        status: 401,
-        error: 'Webhook secret not configured for this form',
-      };
-    }
-  } else if (secretHeader !== expectedSecret) {
+  if (expectedSecret && secretHeader !== expectedSecret) {
     return { ok: false as const, status: 401, error: 'Invalid webhook secret' };
   }
 

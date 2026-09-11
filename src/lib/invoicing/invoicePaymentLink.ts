@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { buildValidatedPublicUrl } from '@/lib/urls/publicUrlGuard';
 
 export type InvoicePaymentLinkResult = {
   payment_link: string | null;
@@ -49,9 +48,11 @@ export async function ensureInvoicePaymentLink(options: {
       ? existingMeta.public_token.trim()
       : crypto.randomBytes(24).toString('hex');
 
-  const paymentLink = buildValidatedPublicUrl(
-    `/invoice/${options.invoiceId}?token=${encodeURIComponent(publicToken)}`
+  const origin = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(
+    /\/$/,
+    ''
   );
+  const paymentLink = `${origin}/invoice/${options.invoiceId}?token=${publicToken}`;
 
   if (invoice.payment_link === paymentLink && invoice.is_public) {
     return {

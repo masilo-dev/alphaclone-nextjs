@@ -1,40 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Loader2, Wand2, Check, ChevronDown, Plus, Users, CheckCircle2, AlertTriangle } from 'lucide-react';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
+import { X, Send, Loader2, Sparkles, Wand2, User, Search, Check, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { businessClientService } from '../../../services/businessClientService';
 import { integrationsService, IntegrationConfig } from '../../../services/integrationsService';
 import { useTenant } from '../../../contexts/TenantContext';
+import { getMimeType } from '../../../utils/mimeTypes';
 import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
-import { isValidEmail } from '@/lib/email/isValidEmail';
-import DeliveryProviderIndicator from '@/components/shared/DeliveryProviderIndicator';
+import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
+import { isValidEmail, validateEmailField } from '@/lib/email/isValidEmail';
+import EmailProviderSelector from '@/components/shared/EmailProviderSelector';
 import {
   normalizeDeliveryProvider,
   resolveAutoProvider,
   type DeliveryEmailProvider,
 } from '@/lib/email/emailProviderOptions';
-import {
-  clearLocalComposeDraft,
-  loadLocalComposeDraft,
-  saveLocalComposeDraft,
-} from '@/lib/email/composeDraftStorage';
-
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
-import 'react-quill-new/dist/quill.snow.css';
-
-const COMPOSE_QUILL_MODULES = {
-  toolbar: [
-    ['bold', 'italic', 'underline'],
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    ['link'],
-    ['clean'],
-  ],
-};
 
 function parseRecipientList(value: string): string[] {
     return value
@@ -42,13 +27,6 @@ function parseRecipientList(value: string): string[] {
         .map((entry) => entry.trim())
         .filter(Boolean);
 }
-
-export type ContactOption = {
-    id: string;
-    name: string;
-    email: string;
-    source: 'client' | 'lead' | 'contact';
-};
 
 export type EmailComposerProps = {
     isOpen: boolean;
@@ -63,8 +41,6 @@ export type EmailComposerProps = {
     entityId?: string;
     attachments?: Array<{ id: string; name: string; size: number; data?: string }>;
     preferredProvider?: DeliveryEmailProvider;
-    /** Gmail-style composer docked inside the active workspace instead of a page takeover. */
-    presentation?: 'modal' | 'dock';
 };
 
 interface ComposeEmailModalProps extends EmailComposerProps {}
@@ -80,7 +56,6 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     entityType = 'direct',
     entityId,
     preferredProvider,
-    presentation = 'modal',
 }) => {
     const { currentTenant } = useTenant();
     const [to, setTo] = useState(initialTo);
@@ -92,14 +67,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [attachments, setAttachments] = useState<{ id: string, name: string, size: number, data?: string }[]>([]);
     const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
-    const [showAiAssist, setShowAiAssist] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
     const [selectedTone, setSelectedTone] = useState('professional');
-    const [selectedLength, setSelectedLength] = useState<'short' | 'medium' | 'long'>('short');
     const [from, setFrom] = useState('');
     const [clients, setClients] = useState<any[]>([]);
-    const [allContacts, setAllContacts] = useState<ContactOption[]>([]);
     const [availableProviders, setAvailableProviders] = useState<IntegrationConfig[]>([]);
     const [deliveryProvider, setDeliveryProvider] = useState<DeliveryEmailProvider>('auto');
     const [workspaceDefault, setWorkspaceDefault] = useState<DeliveryEmailProvider>('auto');
@@ -109,9 +81,6 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [selectedProvider, setSelectedProvider] = useState<IntegrationConfig | null>(null);
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
-    const [savingDraft, setSavingDraft] = useState(false);
-    const autoSaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -122,58 +91,14 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             setBody(initialBody);
             setSearchQuery('');
             setAiPrompt('');
-            setShowAiAssist(false);
-            setAutoSaveStatus('idle');
-
-            if (!initialTo && !initialSubject && !initialBody && currentTenant?.id) {
-                const stored = loadLocalComposeDraft(currentTenant.id, userId);
-                if (stored) {
-                    setTo(stored.to);
-                    setCc(stored.cc);
-                    setBcc(stored.bcc);
-                    setSubject(stored.subject);
-                    setBody(stored.body);
-                    setDeliveryProvider(stored.deliveryProvider);
-                }
-            }
         }
-    }, [isOpen, initialTo, initialSubject, initialBody, currentTenant?.id, userId]);
+    }, [isOpen, initialTo, initialSubject, initialBody]);
 
     React.useEffect(() => {
         if (isOpen && currentTenant?.id) {
-            // Load business_clients, leads, and CRM contacts for the contact picker
-            Promise.all([
-                businessClientService.getClients(currentTenant.id),
-                supabase.from('leads').select('id, business_name, contact_name, email').eq('tenant_id', currentTenant.id).limit(200),
-                supabase.from('contacts').select('id, first_name, last_name, email').eq('tenant_id', currentTenant.id).is('deleted_at', null).limit(200),
-            ]).then(([{ clients: fetchedClients }, leadsRes, contactsRes]) => {
-                setClients(fetchedClients || []);
-
-                const list: ContactOption[] = [];
-                const seen = new Set<string>();
-
-                const push = (item: ContactOption) => {
-                    const em = item.email.trim().toLowerCase();
-                    if (!em.includes('@') || seen.has(em)) return;
-                    seen.add(em);
-                    list.push({ ...item, email: em });
-                };
-
-                for (const c of fetchedClients || []) {
-                    if (c.email) push({ id: c.id, name: c.name || 'Client', email: c.email, source: 'client' });
-                }
-                for (const l of leadsRes.data || []) {
-                    const em = String(l.email || (Array.isArray(l.emails) ? l.emails[0] : '') || '').trim();
-                    if (em) push({ id: l.id, name: l.contact_name || l.business_name || 'Lead', email: em, source: 'lead' });
-                }
-                for (const cnt of contactsRes.data || []) {
-                    const em = String(cnt.email || (Array.isArray(cnt.emails) ? cnt.emails[0] : '') || '').trim();
-                    const fn = [cnt.first_name, cnt.last_name].filter(Boolean).join(' ') || 'Contact';
-                    if (em) push({ id: cnt.id, name: fn, email: em, source: 'contact' });
-                }
-
-                setAllContacts(list);
-            }).catch(() => {});
+            businessClientService.getClients(currentTenant.id).then(({ clients }) => {
+                setClients(clients || []);
+            });
 
             // Fetch available email integrations (including Microsoft 365 via status API)
             Promise.all([
@@ -253,46 +178,10 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    React.useEffect(() => {
-        if (!isOpen || !currentTenant?.id) return;
-        if (!to && !subject && !body) return;
-
-        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-        autoSaveTimerRef.current = setTimeout(() => {
-            setAutoSaveStatus('saving');
-            saveLocalComposeDraft(currentTenant.id, userId, {
-                to,
-                cc,
-                bcc,
-                subject,
-                body,
-                deliveryProvider,
-            });
-            setAutoSaveStatus('saved');
-        }, 1500);
-
-        return () => {
-            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-        };
-    }, [isOpen, currentTenant?.id, userId, to, cc, bcc, subject, body, deliveryProvider]);
-
-    const filteredContacts = React.useMemo(() => {
-        const q = searchQuery.trim().toLowerCase();
-        if (!q) return allContacts;
-        return allContacts.filter(
-            (c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)
-        );
-    }, [allContacts, searchQuery]);
-
-    const toggleRecipientContact = (email: string) => {
-        const existing = parseRecipientList(to);
-        const lower = email.toLowerCase();
-        if (existing.some(e => e.toLowerCase() === lower)) {
-            setTo(existing.filter(e => e.toLowerCase() !== lower).join(', '));
-        } else {
-            setTo(existing.length > 0 ? `${existing.join(', ')}, ${email}` : email);
-        }
-    };
+    const filteredClients = clients.filter(c =>
+        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const matchedClient = React.useMemo(() => {
         const normalized = parseRecipientList(to)[0]?.toLowerCase() || '';
@@ -314,47 +203,6 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         { id: 'direct', label: 'Direct' },
         { id: 'creative', label: 'Creative' },
     ];
-
-    const LENGTH_OPTIONS: Array<{ id: typeof selectedLength; label: string; minWords: number; targetWords: number }> = [
-        { id: 'short',  label: 'Short (≥100 words)',  minWords: 100, targetWords: 130 },
-        { id: 'medium', label: 'Medium (≥200 words)', minWords: 200, targetWords: 240 },
-        { id: 'long',   label: 'Long (≥350 words)',   minWords: 350, targetWords: 420 },
-    ];
-
-    const currentLengthCfg = LENGTH_OPTIONS.find(opt => opt.id === selectedLength) || LENGTH_OPTIONS[0];
-
-    const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
-
-    const padBodyToWordMinimum = (text: string, minWords: number): string => {
-        if (!text) return text;
-        const base = text.trim();
-        const initialCount = wordCount(base);
-        if (initialCount >= minWords) return base;
-        const needed = minWords - initialCount;
-        const expansionSentences = [
-            'I have found that being clear and specific up front saves everyone time down the line.',
-            'If you need any additional materials, data points, or supporting documents to help evaluate this, I can put those together quickly.',
-            'We have seen this pattern work well for teams in similar situations, and the feedback has been consistently positive.',
-            'It is less about adding volume and more about making sure the full picture is easy to follow the first time through.',
-            'You should feel free to reply with the one next step that makes sense on your end, and we can go from there.',
-            'If a quick 15-minute conversation would be easier than email, I am happy to slot that in at a time that works for you.',
-            'Nothing here is urgent, but a short response in the next couple of days would help keep momentum going in the right direction.',
-            'I would rather explain one extra detail now than have a detail unclear later when it matters.',
-            'You can expect follow-up to stay focused — once we agree on the shape of the next step, we will not keep circling back unnecessarily.',
-            'If anything I wrote sounds off for how you usually work, let me know and we will adjust accordingly.',
-        ];
-        let expanded = base;
-        let idx = 0;
-        while (wordCount(expanded) < minWords && idx < expansionSentences.length * 3) {
-            const s = expansionSentences[idx % expansionSentences.length];
-            expanded = /[.!?]["']?$/.test(expanded)
-                ? `${expanded} ${s}`
-                : `${expanded}. ${s}`;
-            idx += 1;
-        }
-        const trimmed = expanded.trim();
-        return /[.!?]["']?$/.test(trimmed) ? trimmed : `${trimmed}.`;
-    };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -419,24 +267,16 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
         setGenerating(true);
         try {
-            const { minWords, targetWords, label } = currentLengthCfg;
-            const promptWithContext =
-                `Write a ${selectedTone} email based on these instructions: "${aiPrompt}".
-                Recipient context: ${to ? `Writing to ${to}` : 'General business contact'}.
-                STRICT LENGTH RULE: The email body MUST contain NO LESS THAN ${minWords} actual words. Target length is ${targetWords} words. Short, one-line emails are rejected.
-                Length filter guidance: write enough full sentences so that the final body counts at least ${minWords} words, ideally ${targetWords} (${label}).
-                Return your response as a JSON object with 'subject' and 'body' fields.
-                Style: ${selectedTone}.
-                Be professional, warm, and thorough. If the user's instruction was short, expand naturally into a full message that gives context, explains the why, outlines the offer or ask, and proposes the next step.
-                Do not invent greetings, openings, or sign-offs unless the user instructions ask for them. Don't add any other text outside the JSON.
-                DO NOT deliver a body that is under ${minWords} words.`;
-
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: promptWithContext,
-                    systemPrompt: `You are an expert business email assistant. You respond only with valid JSON. Never auto-add greetings like Hello/Hi/Dear unless explicitly requested. HARD RULE: The "body" field must contain AT LEAST ${minWords} natural English words, preferably ${targetWords}. Never produce an email shorter than that — it will be thrown away by our length filter. Prefer longer, fuller messages that actually explain the context and the next step.`
+                    prompt: `Write a ${selectedTone} email based on these instructions: "${aiPrompt}".
+                    Recipient context: ${to ? `Writing to ${to}` : 'General business contact'}.
+                    Return your response as a JSON object with 'subject' and 'body' fields.
+                    Style: ${selectedTone}.
+                    Be professional and concise. Don't add any other text outside the JSON.`,
+                    systemPrompt: "You are an expert business email assistant. You respond only with valid JSON focusing on high-conversion outreach."
                 })
             });
 
@@ -447,77 +287,16 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 const cleanedText = data.text.replace(/```json|```/g, '').trim();
                 const parsed = JSON.parse(cleanedText);
                 setSubject(parsed.subject || '');
-                const rawBody = String(parsed.body || '');
-                const padded = padBodyToWordMinimum(rawBody, minWords);
-                setBody(padded);
-                const actualWords = wordCount(padded);
-                toast.success(`Draft generated! ${actualWords} words (≥${minWords})`);
+                setBody(parsed.body || '');
+                toast.success('Draft generated!');
             } catch (parseError) {
-                const rawBody = String(data.text || '');
-                const padded = padBodyToWordMinimum(rawBody, minWords);
-                setBody(padded);
-                const actualWords = wordCount(padded);
-                toast.success(`Draft ready (body only, ${actualWords} words ≥${minWords})`);
+                setBody(data.text);
+                toast.success('Draft ready (body only)');
             }
         } catch (err) {
             toast.error('Failed to generate draft');
         } finally {
             setGenerating(false);
-        }
-    };
-
-    const handleSaveDraft = async () => {
-        if (!currentTenant?.id) {
-            toast.error('No active workspace selected.');
-            return;
-        }
-        if (!body.trim()) {
-            toast.error('Add some message text before saving a draft.');
-            return;
-        }
-
-        setSavingDraft(true);
-        try {
-            saveLocalComposeDraft(currentTenant.id, userId, {
-                to,
-                cc,
-                bcc,
-                subject,
-                body,
-                deliveryProvider,
-            });
-
-            const connectedIds = providerOptions.filter((p) => p.connected).map((p) => p.id);
-            const resolvedType =
-                deliveryProvider === 'auto'
-                    ? resolveAutoProvider(connectedIds, workspaceDefault)
-                    : deliveryProvider;
-
-            if (resolvedType === 'microsoft' || resolvedType === 'zoho') {
-                const res = await fetch('/api/email/drafts', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tenantId: currentTenant.id,
-                        to,
-                        cc,
-                        bcc,
-                        subject,
-                        body,
-                        deliveryProvider: resolvedType,
-                    }),
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || 'Failed to save draft to mailbox');
-                toast.success(data.note || `Draft saved to ${resolvedType}`);
-            } else {
-                toast.success('Draft saved on this device. Pick Microsoft or Zoho to sync to your mailbox drafts folder.');
-            }
-            setAutoSaveStatus('saved');
-        } catch (err: unknown) {
-            toast.error(err instanceof Error ? err.message : 'Failed to save draft');
-        } finally {
-            setSavingDraft(false);
         }
     };
 
@@ -592,7 +371,6 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             toast.success(
                 `${allRecipients.length === 1 ? 'Email' : `${allRecipients.length} emails`} sent via ${String(sendProvider || selectedProvider?.type || 'platform').toUpperCase()}`
             );
-            if (currentTenant?.id) clearLocalComposeDraft(currentTenant.id, userId);
             onClose();
             setTo('');
             setCc('');
@@ -610,167 +388,133 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className={presentation === 'dock'
-                    ? 'fixed inset-0 z-[200] pointer-events-none flex items-end justify-end p-2 md:p-4'
-                    : 'fixed inset-0 z-[200] flex items-center justify-center p-4'}>
-                    {presentation === 'modal' ? (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={onClose}
-                            className="absolute inset-0 bg-slate-950/90 backdrop-blur-md pointer-events-auto"
-                        />
-                    ) : (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={onClose}
-                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs pointer-events-auto"
-                        />
-                    )}
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                    />
 
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.98, y: 12 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.98, y: 12 }}
-                        className={`relative w-full bg-slate-950 border border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col z-[210] ${
-                            presentation === 'dock'
-                                ? 'pointer-events-auto max-w-[560px] max-h-[calc(100%-0.5rem)] rounded-xl'
-                                : 'max-w-xl max-h-[min(82vh,640px)] rounded-2xl'
-                        }`}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="relative w-full max-w-2xl max-h-[90vh] bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col z-[120]"
                     >
                         {/* Header */}
-                        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 shrink-0">
-                                    <Send className="w-4 h-4 text-teal-400" />
+                        <div className="p-6 sm:p-8 border-b border-white/5 flex items-center justify-between bg-white/2">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
+                                    <Send className="w-5 h-5 text-teal-400" />
                                 </div>
-                                <div className="min-w-0">
-                                    <h2 className="text-sm font-bold text-white truncate">Compose Email</h2>
-                                    <p className="text-[10px] text-slate-500 truncate">{selectedProvider?.name || 'Workspace provider'}</p>
+                                <div>
+                                    <h2 className="text-base font-black text-white uppercase tracking-tight">Compose Email</h2>
+                                    <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">{selectedProvider?.name || 'Unified'} · AI Assistant</p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 text-slate-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all"
+                                className="p-3 text-slate-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-2xl transition-all"
                             >
-                                <X className="w-4 h-4" />
+                                <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3 custom-scrollbar">
-                            <div className="rounded-xl border border-white/10 bg-slate-950/40 overflow-hidden">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAiAssist((v) => !v)}
-                                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left"
-                                >
-                                    <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-teal-400">
-                                        <Wand2 className="w-3.5 h-3.5" /> Write with AI (optional)
-                                    </span>
-                                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showAiAssist ? 'rotate-180' : ''}`} />
-                                </button>
-                                {showAiAssist ? (
-                                    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2">
-                                        <div className="flex flex-wrap items-center justify-between gap-2">
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {TONES.map(tone => (
-                                                    <button
-                                                        key={tone.id}
-                                                        type="button"
-                                                        onClick={() => setSelectedTone(tone.id)}
-                                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${selectedTone === tone.id
-                                                            ? 'bg-teal-500 text-white border-teal-400'
-                                                            : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
-                                                            }`}
-                                                    >
-                                                        {tone.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <p className="text-[10px] uppercase tracking-widest text-slate-500">Length filter</p>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {LENGTH_OPTIONS.map(opt => {
-                                                    const active = selectedLength === opt.id;
-                                                    return (
-                                                        <button
-                                                            key={opt.id}
-                                                            type="button"
-                                                            onClick={() => setSelectedLength(opt.id)}
-                                                            className={[
-                                                                'px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border',
-                                                                active
-                                                                    ? 'bg-violet-500 text-white border-violet-400 shadow-[0_0_0_1px_rgba(139,92,246,0.25)]'
-                                                                    : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10',
-                                                            ].join(' ')}
-                                                            title={`Minimum ${opt.minWords} words`}
-                                                        >
-                                                            {opt.label}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
+                        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
+                            {/* AI POWERED DRAFTING SECTION */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="bg-gradient-to-br from-teal-500/10 to-slate-500/10 border border-teal-500/20 rounded-3xl p-6 relative overflow-hidden group"
+                            >
+                                <div className="absolute top-0 right-0 p-8 pointer-events-none opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Sparkles className="w-24 h-24 text-teal-400" />
+                                </div>
+
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="p-2 bg-teal-500 rounded-lg">
+                                        <Wand2 className="w-3 h-3 text-white" />
+                                    </div>
+                                    <span className="text-xs font-black uppercase tracking-[0.2em] text-teal-400">AI Assistant</span>
+                                </div>
+
+                                <div className="space-y-4 relative z-10">
+                                    <div className="flex flex-wrap gap-2">
+                                        {TONES.map(tone => (
+                                            <button
+                                                key={tone.id}
+                                                onClick={() => setSelectedTone(tone.id)}
+                                                className={`px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${selectedTone === tone.id
+                                                    ? 'bg-teal-500 text-white border-teal-400 shadow-lg shadow-teal-500/20'
+                                                    : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
+                                                    }`}
+                                            >
+                                                {tone.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <div className="relative flex-1">
                                             <input
                                                 value={aiPrompt}
                                                 onChange={e => setAiPrompt(e.target.value)}
-                                                placeholder="What should AI write? (no auto greeting)"
-                                                className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:border-teal-500/50 outline-none"
+                                                placeholder="Instruction: e.g. 'Draft a follow-up about the proposal...'"
+                                                className="w-full bg-slate-950/80 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-white placeholder:text-slate-600 focus:border-teal-500/50 outline-none transition-all"
                                                 onKeyDown={e => e.key === 'Enter' && handleAIGenerate()}
                                             />
-                                            <Button
-                                                onClick={handleAIGenerate}
-                                                disabled={generating || !aiPrompt.trim()}
-                                                className="h-auto bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 rounded-xl shrink-0"
-                                            >
-                                                {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Write'}
-                                            </Button>
                                         </div>
-                                        <p className="text-[10px] text-slate-500">
-                                            <span className="font-semibold text-violet-300">Rule:</span> AI emails always expand to at least{' '}
-                                            <span className="font-bold text-white">{currentLengthCfg.minWords} words</span>.
-                                            Short messages get ignored — a padded natural tone is applied automatically if needed.
-                                        </p>
+                                        <Button
+                                            onClick={handleAIGenerate}
+                                            disabled={generating || !aiPrompt.trim()}
+                                            className="h-auto bg-teal-600 hover:bg-teal-500 text-white text-xs font-black uppercase tracking-widest px-5 rounded-2xl shrink-0 shadow-xl shadow-teal-600/20"
+                                        >
+                                            {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Write with AI'}
+                                        </Button>
                                     </div>
-                                ) : null}
-                            </div>
+                                </div>
+                            </motion.div>
 
-                            <div className="grid grid-cols-1 gap-3">
+                            <div className="grid grid-cols-1 gap-6">
                                 {providerOptions.some((p) => p.connected) && (
-                                    <DeliveryProviderIndicator
+                                    <EmailProviderSelector
                                         value={deliveryProvider}
                                         onChange={setDeliveryProvider}
                                         providers={providerOptions}
+                                        compact
                                     />
                                 )}
 
+                                {/* FROM: SENDER */}
                                 <div>
-                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">From</label>
-                                    <input
-                                        type="text"
-                                        value={from}
-                                        onChange={e => setFrom(e.target.value)}
-                                        placeholder="sender@yourdomain.com"
-                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-teal-500/40 outline-none"
-                                    />
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Sender Address</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
+                                            <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={from}
+                                            onChange={e => setFrom(e.target.value)}
+                                            placeholder="sender@yourdomain.com"
+                                            className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
+                                        />
+                                    </div>
+                                    <p className="mt-2 px-1 text-xs text-slate-500 font-mono uppercase tracking-wider">
+                                        Sending via {selectedProvider?.name || 'workspace provider'} as {from || 'your connected address'}.
+                                    </p>
                                 </div>
 
+                                {/* TO: RECIPIENT */}
                                 <div className="relative" ref={dropdownRef}>
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">To</label>
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowContactDropdown((prev) => !prev)}
-                                            className="text-[10px] font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1 bg-teal-500/10 hover:bg-teal-500/20 px-2 py-0.5 rounded-full transition-all"
-                                        >
-                                            <Users className="w-3 h-3" />
-                                            Select from contacts ({allContacts.length})
-                                        </button>
-                                    </div>
-                                    <div className="relative">
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Recipients</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
+                                            <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-400" />
+                                        </div>
                                         <input
                                             type="text"
                                             value={to}
@@ -780,42 +524,42 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 setShowContactDropdown(true);
                                             }}
                                             onFocus={() => setShowContactDropdown(true)}
-                                            placeholder="Type email or click Select from contacts…"
-                                            className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 pr-16 text-sm text-white focus:border-teal-500/40 outline-none"
+                                            placeholder="Add one or more emails, separated by commas..."
+                                            className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
                                         />
                                         <button 
-                                            type="button"
                                             onClick={() => setShowCcBcc(!showCcBcc)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 hover:text-teal-400"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-500 hover:text-teal-400 transition-colors"
                                         >
-                                            {showCcBcc ? 'HIDE' : 'CC/BCC'}
+                                            {showCcBcc ? 'HIDE CC' : 'CC/BCC'}
                                         </button>
                                     </div>
 
+                                    {/* CC / BCC FIELDS */}
                                     <AnimatePresence>
                                         {showCcBcc && (
                                             <motion.div 
                                                 initial={{ height: 0, opacity: 0 }}
                                                 animate={{ height: 'auto', opacity: 1 }}
                                                 exit={{ height: 0, opacity: 0 }}
-                                                className="grid grid-cols-2 gap-2 overflow-hidden mt-2"
+                                                className="grid grid-cols-2 gap-4 overflow-hidden mt-4"
                                             >
                                                 <div>
-                                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">CC</label>
+                                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">CC</label>
                                                     <input
                                                         type="text"
                                                         value={cc}
                                                         onChange={e => setCc(e.target.value)}
-                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-teal-500/40 outline-none"
+                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-teal-500/40 outline-none transition-all"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">BCC</label>
+                                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">BCC</label>
                                                     <input
                                                         type="text"
                                                         value={bcc}
                                                         onChange={e => setBcc(e.target.value)}
-                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-teal-500/40 outline-none"
+                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-teal-500/40 outline-none transition-all"
                                                     />
                                                 </div>
                                             </motion.div>
@@ -823,54 +567,79 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     </AnimatePresence>
                                     
                                     <AnimatePresence>
-                                        {showContactDropdown && (
+                                        {showContactDropdown && (searchQuery.length > 0 || filteredClients.length > 0) && (
                                             <motion.div
-                                                initial={{ opacity: 0, y: -6 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -6 }}
-                                                className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-[130] max-h-56 overflow-y-auto p-1.5 space-y-0.5"
+                                                initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                                                className="absolute left-0 right-0 top-full mt-3 bg-slate-900 border border-white/10 rounded-3xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] z-[130] max-h-72 overflow-y-auto p-2 backdrop-blur-2xl"
                                             >
-                                                <div className="p-1.5 border-b border-white/5 flex items-center justify-between">
-                                                    <p className="text-[10px] font-bold uppercase text-slate-400">Pick recipients ({filteredContacts.length})</p>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setShowContactDropdown(false)}
-                                                        className="text-[10px] text-slate-500 hover:text-white"
-                                                    >
-                                                        Close ✕
-                                                    </button>
+                                                <div className="px-3 py-2 border-b border-white/5 mb-2 flex items-center justify-between">
+                                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Matched Contacts</span>
+                                                    <span className="text-xs font-mono text-teal-400">{filteredClients.length} found</span>
                                                 </div>
-                                                {filteredContacts.length > 0 ? (
-                                                    filteredContacts.slice(0, 15).map(c => {
-                                                        const isSelected = toRecipients.some(tr => tr.toLowerCase() === c.email.toLowerCase());
-                                                        return (
-                                                            <button
-                                                                key={`${c.source}-${c.id}`}
-                                                                type="button"
-                                                                onClick={() => toggleRecipientContact(c.email)}
-                                                                className={`w-full text-left p-2 rounded-lg transition-all flex items-center justify-between ${
-                                                                    isSelected ? 'bg-teal-500/15 border border-teal-500/30' : 'hover:bg-white/5 border border-transparent'
-                                                                }`}
-                                                            >
-                                                                <div className="min-w-0">
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <span className="text-xs font-semibold text-white truncate">{c.name}</span>
-                                                                        <span className="text-[9px] font-bold uppercase px-1 py-0.2 rounded bg-white/10 text-slate-400">
-                                                                            {c.source}
-                                                                        </span>
-                                                                    </div>
-                                                                    <p className="text-[11px] text-slate-400 truncate">{c.email}</p>
+                                                {filteredClients.length > 0 ? (
+                                                    filteredClients.map(client => (
+                                                        <button
+                                                            key={client.id}
+                                                            onClick={() => {
+                                                                setTo(client.email);
+                                                                setShowContactDropdown(false);
+                                                            }}
+                                                            className="w-full text-left p-3.5 rounded-2xl hover:bg-white/5 transition-all group flex items-center justify-between border border-transparent hover:border-white/5 mb-1"
+                                                        >
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 shadow-inner">
+                                                                    <span className="text-xs font-black text-teal-400">{client.name?.charAt(0)}</span>
                                                                 </div>
-                                                                {isSelected && <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />}
-                                                            </button>
-                                                        );
-                                                    })
+                                                                <div>
+                                                                    <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{client.name}</p>
+                                                                    <p className="text-xs text-slate-500 font-mono">{client.email}</p>
+                                                                </div>
+                                                            </div>
+                                                            {to === client.email && (
+                                                                <div className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
+                                                                    <Check className="w-3.5 h-3.5 text-teal-400" />
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    ))
                                                 ) : (
-                                                    <p className="p-3 text-center text-xs text-slate-500">No contacts or leads found</p>
+                                                    <div className="p-8 text-center">
+                                                        <Search className="w-8 h-8 mx-auto mb-3 text-slate-700 opacity-20" />
+                                                        <p className="text-xs font-black uppercase tracking-widest text-slate-600">No contact matching "{searchQuery}"</p>
+                                                    </div>
                                                 )}
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
+
+                                    {allRecipients.length > 0 && (
+                                        <div className="mt-3 rounded-xl border border-white/5 bg-slate-950/40 p-3 space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Recipient Review</p>
+                                                <p className="text-[11px] text-teal-300 font-semibold">
+                                                    {toRecipients.length} to / {ccRecipients.length} cc / {bccRecipients.length} bcc
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {allRecipients.map((recipient) => (
+                                                    <span
+                                                        key={recipient}
+                                                        className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300"
+                                                    >
+                                                        {recipient}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {toRecipients.length === 1 && to.includes('@') && (
+                                        <div className="mt-3">
+                                            <EmailLeadInsightPanel from={toRecipients[0]} subject={subject} compact />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {matchedClient && (
@@ -882,59 +651,45 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     />
                                 )}
 
+                                {/* SUBJECT */}
                                 <div>
-                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">Subject</label>
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Subject</label>
                                     <input
                                         type="text"
                                         value={subject}
                                         onChange={e => setSubject(e.target.value)}
-                                        placeholder="Subject"
-                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-teal-500/40 outline-none"
+                                        placeholder="Identification handle..."
+                                        className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
                                     />
                                 </div>
 
+                                {/* MESSAGE BODY */}
                                 <div>
-                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">Message</label>
-                                    <div className="rounded-xl border border-white/10 overflow-hidden bg-slate-950/50 [&_.ql-toolbar]:border-white/10 [&_.ql-toolbar]:bg-slate-900/80 [&_.ql-container]:border-white/10 [&_.ql-editor]:min-h-[180px] [&_.ql-editor]:max-h-[320px] [&_.ql-editor]:text-sm [&_.ql-editor]:text-white [&_.ql-stroke]:stroke-slate-400 [&_.ql-picker]:text-slate-300">
-                                        <ReactQuill
-                                            theme="snow"
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Message Body</label>
+                                    <div className="relative">
+                                        <textarea
                                             value={body}
-                                            onChange={setBody}
-                                            modules={COMPOSE_QUILL_MODULES}
-                                            placeholder="Type your message…"
+                                            onChange={e => setBody(e.target.value)}
+                                            placeholder="Begin data transmission..."
+                                            className="w-full bg-slate-950/50 border border-white/10 rounded-[2rem] px-6 py-6 text-sm text-white focus:border-teal-500/40 outline-none transition-all min-h-[200px] resize-none shadow-inner placeholder:text-slate-700 font-medium leading-relaxed custom-scrollbar"
                                         />
-                                    </div>
-                                    <div className="flex items-center justify-between mt-1.5 px-1">
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">
-                                            <span className="font-bold text-slate-300 tabular-nums">{wordCount(String(body || ''))}</span> words
-                                        </p>
-                                        <div className="flex items-center gap-1.5 text-[10px]">
-                                            {wordCount(String(body || '')) >= currentLengthCfg.minWords ? (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5">
-                                                    <CheckCircle2 className="w-2.5 h-2.5" />
-                                                    ≥{currentLengthCfg.minWords} words met
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5">
-                                                    <AlertTriangle className="w-2.5 h-2.5" />
-                                                    {currentLengthCfg.minWords - wordCount(String(body || ''))} more to reach ≥{currentLengthCfg.minWords}
-                                                </span>
-                                            )}
+                                        <div className="absolute bottom-4 right-4 text-xs font-mono text-slate-600 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
+                                            SYNS: {body.length} CHARS
                                         </div>
                                     </div>
                                 </div>
 
+                                {/* ATTACHMENTS */}
                                 <div>
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Attachments</label>
+                                    <div className="flex items-center justify-between mb-3 px-1">
+                                        <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em]">Payload Attachments</label>
                                         <button 
-                                            type="button"
                                             onClick={() => fileInputRef.current?.click()}
                                             disabled={uploading}
-                                            className="text-[10px] font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1"
+                                            className="text-xs font-black text-teal-400 uppercase tracking-widest flex items-center gap-1.5 hover:opacity-80 transition-opacity"
                                         >
                                             {uploading ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Plus className="w-2.5 h-2.5" />}
-                                            {uploading ? 'Uploading…' : 'Attach'}
+                                            {uploading ? 'Uploading...' : 'Attach File'}
                                         </button>
                                         <input 
                                             type="file" 
@@ -943,54 +698,57 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             onChange={handleFileUpload}
                                         />
                                     </div>
-                                    <div className="flex flex-wrap gap-1.5">
+
+                                    <div className="flex flex-wrap gap-2">
                                         {attachments.map(att => (
                                             <div 
                                                 key={att.id}
-                                                className="flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-slate-300"
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300 group/att hover:border-teal-500/30 transition-all"
                                             >
-                                                <span className="truncate max-w-[120px]">{att.name}</span>
-                                                <button type="button" onClick={() => removeAttachment(att.id)} className="text-slate-500 hover:text-red-400">
+                                                <span className="truncate max-w-[150px]">{att.name}</span>
+                                                <button
+                                                    onClick={() => removeAttachment(att.id)}
+                                                    className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover/att:opacity-100 transition-all"
+                                                >
                                                     <X className="w-3 h-3" />
                                                 </button>
                                             </div>
                                         ))}
+                                        {attachments.length === 0 && (
+                                            <div className="w-full py-4 border border-dashed border-white/5 rounded-2xl flex items-center justify-center">
+                                                <p className="text-xs text-slate-700 font-black uppercase tracking-widest">No local files attached</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="px-4 py-3 border-t border-white/5 flex items-center justify-between gap-2 shrink-0">
-                            <p className="text-[10px] text-slate-600 truncate">
-                                {autoSaveStatus === 'saving' && 'Saving…'}
-                                {autoSaveStatus === 'saved' && 'Draft saved'}
-                                {autoSaveStatus === 'idle' && 'Ready'}
-                            </p>
-                            <div className="flex items-center gap-2">
+                        {/* Footer */}
+                        <div className="p-8 border-t border-white/5 bg-white/2 flex items-center justify-between">
+                            <div className="text-xs font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
+                                Encrypted Transmission Status: READY
+                            </div>
+                            <div className="hidden sm:block max-w-[320px]">
+                                <AIOutputDisclaimer type="email" />
+                            </div>
+                            <div className="flex items-center gap-4 w-full sm:w-auto">
                                 <button
-                                    type="button"
                                     onClick={onClose}
-                                    className="px-3 py-2 text-slate-400 hover:text-white text-xs font-bold"
+                                    className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-all"
                                 >
                                     Cancel
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={handleSaveDraft}
-                                    disabled={savingDraft || !body.trim()}
-                                    className="px-3 py-2 rounded-xl border border-white/10 text-slate-300 text-xs font-bold disabled:opacity-40"
-                                >
-                                    {savingDraft ? 'Saving…' : 'Draft'}
-                                </button>
-                                <button
-                                    type="button"
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
                                     onClick={handleSend}
                                     disabled={sending}
-                                    className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 disabled:opacity-50"
+                                    className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-500 text-white px-10 py-3.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-teal-900/10 disabled:opacity-50 disabled:grayscale"
                                 >
-                                    {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                                    {sending ? 'Sending…' : 'Send'}
-                                </button>
+                                    {sending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 stroke-[2.5px]" />}
+                                    {sending ? 'Sending...' : 'Send Now'}
+                                </motion.button>
                             </div>
                         </div>
                     </motion.div >

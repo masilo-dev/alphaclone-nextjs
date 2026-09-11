@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { denyUnlessInternalApiKey } from '@/lib/security/productionGuard';
 
 const INDEXNOW_KEY = process.env.INDEXNOW_KEY;
 const BASE_URL = 'https://alphaclonesystems.com';
@@ -9,8 +8,6 @@ const BASE_URL = 'https://alphaclonesystems.com';
 // Notifies search engines of new or updated content immediately
 export async function POST(request: NextRequest) {
     try {
-        const denied = denyUnlessInternalApiKey(request);
-        if (denied) return denied;
         if (!INDEXNOW_KEY) {
             return NextResponse.json({ error: 'INDEXNOW_KEY is not configured' }, { status: 500 });
         }
@@ -58,9 +55,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET handler — ping all core marketing pages
-export async function GET(request: NextRequest) {
-    const denied = denyUnlessInternalApiKey(request);
-    if (denied) return denied;
+export async function GET() {
     if (!INDEXNOW_KEY) {
         return NextResponse.json({ error: 'INDEXNOW_KEY is not configured' }, { status: 500 });
     }

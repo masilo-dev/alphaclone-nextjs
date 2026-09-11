@@ -1,15 +1,14 @@
+import crypto from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { AppUrls, buildValidatedPublicUrl } from '@/lib/urls';
+import { AppUrls } from '@/lib/urls';
 
 export function buildPublicInvoiceUrl(
   invoiceId: string,
   publicToken: string,
-  _origin?: string
+  origin?: string
 ): string {
-  // Always use validated production URLs — ignore localhost/dev origins for customer links.
-  return buildValidatedPublicUrl(
-    `/invoice/${invoiceId}?token=${encodeURIComponent(publicToken)}`
-  );
+  const base = (origin || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/+$/, '').replace(/^https:\/\/www\./, 'https://');
+  return `${base}/invoice/${invoiceId}?token=${encodeURIComponent(publicToken)}`;
 }
 
 /** Ensure invoice is public and has a stable client payment token. Returns the token. */
@@ -31,7 +30,7 @@ export async function ensureInvoicePublicToken(
 
   const metadata = (invoice.metadata || {}) as Record<string, unknown>;
   const existing = String(metadata.public_token || '').trim();
-  const publicToken = existing || globalThis.crypto.randomUUID();
+  const publicToken = existing || crypto.randomUUID();
 
   if (!existing || !invoice.is_public) {
     await admin

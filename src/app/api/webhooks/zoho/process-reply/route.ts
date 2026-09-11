@@ -36,25 +36,13 @@ export async function POST(req: NextRequest) {
         data = await req.json();
     }
 
-    const { userId, tenantId, messageId, folderId, replyText, senderEmail, originalSubject, logId } = data;
+    const { userId, messageId, folderId, replyText, senderEmail, originalSubject, logId } = data;
 
-    if (!userId || !tenantId || !messageId || !replyText) {
+    if (!userId || !messageId || !replyText) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const { processNormalizedTrigger } = await import('@/lib/bonnie/runtime/triggerGateway');
-    await processNormalizedTrigger({
-        tenant_id: tenantId,
-        user_id: userId,
-        trigger_type: 'webhook',
-        event_type: 'email.reply.process',
-        source: 'webhooks/zoho/process-reply',
-        correlation_id: String(logId || messageId),
-        deduplication_key: `zoho-reply:${tenantId}:${messageId}`,
-        payload: { messageId, folderId, senderEmail },
-    }).catch(() => undefined);
-
-    const zohoMail = new ZohoMailService(userId, tenantId);
+    const zohoMail = new ZohoMailService(userId);
     const supabase = createSupabaseAdminClient();
 
     try {
@@ -94,7 +82,6 @@ export async function POST(req: NextRequest) {
         const { data: zohoIntegration } = await admin
             .from('integrations')
             .select('tenant_id')
-            .eq('tenant_id', tenantId)
             .eq('user_id', userId)
             .eq('type', 'zoho')
             .eq('enabled', true)

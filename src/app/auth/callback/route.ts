@@ -1,9 +1,8 @@
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect'
-import { sanitizeInternalRedirect } from '@/lib/security/safeRedirect'
-import { createSupabaseServerClient } from '@/lib/supabase-server'
 
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
@@ -12,9 +11,47 @@ export async function GET(request: Request) {
 
     if (code) {
         try {
-            await cookies()
+            const cookieStore = await cookies()
 
-            const supabase = await createSupabaseServerClient()
+            // Use centralized ENV to handle variable resolution (VITE_ vs NEXT_PUBLIC_)
+            // and fallback logic
+            const { ENV } = await import('@/config/env')
+
+            const supabase = createServerClient(
+                ENV.VITE_SUPABASE_URL,
+                ENV.VITE_SUPABASE_ANON_KEY,
+                {
+                    cookies: {
+                        getAll() {
+                            return cookieStore.getAll()
+                        },
+                        setAll(cookiesToSet) {
+                            try {
+                                const allCookies = cookieStore.getAll();
+                                const sbCookieNames = allCookies
+                                    .map(c => c.name)
+                                    .filter(name => name.startsWith('sb-') && name.includes('-auth-token'));
+
+                                const newCookieNames = new Set(cookiesToSet.map(c => c.name));
+
+                                sbCookieNames.forEach(oldName => {
+                                    if (!newCookieNames.has(oldName)) {
+                                        cookieStore.set(oldName, '', { expires: new Date(0), path: '/' });
+                                    }
+                                });
+
+                                cookiesToSet.forEach(({ name, value, options }) =>
+                                    cookieStore.set(name, value, options)
+                                )
+                            } catch {
+                                // The `setAll` method was called from a Server Component.
+                                // This can be ignored if you have middleware refreshing
+                                // user sessions.
+                            }
+                        },
+                    },
+                }
+            )
             const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code)
             if (!error && session) {
                 const user = session.user
@@ -51,7 +88,9 @@ export async function GET(request: Request) {
                             const { bootstrapTenantForUser } = await import('@/lib/tenant/bootstrapTenantServer');
                             const name = (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
                             const workspaceName = `${name}'s Workspace`;
-                            const randomSuffix = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+                            const randomSuffix = Array.from({ length: 5 }, () =>
+                                String.fromCharCode(97 + Math.floor(Math.random() * 26))
+                            ).join('');
                             const slug = name.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
 
                             const { tenantId: newTenantId } = await bootstrapTenantForUser(admin, user, {
@@ -70,18 +109,6 @@ export async function GET(request: Request) {
                     }
                 } catch (tenantErr) {
                     console.error('[auth/callback] Failed to ensure tenant for OAuth user:', tenantErr);
-                    // Still try to ensure a profile exists so getCurrentUser does not clear the session.
-                    try {
-                        const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
-                        const { ensureUserProfile } = await import('@/lib/tenant/bootstrapTenantServer');
-                        const admin = createSupabaseAdminClient();
-                        await ensureUserProfile(admin, user);
-                    } catch (profileErr) {
-                        console.error('[auth/callback] Profile ensure also failed:', profileErr);
-                        return NextResponse.redirect(
-                            `${origin}/auth/login?error=${encodeURIComponent('workspace_bootstrap_failed')}`
-                        );
-                    }
                 }
 
                 if (provider === 'linkedin_oidc') {
@@ -164,73 +191,7 @@ export async function GET(request: Request) {
                     }
                 }
 
-                try {
-                    const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
-                    const { recordRegistrationEvent, inferSignupMethod } = await import('@/lib/auth/registrationEvents')
-                    const admin = createSupabaseAdminClient()
-                    const registrationResult = await recordRegistrationEvent(admin, {
-                        user,
-                        signupMethod: inferSignupMethod(user),
-                        sourceUrl: request.headers.get('referer'),
-                        userAgent: request.headers.get('user-agent'),
-                        metadata: {
-                            callbackProvider: provider || null,
-                            callbackNext: requestedNext || null,
-                        },
-                    })
-                    if (!registrationResult.success) {
-                        console.error('[auth/callback] Registration event failed:', registrationResult.error)
-                    }
-                } catch (registrationErr) {
-                    console.error('[auth/callback] Registration event error:', registrationErr)
-                }
-
-                // Apply signup consent prefs after email confirmation (no session existed at signUp).
-                if (user.user_metadata?.signup_method === 'email' && !user.user_metadata?.communication_prefs_applied_at) {
-                    try {
-                        const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
-                        const admin = createSupabaseAdminClient()
-                        const marketing = Boolean(user.user_metadata?.marketing_opt_in)
-                        const profileName = String(
-                            user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
-                        ).trim()
-                        const consentAt = new Date().toISOString()
-                        await admin.from('profiles').upsert(
-                            {
-                                id: user.id,
-                                email: user.email,
-                                name: profileName,
-                                role: 'tenant_admin',
-                                communication_prefs: {
-                                    transactional: true,
-                                    product_updates: true,
-                                    marketing,
-                                    sms: false,
-                                    legal_acceptance: {
-                                        accepted_at: consentAt,
-                                        policy_version: '2026-06-01',
-                                        eu_consent: Boolean(user.user_metadata?.eu_consent) || null,
-                                        age_confirmed: Boolean(user.user_metadata?.age_confirmed) || null,
-                                        terms_url: 'https://alphaclonesystems.com/terms-of-service',
-                                        privacy_url: 'https://alphaclonesystems.com/privacy-policy',
-                                    },
-                                },
-                                gdpr_consent_date: consentAt,
-                            },
-                            { onConflict: 'id' }
-                        )
-                        await admin.auth.admin.updateUserById(user.id, {
-                            user_metadata: {
-                                ...user.user_metadata,
-                                communication_prefs_applied_at: consentAt,
-                            },
-                        })
-                    } catch (prefsErr) {
-                        console.error('[auth/callback] Failed to apply registration communication prefs:', prefsErr)
-                    }
-                }
-
-                let next = sanitizeInternalRedirect(requestedNext) ?? '/dashboard'
+                let next = requestedNext ?? '/dashboard'
                 if (!requestedNext) {
                     try {
                         const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')

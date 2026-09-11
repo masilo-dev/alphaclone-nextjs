@@ -72,11 +72,8 @@ const clients = [
         redirect_uris: [
             'https://chatgpt.com/connector_platform_oauth_redirect', 
             'https://chatgpt.com/connector/oauth/*',
-            'https://chatgpt.com/connector/oauth/callback',
             'https://chat.openai.com/connector_platform_oauth_redirect', 
-            'https://chat.openai.com/connector/oauth/*',
-            'https://chat.openai.com/connector/oauth/callback',
-            'https://platform.openai.com/apps-manage/oauth/*'
+            'https://chat.openai.com/connector/oauth/*'
         ], 
         is_public: true,
         scopes: ['read', 'write', 'mcp:tools', 'mcp:resources']

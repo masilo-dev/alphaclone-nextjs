@@ -14,16 +14,17 @@ import {
   defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
 import {
+  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MoreVertical, Clock, CheckCircle2,
-  Circle, PlayCircle, Eye, Link2,
+  MoreVertical, Clock, AlertCircle, CheckCircle2,
+  Circle, PlayCircle, Eye, MessageSquare, Link2,
   Zap, User as UserIcon, Lightbulb
 } from 'lucide-react';
 import { Task } from '../../../services/taskService';
@@ -34,12 +35,12 @@ interface KanbanViewProps {
   onEditTask: (task: Task) => void;
 }
 
-const STATUSES: { id: Task['status']; label: string; icon: any; color: string; tint: string }[] = [
-  { id: 'ideas', label: 'Ideas', icon: Lightbulb, color: 'text-[var(--ac-bonnie)]', tint: 'color-mix(in srgb, var(--ac-bonnie) 10%, transparent)' },
-  { id: 'todo', label: 'Todo', icon: Circle, color: 'text-[var(--ws-text-secondary)]', tint: 'var(--ws-surface-secondary)' },
-  { id: 'in_progress', label: 'Active', icon: PlayCircle, color: 'text-[var(--ac-accent)]', tint: 'var(--ac-accent-muted)' },
-  { id: 'review', label: 'Review', icon: Eye, color: 'text-[var(--warning)]', tint: 'color-mix(in srgb, var(--warning) 10%, transparent)' },
-  { id: 'completed', label: 'Success', icon: CheckCircle2, color: 'text-[var(--success)]', tint: 'color-mix(in srgb, var(--success) 10%, transparent)' },
+const STATUSES: { id: Task['status']; label: string; icon: any; color: string }[] = [
+  { id: 'ideas', label: 'Ideas', icon: Lightbulb, color: 'text-fuchsia-400' },
+  { id: 'todo', label: 'Todo', icon: Circle, color: 'text-slate-400' },
+  { id: 'in_progress', label: 'Active', icon: PlayCircle, color: 'text-blue-400' },
+  { id: 'review', label: 'Review', icon: Eye, color: 'text-amber-400' },
+  { id: 'completed', label: 'Success', icon: CheckCircle2, color: 'text-teal-400' },
 ];
 
 export const KanbanView: React.FC<KanbanViewProps> = ({ tasks, onUpdateStatus, onEditTask }) => {
@@ -47,7 +48,9 @@ export const KanbanView: React.FC<KanbanViewProps> = ({ tasks, onUpdateStatus, o
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: {
+        distance: 8,
+      },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -70,20 +73,23 @@ export const KanbanView: React.FC<KanbanViewProps> = ({ tasks, onUpdateStatus, o
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
+
     if (!over) return;
 
     const activeTaskId = active.id as string;
     const overId = over.id as string;
+
+    // Determine if we dropped on a column or another task
     let newStatus: Task['status'] | null = null;
 
-    if (STATUSES.some((s) => s.id === overId)) {
-      newStatus = overId as Task['status'];
+    if (STATUSES.some(s => s.id === overId)) {
+        newStatus = overId as Task['status'];
     } else {
-      const overTask = tasks.find((t) => t.id === overId);
-      if (overTask) newStatus = overTask.status;
+        const overTask = tasks.find(t => t.id === overId);
+        if (overTask) newStatus = overTask.status;
     }
 
-    const task = tasks.find((t) => t.id === activeTaskId);
+    const task = tasks.find(t => t.id === activeTaskId);
     if (task && newStatus && task.status !== newStatus) {
       await onUpdateStatus(activeTaskId, newStatus);
     }
@@ -96,7 +102,7 @@ export const KanbanView: React.FC<KanbanViewProps> = ({ tasks, onUpdateStatus, o
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid min-h-[600px] h-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 h-full min-h-[600px]">
         {STATUSES.map((status) => (
           <KanbanColumn
             key={status.id}
@@ -107,13 +113,15 @@ export const KanbanView: React.FC<KanbanViewProps> = ({ tasks, onUpdateStatus, o
         ))}
       </div>
 
-      <DragOverlay
-        dropAnimation={{
-          sideEffects: defaultDropAnimationSideEffects({
-            styles: { active: { opacity: '0.5' } },
-          }),
-        }}
-      >
+      <DragOverlay dropAnimation={{
+        sideEffects: defaultDropAnimationSideEffects({
+            styles: {
+                active: {
+                    opacity: '0.5',
+                },
+            },
+        }),
+      }}>
         {activeTask ? (
           <div className="w-[300px]">
             <KanbanCard task={activeTask} isDragging onEdit={() => {}} />
@@ -131,44 +139,38 @@ interface KanbanColumnProps {
 }
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({ status, tasks, onEditTask }) => {
-  const { id, label, icon: Icon, color, tint } = status;
+  const { id, label, icon: Icon, color } = status;
 
   return (
-    <section className="flex h-full flex-col space-y-4 rounded-[var(--ws-radius-lg,14px)] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-4">
-      <div className="flex shrink-0 items-center justify-between px-1">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--ws-radius-control,8px)]" style={{ background: tint }}>
-            <Icon className={`h-4 w-4 ${color}`} aria-hidden="true" />
-          </span>
-          <h3 className="truncate text-xs font-semibold text-[var(--ws-text-primary)]">{label}</h3>
-          <span className="rounded-full border border-[var(--ws-border)] bg-[var(--ws-panel)] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-[var(--ws-text-tertiary)]">
+    <div className="flex flex-col h-full bg-slate-950/30 rounded-3xl border border-white/5 p-4 space-y-4">
+      <div className="flex items-center justify-between px-2 shrink-0">
+        <div className="flex items-center gap-2">
+          <Icon className={`w-4 h-4 ${color}`} />
+          <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">{label}</h3>
+          <span className="text-[10px] font-bold text-slate-500 bg-slate-900 px-2 py-0.5 rounded-full border border-white/5">
             {tasks.length}
           </span>
         </div>
-        <button
-          type="button"
-          aria-label={`${label} column options`}
-          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--ws-radius-control,8px)] text-[var(--ws-text-tertiary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
-        >
-          <MoreVertical className="h-4 w-4" aria-hidden="true" />
+        <button className="text-slate-600 hover:text-slate-400">
+          <MoreVertical className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="min-h-[150px] flex-1">
-        <SortableContext id={id} items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+      <div className="flex-1 min-h-[150px]">
+        <SortableContext id={id} items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
             {tasks.map((task) => (
               <SortableTaskCard key={task.id} task={task} onEdit={onEditTask} />
             ))}
-            {tasks.length === 0 ? (
-              <div className="flex h-24 items-center justify-center rounded-[var(--ws-radius-lg,14px)] border border-dashed border-[var(--ws-border)]">
-                <p className="text-[11px] font-medium text-[var(--ws-text-tertiary)]">No tasks</p>
-              </div>
-            ) : null}
+            {tasks.length === 0 && (
+                <div className="h-24 border border-dashed border-white/5 rounded-2xl flex items-center justify-center">
+                    <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">No Intel</p>
+                </div>
+            )}
           </div>
         </SortableContext>
       </div>
-    </section>
+    </div>
   );
 };
 
@@ -179,7 +181,14 @@ interface TaskCardProps {
 }
 
 const SortableTaskCard = ({ task, onEdit }: TaskCardProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -194,11 +203,12 @@ const SortableTaskCard = ({ task, onEdit }: TaskCardProps) => {
 };
 
 const KanbanCard = ({ task, isDragging, onEdit }: TaskCardProps) => {
-  const priorityStyle = task.priority === 'urgent'
-    ? 'border-[color-mix(in_srgb,var(--danger)_38%,var(--ws-border))]'
-    : task.priority === 'high'
-      ? 'border-[color-mix(in_srgb,var(--warning)_38%,var(--ws-border))]'
-      : 'border-[var(--ws-border)]';
+  const urgencyColor = task.priority === 'urgent' ? 'border-rose-500/50 shadow-rose-500/10' :
+                       task.priority === 'high' ? 'border-amber-500/50 shadow-amber-500/10' :
+                       'border-white/5 shadow-black/20';
+
+  const urgencyGlow = task.priority === 'urgent' ? 'shadow-[0_0_15px_-5px_rgba(244,63,94,0.3)]' :
+                      task.priority === 'high' ? 'shadow-[0_0_15px_-5px_rgba(245,158,11,0.2)]' : '';
 
   const subtaskStats = useMemo(() => {
     const subs = task.subtasks || [];
@@ -209,81 +219,86 @@ const KanbanCard = ({ task, isDragging, onEdit }: TaskCardProps) => {
   }, [task.subtasks]);
 
   return (
-    <motion.button
-      type="button"
-      layout
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.985 }}
-      transition={{ type: 'spring', bounce: 0, duration: 0.28 }}
-      className={`group w-full cursor-grab rounded-[var(--ws-radius-lg,14px)] border bg-[var(--ws-panel)] p-4 text-left shadow-sm outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${priorityStyle} ${isDragging ? 'opacity-55' : 'opacity-100'}`}
+    <motion.div
+      whileHover={{ y: -2 }}
+      className={`group bg-slate-900/60 backdrop-blur-xl p-4 rounded-2xl border transition-all cursor-grab active:cursor-grabbing ${urgencyColor} ${urgencyGlow} ${isDragging ? 'opacity-50' : 'opacity-100'}`}
       onClick={() => onEdit(task)}
-      aria-label={`Open task ${task.title}`}
     >
       <div className="space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="truncate text-sm font-semibold leading-tight text-[var(--ws-text-primary)]">
+          <h4 className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors leading-tight truncate">
             {task.title}
           </h4>
-          {task.priority === 'urgent' ? (
-            <Zap className="h-3 w-3 shrink-0 text-[var(--danger)]" aria-label="Urgent priority" />
-          ) : null}
+          {task.priority === 'urgent' && (
+              <Zap className="w-3 h-3 text-rose-500 fill-rose-500/20 shrink-0" />
+          )}
         </div>
 
-        {task.description ? (
-          <p className="line-clamp-2 text-[11px] font-normal leading-relaxed text-[var(--ws-text-secondary)]">
+        {task.description && (
+          <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed font-medium">
             {task.description}
           </p>
-        ) : null}
+        )}
 
-        {(task.relatedToProject || task.relatedToLead || task.relatedToDeal) ? (
+        {/* Context Badges */}
+        {(task.relatedToProject || task.relatedToLead || task.relatedToDeal) && (
           <div className="flex flex-wrap gap-1.5 pt-1">
-            {task.relatedToProject ? (
-              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--ac-bonnie)_22%,transparent)] bg-[color-mix(in_srgb,var(--ac-bonnie)_10%,transparent)] px-2 py-0.5 text-[9px] font-semibold text-[var(--ac-bonnie)]">Project</span>
-            ) : null}
-            {task.relatedToLead ? (
-              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--ac-accent)_22%,transparent)] bg-[var(--ac-accent-muted)] px-2 py-0.5 text-[9px] font-semibold text-[var(--ac-accent)]">Lead</span>
-            ) : null}
-            {task.relatedToDeal ? (
-              <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-2 py-0.5 text-[9px] font-semibold text-[var(--warning)]">Deal</span>
-            ) : null}
+            {task.relatedToProject && (
+              <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20">
+                Project
+              </span>
+            )}
+            {task.relatedToLead && (
+              <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                Lead
+              </span>
+            )}
+            {task.relatedToDeal && (
+              <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                Deal
+              </span>
+            )}
           </div>
-        ) : null}
+        )}
 
-        {subtaskStats ? (
+        {/* Subtask Progress Bar */}
+        {subtaskStats && (
           <div className="space-y-1.5 pt-1">
-            <div className="flex items-center justify-between text-[10px] font-medium text-[var(--ws-text-tertiary)]">
+            <div className="flex items-center justify-between text-[9px] font-mono text-slate-500 font-bold uppercase tracking-wider">
               <span>Progress</span>
-              <span className="tabular-nums">{subtaskStats.completed}/{subtaskStats.total} ({subtaskStats.percent}%)</span>
+              <span>{subtaskStats.completed}/{subtaskStats.total} ({subtaskStats.percent}%)</span>
             </div>
-            <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--ws-surface-secondary)]">
+            <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
               <div
-                className="h-full bg-[var(--brand-teal)] transition-[width] duration-300"
+                className="h-full bg-teal-400 transition-all duration-300"
                 style={{ width: `${subtaskStats.percent}%` }}
               />
             </div>
           </div>
-        ) : null}
+        )}
 
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-3">
-            {task.dueDate ? (
-              <div className="flex items-center gap-1.5 text-[10px] font-medium text-[var(--ws-text-tertiary)]">
-                <Clock className="h-3 w-3" aria-hidden="true" />
+            {task.dueDate && (
+              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-600">
+                <Clock className="w-3 h-3" />
                 {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>
-            ) : null}
-            {(task.metadata?.linkedCount > 0 || task.relatedToProject) ? (
-              <Link2 className="h-3 w-3 text-[var(--ws-text-tertiary)]" aria-label="Linked task" />
-            ) : null}
+            )}
+            {(task.metadata?.linkedCount > 0 || task.relatedToProject) && (
+              <Link2 className="w-3 h-3 text-slate-700" />
+            )}
           </div>
 
-          <div className="flex -space-x-2" aria-hidden="true">
-            <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 border-[var(--ws-panel)] bg-[var(--ws-surface-secondary)]">
-              <UserIcon className="h-2.5 w-2.5 text-[var(--ws-text-tertiary)]" />
-            </div>
+          <div className="flex -space-x-2">
+            {[1].map((_, i) => (
+              <div key={i} className="w-5 h-5 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center">
+                <UserIcon className="w-2.5 h-2.5 text-slate-500" />
+              </div>
+            ))}
           </div>
         </div>
       </div>
-    </motion.button>
+    </motion.div>
   );
 };

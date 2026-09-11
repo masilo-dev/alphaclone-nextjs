@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import {
   BarChart,
   Bar,
@@ -15,65 +14,37 @@ import { DashboardChartCard } from './DashboardChartCard';
 import { ChartMount } from './ChartMount';
 import type { DashboardChartPoint } from '@/types/dashboardStats';
 import { DASHBOARD_COLORS } from '@/types/dashboardStats';
-import { RichChartEmptyState, RichChartTooltip, formatChartValue, resolveChartAccent } from './chartVisuals';
 
 interface DashboardBarChartProps {
   data: DashboardChartPoint[];
   color?: string;
-  moduleId?: string;
   dual?: boolean;
   valuePrefix?: string;
   title?: string;
   subtitle?: string;
-  emptyTitle?: string;
-  emptyDescription?: string;
-  emptyActionLabel?: string;
-  onEmptyAction?: () => void;
 }
 
 export function DashboardBarChart({
   data,
   color = DASHBOARD_COLORS.blue,
-  moduleId,
   dual = false,
   valuePrefix = '$',
   title = 'Volume',
   subtitle,
-  emptyTitle,
-  emptyDescription,
-  emptyActionLabel,
-  onEmptyAction,
 }: DashboardBarChartProps) {
   const hasValues = data.some((point) => point.value > 0 || (point.value2 ?? 0) > 0);
-  const accent = resolveChartAccent(moduleId, color);
-  const secondary = DASHBOARD_COLORS.green;
-  const gradientId = React.useId().replace(/:/g, '');
 
   return (
-    <DashboardChartCard title={title} subtitle={subtitle} accentColor={accent} badge={dual ? 'Compare' : 'Volume'}>
+    <DashboardChartCard title={title} subtitle={subtitle}>
       {!hasValues ? (
-        <RichChartEmptyState
-          title={emptyTitle}
-          description={emptyDescription}
-          actionLabel={emptyActionLabel}
-          onAction={onEmptyAction}
-          accentColor={accent}
-        />
+        <div className="h-[240px] flex items-center justify-center">
+          <p className="text-[13px] text-[var(--ws-text-tertiary)]">No data yet</p>
+        </div>
       ) : (
         <ChartMount height={240}>
           <ResponsiveContainer width="100%" height={240} minWidth={0} minHeight={240}>
-            <BarChart data={data} margin={{ top: 8, right: 10, left: 0, bottom: 0 }} barGap={8}>
-              <defs>
-                <linearGradient id={`bar-fill-${gradientId}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={accent} stopOpacity={0.96} />
-                  <stop offset="100%" stopColor={accent} stopOpacity={0.42} />
-                </linearGradient>
-                <linearGradient id={`bar-fill-2-${gradientId}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={secondary} stopOpacity={0.96} />
-                  <stop offset="100%" stopColor={secondary} stopOpacity={0.42} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.16)" vertical={false} />
+            <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
               <XAxis
                 dataKey="label"
                 tick={{ fill: '#94a3b8', fontSize: 12 }}
@@ -86,23 +57,25 @@ export function DashboardBarChart({
                 axisLine={false}
                 tickLine={false}
                 width={52}
-                tickFormatter={(v: number) => formatChartValue(v, valuePrefix)}
+                tickFormatter={(v: number) => `${valuePrefix}${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`}
               />
               <Tooltip
-                cursor={{ fill: 'rgba(148, 163, 184, 0.08)', radius: 8 }}
-                content={<RichChartTooltip valuePrefix={valuePrefix} dual={dual} />}
+                contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, fontSize: 12 }}
+                formatter={(value: number, name: string) => [
+                  `${valuePrefix}${value}`,
+                  name === 'value2' ? 'Collected' : dual ? 'Invoiced' : 'Total',
+                ]}
               />
               {dual ? (
                 <Legend
                   verticalAlign="top"
                   height={28}
-                  iconType="circle"
                   formatter={(value: string) => (value === 'value2' ? 'Collected' : 'Invoiced')}
                   wrapperStyle={{ fontSize: 11, color: '#94a3b8' }}
                 />
               ) : null}
-              <Bar dataKey="value" name="value" fill={`url(#bar-fill-${gradientId})`} radius={[8, 8, 2, 2]} maxBarSize={42} />
-              {dual ? <Bar dataKey="value2" name="value2" fill={`url(#bar-fill-2-${gradientId})`} radius={[8, 8, 2, 2]} maxBarSize={42} /> : null}
+              <Bar dataKey="value" name="value" fill={color} radius={[4, 4, 0, 0]} />
+              {dual ? <Bar dataKey="value2" name="value2" fill={DASHBOARD_COLORS.green} radius={[4, 4, 0, 0]} /> : null}
             </BarChart>
           </ResponsiveContainer>
         </ChartMount>

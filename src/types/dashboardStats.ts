@@ -56,18 +56,18 @@ export interface OverviewStatsResponse extends DashboardStatsResponse {
 }
 
 export const DASHBOARD_COLORS = {
-  green: '#4ade80',
+  green: '#639922',
   greenBg: '#EAF3DE',
-  amber: '#fbbf24',
+  amber: '#EF9F27',
   amberBg: '#FAEEDA',
-  red: '#fb7185',
+  red: '#E24B4A',
   redBg: '#FCEBEB',
-  blue: '#38bdf8',
+  blue: '#378ADD',
   blueBg: '#E6F1FB',
-  teal: '#2dd4bf',
-  indigo: '#818cf8',
-  violet: '#c084fc',
-  slate: '#94a3b8',
+  teal: '#0d9488',
+  indigo: '#6366f1',
+  violet: '#7c3aed',
+  slate: '#64748b',
 } as const;
 
 export const MODULE_COLORS: Record<string, string> = {

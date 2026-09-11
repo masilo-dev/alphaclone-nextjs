@@ -1,27 +1,26 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
+
+const BonnieModuleDock = dynamic(
+  () => import('@/components/dashboard/bonnie/BonnieModuleDock'),
+  { ssr: false, loading: () => <div className="h-full min-h-[480px] rounded-xl border border-slate-800 bg-slate-950/50" /> }
+);
 
 type BonnieModulePageShellProps = {
   children: React.ReactNode;
   className?: string;
-  /**
-   * Retained for call-site compatibility. Bonnie now lives in its dedicated
-   * sidebar workspace, so module content always receives the full width.
-   */
-  showBonnieDock?: boolean;
 };
 
-/**
- * Preserves the module-shell API without permanently mounting Bonnie beside
- * every module. Open Bonnie from Intelligence → Bonnie AI in the sidebar, or
- * use contextual Ask Bonnie actions where they are useful.
- */
-export function BonnieModulePageShell({
-  children,
-  className,
-  showBonnieDock: _showBonnieDock = true,
-}: BonnieModulePageShellProps) {
-  void _showBonnieDock;
-  return <div className={className}>{children}</div>;
+/** Wraps module pages — Bonnie dock sits below main content so forms stay full width. */
+export function BonnieModulePageShell({ children, className }: BonnieModulePageShellProps) {
+  return (
+    <div className={`flex flex-col gap-4 ${className || ''}`}>
+      <div className="min-w-0 w-full">{children}</div>
+      <aside className="hidden md:block w-full lg:max-w-sm lg:ml-auto shrink-0">
+        <BonnieModuleDock />
+      </aside>
+    </div>
+  );
 }

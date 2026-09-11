@@ -19,7 +19,7 @@ interface DetailDrawerProps {
   children: React.ReactNode;
   className?: string;
   /** Wider drawer on desktop (forms, quote editor) */
-  size?: 'default' | 'wide' | 'fullscreen';
+  size?: 'default' | 'wide';
 }
 
 /**
@@ -42,13 +42,7 @@ export function DetailDrawer({
       <SheetContent
         side={isMobile ? 'bottom' : 'right'}
         className={cn(
-          size === 'fullscreen'
-            ? 'inset-0 h-[100dvh] !w-screen max-w-none rounded-none border-0'
-            : isMobile
-              ? 'max-h-[85vh]'
-              : size === 'wide'
-                ? 'h-full !w-[min(100vw,44rem)] !p-4 !gap-2'
-                : 'h-full',
+          isMobile ? 'max-h-[85vh]' : size === 'wide' ? 'h-full !w-[min(100vw,48rem)]' : 'h-full',
           className
         )}
       >

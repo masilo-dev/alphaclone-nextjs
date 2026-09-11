@@ -42,7 +42,9 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const payload = parsed.data;
-    const { admin } = await requireTenantAccess(payload.tenantId);
+    await requireTenantAccess(payload.tenantId);
+
+    const admin = createSupabaseAdminClient();
     const origin = req.nextUrl.origin;
 
     if (payload.type === 'progress') {

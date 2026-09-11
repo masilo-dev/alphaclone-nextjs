@@ -3,8 +3,6 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 import { encodeLinkedInOAuthState, type LinkedInOAuthState } from '@/lib/linkedin/oauthState';
-import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
-import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/linkedin',
@@ -12,30 +10,24 @@ const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/settings',
 ] as const;
 
-/** Full set of authorized LinkedIn scopes for profiles, pages, ads, lead sync, and verification */
+/** Minimum scopes + business page (org) + ads/events products used by MCP */
 const LINKEDIN_REQUESTED_SCOPES = [
   'openid',
   'profile',
   'email',
-  'r_basicprofile',
-  'r_profile_basicinfo',
   'w_member_social',
   'w_organization_social',
   'r_organization_social',
   'r_organization_admin',
   'rw_organization_admin',
   'r_ads',
-  'rw_ads',
   'r_ads_reporting',
-  'r_ads_leadgen_automation',
-  'r_marketing_leadgen_automation',
-  'r_1st_connections_size',
-  'r_verify',
+  'rw_events',
 ] as const;
 
 export async function GET(req: NextRequest) {
   try {
-    const appUrl = PUBLIC_APP_ORIGIN;
+    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
     const supabase = await createSupabaseServerClient();
     const {
       data: { user },
@@ -60,7 +52,7 @@ export async function GET(req: NextRequest) {
     }
 
     const clientId = ENV.LINKEDIN_CLIENT_ID;
-    const redirectUri = OAUTH_CALLBACKS.linkedin;
+    const redirectUri = ENV.LINKEDIN_REDIRECT_URI || `${appUrl}/api/auth/linkedin/callback`;
     if (!clientId) {
       return NextResponse.redirect(`${appUrl}/dashboard/business/linkedin?li_error=app_not_configured`);
     }

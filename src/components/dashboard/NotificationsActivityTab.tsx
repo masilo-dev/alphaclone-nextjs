@@ -13,7 +13,6 @@ import { usePushNotifications } from '../../hooks/usePushNotifications';
 import type { DashboardFeedItem } from '@/types/dashboardStats';
 import EmptyState from '@/components/ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
-import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 interface NotificationsActivityTabProps {
   user: User;
@@ -36,29 +35,19 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
         notificationService.getNotifications(user.id, tenantId),
         supabase
           .from('audit_logs')
-          .select('action, entity_type, created_at, metadata, severity')
+          .select('action, entity_type, created_at, metadata')
           .eq('tenant_id', tenantId)
           .order('created_at', { ascending: false })
-          .limit(30),
+          .limit(25),
       ]);
 
       if (loaded) setNotifications(loaded);
 
-      const feed: DashboardFeedItem[] = (activityRes.data || []).map((row: any) => {
-        const meta = row.metadata || {};
-        const isFailure = row.severity === 'high' || meta.status === 'failed' || meta.status === 'blocked';
-        const isAtRisk = meta.status === 'at_risk';
-
-        const eventTitle = meta.event || row.action || row.entity_type;
-        const actorName = meta.actor ? ` (${meta.actor})` : '';
-        const resultText = meta.result ? ` — ${meta.result}` : '';
-
-        return {
-          dot: isFailure ? '#f43f5e' : isAtRisk ? '#f59e0b' : '#14b8a6',
-          text: `${eventTitle}${actorName}${resultText}`,
-          time: formatDistanceToNow(new Date(row.created_at), { addSuffix: true }),
-        };
-      });
+      const feed: DashboardFeedItem[] = (activityRes.data || []).map((row: any) => ({
+        dot: '#14b8a6',
+        text: `${row.action || row.entity_type}${row.metadata?.name ? `: ${row.metadata.name}` : ''}`,
+        time: formatDistanceToNow(new Date(row.created_at), { addSuffix: true }),
+      }));
       setActivity(feed);
     } finally {
       setLoading(false);
@@ -78,7 +67,12 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
 
   return (
     <ModulePageLayout
-      header={<EnterprisePageHeader moduleKey="notifications" />}
+      header={
+        <div className="px-1 pb-2">
+          <h1 className="text-lg font-semibold text-white">Notifications & Activity</h1>
+          <p className="text-sm text-slate-400">Alerts, audit trail, and preference controls</p>
+        </div>
+      }
     >
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-4 ac-scroll-full pb-24">
         <div className={`overflow-hidden ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
@@ -113,13 +107,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
             {loading ? (
               <EmptyState icon={Bell} title="Loading alerts" description="Pulling your latest notifications and audit activity into the workspace." className="py-8" />
             ) : visibleNotifications.length === 0 ? (
-              <EmptyState
-                icon={BellOff}
-                title="You're all caught up"
-                description="Important alerts — overdue invoices, pending approvals, and customer replies — will appear here when something needs your attention."
-                bonnieSuggestion="Bonnie sends proactive alerts when something needs your attention."
-                className="py-8"
-              />
+              <EmptyState icon={BellOff} title="No notifications" description="You are all caught up. New alerts will appear here when important activity happens." className="py-8" />
             ) : (
               visibleNotifications.map((n) => (
                 <div
@@ -172,7 +160,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
           <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-teal-400" />
-              <span className="text-sm font-semibold text-white">Business activity timeline</span>
+              <span className="text-sm font-semibold text-white">Activity timeline</span>
             </div>
             <ActivityFeed items={activity} title="" subtitle="" />
           </div>

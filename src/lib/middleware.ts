@@ -4,12 +4,6 @@ import { rateLimitMiddleware, rateLimitConfigs } from './rateLimit'
 
 export async function updateSession(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
-    const accept = request.headers.get('accept') || '';
-    const fetchDest = request.headers.get('sec-fetch-dest') || '';
-    const isProtectedPage = pathname.startsWith('/dashboard') || pathname === '/alpha';
-    const isDashboardNavigation =
-        isProtectedPage &&
-        (fetchDest === 'document' || accept.includes('text/html'));
     const requestId = request.headers.get('x-request-id')?.trim() || crypto.randomUUID();
     const forwardHeaders = new Headers(request.headers);
     forwardHeaders.set('x-request-id', requestId);
@@ -51,7 +45,7 @@ export async function updateSession(request: NextRequest) {
     }
 
     // AI Agent and Scraper routes - Protection against resource/cost exhaustion
-    if (pathname === '/api/alpha' || pathname.startsWith('/api/alpha/')) {
+    if (pathname.includes('/api/alpha/')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.api.heavy);
         if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
@@ -91,12 +85,8 @@ export async function updateSession(request: NextRequest) {
         const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
-            if (isDashboardNavigation) {
-                const url = request.nextUrl.clone();
-                url.pathname = '/maintenance';
-                url.search = '';
-                url.searchParams.set('reason', 'authentication_unavailable');
-                return withRequestIdHeader(NextResponse.redirect(url));
+            if (!pathname.startsWith('/api/')) {
+                console.warn('Middleware: Supabase public env vars are not set; session refresh skipped.');
             }
             return response;
         }
@@ -141,8 +131,12 @@ export async function updateSession(request: NextRequest) {
         )
 
         // HARD GATE: Enforce trial and subscription status for dashboard routes
-        if (isProtectedPage) {
-            if (!isDashboardNavigation) {
+        if (pathname.startsWith('/dashboard')) {
+            const accept = request.headers.get('accept') || '';
+            const fetchDest = request.headers.get('sec-fetch-dest') || '';
+            const isDocumentNavigation = fetchDest === 'document' || accept.includes('text/html');
+
+            if (!isDocumentNavigation) {
                 return response;
             }
 
@@ -155,13 +149,11 @@ export async function updateSession(request: NextRequest) {
                 return NextResponse.redirect(url);
             }
 
-            const { data: profile, error: profileError } = await supabase
+            const { data: profile } = await supabase
                 .from('profiles')
                 .select('account_status')
                 .eq('id', user.id)
                 .maybeSingle();
-
-            if (profileError) throw profileError;
 
             if (!profile || profile.account_status === 'deleted' || profile.account_status === 'pending_deletion') {
                 const url = request.nextUrl.clone();
@@ -185,32 +177,44 @@ export async function updateSession(request: NextRequest) {
                 return redirect;
             }
 
-            const provider = user.app_metadata?.provider;
-            const isEmailPasswordUser = !provider || provider === 'email';
-            if (
-                isEmailPasswordUser &&
-                !user.email_confirmed_at &&
-                !pathname.startsWith('/auth/verify')
-            ) {
-                const url = request.nextUrl.clone();
-                url.pathname = '/auth/login';
-                url.searchParams.set('reason', 'email_not_verified');
-                url.searchParams.set('email', user.email || '');
-                return withRequestIdHeader(NextResponse.redirect(url));
+            // Skip gate for the upgrade page itself to avoid redirect loops
+            if (pathname.startsWith('/billing/upgrade')) {
+                return response;
             }
 
-            // Tenant membership and subscription authorization are enforced by
-            // tenant-scoped server routes. Never trust user_metadata.tenant_id here.
+            const tenantId = user.user_metadata?.tenant_id;
+            if (tenantId) {
+                // Fetch tenant status directly using service-role-like apikey (anon key works if RLS allows, but we need reliability)
+                // In middleware, we use the user's own supabase client which is restricted by RLS.
+                // Assuming RLS allows users to see their own tenant record.
+                const { data: tenant } = await supabase
+                    .from('tenants')
+                    .select('subscription_status, trial_ends_at, subscription_plan')
+                    .eq('id', tenantId)
+                    .single();
+
+                if (tenant) {
+                    const isTrialExpired =
+                        tenant.subscription_status === 'trial' &&
+                        tenant.trial_ends_at &&
+                        new Date(tenant.trial_ends_at) < new Date();
+
+                    const isInactive = ['suspended', 'cancelled', 'past_due'].includes(tenant.subscription_status);
+                    const isFreePlan = String((tenant as any).subscription_plan || 'free') === 'free';
+                    const isFreeBlocked = isFreePlan && tenant.subscription_status !== 'trial';
+
+                    if (isTrialExpired || isInactive || isFreeBlocked) {
+                        console.log(`[Middleware] Hard Gate: Redirecting tenant ${tenantId} (Status: ${tenant.subscription_status}) to upgrade.`);
+                        const url = request.nextUrl.clone();
+                        url.pathname = '/billing/upgrade';
+                        return NextResponse.redirect(url);
+                    }
+                }
+            }
         }
     } catch (e) {
+        // Catch any other errors (e.g. Supabase connection issues) to prevent 500s
         console.error('Middleware Logic Error:', e);
-        if (isDashboardNavigation) {
-            const url = request.nextUrl.clone();
-            url.pathname = '/maintenance';
-            url.search = '';
-            url.searchParams.set('reason', 'authentication_unavailable');
-            return withRequestIdHeader(NextResponse.redirect(url));
-        }
         return response;
     }
 

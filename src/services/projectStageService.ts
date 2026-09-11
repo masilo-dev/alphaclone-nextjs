@@ -1,7 +1,5 @@
 import { supabase } from '../lib/supabase';
 import { auditLoggingService } from './auditLoggingService';
-import { tenantService } from './tenancy/TenantService';
-import { projectService } from './projectService';
 
 export interface StageTransition {
     from: string;
@@ -25,34 +23,34 @@ const PROJECT_STAGES: Record<string, ProjectStage> = {
         name: 'Initiation',
         order: 1,
         requiredFields: ['name', 'description'],
-        nextStages: ['Planning', 'On Hold', 'Closure'],
+        nextStages: ['Planning', 'On Hold'],
         previousStages: [],
     },
     'Planning': {
         name: 'Planning',
         order: 2,
-        requiredFields: ['name', 'description'],
-        nextStages: ['Execution', 'On Hold', 'Closure'],
+        requiredFields: ['name', 'description', 'timeline'],
+        nextStages: ['Execution', 'On Hold'],
         previousStages: ['Initiation'],
     },
     'Execution': {
         name: 'Execution',
         order: 3,
-        requiredFields: ['name', 'description'],
-        nextStages: ['Review', 'Planning', 'On Hold', 'Closure'],
+        requiredFields: ['name', 'description', 'timeline', 'design_files'],
+        nextStages: ['Review', 'Planning', 'On Hold'],
         previousStages: ['Planning'],
     },
     'Review': {
         name: 'Review',
         order: 4,
-        requiredFields: ['name', 'description'],
+        requiredFields: ['name', 'description', 'timeline', 'test_results'],
         nextStages: ['Closure', 'Execution', 'On Hold'],
         previousStages: ['Execution'],
     },
     'Closure': {
         name: 'Closure',
         order: 5,
-        requiredFields: ['name'],
+        requiredFields: ['name', 'description', 'timeline', 'completion_date'],
         nextStages: [],
         previousStages: ['Review'],
     },
@@ -157,14 +155,11 @@ class ProjectStageService {
         forceUpdate: boolean = false
     ): Promise<{ success: boolean; error?: string; transition?: StageTransition }> {
         try {
-            const tenantId = tenantService.getCurrentTenantId();
-            if (!tenantId) return { success: false, error: 'Select a workspace first' };
             // Get current project
             const { data: project, error: fetchError } = await supabase
                 .from('projects')
                 .select('*')
                 .eq('id', projectId)
-                .eq('tenant_id', tenantId)
                 .single();
 
             if (fetchError || !project) {
@@ -188,13 +183,18 @@ class ProjectStageService {
                 };
             }
 
-            // Closure is "mark as finished" — persist Completed/100% so the
-            // list stops saying the project is still open.
-            const { error: updateError } = await projectService.updateProject(projectId, {
-                currentStage: newStage as any,
-                ...(newStage === 'Closure' ? { status: 'Completed' as const, progress: 100 } : {}),
-            });
-            if (updateError) return { success: false, error: updateError };
+            // Update project stage
+            const { error: updateError } = await supabase
+                .from('projects')
+                .update({
+                    current_stage: newStage,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', projectId);
+
+            if (updateError) {
+                return { success: false, error: updateError.message };
+            }
 
             // Log to audit trail
             await auditLoggingService.logAction(
@@ -256,27 +256,41 @@ class ProjectStageService {
         newStage: string
     ): Promise<void> {
         try {
-            if (!project.tenant_id || !project.owner_id) return;
-            const response = await fetch('/api/notifications', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tenantId: project.tenant_id,
-                    userId: project.owner_id,
-                    type: 'project',
-                    title: `Project moved to ${newStage}`,
-                    message: `"${project.name}" moved from ${oldStage} to ${newStage}.`,
-                    link: `/dashboard?tab=projects&project=${project.id}`,
-                    priority: newStage === 'Closure' ? 'high' : 'medium',
-                    metadata: { projectId: project.id, oldStage, newStage },
-                }),
-            });
-            if (!response.ok) {
-                const payload = await response.json().catch(() => ({}));
-                throw new Error(payload.error || 'Project notification could not be created');
+            // Create notification message
+            const message = {
+                sender_id: 'system',
+                recipient_id: project.owner_id,
+                text: `Your project "${project.name}" has moved from ${oldStage} to ${newStage}.`,
+                priority: 'normal',
+                created_at: new Date().toISOString(),
+            };
+
+            await supabase.from('messages').insert(message);
+
+            // Send email notification for deployment
+            if (newStage === 'Review') { // Deployment is now part of Review/Closure transition? Or maybe Execution -> Review
+                // Logic for deployment notification might need adjustment.
+                // Assuming 'Review' is where testing happens, and 'Closure' is final.
+                // Let's assume 'Execution' -> 'Review' is where we might notify.
+                // But previously it was 'Deployment'.
+                // If the user wants 5 stages: Initiation, Planning, Execution, Review, Closure.
+                // 'Deployment' maps best to 'Review' (UAT) or 'Closure' (Go Live).
+                // I'll map 'Deployment' logic to 'Review' for now as that's when client sees it usually.
+                const { userService } = await import('./userService');
+                const { user: profile } = await userService.getUser(project.owner_id);
+                if (profile?.email) {
+                    const { emailCampaignService } = await import('./emailCampaignService');
+                    emailCampaignService.sendTransactionalEmail(profile.email, 'Project Review Ready', {
+                        name: profile.name,
+                        projectName: project.name,
+                        deploymentUrl: project.deployment_url || 'https://alphaclonesystems.com'
+                    }).catch(err => console.error('Failed to trigger review email:', err));
+                }
+            } else if (newStage === 'Closure') {
+                // Potential for another template here if needed
             }
         } catch (error) {
-            console.error('Error notifying project owner:', error);
+            console.error('Error notifying client:', error);
         }
     }
 

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { encrypt } from '@/lib/encryption';
 
 function appBaseUrl(): string {
   return (ENV.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
@@ -39,18 +38,10 @@ export async function GET(req: NextRequest) {
       .from('oauth_states')
       .delete()
       .eq('id', state)
-      .select('user_id, tenant_id, metadata, created_at')
+      .select('user_id, tenant_id')
       .single();
 
-    const stateCreatedAt = st?.created_at ? new Date(st.created_at).getTime() : 0;
-    if (
-      stateErr ||
-      !st?.tenant_id ||
-      !st.user_id ||
-      st.metadata?.provider !== 'zoom' ||
-      !stateCreatedAt ||
-      Date.now() - stateCreatedAt > 10 * 60_000
-    ) {
+    if (stateErr || !st?.tenant_id || !st.user_id) {
       return fail('invalid_state');
     }
 
@@ -88,24 +79,13 @@ export async function GET(req: NextRequest) {
       /* optional */
     }
 
-    const encryptionSecret = ENV.ENCRYPTION_SECRET;
-    if (!encryptionSecret) return fail('encryption_not_configured');
-
-    const { error: secretError } = await admin.from('zoom_integration_secrets').upsert({
-      tenant_id: st.tenant_id,
-      configured_by: st.user_id,
-      access_token_encrypted: await encrypt(String(tok.access_token), encryptionSecret),
-      refresh_token_encrypted: tok.refresh_token
-        ? await encrypt(String(tok.refresh_token), encryptionSecret)
-        : null,
-      expires_at: expiresAt,
-      scope: String(tok.scope || ''),
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'tenant_id' });
-    if (secretError) {
-      console.error('[Zoom OAuth] secret upsert:', secretError);
-      return fail('credential_storage');
-    }
+    const metadata = {
+      zoom_access_token: tok.access_token as string,
+      zoom_refresh_token: (tok.refresh_token as string) || '',
+      zoom_expires_at: expiresAt,
+      zoom_scope: (tok.scope as string) || '',
+      zoom_account_id: zoomAccountId,
+    };
 
     const { error: upErr } = await admin.from('tenant_integrations').upsert(
       {
@@ -114,7 +94,7 @@ export async function GET(req: NextRequest) {
         status: 'connected',
         connected_at: new Date().toISOString(),
         configured_by: st.user_id,
-        metadata: { zoom_account_id: zoomAccountId },
+        metadata,
       },
       { onConflict: 'tenant_id,integration_id' }
     );

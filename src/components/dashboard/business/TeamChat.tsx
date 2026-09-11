@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Avatar } from '@/components/ui/Avatar';
+import Image from 'next/image';
 import { Send, MessageCircle, CheckCircle, CheckCheck } from 'lucide-react';
 import { User } from '../../../types';
 import { format } from 'date-fns';
+import { supabase } from '../../../lib/supabase';
 import { taskService } from '../../../services/taskService';
 import { messageService } from '../../../services/messageService';
 import toast from 'react-hot-toast';
@@ -150,10 +151,13 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
     const loadReceiptSummaries = async (messageIds: string[]) => {
         if (!tenantId || messageIds.length === 0) return;
 
-        const response = await fetch(`/api/tenant/${tenantId}/team-message-receipts?messageIds=${encodeURIComponent(messageIds.join(','))}`, { cache: 'no-store' });
-        if (!response.ok) return;
-        const payload = await response.json();
-        const data = payload.receipts || [];
+        const { data, error } = await supabase
+            .from('message_receipts')
+            .select('message_id, user_id, delivered_at, read_at')
+            .eq('tenant_id', tenantId)
+            .in('message_id', messageIds);
+
+        if (error || !data) return;
 
         const grouped: Record<string, DeliverySummary> = {};
         for (const receipt of data as any[]) {
@@ -170,7 +174,14 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
     const syncMyReceipts = async (messageIds: string[]) => {
         if (!tenantId || messageIds.length === 0) return;
 
-        await fetch(`/api/tenant/${tenantId}/team-message-receipts`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messageIds }) });
+        const nowIso = new Date().toISOString();
+        await supabase
+            .from('message_receipts')
+            .update({ read_at: nowIso })
+            .eq('tenant_id', tenantId)
+            .eq('user_id', user.id)
+            .in('message_id', messageIds)
+            .is('read_at', null);
 
         await loadReceiptSummaries(messageIds);
     };
@@ -233,12 +244,20 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
 
         const deliveredAt = new Date();
         updateMessageDelivery(senderMessageId, { deliveredAt });
-        const receiptResponse = await fetch(`/api/tenant/${tenantId}/team-message-receipts`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messageId: senderMessageId, recipientUserIds: recipientMembers.map((member) => member.user_id), deliveredAt: deliveredAt.toISOString() }),
-        });
-        if (!receiptResponse.ok) throw new Error('Email was sent, but delivery receipts could not be recorded');
+        await supabase.from('messages').update({ delivered_at: deliveredAt.toISOString() }).eq('id', senderMessageId);
+        const receiptRows = recipientMembers.map((member) => ({
+            tenant_id: tenantId,
+            message_id: senderMessageId,
+            user_id: member.user_id,
+            delivery_channel: 'email',
+            delivered_at: deliveredAt.toISOString(),
+            read_at: null,
+        }));
+        if (receiptRows.length > 0) {
+            await supabase
+                .from('message_receipts')
+                .upsert(receiptRows, { onConflict: 'message_id,user_id,delivery_channel' });
+        }
         await loadReceiptSummaries([senderMessageId]);
         await persistMessage(`Emailed ${recipients.length} teammate${recipients.length === 1 ? '' : 's'}.`, 'system');
     };
@@ -360,7 +379,9 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                 </div>
                     <div className="flex -space-x-2">
                         {teamMembers.slice(0, 5).map(m => (
-                            <Avatar key={m.user_id} src={m.user.avatar} name={m.user.name} email={m.user.email} size={32} className="border-2 border-slate-900" />
+                            <div key={m.user_id} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-xs font-bold text-white" title={m.user.name}>
+                                {m.user.name?.charAt(0)}
+                            </div>
                         ))}
                         {teamMembers.length > 5 && (
                             <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">
@@ -397,7 +418,13 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
 
                             return (
                                 <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                                <Avatar src={msg.userAvatar} name={msg.userName} size={32} />
+                                <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-xs relative overflow-hidden">
+                                    {msg.userAvatar ? (
+                                        <Image src={msg.userAvatar} fill className="object-cover" alt="" sizes="32px" />
+                                    ) : (
+                                        msg.userName.charAt(0)
+                                    )}
+                                </div>
                                 <div className={`max-w-[70%] space-y-1 ${isMe ? 'items-end' : 'items-start'}`}>
                                     <div className="flex items-center gap-2 text-xs text-slate-400">
                                         <span className="font-bold text-slate-300">{msg.userName}</span>

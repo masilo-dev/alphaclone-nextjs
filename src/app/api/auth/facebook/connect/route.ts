@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { encodeOAuthState } from '@/lib/oauth/oauthState';
-import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
-import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     try {
@@ -26,20 +24,19 @@ export async function GET(req: NextRequest) {
     }
 
     const appId = process.env.FACEBOOK_APP_ID;
-    const appUrl = PUBLIC_APP_ORIGIN;
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
     if (!appId) {
         return NextResponse.redirect(
             `${appUrl}/dashboard/business/facebook?fb_error=app_not_configured`
         );
     }
 
-    const redirectUri = OAUTH_CALLBACKS.facebook;
+    const redirectUri = `${appUrl}/api/auth/facebook/callback`;
     const scopeMode = req.nextUrl.searchParams.get('scope_mode') === 'publishing' ? 'publishing' : 'advanced';
     const publishingScopes = [
         'pages_show_list',
         'pages_read_engagement',
         'pages_manage_posts',       // required to post content to page
-        'read_insights',            // post/page reach metrics for analytics
     ];
     const advancedScopes = [
         ...publishingScopes,
@@ -48,9 +45,6 @@ export async function GET(req: NextRequest) {
         'pages_messaging',          // required for Messenger send
         'leads_retrieval',
         'ads_management',
-        'instagram_basic',
-        'instagram_content_publish',
-        'instagram_manage_insights',
     ];
     const requestedScopes = scopeMode === 'advanced' ? advancedScopes : publishingScopes;
     const scopes = requestedScopes.join(',');
@@ -74,7 +68,7 @@ export async function GET(req: NextRequest) {
         requestedScopes,
     });
 
-    const authUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth');
+    const authUrl = new URL('https://www.facebook.com/v19.0/dialog/oauth');
     authUrl.searchParams.set('client_id', appId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('scope', scopes);

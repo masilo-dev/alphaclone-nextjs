@@ -270,11 +270,7 @@ registerTool('crm', {
         metadata: row.metadata || {},
       })),
       ...dealActivities,
-    ].sort((a: unknown, b: unknown) => {
-      const aAt = (a as { created_at?: unknown }).created_at;
-      const bAt = (b as { created_at?: unknown }).created_at;
-      return new Date(String(bAt)).getTime() - new Date(String(aAt)).getTime();
-    });
+    ].sort((a, b) => new Date(String(b.created_at)).getTime() - new Date(String(a.created_at)).getTime());
 
     return unified.slice(0, 50);
   },
@@ -411,36 +407,6 @@ registerTool('crm', {
 });
 
 registerTool('crm', {
-  name: 'search_clients',
-  description: 'Search business clients by name, email, phone, website, location, or company.',
-  inputSchema: z.object({
-    tenant_id: z.string().uuid(),
-    query: z.string().min(1),
-    limit: z.number().int().min(1).max(1000).optional().default(100),
-  }),
-  jsonSchema: {
-    type: 'object',
-    properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
-      query: { type: 'string', description: 'Free-text search query' },
-      limit: { type: 'number', description: 'Max records (default 100, max 1000)' },
-    },
-    required: ['tenant_id', 'query'],
-  },
-  handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const { searchBusinessClients } = await import('@/lib/crm/searchBusinessClients');
-    const items = await searchBusinessClients(supabase, args.tenant_id, args.query, args.limit);
-    return {
-      ok: true,
-      tool: 'search_clients',
-      data: { items, count: items.length },
-      error: null,
-    };
-  },
-});
-
-registerTool('crm', {
   name: 'search_contacts',
   description: 'Search unified CRM contacts by name, email, or phone.',
   inputSchema: z.object({
@@ -476,13 +442,9 @@ registerTool('crm', {
     email: z.string().email().optional(),
     phone: z.string().optional(),
     industry: z.string().optional(),
-    website: z.string().url().optional(),
-    location: z.string().optional(),
     sales_stage: z.string().optional(),
     value: z.number().optional(),
-    source: z.string().optional(),
     notes: z.string().optional(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -492,35 +454,28 @@ registerTool('crm', {
       email: { type: 'string', format: 'email' },
       phone: { type: 'string' },
       industry: { type: 'string' },
-      website: { type: 'string', format: 'uri' },
-      location: { type: 'string' },
       sales_stage: { type: 'string' },
       value: { type: 'number' },
-      source: { type: 'string' },
       notes: { type: 'string' },
-      metadata: { type: 'object' },
     },
     required: ['tenant_id', 'name'],
   },
   handler: async (args) => {
+    if (!args.email) {
+      throw new Error('email is required for create_client');
+    }
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from('business_clients')
       .insert({
         tenant_id: args.tenant_id,
         name: args.name,
-        email: args.email || null,
+        email: args.email,
         phone: args.phone || null,
         industry: args.industry || null,
-        website: args.website || null,
-        location: args.location || null,
         sales_stage: args.sales_stage || 'lead',
         value: Number(args.value) || 0,
         description: args.notes || null,
-        custom_fields: {
-          ...(args.metadata && typeof args.metadata === 'object' ? args.metadata : {}),
-          ...(args.source ? { lead_source: args.source } : {}),
-        },
         is_active: true,
       })
       .select('id, name, email')

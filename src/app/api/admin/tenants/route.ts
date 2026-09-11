@@ -15,72 +15,31 @@ const patchSchema = z.object({
   status: z.enum(['active', 'suspended', 'inactive', 'trial']),
 });
 
-function mapSubscriptionToStatus(subscriptionStatus: unknown, status: unknown): string {
-  if (typeof status === 'string' && status.trim()) return status;
-  const sub = String(subscriptionStatus || '').toLowerCase();
-  if (sub === 'suspended' || sub === 'cancelled' || sub === 'canceled') return 'suspended';
-  if (sub === 'trialing' || sub === 'trial') return 'trial';
-  if (sub === 'inactive' || sub === 'paused') return 'inactive';
-  return 'active';
-}
-
-function isMissingColumnError(error: { message?: string; code?: string } | null | undefined): boolean {
-  return (
-    !!error &&
-    (error.code === '42703' ||
-      error.code === 'PGRST204' ||
-      /column|does not exist/i.test(error.message || ''))
-  );
-}
-
-async function listTenants(admin: ReturnType<typeof createSupabaseAdminClient>) {
-  // Prefer status when present; fall back if production schema lacks tenants.status
-  const withStatus = await admin
-    .from('tenants')
-    .select(`
-      id,
-      name,
-      status,
-      created_at,
-      subscription_tier,
-      subscription_status,
-      settings,
-      tenant_users (count)
-    `)
-    .is('deletion_pending_at', null)
-    .order('created_at', { ascending: false });
-
-  if (!isMissingColumnError(withStatus.error)) {
-    return withStatus;
-  }
-
-  return admin
-    .from('tenants')
-    .select(`
-      id,
-      name,
-      created_at,
-      subscription_tier,
-      subscription_status,
-      settings,
-      tenant_users (count)
-    `)
-    .is('deletion_pending_at', null)
-    .order('created_at', { ascending: false });
-}
-
 export async function GET() {
   try {
     await requirePlatformSuperAdmin();
     const admin = createSupabaseAdminClient();
 
-    const { data, error } = await listTenants(admin);
+    const { data, error } = await admin
+      .from('tenants')
+      .select(`
+        id,
+        name,
+        status,
+        created_at,
+        subscription_tier,
+        settings,
+        tenant_users (count)
+      `)
+      .is('deletion_pending_at', null)
+      .order('created_at', { ascending: false });
+
     if (error) throw error;
 
     const tenants = (data || []).map((tenant: Record<string, unknown>) => ({
       id: tenant.id,
       name: tenant.name,
-      status: mapSubscriptionToStatus(tenant.subscription_status, tenant.status),
+      status: tenant.status || 'active',
       createdAt: tenant.created_at,
       userCount: (tenant.tenant_users as { count: number }[])?.[0]?.count || 0,
       subscription: tenant.subscription_tier || 'free',
@@ -103,34 +62,13 @@ export async function PATCH(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
-    const subscriptionStatus =
-      parsed.data.status === 'suspended'
-        ? 'suspended'
-        : parsed.data.status === 'trial'
-          ? 'trialing'
-          : parsed.data.status === 'inactive'
-            ? 'inactive'
-            : 'active';
-
-    // Write both status (when present) and subscription_status (canonical billing field)
-    let { error } = await admin
+    const { error } = await admin
       .from('tenants')
       .update({
         status: parsed.data.status,
-        subscription_status: subscriptionStatus,
         updated_at: new Date().toISOString(),
       })
       .eq('id', parsed.data.tenantId);
-
-    if (isMissingColumnError(error)) {
-      ({ error } = await admin
-        .from('tenants')
-        .update({
-          subscription_status: subscriptionStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', parsed.data.tenantId));
-    }
 
     if (error) throw error;
 
@@ -138,7 +76,7 @@ export async function PATCH(req: NextRequest) {
       adminUserId: user.id,
       tenantId: parsed.data.tenantId,
       eventType: 'PLATFORM_ADMIN_TENANT_STATUS_UPDATE',
-      eventDetails: { status: parsed.data.status, subscription_status: subscriptionStatus },
+      eventDetails: { status: parsed.data.status },
       severity: parsed.data.status === 'suspended' ? 'warning' : 'info',
     });
 
@@ -158,26 +96,14 @@ export async function DELETE(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
-    let { error } = await admin
+    const { error } = await admin
       .from('tenants')
       .update({
         deletion_pending_at: new Date().toISOString(),
         subscription_status: 'suspended',
-        status: 'suspended',
         updated_at: new Date().toISOString(),
       })
       .eq('id', parsed.data.tenantId);
-
-    if (isMissingColumnError(error)) {
-      ({ error } = await admin
-        .from('tenants')
-        .update({
-          deletion_pending_at: new Date().toISOString(),
-          subscription_status: 'suspended',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', parsed.data.tenantId));
-    }
 
     if (error) throw error;
 

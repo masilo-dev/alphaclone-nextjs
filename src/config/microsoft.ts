@@ -7,18 +7,16 @@ export const MICROSOFT_OAUTH_AUTHORIZE_URL =
 export const MICROSOFT_SCOPES = [
   'openid',
   'profile',
-  'email',
   'offline_access',
   'User.Read',
-  'Mail.Read',
   'Mail.ReadWrite',
   'Mail.Send',
-  'Calendars.Read',
   'Calendars.ReadWrite',
+  'Tasks.ReadWrite',
+  'Files.ReadWrite',
   'Contacts.Read',
-  'Contacts.ReadWrite',
-  'MailboxFolder.Read',
-  'MailboxFolder.ReadWrite',
+  'Team.ReadBasic.All',
+  'OnlineMeetings.ReadWrite',
 ] as const;
 
 export const MICROSOFT_DEFAULT_REDIRECT_PATH = '/auth/microsoft/callback';

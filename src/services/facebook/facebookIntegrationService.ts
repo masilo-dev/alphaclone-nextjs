@@ -110,12 +110,8 @@ export async function getFacebookIntegration(
   admin: SupabaseClient,
   query: FacebookQuery
 ): Promise<(FacebookIntegrationRow & { page_access_token?: string | null; user_access_token?: string | null }) | null> {
-  // Multi-tenant: tenantId is required — never look up pages without tenant scope
-  if (!query.tenantId) {
-    return null;
-  }
   let q = admin.from('facebook_integrations').select(`${SAFE_COLUMNS}, page_access_token, user_access_token`);
-  q = q.eq('tenant_id', query.tenantId);
+  if (query.tenantId) q = q.eq('tenant_id', query.tenantId);
   if (query.userId) q = q.eq('user_id', query.userId);
   if (query.pageId) q = q.eq('page_id', query.pageId);
   if (query.requireActive !== false) q = q.eq('is_active', true);
@@ -162,64 +158,11 @@ export async function upsertFacebookIntegration(params: {
     updated_at: new Date().toISOString(),
   };
 
-  // Prefer tenant-scoped uniqueness so the same user+page can exist per tenant.
-  let data: { id: string } | null = null;
-  let error: { message?: string; code?: string } | null = null;
-  if (params.tenantId) {
-    const scoped = await admin
-      .from('facebook_integrations')
-      .upsert(row, { onConflict: 'tenant_id,user_id,page_id' })
-      .select('id')
-      .single();
-    data = scoped.data;
-    error = scoped.error;
-    // Legacy DBs may still only have (user_id,page_id) — fall back once.
-    if (error && /conflict|constraint|on conflict/i.test(error.message || '')) {
-      const legacy = await admin
-        .from('facebook_integrations')
-        .upsert(row, { onConflict: 'user_id,page_id' })
-        .select('id')
-        .single();
-      data = legacy.data;
-      error = legacy.error;
-    }
-  } else {
-    const legacy = await admin
-      .from('facebook_integrations')
-      .upsert(row, { onConflict: 'user_id,page_id' })
-      .select('id')
-      .single();
-    data = legacy.data;
-    error = legacy.error;
-  }
-
-  // Fallback: If PostgREST upsert fails due to missing DB unique constraint (SQL 42P10), perform explicit lookup then update or insert
-  if (error) {
-    let q = admin.from('facebook_integrations').select('id').eq('user_id', params.userId).eq('page_id', params.pageId);
-    if (params.tenantId) {
-      q = q.eq('tenant_id', params.tenantId);
-    }
-    const { data: existing } = await q.maybeSingle();
-
-    if (existing?.id) {
-      const upd = await admin
-        .from('facebook_integrations')
-        .update(row)
-        .eq('id', existing.id)
-        .select('id')
-        .single();
-      data = upd.data;
-      error = upd.error;
-    } else {
-      const ins = await admin
-        .from('facebook_integrations')
-        .insert(row)
-        .select('id')
-        .single();
-      data = ins.data;
-      error = ins.error;
-    }
-  }
+  const { data, error } = await admin
+    .from('facebook_integrations')
+    .upsert(row, { onConflict: 'user_id,page_id' })
+    .select('id')
+    .single();
 
   if (error || !data?.id) return { integrationId: null, error: error?.message || 'upsert failed' };
   const integrationId = String(data.id);
@@ -233,7 +176,7 @@ export async function upsertFacebookIntegration(params: {
 export async function revokeFacebookPermissions(userAccessToken: string): Promise<void> {
   if (!userAccessToken) return;
   await fetch(
-    `https://graph.facebook.com/v21.0/me/permissions?access_token=${encodeURIComponent(userAccessToken)}`,
+    `https://graph.facebook.com/v19.0/me/permissions?access_token=${encodeURIComponent(userAccessToken)}`,
     { method: 'DELETE' }
   ).catch(() => undefined);
 }

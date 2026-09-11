@@ -24,7 +24,6 @@ import AutomationBuilder from './workflows/AutomationBuilder';
 import { launchFunnelService } from '@/services/launchFunnelService';
 import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
 import { BonnieModulePageShell } from './bonnie/BonnieModulePageShell';
-import { useTenant } from '@/contexts/TenantContext';
 
 interface ParsedContact {
     name?: string;
@@ -36,7 +35,6 @@ interface ParsedContact {
 }
 
 const SalesAgent: React.FC = () => {
-    const { currentTenant } = useTenant();
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
     const router = useRouter();
@@ -127,7 +125,8 @@ const SalesAgent: React.FC = () => {
             setShowManualModal(false);
             setManualLead({ businessName: '', email: '', phone: '', industry: '', location: '', value: '' });
 
-            // Manual entries stay in lead status so a human can verify them before conversion.
+            // Auto-process manual lead too? User said "ALL generated leads", but let's stick to AI ones for now unless specified.
+            // Actually, for consistency, let's keep manual separate unless requested.
             loadLeads();
         }
     };
@@ -198,12 +197,20 @@ const SalesAgent: React.FC = () => {
 
             // 7. Sync to HubSpot (NEW)
             try {
-                if (currentTenant?.id) {
+                const { supabase } = await import('../../lib/supabase');
+                const { data: hubspotIntegration } = await supabase
+                    .from('integrations')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .eq('type', 'hubspot')
+                    .maybeSingle();
+
+                if (hubspotIntegration && hubspotIntegration.enabled) {
                     console.log(`[SalesAgent] HubSpot connected, syncing lead ${lead.businessName}...`);
                     await fetch('/api/hubspot/sync', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ tenantId: currentTenant.id, leads: [lead] })
+                        body: JSON.stringify({ userId, leads: [lead] })
                     });
                 }
             } catch (hsErr) {
@@ -308,7 +315,7 @@ const SalesAgent: React.FC = () => {
 
     // Chat State
     const [messages, setMessages] = useState([
-        { id: 1, sender: 'agent', text: 'Hello. I can find and qualify leads, draft outreach, save CRM follow-up, and dispatch durable Alpha missions for longer-running work.' }
+        { id: 1, sender: 'agent', text: 'Hello. I can help you find leads, draft outreach messages, and prepare CRM follow-up. Assisted workflows are available now; fully autonomous execution is still in beta.' }
     ]);
     const [inputText, setInputText] = useState('');
     const [pendingSearch, setPendingSearch] = useState<{ industry: string, location: string, filters?: string } | null>(null);
@@ -1009,7 +1016,7 @@ const SalesAgent: React.FC = () => {
     };
 
     return (
-        <BonnieModulePageShell showBonnieDock={false}>
+        <BonnieModulePageShell>
         <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col px-4 py-4 sm:px-6 sm:py-6 lg:p-8 overflow-y-auto custom-scrollbar min-w-0">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
                 <div className="min-w-0">
@@ -1055,7 +1062,7 @@ const SalesAgent: React.FC = () => {
                     </label>
                     <select
                         id="growth-agent-view"
-                        className="w-full max-w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-100 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full max-w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
                         value={activeTab === 'agent' ? 'agent' : 'omni'}
                         onChange={(e) => {
                             const v = e.target.value;
@@ -1068,9 +1075,9 @@ const SalesAgent: React.FC = () => {
                             }
                         }}
                     >
-                        <option className="bg-slate-900 text-slate-100" value="omni">{t('Lead search')}</option>
-                        <option className="bg-slate-900 text-slate-100" value="agent">{t('Agent chat')}</option>
-                        <option className="bg-slate-900 text-slate-100" value="marketplace">{t('Integration marketplace')}</option>
+                        <option value="omni">{t('Lead search')}</option>
+                        <option value="agent">{t('Agent chat')}</option>
+                        <option value="marketplace">{t('Integration marketplace')}</option>
                     </select>
                 </div>
             </div>

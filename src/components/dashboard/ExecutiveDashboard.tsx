@@ -1,32 +1,25 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
 import { Loader2, DollarSign, Users, Target, TrendingUp, ChevronRight } from 'lucide-react';
-import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
-import { useTenantRole } from '@/contexts/TenantContext';
-import { useWorkspacePreferences } from '@/hooks/useWorkspacePreferences';
-import { DEFAULT_EXECUTIVE_KPI_GOALS } from '@/types/workspacePreferences';
 
-const LEGACY_GOAL_KEY = 'executive-kpi-goals';
-const ADMIN_ROLES = new Set(['owner', 'admin', 'tenant_admin', 'super_admin']);
+
+const GOAL_KEY = 'executive-kpi-goals';
 
 export default function ExecutiveDashboard() {
   const router = useRouter();
-  const tenantRole = useTenantRole();
-  const canEditGoals = tenantRole != null && ADMIN_ROLES.has(tenantRole);
+  const [stats, setStats] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [goals, setGoals] = useState({ revenue: 50000, clients: 100, deals: 25 });
 
-  const {
-    executiveKpiGoals: goals,
-    loading: prefsLoading,
-    saveExecutiveKpiGoals,
-    patchImmediate,
-  } = useWorkspacePreferences();
-
-  const [stats, setStats] = React.useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const migratedRef = useRef(false);
+  useEffect(() => {
+    try {
+      const g = localStorage.getItem(GOAL_KEY);
+      if (g) setGoals(JSON.parse(g));
+    } catch { /* ignore */ }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -36,115 +29,15 @@ export default function ExecutiveDashboard() {
   }, []);
 
   useEffect(() => {
-    void load();
+    load();
   }, [load]);
 
-  useEffect(() => {
-    if (prefsLoading || migratedRef.current) return;
+  const saveGoals = (next: typeof goals) => {
+    setGoals(next);
+    localStorage.setItem(GOAL_KEY, JSON.stringify(next));
+  };
 
-    try {
-      const raw = localStorage.getItem(LEGACY_GOAL_KEY);
-      if (!raw) {
-        migratedRef.current = true;
-        return;
-      }
-
-      const parsed = JSON.parse(raw) as {
-        revenue?: number;
-        clients?: number;
-        projects?: number;
-        deals?: number;
-      };
-
-      const isDefault =
-        goals.revenue === DEFAULT_EXECUTIVE_KPI_GOALS.revenue &&
-        goals.clients === DEFAULT_EXECUTIVE_KPI_GOALS.clients &&
-        goals.projects === DEFAULT_EXECUTIVE_KPI_GOALS.projects;
-
-      if (isDefault && canEditGoals) {
-        const legacyGoals = {
-          revenue: parsed.revenue ?? DEFAULT_EXECUTIVE_KPI_GOALS.revenue,
-          clients: parsed.clients ?? DEFAULT_EXECUTIVE_KPI_GOALS.clients,
-          projects: parsed.projects ?? parsed.deals ?? DEFAULT_EXECUTIVE_KPI_GOALS.projects,
-        };
-        void patchImmediate({ executiveKpiGoals: legacyGoals });
-      }
-
-      localStorage.removeItem(LEGACY_GOAL_KEY);
-    } catch {
-      localStorage.removeItem(LEGACY_GOAL_KEY);
-    } finally {
-      migratedRef.current = true;
-    }
-  }, [prefsLoading, goals, canEditGoals, patchImmediate]);
-
-  const saveGoals = useCallback(
-    (next: typeof goals) => {
-      if (!canEditGoals) return;
-      saveExecutiveKpiGoals(next);
-    },
-    [canEditGoals, saveExecutiveKpiGoals],
-  );
-
-  const pageLoading = loading || prefsLoading;
-
-  // Derived numbers tolerate a missing `stats` so every hook below runs on every
-  // render. The loading early-return used to sit above `useMemo`, which changed
-  // the hook count between renders and crashed the page (React #310).
-  const revenueTotal = stats?.revenue.total ?? 0;
-  const clientCount = stats?.users.clients ?? 0;
-  const activeProjects = stats?.projects.active ?? 0;
-  const revenueGoalPct = Math.min(100, Math.round((revenueTotal / Math.max(goals.revenue, 1)) * 100));
-  const clientGoalPct = Math.min(100, Math.round((clientCount / Math.max(goals.clients, 1)) * 100));
-  const projectGoalPct = Math.min(100, Math.round((activeProjects / Math.max(goals.projects, 1)) * 100));
-  const trendValue = stats && Number.isFinite(stats.revenue.trend) ? stats.revenue.trend : null;
-
-  const kpis = useMemo(
-    () => [
-      {
-        label: 'Revenue vs Goal',
-        value: `$${revenueTotal.toLocaleString()}`,
-        delta: `${revenueGoalPct}% of goal`,
-        deltaDir: (revenueTotal >= goals.revenue ? 'up' : 'down') as 'up' | 'down',
-        comparisonText: `Goal: $${goals.revenue.toLocaleString()} · last 30 days`,
-        icon: DollarSign,
-        href: '/dashboard/business/billing',
-      },
-      {
-        label: 'Client Target',
-        value: clientCount,
-        delta: `${clientGoalPct}% of goal`,
-        deltaDir: (clientCount >= goals.clients ? 'up' : 'down') as 'up' | 'down',
-        comparisonText: `Target: ${goals.clients}`,
-        icon: Users,
-        href: '/dashboard/contacts',
-      },
-      {
-        label: 'Active Projects',
-        value: activeProjects,
-        delta: `${projectGoalPct}% of goal`,
-        deltaDir: (activeProjects >= goals.projects ? 'up' : 'down') as 'up' | 'down',
-        comparisonText: `Target: ${goals.projects} active projects`,
-        icon: Target,
-        href: '/dashboard/business/projects',
-      },
-      {
-        label: 'Revenue Trend',
-        value:
-          trendValue == null
-            ? 'Not tracked'
-            : `${trendValue >= 0 ? '+' : ''}${trendValue.toFixed(1)}%`,
-        delta: trendValue == null ? 'Unavailable' : `${trendValue >= 0 ? '+' : ''}${trendValue.toFixed(1)}%`,
-        deltaDir: (trendValue == null || trendValue >= 0 ? 'up' : 'down') as 'up' | 'down',
-        comparisonText: 'vs prior period (analytics service)',
-        icon: TrendingUp,
-        href: '/dashboard/business/billing',
-      },
-    ],
-    [revenueTotal, clientCount, activeProjects, goals, revenueGoalPct, clientGoalPct, projectGoalPct, trendValue],
-  );
-
-  if (pageLoading || !stats) {
+  if (loading || !stats) {
     return (
       <div className="p-6 space-y-4 animate-pulse">
         <div className="h-8 w-64 bg-slate-800 rounded" />
@@ -155,23 +48,81 @@ export default function ExecutiveDashboard() {
     );
   }
 
-  const kpiProgress = [revenueGoalPct, clientGoalPct, projectGoalPct, null];
+  const kpis = [
+    {
+      label: 'Revenue vs Goal',
+      value: `$${stats.revenue.total.toLocaleString()}`,
+      delta: `${Math.round((stats.revenue.total / goals.revenue) * 100)}%`,
+      deltaDir: stats.revenue.total >= goals.revenue ? 'up' : 'down' as any,
+      comparisonText: `Goal: $${goals.revenue.toLocaleString()}`,
+      icon: DollarSign,
+      href: '/dashboard/finance',
+      color: 'bg-violet-600'
+    },
+    {
+      label: 'Client Target',
+      value: stats.users.clients,
+      delta: `${Math.round((stats.users.clients / goals.clients) * 100)}%`,
+      deltaDir: stats.users.clients >= goals.clients ? 'up' : 'down' as any,
+      comparisonText: `Target: ${goals.clients}`,
+      icon: Users,
+      href: '/dashboard/crm',
+      color: 'bg-blue-600'
+    },
+    {
+      label: 'Active Projects',
+      value: stats.projects.active,
+      delta: `${Math.round((stats.projects.active / goals.deals) * 100)}%`,
+      deltaDir: stats.projects.active >= goals.deals ? 'up' : 'down' as any,
+      comparisonText: `Quota: ${goals.deals}`,
+      icon: Target,
+      href: '/dashboard/projects',
+      color: 'bg-emerald-600'
+    },
+    {
+      label: 'Revenue Trend',
+      value: `${stats.revenue.trend >= 0 ? '+' : ''}${stats.revenue.trend.toFixed(1)}%`,
+      delta: stats.revenue.trend >= 0 ? '+12%' : '-5%',
+      deltaDir: stats.revenue.trend >= 0 ? 'up' : 'down' as any,
+      comparisonText: 'vs Last Month',
+      icon: TrendingUp,
+      href: '/dashboard/finance',
+      color: 'bg-amber-600'
+    }
+  ];
 
-  const kpiColors = ['teal', 'blue', 'emerald', 'amber'] as const;
+  // Compute progress percentages (capped at 100%) for the first 3 goal-based KPIs
+  const kpiProgress = [
+    Math.min(100, Math.round((stats.revenue.total / Math.max(goals.revenue, 1)) * 100)),
+    Math.min(100, Math.round((stats.users.clients / Math.max(goals.clients, 1)) * 100)),
+    Math.min(100, Math.round((stats.projects.active / Math.max(goals.deals, 1)) * 100)),
+    null, // Revenue Trend has no progress bar
+  ];
+
+  const kpiColors = ['violet', 'blue', 'emerald', 'amber'] as const;
   const colorMap: Record<string, { bar: string; text: string; bg: string }> = {
-    teal:    { bar: 'bg-teal-500',    text: 'text-teal-400',    bg: 'bg-teal-500/10' },
+    violet:  { bar: 'bg-violet-500',  text: 'text-violet-400',  bg: 'bg-violet-500/10' },
     blue:    { bar: 'bg-blue-500',    text: 'text-blue-400',    bg: 'bg-blue-500/10' },
     emerald: { bar: 'bg-emerald-500', text: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     amber:   { bar: 'bg-amber-500',   text: 'text-amber-400',   bg: 'bg-amber-500/10' },
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4 pb-24 ac-scroll-full ac-enterprise-module">
-      <EnterprisePageHeader
-        moduleKey="executive"
-        secondaryActions={[{ label: 'Refresh Data', onClick: load }]}
-      />
+    <div className="p-4 md:p-6 space-y-4 pb-24 ac-enterprise-module">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-black text-white">Executive Oversight</h1>
+          <p className="text-sm text-slate-400 mt-0.5">High-level strategic performance indicators.</p>
+        </div>
+        <button
+          onClick={load}
+          className="text-xs text-teal-400 font-bold bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20 hover:bg-teal-500/20 transition-all"
+        >
+          Refresh Data
+        </button>
+      </div>
 
+      {/* Enhanced KPI Cards with Progress Bars */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi, i) => {
           const Icon = kpi.icon;
@@ -186,10 +137,12 @@ export default function ExecutiveDashboard() {
               onClick={() => router.push(kpi.href)}
               className="group relative bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-left hover:border-white/10 transition-all duration-200 hover:bg-slate-900/80"
             >
+              {/* Icon + label */}
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
                   <Icon className={`w-4 h-4 ${text}`} />
                 </div>
+                {/* Trend arrow badge */}
                 <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-full ${
                   isUp
                     ? 'bg-emerald-500/15 text-emerald-400'
@@ -205,6 +158,7 @@ export default function ExecutiveDashboard() {
                 <div className="text-[11px] text-slate-500 mt-0.5">{kpi.comparisonText}</div>
               </div>
 
+              {/* Progress bar (only for goal-based KPIs) */}
               {progress !== null && (
                 <div className="mt-3 space-y-1">
                   <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -225,16 +179,9 @@ export default function ExecutiveDashboard() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-sm font-bold text-white">Performance Goals Configuration</h3>
-            {!canEditGoals && (
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                View only
-              </span>
-            )}
-          </div>
+          <h3 className="text-sm font-bold text-white">Performance Goals Configuration</h3>
           <div className="space-y-4">
-            {(['revenue', 'clients', 'projects'] as const).map((key) => (
+            {(['revenue', 'clients', 'deals'] as const).map((key) => (
               <div key={key} className="space-y-1.5">
                 <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <span>Target {key}</span>
@@ -247,9 +194,7 @@ export default function ExecutiveDashboard() {
                   step={key === 'revenue' ? 1000 : 1}
                   value={goals[key]}
                   onChange={(e) => saveGoals({ ...goals, [key]: Number(e.target.value) })}
-                  disabled={!canEditGoals}
-                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label={`Target ${key}`}
+                  className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
                 />
               </div>
             ))}

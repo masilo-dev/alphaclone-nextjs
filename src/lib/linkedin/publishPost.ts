@@ -1,6 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { logMediaPipelineStep } from '@/lib/social/mediaPipelineLog';
 import { linkedInFetch, LinkedInApiError } from '@/lib/linkedin/linkedinClient';
 import {
   enqueueSocialPostSync,
@@ -54,30 +53,14 @@ async function registerAndUploadLinkedInMedia(
   accessToken: string,
   author: string,
   mediaUrl: string,
-  mediaKind: 'image' | 'video' | 'document'
+  isVideo: boolean
 ): Promise<string> {
-  const isVideo = mediaKind === 'video';
   const mediaFetch = await fetchWithTimeout(mediaUrl, { method: 'GET' }, isVideo ? 60000 : 25000);
   if (!mediaFetch.ok) {
     throw new Error(`Could not download media URL (${mediaFetch.status})`);
   }
   const contentType = mediaFetch.headers.get('content-type') || (isVideo ? 'video/mp4' : 'image/jpeg');
   const mediaBuffer = await mediaFetch.arrayBuffer();
-
-  logMediaPipelineStep({
-    step: 'media_received',
-    provider: 'linkedin',
-    mimeType: contentType,
-    sizeBytes: mediaBuffer.byteLength,
-    extra: { media_kind: mediaKind },
-  });
-
-  logMediaPipelineStep({
-    step: 'provider_upload_started',
-    provider: 'linkedin',
-    mimeType: contentType,
-    sizeBytes: mediaBuffer.byteLength,
-  });
 
   const registerRes = await linkedInFetch(
     'https://api.linkedin.com/v2/assets?action=registerUpload',
@@ -87,11 +70,7 @@ async function registerAndUploadLinkedInMedia(
       body: JSON.stringify({
         registerUploadRequest: {
           recipes: [
-            mediaKind === 'video'
-              ? 'urn:li:digitalmediaRecipe:feedshare-video'
-              : mediaKind === 'document'
-                ? 'urn:li:digitalmediaRecipe:feedshare-document'
-                : 'urn:li:digitalmediaRecipe:feedshare-image',
+            isVideo ? 'urn:li:digitalmediaRecipe:feedshare-video' : 'urn:li:digitalmediaRecipe:feedshare-image',
           ],
           owner: author,
           serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
@@ -124,14 +103,6 @@ async function registerAndUploadLinkedInMedia(
   if (!uploadRes.ok) {
     throw new Error(`LinkedIn media upload failed (${uploadRes.status})`);
   }
-
-  logMediaPipelineStep({
-    step: 'provider_media_id',
-    provider: 'linkedin',
-    providerMediaId: assetUrn,
-    mimeType: contentType,
-    sizeBytes: mediaBuffer.byteLength,
-  });
 
   return assetUrn;
 }
@@ -194,38 +165,16 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
       if (!scopes.includes('w_organization_social')) {
         return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_organization_social scope' };
       }
-      // Only publish to orgs resolved for this tenant — never arbitrary numeric IDs.
-      if (!selectedCompany) {
-        return {
-          ok: false,
-          platform: 'linkedin',
-          reason: `LinkedIn organization ${requestedOrganizationId} is not available for this tenant`,
-        };
+      if (!selectedCompany && companyPages.length > 0) {
+        console.warn(
+          `[publishLinkedInPost] linkedin_organization_id=${requestedOrganizationId} not in cached company pages; posting anyway`
+        );
       }
-    } else {
-      // If post metadata insists on organization, never fall back to personal
-      const metaType = post.metadata?.identity_type;
-      if (metaType === 'linkedin_organization') {
-        return {
-          ok: false,
-          platform: 'linkedin',
-          reason:
-            'linkedin_organization was requested but linkedin_organization_id is missing — refusing personal fallback',
-        };
-      }
-      if (!scopes.includes('w_member_social')) {
-        return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
-      }
+    } else if (!scopes.includes('w_member_social')) {
+      return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }
 
     const canPostAsCompany = Boolean(requestedOrganizationId && scopes.includes('w_organization_social'));
-    if (requestedOrganizationId && !canPostAsCompany) {
-      return {
-        ok: false,
-        platform: 'linkedin',
-        reason: 'Cannot publish as organization without w_organization_social',
-      };
-    }
     const authorUrn = canPostAsCompany
       ? `urn:li:organization:${requestedOrganizationId}`
       : integration.linkedin_person_urn;
@@ -236,29 +185,18 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
       : [];
     const hasMedia = mediaUrls.length > 0;
 
-    let shareMediaCategory: 'NONE' | 'ARTICLE' | 'IMAGE' | 'VIDEO' | 'DOCUMENT' = 'NONE';
+    let shareMediaCategory: 'NONE' | 'ARTICLE' | 'IMAGE' | 'VIDEO' = 'NONE';
     let media: Array<Record<string, unknown>> = [];
 
     if (hasMedia) {
       const firstMediaUrl = mediaUrls[0];
       const isVideo = /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
-      const isDocument = /\.pdf(\?|$)/i.test(firstMediaUrl);
-      if (isDocument) {
-        if (mediaUrls.length !== 1) throw new Error('LinkedIn document posts support one PDF');
+      if (isVideo) {
         const assetUrn = await registerAndUploadLinkedInMedia(
           integration.accessToken,
           authorUrn,
           firstMediaUrl,
-          'document'
-        );
-        shareMediaCategory = 'DOCUMENT';
-        media = [{ status: 'READY', media: assetUrn, title: { text: 'Alphaclone Document' } }];
-      } else if (isVideo) {
-        const assetUrn = await registerAndUploadLinkedInMedia(
-          integration.accessToken,
-          authorUrn,
-          firstMediaUrl,
-          'video'
+          true
         );
         shareMediaCategory = 'VIDEO';
         media = [{ status: 'READY', media: assetUrn, title: { text: 'AlphaClone Video' } }];
@@ -269,7 +207,7 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
             integration.accessToken,
             authorUrn,
             mediaUrls[i],
-            'image'
+            false
           );
           media.push({
             status: 'READY',

@@ -6,7 +6,6 @@ import { Button, Input, Card, Badge } from '@/components/ui/UIComponents';
 import { Zap, Shield, Database, Layout, Sparkles, ArrowRight, CheckCircle2, Building2, User } from 'lucide-react';
 import { aiArchitectService, ArchitectSpecs } from '@/services/ai/aiArchitectService';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
 
 export default function AIArchitectPage() {
   const [step, setStep] = useState<'form' | 'loading' | 'blueprint'>('form');
@@ -21,14 +20,15 @@ export default function AIArchitectPage() {
     e.preventDefault();
     setStep('loading');
     
-    try {
-      const specs = await aiArchitectService.generateSpecs(formData.businessName, formData.businessType, formData.goals);
-      setBlueprint(specs);
-      setStep('blueprint');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Blueprint generation failed');
-      setStep('form');
-    }
+    // Simulate generation for premium feel or call service
+    const specs = await aiArchitectService.generateSpecs(
+      formData.businessName,
+      formData.businessType,
+      formData.goals
+    );
+
+    setBlueprint(specs);
+    setStep('blueprint');
   };
 
   return (

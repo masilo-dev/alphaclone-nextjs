@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import PlatformGuide from '@/components/pages/PlatformGuide';
-import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
     title: 'Platform Guide & Onboarding | Set Up AlphaClone Step by Step',
@@ -100,9 +99,7 @@ export default function Page() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
             />
-            <MarketingLandingShell>
-                <PlatformGuide />
-            </MarketingLandingShell>
+            <PlatformGuide />
         </>
     );
 }

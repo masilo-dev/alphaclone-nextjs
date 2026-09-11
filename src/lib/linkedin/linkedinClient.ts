@@ -42,8 +42,9 @@ export async function linkedInFetch(
   if (options.restli !== false) {
     headers.set('X-Restli-Protocol-Version', '2.0.0');
   }
-  const linkedInVersion = options.linkedInVersion || '202608';
-  headers.set('LinkedIn-Version', linkedInVersion);
+  if (options.linkedInVersion) {
+    headers.set('LinkedIn-Version', options.linkedInVersion);
+  }
   if (init.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }

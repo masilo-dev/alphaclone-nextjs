@@ -13,16 +13,6 @@ type ErrorRow = {
   created_at?: string;
 };
 
-function normalizeErrorLogRow(row: Record<string, unknown>): ErrorRow {
-  return {
-    id: typeof row.id === 'string' ? row.id : undefined,
-    message: String(row.error_message || row.message || 'Unknown error'),
-    severity: (row.severity as string | null | undefined) ?? null,
-    url: (row.endpoint as string | null | undefined) ?? (row.url as string | null | undefined) ?? null,
-    created_at: typeof row.created_at === 'string' ? row.created_at : undefined,
-  };
-}
-
 function buildOperationsBrief(logs: ErrorRow[]): string {
   if (logs.length === 0) {
     return 'No error telemetry was returned for the latest window. This does not prove the system is fault-free; it may mean logging is empty or not yet wired for some modules.';
@@ -48,34 +38,20 @@ export async function GET() {
   }
 
   const admin = createSupabaseAdminClient();
-  const primary = await admin
+  const { data: logs, error } = await admin
     .from('error_logs')
-    .select('id, error_message, error_type, severity, endpoint, created_at, user_agent')
+    .select('id, message, severity, url, created_at, user_agent')
     .order('created_at', { ascending: false })
     .limit(100);
-
-  let rawRows: Record<string, unknown>[] | null = (primary.data as Record<string, unknown>[] | null) ?? null;
-  let error = primary.error;
-
-  if (error && /column|does not exist/i.test(error.message || '')) {
-    const legacy = await admin
-      .from('error_logs')
-      .select('id, message, severity, url, created_at, user_agent')
-      .order('created_at', { ascending: false })
-      .limit(100);
-    rawRows = (legacy.data as Record<string, unknown>[] | null) ?? null;
-    error = legacy.error;
-  }
 
   if (error) {
     return NextResponse.json({ error: error.message, code: error.code }, { status: 500 });
   }
 
-  const normalized = (rawRows || []).map(normalizeErrorLogRow);
-  const brief = buildOperationsBrief(normalized);
+  const brief = buildOperationsBrief((logs as ErrorRow[]) || []);
   return NextResponse.json({
     brief,
-    recent: normalized.slice(0, 30),
+    recent: (logs || []).slice(0, 30),
   });
 }
 
@@ -112,26 +88,15 @@ export async function POST(req: NextRequest) {
       .join('\n');
 
     const admin = createSupabaseAdminClient();
-    const primary = await admin.from('error_logs').insert({
-      error_type: 'incident',
-      error_message: message,
+    const { error } = await admin.from('error_logs').insert({
+      message,
       severity: 'warning',
       user_id: user.id,
-      endpoint: area.slice(0, 500),
+      url: area.slice(0, 500),
     });
 
-    if (primary.error && /column|does not exist/i.test(primary.error.message || '')) {
-      const legacy = await admin.from('error_logs').insert({
-        message,
-        severity: 'warning',
-        user_id: user.id,
-        url: area.slice(0, 500),
-      });
-      if (legacy.error) {
-        return NextResponse.json({ error: legacy.error.message }, { status: 500 });
-      }
-    } else if (primary.error) {
-      return NextResponse.json({ error: primary.error.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

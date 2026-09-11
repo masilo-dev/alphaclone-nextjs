@@ -199,7 +199,7 @@ export default function WhatsAppIntegration() {
 
       {!metaConfigured && (
         <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 text-sm">
-          Platform webhook signatures are not fully verified. Ask your administrator to set up <code className="text-amber-200">FACEBOOK_VERIFY_TOKEN</code> and <code className="text-amber-200">FACEBOOK_APP_SECRET</code> in Railway environment variables to fully secure your inbound webhooks.
+          Platform webhook signatures are not fully verified. Ask your administrator to set up <code className="text-amber-200">FACEBOOK_VERIFY_TOKEN</code> and <code className="text-amber-200">FACEBOOK_APP_SECRET</code> in Vercel to fully secure your inbound webhooks.
         </div>
       )}
 
@@ -291,30 +291,6 @@ export default function WhatsAppIntegration() {
                   <li>Choose a display name, then connect this tenant to Zernio routing.</li>
                 </ol>
               )}
-            </div>
-
-            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    1-Click Meta Automatic Connect
-                  </h4>
-                  <p className="text-xs text-slate-300 mt-0.5">
-                    Log in with your Meta account to connect your WhatsApp Business lines automatically without manual keys.
-                  </p>
-                </div>
-                <Button
-                  onClick={() => {
-                    if (!currentTenant?.id) return;
-                    window.location.href = `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(currentTenant.id)}&return_to=${encodeURIComponent('/dashboard/business/whatsapp')}`;
-                  }}
-                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 text-xs flex items-center gap-2"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Log in with Meta
-                </Button>
-              </div>
             </div>
 
             <div className="space-y-4 border-t border-white/5 pt-4">

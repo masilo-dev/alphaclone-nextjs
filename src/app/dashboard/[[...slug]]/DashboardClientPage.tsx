@@ -1,54 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Project, ChatMessage, GalleryItem, User } from '@/types';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef } from 'react';
+import { Project, ChatMessage, GalleryItem } from '@/types';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
 import { SessionTimeoutWarning, useSessionTimeoutWarning } from '@/components/SessionTimeoutWarning';
-import { usePWA } from '@/contexts/PWAContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
-import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
+import AppLegalFooter from '@/components/legal/AppLegalFooter';
 import dynamic from 'next/dynamic';
 
 const Dashboard = dynamic(() => import('@/components/Dashboard'), {
     ssr: false,
-    loading: () => <DashboardShellSkeleton />,
+    loading: () => null,
 });
-
-const BusinessDashboard = dynamic(() => import('@/components/dashboard/business/BusinessDashboard'), {
-    ssr: false,
-    loading: () => <DashboardShellSkeleton />,
-});
-
-/** Tenant admins use BusinessDashboard only — skip the heavy Dashboard shell hooks. */
-function TenantAdminDashboardShell({
-    user,
-    onLogout,
-}: {
-    user: User;
-    onLogout: () => void;
-}) {
-    const location = usePathname();
-    const router = useRouter();
-    const { currentTenant } = useTenant();
-    const businessRoute = useMemo(
-        () => normalizeBusinessRoute(location || '/dashboard', user.role),
-        [location, user.role],
-    );
-
-    return (
-        <BusinessDashboard
-            user={user}
-            currentTenant={currentTenant ?? undefined}
-            onLogout={onLogout}
-            activeTab={businessRoute}
-            setActiveTab={(tab) => router.push(tab)}
-        />
-    );
-}
 
 class BuildErrorLogger extends React.Component<{ children: React.ReactNode }> {
     state = { hasError: false };
@@ -75,7 +41,6 @@ export default function DashboardClientPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
     const { user, loading: authLoading, needsMfa, signOut } = useAuth();
-    const { isPWA } = usePWA();
     const { isLoading: tenantLoading } = useTenant();
     const router = useRouter();
     const hasBootstrappedRef = useRef(false);
@@ -99,56 +64,37 @@ export default function DashboardClientPage() {
         }
     }, [user, authLoading, needsMfa, router]);
 
-    // Installed apps retain their persisted Supabase session between visits. The
-    // browser dashboard keeps its 30-minute inactivity protection.
-    const { showWarning, countdown, extendSession } = useSessionTimeoutWarning(handleLogout, undefined, undefined, !isPWA);
+    // Initialize the session timeout hook (10 min timeout, 2 min warning)
+    const { showWarning, countdown, extendSession } = useSessionTimeoutWarning(handleLogout);
 
     // Only block with skeleton on the first load — never flash back after the dashboard is interactive.
     if (!hasBootstrappedRef.current && (authLoading || tenantLoading || !user || needsMfa)) {
         return <DashboardShellSkeleton />;
     }
 
-    // Auth redirect in progress — always keep a visible recovery state instead of a blank protected route.
-    if (!user || needsMfa) {
-        const loginHref = needsMfa ? '/auth/login?reason=mfa_required' : '/auth/login';
-        return (
-            <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-center text-white">
-                <section className="max-w-md rounded-2xl border border-white/10 bg-slate-900/70 p-7 shadow-2xl">
-                    <h1 className="text-xl font-semibold">Sign-in required</h1>
-                    <p className="mt-2 text-sm text-slate-300">
-                        This workspace is protected. Redirecting you to sign in now; if that does not open, use the link below.
-                    </p>
-                    <Link href={loginHref} className="mt-5 inline-flex min-h-10 items-center rounded-lg bg-teal-400 px-4 text-sm font-semibold text-slate-950 hover:bg-teal-300">
-                        Go to sign in
-                    </Link>
-                </section>
-            </main>
-        );
-    }
+    // Auth redirect in progress — avoid re-mounting the blocking skeleton over a live dashboard.
+    if (!user || needsMfa) return null;
 
     return (
         <BuildErrorLogger>
             <SubscriptionGuard>
-                {user.role === 'tenant_admin' || user.role === 'business_dashboard' ? (
-                    <TenantAdminDashboardShell user={user} onLogout={handleLogout} />
-                ) : (
-                    <Dashboard
-                        user={user}
-                        onLogout={handleLogout}
-                        projects={projects}
-                        setProjects={setProjects}
-                        messages={messages}
-                        setMessages={setMessages}
-                        galleryItems={galleryItems}
-                        setGalleryItems={setGalleryItems}
-                    />
-                )}
+                <Dashboard
+                    user={user}
+                    onLogout={handleLogout}
+                    projects={projects}
+                    setProjects={setProjects}
+                    messages={messages}
+                    setMessages={setMessages}
+                    galleryItems={galleryItems}
+                    setGalleryItems={setGalleryItems}
+                />
                 <SessionTimeoutWarning
                     isOpen={showWarning}
                     countdown={countdown}
                     onExtendSession={extendSession}
                     onLogout={handleLogout}
                 />
+                <AppLegalFooter compact />
             </SubscriptionGuard>
         </BuildErrorLogger>
     );

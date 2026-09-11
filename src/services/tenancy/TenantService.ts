@@ -36,16 +36,36 @@ class TenantService {
                 name: data.name,
                 slug: slugBase,
                 plan: data.plan || 'free',
-                mode: 'create',
-                idempotencyKey: crypto.randomUUID(),
             });
             if (tenant?.id) {
                 return tenant;
             }
-            throw new Error(bootstrapError || 'Workspace creation failed');
+            console.warn('[TenantService] bootstrap API failed, falling back to RPC:', bootstrapError);
         } catch (apiErr) {
-            throw apiErr instanceof Error ? apiErr : new Error('Workspace creation failed');
+            console.warn('[TenantService] bootstrap API unreachable, falling back to RPC:', apiErr);
         }
+
+        const { data: tenantId, error } = await supabase.rpc('create_tenant', {
+            p_name: data.name,
+            p_slug: slugBase,
+            p_admin_user_id: data.adminUserId,
+            p_plan: data.plan || 'free'
+        });
+
+        if (error) {
+            console.error('[TenantService] create_tenant RPC failed:', {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+            });
+            throw error;
+        }
+
+        const tenant = await this.getTenant(tenantId);
+        if (!tenant) throw new Error('Failed to retrieve tenant after creation');
+
+        return tenant;
     }
 
     /**
@@ -108,23 +128,31 @@ class TenantService {
         tenantId: string,
         updates: Partial<Tenant>
     ): Promise<Tenant> {
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updates),
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Workspace update failed');
-        return payload.tenant as Tenant;
+        const { data, error } = await supabase
+            .from('tenants')
+            .update(updates)
+            .eq('id', tenantId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data as Tenant;
     }
 
     /**
      * Delete tenant
      */
     async deleteTenant(tenantId: string): Promise<void> {
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}`, { method: 'DELETE' });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Workspace deletion could not be scheduled');
+        // Implement 90-day retention policy (Soft Delete)
+        const { error } = await supabase
+            .from('tenants')
+            .update({
+                deletion_pending_at: new Date().toISOString(),
+                subscription_status: 'suspended'
+            })
+            .eq('id', tenantId);
+
+        if (error) throw error;
     }
 
     /**
@@ -183,7 +211,10 @@ class TenantService {
                 .eq('user_id', userId)
                 .order('joined_at', { ascending: false });
 
-            if (tuError) throw tuError;
+            if (tuError) {
+                console.error('[TenantService] Direct tenant lookup also failed:', tuError.message);
+                return [];
+            }
 
             return (tuData || [])
                 .filter((row: any) => row.tenant)
@@ -194,7 +225,7 @@ class TenantService {
                 }));
         } catch (fallbackErr: any) {
             console.error('[TenantService] All tenant lookups failed:', fallbackErr?.message);
-            throw fallbackErr;
+            return [];
         }
     }
 
@@ -214,25 +245,16 @@ class TenantService {
     }
 
     /**
-     * Remove user from tenant. Pass purge=true to permanently delete the account
-     * when they only belong to this workspace.
+     * Remove user from tenant
      */
-    async removeUserFromTenant(
-        tenantId: string,
-        userId: string,
-        options?: { purge?: boolean }
-    ): Promise<{ purged: boolean; message?: string }> {
-        const purge = options?.purge ? '&purge=true' : '';
-        const response = await fetch(
-            `/api/tenant/${encodeURIComponent(tenantId)}/members?userId=${encodeURIComponent(userId)}${purge}`,
-            { method: 'DELETE' }
-        );
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Team member could not be removed');
-        return {
-            purged: Boolean(payload.purged),
-            message: typeof payload.message === 'string' ? payload.message : undefined,
-        };
+    async removeUserFromTenant(tenantId: string, userId: string): Promise<void> {
+        const { error } = await supabase
+            .from('tenant_users')
+            .delete()
+            .eq('tenant_id', tenantId)
+            .eq('user_id', userId);
+
+        if (error) throw error;
     }
 
     /**
@@ -243,23 +265,26 @@ class TenantService {
         userId: string,
         role: TenantRole
     ): Promise<void> {
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/members`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, role }),
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Team role could not be updated');
+        const { error } = await supabase
+            .from('tenant_users')
+            .update({ role })
+            .eq('tenant_id', tenantId)
+            .eq('user_id', userId);
+
+        if (error) throw error;
     }
 
     /**
      * Get tenant users
      */
     async getTenantUsers(tenantId: string): Promise<TenantUser[]> {
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/members`);
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Team members could not be loaded');
-        return (payload.members || []) as TenantUser[];
+        const { data, error } = await supabase
+            .from('tenant_users')
+            .select('*, profiles(*)')
+            .eq('tenant_id', tenantId);
+
+        if (error) throw error;
+        return (data || []) as TenantUser[];
     }
 
     /**
@@ -281,29 +306,51 @@ class TenantService {
         tenantId: string,
         email: string,
         role: TenantRole,
-        _invitedBy: string
+        invitedBy: string
     ): Promise<TenantInvitation> {
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/invitations`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, role }),
+        const { data: invitationId, error } = await supabase.rpc('create_tenant_invitation', {
+            p_tenant_id: tenantId,
+            p_email: email,
+            p_role: role,
+            p_invited_by: invitedBy
         });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Invitation could not be sent');
-        return payload.invitation as TenantInvitation;
+
+        if (error) throw error;
+
+        const { data: invitation } = await supabase
+            .from('tenant_invitations')
+            .select('*')
+            .eq('id', invitationId)
+            .single();
+
+        return invitation as TenantInvitation;
     }
 
     /**
      * Accept tenant invitation
      */
-    async acceptInvitation(token: string, _userId: string): Promise<void> {
-        const response = await fetch('/api/tenant/invitations/accept', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-        });
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || 'Invitation could not be accepted');
+    async acceptInvitation(token: string, userId: string): Promise<void> {
+        // Get invitation
+        const { data: invitation } = await supabase
+            .from('tenant_invitations')
+            .select('*')
+            .eq('token', token)
+            .single();
+
+        if (!invitation) throw new Error('Invalid invitation');
+        if (invitation.accepted_at) throw new Error('Invitation already accepted');
+        if (new Date(invitation.expires_at) < new Date()) {
+            throw new Error('Invitation expired');
+        }
+
+        // Add user to tenant
+        await this.addUserToTenant(invitation.tenant_id, userId, invitation.role);
+
+        // Mark invitation as accepted
+        await supabase
+            .from('tenant_invitations')
+            .update({ accepted_at: new Date().toISOString() })
+            .eq('id', invitation.id);
     }
 
     /**

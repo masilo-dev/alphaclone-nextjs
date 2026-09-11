@@ -1,19 +1,25 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
-import { z } from 'zod';
+import { supabase } from '@/lib/supabase';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: Request) {
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     try {
-        const { tenantId, returnUrl } = z.object({ tenantId: z.string().uuid(), returnUrl: z.string().url().optional() }).parse(await req.json());
-        await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
+        const { tenantId, returnUrl } = await req.json();
+
+        if (!tenantId) {
+            return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
+        }
 
         // Get the tenant to find the Stripe Customer ID
         // Note: We need to store stripe_customer_id in our DB. 
         // Let's check if it exists or add it.
-        const admin = createSupabaseAdminClient();
-        const { data: tenant } = await admin
+        const { data: tenant } = await supabase
             .from('tenants')
             .select('stripe_customer_id')
             .eq('id', tenantId)
@@ -25,14 +31,12 @@ export async function POST(req: Request) {
 
         const session = await stripe.billingPortal.sessions.create({
             customer: tenant.stripe_customer_id,
-            return_url: returnUrl && new URL(returnUrl).origin === new URL(req.url).origin
-                ? returnUrl
-                : `${new URL(req.url).origin}/dashboard/settings`,
+            return_url: returnUrl || `${req.headers.get('origin')}/dashboard/settings`,
         });
 
         return NextResponse.json({ url: session.url });
     } catch (err: any) {
         console.error('Stripe Portal Error:', err);
-        return routeErrorResponse(err, 'Stripe billing portal is unavailable', req);
+        return clientErrorResponse(err, { request: req, scope: 'stripe/create-portal-session' });
     }
 }

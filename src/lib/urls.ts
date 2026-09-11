@@ -1,40 +1,36 @@
 /**
  * AppUrls - Centralized URL builder for AlphaClone
  * Standardizes redirects and links across email templates, dashboards, and services.
- * Customer-facing links always go through publicUrlGuard (zero-localhost).
  */
 
-import { buildValidatedPublicUrl, getProductionBaseUrl, validatePublicUrl } from '@/lib/urls/publicUrlGuard';
-
-export { validatePublicUrl, buildValidatedPublicUrl, getProductionBaseUrl };
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://');
 
 export const AppUrls = {
   // Public Signing (canonical native contract portal)
-  signContract: (token: string) => buildValidatedPublicUrl(`/contract/${encodeURIComponent(token)}`),
+  signContract: (token: string) => `${BASE_URL}/contract/${token}`,
 
   // Public Payment
   payInvoice: (invoiceId: string, publicToken?: string) =>
     publicToken
-      ? buildValidatedPublicUrl(`/invoice/${invoiceId}?token=${encodeURIComponent(publicToken)}`)
-      : buildValidatedPublicUrl(`/invoice/${invoiceId}`),
+      ? `${BASE_URL}/invoice/${invoiceId}?token=${encodeURIComponent(publicToken)}`
+      : `${BASE_URL}/invoice/${invoiceId}`,
 
-  clientFinancePortal: (token: string) =>
-    buildValidatedPublicUrl(`/portal/${encodeURIComponent(token)}`),
+  clientFinancePortal: (token: string) => `${BASE_URL}/portal/${token}`,
 
   // Public Document View
   viewDocument: (docId: string, type: 'invoice' | 'contract' | 'receipt', token?: string) => {
-    if (type === 'contract') return buildValidatedPublicUrl(`/contract/${docId}`);
+    if (type === 'contract') return `${BASE_URL}/contract/${docId}`;
     if (type === 'invoice') return AppUrls.payInvoice(docId, token);
-    return buildValidatedPublicUrl(`/public/receipt/${docId}`);
+    return `${BASE_URL}/public/receipt/${docId}`;
   },
 
-  viewReceipt: (docId: string) => buildValidatedPublicUrl(`/public/receipt/${docId}`),
+  viewReceipt: (docId: string) => `${BASE_URL}/public/receipt/${docId}`,
 
   // Dashboard Routes
-  dashboard: () => buildValidatedPublicUrl('/dashboard'),
-  finance: () => buildValidatedPublicUrl('/dashboard?tab=finance'),
-  accounting: () => buildValidatedPublicUrl('/dashboard?tab=accounting'),
+  dashboard: () => `${BASE_URL}/dashboard`,
+  finance: () => `${BASE_URL}/dashboard?tab=finance`,
+  accounting: () => `${BASE_URL}/dashboard?tab=accounting`,
 
   // Auth
-  login: () => buildValidatedPublicUrl('/auth/login'),
+  login: () => `${BASE_URL}/auth/login`,
 };

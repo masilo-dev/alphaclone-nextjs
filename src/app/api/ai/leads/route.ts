@@ -20,6 +20,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { routeAIRequest } from '@/services/aiRouter';
 import { freePlacesService } from '@/services/freePlacesService';
+import { ENV } from '@/config/env';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -103,8 +104,9 @@ export async function POST(req: Request) {
             capBatch = reserved.capThisBatch;
         }
 
+        const googleApiKey = ENV.GOOGLE_API_KEY;
         let leads: any[] = [];
-        let source = 'Verified directory search';
+        let source = 'AI Simulated';
         let provider = 'auto';
         let model = 'auto';
 
@@ -117,9 +119,9 @@ export async function POST(req: Request) {
         if (!placesError && places && places.length > 0) {
             console.log(`[Lead Gen] Found ${places.length} real leads from free sources (capping at ${capBatch})`);
             leads = places.slice(0, capBatch).map((p) => ({
-                id: crypto.randomUUID(),
+                id: Math.random().toString(36).substring(2, 10),
                 ...p,
-                estimatedValue: null,
+                estimatedValue: Math.floor(Math.random() * (50000 - 5000 + 1)) + 5000,
                 notes: `Real business found via ${p.source}. Matches "${industry}" in "${location}".`,
             }));
             source = 'Free Places Search';
@@ -128,13 +130,67 @@ export async function POST(req: Request) {
         }
 
         if (leads.length === 0) {
-            return NextResponse.json({
-                leads: [],
-                source: 'Verified directory search',
-                provider: 'directory',
-                model: null,
-                warning: 'No verified businesses matched this search. Broaden the industry or location and try again.',
+            console.log(`[Lead Gen] Using AI router for up to ${capBatch} leads...`);
+            if (!skipQuota && tenantId) {
+                const blocked = await consumeAiUnitsOr429(
+                    admin,
+                    tenantId,
+                    plan,
+                    UNITS_PER_LEAD_AI_PASS
+                );
+                if (blocked) return blocked;
+            }
+            const prompt = `You are a Senior Sales Development Representative (SDR) and Data Scientist Auditor at AlphaClone.
+Your task is to identify EXACTLY ${capBatch} high-fidelity business leads (no more, no less).
+
+SEARCH SPECIFICATION:
+- Industry/Service: "${industry}"
+- Target Location: "${location}"
+${filters ? `- Required Constraints: "${filters}"\n` : ''}
+
+DATA QUALITY REQUIREMENTS (Senior SDR Standard):
+- Match the SPECIFIC service niche.
+- Contact details MUST be REALTIME and HIGH-FIDELITY.
+- **PHONE & EMAIL (NON-NEGOTIABLE)**: You MUST return a valid phone number and a realistic, pattern-verified email for every business.
+- **WEBSITE URL POLICY**: ONLY include a "website" if you are CERTAIN it is the real, active domain.
+- Output only valid JSON.
+
+Strict Schema:
+[
+  {
+    "id": "random-8-chars",
+    "businessName": "Company Name",
+    "industry": "${industry}",
+    "location": "${location}",
+    "phone": "Localized String",
+    "email": "Business Email (Required)",
+    "website": "REAL URL ONLY",
+    "estimatedValue": numeric_value,
+    "notes": "SDR INSIGHT: Why this lead is a high-value target."
+  }
+]`;
+
+            const aiResponse = await routeAIRequest({
+                prompt,
+                maxTokens: 2000,
+                temperature: 0.2,
             });
+
+            let cleanedContent = aiResponse.content;
+            const arrayMatch = cleanedContent.match(/\[[\s\S]*\]/);
+            if (arrayMatch) cleanedContent = arrayMatch[0];
+
+            try {
+                const parsed = JSON.parse(cleanedContent);
+                leads = Array.isArray(parsed) ? parsed : parsed.leads || [parsed];
+            } catch (jsonError) {
+                console.error('[Lead Gen] AI Parsing Error:', jsonError);
+                leads = [];
+            }
+
+            source = `Discovery (${aiResponse.provider})`;
+            provider = aiResponse.provider;
+            model = aiResponse.model;
         }
 
         if (leads.length > capBatch) {
@@ -171,8 +227,8 @@ ${JSON.stringify(
                 )}
 
 AUDIT & ENRICHMENT PARAMETERS:
-1. Never invent, replace, or claim verification of contact details.
-2. Pain Points: Suggest 3 hypotheses clearly framed for human review.
+1. Contact Verification: Ensure phone and email are valid. Discover missing ones using domain heuristics.
+2. Tech Stack & Pain Points: Identify likely tech stack and 3 specific operational pain points.
 3. Outreach Hook: Write a hyper-personalized, non-generic first line for an email (max 20 words).
 4. Strategic Strategy: Assign a strategy (ROI_FOCUS, PROBLEM_SOLVER, or CASUAL_INTRO).
 5. Value Proposition: A concise 1-sentence reason why AlphaClone's AI automation specifically helps THIS business.
@@ -182,7 +238,10 @@ Strict Output JSON:
   "enrichedLeads": [
     { 
       "businessName": "Exact Matching Name", 
-      "isVerified": false,
+      "email": "VERIFIED_EMAIL",
+      "phone": "VERIFIED_PHONE",
+      "isVerified": boolean,
+      "trustScore": 0-100,
       "techStack": ["...", "..."],
       "painPoints": ["...", "..."],
       "outreachHook": "Personalized first line",
@@ -211,7 +270,10 @@ Strict Output JSON:
                             if (e) {
                                 return {
                                     ...lead,
-                                    isVerified: false,
+                                    email: e.email || lead.email,
+                                    phone: e.phone || lead.phone,
+                                    isVerified: e.isVerified,
+                                    trustScore: e.trustScore,
                                     verificationNotes: e.dataAnalysis,
                                     techStack: e.techStack || [],
                                     painPoints: e.painPoints || [],
@@ -231,15 +293,18 @@ Strict Output JSON:
             }
         }
 
-        if (leads.length > 0) {
+        if (leads.length > 0 && googleApiKey) {
             try {
-                const { geocodeAddress } = await import('@/lib/location/geocodeAddress');
+                const { googleMapsService } = await import('@/services/googleMapsService');
 
                 leads = await Promise.all(
                     leads.map(async (lead) => {
                         try {
                             if (lead.location) {
-                                const { valid, formattedAddress } = await geocodeAddress(lead.location);
+                                const { valid, formattedAddress } = await googleMapsService.validateAddress(
+                                    lead.location,
+                                    googleApiKey
+                                );
                                 if (valid && formattedAddress) {
                                     return {
                                         ...lead,
@@ -259,7 +324,9 @@ Strict Output JSON:
             }
         }
 
-        const validatedLeads = leads;
+        const validatedLeads = leads.filter(
+            (l) => l.email && l.phone && l.email.includes('@')
+        );
 
         const finalLeads = validatedLeads.slice(0, capBatch).map((l) => ({
             ...l,

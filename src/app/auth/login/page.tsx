@@ -5,21 +5,22 @@ export const dynamic = 'force-dynamic';
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import nextDynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
-import { AlertCircle, LogIn, UserPlus, Shield, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, LogIn, UserPlus, FileText, Shield, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
-import { SubscriptionPlan } from '@/services/tenancy/types';
+import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import Image from 'next/image';
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
-import { sanitizeInternalRedirect } from '@/lib/security/safeRedirect';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
-import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
-import TurnstileWidget from '@/components/security/TurnstileWidget';
-import DevSetupBanner from '@/components/auth/DevSetupBanner';
-import PublicStatusPill from '@/components/status/PublicStatusPill';
+
+const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
 
 export default function LoginPage() {
     return (
@@ -38,15 +39,21 @@ function LoginContent() {
     const planParam = searchParams?.get('plan') as SubscriptionPlan | null;
     const businessNameParam = searchParams?.get('businessName');
     const referralCodeParam = searchParams?.get('ref')?.trim() || undefined;
-    const nextParam =
-      searchParams?.get('next') ||
-      searchParams?.get('returnTo') ||
-      searchParams?.get('redirect') ||
-      null;
+    const nextParam = searchParams?.get('next') || searchParams?.get('returnTo') || null;
 
-    const resolveExplicitNextRedirect = (): string | null =>
-      sanitizeInternalRedirect(nextParam);
-    const oauthReturnPath = resolveExplicitNextRedirect();
+    const resolveExplicitNextRedirect = (): string | null => {
+      if (nextParam) {
+        try {
+          const decoded = decodeURIComponent(nextParam);
+          if (decoded.startsWith('/oauth/') || decoded.startsWith('/authorize') || decoded.startsWith('/dashboard')) {
+            return decoded;
+          }
+        } catch {
+          // ignore malformed next param
+        }
+      }
+      return null;
+    };
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
@@ -66,12 +73,12 @@ function LoginContent() {
     const [isEuLikeRegistration, setIsEuLikeRegistration] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPayment, setShowPayment] = useState(false);
+    const [newTenantData, setNewTenantData] = useState<{ id: string, name: string } | null>(null);
+    const [paymentProcessing, setPaymentProcessing] = useState(false);
     const [showMfaChallenge, setShowMfaChallenge] = useState(false);
     const [mfaCode, setMfaCode] = useState('');
-    const [turnstileToken, setTurnstileToken] = useState('');
-    const [turnstileNonce, setTurnstileNonce] = useState(0);
-    const [turnstileError, setTurnstileError] = useState(false);
-    const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+    const [humanVerified, setHumanVerified] = useState(false);
     const [registrationOpen, setRegistrationOpen] = useState(true);
     const [policyLoaded, setPolicyLoaded] = useState(false);
     const [passwordResetSentTo, setPasswordResetSentTo] = useState('');
@@ -141,27 +148,6 @@ function LoginContent() {
         setIsLoading(true);
 
         try {
-            if (turnstileEnabled) {
-                if (!turnstileToken) {
-                    setError('Please complete the security check before continuing.');
-                    setIsLoading(false);
-                    return;
-                }
-                const humanRes = await fetch('/api/auth/human-check', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ turnstileToken }),
-                });
-                if (!humanRes.ok) {
-                    const payload = await humanRes.json().catch(() => ({}));
-                    setError(payload.error || 'Security verification failed. Please try again.');
-                    setTurnstileToken('');
-                    setTurnstileNonce((n) => n + 1);
-                    setIsLoading(false);
-                    return;
-                }
-            }
-
             // 1. REGISTRATION FLOW
             if (isRegistering) {
                 if (!registrationOpen) {
@@ -197,10 +183,6 @@ function LoginContent() {
                       businessName,
                       plan: selectedPlan,
                       referralCode: referralCodeParam,
-                      marketingOptIn,
-                      euConsent,
-                      ageConfirmed,
-                      legalAccepted,
                     });
                     
                     if (signupResult.error) {
@@ -243,22 +225,6 @@ function LoginContent() {
                                     isRegistration: true,
                                 }),
                             });
-                            void fetch('/api/auth/registration-event', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    Authorization: `Bearer ${sessionToken}`,
-                                },
-                                body: JSON.stringify({
-                                    selectedPlan,
-                                    referralCode: referralCodeParam,
-                                    businessName,
-                                    marketingOptIn,
-                                    legalAccepted,
-                                    euConsent,
-                                    ageConfirmed,
-                                }),
-                            }).catch((eventErr) => console.warn('Registration event notification failed:', eventErr));
                         }
                     } catch (consentErr) {
                         console.warn('Failed to persist registration consent:', consentErr);
@@ -275,9 +241,7 @@ function LoginContent() {
                     } else if (errorMsg.toLowerCase().includes('permanently blocked') || errorMsg.toLowerCase().includes('blocked after account deletion')) {
                         setError('This email was permanently deleted and is banned from registering again.');
                     } else if (errorMsg.toLowerCase().includes('password')) {
-                        setError(errorMsg.includes('12') || errorMsg.toLowerCase().includes('uppercase') || errorMsg.toLowerCase().includes('special')
-                            ? errorMsg
-                            : 'Your password does not meet the security requirements. Use at least 12 characters with upper, lower, number, and special character.');
+                        setError('Your password does not meet the security requirements. Use at least 8 characters.');
                     } else {
                         setError(errorMsg);
                     }
@@ -292,22 +256,20 @@ function LoginContent() {
                     trialEndDate.setDate(trialEndDate.getDate() + 14);
 
                     const workspaceName = businessName?.trim() || `${name}'s Organization`;
-                    const randomSuffix = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+                    const randomSuffix = Array.from({ length: 5 }, () =>
+                        String.fromCharCode(97 + Math.floor(Math.random() * 26))
+                    ).join('');
                     const slug = workspaceName.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
 
-                    let newTenant: { id: string; name: string };
+                    let newTenant = null;
                     try {
-                        const result = await bootstrapTenantViaApi({
+                        const { tenantService } = await import('@/services/tenancy/TenantService');
+                        newTenant = await tenantService.createTenant({
                             name: workspaceName,
                             slug,
+                            adminUserId: newUser.id,
                             plan: selectedPlan,
-                            mode: 'ensure',
-                            idempotencyKey: 'initial-workspace-v1',
                         });
-                        if (result.error || !result.tenant) {
-                            throw new Error(result.error || 'Failed to create workspace');
-                        }
-                        newTenant = result.tenant;
                         toast.success('Workspace provisioned!', { id: 'workspace' });
                     } catch (tenantErr: any) {
                         const errorMsg = tenantErr.message || 'Failed to create workspace';
@@ -316,6 +278,17 @@ function LoginContent() {
                         setError(errorMsg);
                         setIsLoading(false);
                         return;
+                    }
+
+                    try {
+                        const { tenantService } = await import('@/services/tenancy/TenantService');
+                        await tenantService.updateTenant(newTenant.id, {
+                            trial_ends_at: trialEndDate,
+                            subscription_status: 'trial',
+                            subscription_plan: selectedPlan,
+                        });
+                    } catch (trialErr) {
+                        console.warn('Subscription setup failed:', trialErr);
                     }
 
                     try {
@@ -349,7 +322,7 @@ function LoginContent() {
                     }
 
                     toast.success('Welcome to AlphaClone! Redirecting...');
-                    router.push(resolveExplicitNextRedirect() ?? getPostAuthDashboardPath('tenant_admin'));
+                    router.push(getPostAuthDashboardPath('tenant_admin'));
                     return;
                 }
                 setIsLoading(false);
@@ -393,6 +366,42 @@ function LoginContent() {
         }
     };
 
+    const handlePayment = async () => {
+        if (!newTenantData) return;
+        setPaymentProcessing(true);
+        setError('');
+
+        try {
+            const { businessInvoiceService } = await import('@/services/businessInvoiceService');
+            const amount = selectedPlan === 'starter' ? 15 : selectedPlan === 'pro' ? 45 : 80;
+
+            const { invoice, error: invoiceErr } = await businessInvoiceService.createInvoice(newTenantData.id, {
+                total: amount,
+                notes: `First month subscription — ${selectedPlan} plan`,
+                status: 'draft',
+                dueDate: new Date().toISOString().split('T')[0],
+            });
+
+            if (invoiceErr) throw new Error(invoiceErr);
+
+            // In a real flow, we'd open Stripe here.
+            // For now, we simulate a successful payment activation.
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Mark tenant as active/paid (simplified for now)
+            const { tenantService } = await import('@/services/tenancy/TenantService');
+            await tenantService.updateTenant(newTenantData.id, {
+                subscription_status: 'active'
+            });
+
+            router.push(getPostAuthDashboardPath('tenant_admin'));
+        } catch (err: any) {
+            setError(`Payment failed: ${err.message}. Please try again.`);
+        } finally {
+            setPaymentProcessing(false);
+        }
+    };
+
     const handleMfaVerify = async () => {
         setIsLoading(true);
         setError('');
@@ -430,15 +439,76 @@ function LoginContent() {
         }
     };
 
+    if (showPayment && newTenantData) {
+        return (
+            <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <HeroBackground />
+                </div>
+
+                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 my-auto animate-slide-up">
+                    <h2 className="text-2xl font-bold text-white mb-2 text-center">Your 14-Day Trial is Active</h2>
+                    <p className="text-slate-400 text-sm text-center mb-8">
+                        No charge now. Add a payment method after your trial to continue.
+                    </p>
+
+                    <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 space-y-4">
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
+                            <span className="text-slate-400">Plan Selected</span>
+                            <span className="text-white font-semibold">{selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
+                            <span className="text-slate-400">Billing Cycle</span>
+                            <span className="text-white font-semibold">Monthly</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
+                            <span className="text-slate-400">Trial Period</span>
+                            <span className="text-teal-400 font-semibold">14 days free</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-white font-bold">Due After Trial</span>
+                            <span className="text-2xl font-black text-teal-400">
+                                ${PLAN_PRICING[selectedPlan]?.monthly ?? '—'}/mo
+                            </span>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-start gap-3 text-left mb-6">
+                            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                            <p className="text-sm text-rose-200">{error}</p>
+                        </div>
+                    )}
+
+                    <Button
+                        onClick={() => { window.location.href = '/dashboard'; }}
+                        className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 py-4 text-lg font-bold rounded-2xl shadow-lg shadow-teal-500/20"
+                    >
+                        Go to Dashboard
+                    </Button>
+
+                    <p className="text-xs text-slate-500 mt-4 flex items-center justify-center gap-2 text-center">
+                        <FileText className="w-3 h-3 flex-shrink-0" />
+                        You will be reminded before your trial ends to add a payment method.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     if (showMfaChallenge) {
         return (
             <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="max-w-md w-full bg-white/95 dark:bg-slate-900/80 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <HeroBackground />
+                </div>
+
+                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
                     <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Shield className="w-10 h-10 text-teal-600 dark:text-teal-400" />
+                        <Shield className="w-10 h-10 text-teal-400" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Two-Factor Authentication</h2>
-                    <p className="text-slate-600 dark:text-slate-400 mb-8 text-sm">
+                    <h2 className="text-2xl font-bold text-white mb-2">Two-Factor Authentication</h2>
+                    <p className="text-slate-400 mb-8 text-sm">
                         Enter the 6-digit verification code from your authenticator app to continue.
                     </p>
 
@@ -477,7 +547,7 @@ function LoginContent() {
                             setMfaCode('');
                             setError('');
                         }}
-                        className="mt-6 text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                        className="mt-6 text-sm text-slate-500 hover:text-slate-300 transition-colors"
                     >
                         Back to Login
                     </button>
@@ -488,7 +558,12 @@ function LoginContent() {
 
     return (
         <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
-            <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-white/95 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
+            {/* Background Effects */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <HeroBackground />
+            </div>
+
+            <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
                 <div className="mb-3 text-center">
                     {isPWA ? (
                         <div className="mx-auto mb-2 flex justify-center inline-block">
@@ -513,22 +588,16 @@ function LoginContent() {
                             />
                         </Link>
                     )}
-                    <h1 className="text-base font-bold text-slate-900 dark:text-white mb-0.5">AlphaClone Systems</h1>
-                    <p className="text-slate-600 dark:text-slate-400 text-[11px] mb-2">
+                    <h1 className="text-base font-bold text-white mb-0.5">AlphaClone Systems</h1>
+                    <p className="text-slate-400 text-[11px]">
                         {isRegistering
                             ? '14-day free trial · workspace ready in seconds'
                             : 'Sign in to your business workspace'}
                     </p>
-                    <div className="flex justify-center my-1">
-                        <PublicStatusPill />
-                    </div>
                 </div>
-
-                <DevSetupBanner />
 
                 <SocialAuthButtons
                     isLoading={isLoading}
-                    nextPath={oauthReturnPath}
                     onError={setError}
                     onLoadingChange={setIsLoading}
                     className="mb-3"
@@ -536,10 +605,10 @@ function LoginContent() {
 
                 <div className="relative my-3">
                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+                        <div className="w-full border-t border-slate-800" />
                     </div>
                     <div className="relative flex justify-center text-[10px] uppercase tracking-wide">
-                        <span className="bg-white dark:bg-slate-900/80 px-2 text-slate-500">Or use email</span>
+                        <span className="bg-slate-900/80 px-2 text-slate-500">Or use email</span>
                     </div>
                 </div>
 
@@ -575,56 +644,52 @@ function LoginContent() {
                         autoComplete="email"
                     />
 
-                    <div>
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                            <label className="text-xs font-medium text-slate-600 dark:text-slate-400">Password</label>
-                            {!isRegistering && (
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        if (!email) {
-                                            setError('Enter your email first, then tap Forgot password.');
-                                            return;
-                                        }
-                                        setIsLoading(true);
-                                        const { authService } = await import('@/services/authService');
-                                        const { error: resetErr } = await authService.resetPassword(email);
-                                        if (resetErr) {
-                                            setError(resetErr);
-                                            setPasswordResetSentTo('');
-                                        } else {
-                                            setError('');
-                                            setPasswordResetSentTo(email);
-                                            toast.success('Password reset link sent to your email!');
-                                        }
-                                        setIsLoading(false);
-                                    }}
-                                    className="text-[11px] font-semibold text-teal-400 hover:text-teal-300 transition-colors"
-                                >
-                                    Forgot password?
-                                </button>
-                            )}
-                        </div>
-                        <div className="relative">
-                            <Input
-                                type={showPassword ? 'text' : 'password'}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                                className="pr-11"
-                                autoComplete={isRegistering ? 'new-password' : 'current-password'}
-                            />
+                    <div className="relative">
+                        <Input
+                            label="Password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            className={!isRegistering ? 'pr-20' : 'pr-12'}
+                            autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            className={`absolute top-9 ${!isRegistering ? 'right-16' : 'right-3'} text-slate-400 hover:text-teal-400 transition-colors`}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            title={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                        {!isRegistering && (
                             <button
                                 type="button"
-                                onClick={() => setShowPassword((prev) => !prev)}
-                                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 hover:text-teal-300 transition-colors"
-                                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                title={showPassword ? 'Hide password' : 'Show password'}
+                                onClick={async () => {
+                                    if (!email) {
+                                        setError('Please enter your email address first to reset your password.');
+                                        return;
+                                    }
+                                    setIsLoading(true);
+                                    const { authService } = await import('@/services/authService');
+                                    const { error: resetErr } = await authService.resetPassword(email);
+                                    if (resetErr) {
+                                        setError(resetErr);
+                                        setPasswordResetSentTo('');
+                                    } else {
+                                        setError('');
+                                        setPasswordResetSentTo(email);
+                                        toast.success('Password reset link sent to your email!');
+                                    }
+                                    setIsLoading(false);
+                                }}
+                                className="absolute right-0 top-0 text-[10px] text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wider"
                             >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                Forgot?
                             </button>
-                        </div>
+                        )}
                     </div>
 
                     {!isRegistering && passwordResetSentTo && (
@@ -635,9 +700,9 @@ function LoginContent() {
 
                     {isRegistering && (
                         <div className="flex flex-wrap gap-x-2 gap-y-0.5 py-0.5">
-                            <div className={`flex items-center gap-1 text-[10px] ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
-                                <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                12+ chars
+                            <div className={`flex items-center gap-1 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                8+ chars
                             </div>
                             <div className={`flex items-center gap-1 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
@@ -655,7 +720,7 @@ function LoginContent() {
                     )}
 
                     {isRegistering && (
-                        <div className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
+                        <div className="space-y-1.5 text-[11px] text-slate-400">
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -683,8 +748,8 @@ function LoginContent() {
                     )}
 
                     {isRegistering && isEuLikeRegistration && (
-                        <div className="space-y-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 p-2 text-[11px] text-slate-600 dark:text-slate-400">
-                            <p className="font-semibold text-teal-700 dark:text-teal-300 uppercase tracking-wide text-[10px]">EU / UK consent</p>
+                        <div className="space-y-1.5 rounded-lg border border-slate-800 bg-slate-900/60 p-2 text-[11px] text-slate-400">
+                            <p className="font-semibold text-teal-300 uppercase tracking-wide text-[10px]">EU / UK consent</p>
                             <label className="flex items-start gap-2 cursor-pointer">
                                 <input type="checkbox" checked={euConsent} onChange={(e) => setEuConsent(e.target.checked)} className="mt-0.5 accent-teal-500" />
                                 <span>I consent to data processing per the Privacy Policy.</span>
@@ -703,37 +768,10 @@ function LoginContent() {
                         </div>
                     )}
 
-                    {turnstileEnabled && (
-                        <div className="flex flex-col items-center gap-1.5">
-                            <TurnstileWidget
-                                key={turnstileNonce}
-                                theme="dark"
-                                onTokenChange={(t) => {
-                                    setTurnstileToken(t);
-                                    if (t) setTurnstileError(false);
-                                }}
-                                onExpire={() => {
-                                    setTurnstileToken('');
-                                    setTurnstileError(false);
-                                }}
-                                onError={() => {
-                                    setTurnstileToken('');
-                                    setTurnstileError(true);
-                                }}
-                            />
-                            {turnstileError && (
-                                <p className="text-[11px] text-amber-400 text-center">
-                                    Security check unavailable. Please refresh the page and try again.
-                                </p>
-                            )}
-                        </div>
-                    )}
-
                     <Button
                         type="submit"
                         className="w-full h-9 text-sm font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
                         isLoading={isLoading}
-                        disabled={turnstileEnabled && (!turnstileToken || turnstileError)}
                     >
                         {isRegistering ? 'Create Account with Email' : 'Sign In with Email'}
                     </Button>
@@ -764,7 +802,7 @@ function LoginContent() {
                     {!registrationOpen && policyLoaded && (
                         <p className="text-[11px] text-amber-400">Account registration is temporarily closed.</p>
                     )}
-                    <p className="text-xs text-slate-500 dark:text-slate-600 uppercase tracking-wider">
+                    <p className="text-xs text-slate-600 uppercase tracking-wider">
                         Secured by AlphaClone 256-bit Encryption
                     </p>
                 </div>

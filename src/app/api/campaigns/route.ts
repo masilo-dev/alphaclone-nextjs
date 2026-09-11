@@ -11,7 +11,9 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
 
-        const { admin: supabase } = await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId);
+
+        const supabase = createSupabaseAdminClient();
         const { data, error } = await supabase
             .from('email_campaigns')
             .select('*')
@@ -33,7 +35,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Missing tenant_id' }, { status: 400 });
         }
 
-        const { user, admin: supabase } = await requireTenantAccess(body.tenant_id);
+        const { user } = await requireTenantAccess(body.tenant_id);
+
+        const supabase = createSupabaseAdminClient();
 
         const { data, error } = await supabase
             .from('email_campaigns')
@@ -76,7 +80,9 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'Missing id or tenantId' }, { status: 400 });
         }
 
-        const { admin: supabase } = await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId);
+
+        const supabase = createSupabaseAdminClient();
         const { error } = await supabase
             .from('email_campaigns')
             .delete()

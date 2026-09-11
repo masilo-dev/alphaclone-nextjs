@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { isProduction } from '@/lib/security/productionGuard';
-import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
-import { PUBLIC_APP_ORIGIN, PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
-import { formatScopeString } from '@/lib/mcp/scopes';
+import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -68,29 +66,23 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
     const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
     // Check if this is a valid client access token
-    const withRevoked = await supabase
+    const { data: clientToken } = await supabase
       .from('mcp_oauth_tokens')
       .select('client_id, expires_at, revoked')
       .eq('access_token', token)
       .eq('revoked', false)
       .maybeSingle();
 
-    let clientToken = withRevoked.data;
-    if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
-      const fallback = await supabase
-        .from('mcp_oauth_tokens')
-        .select('client_id, expires_at')
-        .eq('access_token', token)
-        .maybeSingle();
-      clientToken = fallback.data as typeof clientToken;
-    }
-
     if (clientToken && new Date(clientToken.expires_at) > new Date()) {
       return { isAuthenticated: true, clientId: clientToken.client_id || undefined };
     }
 
     // Check if this is an API key (internal service)
-    const apiKeyData = await lookupMcpApiKey(supabase, token, { requireActive: true });
+    const { data: apiKeyData } = await supabase
+      .from('mcp_api_keys')
+      .select('tenant_id')
+      .or(`api_key.eq.${token},api_key_hash.eq.${hashMcpApiKey(token)}`)
+      .maybeSingle();
 
     if (apiKeyData) {
       return { isAuthenticated: true, clientId: 'internal-service' };
@@ -162,44 +154,25 @@ export async function POST(req: NextRequest) {
       resource?: string;
     } | null = null;
 
-    // Try access token first (revoked column may be missing on older schemas)
-    let accessTokenData: any = null;
-    {
-      const withRevoked = await supabase
-        .from('mcp_oauth_tokens')
-        .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, revoked, created_at, resource')
-        .eq('access_token', token)
-        .maybeSingle();
-      if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
-        const fallback = await supabase
-          .from('mcp_oauth_tokens')
-          .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, created_at, resource')
-          .eq('access_token', token)
-          .maybeSingle();
-        accessTokenData = fallback.data;
-      } else {
-        accessTokenData = withRevoked.data;
-      }
-    }
+    // Try access token first
+    const { data: accessTokenData } = await supabase
+      .from('mcp_oauth_tokens')
+      .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, revoked, created_at, resource')
+      .eq('access_token', token)
+      .maybeSingle();
 
     if (accessTokenData) {
       tokenData = accessTokenData;
     } else if (tokenTypeHint !== 'access_token') {
       // Try refresh token if hint allows or no hint
-      const withRevoked = await supabase
+      const { data: refreshTokenData } = await supabase
         .from('mcp_oauth_tokens')
         .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, revoked, created_at, resource')
         .eq('refresh_token', token)
         .maybeSingle();
-      if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
-        const fallback = await supabase
-          .from('mcp_oauth_tokens')
-          .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, created_at, resource')
-          .eq('refresh_token', token)
-          .maybeSingle();
-        if (fallback.data) tokenData = fallback.data;
-      } else if (withRevoked.data) {
-        tokenData = withRevoked.data;
+
+      if (refreshTokenData) {
+        tokenData = refreshTokenData;
       }
     }
 
@@ -224,17 +197,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build full introspection response for active token (public origin only)
+    // Build full introspection response for active token
+    const baseUrl = `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host') || req.headers.get('host') || 'alphaclonesystems.com'}`;
+
     const response: Record<string, unknown> = {
       active: true,
-      scope: formatScopeString(tokenData.scopes || ['read', 'write']),
+      scope: (tokenData.scopes || ['read', 'write']).join(' '),
       client_id: tokenData.client_id,
       token_type: 'Bearer',
       exp,
       iat: tokenData.created_at ? Math.floor(new Date(tokenData.created_at).getTime() / 1000) : now,
       sub: tokenData.user_id,
-      aud: tokenData.resource || PUBLIC_MCP_RESOURCE,
-      iss: PUBLIC_APP_ORIGIN,
+      aud: tokenData.resource || `${baseUrl}/api/mcp`,
+      iss: baseUrl,
     };
 
     // Optional fields

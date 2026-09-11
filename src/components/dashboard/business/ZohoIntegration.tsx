@@ -38,11 +38,9 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
 
     const checkConnection = async () => {
         if (!user) return;
-        const tenantId = tenantService.getCurrentTenantId();
-        if (!tenantId) { setLoading(false); return; }
         setLoading(true);
         try {
-            const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
+            const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
             const data = await res.json();
             setIsConnected(!!data.isConnected);
             setCampaignsReady(!!data.campaignsReady);
@@ -58,12 +56,10 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
 
     const handleConnect = () => {
         if (!user) return;
-        const tenantId = tenantService.getCurrentTenantId();
-        if (!tenantId) { toast.error('Select a workspace first'); return; }
         setConnecting(true);
         
         // Build the connection URL with region and state (userId)
-        const connectUrl = `/api/auth/zoho/connect?region=${selectedRegion}&tenantId=${encodeURIComponent(tenantId)}`;
+        const connectUrl = `/api/auth/zoho/connect?region=${selectedRegion}&state=${user.id}`;
         window.location.href = connectUrl;
     };
 
@@ -71,14 +67,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
         if (!user || !window.confirm('Are you sure you want to disconnect Zoho? This will remove access to Zoho Mail and CRM features.')) return;
 
         try {
-            const tenantId = tenantService.getCurrentTenantId();
-            if (!tenantId) throw new Error('Select a workspace first');
-            const res = await fetch('/api/auth/zoho/disconnect', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId }),
-            });
+            const res = await fetch('/api/auth/zoho/disconnect', { method: 'POST', credentials: 'include' });
             if (res.ok) {
                 setIsConnected(false);
                 setConfiguredRegion(null);

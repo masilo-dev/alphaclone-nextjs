@@ -38,19 +38,15 @@ export async function POST(req: NextRequest) {
     const ticketUrl = `${appBaseUrl()}/dashboard/business/tickets?ticket=${payload.ticketId}`;
 
     if (payload.event === 'created') {
-      try {
-        await notifyTenantOwners({
-          tenantId: payload.tenantId,
-          type: 'ticket_created',
-          title: `New support ticket: ${payload.title}`,
-          message: payload.description
-            ? `${payload.title}\n\n${payload.description.slice(0, 500)}`
-            : payload.title,
-          link: ticketUrl,
-        });
-      } catch (err) {
-        console.error('[tickets/notify] owner notification failed:', err);
-      }
+      await notifyTenantOwners({
+        tenantId: payload.tenantId,
+        type: 'ticket_created',
+        title: `New support ticket: ${payload.title}`,
+        message: payload.description
+          ? `${payload.title}\n\n${payload.description.slice(0, 500)}`
+          : payload.title,
+        link: ticketUrl,
+      });
 
       const customerEmail = payload.customerEmail?.trim();
       if (customerEmail) {
@@ -74,17 +70,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (payload.event === 'status_changed') {
-      try {
-        await notifyTenantOwners({
-          tenantId: payload.tenantId,
-          type: 'ticket_updated',
-          title: `Ticket updated: ${payload.title}`,
-          message: `Status changed to ${payload.status || 'updated'}.`,
-          link: ticketUrl,
-        });
-      } catch (err) {
-        console.error('[tickets/notify] owner notification failed:', err);
-      }
+      await notifyTenantOwners({
+        tenantId: payload.tenantId,
+        type: 'ticket_updated',
+        title: `Ticket updated: ${payload.title}`,
+        message: `Status changed to ${payload.status || 'updated'}.`,
+        link: ticketUrl,
+      });
 
       const customerEmail = payload.customerEmail?.trim();
       if (customerEmail && payload.status) {

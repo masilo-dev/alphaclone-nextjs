@@ -10,7 +10,6 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 
 // BlockNote is loaded client-side only to avoid SSR issues
@@ -40,7 +39,6 @@ const ICONS = ['📄', '📝', '📋', '📌', '🗂️', '💡', '🎯', '📊'
 export default function PagesTab() {
     const { user } = useAuth();
     const { currentTenant: tenant } = useTenant();
-    const { confirm } = useConfirmDialog();
     const [pages, setPages] = useState<Page[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -84,10 +82,20 @@ export default function PagesTab() {
     // ----- Page CRUD -----
     const createPage = async (parentId: string | null = null) => {
         if (!tenant?.id || !user?.id) return;
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/pages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parentId, sortOrder: pages.filter(p => p.parent_id === parentId).length }) });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.page) { toast.error(result.error || 'Failed to create page'); return; }
-        const data = result.page as Page;
+        const { data, error } = await supabase
+            .from('pages')
+            .insert({
+                tenant_id: tenant.id,
+                user_id: user.id,
+                parent_id: parentId,
+                title: 'Untitled',
+                icon: '📄',
+                content: [],
+                sort_order: pages.filter(p => p.parent_id === parentId).length,
+            })
+            .select()
+            .single();
+        if (error) { toast.error('Failed to create page'); return; }
         setPages(prev => [...prev, data]);
         setSelectedPageId(data.id);
         if (parentId) setExpanded(prev => new Set([...prev, parentId]));
@@ -98,27 +106,18 @@ export default function PagesTab() {
     };
 
     const deletePage = async (id: string) => {
-        const ok = await confirm({
-            title: 'Delete page?',
-            description: 'Delete this page and all sub-pages? This cannot be undone.',
-            confirmLabel: 'Delete',
-            cancelLabel: 'Cancel',
-            variant: 'danger',
-        });
-        if (!ok) return;
+        if (!confirm('Delete this page and all sub-pages?')) return;
         // Cascade deletes sub-pages via DB foreign key
-        if (!tenant?.id) return;
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/pages?pageId=${encodeURIComponent(id)}`, { method: 'DELETE' });
-        if (!response.ok) { toast.error('Failed to delete page'); return; }
+        const { error } = await supabase.from('pages').delete().eq('id', id);
+        if (error) { toast.error('Failed to delete page'); return; }
         setPages(prev => prev.filter(p => p.id !== id && p.parent_id !== id));
         if (selectedPageId === id) setSelectedPageId(pages.find(p => p.id !== id)?.id ?? null);
         toast.success('Page deleted');
     };
 
     const archivePage = async (id: string) => {
-        if (!tenant?.id) return;
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/pages`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: id, isArchived: true }) });
-        if (!response.ok) { toast.error('Failed to archive page'); return; }
+        const { error } = await supabase.from('pages').update({ is_archived: true }).eq('id', id);
+        if (error) { toast.error('Failed to archive page'); return; }
         setPages(prev => prev.filter(p => p.id !== id));
         if (selectedPageId === id) setSelectedPageId(pages.find(p => p.id !== id)?.id ?? null);
         toast.success('Page archived');
@@ -128,13 +127,13 @@ export default function PagesTab() {
         const title = renameValue.trim() || 'Untitled';
         setPages(prev => prev.map(p => p.id === id ? { ...p, title } : p));
         setRenamingId(null);
-        if (tenant?.id) await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/pages`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: id, title }) });
+        await supabase.from('pages').update({ title }).eq('id', id);
     };
 
     const updateIcon = async (id: string, icon: string) => {
         setPages(prev => prev.map(p => p.id === id ? { ...p, icon } : p));
         setShowIconPicker(null);
-        if (tenant?.id) await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/pages`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId: id, icon }) });
+        await supabase.from('pages').update({ icon }).eq('id', id);
     };
 
     // Auto-save content with debounce
@@ -143,10 +142,10 @@ export default function PagesTab() {
         if (saveTimerRef.current[pageId]) clearTimeout(saveTimerRef.current[pageId]);
         setSavingId(pageId);
         saveTimerRef.current[pageId] = setTimeout(async () => {
-            if (tenant?.id) await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/pages`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pageId, content }) });
+            await supabase.from('pages').update({ content }).eq('id', pageId);
             setSavingId(null);
         }, 1200);
-    }, [tenant?.id]);
+    }, []);
 
     // ----- Tree helpers -----
     const rootPages = pages.filter(p => !p.parent_id);

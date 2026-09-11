@@ -128,6 +128,8 @@ const IntegrationMonitor: React.FC<IntegrationMonitorProps> = ({ tenantId, onInt
         return '📅';
       case 'stripe':
         return '💳';
+      case 'hubspot':
+        return '🔵';
       case 'sendgrid':
         return '📧';
       default:

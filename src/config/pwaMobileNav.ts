@@ -12,7 +12,6 @@ import {
   Globe,
   FileText,
   Target,
-  Sparkles,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -38,39 +37,9 @@ export interface PwaNavItem {
   labelActive: string;
 }
 
-export const PWA_MAX_BOTTOM_SLOTS = 5;
+export const PWA_MAX_BOTTOM_SLOTS = 4;
 
 export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
-  {
-    id: 'work',
-    label: 'Work',
-    icon: Briefcase,
-    tileBg: 'bg-violet-500',
-    tileBgMuted: 'bg-violet-500/20',
-    labelActive: 'text-violet-300',
-    hrefForRole: () => '/dashboard/projects',
-    matchPrefixesForRole: () => ['/dashboard/projects', '/dashboard/tasks', '/dashboard/business/projects', '/dashboard/business/tasks'],
-  },
-  {
-    id: 'money',
-    label: 'Money',
-    icon: DollarSign,
-    tileBg: 'bg-amber-500',
-    tileBgMuted: 'bg-amber-500/20',
-    labelActive: 'text-amber-300',
-    hrefForRole: (role) => role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance',
-    matchPrefixesForRole: () => ['/dashboard/finance', '/dashboard/business/billing', '/dashboard/invoices'],
-  },
-  {
-    id: 'bonnie',
-    label: 'Bonnie',
-    icon: Sparkles,
-    tileBg: 'bg-teal-500',
-    tileBgMuted: 'bg-teal-500/20',
-    labelActive: 'text-teal-300',
-    hrefForRole: () => '/dashboard/bonnie',
-    matchPrefixesForRole: () => ['/dashboard/bonnie'],
-  },
   {
     id: 'home',
     label: 'Home',
@@ -93,13 +62,13 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
   },
   {
     id: 'mail',
-    label: 'Comms',
+    label: 'Mail',
     icon: Mail,
     tileBg: 'bg-green-500',
     tileBgMuted: 'bg-green-500/20',
     labelActive: 'text-green-400',
-    hrefForRole: () => '/dashboard/comms',
-    matchPrefixesForRole: () => ['/dashboard/comms', '/dashboard/mail'],
+    hrefForRole: () => '/dashboard/mail',
+    matchPrefixesForRole: () => ['/dashboard/mail'],
   },
   {
     id: 'clients',
@@ -201,9 +170,7 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
   },
 ];
 
-const DEFAULT_MODULE_IDS = ['home', 'crm', 'work', 'money', 'bonnie'];
-/** Phone browser: keep bottom bar home-first; full modules stay in the More menu. */
-const PHONE_BROWSER_DEFAULT_MODULE_IDS = ['home'];
+const DEFAULT_MODULE_IDS = ['home', 'crm', 'mail', 'clients'];
 
 export function moduleDefToNavItem(def: PwaModuleDef, role: UserRole): PwaNavItem {
   return {
@@ -218,19 +185,15 @@ export function moduleDefToNavItem(def: PwaModuleDef, role: UserRole): PwaNavIte
   };
 }
 
-export function getDefaultBottomNavModuleIds(isPwa = true): string[] {
-  return [...(isPwa ? DEFAULT_MODULE_IDS : PHONE_BROWSER_DEFAULT_MODULE_IDS)];
+export function getDefaultBottomNavModuleIds(): string[] {
+  return [...DEFAULT_MODULE_IDS];
 }
 
 export function resolveBottomNavItems(
   role: UserRole,
   selectedIds?: string[] | null,
-  options?: { isPwa?: boolean },
 ): PwaNavItem[] {
-  const isPwa = options?.isPwa !== false;
-  const fallbackIds = getDefaultBottomNavModuleIds(isPwa);
-  // Custom bottom slots only apply inside the installed PWA.
-  const ids = (isPwa && selectedIds?.length ? selectedIds : fallbackIds).slice(0, PWA_MAX_BOTTOM_SLOTS);
+  const ids = (selectedIds?.length ? selectedIds : DEFAULT_MODULE_IDS).slice(0, PWA_MAX_BOTTOM_SLOTS);
   const catalog = new Map(PWA_MODULE_CATALOG.map((m) => [m.id, m]));
 
   const items: PwaNavItem[] = [];
@@ -240,7 +203,7 @@ export function resolveBottomNavItems(
   }
 
   if (items.length === 0) {
-    return fallbackIds.map((id) => moduleDefToNavItem(catalog.get(id)!, role));
+    return DEFAULT_MODULE_IDS.map((id) => moduleDefToNavItem(catalog.get(id)!, role));
   }
 
   return items;

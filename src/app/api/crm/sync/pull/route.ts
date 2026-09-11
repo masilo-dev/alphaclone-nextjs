@@ -5,7 +5,6 @@ import { OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { hubspotService } from '@/services/hubspotService';
 import { ZohoCRMService } from '@/services/zoho/ZohoCRMService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import { requireTenantRole } from '@/lib/apiAuth';
 
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
@@ -19,15 +18,23 @@ export async function POST(req: Request) {
 
   try {
     const userId = user.id;
-    const { tenantId } = await req.json();
-    await requireTenantRole(String(tenantId || ''), ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
+    const { data: tenantUser } = await supabase
+      .from('tenant_users')
+      .select('tenant_id')
+      .eq('user_id', userId)
+      .limit(1)
+      .maybeSingle();
+
+    const tenantId = tenantUser?.tenant_id;
+    if (!tenantId) {
+      return NextResponse.json({ success: false, error: 'Tenant not found' });
+    }
 
     const supabaseAdmin = createSupabaseAdminClient();
     const { data: integrations, error } = await supabaseAdmin
       .from('integrations')
       .select('*')
       .eq('user_id', userId)
-      .eq('tenant_id', tenantId)
       .eq('enabled', true);
 
     if (error || !integrations) {
@@ -40,7 +47,7 @@ export async function POST(req: Request) {
     const hubspot = integrations.find((i: { type: string }) => i.type === 'hubspot');
     if (hubspot) {
       try {
-        const contacts = await hubspotService.getContacts(userId, tenantId, 100);
+        const contacts = await hubspotService.getContacts(userId, 100);
         for (const contact of contacts) {
           const { firstname, lastname, email, phone, company } = contact.properties;
           const emailNorm = String(email || '').trim().toLowerCase();
@@ -100,7 +107,7 @@ export async function POST(req: Request) {
     const zoho = integrations.find((i: { type: string }) => i.type === 'zoho');
     if (zoho) {
       try {
-        const zohoCRM = new ZohoCRMService(userId, tenantId);
+        const zohoCRM = new ZohoCRMService(userId);
         const zohoLeads = await zohoCRM.getRecords('Leads');
         for (const lead of zohoLeads || []) {
           const emailNorm = String(lead.Email || (lead as { email?: string }).email || '').trim().toLowerCase();

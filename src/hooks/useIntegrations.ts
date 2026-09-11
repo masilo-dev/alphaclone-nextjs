@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { integrationService, TenantIntegration, ConnectResult } from '../services/integrationService';
 import { useTenant } from '../contexts/TenantContext';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 export interface UseIntegrationsReturn {
@@ -25,8 +26,10 @@ export function useIntegrations(): UseIntegrationsReturn {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const data = await integrationService.getIntegrationsForTenant(
-        currentTenant?.id ?? ''
+        currentTenant?.id ?? '',
+        user?.id
       );
       setIntegrations(data);
     } catch (err) {
@@ -47,10 +50,11 @@ export function useIntegrations(): UseIntegrationsReturn {
     }
     setConnecting(integrationId);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const result: ConnectResult = await integrationService.connect(
         currentTenant.id,
         integrationId,
-        ''
+        user?.id ?? ''
       );
 
       if (!result.success) {
@@ -84,9 +88,11 @@ export function useIntegrations(): UseIntegrationsReturn {
     if (!currentTenant?.id) return;
     const toastId = toast.loading('Disconnecting…');
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const result = await integrationService.disconnect(
         currentTenant.id,
-        integrationId
+        integrationId,
+        user?.id
       );
       if (!result.success) {
         toast.error(result.error ?? 'Failed to disconnect', { id: toastId });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,7 +10,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    const { admin: supabase } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from('scraper_campaigns')
       .select('*')
@@ -17,37 +19,7 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    const campaigns = data || [];
-    const campaignIds = campaigns.map((c: { id: string }) => c.id);
-    let leadRows: Array<{
-      campaign_id: string;
-      email?: string | null;
-      phone?: string | null;
-      status?: string | null;
-      crm_lead_id?: string | null;
-    }> = [];
-    if (campaignIds.length) {
-      const leadsRes = await supabase
-        .from('scraper_leads')
-        .select('campaign_id, email, phone, status, crm_lead_id')
-        .eq('tenant_id', tenantId)
-        .in('campaign_id', campaignIds);
-      leadRows = (leadsRes.data || []) as typeof leadRows;
-    }
-    const withCounts = campaigns.map((campaign: { id: string }) => {
-      const rows = leadRows.filter((row) => row.campaign_id === campaign.id);
-      const contactable = rows.filter((row) => Boolean(row.email?.trim() || row.phone?.trim())).length;
-      const saved = rows.filter((row) => Boolean(row.crm_lead_id) || row.status === 'synced' || row.status === 'accepted').length;
-      const contacted = rows.filter((row) => row.status === 'contacted').length;
-      return {
-        ...campaign,
-        discovered_count: rows.length,
-        contactable_count: contactable,
-        accepted_count: saved,
-        contacted_count: contacted,
-      };
-    });
-    return NextResponse.json({ campaigns: withCounts });
+    return NextResponse.json({ campaigns: data || [] });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to list scraper campaigns');
   }
@@ -62,7 +34,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId or name' }, { status: 400 });
     }
 
-    const { user, admin: supabase } = await requireTenantAccess(tenantId);
+    const { user } = await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
 
     const sources = campaign.sources || (campaign.source ? [campaign.source] : ['website', 'directory']);
 

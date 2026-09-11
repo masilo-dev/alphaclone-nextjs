@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
-import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 
 const invoiceRouteSchema = z.object({
@@ -13,25 +12,14 @@ const UpdateInvoiceSchema = z.object({
     total: z.number().min(0, 'Total cannot be negative').optional(),
     subtotal: z.number().min(0).optional(),
     tax: z.number().min(0).optional(),
-    due_date: z.union([z.string().date(), z.string().datetime()]).optional(),
-    issue_date: z.union([z.string().date(), z.string().datetime()]).optional(),
+    due_date: z.string().datetime().optional(),
     notes: z.string().optional(),
-    status: z.enum(['draft', 'sent', 'viewed', 'partially_paid', 'paid', 'overdue', 'disputed', 'void', 'cancelled']).optional(),
+    status: z.enum(['draft', 'sent', 'overdue', 'cancelled', 'void', 'paid']).optional(),
     line_items: z.array(z.object({
         description: z.string(),
         quantity: z.number().min(0),
         unit_price: z.number().min(0),
     })).optional(),
-    client_id: z.string().uuid().nullable().optional(),
-    project_id: z.string().uuid().nullable().optional(),
-    contract_id: z.string().uuid().nullable().optional(),
-    tax_rate: z.number().min(0).max(100).optional(),
-    discount_amount: z.number().min(0).optional(),
-    is_public: z.boolean().optional(),
-    sender_name: z.string().max(300).nullable().optional(),
-    bank_details: z.string().max(10_000).nullable().optional(),
-    mobile_payment_details: z.string().max(10_000).nullable().optional(),
-    signature: z.union([z.string().max(2_000_000), z.object({ type: z.enum(['draw', 'type']), data: z.string().max(2_000_000) }), z.null()]).optional(),
     tenantId: z.string().uuid(),
 });
 
@@ -45,7 +33,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         }
 
         const { tenantId, ...updatePayload } = parsed.data;
-        const { user } = await requireTenantAccess(tenantId, req);
+        const { user } = await requireTenantAccess(tenantId);
         const admin = createAdminSupabaseClientOrThrow();
 
         // 1. Fetch existing invoice
@@ -59,18 +47,6 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         if (fetchError || !existing) {
             return NextResponse.json({ error: 'Invoice not found', code: 'NOT_FOUND' }, { status: 404 });
         }
-        if (updatePayload.client_id) {
-            const { data } = await admin.from('business_clients').select('id').eq('id', updatePayload.client_id).eq('tenant_id', tenantId).maybeSingle();
-            if (!data) return NextResponse.json({ error: 'Client is not in this workspace' }, { status: 422 });
-        }
-        if (updatePayload.project_id) {
-            const { data } = await admin.from('projects').select('id').eq('id', updatePayload.project_id).eq('tenant_id', tenantId).maybeSingle();
-            if (!data) return NextResponse.json({ error: 'Project is not in this workspace' }, { status: 422 });
-        }
-        if (updatePayload.contract_id) {
-            const { data } = await admin.from('contracts').select('id').eq('id', updatePayload.contract_id).eq('tenant_id', tenantId).maybeSingle();
-            if (!data) return NextResponse.json({ error: 'Contract is not in this workspace' }, { status: 422 });
-        }
 
         // 2. Security Guards
         const lockedStatuses = ['sent', 'paid', 'overdue'];
@@ -82,41 +58,35 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
                 { status: 409 }
             );
         }
-        if (existing.status === 'draft' && updatePayload.status && updatePayload.status !== 'draft') {
-            await validateDailyResourceQuota(tenantId, user.id, 'invoices');
-        }
 
-        // 3. Handle paid_at — payments must go through /payment RPC
+        // 3. Handle paid_at and delivery_status when status changes to 'paid'
         const finalPayload: any = { ...updatePayload };
-        if (finalPayload.due_date) finalPayload.due_date = finalPayload.due_date.slice(0, 10);
-        if (finalPayload.issue_date) finalPayload.issue_date = finalPayload.issue_date.slice(0, 10);
-        if (updatePayload.status === 'paid') {
-            return NextResponse.json(
-                {
-                    error: 'Use POST /api/invoices/[id]/payment to record payments with evidence',
-                    code: 'USE_PAYMENT_ENDPOINT',
-                    action: 'POST /api/invoices/[id]/payment',
-                },
-                { status: 409 },
-            );
-        }
         if (updatePayload.status) {
-            finalPayload.paid_at = null;
+            if (updatePayload.status === 'paid') {
+                // Set paid_at if not already set
+                if (!existing.paid_at) {
+                    finalPayload.paid_at = new Date().toISOString();
+                    finalPayload.delivery_status = 'DELIVERED';
+                }
+                // Clear any previous paid_at if status is being changed away from paid
+            } else {
+                finalPayload.paid_at = null;
+            }
         }
 
-        // 4. Update header and relational line items in one database transaction.
-        const { data: rows, error: updateError } = await admin.rpc('update_business_invoice_atomic', {
-            p_tenant_id: tenantId,
-            p_invoice_id: id,
-            p_updates: finalPayload,
-            p_items: updatePayload.line_items || null,
-        });
+        // 4. Update Database
+        const { data: updated, error: updateError } = await admin
+            .from('business_invoices')
+            .update({
+                ...finalPayload,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', id)
+            .eq('tenant_id', tenantId)
+            .select()
+            .single();
 
         if (updateError) throw updateError;
-        const updated = Array.isArray(rows) ? rows[0] : rows;
-        if (existing.status === 'draft' && updatePayload.status && updatePayload.status !== 'draft') {
-            await recordDailyResourceQuota(tenantId, user.id, 'invoices', 1, `invoice-send:${id}`);
-        }
 
         // Audit log — invoice_audit_log for invoice-specific events
         if (updatePayload.status && existing.status !== updatePayload.status) {
@@ -126,7 +96,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
                 eventType: 'status_changed',
                 eventData: { from: existing.status, to: updatePayload.status },
                 performedBy: user.id,
-            }).catch((error) => console.error('[invoices] status audit failed', error));
+            });
         } else if (Object.keys(finalPayload).filter((k: string) => k !== 'updated_at').length > 0) {
             await logInvoiceEvent({
                 invoiceId: id,
@@ -134,7 +104,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
                 eventType: 'edited',
                 eventData: { fields: Object.keys(finalPayload) },
                 performedBy: user.id,
-            }).catch((error) => console.error('[invoices] edit audit failed', error));
+            });
         }
 
         return NextResponse.json({ success: true, data: updated });
@@ -153,7 +123,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
         }
 
         const { tenantId } = parsed.data;
-        const { user } = await requireTenantAccess(tenantId, req);
+        await requireTenantAccess(tenantId);
         const admin = createAdminSupabaseClientOrThrow();
 
         const { data: invoice, error } = await admin
@@ -167,13 +137,14 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
             return NextResponse.json({ error: 'Invoice not found', code: 'NOT_FOUND' }, { status: 404 });
         }
 
-        if (invoice.status !== 'draft') return NextResponse.json({ error: `Invoice ${invoice.invoice_number} has been issued and cannot be deleted. Void it with a reason instead.`, code: 'INVOICE_DELETE_FORBIDDEN', action: 'POST /api/invoices/[id]/void' }, { status: 409 });
-        const { error: lineError } = await admin.from('invoice_line_items').delete().eq('invoice_id', id).eq('tenant_id', tenantId);
-        if (lineError) throw lineError;
-        const { error: deleteError } = await admin.from('business_invoices').delete().eq('id', id).eq('tenant_id', tenantId);
-        if (deleteError) throw deleteError;
-        await logInvoiceEvent({ invoiceId: id, tenantId, eventType: 'deleted', eventData: { invoiceNumber: invoice.invoice_number }, performedBy: user.id }).catch((error) => console.error('[invoices] delete audit failed', error));
-        return NextResponse.json({ success: true });
+        return NextResponse.json(
+            {
+                error: `Invoice ${invoice.invoice_number} cannot be deleted. Use void endpoint with reason.`,
+                code: 'INVOICE_DELETE_FORBIDDEN',
+                action: 'POST /api/invoices/[id]/void',
+            },
+            { status: 409 }
+        );
     } catch (error) {
         return routeErrorResponse(error, 'Failed to process invoice delete request', req);
     }

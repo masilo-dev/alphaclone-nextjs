@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMCPServer } from '@/services/mcp/MCPServer';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders, createUnauthorizedResponse } from '@/services/mcp/authMiddlewareApp';
+import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { getInitialBusinessAIStateForTenant } from '@/lib/mcp/getInitialBusinessAIStateForTenant';
@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
   const mcpSessionId = req.headers.get('mcp-session-id');
   let tenantId = '';
   let userId = '';
-  let authClientId: string | null = null;
 
   // Handle Authentication for all methods
   if (mcpSessionId) {
@@ -55,7 +54,7 @@ export async function POST(req: NextRequest) {
     });
     const { data: session, error: sessionError } = await supabaseAdmin
       .from('mcp_sessions')
-      .select('tenant_id, user_id, expires_at, metadata')
+      .select('tenant_id, user_id, expires_at')
       .eq('id', mcpSessionId)
       .single();
 
@@ -71,11 +70,8 @@ export async function POST(req: NextRequest) {
       }
       tenantId = auth.tenant_id;
       userId = auth.user_id;
-      authClientId = auth.client_id || null;
     } else {
       const expiry = session.expires_at ? new Date(session.expires_at) : new Date(0);
-      const meta = (session.metadata || {}) as Record<string, unknown>;
-      if (typeof meta.client_id === 'string') authClientId = meta.client_id;
       if (expiry < new Date()) {
         // Session expired, fallback to api_key if possible
         const auth = await validateMCPAuthApp(req);
@@ -88,7 +84,6 @@ export async function POST(req: NextRequest) {
         }
         tenantId = auth.tenant_id;
         userId = auth.user_id;
-        authClientId = auth.client_id || authClientId;
       } else {
         tenantId = session.tenant_id;
         userId = session.user_id;
@@ -98,28 +93,24 @@ export async function POST(req: NextRequest) {
     // Stateless fallback using api_key (e.g. for simple HTTP transport clients or initialize method)
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
-      return createUnauthorizedResponse(req, 'invalid_token', auth.error);
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
-    authClientId = auth.client_id || null;
   }
 
   if (!tenantId || !userId) {
-    return createUnauthorizedResponse(
-      req,
-      'invalid_token',
-      'Authentication failed: missing tenant or user context'
-    );
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      error: { code: -32001, message: 'Authentication failed: missing tenant or user context' },
+      id: requestBody.id ?? null,
+    }, { status: 401, headers: getMcpCorsHeaders(req) });
   }
 
   // Robust discovery handling for stateless environments
   if (requestBody.method === 'tools/list') {
     const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-    const tools = await getUnifiedMcpTools({
-      clientId: authClientId,
-      userAgent: req.headers.get('user-agent'),
-    });
+    const tools = await getUnifiedMcpTools();
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
@@ -131,100 +122,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
-      result: {
-        resources: [
-          {
-            uri: 'mcp://business/snapshot',
-            name: 'Business Snapshot',
-            description: 'A proactive audit of deals, invoices, leads, and tasks for the current tenant.',
-            mimeType: 'application/json',
-          },
-          {
-            uri: 'mcp://business/ai-state',
-            name: 'Business AI State',
-            description: 'Current AI operating posture, model preference, and audit mode for this workspace.',
-            mimeType: 'application/json',
-          },
-        ],
-      },
+      result: { resources: [] }
     }, { headers: getMcpCorsHeaders(req) });
   }
 
   if (requestBody.method === 'prompts/list') {
-    const { listMcpPrompts } = await import('@/lib/mcp/prompts/review_bonnie_patterns');
-    const prompts = listMcpPrompts().map((p) => ({
-      name: p.name,
-      description: p.description,
-      arguments: (p.arguments || []).map((a: any) => ({
-        name: a.name,
-        description: a.description,
-        required: a.required ?? false,
-      })),
-    }));
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
-      result: { prompts },
+      result: { prompts: [] }
     }, { headers: getMcpCorsHeaders(req) });
-  }
-
-  if (requestBody.method === 'prompts/get') {
-    const { getMcpPrompt } = await import('@/lib/mcp/prompts/review_bonnie_patterns');
-    const name = String(requestBody.params?.name || '');
-    const prompt = getMcpPrompt(name);
-    if (!prompt) {
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        id: requestBody.id,
-        error: { code: -32602, message: `Unknown prompt: ${name}` },
-      }, { status: 400, headers: getMcpCorsHeaders(req) });
-    }
-    const args = (requestBody.params?.arguments || {}) as Record<string, string>;
-    return NextResponse.json({
-      jsonrpc: '2.0',
-      id: requestBody.id,
-      result: {
-        description: prompt.description,
-        messages: [{ role: 'user', content: { type: 'text', text: prompt.template(args) } }],
-      },
-    }, { headers: getMcpCorsHeaders(req) });
-  }
-
-  if (requestBody.method === 'tools/call') {
-    const toolName = requestBody.params?.name;
-    const toolArgs = requestBody.params?.arguments || {};
-
-    const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
-    initializeRegistry();
-
-    if (hasTool(toolName)) {
-      try {
-        const rawResult = await executeTool(tenantId, userId, toolName, {
-          ...toolArgs,
-          tenant_id: tenantId,
-          user_id: userId,
-        });
-        const result = (rawResult && typeof rawResult === 'object' && Array.isArray((rawResult as any).content))
-          ? rawResult
-          : { content: [{ type: 'text', text: typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult ?? {}, null, 2) }] };
-
-        return NextResponse.json({
-          jsonrpc: '2.0',
-          id: requestBody.id,
-          result,
-        }, { headers: getMcpCorsHeaders(req) });
-      } catch (err: any) {
-        console.error(`[MCP Messages route.ts] Execution error for ${toolName}:`, err);
-        return NextResponse.json({
-          jsonrpc: '2.0',
-          id: requestBody.id,
-          result: {
-            content: [{ type: 'text', text: JSON.stringify({ error: true, message: err?.message || 'Tool execution failed' }) }],
-            isError: true,
-          },
-        }, { headers: getMcpCorsHeaders(req) });
-      }
-    }
   }
 
   try {
@@ -237,7 +144,7 @@ export async function POST(req: NextRequest) {
     const transport = new StatelessTransport();
     await mcpServer.server.connect(transport);
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (ENV.NODE_ENV !== 'production') {
       console.log(`[MCP Messages] Passing method: ${requestBody.method} to SDK (Tenant: ${tenantId})`);
     }
 
@@ -279,10 +186,8 @@ export async function POST(req: NextRequest) {
           user_id: userId,
           expires_at: expiresAt,
           metadata: {
-            client_id: authClientId,
             client_label: requestBody.params?.clientInfo?.name || 'mcp-messages-app',
             protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
-            initial_ai_state: initialAiState,
             business_ai_version: initialAiState.version,
             business_ai_state: initialAiState,
           },

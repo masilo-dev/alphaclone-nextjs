@@ -1,6 +1,5 @@
 import { supabase } from '../lib/supabase';
 import { auditLoggingService } from './auditLoggingService';
-import { taskStatusForStorage, normalizeTaskStatus } from '@/lib/projects/projectTaskDomain';
 
 export interface Task {
     id: string;
@@ -333,24 +332,18 @@ class TaskDependencyService {
             if (!task) return;
 
             // If all blocking tasks are completed, unblock this task
-            if (blockingTasks.length === 0 && normalizeTaskStatus(task.status) === 'blocked') {
+            if (blockingTasks.length === 0 && task.status === 'blocked') {
                 await supabase
                     .from('tasks')
-                    .update({ status: taskStatusForStorage('to_do') })
+                    .update({ status: 'todo' })
                     .eq('id', taskId);
             }
 
             // If any blocking tasks exist and task is not blocked, block it
-            const currentStatus = normalizeTaskStatus(task.status);
-            if (
-                blockingTasks.length > 0 &&
-                currentStatus !== 'blocked' &&
-                currentStatus !== 'done' &&
-                currentStatus !== 'cancelled'
-            ) {
+            if (blockingTasks.length > 0 && task.status !== 'blocked' && task.status !== 'completed') {
                 await supabase
                     .from('tasks')
-                    .update({ status: taskStatusForStorage('blocked') })
+                    .update({ status: 'blocked' })
                     .eq('id', taskId);
             }
         } catch (error) {

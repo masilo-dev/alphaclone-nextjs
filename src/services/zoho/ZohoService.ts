@@ -35,17 +35,14 @@ const ZOHO_CONFIG_CACHE_TTL_MS = 60_000;
 
 export class ZohoService {
     protected userId: string;
-    protected tenantId: string;
     protected encryptionSecret: string;
     private configCache: ZohoConfig | null = null;
     private configCachedAt = 0;
+    private tenantIdCache: string | null | undefined;
+    private tenantIdCachedAt = 0;
 
-    constructor(userId: string, tenantId: string) {
+    constructor(userId: string) {
         this.userId = userId;
-        if (!tenantId?.trim()) {
-            throw new Error('A workspace is required for Zoho operations.');
-        }
-        this.tenantId = tenantId.trim();
         const secret = ENV.ZOHO_ENCRYPTION_SECRET;
         if (!secret) {
             throw new Error(
@@ -77,6 +74,8 @@ export class ZohoService {
     protected invalidateConfigCache(): void {
         this.configCache = null;
         this.configCachedAt = 0;
+        this.tenantIdCache = undefined;
+        this.tenantIdCachedAt = 0;
     }
 
     /**
@@ -93,10 +92,10 @@ export class ZohoService {
         const supabase = this.getSupabaseClient();
         const { data, error } = await supabase
             .from('integrations')
-            .select('config, enabled')
-            .eq('tenant_id', this.tenantId)
+            .select('config')
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
+            .eq('enabled', true)
             .order('updated_at', { ascending: false })
             .limit(1)
             .maybeSingle();
@@ -127,6 +126,52 @@ export class ZohoService {
         return normalized;
     }
 
+    protected async resolveTenantIdForIntegration(): Promise<string | null> {
+        if (
+            this.tenantIdCache !== undefined &&
+            Date.now() - this.tenantIdCachedAt < ZOHO_CONFIG_CACHE_TTL_MS
+        ) {
+            return this.tenantIdCache;
+        }
+
+        const supabase = this.getSupabaseClient();
+        const { data: existing } = await supabase
+            .from('integrations')
+            .select('tenant_id')
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (existing?.tenant_id) {
+            this.tenantIdCache = existing.tenant_id as string;
+            this.tenantIdCachedAt = Date.now();
+            return this.tenantIdCache;
+        }
+
+        const { data: tenantMembership } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', this.userId)
+            .order('joined_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+        if (tenantMembership?.tenant_id) {
+            this.tenantIdCache = tenantMembership.tenant_id as string;
+            this.tenantIdCachedAt = Date.now();
+            return this.tenantIdCache;
+        }
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', this.userId)
+            .maybeSingle();
+        this.tenantIdCache = (profile?.tenant_id as string) || null;
+        this.tenantIdCachedAt = Date.now();
+        return this.tenantIdCache;
+    }
+
     async saveConfig(config: Partial<ZohoConfig>): Promise<void> {
         this.invalidateConfigCache();
         const currentConfig = await this.getConfig() || {};
@@ -149,6 +194,7 @@ export class ZohoService {
         }
 
         const supabase = this.getSupabaseClient();
+        const tenantId = await this.resolveTenantIdForIntegration();
         const payload = {
             user_id: this.userId,
             type: 'zoho',
@@ -156,13 +202,12 @@ export class ZohoService {
             enabled: true,
             config: newConfig,
             updated_at: new Date().toISOString(),
-            tenant_id: this.tenantId,
+            tenant_id: tenantId,
         };
 
         const { data: existing } = await supabase
             .from('integrations')
             .select('id')
-            .eq('tenant_id', this.tenantId)
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
             .order('updated_at', { ascending: false })
@@ -172,7 +217,7 @@ export class ZohoService {
         if (existing?.id) {
             const { error: updateError } = await supabase
                 .from('integrations')
-                .update({ ...payload, enabled: true })
+                .update(payload)
                 .eq('id', existing.id);
             if (updateError) {
                 throw new Error(`Failed to update Zoho integration config: ${updateError.message}`);
@@ -190,37 +235,6 @@ export class ZohoService {
         this.invalidateConfigCache();
     }
 
-    /** Clear stale auth-expired flags after a successful token refresh or OAuth reconnect. */
-    protected async clearAuthExpiredFlags(): Promise<void> {
-        this.invalidateConfigCache();
-        const supabase = this.getSupabaseClient();
-        const { data: existing } = await supabase
-            .from('integrations')
-            .select('id, config')
-            .eq('tenant_id', this.tenantId)
-            .eq('user_id', this.userId)
-            .eq('type', 'zoho')
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        if (!existing?.id) return;
-
-        const config = { ...((existing.config as Record<string, unknown>) || {}) };
-        delete config.authExpiredAt;
-        delete config.authExpiredReason;
-
-        await supabase
-            .from('integrations')
-            .update({
-                enabled: true,
-                config,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', existing.id);
-        this.invalidateConfigCache();
-    }
-
     /** Disable cron/API use when Zoho revokes the refresh token. */
     protected async markRefreshTokenRevoked(reason: string): Promise<void> {
         this.invalidateConfigCache();
@@ -228,7 +242,6 @@ export class ZohoService {
         const { data: existing } = await supabase
             .from('integrations')
             .select('id, config')
-            .eq('tenant_id', this.tenantId)
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
             .order('updated_at', { ascending: false })
@@ -295,7 +308,6 @@ export class ZohoService {
         if (data.access_token) {
             const expiryDate = new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString();
             await this.saveConfig({ accessToken: data.access_token, expiryDate });
-            await this.clearAuthExpiredFlags();
             return data.access_token;
         }
 
@@ -393,81 +405,8 @@ export class ZohoService {
     }
 
     async checkIntegration(): Promise<boolean> {
-        const health = await this.getDetailedHealthStatus();
-        return health.status === 'connected_and_ready' || health.status === 'connected_sender_setup_required';
-    }
-
-    async getDetailedHealthStatus(): Promise<{
-        status: 'connected_and_ready' | 'connected_sender_setup_required' | 'auth_expired' | 'permission_missing' | 'disconnected';
-        senderConfigured: boolean;
-        tokenValid: boolean;
-        details: string;
-    }> {
         const config = await this.getConfig();
-        if (!config?.refreshToken) {
-            return {
-                status: 'disconnected',
-                senderConfigured: false,
-                tokenValid: false,
-                details: 'Zoho integration is not connected.',
-            };
-        }
-
-        const senderConfigured = !!(config.mailApiHost || config.crmApiHost);
-
-        try {
-            const token = await this.getValidAccessToken();
-            if (!token) {
-                if (config.authExpiredAt) {
-                    return {
-                        status: 'auth_expired',
-                        senderConfigured,
-                        tokenValid: false,
-                        details: config.authExpiredReason || 'Zoho authentication expired. Reconnect required.',
-                    };
-                }
-                return {
-                    status: 'auth_expired',
-                    senderConfigured,
-                    tokenValid: false,
-                    details: 'Failed to refresh Zoho access token.',
-                };
-            }
-
-            await this.clearAuthExpiredFlags();
-
-            if (!senderConfigured) {
-                return {
-                    status: 'connected_sender_setup_required',
-                    senderConfigured: false,
-                    tokenValid: true,
-                    details: 'Connected, but Zoho mail/CRM host or sender email is not configured.',
-                };
-            }
-
-            return {
-                status: 'connected_and_ready',
-                senderConfigured: true,
-                tokenValid: true,
-                details: 'Zoho integration is healthy, authenticated, and ready for operations.',
-            };
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Zoho API call failed during health check.';
-            if (err instanceof ZohoAuthExpiredError) {
-                return {
-                    status: 'auth_expired',
-                    senderConfigured,
-                    tokenValid: false,
-                    details: message,
-                };
-            }
-            return {
-                status: 'permission_missing',
-                senderConfigured,
-                tokenValid: false,
-                details: message,
-            };
-        }
+        return !!(config?.refreshToken);
     }
 
     async disconnect(): Promise<void> {
@@ -475,7 +414,6 @@ export class ZohoService {
         await supabase
             .from('integrations')
             .delete()
-            .eq('tenant_id', this.tenantId)
             .eq('user_id', this.userId)
             .eq('type', 'zoho');
         this.invalidateConfigCache();

@@ -31,7 +31,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId and title are required' }, { status: 400 });
     }
 
-    const { admin } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+
+    const admin = createSupabaseAdminClient();
 
     const { data: membership } = await admin
       .from('tenant_users')

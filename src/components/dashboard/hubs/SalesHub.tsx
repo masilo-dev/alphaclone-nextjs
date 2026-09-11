@@ -1,23 +1,21 @@
 'use client';
 
 import React from 'react';
-import { Users, TrendingUp, Target, Contact, CheckSquare, Mail, BarChart3, Activity, Search, Inbox } from 'lucide-react';
+import { Users, TrendingUp, Target, Contact, CheckSquare, Mail, BarChart3, Database } from 'lucide-react';
 import HubShell from './HubShell';
 
-/** Hub tabs aligned with CRM / leads / pipeline lifecycle — not every submodule at once. */
 const SALES_TABS = [
   { label: 'Overview', href: '/dashboard/crm', icon: Users },
-  { label: 'Contacts', href: '/dashboard/crm/unified-contacts', icon: Contact },
-  { label: 'Companies', href: '/dashboard/crm/accounts', icon: Users },
-  { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
-  { label: 'Lead Finder', href: '/dashboard/leads/finder', icon: Search },
-  { label: 'Pipeline', href: '/dashboard/deals', icon: Target },
-  { label: 'Activities', href: '/dashboard/crm/follow-ups', icon: Activity },
+  { label: 'Workspace', href: '/dashboard/crm/workspace', icon: Users },
   { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
-  { label: 'Reach Inbox', href: '/dashboard/outreach/inbox', icon: Inbox },
+  { label: 'Console', href: '/dashboard/crm/console', icon: Target },
+  { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
+  { label: 'Deals', href: '/dashboard/deals', icon: Target },
+  { label: 'Contacts', href: '/dashboard/contacts', icon: Contact },
+  { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   { label: 'Forecast', href: '/dashboard/forecast', icon: BarChart3 },
-  { label: 'Workspace', href: '/dashboard/crm/workspace', icon: Users },
+  { label: 'Ingestion', href: '/dashboard/business/ingestion', icon: Database },
 ];
 
 interface SalesHubProps {
@@ -27,11 +25,10 @@ interface SalesHubProps {
 export default function SalesHub({ children }: SalesHubProps) {
   return (
     <HubShell
-      title="CRM & Sales"
-      description="Relationships, leads, and deals moving toward close"
+      title="Sales Hub"
+      description="Pipeline, leads, deals, and contacts in one workspace"
       tabs={SALES_TABS}
-      moduleId="crm"
-      accent="green"
+      accent="teal"
     >
       {children}
     </HubShell>

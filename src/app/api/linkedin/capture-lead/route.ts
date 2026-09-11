@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId and actorUrn are required' }, { status: 400 });
     }
 
-    const { admin } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+    const admin = createSupabaseAdminClient();
 
     const displayName = actorUrn.includes(':') ? actorUrn.split(':').pop() : actorUrn;
     const { data: lead, error } = await admin

@@ -1,10 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
-
-function escapeEmailValue(value: string) {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
 
 export type CalendlyTenantConfig = {
   accessToken: string;
@@ -132,39 +127,11 @@ export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
     },
   };
 
-  const isNewBooking = !bookingId;
   if (bookingId) {
     await supabase.from('bookings').update(bookingPayload).eq('id', bookingId);
   } else {
     const { data: created } = await supabase.from('bookings').insert(bookingPayload).select('id').single();
     bookingId = created?.id;
-  }
-
-  if (isNewBooking && input.inviteeEmail) {
-    try {
-      const { data: host } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', input.hostUserId)
-        .maybeSingle();
-      if (host?.email) {
-        const when = new Date(input.startTime).toLocaleString('en-US', {
-          dateStyle: 'full',
-          timeStyle: 'short',
-        });
-        await sendEmailServer({
-          tenantId: input.tenantId,
-          to: host.email,
-          replyTo: input.inviteeEmail,
-          subject: `New Calendly booking: ${input.inviteeName || 'Guest'} - ${input.eventName}`,
-          templateName: 'calendlyHostNotification',
-          isPlatformNotification: true,
-          html: `<div style="font-family:Arial,sans-serif;padding:24px;color:#0f172a"><h2>New demo booking</h2><p><strong>${escapeEmailValue(input.inviteeName || 'Guest')}</strong> (${escapeEmailValue(input.inviteeEmail)}) booked <strong>${escapeEmailValue(input.eventName)}</strong>.</p><p><strong>When:</strong> ${escapeEmailValue(when)}</p>${input.location ? `<p><a href="${escapeEmailValue(input.location)}">Open meeting</a></p>` : ''}</div>`,
-        });
-      }
-    } catch (notifyError) {
-      console.error('[Calendly] Host email notification failed:', notifyError);
-    }
   }
 
   const { data: existingCall } = await supabase
@@ -231,33 +198,30 @@ export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
 export async function registerCalendlyWebhook(
   accessToken: string,
   calendlyUserUri: string,
-  callbackUrl: string,
-  organizationUri?: string
+  callbackUrl: string
 ): Promise<string | null> {
-  const bodyPayload: Record<string, unknown> = {
-    url: callbackUrl,
-    events: [
-      'invitee.created',
-      'invitee.canceled',
-      'invitee_no_show.created',
-      'meeting_recap.created',
-      'contact.created',
-      'contact.updated',
-      'contact.deleted',
-    ],
-    user: calendlyUserUri,
-    scope: 'user',
-  };
-  if (organizationUri) {
-    bodyPayload.organization = organizationUri;
-  }
   const res = await fetch('https://api.calendly.com/webhook_subscriptions', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(bodyPayload),
+    body: JSON.stringify({
+      url: callbackUrl,
+      events: [
+        'invitee.created',
+        'invitee.canceled',
+        'invitee.no_show.created',
+        // New events: meeting recap (Oct 2025), contacts (May 2026), routing forms
+        'meeting_recap.created',
+        'routing_form_submission.created',
+        'contact.created',
+        'contact.updated',
+        'contact.deleted',
+      ],
+      user: calendlyUserUri,
+      scope: 'user',
+    }),
   });
 
   if (!res.ok) {

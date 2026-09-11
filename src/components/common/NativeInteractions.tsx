@@ -32,9 +32,6 @@ export default function NativeInteractions() {
 
     useEffect(() => {
         const handleInteraction = (e: MouseEvent | TouchEvent) => {
-            // Synthetic/programmatic events do not grant browser user
-            // activation and Chrome rejects vibration attempted from them.
-            if (!e.isTrusted || !navigator.userActivation?.isActive) return;
             const target = e.target as HTMLElement;
             const interactive = target.closest('button, a, [role="button"]');
 

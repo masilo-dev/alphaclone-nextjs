@@ -165,7 +165,7 @@ function getRating(name: WebVitalName, value: number): WebVitalRating {
  * Generate unique metric ID
  */
 function generateMetricId(): string {
-  return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**

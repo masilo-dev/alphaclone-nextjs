@@ -3,7 +3,6 @@ import { ChatMessage } from '../../types';
 import { format } from 'date-fns';
 import { Loader2, FileIcon, Download, CheckCheck, Flag, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
-import { Avatar } from '@/components/ui/Avatar';
 
 interface MessageBubbleProps {
     message: ChatMessage;
@@ -28,7 +27,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 {/* Avatar Gutter */}
                 <div className="w-8 flex-shrink-0">
                     {!isOwn && showAvatar && (
-                        <Avatar name={message.senderName} size={32} />
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                            {message.senderName?.[0]?.toUpperCase() || '?'}
+                        </div>
                     )}
                 </div>
 

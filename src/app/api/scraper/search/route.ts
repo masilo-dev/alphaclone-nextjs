@@ -6,7 +6,8 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
 import { scraperSearchSchema } from '@/schemas/validation';
 import { enrichLeadWebsite } from '@/lib/scraper/enrichmentPipeline';
-import { runInBackground } from '@/lib/server/backgroundTask';
+import { waitUntil } from '@vercel/functions';
+import { checkBotId } from 'botid/server';
 
 const SOURCE_UNAVAILABLE = 'This source could not return results. Try again or adjust your query.';
 import {
@@ -555,6 +556,11 @@ export async function POST(request: Request) {
     const requestStartedAt = Date.now();
     const isBudgetExceeded = () => Date.now() - requestStartedAt > REQUEST_BUDGET_MS;
 
+    // Vercel BotId Protection
+    const verification = await checkBotId();
+    if (verification.isBot) {
+      return NextResponse.json({ error: 'Bot detected. Access denied.' }, { status: 403 });
+    }
 
     const body = await request.json();
     const fallbackNiche = body.niche || body.query?.split(' in ')[0]?.trim() || '';
@@ -721,8 +727,9 @@ export async function POST(request: Request) {
           }
         })
     );
-      // Run final cleanup and history deduplication in the background
-      runInBackground((async () => {
+      // Run final cleanup and history deduplication in the background via waitUntil
+      // This ensures we return results immediately while still maintaining durable state
+      waitUntil((async () => {
         const tenantIdForDedupe = tenantId || '';
         if (tenantIdForDedupe) {
           const adminForDedupe = getAdminSupabase();

@@ -1,16 +1,14 @@
 /** Single source of truth for outcome-led marketing copy. */
 
-import { MARKETING_PRICING } from '@/config/pricingPlans';
-
 export const OUTCOME_PROMISE = {
   badge: 'Every lead-to-invoice workflow in one place',
   /** Shorter badge for narrow screens — clearer ICP, less wrap under the nav */
   badgeMobile: 'For service businesses & agencies',
-  headline: 'Your business has tools.',
-  headlineAccent: 'Now give it an execution layer.',
+  headline: 'Stop managing tools.',
+  headlineAccent: 'Run your whole client business from one workspace.',
   subhead:
-    'AlphaClone turns your instructions into coordinated action across CRM, billing, projects, and outreach — while you retain control over important decisions.',
-  icp: 'For solo founders and small service teams who coordinate work across disconnected tools.',
+    'AlphaClone replaces a patchwork of CRM, invoicing, contracts, projects, meetings, and social tools with a single, AI-assisted OS for service businesses.',
+  icp: 'For founders, agencies, and lean teams who want enterprise-grade tracking without enterprise-grade complexity.',
 } as const;
 
 export const OUTCOME_HERO_BULLETS = [
@@ -27,7 +25,7 @@ export const OUTCOME_TRUST_POINTS = [
 
 export const OUTCOME_PROOF_STATS = [
   { value: '1', label: 'client record', detail: 'from first lead to paid invoice' },
-  { value: '1', label: 'workflow focus', detail: 'start with quote-to-cash or follow-up' },
+  { value: '5+', label: 'tools replaced', detail: 'typical CRM + billing + contracts stack' },
   { value: '14', label: 'days to test', detail: 'full workflow before you pay' },
   { value: '$0', label: 'card to start', detail: 'cancel anytime' },
 ] as const;
@@ -65,7 +63,7 @@ export const OUTCOME_CASE_STUDIES: OutcomeCaseStudy[] = [
     id: 'solo-consultant',
     persona: 'Solo consultant',
     industry: 'Professional services',
-    stackReplaced: 'HubSpot + QuickBooks + Cal.com',
+    stackReplaced: 'HubSpot + QuickBooks + Calendly',
     problem:
       'Every new client meant three logins, duplicate contact entry, and invoices disconnected from the deal that created them.',
     whatChanged:
@@ -132,7 +130,7 @@ export const WHO_WE_SERVE_HERO = {
   headline: 'Built for teams that sell',
   headlineAccent: 'and deliver client work.',
   subhead:
-    'If you outgrew spreadsheets and tab-switching between CRM, projects, and billing — AlphaClone is your operating layer, not another point tool.',
+    'If you outgrew spreadsheets and tab-switching between CRM, projects, and billing — Alphaclone is your operating layer, not another point tool.',
 } as const;
 
 export type WhoWeServeSegment = {
@@ -194,7 +192,7 @@ export const WHO_WE_SERVE_SEGMENTS: WhoWeServeSegment[] = [
     challenge:
       'Per-seat enterprise pricing prices out small teams that still need credible client operations.',
     outcomes: [
-      `Full client workflow (${MARKETING_PRICING.startingPriceLine}) — flat workspace pricing`,
+      'Full client workflow from $15/month — no per-seat escalation on Starter',
       '14-day trial to validate before you commit budget',
       'Same capabilities larger firms pay multiple vendors for',
     ],

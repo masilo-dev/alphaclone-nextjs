@@ -3,11 +3,11 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown, MailCheck, Sparkles } from 'lucide-react';
 import { Button, Input } from '../../ui/UIComponents';
-import { CommunicationComposer } from '@/components/ui/os/CommunicationComposer';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { BusinessClient, businessClientService } from '../../../services/businessClientService';
+import { supabase } from '../../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
-import { useBonnieDrawerOptional } from '@/contexts/BonnieDrawerContext';
 import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
 import { EmailRecipient, toBusinessClientFromRecipient } from './emailRecipient';
 
@@ -38,7 +38,6 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     onSent,
 }) => {
     const { currentTenant } = useTenant();
-    const bonnieDrawer = useBonnieDrawerOptional();
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(client || null);
     const [subject, setSubject] = useState(prefilledSubject || '');
     const [body, setBody] = useState(prefilledBody || '');
@@ -58,6 +57,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     const [contactSearch, setContactSearch] = useState('');
     const [showPicker, setShowPicker] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
+
+    const [signature, setSignature] = useState('');
     const pickerRef = useRef<HTMLDivElement>(null);
     
     // Define available email providers
@@ -88,6 +89,15 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     useEffect(() => {
         if (prefilledBody) setBody(prefilledBody);
     }, [prefilledBody]);
+
+    // Load signature
+    useEffect(() => {
+        const fetchSignature = async () => {
+            const sig = await businessClientService.getUserSignature(user.id);
+            setSignature(sig);
+        };
+        fetchSignature();
+    }, [user.id]);
 
     useEffect(() => {
         const loadClients = async () => {
@@ -162,6 +172,24 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Handle AI Auto-drafting and Signature Appending
+    useEffect(() => {
+        if (selectedClient?.customFields?.ai_outreach_draft) {
+            const draft = selectedClient.customFields.ai_outreach_draft;
+            setSubject(draft.subject || '');
+
+            // Only update body if it's currently empty to avoid overwriting user edits
+            // But always ensure signature is present if empty
+            if (!body) {
+                setBody(`${draft.body || ''}${signature}`);
+            }
+        } else if (selectedClient && !subject && !body) {
+            // Default template for non-draft clients
+            setSubject(`Strategic Update: ${selectedClient.name}`);
+            setBody(`Hello ${selectedClient.name.split(' ')[0]},\n\nI would like to follow up on our recent discussion...\n${signature}`);
+        }
+    }, [selectedClient, signature]);
+
     const filteredContacts = useMemo(() => {
         const query = contactSearch.trim().toLowerCase();
         if (!query) return clients;
@@ -195,7 +223,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             const response = await fetch('/api/outreach/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
+                body: JSON.stringify({
                     tenantId: currentTenant.id,
                     leadEmail: selectedClient.email,
                     leadName: selectedClient.name,
@@ -207,8 +235,6 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                     autoSend: true,
                     consentGranted: true,
                     confidenceScore: 100,
-                    skipCrmGate: true,
-                    directSend: true,
                     deliveryProviders: [selectedProvider],
                     preferredProvider: selectedProvider,
                     balanceByDailyLimit: false,
@@ -223,8 +249,12 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                 throw new Error('Email was queued for approval instead of sending. Check AI Agents or retry with auto-send enabled.');
             }
 
-            const { activityService } = await import('../../../services/activityService');
-            await activityService.logActivity(user.id, 'Email Sent', { type: 'EXECUTE', to: selectedClient.email, subject, provider: result.provider || selectedProvider }, currentTenant.id);
+            await supabase.from('activity_logs').insert({
+                user_id: user.id,
+                type: 'EXECUTE',
+                action: 'Email Sent',
+                details: { to: selectedClient.email, subject, provider: result.provider || selectedProvider }
+            });
 
             const sentVia = String(result.provider || selectedProvider).toUpperCase();
             toast.success(`Email sent successfully via ${sentVia}`);
@@ -255,14 +285,14 @@ Recipient industry: ${selectedClient.industry || 'Unknown'}
 Subject: ${subject}
 Context: ${selectedClient.description || 'No additional context'}
 Current draft: ${body || 'No current draft'}
-Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject or current draft already uses them. Return valid JSON with keys "subject" and "body".`;
+Return valid JSON with keys "subject" and "body".`;
 
             const response = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     prompt,
-                    systemPrompt: 'You are a professional business email assistant. Return JSON only. Never auto-add greetings unless explicitly present in the request.',
+                    systemPrompt: 'You are a professional business email assistant. Return JSON only.',
                 }),
             });
 
@@ -287,37 +317,18 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
         }
     };
 
-    const relatedCustomer = selectedClient
-        ? { type: 'Customer', id: selectedClient.id, label: selectedClient.name }
-        : recipient
-            ? { type: 'Recipient', label: recipient.name || recipient.email || 'Contact' }
-            : undefined;
-
     return (
-        <CommunicationComposer
+        <DetailDrawer
             open
-            onOpenChange={(next) => { if (!next) onClose(); }}
-            title="Compose message"
-            defaultChannel="email"
-            relatedCustomer={relatedCustomer}
-            onAskBonnie={
-                bonnieDrawer
-                    ? () => {
-                        bonnieDrawer.openDrawer({
-                            mode: 'draft',
-                            contexts: relatedCustomer
-                                ? [{ type: relatedCustomer.type, id: relatedCustomer.id, label: relatedCustomer.label }]
-                                : undefined,
-                        });
-                    }
-                    : undefined
-            }
+            onOpenChange={(open) => { if (!open) onClose(); }}
+            title="Send Email"
+            size="wide"
         >
-            <div className="space-y-4">
+            <div className="space-y-6">
                 {/* Provider selector — always visible so Zoho/Microsoft compose starts clearly */}
                 <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Send via</label>
-                    <div className="flex flex-wrap gap-2 p-1 bg-[var(--ws-surface-secondary)] rounded-[10px] border border-[var(--ws-border)]">
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Send via</label>
+                    <div className="flex flex-wrap gap-2 p-1 bg-slate-900/50 rounded-xl border border-slate-800">
                         {availableProviders.map((p) => {
                             if (!p) return null;
                             const connected = providerStatus[p];
@@ -334,12 +345,12 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                 }}
                                 disabled={loadingProvider}
                                 title={connected ? `Send with ${providerLabels[p]}` : `Connect ${providerLabels[p]} in Settings`}
-                                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-[8px] text-xs font-semibold transition-all ${
+                                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
                                     selectedProvider === p && connected
-                                    ? 'bg-[var(--brand-blue-500)] text-white shadow-sm' 
+                                    ? 'bg-teal-500 text-slate-950 shadow-lg shadow-teal-500/20'
                                     : connected
-                                        ? 'text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] border border-[var(--ws-border)] hover:border-[var(--brand-blue-500)]'
-                                        : 'text-[var(--ws-text-disabled)] bg-[var(--ws-surface-tertiary)] cursor-not-allowed border border-[var(--ws-border)]'
+                                        ? 'text-slate-300 hover:text-white border border-slate-700 hover:border-teal-500/40'
+                                        : 'text-slate-600 bg-slate-900/30 cursor-not-allowed border border-slate-800'
                                 }`}
                             >
                                 <MailCheck className="w-3.5 h-3.5" />
@@ -364,10 +375,10 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                         <button
                             type="button"
                             onClick={() => { setContactSearch(''); setShowPicker(v => !v); }}
-                            className="w-full flex items-center gap-3 p-3 bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-[12px] hover:border-[var(--brand-blue-500)] transition-colors text-left"
+                            className="w-full flex items-center gap-3 p-3 bg-slate-800/50 border border-slate-700 rounded-xl hover:border-teal-500/50 transition-colors text-left"
                         >
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${selectedClient ? 'bg-[var(--ws-active)] border border-[var(--brand-blue-500)]' : 'bg-[var(--ws-surface-tertiary)] border border-[var(--ws-border)]'}`}>
-                                {selectedClient ? <User className="w-4 h-4 text-[var(--brand-blue-500)]" /> : <Users className="w-4 h-4 text-[var(--ws-text-muted)]" />}
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${selectedClient ? 'bg-teal-600/30 border border-teal-500/30' : 'bg-slate-700 border border-slate-600'}`}>
+                                {selectedClient ? <User className="w-4 h-4 text-teal-400" /> : <Users className="w-4 h-4 text-slate-400" />}
                             </div>
                             <div className="flex-1 min-w-0">
                                 {selectedClient ? (
@@ -393,7 +404,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                             value={contactSearch}
                                             onChange={(e) => setContactSearch(e.target.value)}
                                             placeholder="Search clients..."
-                                            className="w-full bg-slate-900 text-white text-xs rounded-lg pl-8 pr-3 py-2 outline-none border border-slate-700 focus:border-[var(--brand-blue-500)]/50 transition-all"
+                                            className="w-full bg-slate-900 text-white text-xs rounded-lg pl-8 pr-3 py-2 outline-none border border-slate-700 focus:border-teal-500/50 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -409,10 +420,10 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                                 setShowPicker(false);
                                                 setContactSearch('');
                                             }}
-                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-700 transition-colors ${selectedClient?.id === contact.id ? 'bg-[var(--brand-blue-500)]/10' : ''}`}
+                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-700 transition-colors ${selectedClient?.id === contact.id ? 'bg-teal-500/10' : ''}`}
                                         >
-                                            <div className="w-7 h-7 rounded-full bg-[var(--brand-blue-600)]/20 border border-[var(--brand-blue-500)]/20 flex items-center justify-center shrink-0">
-                                                <User className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
+                                            <div className="w-7 h-7 rounded-full bg-teal-600/20 border border-teal-500/20 flex items-center justify-center shrink-0">
+                                                <User className="w-3.5 h-3.5 text-teal-400" />
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-white text-xs font-medium truncate">{contact.name}</p>
@@ -438,11 +449,11 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                 )}
 
                 {recipient?.email && (
-                    <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-active)] p-3 flex items-center gap-3">
-                        <Mail className="w-4 h-4 text-[var(--brand-blue-500)] shrink-0" />
+                    <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 flex items-center gap-3">
+                        <Mail className="w-4 h-4 text-teal-400 shrink-0" />
                         <div>
-                            <p className="text-sm font-semibold text-[var(--ws-text-primary)]">{recipient.name}</p>
-                            <p className="text-xs text-[var(--ws-text-muted)]">{recipient.email}</p>
+                            <p className="text-sm font-semibold text-white">{recipient.name}</p>
+                            <p className="text-xs text-slate-400">{recipient.email}</p>
                         </div>
                     </div>
                 )}
@@ -472,10 +483,10 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                 type="button"
                                 onClick={handleGenerateWithAI}
                                 disabled={aiGenerating || !selectedClient || loadingProvider}
-                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-[8px] border border-[var(--ws-border)] text-[var(--brand-violet-500)] hover:bg-[var(--ws-hover)] transition-all disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border border-teal-500/30 text-teal-300 hover:bg-teal-500/10 transition-all disabled:opacity-50"
                             >
                                 {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                                Bonnie draft
+                                AI Draft
                             </button>
                         </div>
                         <textarea
@@ -483,19 +494,19 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             onChange={(e) => setBody(e.target.value)}
                             placeholder="Type your message here..."
                             disabled={!selectedClient?.email || loadingProvider}
-                            className="w-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] p-3 rounded-[12px] text-[var(--ws-text-primary)] text-sm focus:outline-none focus:border-[var(--brand-blue-500)] transition-colors h-[140px] max-h-[140px] resize-none overflow-y-auto"
+                            className="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-white text-sm focus:outline-none focus:border-teal-500 transition-colors min-h-[200px] resize-none"
                         />
                     </div>
                 </div>
 
-                <div className="border-t border-[var(--ws-border)] pt-4 flex items-center justify-between gap-3 flex-wrap">
-                    <div className="text-[var(--ws-text-muted)] text-xs flex items-center gap-2">
+                <div className="border-t border-slate-800 pt-4 flex items-center justify-between">
+                    <div className="text-slate-500 text-xs flex items-center gap-2">
                         {loadingProvider ? (
                             <><Loader2 className="w-3 h-3 animate-spin" /> Detecting provider...</>
                         ) : selectedProvider ? (
-                            <><CheckCircle2 className="w-3 h-3 text-[var(--success-500)]" /> Using {selectedProvider === 'microsoft' ? 'Microsoft 365' : selectedProvider === 'zoho' ? 'Zoho Mail' : selectedProvider === 'sendgrid' ? 'SendGrid' : selectedProvider === 'resend' ? 'Resend' : 'Brevo'} to send securely</>
+                            <><CheckCircle2 className="w-3 h-3 text-teal-500" /> Using {selectedProvider === 'microsoft' ? 'Microsoft 365' : selectedProvider === 'zoho' ? 'Zoho Mail' : selectedProvider === 'sendgrid' ? 'SendGrid' : selectedProvider === 'resend' ? 'Resend' : 'Brevo'} to send securely</>
                         ) : (
-                            <><span className="text-[var(--warning-text)]">No provider connected. Emails cannot be sent.</span></>
+                            <><span className="text-amber-500">⚠ No provider connected. Emails cannot be sent.</span></>
                         )}
                     </div>
                     <div className="flex gap-3">
@@ -506,13 +517,13 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                             onClick={handleSend}
                             disabled={isSending || loadingProvider || !selectedClient?.email || !selectedProvider}
                             icon={isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                            className="bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-semibold"
+                            className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold"
                         >
-                            {isSending ? 'Sending...' : 'Send message'}
+                            {isSending ? 'Sending...' : 'Send Message'}
                         </Button>
                     </div>
                 </div>
             </div>
-        </CommunicationComposer>
+        </DetailDrawer>
     );
 };

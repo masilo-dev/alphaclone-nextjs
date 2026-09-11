@@ -7,7 +7,7 @@ import { SITE_URL } from '@/lib/siteUrl';
 const f = MARKETING_FEATURES.sequences;
 
 export const metadata: Metadata = {
-  title: `${f.title} | AlphaClone`,
+  title: `${f.title} | Alphaclone`,
   description: f.description,
   alternates: { canonical: `${SITE_URL}/marketing/sequences` },
 };

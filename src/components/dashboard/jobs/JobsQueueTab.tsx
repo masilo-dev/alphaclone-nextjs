@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { RefreshCw, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
@@ -12,7 +12,6 @@ import {
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
-import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 type QueueRow = {
   id: string;
@@ -67,8 +66,8 @@ export default function JobsQueueTab() {
         .catch((error: unknown) => ({ data: [], error })),
       supabase
         .from('lead_run_log')
-        .select('id, campaign_id, status, errors, run_at, message, metadata')
-        .order('run_at', { ascending: false })
+        .select('id, campaign_id, market, category, status, errors, created_at')
+        .order('created_at', { ascending: false })
         .limit(30)
         .then((r: { data: unknown[] | null; error: unknown }) => r)
         .catch((error: unknown) => ({ data: [], error })),
@@ -107,12 +106,12 @@ export default function JobsQueueTab() {
           }))),
       ...(isMissingTableError((leadRunsRes as { error?: unknown }).error)
         ? []
-        : ((leadRunsRes as { data: { id: string; status: string; run_at: string; message: string | null; metadata: Record<string, unknown> | null }[] | null }).data || []).map((r) => ({
+        : ((leadRunsRes as { data: { id: string; market: string | null; category: string | null; status: string; created_at: string }[] | null }).data || []).map((r) => ({
             id: r.id,
             kind: 'lead_run',
             status: r.status || 'unknown',
-            detail: r.message || [r.metadata?.market, r.metadata?.category].filter(Boolean).join(' · ') || 'lead run',
-            created_at: r.run_at,
+            detail: [r.market, r.category].filter(Boolean).join(' · ') || 'lead run',
+            created_at: r.created_at,
           }))),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -135,10 +134,15 @@ export default function JobsQueueTab() {
   return (
     <ModulePageLayout
       header={
-        <EnterprisePageHeader
-          moduleKey="jobs"
-          secondaryActions={[{ label: 'Refresh', onClick: () => void load() }]}
-        />
+        <div className="px-1 pb-2 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-white">Jobs & Queue</h1>
+            <p className="text-sm text-slate-400">Automation events, workflows, and scraper jobs</p>
+          </div>
+          <button type="button" onClick={() => void load()} className="p-2 rounded-lg border border-[var(--ws-border)] text-slate-400 hover:text-white">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       }
     >
       <div className="ac-scroll-full pb-24">

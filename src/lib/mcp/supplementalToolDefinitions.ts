@@ -1,16 +1,7 @@
-export type McpToolAnnotations = {
-  readOnlyHint: boolean;
-  openWorldHint: boolean;
-  destructiveHint: boolean;
-};
-
 export type McpDiscoveryTool = {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  annotations?: McpToolAnnotations;
-  jsonSchema?: Record<string, unknown>;
-  _meta?: Record<string, unknown>;
 };
 
 const tenantIdProp = { type: 'string', description: 'AlphaClone Workspace ID' };
@@ -224,19 +215,6 @@ export const SUPPLEMENTAL_MCP_TOOLS: McpDiscoveryTool[] = [
         goal: { type: 'string' },
       },
       required: ['tenant_id'],
-    },
-  },
-  {
-    name: 'execute_internal_tool',
-    description: 'Compatibility dispatcher for authorized AlphaClone tools by canonical name. Prefer direct stable-core or domain-pack tools when available.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        tenant_id: tenantIdProp,
-        tool_name: { type: 'string', description: 'Canonical internal tool name to execute' },
-        arguments: { type: 'object', description: 'Arguments object matching the target tool schema' },
-      },
-      required: ['tenant_id', 'tool_name'],
     },
   },
 ];

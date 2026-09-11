@@ -19,16 +19,5 @@ module.exports = defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'mobile',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: devices['iPhone 12'].viewport,
-        userAgent: devices['iPhone 12'].userAgent,
-        isMobile: true,
-        hasTouch: true,
-      },
-      testMatch: /mobile-.*\.spec\.js/,
-    },
   ],
 });

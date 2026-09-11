@@ -8,9 +8,7 @@ export const BONNIE_REGISTRY_TOOLS = [
   'get_contacts', 'create_contact', 'update_contact', 'log_contact_activity',
   'get_deals', 'create_deal', 'update_deal', 'move_deal_stage', 'get_pipeline_summary',
   // Finance
-  'get_invoices', 'create_invoice', 'update_invoice_status', 'update_invoice', 'send_invoice',
-  'convert_quote_to_invoice', 'get_accounts_receivable_aging', 'get_accounts_payable_aging',
-  'accounting_snapshot', 'get_revenue_summary', 'get_finance_snapshot',
+  'get_invoices', 'create_invoice', 'update_invoice_status', 'accounting_snapshot', 'get_revenue_summary', 'get_finance_snapshot',
   // Projects & tasks
   'get_projects', 'create_project', 'get_project_tasks', 'create_project_task', 'update_project_task',
   // Campaigns & outreach
@@ -37,11 +35,6 @@ export const BONNIE_REGISTRY_TOOLS = [
   // Bonnie meta
   'orchestrate_task', 'define_outcome', 'trigger_bonnie_dream',
   'list_skills', 'load_skill', 'activate_skill_for_session',
-  'list_pending_approvals', 'approve_pending_action', 'reject_pending_action',
-  // Platform advantage
-  'owner_autopilot_queue', 'revenue_recovery_agent', 'client_pulse',
-  'deal_to_cash_flow', 'ai_business_readiness_score', 'business_memory_graph',
-  'trust_ledger', 'solo_owner_time_savings_meter',
 ] as const;
 
 /** Tools implemented in MCPServer (not in lightweight registry) */
@@ -53,11 +46,8 @@ export const BONNIE_MCP_SERVER_TOOLS = [
   'get_tasks', 'create_task', 'update_task',
   // Email campaigns — create + publish
   'create_bulk_email_campaign', 'queue_email_campaign_send', 'send_bulk_email_campaign',
-  'get_bulk_job_status',
-  'send_batch_outreach',
   // Social publish
   'create_social_post', 'create_post', 'create_linkedin_post', 'create_post_with_ai_image',
-  'publish_social_post', 'publish_post',
   'upload_media_asset',
   // WhatsApp
   'send_whatsapp_message', 'get_whatsapp_status', 'enable_whatsapp_chatbot', 'disable_whatsapp_chatbot',
@@ -70,22 +60,14 @@ export const BONNIE_MCP_SERVER_TOOLS = [
   'nexus_lead_enrichment', 'nexus_sales_campaign',
   'capture_linkedin_comment_leads', 'auto_create_lead_from_message',
   // Tickets
-  'create_ticket', 'get_tickets', 'escalate_ticket',
+  'create_ticket', 'get_tickets',
   // Invoicing actions
-  'send_invoice', 'nexus_invoice_chasing', 'reconcile_payment', 'send_receipt', 'start_invoice_lifecycle',
-  // Quotes and contracts
-  'get_quotes', 'create_quote', 'send_quote', 'start_contract_lifecycle',
-  // Platform health
-  'get_api_health',
+  'send_invoice', 'nexus_invoice_chasing',
   // Deals scoring
   'score_deal',
 ] as const;
 
 export const BONNIE_CUSTOM_TOOLS = [
-  'get_daily_operations_summary',
-  'get_tenant_activity_timeline',
-  'get_unreplied_emails_and_sla_risks',
-  'delegate_to_hermes',
   'run_autonomous_scan',
   'summarize_workspace',
   'get_account_overview',
@@ -106,9 +88,6 @@ export const BONNIE_CUSTOM_TOOLS = [
   'draft_reply',
   'summarize_ticket',
   'generate_outreach_draft',
-  'list_pending_approvals',
-  'approve_pending_action',
-  'reject_pending_action',
 ] as const;
 
 export type BonnieModuleId =
@@ -137,11 +116,11 @@ export const BONNIE_MODULE_HINTS: Record<
 > = {
   crm: {
     label: 'CRM',
-    tools: ['get_contacts', 'create_contact', 'get_clients', 'log_contact_activity', 'client_pulse', 'owner_autopilot_queue', 'revenue_recovery_agent', 'get_tenant_activity_timeline'],
-    examples: ['Show my top contacts', 'Which clients need attention?', 'Recover overdue invoice cash'],
+    tools: ['get_contacts', 'create_contact', 'get_clients', 'log_contact_activity'],
+    examples: ['Show my top contacts', 'Log a call with Acme Corp'],
   },
   leads: {
-    label: 'Lead Finder',
+    label: 'Leads',
     tools: [
       'get_leads',
       'create_lead',
@@ -150,21 +129,17 @@ export const BONNIE_MODULE_HINTS: Record<
       'parse_lead_criteria',
       'qualify_crm_leads',
       'get_scraper_leads',
-      'list_scraper_campaigns',
-      'create_scraper_campaign',
-      'run_scraper_campaign',
       'search_facebook_leads',
       'start_lead_campaign',
       'nexus_lead_enrichment',
       'recommend_next_steps',
       'generate_outreach_draft',
-      'send_batch_outreach',
     ],
     examples: [
-      'Find plumbers in Austin and qualify them now',
-      'Create a scraper campaign for dental clinics in Dallas and run it',
-      'Show scraper leads and send outreach to the top 5',
-      'Enrich Acme Corp and push next steps into CRM',
+      'Find plumbers in Austin (discovery only — find_and_qualify_leads)',
+      'Enrich existing lead Acme Corp with more data (nexus_lead_enrichment)',
+      'Score my CRM leads for dental clinics — min score 50',
+      'List hot leads',
     ],
   },
   deals: {
@@ -184,55 +159,22 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   social: {
     label: 'Social media',
-    tools: [
-      'upload_media_asset',
-      'create_social_post_with_media',
-      'create_social_post',
-      'create_linkedin_post',
-      'publish_social_post',
-      'publish_post',
-      'schedule_social_post',
-      'publish_facebook_reel',
-      'publish_facebook_multi_photo',
-      'search_facebook_leads',
-    ],
+    tools: ['upload_media_asset', 'create_social_post_with_media', 'create_social_post', 'create_linkedin_post', 'schedule_social_post', 'publish_facebook_reel', 'search_facebook_leads'],
     examples: [
-      'Publish this caption to Facebook now',
+      'Post this image to Facebook with caption …',
       'Upload media and publish a LinkedIn post about our new service',
-      'Schedule tomorrow’s Instagram post and confirm it is live in the calendar',
+      'Search Facebook leads inside the platform',
     ],
   },
   mail: {
     label: 'Mail',
-    tools: ['microsoft_get_emails', 'microsoft_send_email', 'send_bulk_email_campaign', 'get_unreplied_emails_and_sla_risks'],
-    examples: ['Summarize unread mail', 'Send follow-up email to client', 'Check SLA risks'],
+    tools: ['microsoft_get_emails', 'microsoft_send_email', 'send_bulk_email_campaign'],
+    examples: ['Summarize unread mail', 'Send follow-up email to client'],
   },
   accounting: {
     label: 'Accounting',
-    tools: [
-      'get_revenue_summary',
-      'accounting_snapshot',
-      'get_finance_snapshot',
-      'get_accounts_receivable_aging',
-      'get_accounts_payable_aging',
-      'get_invoices',
-      'create_invoice',
-      'update_invoice',
-      'update_invoice_status',
-      'send_invoice',
-      'convert_quote_to_invoice',
-      'reconcile_payment',
-      'send_receipt',
-      'start_invoice_lifecycle',
-      'nexus_invoice_chasing',
-      'revenue_recovery_agent',
-      'deal_to_cash_flow',
-    ],
-    examples: [
-      'Chase all overdue invoices now',
-      'Show AR aging then send payment reminders',
-      'Convert quote to invoice and send it',
-    ],
+    tools: ['get_revenue_summary', 'accounting_snapshot', 'get_invoices', 'send_invoice'],
+    examples: ['What is my revenue this month?', 'Show overdue invoices'],
   },
   contracts: {
     label: 'Contracts',
@@ -266,27 +208,23 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   inbox: {
     label: 'Unified inbox',
-    tools: ['microsoft_get_emails', 'search_email_lead_context', 'draft_reply', 'get_recent_messages', 'get_unreplied_emails_and_sla_risks'],
-    examples: ['Who is this email from?', 'Draft reply to latest client email', 'Check unreplied emails'],
+    tools: ['microsoft_get_emails', 'search_email_lead_context', 'draft_reply', 'get_recent_messages'],
+    examples: ['Who is this email from?', 'Draft reply to latest client email'],
   },
   analytics: {
     label: 'Analytics',
-    tools: ['get_dashboard_stats', 'get_revenue_summary', 'get_api_health', 'get_business_snapshot', 'get_daily_operations_summary'],
-    examples: ['How is the business performing?', 'Revenue this month vs last', 'What happened in my business today?'],
+    tools: ['get_dashboard_stats', 'get_revenue_summary', 'get_api_health', 'get_business_snapshot'],
+    examples: ['How is the business performing?', 'Revenue this month vs last'],
   },
   automation: {
     label: 'Automation',
-    tools: ['delegate_to_hermes', 'run_playbook', 'get_automation_health', 'orchestrate_task', 'get_autonomous_rules', 'run_autonomous_scan'],
-    examples: ['Run invoice recovery playbook', 'What automations are unhealthy?', 'Start a background agent task for this workflow'],
+    tools: ['run_playbook', 'get_automation_health', 'orchestrate_task', 'get_autonomous_rules', 'run_autonomous_scan'],
+    examples: ['Run invoice recovery playbook', 'What automations are unhealthy?'],
   },
   general: {
     label: 'Workspace',
     tools: [
-      'get_daily_operations_summary',
-      'get_tenant_activity_timeline',
-      'get_unreplied_emails_and_sla_risks',
       'get_account_overview',
-      'delegate_to_hermes',
       'get_integration_health',
       'get_proactive_brief',
       'get_customer_360',
@@ -301,7 +239,6 @@ export const BONNIE_MODULE_HINTS: Record<
       'start_contract_lifecycle',
     ],
     examples: [
-      'What happened in my business today?',
       'Give me full account overview',
       'Run full workspace scan',
       'Give me chief of staff briefing',

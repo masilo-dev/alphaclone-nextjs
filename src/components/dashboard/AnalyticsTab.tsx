@@ -1,29 +1,27 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  TrendingDown, FileText, ChevronRight,
-  BarChart3, PieChart, Loader2,
+  TrendingUp, TrendingDown, FileText, ChevronRight,
+  BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw,
 } from 'lucide-react';
+import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
 import { format, parseISO } from 'date-fns';
-import { StandardLineChart } from '@/components/ui/design-system';
-import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
-import { PlatformKpiGrid, MetricDateRangeSelector, ModuleKpiRichSections } from '@/components/dashboard/metrics';
-import { platformKpiFromNumbers } from '@/lib/metrics/metricPresentation';
-import { useMetricDateRange } from '@/hooks/useMetricDateRange';
-import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { useTenant } from '@/contexts/TenantContext';
+import { StandardStatCard, StandardLineChart, type CardTheme } from '@/components/ui/design-system';
+
+type DateRange = '7d' | '30d' | '90d';
+type ChartMetric = 'revenue' | 'projects';
 
 const REPORTS = [
   { name: 'P&L Statement', icon: BarChart3, href: '/dashboard/accounting' },
   { name: 'Balance Sheet', icon: FileText, href: '/dashboard/accounting' },
-  { name: 'Cash Flow Forecast', icon: TrendingDown, href: '/dashboard/business/cash-flow' },
+  { name: 'Cash Flow Forecast', icon: TrendingUp, href: '/dashboard/business/cash-flow' },
   { name: 'Expense Report', icon: TrendingDown, href: '/dashboard/business/expenses' },
   { name: 'Revenue Summary', icon: BarChart3, href: '/dashboard/business/reports' },
   { name: 'Lead Pipeline', icon: FileText, href: '/dashboard/leads' },
   { name: 'Deal Win/Loss', icon: PieChart, href: '/dashboard/deals' },
-  { name: 'Campaign Performance', icon: BarChart3, href: '/dashboard/business/campaigns' },
+  { name: 'Campaign Performance', icon: TrendingUp, href: '/dashboard/business/campaigns' },
   { name: 'Social Media Analytics', icon: BarChart3, href: '/dashboard/business/social' },
 ];
 
@@ -31,8 +29,6 @@ const METRIC_COLORS = {
   revenue: '#14b8a6',
   projects: '#8b5cf6',
 } as const;
-
-type ChartMetric = 'revenue' | 'projects';
 
 function formatChartLabel(dateStr: string): string {
   try {
@@ -42,71 +38,80 @@ function formatChartLabel(dateStr: string): string {
   }
 }
 
+function buildKpiChips(stats: AnalyticsData) {
+  const trend = stats.revenue.trend;
+  return [
+    {
+      label: 'Revenue',
+      value: `$${stats.revenue.total.toLocaleString()}`,
+      delta: trend >= 0 ? `+${trend.toFixed(1)}%` : `${trend.toFixed(1)}%`,
+      deltaDir: (trend >= 0 ? 'up' : 'down') as 'up' | 'down',
+      theme: 'teal' as CardTheme,
+      href: '/dashboard/business/reports',
+    },
+    {
+      label: 'Active Projects',
+      value: String(stats.projects.active),
+      delta: `${stats.projects.completed} completed`,
+      deltaDir: 'none' as const,
+      theme: 'purple' as CardTheme,
+      href: '/dashboard/business/projects',
+    },
+    {
+      label: 'Clients',
+      value: String(stats.users.clients),
+      delta: stats.users.growth >= 0 ? `+${stats.users.growth.toFixed(1)}%` : `${stats.users.growth.toFixed(1)}%`,
+      deltaDir: (stats.users.growth >= 0 ? 'up' : 'down') as 'up' | 'down',
+      theme: 'blue' as CardTheme,
+      href: '/dashboard/contacts',
+    },
+    {
+      label: 'On-Time Delivery',
+      value: `${stats.performance.onTimeDelivery}%`,
+      delta: `${stats.performance.clientSatisfaction}/5 sat`,
+      deltaDir: 'none' as const,
+      theme: 'amber' as CardTheme,
+      href: '/dashboard/performance',
+    },
+  ];
+}
+
 const AnalyticsTab: React.FC = () => {
   const router = useRouter();
-  const { currentTenant } = useTenant();
-  const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
+  const [dateRange, setDateRange] = useState<DateRange>('30d');
   const [metric, setMetric] = useState<ChartMetric>('revenue');
-  const { data: overviewStats, loading, isValidating } = useDashboardStats(
-    currentTenant?.id,
-    '/api/dashboard/overview',
-    preset,
-  );
+  const [stats, setStats] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const kpiItems = useMemo(() => {
-    if (!overviewStats) return [];
-    const revenueMetric = overviewStats.metrics.find((m) =>
-      String(m.label).toLowerCase().includes('invoiced'),
-    );
-    const dealsMetric = overviewStats.metrics.find((m) =>
-      String(m.label).toLowerCase().includes('deals'),
-    );
-    const tasksMetric = overviewStats.metrics.find((m) =>
-      String(m.label).toLowerCase().includes('tasks'),
-    );
-    const emailsMetric = overviewStats.metricsRowB?.find((m) =>
-      String(m.label).toLowerCase().includes('email'),
-    );
-    return [
-      platformKpiFromNumbers({
-        metricId: 'home.total_revenue',
-        label: 'Revenue',
-        current: Number(String(revenueMetric?.value ?? 0).replace(/[^0-9.-]/g, '')) || 0,
-        formattedValue: String(revenueMetric?.value ?? '$0'),
-        referencePeriod: comparisonLabel,
-        href: '/dashboard/business/billing',
-      }),
-      platformKpiFromNumbers({
-        label: 'Active deals',
-        current: Number(dealsMetric?.value ?? 0),
-        referencePeriod: comparisonLabel,
-        href: '/dashboard/deals',
-      }),
-      platformKpiFromNumbers({
-        label: 'Open tasks',
-        current: Number(tasksMetric?.value ?? 0),
-        referencePeriod: comparisonLabel,
-        href: '/dashboard/tasks',
-      }),
-      platformKpiFromNumbers({
-        label: 'Emails sent',
-        current: Number(emailsMetric?.value ?? 0),
-        referencePeriod: comparisonLabel,
-        href: '/dashboard/business/campaigns',
-      }),
-    ];
-  }, [overviewStats, comparisonLabel]);
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
+    const { data, error } = await analyticsService.getAnalytics(dateRange);
+    if (data) setStats(data);
+    else console.error('Failed to load analytics:', error);
+    setLoading(false);
+    setRefreshing(false);
+  }, [dateRange]);
 
-  const chartData =
-    overviewStats?.mainChart.map((p) => ({
-      month: p.label,
-      revenue: p.value,
-      projects: 0,
-      label: p.label,
-      value: metric === 'revenue' ? p.value : 0,
-    })) ?? [];
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  if (loading && !overviewStats) {
+  const chartData = stats?.revenue.byPeriod.map((p) => {
+    const proj = stats.projects.byPeriod.find((pp) => pp.date === p.date);
+    return {
+      month: formatChartLabel(p.date),
+      revenue: p.revenue,
+      projects: proj?.count ?? 0,
+      label: formatChartLabel(p.date),
+      value: metric === 'revenue' ? p.revenue : (proj?.count ?? 0)
+    };
+  }) ?? [];
+
+  const kpiChips = stats ? buildKpiChips(stats) : [];
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
@@ -116,26 +121,49 @@ const AnalyticsTab: React.FC = () => {
 
   return (
     <div className="ac-scroll-full ac-enterprise-module pb-24 space-y-5 px-4 pt-4">
-      <EnterprisePageHeader moduleKey="analytics">
-        <MetricDateRangeSelector value={preset} onChange={setPeriod} compact />
-      </EnterprisePageHeader>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex gap-2">
+          {(['7d', '30d', '90d'] as DateRange[]).map((r) => (
+            <button
+              key={r}
+              onClick={() => setDateRange(r)}
+              className={`h-[34px] px-4 rounded-full text-[12px] font-bold transition-all ${dateRange === r ? 'bg-[#adebb3] text-[#0f172a]' : 'bg-white/5 text-[#c0c0c0] border border-white/5'}`}
+            >
+              {r.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => loadData(true)}
+          disabled={refreshing}
+          className="p-2 rounded-xl bg-white/5 border border-white/5 text-[#c0c0c0] hover:text-[#adebb3] transition-colors"
+          aria-label="Refresh analytics"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
 
-      <PlatformKpiGrid items={kpiItems} loading={loading} skeletonCount={4} />
-
-      {overviewStats ? (
-        <ModuleKpiRichSections
-          data={overviewStats}
-          comparisonLabel={comparisonLabel}
-          showPlatformHealth
-        />
-      ) : null}
+      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+        {kpiChips.map((kpi) => (
+          <StandardStatCard
+            key={kpi.label}
+            label={kpi.label}
+            value={kpi.value}
+            delta={kpi.delta}
+            deltaDir={kpi.deltaDir}
+            themeColor={kpi.theme}
+            onClick={() => router.push(kpi.href)}
+            className="flex-shrink-0 min-w-[170px]"
+            comparisonText=""
+          />
+        ))}
+      </div>
 
       <div className="space-y-4">
         <div className="flex gap-1.5">
           {(['revenue', 'projects'] as ChartMetric[]).map((m) => (
             <button
               key={m}
-              type="button"
               onClick={() => setMetric(m)}
               className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold capitalize transition-all ${metric === m ? 'text-[#f5f5f5]' : 'text-[#94a3b8] bg-transparent'}`}
               style={{
@@ -152,31 +180,31 @@ const AnalyticsTab: React.FC = () => {
           xKey="label"
           yKey="value"
           name={metric}
-          color={METRIC_COLORS[metric]}
-          height={280}
+          color={metric === 'revenue' ? '#14b8a6' : '#8b5cf6'}
+          valuePrefix={metric === 'revenue' ? '$' : ''}
+          height={200}
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {REPORTS.map(({ name, icon: Icon, href }) => (
-          <button
-            key={name}
-            type="button"
-            onClick={() => router.push(href)}
-            className="ac-workspace-panel p-4 text-left hover:border-teal-500/30 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <Icon className="w-5 h-5 text-teal-400" />
-              <span className="text-sm font-semibold text-white group-hover:text-teal-300">{name}</span>
-              <ChevronRight className="w-4 h-4 ml-auto text-slate-500 group-hover:text-teal-400" />
-            </div>
-          </button>
-        ))}
+      <div>
+        <span className="text-[13px] font-bold tracking-wide text-[#c0c0c0] block mb-3">Reports</span>
+        <div className="bg-white/5 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+          {REPORTS.map((report) => (
+            <button
+              key={report.name}
+              onClick={() => router.push(report.href)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 transition-colors"
+            >
+              <report.icon className="w-5 h-5 text-[#94a3b8] flex-shrink-0" />
+              <span className="flex-1 text-[15px] text-[#f5f5f5] text-left">{report.name}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] text-[#adebb3] font-bold">View</span>
+                <ChevronRight className="w-4 h-4 text-[#64748b]" />
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
-
-      {isValidating ? (
-        <p className="text-[11px] text-slate-500 text-right">Refreshing metrics…</p>
-      ) : null}
     </div>
   );
 };

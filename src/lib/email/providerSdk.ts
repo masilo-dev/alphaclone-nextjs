@@ -45,7 +45,6 @@ function loadSendGrid(): SendGridModule | null {
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
-import { microsoftServerService } from '@/services/server/microsoftServerService';
 
 export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow' | 'outlook' | 'smtp';
 
@@ -67,7 +66,6 @@ export type EmailSendInput = {
         contentType?: string;
     }>;
     userId?: string;
-    tenantId?: string;
     // SMTP-specific
     smtpHost?: string;
     smtpPort?: number;
@@ -212,17 +210,10 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
                     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
                 }
                 : undefined,
-            ...(input.attachments?.length
-                ? {
-                    attachment: input.attachments.map((attachment) => ({
-                        name: attachment.filename,
-                        content:
-                            attachment.content instanceof Buffer
-                                ? attachment.content.toString('base64')
-                                : String(attachment.content),
-                    })),
-                }
-                : {}),
+            attachment: input.attachments?.map((attachment) => ({
+                name: attachment.filename,
+                content: attachment.content instanceof Buffer ? attachment.content.toString('base64') : String(attachment.content),
+            })),
             }),
         });
 
@@ -243,15 +234,15 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
 
 async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
     try {
-        if (!input.userId || !input.tenantId) {
-            return { ok: false, provider: 'zoho', error: 'Zoho send requires user and workspace context' };
+        if (!input.userId) {
+            return { ok: false, provider: 'zoho', error: 'Zoho send requires user context' };
         }
         const recipients = normalizeRecipients(input.to);
         if (!recipients.length) {
             return { ok: false, provider: 'zoho', error: 'Recipient is required' };
         }
 
-        const zohoService = new ZohoMailService(input.userId, input.tenantId);
+        const zohoService = new ZohoMailService(input.userId);
         const result = await zohoService.sendEmail({
             fromAddress: input.fromEmail,
             toAddress: recipients.join(','),
@@ -377,22 +368,47 @@ async function sendViaOutlook(input: EmailSendInput): Promise<EmailSendResult> {
         if (!input.userId) {
             return { ok: false, provider: 'outlook', error: 'Outlook send requires userId (OAuth context)' };
         }
+        // Use Microsoft Graph API via nodemailer-like approach or direct fetch
+        // Credentials resolved from Supabase tenant integrations at runtime
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: integration } = await supabaseAdmin
+            .from('integrations')
+            .select('config')
+            .eq('user_id', input.userId)
+            .eq('type', 'outlook')
+            .maybeSingle();
+
+        const accessToken = integration?.config?.access_token;
+        if (!accessToken) {
+            return { ok: false, provider: 'outlook', error: 'No Outlook OAuth token found for user' };
+        }
+
         const recipients = normalizeRecipients(input.to);
-        await microsoftServerService.sendEmail(input.userId, {
-            to: recipients,
-            subject: input.subject,
-            html: input.html || input.text || '',
-            cc: input.cc,
-            bcc: input.bcc,
-            replyTo: input.replyTo,
-            attachments: input.attachments?.map((attachment) => ({
-                filename: attachment.filename,
-                contentType: attachment.contentType,
-                contentBase64: Buffer.isBuffer(attachment.content)
-                    ? attachment.content.toString('base64')
-                    : String(attachment.content),
-            })),
+        const graphPayload = {
+            message: {
+                subject: input.subject,
+                body: { contentType: input.html ? 'HTML' : 'Text', content: input.html || input.text || '' },
+                toRecipients: recipients.map(addr => ({ emailAddress: { address: addr } })),
+                ...(input.cc?.length ? { ccRecipients: input.cc.map(addr => ({ emailAddress: { address: addr } })) } : {}),
+                ...(input.bcc?.length ? { bccRecipients: input.bcc.map(addr => ({ emailAddress: { address: addr } })) } : {}),
+                ...(input.replyTo ? { replyTo: [{ emailAddress: { address: input.replyTo } }] } : {}),
+            },
+            saveToSentItems: true,
+        };
+
+        const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(graphPayload),
         });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            return { ok: false, provider: 'outlook', error: errText };
+        }
 
         return { ok: true, provider: 'outlook' };
     } catch (error) {
@@ -545,7 +561,7 @@ export async function sendWithProviderSdk(
                         contact_id,
                         company_id,
                         source: provider as any,
-                        external_id: result.emailId || `${provider}-outbound-${crypto.randomUUID()}`,
+                        external_id: result.emailId || `${provider}-outbound-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                         direction: 'outbound',
                         channel: 'email',
                         subject: input.subject,

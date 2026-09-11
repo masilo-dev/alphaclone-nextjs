@@ -11,9 +11,6 @@ interface DailyVideoRoomProps {
     roomUrl: string;
     callId?: string;
     onLeave: () => void;
-    meetingAccessPin?: string;
-    meetingAccessToken?: string;
-    guestName?: string;
 }
 
 /**
@@ -24,10 +21,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
     user,
     roomUrl,
     callId,
-    onLeave,
-    meetingAccessPin,
-    meetingAccessToken,
-    guestName,
+    onLeave
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const callObjectRef = useRef<DailyCall | null>(null);
@@ -68,8 +62,10 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                 // 1. Get Meeting Token if possible (for admin privileges)
                 let token: string | undefined = undefined;
                 // Extract room name from URL if not passed explicitly
-                if (callId) {
-                    const { token: fetchedToken } = await dailyService.getMeetingToken(callId, guestName || user.name || 'Guest', meetingAccessPin, meetingAccessToken);
+                const roomName = roomUrl.split('/').pop();
+
+                if (roomName) {
+                    const { token: fetchedToken } = await dailyService.getMeetingToken(roomName, user.name, user.role === 'admin' || user.role === 'tenant_admin');
                     if (fetchedToken) token = fetchedToken;
                 }
 
@@ -213,7 +209,6 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     callObject={callObjectRef.current}
                     isAdmin={true}
                     onEndMeeting={() => void handleCallEndRef.current()}
-                    callId={callId}
                 />
             )}
 
@@ -222,7 +217,6 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     callObject={callObjectRef.current}
                     isHost={true}
                     onEndMeeting={() => void handleCallEndRef.current()}
-                    callId={callId}
                 />
             )}
         </div>

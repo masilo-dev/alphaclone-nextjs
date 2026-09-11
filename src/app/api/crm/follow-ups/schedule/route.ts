@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 const bodySchema = z.object({
   tenantId: z.string().uuid(),
@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { tenantId, entityType, entityId, followUpAt, note } = parsed.data;
-    const { user, admin } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'member', 'super_admin'], req);
+    const { user } = await requireTenantAccess(tenantId);
+    const admin = createSupabaseAdminClient();
 
     if (entityType === 'contact') {
       await admin

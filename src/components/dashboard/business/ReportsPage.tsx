@@ -22,7 +22,6 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 import { WrapChart } from '@/lib/chartWrapper';
 import { StandardStatCard, StandardLineChart, StandardDonutChart, type CardTheme } from '@/components/ui/design-system';
-import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 interface ReportsPageProps {
     user: User;
@@ -204,8 +203,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             if (drillRes.ok) {
                 const data = drillPayload?.data;
                 setIntelligenceSummary({
-                    topActions: Array.isArray(data?.topActions) ? data.topActions.slice(0, 5) : [],
-                    systemicRisks: Array.isArray(data?.systemicRisks) ? data.systemicRisks.slice(0, 5) : []
+                    topActions: (data?.topActions || []).slice(0, 5),
+                    systemicRisks: (data?.systemicRisks || []).slice(0, 5)
                 });
             }
         } catch (error) {
@@ -232,13 +231,18 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="space-y-6 ac-scroll-full ac-enterprise-module">
-            <EnterprisePageHeader moduleKey="reports">
-                <div className="flex flex-wrap gap-3">
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-[#f5f5f5]">Business Reports</h2>
+                    <p className="text-[#c0c0c0] mt-1">Analytics and insights</p>
+                </div>
+                <div className="flex gap-3">
                     <select
                         value={exportCategory}
                         onChange={(e) => setExportCategory(e.target.value as any)}
-                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-teal-500/50 text-[var(--ws-text-primary)]"
+                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-[#adebb3]"
                     >
                         <option value="revenue">Revenue Data</option>
                         <option value="clients">Client List</option>
@@ -247,7 +251,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value)}
-                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-teal-500/50 text-[var(--ws-text-primary)]"
+                        className="px-4 py-2 bg-white/5 border border-white/5 rounded-lg focus:outline-none focus:border-[#adebb3]"
                     >
                         <option value="7">Last 7 days</option>
                         <option value="30">Last 30 days</option>
@@ -265,7 +269,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     </button>
                     <button
                         onClick={() => handleExport('xlsx', exportCategory)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#3eb489] hover:bg-[#adebb3] text-[#0f172a] rounded-lg transition-colors disabled:opacity-50"
                         title="Export Excel"
                         disabled={isExporting}
                     >
@@ -273,7 +277,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                         <span className="hidden sm:inline">Export Excel</span>
                     </button>
                 </div>
-            </EnterprisePageHeader>
+            </div>
 
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -361,7 +365,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                                 <div>
                             <div className="text-xs text-[#adebb3] font-semibold mb-1">Top Actions</div>
                                     <ul className="space-y-1">
-                                        {(Array.isArray(intelligenceSummary.topActions) ? intelligenceSummary.topActions : []).slice(0, 2).map((item) => (
+                                        {intelligenceSummary.topActions.slice(0, 2).map((item) => (
                                             <li key={item} className="text-xs text-[#e5e7eb] line-clamp-2">{item}</li>
                                         ))}
                                     </ul>
@@ -372,7 +376,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                                         Top Risks
                                     </div>
                                     <ul className="space-y-1">
-                                        {(Array.isArray(intelligenceSummary.systemicRisks) ? intelligenceSummary.systemicRisks : []).slice(0, 2).map((item) => (
+                                        {intelligenceSummary.systemicRisks.slice(0, 2).map((item) => (
                                             <li key={item} className="text-xs text-[#e5e7eb] line-clamp-2">{item}</li>
                                         ))}
                                     </ul>

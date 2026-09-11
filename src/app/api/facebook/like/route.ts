@@ -4,7 +4,6 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 
 type LikeRequestBody = {
-    tenantId: string;
     pageId: string;
     targetId: string; // post ID or comment ID
 };
@@ -41,20 +40,17 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as LikeRequestBody;
-    const { tenantId, pageId, targetId } = body;
+    const { pageId, targetId } = body;
 
-    if (!tenantId || !pageId || !targetId) {
+    if (!pageId || !targetId) {
         return NextResponse.json(
-            { error: 'tenantId, pageId and targetId are required' },
+            { error: 'pageId and targetId are required' },
             { status: 400 }
         );
     }
-    const { data: membership } = await supabase.from('tenant_users').select('tenant_id')
-        .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const admin = createSupabaseAdminClient();
-    const integration = await getFacebookIntegrationWithToken(admin, { tenantId, userId: user.id, pageId });
+    const integration = await getFacebookIntegrationWithToken(admin, { userId: user.id, pageId });
 
     const token = integration?.pageAccessToken;
     if (!token) {
@@ -68,7 +64,7 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    const endpoint = `https://graph.facebook.com/v21.0/${targetId}/likes`;
+    const endpoint = `https://graph.facebook.com/v19.0/${targetId}/likes`;
 
     const params = new URLSearchParams();
     params.set('access_token', token);

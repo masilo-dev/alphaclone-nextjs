@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -65,7 +64,8 @@ export async function GET(req: NextRequest) {
         console.log('State nonce generated:', stateNonce);
 
         const clientId = ENV.GOOGLE_CLIENT_ID;
-        const redirectUri = OAUTH_CALLBACKS.googleGmail;
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+        const redirectUri = `${appUrl}/api/auth/google/gmail/callback`;
 
         const scopes = [
             'https://www.googleapis.com/auth/gmail.readonly',

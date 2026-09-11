@@ -12,7 +12,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    const { admin: supabase } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
 
     const { data: campaign, error } = await supabase
       .from('scraper_campaigns')
@@ -46,7 +47,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    const { admin: supabase } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
 
     const { data, error } = await supabase
       .from('scraper_campaigns')
@@ -71,7 +73,8 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    const { admin: supabase } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
 
     const { error } = await supabase
       .from('scraper_campaigns')

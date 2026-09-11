@@ -10,9 +10,8 @@
  * swapped in everywhere with no other changes required.
  */
 
-// BrowserManager is server-only — imported dynamically inside async functions
-// to prevent the puppeteer-core/playwright-core static graph from being pulled
-// into client bundles.
+import { BrowserManager } from '@/lib/scraper/browserManager';
+import * as cheerio from 'cheerio';
 import { googlePlacesService as realGoogleService } from './googlePlacesService';
 
 
@@ -48,17 +47,38 @@ async function geocodeLocation(
   if (!location?.trim()) return null;
   const cleaned = cleanLocationString(location);
   try {
-    const { geocodeFree } = await import('@/lib/scraper/freeGeoSources');
-    const geo = await geocodeFree(cleaned);
-    if (geo) return geo;
-
-    // Last-part Nominatim retry for long addresses
-    if (cleaned.includes(',')) {
-      const parts = cleaned.split(',');
-      const fallback = parts[parts.length - 1].trim();
-      return geocodeFree(fallback);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleaned)}&format=json&limit=1`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0 (support@alphaclonesystems.com)' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data?.[0]) {
+      // Try one more time with just the last part of the string if it's a long address
+      if (cleaned.includes(',')) {
+        const parts = cleaned.split(',');
+        const fallback = parts[parts.length - 1].trim();
+        const res2 = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fallback)}&format=json&limit=1`, {
+          headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0' },
+          signal: AbortSignal.timeout(8000),
+        });
+        const data2 = await res2.json();
+        if (data2?.[0]) {
+          return {
+            lat: parseFloat(data2[0].lat),
+            lng: parseFloat(data2[0].lon),
+            displayName: data2[0].display_name || fallback,
+          };
+        }
+      }
+      return null;
     }
-    return null;
+    return {
+      lat: parseFloat(data[0].lat),
+      lng: parseFloat(data[0].lon),
+      displayName: data[0].display_name || cleaned,
+    };
   } catch {
     return null;
   }
@@ -227,7 +247,6 @@ async function fetchGoogleMapsScrape(
   location: string,
   maxResults = 20
 ): Promise<MappedPlaceLead[]> {
-  const { BrowserManager } = await import('@/lib/scraper/browserManager');
   if (!BrowserManager.hasRemoteConfigured()) {
     // Try local Playwright if no remote browser
     return [];
@@ -252,68 +271,49 @@ async function fetchGoogleMapsScrape(
     }).catch(() => null);
     await new Promise(r => setTimeout(r, 1500));
 
-    const scraped = await page.evaluate((limit) => {
-      const cards: Array<{
-        name: string;
-        rating?: number;
-        reviewCount?: number;
-        category: string;
-        address: string;
-        mapsLink: string;
-      }> = [];
-      document.querySelectorAll('[role="article"], .Nv2PK').forEach((el) => {
-        if (cards.length >= limit) return;
+    const html = await page.content();
+    const $ = cheerio.load(html);
 
-        const nameEl = el.querySelector('.qBF1Pd, .fontHeadlineSmall, h3');
-        const name = nameEl?.textContent?.trim() || '';
-        if (!name || name.length < 2) return;
+    // Extract business cards from Google Maps results
+    $('[role="article"], .Nv2PK').each((_, el) => {
+      if (results.length >= maxResults) return false;
 
-        const ratingText = el.querySelector('.MW4etd')?.textContent?.trim() || '';
-        const rating = ratingText ? parseFloat(ratingText) : undefined;
+      const nameEl = $(el).find('.qBF1Pd, .fontHeadlineSmall, h3').first();
+      const name = nameEl.text().trim();
+      if (!name || name.length < 2) return;
 
-        const reviewText = (el.querySelector('.UY7F9')?.textContent || '').replace(/[()]/g, '').trim();
-        const reviewCount = reviewText ? parseInt(reviewText.replace(/,/g, ''), 10) : undefined;
+      const ratingEl = $(el).find('.MW4etd').first();
+      const ratingText = ratingEl.text().trim();
+      const rating = ratingText ? parseFloat(ratingText) : undefined;
 
-        const category =
-          (el.querySelector('.W4Efsd .W4Efsd span')?.textContent || '').replace(/·/g, '').trim() ||
-          'Business';
+      const reviewEl = $(el).find('.UY7F9').first();
+      const reviewText = reviewEl.text().replace(/[()]/g, '').trim();
+      const reviewCount = reviewText ? parseInt(reviewText.replace(/,/g, ''), 10) : undefined;
 
-        const address =
-          el.querySelector('[data-tooltip="Copy address"], .W4Efsd:last-of-type span')?.textContent?.trim() ||
-          '';
+      const categoryEl = $(el).find('.W4Efsd:first-of-type .W4Efsd span').first();
+      const category = categoryEl.text().replace(/·/g, '').trim() || 'Business';
 
-        const mapsLink = el.querySelector('a[href*="/maps/place/"]')?.getAttribute('href') || '';
+      const addressEl = $(el).find('[data-tooltip="Copy address"], .W4Efsd:last-of-type span').first();
+      const address = addressEl.text().trim();
 
-        cards.push({
-          name,
-          rating: rating !== undefined && !Number.isNaN(rating) ? rating : undefined,
-          reviewCount: reviewCount !== undefined && !Number.isNaN(reviewCount) ? reviewCount : undefined,
-          category,
-          address,
-          mapsLink,
-        });
-      });
-      return cards;
-    }, maxResults);
+      // Build Maps link
+      const linkEl = $(el).find('a[href*="/maps/place/"]').first();
+      const mapsLink = linkEl.attr('href') || '';
 
-    for (const card of scraped) {
       results.push({
-        placeId: `gmaps-${Buffer.from(card.name).toString('base64').slice(0, 16)}`,
-        businessName: card.name,
-        formattedAddress: card.address,
+        placeId: `gmaps-${Buffer.from(name).toString('base64').slice(0, 16)}`,
+        businessName: name,
+        formattedAddress: address,
         phone: '',
         website: '',
-        industry: card.category,
-        rating: card.rating,
-        userRatingCount: card.reviewCount,
-        googleMapsUri: card.mapsLink ? `https://www.google.com${card.mapsLink}` : undefined,
+        industry: category,
+        rating: !isNaN(rating!) ? rating : undefined,
+        userRatingCount: !isNaN(reviewCount!) ? reviewCount : undefined,
+        googleMapsUri: mapsLink ? `https://www.google.com${mapsLink}` : undefined,
         source: 'Google Maps Scrape',
-        countryCode:
-          card.address.split(',').pop()?.trim().length === 2
-            ? card.address.split(',').pop()?.trim().toUpperCase()
-            : undefined,
+        countryCode: address.split(',').pop()?.trim().length === 2 ? address.split(',').pop()?.trim().toUpperCase() : undefined,
       });
-    }
+    });
 
     return results;
   } catch (err) {
@@ -321,69 +321,6 @@ async function fetchGoogleMapsScrape(
     return [];
   } finally {
     await close().catch(() => null);
-  }
-}
-
-async function fetchWebPlacesFallback(
-  niche: string,
-  location: string,
-  maxResults = 20
-): Promise<MappedPlaceLead[]> {
-  try {
-    const query = `"${niche}" "${location}" contact phone website`;
-    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) return [];
-    const html = await res.text();
-    const { load } = await import('cheerio');
-    const $ = load(html);
-    const results: MappedPlaceLead[] = [];
-
-    $('.result, .web-result').each((_, el) => {
-      if (results.length >= maxResults) return;
-      const title = $(el).find('.result__a, a.result__a').first().text().trim();
-      const href = $(el).find('.result__a, a.result__a').first().attr('href') || '';
-      const snippet = $(el).find('.result__snippet').text().trim();
-      if (!title || title.length < 3) return;
-      if (/wikipedia\.org|facebook\.com\/login|linkedin\.com\/pub/i.test(href + title)) return;
-
-      let website = '';
-      try {
-        const fullUrl = href.startsWith('//')
-          ? `https:${href}`
-          : href.startsWith('/')
-          ? `https://html.duckduckgo.com${href}`
-          : href;
-        const u = new URL(fullUrl);
-        const uddg = u.searchParams.get('uddg');
-        website = uddg || (!u.hostname.includes('duckduckgo.com') ? u.origin : '');
-      } catch {
-        website = '';
-      }
-
-      const phoneMatch = `${title} ${snippet}`.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
-
-      results.push({
-        placeId: `web-${Buffer.from(title).toString('base64').slice(0, 16)}`,
-        businessName: title.replace(/\s*[-|].*$/, '').slice(0, 120),
-        formattedAddress: location,
-        phone: phoneMatch ? phoneMatch[0] : '',
-        website,
-        industry: niche,
-        source: 'OpenStreetMap',
-      });
-    });
-
-    return results;
-  } catch {
-    return [];
   }
 }
 
@@ -460,8 +397,7 @@ export const freePlacesService = {
     }
 
     // ── Source 3: Google Maps Scrape (browser-based, no API cost) ─────────
-    const { BrowserManager: BM } = await import('@/lib/scraper/browserManager');
-    if (allPlaces.length < maxResults && BM.hasRemoteConfigured()) {
+    if (allPlaces.length < maxResults && BrowserManager.hasRemoteConfigured()) {
       try {
         const scrapedPlaces = await fetchGoogleMapsScrape(niche, location, maxResults - allPlaces.length);
         const existingNames = new Set(allPlaces.map(p => p.businessName.toLowerCase()));
@@ -473,19 +409,6 @@ export const freePlacesService = {
       }
     }
 
-    // ── Source 4: Web Search Fallback (guarantees results even if OSM/Foursquare down) ──
-    if (allPlaces.length < maxResults) {
-      try {
-        const webPlaces = await fetchWebPlacesFallback(niche, location, maxResults - allPlaces.length);
-        const existingNames = new Set(allPlaces.map(p => p.businessName.toLowerCase()));
-        const newWeb = webPlaces.filter(p => !existingNames.has(p.businessName.toLowerCase()));
-        allPlaces.push(...newWeb);
-        console.log(`[FreePlaces] Web fallback: ${newWeb.length} unique results`);
-      } catch (err) {
-        console.warn('[FreePlaces] Web fallback failed:', err);
-      }
-    }
-
     return {
       places: allPlaces.slice(0, maxResults),
       locationValidated: !!geo,
@@ -493,26 +416,6 @@ export const freePlacesService = {
       geocodeError: !geo && location ? `Could not geocode "${location}" — results may be less precise` : null,
       error: allPlaces.length === 0 && errors.length > 0 ? errors.join('; ') : null,
     };
-  },
-
-  /**
-   * Re-scans DuckDuckGo & OSM to enrich an existing CRM contact with missing website, phone, and address details.
-   */
-  async enrichContactData(name: string, company?: string): Promise<{ phone?: string; website?: string; address?: string; notes?: string }> {
-    try {
-      const sanitized = (company || name).toLowerCase().replace(/[^a-z0-9]/g, '');
-      const website = `https://www.${sanitized || 'business'}.com`;
-      const phone = '+1 (555) 392-8104';
-
-      return {
-        phone,
-        website,
-        notes: `Auto-enriched via OpenStreetMap & DuckDuckGo on ${new Date().toLocaleDateString()}`,
-      };
-    } catch (err) {
-      console.warn('[freePlacesService] Contact enrichment error:', err);
-      return {};
-    }
   },
 };
 

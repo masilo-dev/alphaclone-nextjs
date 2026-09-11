@@ -1,34 +1,28 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
-import { z } from 'zod';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     try {
-        const { user } = await requireAuthenticatedUser(req);
-        const { invoiceId } = z.object({ invoiceId: z.string().uuid() }).parse(await req.json());
-        const supabaseAdmin = createSupabaseAdminClient();
-        const { data: invoice, error: invoiceError } = await supabaseAdmin
-            .from('business_invoices')
-            .select('id,tenant_id,client_id,total,amount_paid,currency,invoice_number,status,notes')
-            .eq('id', invoiceId)
-            .single();
-        if (invoiceError || !invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-        const { data: membership } = await supabaseAdmin.from('tenant_users').select('user_id').eq('tenant_id', invoice.tenant_id).eq('user_id', user.id).maybeSingle();
-        if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        if (invoice.status === 'paid') return NextResponse.json({ error: 'Invoice is already paid' }, { status: 409 });
-        const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
-        const amount = remaining > 0 ? remaining : Number(invoice.total || 0);
-        const currency = String(invoice.currency || 'usd').toLowerCase();
-        const description = invoice.invoice_number ? `Invoice ${invoice.invoice_number}` : `Invoice ${invoiceId}`;
-        const tenantId = invoice.tenant_id;
+        const { amount, currency, description, invoiceId, tenantId } = await req.json();
+
+        if (!amount || !currency) {
+            return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+        }
 
         let stripeConnectId = null;
 
+        // 1. If tenantId provided, check for connected Stripe account
         if (tenantId) {
+            const supabaseAdmin = createSupabaseAdminClient();
             const { data: tenant } = await supabaseAdmin
                 .from('tenants')
                 .select('stripe_connect_id, stripe_connect_onboarded')
@@ -40,8 +34,9 @@ export async function POST(req: Request) {
             }
         }
 
+        // 2. Create Payment Intent
         const paymentIntentOptions: any = {
-            amount: Math.round(amount * 100),
+            amount: Math.round(amount * 100), // Convert to cents
             currency,
             description: description || (invoiceId ? `Invoice #${invoiceId}` : 'AlphaClone Payment'),
             metadata: {
@@ -54,20 +49,18 @@ export async function POST(req: Request) {
             },
         };
 
-        if (stripeConnectId) {
-            paymentIntentOptions.transfer_data = { destination: stripeConnectId };
-            paymentIntentOptions.application_fee_amount = Math.round(amount * 100 * 0.02);
-        }
-
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
+        const paymentIntent = await stripe.paymentIntents.create(
+            paymentIntentOptions,
+            stripeConnectId ? { stripeAccount: stripeConnectId } : undefined
+        );
 
         return NextResponse.json({
             clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id,
-            amount,
-            currency,
+            id: paymentIntent.id
         });
-    } catch (err: unknown) {
-        return routeErrorResponse(err, 'Failed to create payment intent', req as any);
+
+    } catch (error: any) {
+        console.error('Stripe PaymentIntent error:', error);
+        return clientErrorResponse(error, { request: req, scope: 'stripe/create-payment-intent' });
     }
 }

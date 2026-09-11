@@ -7,6 +7,8 @@
  * - No hardcoding of connection status — always read from DB
  */
 
+import { supabase } from '../lib/supabase';
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type IntegrationCategory =
@@ -17,7 +19,7 @@ export type IntegrationCategory =
   | 'accounting'
   | 'analytics';
 
-export type IntegrationStatus = 'available' | 'connected';
+export type IntegrationStatus = 'available' | 'connected' | 'disabled' | 'coming_soon';
 
 export interface IntegrationCatalogEntry {
   id: string;
@@ -103,6 +105,14 @@ export const INTEGRATION_CATALOG: IntegrationCatalogEntry[] = [
     popular: true,
   },
   // ── CRM & Sales ───────────────────────────────────────────────────────────
+  {
+    id: 'hubspot',
+    name: 'HubSpot',
+    description: 'Two-way contact and deal sync with HubSpot CRM.',
+    category: 'crm',
+    features: ['Contact sync', 'Deal tracking', 'Two-way sync', 'Custom field mapping'],
+    oauthFlow: true,
+  },
   {
     id: 'facebook-leads',
     name: 'Facebook Lead Ads',
@@ -196,46 +206,59 @@ export const integrationService = {
    */
   async getIntegrationsForTenant(
     tenantId: string,
-    _currentUserId?: string | null
+    currentUserId?: string | null
   ): Promise<TenantIntegration[]> {
     if (!tenantId) {
       return INTEGRATION_CATALOG.map(entry => ({ ...entry, status: 'available' as IntegrationStatus }));
     }
 
-    const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/integrations`, {
-      credentials: 'same-origin',
-      cache: 'no-store',
-    });
-    if (!response.ok) throw new Error('Integrations could not be loaded');
-    const payload = await response.json() as {
-      integrations?: Array<{ integrationId: string; status: string; connectedAt?: string; configuredBy?: string; metadata?: Record<string, unknown> }>;
-      personalConnections?: { mcpApiKey?: boolean; chatgpt?: boolean };
-      providerConnections?: { slack?: boolean };
-    };
-    const data = (payload.integrations || []).map(row => ({
-      integration_id: row.integrationId,
-      status: row.status,
-      connected_at: row.connectedAt,
-      configured_by: row.configuredBy,
-      metadata: row.metadata,
-    }));
+    const { data, error } = await supabase
+      .from('tenant_integrations')
+      .select('integration_id, status, connected_at, configured_by, metadata')
+      .eq('tenant_id', tenantId);
+
+    if (error) {
+      console.error('[integrationService] getIntegrationsForTenant:', error.message);
+      return INTEGRATION_CATALOG.map(entry => ({ ...entry, status: 'available' as IntegrationStatus }));
+    }
 
     const rowMap = new Map(
       (data as IntegrationRow[] || []).map((row: IntegrationRow) => [row.integration_id, row])
     );
 
+    let mcpKeyRow: { api_key: string } | null = null;
+    let chatgptTokenRow: { access_token: string } | null = null;
+    if (currentUserId) {
+      const { data } = await supabase
+        .from('mcp_api_keys')
+        .select('api_key')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', currentUserId)
+        .maybeSingle();
+      mcpKeyRow = data;
+
+      const { data: chatgptData } = await supabase
+        .from('mcp_oauth_tokens')
+        .select('access_token')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', currentUserId)
+        .eq('client_id', 'chatgpt-connector')
+        .maybeSingle();
+      chatgptTokenRow = chatgptData;
+    }
+
     return INTEGRATION_CATALOG.map((entry) => {
       const row = rowMap.get(entry.id);
 
-      let status: IntegrationStatus = row?.status === 'connected' ? 'connected' : 'available';
+      let status: IntegrationStatus =
+        (row?.status as IntegrationStatus) ?? entry.defaultStatus ?? 'available';
 
-      if ((entry.id === 'claude-mcp' || entry.id === 'manus-mcp') && payload.personalConnections?.mcpApiKey) {
+      if ((entry.id === 'claude-mcp' || entry.id === 'manus-mcp') && mcpKeyRow?.api_key) {
         status = 'connected';
       }
-      if (entry.id === 'chatgpt-mcp' && payload.personalConnections?.chatgpt) {
+      if (entry.id === 'chatgpt-mcp' && chatgptTokenRow?.access_token) {
         status = 'connected';
       }
-      if (entry.id === 'slack' && payload.providerConnections?.slack) status = 'connected';
 
       return {
         ...entry,
@@ -254,8 +277,8 @@ export const integrationService = {
   async connect(
     tenantId: string,
     integrationId: string,
-    _userId: string,
-    _metadata?: Record<string, unknown>
+    userId: string,
+    metadata?: Record<string, unknown>
   ): Promise<ConnectResult> {
     if (!tenantId || !integrationId) {
       return { success: false, error: 'Missing tenantId or integrationId' };
@@ -290,30 +313,39 @@ export const integrationService = {
       };
     }
 
-    const configurationRoutes: Record<string, string> = {
-      sendgrid: '/dashboard/business/settings?tab=integrations&provider=sendgrid',
-      resend: '/dashboard/business/settings?tab=integrations&provider=resend',
-      twilio: '/dashboard/business/settings?tab=integrations&provider=twilio',
-      calendly: `/api/auth/calendly/connect?tenantId=${encodeURIComponent(tenantId)}`,
-      stripe: '/dashboard/business/settings?tab=billing',
-    };
-    if (configurationRoutes[integrationId]) {
-      return { success: true, redirectUrl: configurationRoutes[integrationId] };
-    }
-
     // OAuth integrations: return a redirect URL for the OAuth flow
     if (catalog.oauthFlow) {
       const redirectMap: Record<string, string> = {
-        slack: `/api/slack/oauth/authorize?tenantId=${encodeURIComponent(tenantId)}`,
-        'google-calendar': `/api/auth/google/calendar/connect?tenantId=${encodeURIComponent(tenantId)}`,
-        'google-analytics': '/dashboard/business/settings?tab=integrations&provider=google-analytics',
-        'zoho-mail': `/api/auth/zoho/connect?tenantId=${encodeURIComponent(tenantId)}`,
+        slack: '/api/slack/oauth',
+        stripe: '/api/stripe/connect',
+        hubspot: '/api/hubspot/oauth',
+        'google-calendar': '/api/google/oauth?scope=calendar',
+        'google-analytics': '/api/google/oauth?scope=analytics',
+        'zoho-mail': '/api/zoho/oauth',
+        calendly: '/api/calendly/oauth',
       };
       const url = redirectMap[integrationId];
       if (url) return { success: true, redirectUrl: url };
     }
 
-    return { success: false, error: 'This integration requires configuration from Workspace Settings.' };
+    // API-key integrations: upsert the row as connected
+    const { error } = await supabase
+      .from('tenant_integrations')
+      .upsert({
+        tenant_id: tenantId,
+        integration_id: integrationId,
+        status: 'connected',
+        connected_at: new Date().toISOString(),
+        configured_by: userId,
+        metadata: metadata ?? {},
+      }, { onConflict: 'tenant_id,integration_id' });
+
+    if (error) {
+      console.error('[integrationService] connect:', error.message);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
   },
 
   /**
@@ -322,15 +354,103 @@ export const integrationService = {
   async disconnect(
     tenantId: string,
     integrationId: string,
-    _currentUserId?: string | null
+    currentUserId?: string | null
   ): Promise<{ success: boolean; error?: string }> {
-    const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/integrations`, {
-      method: 'DELETE',
-      credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ integrationId }),
-    });
-    const payload = await response.json().catch(() => ({}));
-    return response.ok ? { success: true } : { success: false, error: payload.error || 'Disconnect failed' };
+    if (integrationId === 'claude-mcp' || integrationId === 'manus-mcp') {
+      const { MCPAuthService } = await import('@/services/mcp/MCPAuthService');
+      const revoked = currentUserId
+        ? await MCPAuthService.revokeForUser(tenantId, currentUserId)
+        : await MCPAuthService.revokeAllForTenant(tenantId);
+      if (!revoked.success && revoked.error) {
+        console.error('[integrationService] MCP revoke:', revoked.error);
+      }
+      let ti = supabase
+        .from('tenant_integrations')
+        .update({ status: 'available', metadata: {} })
+        .eq('tenant_id', tenantId)
+        .in('integration_id', ['claude-mcp', 'manus-mcp']);
+      if (currentUserId) {
+        ti = ti.eq('configured_by', currentUserId);
+      }
+      await ti;
+      return { success: true };
+    }
+
+    if (integrationId === 'chatgpt-mcp') {
+      let chatgptRevoke = supabase
+        .from('mcp_oauth_tokens')
+        .delete()
+        .eq('tenant_id', tenantId)
+        .eq('client_id', 'chatgpt-connector');
+      if (currentUserId) {
+        chatgptRevoke = chatgptRevoke.eq('user_id', currentUserId);
+      }
+
+      const { error } = await chatgptRevoke;
+
+      if (error) {
+        console.error('[integrationService] chatgpt revoke:', error.message);
+      }
+
+      await supabase
+        .from('tenant_integrations')
+        .update({ status: 'available', metadata: {} })
+        .eq('tenant_id', tenantId)
+        .eq('integration_id', 'chatgpt-mcp');
+
+      return { success: true };
+    }
+
+    if (integrationId === 'facebook-leads') {
+      await supabase
+        .from('facebook_integrations')
+        .update({ is_active: false })
+        .eq('tenant_id', tenantId);
+      await supabase
+        .from('tenant_integrations')
+        .update({ status: 'available', metadata: {} })
+        .eq('tenant_id', tenantId)
+        .eq('integration_id', 'facebook-leads');
+      return { success: true };
+    }
+
+    const { error } = await supabase
+      .from('tenant_integrations')
+      .update({ status: 'available', metadata: {} })
+      .eq('tenant_id', tenantId)
+      .eq('integration_id', integrationId);
+
+    if (error) {
+      console.error('[integrationService] disconnect:', error.message);
+      return { success: false, error: error.message };
+    }
+    return { success: true };
+  },
+
+  /**
+   * Returns whether a specific integration is connected for a tenant.
+   */
+  async isConnected(tenantId: string, integrationId: string): Promise<boolean> {
+    if (!tenantId) return false;
+    const { data } = await supabase
+      .from('tenant_integrations')
+      .select('status')
+      .eq('tenant_id', tenantId)
+      .eq('integration_id', integrationId)
+      .single();
+    return data?.status === 'connected';
+  },
+
+  /**
+   * Returns all connected integrations for a tenant.
+   */
+  async getConnected(tenantId: string): Promise<string[]> {
+    if (!tenantId) return [];
+    const { data } = await supabase
+      .from('tenant_integrations')
+      .select('integration_id')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'connected');
+    return (data as IntegrationRow[] || []).map((r: IntegrationRow) => r.integration_id);
   },
 };

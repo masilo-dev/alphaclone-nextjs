@@ -11,9 +11,6 @@ export type BonnieApprovalPreview = {
   createdAt: string;
   preview: { target?: string; draft?: string };
   payload: Record<string, unknown>;
-  editHistory?: Array<{ timestamp: string; args: Record<string, unknown> }>;
-  workflowId?: string | null;
-  conversationId?: string | null;
 };
 
 function buildPreviewFromPayload(payload: Record<string, unknown>) {
@@ -47,7 +44,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const { admin } = await requireTenantAccess(tenantId, request);
+    await requireTenantAccess(tenantId);
+    const admin = createSupabaseAdminClient();
 
     const { data, error } = await admin
       .from('autonomous_runner_approvals')
@@ -60,25 +58,23 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     const bonnieApprovals: BonnieApprovalPreview[] = (data || [])
-      .filter((row: { payload?: Record<string, unknown>; action_key?: string; source?: string; workflow_id?: string | null }) => {
+      .filter((row: { payload?: Record<string, unknown>; action_key?: string }) => {
         const payload = (row.payload || {}) as Record<string, unknown>;
-        const actionKey = String(row.action_key || '');
-        const source = String(row.source || payload.source || '');
-        // Surface Bonnie, MCP, and autonomous-runner pending actions in Approval Center
-        return (
-          source === 'bonnie' ||
-          source === 'autonomous_runner' ||
-          actionKey.startsWith('bonnie:') ||
-          actionKey.startsWith('mcp:') ||
-          !!row.workflow_id ||
-          payload.source === 'bonnie'
-        );
+        return payload.source === 'bonnie' || String(row.action_key || '').startsWith('bonnie:');
       })
-      .map((row: any) => {
+      .map((row: {
+        id: string;
+        risk_level: string;
+        reason: string;
+        status: string;
+        created_at: string;
+        action_key?: string;
+        payload?: Record<string, unknown>;
+      }) => {
         const payload = (row.payload || {}) as Record<string, unknown>;
         const toolName =
           String(payload.tool_name || '') ||
-          String(row.action_key || '').replace(/^(bonnie:|mcp:)/, '');
+          String(row.action_key || '').replace(/^bonnie:/, '');
         return {
           id: row.id,
           toolName,
@@ -88,9 +84,6 @@ export async function GET(request: NextRequest) {
           createdAt: row.created_at,
           preview: buildPreviewFromPayload(payload),
           payload,
-          editHistory: Array.isArray(row.edit_history) ? row.edit_history : [],
-          workflowId: row.workflow_id ?? null,
-          conversationId: row.conversation_id ?? null,
         };
       });
 
@@ -104,11 +97,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * PATCH /api/bonnie/approvals
- * Inline argument editing: merges args into payload and records the original
- * in edit_history so the full edit trail is preserved for audit.
- */
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
@@ -118,11 +106,12 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId, approvalId, and args are required' }, { status: 400 });
     }
 
-    const { admin } = await requireTenantAccess(tenantId, request);
+    await requireTenantAccess(tenantId);
+    const admin = createSupabaseAdminClient();
 
     const { data: existing, error: fetchError } = await admin
       .from('autonomous_runner_approvals')
-      .select('payload, edit_history')
+      .select('payload')
       .eq('id', approvalId)
       .eq('tenant_id', tenantId)
       .eq('status', 'pending')
@@ -133,26 +122,15 @@ export async function PATCH(request: NextRequest) {
     }
 
     const payload = (existing.payload || {}) as Record<string, unknown>;
-    const editHistory = Array.isArray(existing.edit_history) ? existing.edit_history : [];
-
-    // Snapshot the current args into edit history before overwriting
-    const currentArgs = (payload.args || {}) as Record<string, unknown>;
-    const newEditEntry = {
-      timestamp: new Date().toISOString(),
-      previous_args: currentArgs,
-      new_args: args,
-    };
-
     const mergedPayload = {
       ...payload,
-      args: { ...currentArgs, ...args },
+      args: { ...((payload.args || {}) as Record<string, unknown>), ...args },
     };
 
     const { data, error } = await admin
       .from('autonomous_runner_approvals')
       .update({
         payload: mergedPayload,
-        edit_history: [...editHistory, newEditEntry],
         updated_at: new Date().toISOString(),
       })
       .eq('id', approvalId)
@@ -166,7 +144,6 @@ export async function PATCH(request: NextRequest) {
       success: true,
       approval: data,
       preview: buildPreviewFromPayload(mergedPayload),
-      editCount: editHistory.length + 1,
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to update approval');

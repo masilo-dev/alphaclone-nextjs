@@ -10,11 +10,9 @@ import { isEmailSuppressed } from '@/lib/email/suppression';
 import { outreachSendSchema } from '@/schemas/validation';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { normalizeEmailSubject } from '@/lib/email/emailComposition';
-import { isUnsubscribed } from '@/lib/email/unsubscribe';
-import { buildUnsubscribeUrl } from '@/lib/email/unsubscribeToken';
+import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
 import { buildEmail } from '@/lib/email/template';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
-import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
+import { sendEmail } from '@/lib/email/sendEmail';
 import sanitizeHtml from 'sanitize-html';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 
@@ -205,7 +203,7 @@ export async function POST(request: Request) {
     const isHtml = /<[a-z][\s\S]*>/i.test(emailBody);
     const bodyToSanitize = isHtml ? emailBody : emailBody.replace(/\r?\n/g, '<br />');
     const sanitizedBody = sanitizeHtml(bodyToSanitize, {
-      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'br', 'p', 'div', 'span']),
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
       allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
         '*': ['style', 'class'],
@@ -266,7 +264,7 @@ export async function POST(request: Request) {
       .insert({
         tenant_id:    tenantId,
         user_id:      tenantCtx.user.id,
-        lead_name:    leadName || (leadEmail ? leadEmail.split('@')[0] : 'Contact'),
+        lead_name:    leadName,
         lead_email:   leadEmail,
         subject: normalizedSubject,
         body_html:    htmlWithComplianceFooter,
@@ -275,14 +273,6 @@ export async function POST(request: Request) {
         industry,
         score,
         status:       'queued',
-        lead_id:      entityType === 'lead' && entityId ? entityId : undefined,
-        metadata: {
-          source_type: 'alphaclone_ui',
-          source_agent: 'User',
-          initiated_by_user_id: tenantCtx.user.id,
-          entity_type: entityType || null,
-          entity_id: entityId || null,
-        },
       })
       .select('id')
       .single();
@@ -322,8 +312,7 @@ export async function POST(request: Request) {
       : [];
     const preferred = normalizeProvider(preferredProvider);
 
-    // Primary: fetch integrations scoped to the calling user
-    let { data: integrations, error: integrationsError } = await admin
+    const { data: integrations, error: integrationsError } = await admin
       .from('integrations')
       .select('type, config, enabled, user_id, updated_at')
       .eq('tenant_id', tenantId)
@@ -332,19 +321,6 @@ export async function POST(request: Request) {
       .in('type', ['brevo', 'resend', 'sendgrid', 'zoho']);
     if (integrationsError) {
       return NextResponse.json({ success: false, status: 'failed', error: integrationsError.message }, { status: 500 });
-    }
-
-    // Fallback: if no user-scoped integrations found, use any tenant-level ones (owner connected on behalf of all)
-    if (!integrations || integrations.length === 0) {
-      const { data: tenantIntegrations } = await admin
-        .from('integrations')
-        .select('type, config, enabled, user_id, updated_at')
-        .eq('tenant_id', tenantId)
-        .eq('enabled', true)
-        .in('type', ['brevo', 'resend', 'sendgrid', 'zoho']);
-      if (tenantIntegrations && tenantIntegrations.length > 0) {
-        integrations = tenantIntegrations;
-      }
     }
 
     const { data: profileIntegration } = await admin
@@ -515,7 +491,7 @@ export async function POST(request: Request) {
           });
           providerMessageId = null;
         } else if (selectedProvider.provider === 'zoho') {
-          const zohoService = new ZohoMailService(tenantCtx.user.id, tenantId);
+          const zohoService = new ZohoMailService(tenantCtx.user.id);
           const sendResult = await zohoService.sendEmail({
             toAddress: leadEmail,
             fromAddress: selectedProvider.fromEmail || fromAddress,
@@ -528,18 +504,19 @@ export async function POST(request: Request) {
           selectedProvider.provider === 'resend' ||
           selectedProvider.provider === 'sendgrid'
         ) {
-          const result = await sendEmailServer({
+          const result = await sendEmail(
             tenantId,
-            to: leadEmail,
-            subject: normalizedSubject,
-            message: htmlWithComplianceFooter.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-            fromName: selectedProvider.fromName,
-            userId: tenantCtx.user.id,
-            listUnsubscribeUrl: unsubscribeUrl,
-            category: 'outreach',
-            initiationSource: 'api.outreach.send',
-            preferredProvider: selectedProvider.provider,
-          });
+            {
+              to: leadEmail,
+              subject: normalizedSubject,
+              html: htmlWithComplianceFooter,
+              from_name: selectedProvider.fromName,
+              userId: tenantCtx.user.id,
+              listUnsubscribeUrl: unsubscribeUrl,
+              skipFooter: true,
+            },
+            selectedProvider.provider
+          );
           if (!result.success) {
             throw new Error(result.error || `Failed to send via ${selectedProvider.provider}`);
           }
@@ -561,7 +538,7 @@ export async function POST(request: Request) {
     if (sentProvider) {
       const postSendWarnings: string[] = [];
       if (logId) {
-        let { error: logUpdateError } = await admin
+        const { error: logUpdateError } = await admin
           .from('lead_outreach_log')
           .update({
             status: 'sent',
@@ -576,22 +553,6 @@ export async function POST(request: Request) {
               : null,
           })
           .eq('id', logId);
-        if (logUpdateError && (logUpdateError.code === 'PGRST204' || /provider_event_status|schema cache/i.test(logUpdateError.message))) {
-          const fallback = await admin
-            .from('lead_outreach_log')
-            .update({
-              status: 'sent',
-              sent_at: new Date().toISOString(),
-              provider: sentProvider,
-              zoho_message_id: providerMessageId,
-              provider_message_id: providerMessageId,
-              error_message: providerFailures.length > 0
-                ? `Failover recovered. Previous providers failed: ${providerFailures.map((f) => `${f.provider}: ${f.error}`).join(' | ')}`
-                : null,
-            })
-            .eq('id', logId);
-          logUpdateError = fallback.error;
-        }
         if (logUpdateError) {
           console.error('[Outreach/Send] Failed to update outreach log after provider send:', logUpdateError);
           postSendWarnings.push('outreach_log_update_failed');
@@ -628,59 +589,6 @@ export async function POST(request: Request) {
       } catch (captureError) {
         console.error('[Outreach/Send] Failed to capture outbound message after provider send:', captureError);
         postSendWarnings.push('message_capture_failed');
-      }
-
-      if (providerMessageId || sentProvider === 'microsoft' || sentProvider === 'zoho') {
-        try {
-          await persistCanonicalOutboundEmail({
-            supabase: admin,
-            tenantId,
-            userId: tenantCtx.user.id,
-            provider: sentProvider === 'microsoft' ? 'microsoft_graph' : sentProvider,
-            providerMessageId: providerMessageId || trackingId || logId || crypto.randomUUID(),
-            fromEmail: sentFromEmail,
-            recipients: [leadEmail],
-            subject: normalizedSubject,
-            html: htmlBody,
-            text: (sanitizedBody || '').slice(0, 4000),
-            hasAttachments: false,
-            metadata: {
-              source: 'api.outreach.send',
-              outreach_log_id: logId,
-              tracking_id: trackingId,
-              provider: sentProvider,
-            },
-          });
-        } catch (canonicalErr) {
-          console.error('[Outreach/Send] Canonical email persistence failed:', canonicalErr);
-          postSendWarnings.push('canonical_persistence_failed');
-        }
-      }
-
-      // Log activity to the activities table if entityType is contact or entityId is provided
-      const resolvedContactId = entityId || (entityType === 'contact' ? entityId : null);
-      if (resolvedContactId) {
-        try {
-          await admin.from('activities').insert({
-            tenant_id: tenantId,
-            contact_id: resolvedContactId,
-            created_by: tenantCtx.user.id,
-            type: 'email',
-            subject: normalizedSubject,
-            description: (sanitizedBody || '').slice(0, 1000),
-            status: 'completed',
-            is_automated: false,
-            source: 'outreach',
-            metadata: {
-              provider: sentProvider,
-              tracking_id: trackingId,
-              lead_email: leadEmail,
-            },
-          });
-          await admin.from('contacts').update({ last_activity_at: new Date().toISOString() }).eq('id', resolvedContactId);
-        } catch (activityErr) {
-          console.warn('[Outreach/Send] Contact activity log failed (non-fatal):', activityErr);
-        }
       }
 
       return NextResponse.json({

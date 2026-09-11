@@ -169,12 +169,12 @@ async function sendViaMeta(params: {
       provider: 'meta-whatsapp',
       code: 'NOT_CONFIGURED',
       error:
-        'WhatsApp integration is not configured. Add Phone Number ID and Access Token under Integration Settings, or set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Railway environment variables.',
+        'WhatsApp integration is not configured. Add Phone Number ID and Access Token under Integration Settings, or set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Vercel.',
     };
   }
 
   try {
-    const url = `https://graph.facebook.com/v21.0/${resolvedPhoneNumberId}/messages`;
+    const url = `https://graph.facebook.com/v18.0/${resolvedPhoneNumberId}/messages`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -396,15 +396,6 @@ export async function sendWhatsAppMessage(params: {
     };
   }
 
-  if (/\{\{[^}]+\}\}/.test(outboundMessage)) {
-    return {
-      success: false,
-      provider: 'meta-whatsapp',
-      code: 'VALIDATION_ERROR',
-      error: 'Blocked: unresolved template variables found in message body',
-    };
-  }
-
   const resolved = await resolveWhatsAppProvider({
     tenantId: params.tenantId,
     integrationId: params.integrationId,
@@ -535,7 +526,7 @@ export async function sendWhatsAppTemplate(params: {
   }
 
   try {
-    const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
+    const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {

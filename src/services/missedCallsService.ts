@@ -1,6 +1,5 @@
 import { cleanupRealtimeChannel } from '../lib/realtime';
 import { supabase } from '../lib/supabase';
-import { fetchMissedCallsCountShared } from '../lib/client/missedCallsCache';
 
 /**
  * Missed Calls Service
@@ -87,21 +86,19 @@ class MissedCallsService {
      * Get unseen missed calls count
      */
     async getUnseenMissedCallsCount(userId: string): Promise<{ count: number; error: string | null }> {
-        return fetchMissedCallsCountShared(async (id) => {
-            try {
-                const { data, error } = await supabase.rpc('get_unseen_missed_calls_count', {
-                    p_user_id: id
-                });
+        try {
+            const { data, error } = await supabase.rpc('get_unseen_missed_calls_count', {
+                p_user_id: userId
+            });
 
-                if (error) {
-                    return { count: 0, error: error.message };
-                }
-
-                return { count: data || 0, error: null };
-            } catch (err) {
-                return { count: 0, error: err instanceof Error ? err.message : 'Failed to get missed calls count' };
+            if (error) {
+                return { count: 0, error: error.message };
             }
-        }, userId);
+
+            return { count: data || 0, error: null };
+        } catch (err) {
+            return { count: 0, error: err instanceof Error ? err.message : 'Failed to get missed calls count' };
+        }
     }
 
     /**

@@ -1,12 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
     AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
-    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square, TrendingUp
+    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -15,7 +14,7 @@ import { businessClientService } from '../../../services/businessClientService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
-import { Button, Card, Input, Modal } from '../../ui/UIComponents';
+import { Button, Card } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CommunicationModal } from '../crm/CommunicationModal';
@@ -23,20 +22,6 @@ import type { EmailRecipient } from '../crm/emailRecipient';
 import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
-import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { InvoiceLifecycleDrawer } from '@/components/dashboard/invoicing/InvoiceLifecycleDrawer';
-import { InvoiceAgingReport } from '../invoicing/InvoiceAgingReport';
-import { OverdueReminderPanel } from '../invoicing/OverdueReminderPanel';
-import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
-import { BILLING_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
-import {
-    IntelligentKpiCard,
-    BonnieBrief,
-    BottleneckDetector,
-} from '@/components/ui/intelligence';
-import { WORKSPACE } from '@/constants/design';
-import { type SemanticSeverity, getSemanticStyles } from '@/lib/analytics/funnelAndPriority';
-import { semanticStatusStyle } from '@/lib/ui/statusSemantics';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -47,13 +32,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
-    const { confirm: confirmDialog } = useConfirmDialog();
     
     const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'draft' | 'sent' | 'paid' | 'overdue'>('all');
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [editingInvoice, setEditingInvoice] = useState<BusinessInvoice | null>(null);
     const [selectedInvoice, setSelectedInvoice] = useState<BusinessInvoice | null>(null);
     const [showPDFPreview, setShowPDFPreview] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -66,28 +49,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         overdueAmount: 0,
         draftCount: 0,
         sentCount: 0,
-        paidCount: 0,
-        overdueBucket1_15: 0,
-        overdueBucket16_30: 0,
-        overdueBucket31_60: 0,
-        overdueBucket61_plus: 0,
-        oldestOverdueDays: 0,
-        totalInvoiced: 0,
-        sentPrev: 0,
-        paidPrev: 0,
-        overduePrev: 0,
+        paidCount: 0
     });
     const [clientMap, setClientMap] = useState<Record<string, { name: string; email?: string }>>({});
     const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string; body?: string } | null>(null);
     const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
     const [bulkDeletingInvoices, setBulkDeletingInvoices] = useState(false);
-    const [bulkPausingFollowups, setBulkPausingFollowups] = useState(false);
-    const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
-    const [recordPaymentInvoice, setRecordPaymentInvoice] = useState<BusinessInvoice | null>(null);
-    const [recordPaymentAmount, setRecordPaymentAmount] = useState('');
-    const [recordPaymentError, setRecordPaymentError] = useState<string | null>(null);
-    const [recordPaymentSubmitting, setRecordPaymentSubmitting] = useState(false);
-    const [lifecycleInvoiceId, setLifecycleInvoiceId] = useState<string | null>(null);
 
     const toggleInvoiceSelection = (inv: BusinessInvoice) => {
         setSelectedInvoiceIds((prev) => {
@@ -114,44 +81,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         router.push(buildMailComposeUrl(recipients, subject));
     };
 
-    const handleBulkPauseFollowups = async () => {
-        const ids = [...selectedInvoiceIds];
-        if (!ids.length) return;
-        const ok = await confirmDialog({
-            title: 'Pause automatic follow-ups?',
-            description: `Pause automatic follow-ups for ${ids.length} selected invoice(s). This sends no email and can be changed later on individual invoices.`,
-            confirmLabel: 'Pause follow-ups',
-        });
-        if (!ok) return;
-
-        setBulkPausingFollowups(true);
-        const toastId = toast.loading(`Pausing follow-ups for ${ids.length} invoice(s)...`);
-        try {
-            const { error, count } = await businessInvoiceService.bulkUpdateInvoices(ids, { disableFollowups: true });
-            if (error) throw new Error(error);
-            setInvoices((prev) => prev.map((invoice) => selectedInvoiceIds.has(invoice.id)
-                ? { ...invoice, autoFollowupEnabled: false }
-                : invoice));
-            setSelectedInvoiceIds(new Set());
-            toast.success(`Paused automatic follow-ups for ${count} invoice(s). No email was sent.`, { id: toastId });
-            await loadInvoices();
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Unable to pause follow-ups', { id: toastId });
-        } finally {
-            setBulkPausingFollowups(false);
-        }
-    };
-
     const handleBulkDeleteInvoices = async () => {
         const ids = [...selectedInvoiceIds];
         if (!ids.length) return;
-        const ok = await confirmDialog({
-            title: 'Delete draft invoices?',
-            description: `Delete ${ids.length} selected invoice(s). Only draft invoices can be deleted; non-drafts will be skipped. This cannot be undone.`,
-            confirmLabel: 'Delete drafts',
-            variant: 'danger',
-        });
-        if (!ok) return;
+        if (!confirm(`Delete ${ids.length} draft invoice(s)? This cannot be undone.`)) return;
 
         setBulkDeletingInvoices(true);
         const toastId = toast.loading(`Deleting ${ids.length} invoice(s)...`);
@@ -173,22 +106,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         }
     };
 
-    const openRecordPayment = (invoice: BusinessInvoice) => {
-        setRecordPaymentInvoice(invoice);
-        setRecordPaymentAmount('');
-        setRecordPaymentError(null);
-        setRecordPaymentSubmitting(false);
-        setRecordPaymentOpen(true);
-    };
-
-    const closeRecordPayment = () => {
-        setRecordPaymentOpen(false);
-        setRecordPaymentInvoice(null);
-        setRecordPaymentAmount('');
-        setRecordPaymentError(null);
-        setRecordPaymentSubmitting(false);
-    };
-
     useEffect(() => {
         if (currentTenant?.id) {
             loadInvoices();
@@ -198,26 +115,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     useEffect(() => {
         if (!searchParams) return;
-        const createVal = searchParams.get('create');
-        const newVal = searchParams.get('new');
-        if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
+        if (searchParams.get('create') === 'true' || searchParams.get('new') === 'true') {
             setShowCreateModal(true);
             router.replace('/dashboard/business/billing/manage', { scroll: false });
         }
     }, [searchParams, router]);
-
-    useBonnieDeepLinkFocus({
-        onFocus: ({ focus, recordId }) => {
-            if (focus === 'overdue') setFilter('overdue');
-            if (recordId) {
-                const invoice = invoices.find((item) => item.id === recordId);
-                if (invoice) {
-                    setSelectedInvoiceForOptions(invoice);
-                    setIsOptionsOpen(true);
-                }
-            }
-        },
-    });
 
     const loadClients = async () => {
         if (!currentTenant?.id) return;
@@ -271,47 +173,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     };
 
     const calculateStats = (invoiceData: BusinessInvoice[]) => {
-        const today = new Date();
-        const s = {
-            totalRevenue: 0,
-            pendingAmount: 0,
-            overdueAmount: 0,
-            draftCount: 0,
-            sentCount: 0,
-            paidCount: 0,
-            overdueBucket1_15: 0,
-            overdueBucket16_30: 0,
-            overdueBucket31_60: 0,
-            overdueBucket61_plus: 0,
-            oldestOverdueDays: 0,
-            totalInvoiced: 0,
-            sentPrev: 0,
-            paidPrev: 0,
-            overduePrev: 0,
-        };
+        const s = { totalRevenue: 0, pendingAmount: 0, overdueAmount: 0, draftCount: 0, sentCount: 0, paidCount: 0 };
         invoiceData.forEach(inv => {
-            s.totalInvoiced += inv.total;
-            if (inv.status === 'paid') {
-                s.totalRevenue += inv.total;
-                s.paidCount++;
-                if (inv.updatedAt && today.getTime() - new Date(inv.updatedAt).getTime() > 30 * 86400000) {
-                    s.paidPrev++;
-                }
-            } else if (inv.status === 'sent') {
-                s.pendingAmount += inv.total;
-                s.sentCount++;
-                const issuedDays = inv.issueDate ? Math.floor((today.getTime() - new Date(inv.issueDate).getTime()) / 86400000) : 0;
-                if (issuedDays > 30) s.sentPrev++;
-            } else if (inv.status === 'overdue') {
-                s.overdueAmount += inv.total;
-                const age = inv.dueDate ? Math.max(0, Math.floor((today.getTime() - new Date(inv.dueDate).getTime()) / 86400000)) : 0;
-                if (age > s.oldestOverdueDays) s.oldestOverdueDays = age;
-                if (age > 60) s.overdueBucket61_plus += inv.total;
-                else if (age > 30) s.overdueBucket31_60 += inv.total;
-                else if (age > 15) s.overdueBucket16_30 += inv.total;
-                else s.overdueBucket1_15 += inv.total;
-                if (age > 45) s.overduePrev++;
-            } else if (inv.status === 'draft') s.draftCount++;
+            if (inv.status === 'paid') { s.totalRevenue += inv.total; s.paidCount++; }
+            else if (inv.status === 'sent') { s.pendingAmount += inv.total; s.sentCount++; }
+            else if (inv.status === 'overdue') { s.overdueAmount += inv.total; }
+            else if (inv.status === 'draft') s.draftCount++;
         });
         setStats(s);
     };
@@ -328,7 +195,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         setRevenueData(sorted.length ? sorted : [{ date: 'Today', revenue: 0 }]);
     };
 
-    const [activeTab, setActiveTab] = useState<'invoices' | 'aging' | 'reminders' | 'recurring' | 'services'>('invoices');
+    const [activeTab, setActiveTab] = useState<'invoices' | 'recurring' | 'services'>('invoices');
 
     const filteredInvoices = invoices.filter(inv => {
         const matchesFilter = filter === 'all' || inv.status === filter;
@@ -337,22 +204,22 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     });
 
     const getStatusStyles = (status: string) => {
-        return semanticStatusStyle(status).badge;
+        switch (status) {
+            case 'paid': return 'text-teal-400 bg-teal-400/10 border-teal-500/20';
+            case 'sent': return 'text-teal-400 bg-teal-400/10 border-teal-500/20';
+            case 'overdue': return 'text-rose-400 bg-rose-400/10 border-rose-500/20';
+            default: return 'text-slate-400 bg-slate-400/10 border-slate-500/20';
+        }
     };
 
     const handleViewPDF = (inv: BusinessInvoice) => {
-        if (!currentTenant?.id) return;
-        setShowPDFPreview(
-          `/api/invoices/${encodeURIComponent(inv.id)}/pdf?tenantId=${encodeURIComponent(currentTenant.id)}`
-        );
-    };
-
-    const handleDownloadPDF = (inv: BusinessInvoice) => {
-        if (!currentTenant?.id) return;
-        window.open(
-          `/api/invoices/${encodeURIComponent(inv.id)}/pdf?tenantId=${encodeURIComponent(currentTenant.id)}&download=true`,
-          '_blank'
-        );
+        const metadata = businessInvoiceService.parseMetadata(inv.notes);
+        const client = inv.clientId
+            ? { name: clientMap[inv.clientId]?.name || inv.clientId, email: clientMap[inv.clientId]?.email || '' }
+            : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
+        const doc = businessInvoiceService.generatePDF(inv, currentTenant!, client);
+        const pdfUrl = URL.createObjectURL(doc.output('blob'));
+        setShowPDFPreview(pdfUrl);
     };
 
     if (loading) {
@@ -370,46 +237,30 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     return (
         <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
             <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
-            <ExecutionDecisionGuide
-                steps={BILLING_MANAGER_EXECUTION_STEPS}
-                onNavigate={(href) => router.push(href)}
-            />
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight flex items-center gap-2.5">
-                        <DollarSign className="w-5 h-5 text-[#149C86]" /> Invoicing
-                    </h2>
-                    <p className="text-sm text-[var(--ws-text-muted)] mt-1">Invoices, recurring revenue, and follow-ups</p>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+                        <DollarSign className="text-teal-500" /> Revenue Workspace
+                    </h1>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoices, recurring revenue, and follow-ups</p>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                   <button 
                     onClick={() => setActiveTab('invoices')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Billing
                   </button>
                   <button 
-                    onClick={() => setActiveTab('aging')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'aging' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Aging Report
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('reminders')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'reminders' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Reminders
-                  </button>
-                  <button 
                     onClick={() => setActiveTab('recurring')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Recurring
                   </button>
                   <button 
                     onClick={() => setActiveTab('services')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Catalog
                   </button>
@@ -420,10 +271,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 <React.Suspense fallback={<div className="p-12 text-center text-slate-500">Loading Catalog...</div>}>
                     <ServicesCatalog />
                 </React.Suspense>
-            ) : activeTab === 'aging' ? (
-                <InvoiceAgingReport />
-            ) : activeTab === 'reminders' ? (
-                <OverdueReminderPanel />
             ) : activeTab === 'recurring' ? (
                 currentTenant?.id ? (
                     <RecurringInvoicesPanel
@@ -433,159 +280,25 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 ) : null
             ) : (
                 <>
-            {/* Aging severity strip */}
-            {stats.overdueAmount > 0 ? (
-                (() => {
-                    const hasSevere = stats.overdueBucket61_plus > 0 || stats.overdueBucket31_60 > 0;
-                    const severity: SemanticSeverity = stats.overdueBucket61_plus > 0 ? 'critical' : stats.overdueBucket31_60 > 0 ? 'warning' : stats.overdueBucket16_30 > 0 ? 'warning' : 'info';
-                    const sem = getSemanticStyles(severity);
-                    return (
-                        <div className={`rounded-lg border ${sem.border} ${sem.bg} p-3 md:p-4`}>
-                            <div className="flex flex-col md:flex-row md:items-start gap-3">
-                                <div className="flex items-start gap-3 min-w-0 flex-1">
-                                    <span className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${sem.iconBg} ${sem.text}`}>
-                                        <AlertCircle className="w-4 h-4" />
-                                    </span>
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[13px] font-bold text-[var(--ws-text-primary)]">
-                                            ${stats.overdueAmount.toLocaleString()} overdue across invoices
-                                        </p>
-                                        <p className="mt-1 text-[12px] text-[var(--ws-text-secondary)]">
-                                            Oldest: {stats.oldestOverdueDays} days overdue.
-                                            {hasSevere ? ' 60+ day invoices carry material write-off risk — escalate before end of week.' : ' Gentle payment reminders at this stage recover ~78% without relationship friction.'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {stats.overdueBucket1_15 > 0 ? (
-                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border bg-white/5 text-[10.5px] font-bold text-[var(--ws-text-secondary)] border-white/10">
-                                            1–15d · ${Math.round(stats.overdueBucket1_15 / 1000)}k
-                                        </span>
-                                    ) : null}
-                                    {stats.overdueBucket16_30 > 0 ? (
-                                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border ${getSemanticStyles('warning').bg} ${getSemanticStyles('warning').text} ${getSemanticStyles('warning').border} text-[10.5px] font-bold`}>
-                                            16–30d · ${Math.round(stats.overdueBucket16_30 / 1000)}k
-                                        </span>
-                                    ) : null}
-                                    {stats.overdueBucket31_60 > 0 ? (
-                                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border ${getSemanticStyles('critical').bg} ${getSemanticStyles('critical').text} ${getSemanticStyles('critical').border} text-[10.5px] font-bold`}>
-                                            31–60d · ${Math.round(stats.overdueBucket31_60 / 1000)}k
-                                        </span>
-                                    ) : null}
-                                    {stats.overdueBucket61_plus > 0 ? (
-                                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border ${getSemanticStyles('critical').bg} ${getSemanticStyles('critical').text} ${getSemanticStyles('critical').border} text-[10.5px] font-bold`}>
-                                            61+d · ${Math.round(stats.overdueBucket61_plus / 1000)}k
-                                        </span>
-                                    ) : null}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })()
-            ) : null}
-
-            {/* Intelligent KPIs */}
-            <div className="grid grid-cols-2 min-[960px]:grid-cols-4 gap-3">
-                <IntelligentKpiCard
-                    label="Collected"
-                    current={stats.totalRevenue}
-                    previous={Math.max(1, Math.round(stats.totalRevenue * (stats.paidCount > 1 ? 0.92 : 0.75)))}
-                    target={Math.round(stats.totalRevenue * 1.08)}
-                    href="#"
-                    icon={DollarSign}
-                    iconColor="#14b8a6"
-                    isBetterHigher
-                    compact
-                />
-                <IntelligentKpiCard
-                    label="Awaiting payment"
-                    current={stats.pendingAmount}
-                    previous={Math.round(stats.pendingAmount * (stats.sentCount > 0 ? 1.04 : 0.8))}
-                    href="#"
-                    icon={Clock}
-                    iconColor="#06b6d4"
-                    compact
-                />
-                <IntelligentKpiCard
-                    label="Overdue"
-                    current={stats.overdueAmount}
-                    previous={Math.round(stats.overdueAmount * (stats.overduePrev > 0 ? 0.88 : 0.5))}
-                    href="#"
-                    icon={AlertCircle}
-                    iconColor="#f87171"
-                    isBetterHigher={false}
-                    compact
-                />
-                <IntelligentKpiCard
-                    label="Invoiced (total)"
-                    current={stats.totalInvoiced || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount)}
-                    previous={Math.max(1, Math.round((stats.totalInvoiced || stats.totalRevenue + stats.pendingAmount + stats.overdueAmount) * 0.97))}
-                    href="#"
-                    icon={FileText}
-                    iconColor="#8b5cf6"
-                    isBetterHigher
-                    compact
-                />
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                    { label: 'Collected', value: stats.totalRevenue, color: 'text-teal-400' },
+                    { label: 'Awaiting Payment', value: stats.pendingAmount, color: 'text-teal-400' },
+                    { label: 'Overdue', value: stats.overdueAmount, color: 'text-rose-400' },
+                    { label: 'Drafts', value: stats.draftCount, color: 'text-slate-400' }
+                ].map(s => (
+                    <Card key={s.label} className="p-4 bg-slate-900/40 border-white/5">
+                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
+                        <p className={`text-lg font-black ${s.color}`}>${s.value.toLocaleString()}</p>
+                    </Card>
+                ))}
             </div>
-
-            {/* Collection funnel + bottleneck */}
-            {stats.totalInvoiced > 0 || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount) > 0 ? (
-                <BottleneckDetector
-                    multiplierName="cash"
-                    funnelStages={[
-                        { key: 'invoiced', label: 'Invoiced', count: Math.max(1, stats.totalInvoiced || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount)), benchmarkConversion: 90 },
-                        { key: 'sent', label: 'Sent to client', count: stats.sentCount > 0 ? Math.max(1, stats.pendingAmount + stats.overdueAmount + stats.totalRevenue) : Math.max(1, stats.totalInvoiced * 0.95 || stats.totalRevenue * 1.2), benchmarkConversion: 82 },
-                        { key: 'paid', label: 'Collected', count: Math.max(1, stats.totalRevenue) },
-                    ]}
-                />
-            ) : null}
-
-            <BonnieBrief
-                whatChanged={(() => {
-                    const items: string[] = [];
-                    const total = stats.totalInvoiced || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount);
-                    items.push(`Billing ledger: $${total.toLocaleString()} invoiced · $${stats.totalRevenue.toLocaleString()} collected · $${(stats.pendingAmount + stats.overdueAmount).toLocaleString()} in-flight.`);
-                    if (stats.sentCount > stats.sentPrev) items.push(`${stats.sentCount} invoice${stats.sentCount !== 1 ? 's' : ''} currently awaiting payment.`);
-                    if (stats.overdueAmount > 0) items.push(`$${stats.overdueAmount.toLocaleString()} overdue · oldest ${stats.oldestOverdueDays} days.`);
-                    if (items.length === 1) items.push('No material week-over-week shifts in collections cadence.');
-                    return items;
-                })()}
-                whyItMatters={(() => {
-                    const items: string[] = [];
-                    if (stats.overdueBucket61_plus > 0) {
-                        items.push(`61+ day overdue ($${Math.round(stats.overdueBucket61_plus / 1000)}k) crosses the 40% probabilistic write-off threshold — manual outreach required.`);
-                    } else if (stats.overdueBucket31_60 > 0) {
-                        items.push(`31–60 day balances ($${Math.round(stats.overdueBucket31_60 / 1000)}k) are the highest-ROI collection window — 51% recover with one firm but cordial reminder.`);
-                    }
-                    const collected = stats.totalRevenue;
-                    const owed = stats.pendingAmount + stats.overdueAmount;
-                    if (owed > collected * 0.6 && collected > 0) {
-                        items.push(`Outstanding (${Math.round((owed / (collected + owed)) * 100)}% of booked) is above the 40% healthy ceiling — cash velocity degrades working-business flexibility.`);
-                    }
-                    if (items.length === 0) items.push('Collections posture is healthy. Preserve current reminder cadence and early-payment incentives.');
-                    return items;
-                })()}
-                whatToDo={(() => {
-                    const items: string[] = [];
-                    if (stats.overdueBucket61_plus > 0) items.push('Escalate 61+ day overdue today: payment plan, partial payment, or pause on further work until reconciled.');
-                    if (stats.oldestOverdueDays > 30) items.push('Run the 31+ day queue with direct owner outreach — template reminders degrade sharply past this mark.');
-                    else if (stats.overdueBucket16_30 > 0) items.push('Send 16–30 day cordial batch reminders now — automations recover 78% of this bracket with zero relationship cost.');
-                    if (stats.draftCount > 0) items.push(`Issue the ${stats.draftCount} draft invoice${stats.draftCount !== 1 ? 's' : ''} — unbilled work is a zero-interest loan to your clients.`);
-                    items.push('Measure DSO (days sales outstanding), not raw overdue count — shrinking DSO by 5 days permanently is worth more than one dramatic collection spike.');
-                    return items;
-                })()}
-            />
 
             {/* Chart */}
             {!isMobile && (
-                <div className={`${WORKSPACE.panel.base} p-4 md:p-6 h-80`}>
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-[13px] font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-[var(--success-text)]" />
-                            Collected revenue trend
-                        </h3>
-                    </div>
-                    <ResponsiveContainer width="100%" height="82%" minWidth={0} minHeight={200}>
+                <Card className="p-6 bg-slate-900/40 border-white/5 h-80">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
                             <XAxis 
@@ -616,7 +329,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             />
                         </LineChart>
                     </ResponsiveContainer>
-                </div>
+                </Card>
             )}
 
             {/* Invoices List */}
@@ -643,16 +356,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-indigo-500/30 text-indigo-300 flex items-center gap-1.5 transition-colors hover:text-indigo-200"
                                 >
                                     <Mail size={12} />
-                                    {`Prepare Follow-up (${selectedInvoiceIds.size})`}
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={bulkPausingFollowups}
-                                    onClick={handleBulkPauseFollowups}
-                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-amber-500/30 text-amber-200 flex items-center gap-1.5 transition-colors hover:text-amber-100 disabled:opacity-50"
-                                >
-                                    <Clock size={12} />
-                                    {bulkPausingFollowups ? 'Pausing…' : `Pause Follow-ups (${selectedInvoiceIds.size})`}
+                                    {`Send Follow-up (${selectedInvoiceIds.size})`}
                                 </button>
                                 <button
                                     type="button"
@@ -671,7 +375,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     </div>
                 </div>
                 <p className="text-xs text-slate-500 -mt-2">
-                    Tip: select invoices to prepare a follow-up draft, pause automatic follow-ups, or delete drafts. Preparing a draft does not send email.
+                    Tip: select invoices to send one follow-up to many clients at once. Only drafts can be bulk deleted.
                 </p>
 
                 <div className="space-y-3">
@@ -792,21 +496,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-3">
-                                    <button onClick={() => { setLifecycleInvoiceId(selectedInvoiceForOptions.id); setIsOptionsOpen(false); }} className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"><span className="flex items-center gap-2.5"><Calendar className="w-4 h-4 text-sky-400" /><span>Payment Plan, Credits & Disputes</span></span><span className="text-[10px] text-slate-500 font-mono">LIFECYCLE</span></button>
-                                    <button
-                                        onClick={() => {
-                                            setEditingInvoice(selectedInvoiceForOptions);
-                                            setIsOptionsOpen(false);
-                                        }}
-                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
-                                    >
-                                        <span className="flex items-center gap-2.5">
-                                            <Edit className="w-4 h-4 text-violet-400" />
-                                            <span>Edit Invoice &amp; Theme</span>
-                                        </span>
-                                        <span className="text-[10px] text-slate-500 font-mono">DESIGN</span>
-                                    </button>
-
                                     <button
                                         onClick={() => {
                                             handleViewPDF(selectedInvoiceForOptions);
@@ -823,7 +512,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
                                     <button
                                         onClick={() => {
-                                            handleDownloadPDF(selectedInvoiceForOptions);
+                                            const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
+                                            const client = selectedInvoiceForOptions.clientId
+                                                ? { name: clientMap[selectedInvoiceForOptions.clientId]?.name || selectedInvoiceForOptions.clientId, email: clientMap[selectedInvoiceForOptions.clientId]?.email || '' }
+                                                : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
+                                            const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
+                                            doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
                                             setIsOptionsOpen(false);
                                         }}
                                         className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
@@ -849,18 +543,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     {currentTenant?.id && (
                                         <button
                                             onClick={async () => {
-                                                if (!selectedInvoiceForOptions) return;
-                                                const currentEnabled = selectedInvoiceForOptions.autoFollowupEnabled !== false;
-                                                const nextEnabled = !currentEnabled;
-                                                const ok = await confirmDialog({
-                                                    title: nextEnabled ? 'Enable auto follow-ups?' : 'Disable auto follow-ups?',
-                                                    description: nextEnabled
-                                                        ? 'AlphaClone will send reminder emails until the invoice is paid.'
-                                                        : 'Stops future reminder emails for this invoice. Manual follow-ups will still be available.',
-                                                    confirmLabel: nextEnabled ? 'Enable' : 'Disable',
-                                                    variant: nextEnabled ? 'primary' : 'danger',
-                                                });
-                                                if (!ok) return;
+                                                const enabled = confirm('Enable automatic follow-ups for this invoice?\n\nOK = enable\nCancel = disable');
                                                 const toastId = toast.loading('Updating follow-up settings...');
                                                 try {
                                                     const res = await fetch(`/api/invoices/${selectedInvoiceForOptions.id}/followup-settings`, {
@@ -868,13 +551,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                         headers: { 'Content-Type': 'application/json' },
                                                         body: JSON.stringify({
                                                             tenantId: currentTenant.id,
-                                                            autoFollowupEnabled: nextEnabled,
+                                                            autoFollowupEnabled: enabled,
                                                         }),
                                                     });
                                                     const data = await res.json().catch(() => ({}));
                                                     if (!res.ok) throw new Error(data.error || 'Failed to update follow-ups');
                                                     toast.success(
-                                                        nextEnabled ? 'Auto follow-ups enabled for this invoice.' : 'Auto follow-ups disabled for this invoice.',
+                                                        enabled ? 'Auto follow-ups enabled for this invoice.' : 'Auto follow-ups disabled for this invoice.',
                                                         { id: toastId }
                                                     );
                                                     setIsOptionsOpen(false);
@@ -887,7 +570,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         >
                                             <span className="flex items-center gap-2.5">
                                                 <CheckCircle className="w-4 h-4 text-teal-400" />
-                                                <span>{selectedInvoiceForOptions.autoFollowupEnabled !== false ? 'Disable Auto Follow-ups' : 'Enable Auto Follow-ups'}</span>
+                                                <span>Toggle Auto Follow-ups</span>
                                             </span>
                                             <span className="text-[10px] text-slate-500 font-mono">REMINDERS</span>
                                         </button>
@@ -924,14 +607,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             setIsOptionsOpen(false);
                                             const toastId = toast.loading('Starting invoice lifecycle...');
                                             try {
-                                                if (!currentTenant?.id) throw new Error('Active workspace required');
-                                                const { startInvoiceLifecycleFromDashboard } = await import(
-                                                    '@/lib/invoices/startInvoiceLifecycleFromDashboard'
-                                                );
-                                                await startInvoiceLifecycleFromDashboard({
-                                                    tenantId: currentTenant.id,
-                                                    invoiceId: selectedInvoiceForOptions.id,
-                                                });
+                                                const { callMcpTool } = await import('@/services/mcp/toolCaller');
+                                                await callMcpTool('start_invoice_lifecycle', { invoice_id: selectedInvoiceForOptions.id });
                                                 toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
                                             } catch (err: any) {
                                                 toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
@@ -971,9 +648,26 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
                                             <button
                                                 onClick={async () => {
-                                                    if (!selectedInvoiceForOptions) return;
+                                                    const raw = prompt('Record a payment amount (deposit/partial). Example: 250');
+                                                    if (!raw) return;
+                                                    const amount = Number(String(raw).replace(/[^0-9.]/g, ''));
+                                                    const toastId = toast.loading('Recording payment...');
+                                                    const { error, status, amountPaid } = await businessInvoiceService.recordPayment(
+                                                        selectedInvoiceForOptions.id,
+                                                        amount
+                                                    );
+                                                    if (error) {
+                                                        toast.error(error, { id: toastId });
+                                                        return;
+                                                    }
+                                                    toast.success(
+                                                        status === 'paid'
+                                                            ? 'Payment recorded — invoice is now paid.'
+                                                            : `Deposit recorded — total paid now ${Number(amountPaid || 0).toFixed(2)}.`,
+                                                        { id: toastId }
+                                                    );
                                                     setIsOptionsOpen(false);
-                                                    openRecordPayment(selectedInvoiceForOptions);
+                                                    void loadInvoices();
                                                 }}
                                                 className="w-full flex items-center justify-between p-3.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all text-left text-sm text-blue-200"
                                             >
@@ -1028,14 +722,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     if (!selectedInvoiceForOptions) return;
                                     const toastId = toast.loading('Starting invoice lifecycle...');
                                     try {
-                                        if (!currentTenant?.id) throw new Error('Active workspace required');
-                                        const { startInvoiceLifecycleFromDashboard } = await import(
-                                            '@/lib/invoices/startInvoiceLifecycleFromDashboard'
-                                        );
-                                        await startInvoiceLifecycleFromDashboard({
-                                            tenantId: currentTenant.id,
-                                            invoiceId: selectedInvoiceForOptions.id,
-                                        });
+                                        const { callMcpTool } = await import('@/services/mcp/toolCaller');
+                                        await callMcpTool('start_invoice_lifecycle', { invoice_id: selectedInvoiceForOptions.id });
                                         toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
                                         setShowPDFPreview(null);
                                     } catch (err: any) {
@@ -1049,7 +737,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             <button
                                 onClick={() => {
                                     if (!selectedInvoiceForOptions) return;
-                                    handleDownloadPDF(selectedInvoiceForOptions);
+                                    const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
+                                    const client = selectedInvoiceForOptions.clientId
+                                        ? { name: clientMap[selectedInvoiceForOptions.clientId]?.name || selectedInvoiceForOptions.clientId, email: clientMap[selectedInvoiceForOptions.clientId]?.email || '' }
+                                        : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
+                                    const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
+                                    doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
                                 }}
                                 className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-white"
                             >
@@ -1061,17 +754,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             </AnimatePresence>
 
             <EnhancedInvoiceModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} mode="create" onSuccess={loadInvoices} />
-            <InvoiceLifecycleDrawer invoiceId={lifecycleInvoiceId} tenantId={currentTenant?.id} open={Boolean(lifecycleInvoiceId)} onOpenChange={(open) => !open && setLifecycleInvoiceId(null)} />
-            <EnhancedInvoiceModal
-                isOpen={Boolean(editingInvoice)}
-                onClose={() => setEditingInvoice(null)}
-                mode="edit"
-                invoice={editingInvoice || undefined}
-                onSuccess={() => {
-                    setEditingInvoice(null);
-                    void loadInvoices();
-                }}
-            />
 
             {emailCompose && user && (
                 <CommunicationModal
@@ -1083,65 +765,6 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     onSent={() => setEmailCompose(null)}
                 />
             )}
-
-            <Modal
-                isOpen={recordPaymentOpen}
-                onClose={closeRecordPayment}
-                title={recordPaymentInvoice ? `Record payment — ${recordPaymentInvoice.invoiceNumber}` : 'Record payment'}
-                maxWidth="max-w-lg"
-            >
-                <form
-                    onSubmit={async (e) => {
-                        e.preventDefault();
-                        if (!recordPaymentInvoice) return;
-                        const amount = Number(String(recordPaymentAmount || '').replace(/[^0-9.]/g, ''));
-                        if (!Number.isFinite(amount) || amount <= 0) {
-                            setRecordPaymentError('Enter a valid amount greater than zero.');
-                            return;
-                        }
-
-                        setRecordPaymentSubmitting(true);
-                        setRecordPaymentError(null);
-                        const toastId = toast.loading('Recording payment...');
-                        try {
-                            const { error, status, amountPaid } = await businessInvoiceService.recordPayment(recordPaymentInvoice.id, amount);
-                            if (error) throw new Error(error);
-                            toast.success(
-                                status === 'paid'
-                                    ? 'Payment recorded — invoice is now paid.'
-                                    : `Deposit recorded — total paid now ${Number(amountPaid || 0).toFixed(2)}.`,
-                                { id: toastId }
-                            );
-                            closeRecordPayment();
-                            void loadInvoices();
-                        } catch (err) {
-                            toast.error(err instanceof Error ? err.message : 'Failed to record payment', { id: toastId });
-                            setRecordPaymentSubmitting(false);
-                        }
-                    }}
-                    className="flex flex-col gap-4"
-                >
-                    <Input
-                        label="Payment amount"
-                        value={recordPaymentAmount}
-                        onChange={(e) => {
-                            setRecordPaymentAmount(e.target.value);
-                            if (recordPaymentError) setRecordPaymentError(null);
-                        }}
-                        placeholder="250.00"
-                        inputMode="decimal"
-                        error={recordPaymentError || undefined}
-                    />
-                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-                        <Button type="button" variant="outline" onClick={closeRecordPayment}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" variant="primary" isLoading={recordPaymentSubmitting} disabled={!recordPaymentInvoice}>
-                            Record payment
-                        </Button>
-                    </div>
-                </form>
-            </Modal>
                 </>
             )}
         </div>

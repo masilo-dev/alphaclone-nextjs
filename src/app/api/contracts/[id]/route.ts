@@ -8,14 +8,8 @@ const UpdateContractSchema = z.object({
   content: z.string().optional(),
   status: z.enum(['draft', 'pending_approval', 'approved', 'sent', 'signed', 'void']).optional(),
   metadata: z.record(z.string(), z.any()).optional(),
-  admin_signature: z.string().max(2_000_000).nullable().optional(),
-  admin_signed_at: z.string().datetime().nullable().optional(),
-  governing_law: z.string().trim().max(200).nullable().optional(),
-  jurisdiction: z.string().trim().max(200).nullable().optional(),
-  payment_amount: z.coerce.number().min(0).max(1_000_000_000).nullable().optional(),
   tenantId: z.string().uuid(),
 });
-const DeleteContractSchema = z.object({ tenantId: z.string().uuid() });
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -72,7 +66,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     // 4. Sanitize Content
     if (updatePayload.content) {
       updatePayload.content = sanitizeHtml(updatePayload.content, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'table', 'tr', 'td']),
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'h1', 'h2', 'table', 'tr', 'td']),
         allowedAttributes: {
           ...sanitizeHtml.defaults.allowedAttributes,
           '*': ['style', 'class'],
@@ -101,9 +95,8 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       action: 'contract_updated',
       entity_type: 'contract',
       entity_id: id,
-      // Signature images are large data URLs — record that they changed, not the bytes.
-      new_values: { ...updatePayload, ...(updatePayload.admin_signature !== undefined ? { admin_signature: updatePayload.admin_signature ? '[signature image]' : null } : {}) },
-      old_values: { ...existing, admin_signature: existing.admin_signature ? '[signature image]' : null, client_signature: existing.client_signature ? '[signature image]' : null },
+      new_values: updatePayload,
+      old_values: existing,
       created_at: new Date().toISOString()
     });
 
@@ -111,26 +104,4 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
   } catch (error) {
     return routeErrorResponse(error, 'Failed to update contract', req);
   }
-}
-
-export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await context.params;
-    if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: 'Valid contract ID is required' }, { status: 400 });
-    const parsed = DeleteContractSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) return NextResponse.json({ error: 'Valid tenantId is required' }, { status: 400 });
-    const { user } = await requireTenantAccess(parsed.data.tenantId, req);
-    const admin = createAdminSupabaseClientOrThrow();
-    const { data: contract, error: lookupError } = await admin.from('contracts').select('id,status,title').eq('id', id).eq('tenant_id', parsed.data.tenantId).maybeSingle();
-    if (lookupError) throw lookupError;
-    if (!contract) return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
-    if (contract.status !== 'draft') return NextResponse.json({ error: 'Only draft contracts can be deleted. Void issued or signed contracts to preserve the legal record.' }, { status: 409 });
-    const { error: fileError } = await admin.from('file_uploads').update({ deleted_at: new Date().toISOString() }).eq('tenant_id', parsed.data.tenantId).eq('entity_type', 'contract').eq('entity_id', id);
-    if (fileError) throw fileError;
-    const { error } = await admin.from('contracts').delete().eq('id', id).eq('tenant_id', parsed.data.tenantId);
-    if (error) throw error;
-    const { error: auditError } = await admin.from('audit_logs').insert({ tenant_id: parsed.data.tenantId, user_id: user.id, action: 'contract_deleted', entity_type: 'contract', entity_id: id, old_values: contract, created_at: new Date().toISOString() });
-    if (auditError) console.error('[contracts] delete audit could not be recorded', auditError);
-    return NextResponse.json({ success: true });
-  } catch (error) { return routeErrorResponse(error, 'Contract could not be deleted', req); }
 }

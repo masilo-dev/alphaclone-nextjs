@@ -547,7 +547,7 @@ class QuantumDealIntelligenceService {
     const { error: updateErr } = await supabase
       .from('deals')
       .update({
-        probability: Math.round(closeProbability * 100),
+        probability: round4(closeProbability * 100),
         intelligence_score: intelligenceScore,
         intelligence_confidence: intelligenceConfidence,
         intelligence_state: state as any,

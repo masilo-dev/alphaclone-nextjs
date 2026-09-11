@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import EcosystemPage from '@/components/pages/EcosystemPage';
-import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
     title: 'The AlphaClone Ecosystem | One Unified Business OS Architecture',
-    description: 'Explore the AlphaClone Business OS ecosystem, including CRM, finance, Bonnie AI, Hermes, Cal.com, LinkedIn, Facebook, DeepSeek, Claude, OpenAI, OpenRouter, Microsoft 365, WhatsApp, and Instagram integration status.',
+    description: 'Explore the AlphaClone Business OS ecosystem. Integrated modules for CRM, operations, revenue workflows, agreements, meetings, and analytics in one platform.',
     keywords: [
         'AlphaClone ecosystem',
         'unified business OS architecture',
@@ -14,35 +13,22 @@ export const metadata: Metadata = {
         'Mission Control software',
         'Unified CRM Intelligence',
         'revenue operations platform',
-        'Cal.com scheduling',
-        'LinkedIn integration',
-        'Facebook integration',
-        'DeepSeek API',
-        'Claude API',
-        'OpenAI API',
-        'OpenRouter API',
-        'WhatsApp coming soon',
-        'Instagram coming soon',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/ecosystem' },
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
-        description: 'Integrated modules plus provider status for Cal.com, LinkedIn, Facebook, AI APIs, Microsoft 365, WhatsApp, and Instagram.',
+        description: 'Integrated modules for CRM, operations, revenue workflows, agreements, meetings, and analytics in one AlphaClone workspace.',
         url: 'https://alphaclonesystems.com/ecosystem',
         type: 'website',
     },
     twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
         title: 'The AlphaClone Ecosystem | Unified Business OS',
-        description: 'One unified platform with public integration status for core apps and AI providers.',
+        description: 'Nine integrated modules. One unified platform. Explore the full AlphaClone Business OS architecture.',
     },
     robots: { index: true, follow: true },
 };
 
 export default function Page() {
-    return (
-        <MarketingLandingShell>
-            <EcosystemPage />
-        </MarketingLandingShell>
-    );
+    return <EcosystemPage />;
 }

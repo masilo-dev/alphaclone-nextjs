@@ -54,14 +54,12 @@ export class ContactService {
   /**
    * Get contact by ID
    */
-  async get(id: string, tenantId?: string): Promise<Contact | null> {
-    const scopedTenantId = tenantId || tenantService.getCurrentTenantId();
-    let query = supabase.from('contacts').select('*').eq('id', id);
-    if (scopedTenantId) {
-      query = query.eq('tenant_id', scopedTenantId);
-    }
-
-    const { data, error } = await query.single();
+  async get(id: string): Promise<Contact | null> {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('id', id)
+      .single();
 
     if (error) throw error;
     return data;

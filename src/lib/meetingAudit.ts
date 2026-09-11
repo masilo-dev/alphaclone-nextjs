@@ -2,7 +2,7 @@ import { DailyCall } from '@daily-co/daily-js';
 
 /**
  * Sends an audit/analytics event to a meeting session.
- * Broadcasts a non-persistent in-meeting operational event to connected participants.
+ * Stub implementation – extend as needed for your audit backend.
  */
 export async function sendAuditToMeeting(
   callObject: DailyCall | null,

@@ -70,7 +70,7 @@ export default function PlanActivationPanel() {
                         {trialInfo
                             ? trialInfo.expired
                                 ? 'Your trial has expired and billing needs attention.'
-                                : 'Full workspace access is active during your trial.'
+                                : `${trialInfo.daysLeft} day${trialInfo.daysLeft === 1 ? '' : 's'} left in trial.`
                             : 'Your workspace is currently usable under this subscription state.'}
                     </div>
                 </div>

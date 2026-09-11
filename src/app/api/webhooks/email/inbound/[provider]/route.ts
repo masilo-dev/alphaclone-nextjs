@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
-import { recordInboundOutreachReply } from '@/lib/outreach/recordInboundOutreachReply';
 
 type InboundProvider = 'brevo' | 'resend' | 'sendgrid';
 type InboundMessage = {
@@ -150,7 +149,8 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                     to: message.to,
                     subject: message.subject,
                     bodyPreview: shortBody,
-                    // Do not persist full email bodies in activity logs (PII minimization)
+                    bodyText: message.text,
+                    bodyHtml: message.html,
                     messageId: message.messageId,
                     integrationId: integration.id,
                     receivedAt: new Date().toISOString(),
@@ -176,8 +176,6 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                     projectId: extractProjectThreadMarker(message.subject, message.text, message.html),
                 },
             });
-            await recordInboundOutreachReply({ admin, tenantId: integration.tenant_id, channel: 'email', sender: message.from, text: message.text || message.html || '', provider, providerEventId: message.messageId || null })
-                .catch((replyError) => console.error('[email-inbound] outreach reply capture failed', replyError));
 
             const projectId = extractProjectThreadMarker(message.subject, message.text, message.html);
             if (projectId) {

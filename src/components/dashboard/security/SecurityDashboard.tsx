@@ -52,13 +52,14 @@ const SecurityDashboard: React.FC = () => {
         setResult(null);
 
         try {
-            if (!tenantId) throw new Error('Select a workspace before scanning');
-            const scanResult = await securityScannerService.scanWebsite(url, tenantId);
+            const scanResult = await securityScannerService.scanWebsite(url);
             setResult(scanResult);
-            await loadScanHistory();
+            if (tenantId) {
+                await securityScannerService.saveScanResult(tenantId, scanResult);
+                await loadScanHistory();
+            }
         } catch (error) {
             console.error(error);
-            toast.error(error instanceof Error ? error.message : 'Security scan failed');
         } finally {
             setIsScanning(false);
         }

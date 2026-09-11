@@ -6,7 +6,7 @@ import { z } from 'zod';
 export const signUpSchema = z.object({
     email: z.string().email('Invalid email format'),
     password: z.string()
-        .min(12, 'Password must be at least 12 characters')
+        .min(8, 'Password must be at least 8 characters')
         .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
         .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
         .regex(/[0-9]/, 'Password must contain at least one number')
@@ -67,9 +67,6 @@ export const contactSchema = z.object({
         .max(2000, 'Message must be less than 2000 characters'),
     subject: z.string().max(200, 'Subject must be less than 200 characters').optional(),
     company: z.string().max(200, 'Company must be less than 200 characters').optional(),
-    phone: z.string().max(50, 'Phone must be less than 50 characters').optional(),
-    website: z.string().optional(), // Honeypot field - bots fill this in
-    source: z.string().optional(),
 });
 
 export const leadsManagementSchema = z.object({
@@ -108,7 +105,7 @@ export const outreachSendSchema = z.object({
     /** Direct compose/reply — skip CRM membership gate */
     skipCrmGate: z.boolean().optional(),
     directSend: z.boolean().optional(),
-    entityType: z.enum(['invoice', 'contract', 'document', 'lead', 'client', 'direct', 'contact']).optional(),
+    entityType: z.enum(['invoice', 'contract', 'document', 'lead', 'client', 'direct']).optional(),
     entityId: z.string().uuid().optional(),
 });
 

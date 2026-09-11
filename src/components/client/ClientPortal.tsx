@@ -6,7 +6,6 @@ import { projectService } from '../../services/projectService';
 import { format } from 'date-fns';
 import { supabase } from '../../lib/supabase';
 import { tenantService } from '../../services/tenancy/TenantService';
-import toast from 'react-hot-toast';
 
 interface ClientPortalProps {
     user: User;
@@ -122,25 +121,26 @@ const ClientPortal: React.FC<ClientPortalProps> = ({ user }) => {
         try {
             const tenantId = tenantService.getCurrentTenantId();
             
-            if (!tenantId) throw new Error('No active workspace');
-            const response = await fetch('/api/client/feedback', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tenantId,
-                    projectId: selectedProject.id,
+            // Save feedback to client_feedback table
+            const { error: feedbackError } = await supabase
+                .from('client_feedback')
+                .insert({
+                    tenant_id: tenantId,
+                    project_id: selectedProject.id,
+                    user_id: user.id,
                     rating: feedback.rating,
                     comment: feedback.comment,
-                }),
-            });
-            if (!response.ok) throw new Error('Feedback could not be submitted');
+                    created_at: new Date().toISOString(),
+                });
+
+            if (feedbackError) throw feedbackError;
             
             setShowSurvey(false);
             setFeedback({ rating: 0, comment: '' });
-            toast.success('Thank you for your feedback!');
+            alert('Thank you for your feedback!');
         } catch (err) {
             console.error('Failed to submit feedback:', err);
-            toast.error('Failed to submit feedback. Please try again.');
+            alert('Failed to submit feedback. Please try again.');
         } finally {
             setFeedbackSubmitting(false);
         }

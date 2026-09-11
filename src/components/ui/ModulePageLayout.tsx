@@ -1,8 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import React from 'react';
+import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
+
+const BonnieModuleDock = dynamic(
+  () => import('@/components/dashboard/bonnie/BonnieModuleDock'),
+  { ssr: false, loading: () => <div className="h-full min-h-[200px] rounded-xl border border-slate-800 bg-slate-950/50" /> }
+);
 
 interface ModulePageLayoutProps {
   /** Sticky toolbar row (filters, view toggles, bulk actions) */
@@ -11,64 +16,55 @@ interface ModulePageLayoutProps {
   stats?: React.ReactNode;
   /** Optional workflow strip or breadcrumbs above toolbar */
   header?: React.ReactNode;
+  /** Optional Bonnie AI side panel (desktop dock) */
+  bonnieSlot?: React.ReactNode;
+  /** Show default Bonnie module dock on desktop (lg+) */
+  showBonnieDock?: boolean;
   children: React.ReactNode;
   className?: string;
-  /** Extra bottom padding so sticky phone CTAs clear the bottom nav */
-  phoneNavSafe?: boolean;
-  /** Let a dense module use its own pane-level scrolling instead of a second page scroller. */
-  scrollContent?: boolean;
-  /** Show a control that expands the module into a distraction-free working view. */
-  allowFocus?: boolean;
 }
 
 /**
  * Standard list-module layout: optional header → toolbar → stats → scrollable data.
  * Use inside tabs that already receive a page title from the dashboard shell.
- * Phone-safe padding keeps content above the five-slot bottom nav.
  */
 export function ModulePageLayout({
   toolbar,
   stats,
   header,
+  bonnieSlot,
+  showBonnieDock = false,
   children,
   className,
-  phoneNavSafe = true,
-  scrollContent = true,
-  allowFocus = true,
 }: ModulePageLayoutProps) {
-  const [isFocused, setIsFocused] = useState(false);
+  const sidePanel = bonnieSlot ?? (showBonnieDock ? <BonnieModuleDock /> : null);
+
+  if (sidePanel) {
+    return (
+      <div className={cn('flex flex-col lg:flex-row gap-4 ac-scroll-full min-h-0', className)}>
+        <div className="flex flex-col flex-1 min-w-0 min-h-0 ac-scroll-full">
+          {header ? <div className="flex-shrink-0">{header}</div> : null}
+          {toolbar ? (
+            <div className="flex-shrink-0 px-1 py-2 mb-2">{toolbar}</div>
+          ) : null}
+          {stats ? <section className="flex-shrink-0 mb-4 md:mb-6">{stats}</section> : null}
+          <section className="flex-1 min-h-0 ac-scroll-full">{children}</section>
+        </div>
+        <aside className="hidden lg:flex lg:w-[300px] xl:w-[340px] flex-shrink-0 flex-col min-h-0 max-h-[calc(100dvh-8rem)]">
+          {sidePanel}
+        </aside>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={cn(
-        'flex flex-1 flex-col gap-4 min-h-0 overflow-hidden relative',
-        isFocused && 'fixed inset-0 z-[100] h-[100dvh] w-screen bg-[var(--ws-canvas,#0B1220)] p-3 md:p-4',
-        phoneNavSafe && 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0',
-        className,
-      )}
-    >
-      {allowFocus ? (
-        <button
-          type="button"
-          onClick={() => setIsFocused((current) => !current)}
-          aria-pressed={isFocused}
-          aria-label={isFocused ? 'Exit focus mode' : 'Focus this module'}
-          title={isFocused ? 'Exit focus mode' : 'Focus this module'}
-          className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#0F172A)] text-[var(--ws-text-muted)] shadow-lg transition hover:text-[var(--ws-text-primary)]"
-        >
-          {isFocused ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </button>
-      ) : null}
+    <div className={cn('flex flex-col ac-scroll-full min-h-0', className)}>
       {header ? <div className="flex-shrink-0">{header}</div> : null}
       {toolbar ? (
-        <div className="sticky top-0 z-10 -mx-1 flex-shrink-0 bg-[var(--ws-canvas)] px-1 py-1">
-          {toolbar}
-        </div>
+        <div className="flex-shrink-0 px-1 py-2 mb-2">{toolbar}</div>
       ) : null}
-      {stats ? <section className="flex-shrink-0">{stats}</section> : null}
-      <section className={cn('flex-1 min-h-0', scrollContent && 'overflow-y-auto overscroll-contain')}>
-        {children}
-      </section>
+      {stats ? <section className="flex-shrink-0 mb-4 md:mb-6">{stats}</section> : null}
+      <section className="flex-1 min-h-0 ac-scroll-full">{children}</section>
     </div>
   );
 }

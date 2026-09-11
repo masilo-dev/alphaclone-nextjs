@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPublicAppUrl } from '@/lib/server/appUrl';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { upsertWhatsAppIntegration } from '@/services/whatsapp/whatsappIntegrationService';
@@ -54,7 +53,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const { admin: supabase } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
 
     const { data, error } = await supabase
       .from('whatsapp_integrations')
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     const selectedProvider = String(provider || 'meta').toLowerCase() === 'zernio' ? 'zernio' : 'meta';
 
     const tenantCtx = await requireTenantAccess(tenantId);
-    const supabase = tenantCtx.admin;
+    const supabase = createSupabaseAdminClient();
     const { data: tenantRow, error: tenantError } = await supabase
       .from('tenants')
       .select('settings')
@@ -99,7 +99,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Build the absolute webhook URL for this deployment
-    const baseUrl = getPublicAppUrl();
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BASE_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://alphaclonesystems.com');
     const webhookUrl = `${baseUrl}${APP_WEBHOOK_PATH}`;
 
     let upsertResult: { integrationId: string | null; error?: string };
@@ -217,7 +220,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId and id are required' }, { status: 400 });
     }
 
-    const { admin: supabase } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
 
     const { error } = await supabase
       .from('whatsapp_integrations')

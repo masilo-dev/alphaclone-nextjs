@@ -4,7 +4,6 @@ import { BONNIE_CUSTOM_TOOLS } from '@/lib/bonnie/bonnieToolCatalog';
 import { evaluateToolPolicy } from '@/lib/ai/ToolPolicyGate';
 import { resolveBonnieToolSets } from '@/lib/bonnie/resolveBonnieTools';
 import { recordDecision } from '@/services/nexusDecisionLogService';
-import { extractErrorMessage } from '@/lib/copy/businessFriendlyErrors';
 import type { BonnieToolResult } from '@/lib/bonnie/bonnieToolTypes';
 
 const CUSTOM_SET = new Set<string>(BONNIE_CUSTOM_TOOLS);
@@ -22,9 +21,6 @@ function extractToolText(result: { content?: Array<{ text?: string }> }): string
       if (parsed.message) return String(parsed.message);
       const identifier = parsed.name || parsed.title || parsed.text || parsed.id;
       if (identifier) return String(identifier);
-      // Structured MCP errors nest the message under `error` — never "[object Object]".
-      const nested = extractErrorMessage(parsed);
-      return nested || chunk.slice(0, 2000);
     }
     return String(parsed);
   } catch {
@@ -68,10 +64,8 @@ export async function executeSingleBonnieTool(params: {
   skipPolicy?: boolean;
   policySource?: 'bonnie' | 'mcp' | 'playbook';
   instruction?: string;
-  workflowId?: string;
-  conversationId?: string;
 }): Promise<BonnieToolResult> {
-  const { tenantId, userId, skipPolicy = false, policySource = 'bonnie', instruction, workflowId, conversationId } = params;
+  const { tenantId, userId, skipPolicy = false, policySource = 'bonnie', instruction } = params;
   const tool = String(params.tool || '').trim();
   const args = forceSessionArgs({ ...(params.args || {}) }, { tenantId, userId });
 
@@ -79,7 +73,6 @@ export async function executeSingleBonnieTool(params: {
 
   let riskClass: string | undefined;
 
-  // ToolPolicyGate — EU AI Act Art. 14 human oversight
   if (!skipPolicy) {
     const policy = await evaluateToolPolicy({
       tenantId,
@@ -88,8 +81,6 @@ export async function executeSingleBonnieTool(params: {
       source: policySource,
       args,
       instruction,
-      workflowId,
-      conversationId,
     });
     riskClass = policy.riskClass;
 
@@ -101,19 +92,13 @@ export async function executeSingleBonnieTool(params: {
         toolName: tool,
         toolArgs: args,
         outcome: 'denied',
-        riskClass,
+        riskClass: policy.riskClass,
         reasoning: policy.reason,
       });
-      return {
-        tool,
-        success: false,
-        summary: policy.reason,
-        riskClass,
-      };
+      return { tool, success: false, summary: policy.reason };
     }
 
-    if (policy.outcome === 'queue_approval' && policy.approvalId) {
-      const preview = buildApprovalPreview(tool, args);
+    if (policy.outcome === 'queue_approval') {
       await recordDecision({
         tenantId,
         userId,
@@ -121,18 +106,19 @@ export async function executeSingleBonnieTool(params: {
         toolName: tool,
         toolArgs: args,
         outcome: 'queued_approval',
-        riskClass,
-        reasoning: policy.reason,
+        riskClass: policy.riskClass,
         approvalId: policy.approvalId,
+        reasoning: policy.reason,
       });
       return {
         tool,
-        success: true,
-        summary: policy.reason,
+        success: false,
+        summary: `Approval required: ${policy.reason}`,
+        details: policy.approvalId ? `Approval ID: ${policy.approvalId}` : undefined,
         approvalRequired: true,
         approvalId: policy.approvalId,
-        riskClass,
-        preview,
+        riskClass: policy.riskClass,
+        preview: buildApprovalPreview(tool, args),
       };
     }
   }
@@ -145,41 +131,31 @@ export async function executeSingleBonnieTool(params: {
       toolResult = await executeCustomTool(tool, tenantId, userId, args);
     } else {
       if (hasTool(tool)) {
-        const { businessToolActivity, humanizeTechnicalFailure } = await import(
-          '@/lib/copy/businessFriendlyErrors'
-        );
         const result = await executeTool(tenantId, userId, tool, args);
         const text = extractToolText(result);
         toolResult = {
           tool,
           success: !result.isError,
-          summary: result.isError
-            ? humanizeTechnicalFailure(text, { tool })
-            : `${businessToolActivity(tool)}.`,
+          summary: result.isError ? `Failed: ${text.slice(0, 200)}` : `${tool} completed`,
           details: text,
         };
       } else {
         const { mcpServerTools } = await resolveBonnieToolSets();
         if (mcpServerTools.includes(tool)) {
           const { executeBonnieMcpTool } = await import('@/lib/bonnie/bonnieMcpBridge');
-          const { businessToolActivity, humanizeTechnicalFailure } = await import(
-            '@/lib/copy/businessFriendlyErrors'
-          );
           const result = await executeBonnieMcpTool(tool, args, tenantId, userId);
           const text = extractToolText(result);
           toolResult = {
             tool,
             success: !result.isError,
-            summary: result.isError
-              ? humanizeTechnicalFailure(text, { tool })
-              : `${businessToolActivity(tool)}.`,
+            summary: result.isError ? `Failed: ${text.slice(0, 200)}` : `${tool} completed`,
             details: text,
           };
         } else {
           toolResult = {
             tool,
             success: false,
-            summary: 'Bonnie doesn’t have that capability enabled in this workspace yet.',
+            summary: `Tool "${tool}" is not available to Bonnie.`,
           };
         }
       }
@@ -198,33 +174,9 @@ export async function executeSingleBonnieTool(params: {
       });
     }
 
-    if (!toolResult.approvalRequired) {
-      const { notifyAfterMcpToolExecution } = await import('@/lib/notifications/mcpToolNotificationHook');
-      void notifyAfterMcpToolExecution({
-        tenantId,
-        userId,
-        toolName: tool,
-        args,
-        success: toolResult.success,
-        resultContent: [
-          {
-            text: JSON.stringify({
-              message: toolResult.summary,
-              ...(toolResult.details ? { details: toolResult.details } : {}),
-            }),
-          },
-        ],
-        errorMessage: toolResult.success ? null : toolResult.summary,
-        source: 'bonnie',
-      });
-    }
-
     return toolResult;
   } catch (err: unknown) {
-    const { humanizeTechnicalFailure } = await import('@/lib/copy/businessFriendlyErrors');
-    const message = humanizeTechnicalFailure(err instanceof Error ? err : 'Tool execution failed', {
-      tool,
-    });
+    const message = err instanceof Error ? err.message : 'Tool execution failed';
     if (!skipPolicy) {
       await recordDecision({
         tenantId,

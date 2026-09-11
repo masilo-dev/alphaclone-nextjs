@@ -13,18 +13,11 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
-import { formatFailureToastMessage } from '@/lib/copy/formatFailureForUser';
-
-function socialActionError(action: string, err: unknown, saved?: string) {
-  toast.error(formatFailureToastMessage({ action, rawError: err, saved }));
-}
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 import { LinkedInOrgPanel, normalizeLinkedInScopes } from './LinkedInOrgPanel';
 import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiVideoGenerationService';
 import { motion, AnimatePresence } from 'framer-motion';
-import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
-import { SocialContentCalendar } from './SocialContentCalendar';
-import { SocialAnalyticsStory } from './SocialAnalyticsStory';
+import EmptyState from '@/components/ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
 import { buildBusinessSocialPrompt } from '@/lib/ai/businessContext';
 
@@ -109,9 +102,7 @@ export default function SocialCommandCenter() {
     // Social Manager Platform Switcher
     const [activePlatform, setActivePlatform] = useState<'linkedin' | 'facebook' | 'x'>('linkedin');
     // Social Manager Subview Filter: 'queue' (scheduled), 'published', 'analytics'
-    const [activeSubView, setActiveSubView] = useState<'queue' | 'published' | 'publishing' | 'analytics'>('queue');
-    const [queueDisplayMode, setQueueDisplayMode] = useState<'list' | 'week' | 'month'>('list');
-    const [calendarAnchor, setCalendarAnchor] = useState(() => new Date());
+    const [activeSubView, setActiveSubView] = useState<'queue' | 'published' | 'analytics'>('queue');
     
     // State lists
     const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -123,8 +114,6 @@ export default function SocialCommandCenter() {
     const [recentInteractions, setRecentInteractions] = useState<any[]>([]);
     const [postMetrics, setPostMetrics] = useState<Record<string, PostMetrics>>({});
     const [loading, setLoading] = useState(true);
-    const [syncingMetrics, setSyncingMetrics] = useState(false);
-    const [metricsSyncedAt, setMetricsSyncedAt] = useState<string | null>(null);
 
     // Detail Bottom Sheet
     const [selectedPost, setSelectedPost] = useState<SocialPost | null>(null);
@@ -233,10 +222,7 @@ export default function SocialCommandCenter() {
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data?.success) {
-            toast.error(data?.error || data?.hint || formatFailureToastMessage({
-                action: 'refresh LinkedIn company pages',
-                rawError: data?.error,
-            }));
+                toast.error(data?.error || data?.hint || 'Could not refresh LinkedIn company pages');
                 await loadData();
                 return;
             }
@@ -246,8 +232,8 @@ export default function SocialCommandCenter() {
                     : data.hint || 'No pages returned — try linking manually',
             );
             await loadData();
-        } catch (error) {
-            socialActionError('refresh LinkedIn company pages', error);
+        } catch {
+            toast.error('Failed to refresh company pages');
         }
     };
 
@@ -306,15 +292,14 @@ export default function SocialCommandCenter() {
             // Query social posts, fb pages, and linkedin profiles from DB
             const [postsRes, pagesRes, linkedinRes, analyticsRes] = await Promise.all([
                 supabase.from('social_posts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(60),
-                supabase.from('facebook_integrations').select('page_id,page_name').eq('tenant_id', currentTenant.id).eq('is_active', true),
+                supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user?.id || '').eq('is_active', true),
                 supabase.from('linkedin_integrations').select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
-                supabase.from('social_post_analytics').select('post_id,impressions,clicks,reactions,comments,shares,synced_at,created_at').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(250),
+                supabase.from('social_post_analytics').select('post_id,impressions,clicks,reactions,created_at').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(250),
             ]);
 
             if (!postsRes.error) setPosts(postsRes.data || []);
             if (!analyticsRes.error) {
                 const latestMetrics: Record<string, PostMetrics> = {};
-                let latestSync: string | null = null;
                 (analyticsRes.data || []).forEach((row: any) => {
                     if (!latestMetrics[row.post_id]) {
                         latestMetrics[row.post_id] = {
@@ -324,13 +309,9 @@ export default function SocialCommandCenter() {
                             comments: Number(row.comments || 0),
                             shares: Number(row.shares || 0),
                         };
-                        if (row.synced_at && (!latestSync || row.synced_at > latestSync)) {
-                            latestSync = row.synced_at;
-                        }
                     }
                 });
                 setPostMetrics(latestMetrics);
-                setMetricsSyncedAt(latestSync);
             }
             if (!pagesRes.error) {
                 setFbPages(pagesRes.data || []);
@@ -376,38 +357,6 @@ export default function SocialCommandCenter() {
             shares: Number(shares) || 0,
         };
     };
-
-    const refreshSocialMetrics = async () => {
-        if (!currentTenant?.id || syncingMetrics) return;
-        setSyncingMetrics(true);
-        try {
-            const res = await fetch('/api/social/analytics/sync', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId: currentTenant.id, days: 90, limit: 80 }),
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok || !data.success) {
-                toast.error(data.error || 'Could not refresh social metrics');
-                return;
-            }
-            toast.success(`Synced metrics for ${data.synced ?? 0} post${data.synced === 1 ? '' : 's'}`);
-            await loadData();
-        } catch {
-            toast.error('Failed to refresh social metrics');
-        } finally {
-            setSyncingMetrics(false);
-        }
-    };
-
-    const mergedMetricsByPost = useMemo(() => {
-        const merged: Record<string, PostMetrics> = {};
-        for (const post of posts) {
-            merged[post.id] = getPostMetrics(post);
-        }
-        return merged;
-    }, [posts, postMetrics]);
 
     const addComposeMediaUrl = () => {
         const url = composeMediaUrl.trim();
@@ -468,16 +417,12 @@ export default function SocialCommandCenter() {
     const handleDeletePost = async (id: string) => {
         const toastId = toast.loading('Deleting...');
         try {
-            if (!currentTenant?.id) throw new Error('Select a workspace first');
-            const response = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(currentTenant.id)}&postId=${encodeURIComponent(id)}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('Delete failed');
+            const { error } = await supabase.from('social_posts').delete().eq('id', id);
+            if (error) throw error;
             toast.success('Post deleted', { id: toastId });
             setPosts(prev => prev.filter(p => p.id !== id));
-        } catch (err) {
-            toast.error(formatFailureToastMessage({
-                action: 'delete social post',
-                rawError: err instanceof Error ? err.message : err,
-            }), { id: toastId });
+        } catch {
+            toast.error('Failed to delete post', { id: toastId });
         }
     };
 
@@ -531,11 +476,7 @@ export default function SocialCommandCenter() {
             setXThreadPosts([]);
             loadData();
         } catch (err: any) {
-            toast.error(err.message || formatFailureToastMessage({
-                action: 'save social post',
-                rawError: err.message,
-                saved: 'Your draft is saved.',
-            }), { id: toastId });
+            toast.error(err.message || 'Failed to save post', { id: toastId });
         }
     };
 
@@ -652,7 +593,7 @@ export default function SocialCommandCenter() {
                 const res = await fetch('/api/ai/scrape-social', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tenantId: currentTenant?.id, itemId: item.id })
+                    body: JSON.stringify({ url: item.url, itemId: item.id })
                 });
                 if (!res.ok) throw new Error();
                 await loadData();
@@ -731,8 +672,6 @@ export default function SocialCommandCenter() {
             return post.status === 'scheduled';
         } else if (activeSubView === 'published') {
             return post.status === 'published';
-        } else if (activeSubView === 'publishing') {
-            return post.status === 'publishing' || (post.status === 'failed' && Boolean(post.error_message));
         }
         return true;
     });
@@ -748,6 +687,21 @@ export default function SocialCommandCenter() {
         : '';
     const platformPosts = posts.filter(post => post.platforms.includes(activePlatform));
     const publishedPlatformPosts = platformPosts.filter(post => post.status === 'published');
+    const analyticsTotals = publishedPlatformPosts.reduce(
+        (totals, post) => {
+            const metrics = getPostMetrics(post);
+            totals.impressions += metrics.impressions;
+            totals.reactions += metrics.reactions;
+            totals.comments += metrics.comments;
+            totals.clicks += metrics.clicks;
+            return totals;
+        },
+        { impressions: 0, reactions: 0, comments: 0, clicks: 0 }
+    );
+    const engagementRate = analyticsTotals.impressions > 0
+        ? ((analyticsTotals.reactions + analyticsTotals.comments + analyticsTotals.clicks) / analyticsTotals.impressions) * 100
+        : 0;
+
     if (loading) {
         return (
             <div
@@ -817,7 +771,6 @@ export default function SocialCommandCenter() {
                     <div className="flex p-3 gap-2 bg-slate-950 border-b border-white/5">
                         {[
                             { id: 'queue', label: 'Scheduled Queue', count: posts.filter(p => p.status === 'scheduled' && p.platforms.includes(activePlatform)).length },
-                            { id: 'publishing', label: 'Publishing / Recovery', count: posts.filter(p => (p.status === 'publishing' || p.status === 'failed') && p.platforms.includes(activePlatform)).length },
                             { id: 'published', label: 'Published Feed', count: posts.filter(p => p.status === 'published' && p.platforms.includes(activePlatform)).length },
                             { id: 'analytics', label: 'Analytics Insights', count: null }
                         ].map((sub) => {
@@ -838,34 +791,6 @@ export default function SocialCommandCenter() {
                             );
                         })}
                     </div>
-
-                    {activeSubView !== 'analytics' && (
-                        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-950/80 border-b border-white/5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                Content calendar
-                            </p>
-                            <div className="flex bg-slate-900 p-0.5 rounded-lg border border-white/5">
-                                {([
-                                    { id: 'list', label: 'List' },
-                                    { id: 'week', label: 'Week' },
-                                    { id: 'month', label: 'Month' },
-                                ] as const).map((mode) => (
-                                    <button
-                                        key={mode.id}
-                                        type="button"
-                                        onClick={() => setQueueDisplayMode(mode.id)}
-                                        className={`px-2.5 py-1 text-[10px] font-bold rounded-md ${
-                                            queueDisplayMode === mode.id
-                                                ? 'bg-teal-600 text-white'
-                                                : 'text-slate-500 hover:text-slate-300'
-                                        }`}
-                                    >
-                                        {mode.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Main Platform Content */}
                     <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 pb-24 ac-safe-bottom">
@@ -891,57 +816,94 @@ export default function SocialCommandCenter() {
                             />
                         ) : null}
                         {activeSubView === 'analytics' ? (
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/80 px-4 py-3">
-                                    <div>
-                                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Provider metrics</p>
-                                        <p className="text-[11px] text-slate-500">
-                                            {metricsSyncedAt
-                                                ? `Last synced ${new Date(metricsSyncedAt).toLocaleString()}`
-                                                : 'Not synced yet — pull reach and engagement from Facebook/LinkedIn'}
-                                        </p>
+                            /* Analytics Dashboard */
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                <div className={`flex items-center justify-between p-3 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Date Range</span>
+                                    <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
+                                        {['7D', '30D', '90D'].map((range) => (
+                                            <button
+                                                key={range}
+                                                onClick={() => setAnalyticsDateRange(range as any)}
+                                                className={`px-3 py-1 text-xs font-bold rounded-lg ${analyticsDateRange === range ? 'bg-teal-600 text-white' : 'text-slate-500'}`}
+                                            >
+                                                {range}
+                                            </button>
+                                        ))}
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={refreshSocialMetrics}
-                                        disabled={syncingMetrics}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-teal-500/30 bg-teal-500/10 px-3 py-2 text-xs font-bold text-teal-300 disabled:opacity-60"
-                                    >
-                                        {syncingMetrics ? (
-                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        ) : (
-                                            <RefreshCw className="h-3.5 w-3.5" />
-                                        )}
-                                        Refresh metrics
-                                    </button>
                                 </div>
-                                <SocialAnalyticsStory
-                                    posts={publishedPlatformPosts}
-                                    metricsByPost={mergedMetricsByPost}
-                                    platform={activePlatform}
-                                    range={analyticsDateRange}
-                                    onRangeChange={setAnalyticsDateRange}
-                                    onOpenPost={setSelectedPost}
-                                />
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    {[
+                                        { label: 'Impressions', value: compactNumber(analyticsTotals.impressions), change: `${publishedPlatformPosts.length} published`, up: true },
+                                        { label: 'Likes & Reactions', value: compactNumber(analyticsTotals.reactions), change: 'Synced metrics', up: true },
+                                        { label: 'Comments', value: compactNumber(analyticsTotals.comments), change: 'Conversation signal', up: analyticsTotals.comments > 0 },
+                                        { label: 'Clicks', value: compactNumber(analyticsTotals.clicks), change: 'Traffic signal', up: analyticsTotals.clicks > 0 }
+                                    ].map((stat, i) => (
+                                        <div key={i} className={`space-y-1 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+                                            <span className="text-[11px] font-bold text-slate-500 uppercase">{stat.label}</span>
+                                            <div className="text-xl font-bold text-white">{stat.value}</div>
+                                            <span className={`text-[10px] font-bold ${stat.up ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                {stat.change}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Custom Tooltip Engagement Chart Mock */}
+                                <div className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="text-xs font-bold text-slate-500 uppercase">Average Engagement Rate</span>
+                                            <div className="text-2xl font-black text-white">{engagementRate.toFixed(2)}%</div>
+                                        </div>
+                                        <div className="text-xs text-slate-400 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
+                                            <ActivityIcon className="w-3.5 h-3.5" /> High Performance
+                                        </div>
+                                    </div>
+                                    <div className="h-28 flex items-end justify-between pt-6 px-2 gap-1.5">
+                                        {(publishedPlatformPosts.length > 0
+                                            ? publishedPlatformPosts.slice(-12).map(p => {
+                                                const m = getPostMetrics(p);
+                                                return m.impressions + m.reactions * 5 + m.comments * 10;
+                                            })
+                                            : [10, 25, 15, 40, 30, 55, 45, 70, 55, 80, 65, 90] // Dynamic-looking fallback baseline
+                                        ).map((h, idx) => {
+                                            const maxH = Math.max(...(publishedPlatformPosts.length > 0 ? publishedPlatformPosts.slice(-12).map(p => {
+                                                const m = getPostMetrics(p);
+                                                return m.impressions + m.reactions * 5 + m.comments * 10;
+                                            }) : [90]), 1);
+                                            return (
+                                                <div key={idx} className="group relative flex flex-col items-center w-full">
+                                                    <div
+                                                        className="w-full max-w-[10px] bg-teal-500 hover:bg-teal-400 rounded-t transition-all cursor-pointer"
+                                                        style={{ height: `${Math.max((h / maxH) * 100, 5)}%` }}
+                                                    />
+                                                    <div className="absolute -top-7 scale-0 group-hover:scale-100 bg-teal-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded transition-all pointer-events-none shadow z-10 whitespace-nowrap">
+                                                        {h} pts
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="flex justify-between text-[9px] font-bold text-slate-600 uppercase tracking-wider pt-2 border-t border-white/5">
+                                        <span>Start</span>
+                                        <span>Mid Point</span>
+                                        <span>Today</span>
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             /* Feed List / Queue with Swipe gestures */
                             <div className="space-y-1">
-                                {queueDisplayMode !== 'list' && filteredPosts.length > 0 ? (
-                                    <SocialContentCalendar
-                                        mode={queueDisplayMode}
-                                        anchor={calendarAnchor}
-                                        onAnchorChange={setCalendarAnchor}
-                                        posts={filteredPosts}
-                                        onSelectPost={setSelectedPost}
-                                    />
-                                ) : null}
                                 {filteredPosts.length === 0 ? (
-                                    <EmptyStateFromPreset
-                                        moduleId="social"
+                                    <EmptyState
+                                        icon={ActivityIcon}
+                                        title="No posts in this queue"
+                                        description="Create your first draft or schedule content for this platform to populate the queue."
                                         className={`max-w-none py-16 border border-dashed border-[var(--ws-border)] ${WORKSPACE.panel.radius}`}
                                     />
-                                ) : queueDisplayMode === 'list' ? (
+                                ) : (
                                     <div className="space-y-4">
                                         {filteredPosts.map((post) => {
                                             const offset = swipeState[post.id] || 0;
@@ -1004,7 +966,6 @@ export default function SocialCommandCenter() {
                                                                 <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border flex-shrink-0 ${
                                                                     post.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                                                     post.status === 'scheduled' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                                                                    post.status === 'publishing' ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' :
                                                                     post.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
                                                                     'bg-slate-800 text-slate-400 border-transparent'
                                                                 }`}>
@@ -1082,17 +1043,12 @@ export default function SocialCommandCenter() {
                                                         {post.status === 'failed' && (
                                                             <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
                                                         )}
-                                                        {post.status === 'publishing' && (
-                                                            <div className="mt-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-2 py-1 text-[10px] text-blue-200">
-                                                                Publishing in progress — platform recovery will retry if this stays stuck for 15+ minutes.
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             );
                                         })}
                                     </div>
-                                ) : null}
+                                )}
                             </div>
                         )}
                     </div>
@@ -1334,12 +1290,16 @@ export default function SocialCommandCenter() {
                                         </select>
                                     </div>
 
-                                    {composeMediaUrl && (
-                                        <div className="p-3 bg-slate-950 rounded-xl border border-white/5 space-y-1.5">
-                                            <img src={composeMediaUrl} alt="Selected post media preview" className="w-full h-20 object-cover rounded-lg" />
-                                            <span className="text-[10px] text-slate-500 font-bold block truncate">{composeMediaUrl}</span>
+                                    {/* Link preview card mock */}
+                                    <div className="p-3 bg-slate-950 rounded-xl border border-white/5 space-y-1.5">
+                                        <div className="w-full h-20 bg-slate-900 rounded-lg flex items-center justify-center text-slate-600 text-xs">
+                                            Image preview
                                         </div>
-                                    )}
+                                        <div>
+                                            <span className="text-[10px] text-slate-500 font-bold block uppercase">alphaclonenexus.com</span>
+                                            <span className="text-[11px] text-white font-bold block">AlphaClone Business Operations Hub</span>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 

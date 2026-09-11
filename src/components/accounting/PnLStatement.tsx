@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,10 +11,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, PieChart, Pie, Cell, Legend 
 } from 'recharts';
-import { ChartContainer } from '@/components/ui/ChartContainer';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { useTenant } from '@/contexts/TenantContext';
 
 type PnLData = {
   period: { from: string; to: string; label: string };
@@ -38,7 +37,6 @@ type PnLData = {
 const COLORS = ['#2dd4bf', '#fbbf24', '#f87171', '#818cf8', '#c084fc', '#fb7185', '#38bdf8', '#a3e635'];
 
 export default function PnLStatement() {
-  const { currentTenant } = useTenant();
   const [data, setData] = useState<PnLData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,15 +44,10 @@ export default function PnLStatement() {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   const fetchData = async () => {
-    if (!currentTenant?.id) {
-      setLoading(false);
-      setError('Select a workspace to view its financial statement.');
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      let url = `/api/accounting/pnl?period=${period}&tenantId=${encodeURIComponent(currentTenant.id)}`;
+      let url = `/api/accounting/pnl?period=${period}`;
       if (dateRange.from) url += `&from_date=${dateRange.from}`;
       if (dateRange.to) url += `&to_date=${dateRange.to}`;
 
@@ -72,10 +65,11 @@ export default function PnLStatement() {
 
   useEffect(() => {
     fetchData();
-  }, [period, currentTenant?.id]);
+  }, [period]);
 
   const handleExportPDF = () => {
-    window.print();
+    window.print(); // Browser print with CSS media query handles this for now
+    // TODO: implement full jsPDF export if needed
   };
 
   const fmt = (val: number) => 
@@ -201,8 +195,7 @@ export default function PnLStatement() {
             </div>
           </div>
           <div className="h-64 w-full">
-            <ChartContainer className="h-full" minHeight={240}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data?.revenue.by_month || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="month" stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
@@ -221,7 +214,6 @@ export default function PnLStatement() {
                 </defs>
               </BarChart>
             </ResponsiveContainer>
-            </ChartContainer>
           </div>
         </div>
 
@@ -237,8 +229,7 @@ export default function PnLStatement() {
                 No categorized expenses for this period
               </div>
             ) : (
-              <ChartContainer className="h-full" minHeight={240}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={data?.expenses.by_category}
@@ -260,7 +251,6 @@ export default function PnLStatement() {
                   <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
                 </PieChart>
               </ResponsiveContainer>
-              </ChartContainer>
             )}
           </div>
         </div>

@@ -10,7 +10,6 @@ import { tenantService } from '@/services/tenancy/TenantService';
 import {
     createInstantMeeting,
     loadMeetingForJoin,
-    resolveMeetingJoinUrl,
 } from '@/services/instantMeetingService';
 import MeetingProviderBadge from '@/components/dashboard/common/MeetingProviderBadge';
 import { supabase } from '@/lib/supabase';
@@ -164,11 +163,8 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
     };
 
     // ── Copy invite link ─────────────────────────────────────────────────────
-    const copyMeetingLink = (meeting: MeetingRow) => {
-        const destination = resolveMeetingJoinUrl(meeting);
-        const link = destination
-            ? new URL(destination, window.location.origin).toString()
-            : `${window.location.origin}/meet/${meeting.id}`;
+    const copyMeetingLink = (callId: string) => {
+        const link = `${window.location.origin}/meet/${callId}`;
         navigator.clipboard.writeText(link);
         toast.success('Meeting link copied');
     };
@@ -321,7 +317,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
                                         <div className="flex items-center gap-2 shrink-0">
                                             <Badge variant={m.status === 'active' ? 'success' : 'neutral'}>{m.status}</Badge>
                                             <button
-                                                onClick={() => copyMeetingLink(m)}
+                                                onClick={() => copyMeetingLink(m.id)}
                                                 className="p-1.5 rounded-lg border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                                                 title="Copy invite link"
                                             >

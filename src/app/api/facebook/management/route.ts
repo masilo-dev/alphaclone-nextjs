@@ -6,7 +6,6 @@ import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
-import { getSocialPublishingService } from '@/lib/social/SocialPublishingService';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -20,23 +19,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    const { data: membership } = await authClient.from('tenant_users').select('tenant_id')
-      .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
     if (action === 'create_post' && !isSocialPublishEnabled()) {
       return NextResponse.json({ error: 'Publishing disabled' }, { status: 403 });
     }
 
     const supabase = createSupabaseAdminClient();
-    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-    if (tenantContextError) {
-      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
-    }
+    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
     switch (action) {
       case 'create_post':
-        return NextResponse.json(await createFacebookPost(tenantId, user.id, config));
+        return NextResponse.json(await createFacebookPost(tenantId, config, supabase));
       case 'manage_page':
         return NextResponse.json(await manageFacebookPage(tenantId, config, supabase));
       case 'generate_contract':
@@ -54,26 +46,59 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function createFacebookPost(tenantId: string, userId: string, config: any) {
+async function createFacebookPost(tenantId: string, config: any, supabase: any) {
   try {
     const { pageId, message, imageUrl, link, scheduledTime } = config;
-    const result = await getSocialPublishingService().publish({
-      tenantId,
-      userId,
-      platform: 'facebook',
-      identityType: 'facebook_page',
-      identityId: pageId,
-      caption: message,
-      linkUrl: link || null,
-      mediaUrls: imageUrl ? [imageUrl] : [],
-      scheduledAt: scheduledTime || null,
-      publishNow: !scheduledTime,
+
+    const integration = await getFacebookIntegrationWithToken(supabase, { tenantId, pageId });
+
+    if (!integration?.pageAccessToken) {
+      return { success: false, error: 'Facebook integration not found' };
+    }
+
+    // Create post content
+    const postContent = {
+      message: message,
+      link: link || undefined,
+      picture: imageUrl || undefined,
+      published: !scheduledTime,
+      scheduled_publish_time: scheduledTime || undefined
+    };
+
+    // Make API call to Facebook
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/${pageId}/feed?access_token=${integration.pageAccessToken}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(postContent)
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error('[facebook/management] create post Graph error:', result.error);
+      return { success: false, error: 'Failed to create post' };
+    }
+
+    // Save post to database
+    await supabase.from('facebook_posts').insert({
+      tenant_id: tenantId,
+      page_id: pageId,
+      post_id: result.id,
+      message: message,
+      image_url: imageUrl,
+      link: link,
+      scheduled_time: scheduledTime,
+      status: scheduledTime ? 'scheduled' : 'published',
+      created_at: new Date().toISOString()
     });
+
     return {
-      success: result.ok,
-      data: result.data,
-      error: result.error?.message,
-      message: scheduledTime ? 'Post scheduled successfully' : 'Post published successfully',
+      success: true,
+      data: result,
+      message: scheduledTime ? 'Post scheduled successfully' : 'Post published successfully'
     };
   } catch (error: any) {
     return operationFailed('facebook/management', error);
@@ -98,7 +123,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_page_info':
         // Get page information
         const pageInfoResponse = await fetch(
-          `https://graph.facebook.com/v21.0/${pageId}?access_token=${pageAccessToken}&fields=id,name,username,followers_count,talking_about_count,website,phone,about,category`
+          `https://graph.facebook.com/v18.0/${pageId}?access_token=${pageAccessToken}&fields=id,name,username,followers_count,talking_about_count,website,phone,about,category`
         );
         result = await pageInfoResponse.json();
         break;
@@ -106,7 +131,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'update_page_info':
         // Update page information
         const updateResponse = await fetch(
-          `https://graph.facebook.com/v21.0/${pageId}?access_token=${pageAccessToken}`,
+          `https://graph.facebook.com/v18.0/${pageId}?access_token=${pageAccessToken}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -119,7 +144,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_page_insights':
         // Get page insights
         const insightsResponse = await fetch(
-          `https://graph.facebook.com/v21.0/${pageId}/insights?access_token=${pageAccessToken}&metric=page_impressions,page_engaged_users,page_fan_adds,page_fan_removes&period=day`
+          `https://graph.facebook.com/v18.0/${pageId}/insights?access_token=${pageAccessToken}&metric=page_impressions,page_engaged_users,page_fan_adds,page_fan_removes&period=day`
         );
         result = await insightsResponse.json();
         break;
@@ -127,7 +152,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_posts':
         // Get page posts
         const postsResponse = await fetch(
-          `https://graph.facebook.com/v21.0/${pageId}/posts?access_token=${pageAccessToken}&fields=id,message,created_time,likes.summary(true),comments.summary(true),shares&limit=10`
+          `https://graph.facebook.com/v18.0/${pageId}/posts?access_token=${pageAccessToken}&fields=id,message,created_time,likes.summary(true),comments.summary(true),shares&limit=10`
         );
         result = await postsResponse.json();
         break;

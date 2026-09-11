@@ -4,7 +4,6 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { freePlacesService } from '@/services/freePlacesService';
 import { apolloService } from '@/services/apolloService';
 import { scraperAffordableSchema } from '@/schemas/validation';
-import { loadLeadProviderPolicy, paidProviderAllowed } from '@/lib/lead-finder/providerPolicy';
 
 // Affordable Scraping Tools Integration
 // Replaces expensive Apollo/ZoomInfo with cost-effective alternatives
@@ -231,15 +230,6 @@ export async function POST(request: Request) {
     }
 
     let results: any = {};
-    const policy = tenant_id
-      ? await loadLeadProviderPolicy(createSupabaseAdminClient(), tenant_id)
-      : { freeOnly: true, providers: {} };
-    const allowHunter = paidProviderAllowed(policy, 'hunter', process.env.HUNTER_API_KEY);
-    const allowBuiltWith = paidProviderAllowed(policy, 'builtwith', process.env.BUILTWITH_API_KEY);
-    const allowApollo = paidProviderAllowed(policy, 'apollo', process.env.APOLLO_API_KEY);
-    if ((action.startsWith('hunter_') && !allowHunter) || (action === 'builtwith' && !allowBuiltWith)) {
-      return NextResponse.json({ success: true, status: 'skipped', reason: 'provider_not_enabled_or_configured', results: [] });
-    }
 
     switch (action) {
       case 'hunter_domain': {
@@ -308,9 +298,9 @@ export async function POST(request: Request) {
         }
 
         const [emails, techData, apolloMatch] = await Promise.all([
-          allowHunter ? hunterDomainSearch(domain) : Promise.resolve([]),
-          allowBuiltWith ? builtWithLookup(domain) : Promise.resolve(null),
-          allowApollo && (first_name || last_name || email || organization_name || linkedin_url || domain)
+          hunterDomainSearch(domain),
+          builtWithLookup(domain),
+          (first_name || last_name || email || organization_name || linkedin_url || domain)
             ? apolloService.matchPerson({
                 firstName: first_name,
                 lastName: last_name,
@@ -339,7 +329,7 @@ export async function POST(request: Request) {
             first_name: apolloPerson.firstName,
             last_name: apolloPerson.lastName,
             position: apolloPerson.title,
-            valid: false,
+            valid: true,
           });
         }
 

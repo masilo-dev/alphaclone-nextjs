@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 
-interface PullToRefreshProps extends React.HTMLAttributes<HTMLDivElement> {
+interface PullToRefreshProps {
     onRefresh: () => Promise<void>;
     children: React.ReactNode;
     className?: string;
@@ -14,7 +14,7 @@ interface PullToRefreshProps extends React.HTMLAttributes<HTMLDivElement> {
  * PullToRefresh component
  * Implements a native-like pull-to-refresh interaction for mobile.
  */
-export default function PullToRefresh({ onRefresh, children, className = '', ...rest }: PullToRefreshProps) {
+export default function PullToRefresh({ onRefresh, children, className = '' }: PullToRefreshProps) {
     const [pullDistance, setPullDistance] = useState(0);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -87,7 +87,6 @@ export default function PullToRefresh({ onRefresh, children, className = '', ...
     return (
         <div
             ref={containerRef}
-            {...rest}
             className={`relative overflow-y-auto app-viewport ios-scroll ${className}`}
         >
             {/* Refresh Indicator */}

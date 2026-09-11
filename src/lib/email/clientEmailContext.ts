@@ -100,30 +100,14 @@ export async function loadClientEmailContext(
 
     queries.push(
       (async () => {
-        const withRelated = await supabase
+        const { data } = await supabase
           .from('calendar_events')
           .select('id, title, start_time')
           .eq('tenant_id', tenantId)
           .eq('related_entity_id', clientId)
           .order('start_time', { ascending: false })
           .limit(6);
-
-        let rows = withRelated.data || [];
-        if (
-          withRelated.error &&
-          (withRelated.error.code === '42703' || withRelated.error.message?.includes('related_entity_id'))
-        ) {
-          const fallback = await supabase
-            .from('calendar_events')
-            .select('id, title, start_time')
-            .eq('tenant_id', tenantId)
-            .eq('client_id', clientId)
-            .order('start_time', { ascending: false })
-            .limit(6);
-          rows = fallback.data || [];
-        }
-
-        rows.forEach((row: any) => {
+        (data || []).forEach((row: any) => {
           const when = row.start_time ? new Date(row.start_time).toLocaleString() : 'Scheduled';
           pushUnique({
             id: row.id,

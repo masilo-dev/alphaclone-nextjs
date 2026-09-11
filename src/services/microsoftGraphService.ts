@@ -1,7 +1,7 @@
 import { MICROSOFT_GRAPH_BASE_URL } from '@/config/microsoft';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 
-type GraphMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+type GraphMethod = 'GET' | 'POST' | 'PATCH' | 'PUT';
 
 interface GraphRequestOptions {
   method?: GraphMethod;
@@ -145,24 +145,6 @@ export const microsoftGraphService = {
     });
 
     return { success: true };
-  },
-
-  async createDraft(input: {
-    to?: string[];
-    subject?: string;
-    body: string;
-    cc?: string[];
-  }) {
-    const data = await graphRequest<{ id: string }>('/me/messages', {
-      method: 'POST',
-      body: {
-        subject: input.subject || '',
-        body: { contentType: 'HTML', content: input.body },
-        toRecipients: (input.to || []).map((email) => ({ emailAddress: { address: email } })),
-        ccRecipients: (input.cc || []).map((email) => ({ emailAddress: { address: email } })),
-      },
-    });
-    return { id: data.id, success: true };
   },
 
   async getCalendarEvents(startDateTime?: string, endDateTime?: string) {
@@ -392,15 +374,7 @@ export const microsoftGraphService = {
   },
 
   async getFolderMessages(folder: string, limit = 25) {
-    const folderPath = folder === 'sent'
-      ? 'sentitems'
-      : folder === 'trash'
-        ? 'deleteditems'
-        : folder === 'drafts'
-          ? 'drafts'
-          : folder === 'spam'
-            ? 'junkemail'
-            : 'inbox';
+    const folderPath = folder === 'sent' ? 'sentitems' : folder === 'trash' ? 'deleteditems' : folder === 'drafts' ? 'drafts' : 'inbox';
     const data = await graphRequest<{ value: any[] }>(
       `/me/mailFolders/${folderPath}/messages?$top=${limit}&$orderby=receivedDateTime DESC`
     );
@@ -449,23 +423,6 @@ export const microsoftGraphService = {
     return { success: true };
   },
 
-  async replyAllToMessage(messageId: string, comment: string) {
-    await graphRequest(`/me/messages/${messageId}/replyAll`, {
-      method: 'POST',
-      body: {
-        comment,
-      },
-    });
-    return { success: true };
-  },
-
-  async deleteMessage(messageId: string) {
-    await graphRequest(`/me/messages/${messageId}`, {
-      method: 'DELETE',
-    });
-    return { success: true };
-  },
-
   async createOnlineMeeting(input: {
     subject: string;
     participants?: { email: string }[];
@@ -493,13 +450,5 @@ export const microsoftGraphService = {
       joinUrl: meeting.joinWebUrl || meeting.joinUrl || '',
       chatInfo: meeting.chatInfo,
     };
-  },
-
-  async getPresence(email: string) {
-    const normalized = String(email || '').trim();
-    if (!normalized) throw new Error('Email is required');
-    return graphRequest<{ availability?: string; activity?: string }>(
-      `/users/${encodeURIComponent(normalized)}/presence`
-    );
   },
 };

@@ -37,7 +37,11 @@ const SEOArticlePage: React.FC = () => {
         if (!error && data) {
             setArticle(data);
 
-            await fetch(`/api/seo/articles/${data.id}/view`, { method: 'POST', keepalive: true }).catch(() => undefined);
+            // Increment view count
+            await supabase
+                .from('seo_articles')
+                .update({ views: (data.views || 0) + 1 })
+                .eq('id', data.id);
         }
 
         setLoading(false);

@@ -68,14 +68,20 @@ export const activityService = {
             ...(diff ? { _audit_diff: diff } : {})
         };
 
-        if (!tenantId) return { error: new Error('No active workspace selected') };
-        const response = await fetch(`/api/tenant/${tenantId}/activity`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action, metadata: combinedMetadata, device: { deviceType, browser, userAgent: ua } }),
+        const { error } = await supabase.from('activity_logs').insert({
+            user_id: userId,
+            action,
+            ip_address: locationData.ip,
+            country: locationData.country,
+            city: locationData.city,
+            device_type: deviceType,
+            browser,
+            user_agent: ua,
+            metadata: combinedMetadata,
+            tenant_id: tenantId,
         });
-        const payload = await response.json().catch(() => ({}));
-        return { error: response.ok ? null : new Error(payload.error || 'Activity could not be recorded') };
+
+        return { error };
     },
 
     /**

@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
-import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
-import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { encodeOAuthState } from '@/lib/oauth/oauthState';
 
-function getAppUrl(_req: NextRequest) {
-    return PUBLIC_APP_ORIGIN;
+function getAppUrl(req: NextRequest) {
+    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+    const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '');
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    return host ? `${proto}://${host}` : 'https://alphaclonesystems.com';
 }
 
-function getZohoRedirectUri(_req: NextRequest) {
+function getZohoRedirectUri(req: NextRequest) {
+    const appUrl = getAppUrl(req).replace(/\/$/, '');
     const configured = String(ENV.ZOHO_REDIRECT_URI || '').trim();
     if (configured) return configured.replace(/\/$/, '');
-    return OAUTH_CALLBACKS.zoho;
+    return `${appUrl}/api/auth/zoho/callback`;
 }
 
 function resolveZohoCredentials(region: string): { clientId: string; clientSecret: string } {
@@ -29,11 +31,24 @@ export async function GET(req: NextRequest) {
     try {
     const { searchParams } = new URL(req.url);
     const requestedRegion = searchParams.get('region');
-    const tenantId = searchParams.get('tenantId') || searchParams.get('tenant_id') || '';
+    const state = searchParams.get('state') || ''; // user ID or secure nonce
 
     const redirectUri = getZohoRedirectUri(req);
 
-    const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
+    let identityState = state;
+    if (!identityState) {
+        const supabase = await createSupabaseServerClient();
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+        if (user?.id) {
+            identityState = user.id;
+        }
+    }
+
+    if (!identityState) {
+        return NextResponse.json({ error: 'Missing user identity state' }, { status: 400 });
+    }
 
     const region = (requestedRegion || ENV.ZOHO_REGION || 'US').toUpperCase();
     const { clientId, clientSecret } = resolveZohoCredentials(region);
@@ -44,13 +59,6 @@ export async function GET(req: NextRequest) {
         );
     }
     const hosts = ZohoService.getHostsByRegion(region);
-    const admin = createSupabaseAdminClient();
-    const { data: stateRow, error: stateError } = await admin.from('oauth_states').insert({
-        user_id: user.id,
-        tenant_id: tenantId,
-        metadata: { provider: 'zoho', region },
-    }).select('id').single();
-    if (stateError || !stateRow?.id) throw stateError || new Error('OAuth state could not be created');
 
     const scopes = [
         // Mail
@@ -72,17 +80,20 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('access_type', 'offline');
     authUrl.searchParams.append('prompt', 'consent');
-    // Zoho requires multiple OAuth scopes to be comma-separated.
-    authUrl.searchParams.append('scope', scopes.join(','));
+    authUrl.searchParams.append('scope', scopes.join(' '));
     authUrl.searchParams.append('redirect_uri', redirectUri);
     authUrl.searchParams.append(
         'state',
-        stateRow.id
+        encodeOAuthState({
+            region,
+            state: identityState,
+            ts: Date.now(),
+        })
     );
 
     return NextResponse.redirect(authUrl.toString());
     } catch (err) {
         console.error('[zoho/connect] GET error:', err);
-        return routeErrorResponse(err, 'Zoho authorization could not be started', req);
+        return NextResponse.json({ error: 'OAuth initialization failed' }, { status: 500 });
     }
 }

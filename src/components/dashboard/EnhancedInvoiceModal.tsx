@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Send,
@@ -33,15 +33,6 @@ import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps'
 import { cn } from '@/lib/utils';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import BillableExpensesPicker from './invoicing/BillableExpensesPicker';
-import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
-import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
-import { DocumentPreview } from '@/components/documents/DocumentPreview';
-import {
-  buildInvoiceDocumentInput,
-  mergeInvoiceNotesMetadata,
-  resolveDocumentThemeId,
-} from '@/lib/documents/documentBuilders';
-import type { DocumentThemeId } from '@/lib/documents/renderDocument';
 
 
 interface EnhancedInvoiceModalProps {
@@ -54,7 +45,6 @@ interface EnhancedInvoiceModalProps {
 
 interface InvoiceFormData {
   clientId: string;
-  contractId: string;
   clientName: string;
   clientEmail: string;
   items: Array<{
@@ -68,9 +58,17 @@ interface InvoiceFormData {
   total: number;
   dueDate: string;
   notes: string;
-  template: DocumentThemeId;
+  template: string;
   paymentMethods: string[];
 }
+
+const INVOICE_TEMPLATES = [
+  { id: 'classic', name: 'Classic', preview: '/templates/classic.png' },
+  { id: 'modern', name: 'Modern', preview: '/templates/modern.png' },
+  { id: 'dark', name: 'Dark', preview: '/templates/dark.png' },
+  { id: 'minimal', name: 'Minimal', preview: '/templates/minimal.png' },
+  { id: 'bold', name: 'Bold', preview: '/templates/bold.png' }
+];
 
 const PAYMENT_METHODS = [
   { id: 'stripe', name: 'Credit Card (Stripe)', icon: '💳' },
@@ -100,7 +98,6 @@ export default function EnhancedInvoiceModal({
 
   const [formData, setFormData] = useState<InvoiceFormData>({
     clientId: '',
-    contractId: '',
     clientName: '',
     clientEmail: '',
     items: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
@@ -109,7 +106,7 @@ export default function EnhancedInvoiceModal({
     total: 0,
     dueDate: '',
     notes: '',
-    template: 'executive',
+    template: 'modern',
     paymentMethods: ['stripe']
   });
 
@@ -120,65 +117,6 @@ export default function EnhancedInvoiceModal({
   useEffect(() => {
     if (invoice?.id) setDraftInvoiceId(invoice.id);
   }, [invoice?.id]);
-
-  useEffect(() => {
-    if (!invoice?.id || !isOpen) return;
-    const metadata = businessInvoiceService.parseMetadata(invoice.notes);
-    const displayNotes = String(invoice.notes || '').replace(/---METADATA---[\s\S]*?---METADATA---\s*/, '').trim();
-    setFormData((prev) => ({
-      ...prev,
-      clientId: invoice.clientId || invoice.client_id || prev.clientId,
-      contractId: invoice.contractId || invoice.contract_id || prev.contractId,
-      clientName: metadata?.clientName || invoice.clientName || prev.clientName,
-      clientEmail: metadata?.clientEmail || metadata?.email || invoice.clientEmail || prev.clientEmail,
-      dueDate: invoice.dueDate || invoice.due_date ? String(invoice.dueDate || invoice.due_date).slice(0, 10) : prev.dueDate,
-      notes: displayNotes,
-      template: resolveDocumentThemeId(metadata),
-      items: invoice.lineItems?.length
-        ? invoice.lineItems.map((item: { description: string; quantity: number; rate: number; amount: number }) => ({
-            description: item.description,
-            quantity: item.quantity,
-            rate: item.rate,
-            amount: item.amount,
-          }))
-        : prev.items,
-      subtotal: Number(invoice.subtotal ?? prev.subtotal),
-      tax: Number(invoice.tax ?? prev.tax),
-      total: Number(invoice.total ?? prev.total),
-    }));
-  }, [invoice, isOpen]);
-
-  const invoicePreviewInput = useMemo(() => {
-    if (!currentTenant) return null;
-    return buildInvoiceDocumentInput(
-      {
-        invoice_number: invoice?.invoiceNumber || invoice?.invoice_number || 'DRAFT',
-        issue_date: invoice?.issueDate || invoice?.issue_date || new Date().toISOString(),
-        due_date: formData.dueDate || undefined,
-        notes: formData.notes,
-        subtotal: formData.subtotal,
-        tax: formData.tax,
-        total: formData.total,
-        status: 'draft',
-        metadata: { document_theme: formData.template },
-      },
-      formData.items.map((item) => ({
-        description: item.description,
-        quantity: item.quantity,
-        rate: item.rate,
-        amount: item.amount,
-      })),
-      currentTenant,
-      { name: formData.clientName, email: formData.clientEmail }
-    );
-  }, [currentTenant, formData, invoice]);
-
-  const buildPersistedNotes = () =>
-    mergeInvoiceNotesMetadata(formData.notes, {
-      document_theme: formData.template,
-      clientName: formData.clientName,
-      clientEmail: formData.clientEmail,
-    });
 
   useEffect(() => {
     if (!draftInvoiceId || !currentTenant?.id || mode === 'send') return;
@@ -196,8 +134,7 @@ export default function EnhancedInvoiceModal({
             tax: formData.tax,
             total: formData.total,
             due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
-            contract_id: formData.contractId || null,
-            notes: buildPersistedNotes(),
+            notes: formData.notes,
             line_items: formData.items.map((item) => ({
               description: item.description,
               quantity: item.quantity,
@@ -218,7 +155,6 @@ export default function EnhancedInvoiceModal({
   }, [formData, draftInvoiceId, currentTenant?.id, mode]);
 
   const [clients, setClients] = useState<any[]>([]);
-  const [contracts, setContracts] = useState<Array<{ id: string; title: string; status: string; client_id?: string | null }>>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showContactDropdown, setShowContactDropdown] = useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -234,26 +170,8 @@ export default function EnhancedInvoiceModal({
         console.error('Failed to load clients:', error);
       }
     };
-    const loadContracts = async () => {
-      if (!currentTenant?.id) return;
-      try {
-        const { supabase } = await import('@/lib/supabase');
-        const { data, error } = await supabase
-          .from('contracts')
-          .select('id,title,status,client_id')
-          .eq('tenant_id', currentTenant.id)
-          .in('status', ['draft', 'sent', 'fully_signed', 'approved', 'active'])
-          .order('updated_at', { ascending: false })
-          .limit(100);
-        if (error) throw error;
-        setContracts(data || []);
-      } catch (error) {
-        console.error('Failed to load contracts:', error);
-      }
-    };
     if (isOpen && currentTenant?.id) {
-      void loadClients();
-      void loadContracts();
+      loadClients();
     }
   }, [isOpen, currentTenant?.id]);
 
@@ -315,8 +233,6 @@ export default function EnhancedInvoiceModal({
     try {
       const invoiceData = {
         ...formData,
-        contractId: formData.contractId || undefined,
-        notes: buildPersistedNotes(),
         lineItems: formData.items,
         status: 'draft' as const,
         isPublic: false,
@@ -364,8 +280,6 @@ export default function EnhancedInvoiceModal({
       // Create or update invoice with sent status
       const invoiceData = {
         ...formData,
-        contractId: formData.contractId || undefined,
-        notes: buildPersistedNotes(),
         lineItems: formData.items,
         status: 'sent' as const,
         isPublic: true,
@@ -389,20 +303,14 @@ export default function EnhancedInvoiceModal({
       if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
 
       // Trigger durable invoice lifecycle (PDF -> send -> reminders -> overdue)
-      // Prefer authenticated API — does not require MCP/AI availability.
       try {
-        const tenantId = currentTenant?.id;
-        if (!tenantId) throw new Error('Active workspace required');
-        const { startInvoiceLifecycleFromDashboard } = await import(
-          '@/lib/invoices/startInvoiceLifecycleFromDashboard'
-        );
-        await startInvoiceLifecycleFromDashboard({
-          tenantId,
-          invoiceId: finalInvoice.id,
+        const { callMcpTool } = await import('@/services/mcp/toolCaller');
+        await callMcpTool('start_invoice_lifecycle', {
+          invoice_id: finalInvoice.id,
         });
         toast.success("Invoice lifecycle started — email + reminders now managed automatically.", { id: toastId });
       } catch (dispatchError: any) {
-        console.error('Invoice lifecycle Error:', dispatchError);
+        console.error('MCP Dispatch Error:', dispatchError);
         toast.error(`Invoice saved, but lifecycle automation failed: ${dispatchError.message}`, { id: toastId });
       }
 
@@ -537,10 +445,7 @@ export default function EnhancedInvoiceModal({
                           ...prev,
                           clientId: c.id,
                           clientName: c.name || '',
-                          clientEmail: c.email || '',
-                          contractId: prev.contractId && contracts.some((contract) => contract.id === prev.contractId && contract.client_id === c.id)
-                            ? prev.contractId
-                            : '',
+                          clientEmail: c.email || ''
                         }));
                         setSearchQuery('');
                         setShowContactDropdown(false);
@@ -589,27 +494,6 @@ export default function EnhancedInvoiceModal({
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-2">Linked contract (optional)</label>
-        <select
-          value={formData.contractId}
-          onChange={(e) => setFormData((prev) => ({ ...prev, contractId: e.target.value }))}
-          className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-        >
-          <option value="">No contract linked</option>
-          {contracts
-            .filter((contract) => !formData.clientId || contract.client_id === formData.clientId || !contract.client_id)
-            .map((contract) => (
-              <option key={contract.id} value={contract.id}>
-                {contract.title} ({contract.status.replaceAll('_', ' ')})
-              </option>
-            ))}
-        </select>
-        <p className="mt-1 text-[11px] text-slate-500">
-          Billing documents filed to the vault will reference this agreement when sent.
-        </p>
-      </div>
-
       {formData.clientId && currentTenant?.id && (
         <BillableExpensesPicker
           tenantId={currentTenant.id}
@@ -619,7 +503,7 @@ export default function EnhancedInvoiceModal({
         />
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">Due Date</label>
           <input
@@ -629,23 +513,19 @@ export default function EnhancedInvoiceModal({
             className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Template</label>
+          <select
+            value={formData.template}
+            onChange={(e) => setFormData(prev => ({ ...prev, template: e.target.value }))}
+            className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+          >
+            {INVOICE_TEMPLATES.map(template => (
+              <option key={template.id} value={template.id}>{template.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
-
-      <DocumentThemePicker
-        value={formData.template}
-        onChange={(themeId) => setFormData((prev) => ({ ...prev, template: themeId }))}
-      />
-
-      <DocumentQualityPanel
-        input={{
-          type: 'invoice',
-          hasLogo: Boolean(currentTenant && ((currentTenant as { logo_url?: string }).logo_url || (currentTenant as { settings?: { logo_url?: string } }).settings?.logo_url)),
-          hasClientName: Boolean(formData.clientName?.trim()),
-          hasPricing: formData.items.some((item) => Number(item.quantity) > 0 && Number(item.rate) > 0),
-          hasPaymentDetails: true,
-          clientEmail: formData.clientEmail,
-        }}
-      />
 
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">Notes</label>
@@ -748,7 +628,7 @@ export default function EnhancedInvoiceModal({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[10050] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           >
             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
               <div className="flex justify-between items-center mb-6">
@@ -846,15 +726,62 @@ export default function EnhancedInvoiceModal({
 
   const renderPreviewTab = () => (
     <div className="space-y-4">
-      {invoicePreviewInput ? (
-        <DocumentPreview input={invoicePreviewInput} />
-      ) : (
-        <p className="text-sm text-slate-400">Add client details and line items to preview your themed invoice.</p>
-      )}
+      <div className="bg-slate-800/50 p-4 rounded-lg">
+        <h3 className="font-semibold text-white mb-2">Invoice Preview</h3>
+        <p className="text-sm text-slate-400 mb-4">This is how your invoice will appear to the client</p>
 
-      {invoice ? (
+        <div className="bg-slate-950 p-6 rounded-lg border border-slate-800">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-white">INVOICE</h2>
+              <p className="text-slate-400">Invoice #: INV-{Date.now()}</p>
+            </div>
+            <div className="text-right">
+              <p className="font-medium text-white">{formData.clientName}</p>
+              <p className="text-slate-400">{formData.clientEmail}</p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="font-semibold text-white mb-2">Items</h3>
+            {formData.items.map((item, index) => (
+              <div key={index} className="flex justify-between items-center py-2 border-b border-slate-800/50">
+                <div>
+                  <p className="font-medium text-white">{item.description || 'Item'}</p>
+                  <p className="text-sm text-slate-400">{item.quantity} × ${item.rate.toFixed(2)}</p>
+                </div>
+                <p className="font-medium text-white">${item.amount.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-slate-800 pt-4 text-white">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-slate-400">Subtotal:</span>
+              <span>${formData.subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-slate-400">Tax:</span>
+              <span>${formData.tax.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center text-lg font-bold border-t border-slate-800 pt-2">
+              <span>Total:</span>
+              <span>${formData.total.toFixed(2)}</span>
+            </div>
+          </div>
+
+          {formData.notes && (
+            <div className="mt-6 p-4 bg-slate-900 rounded-lg">
+              <h4 className="font-medium text-white mb-2">Notes</h4>
+              <p className="text-sm text-slate-400">{formData.notes}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {invoice && (
         <div className="bg-teal-900/20 p-4 border border-teal-500/20 rounded-lg">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center justify-between">
             <div>
               <h4 className="font-medium text-teal-400">Payment Link</h4>
               <p className="text-sm text-teal-500">Share this link with your client for payment</p>
@@ -862,10 +789,10 @@ export default function EnhancedInvoiceModal({
             <button
               onClick={handleCopyPaymentLink}
               className={cn(
-                'flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors',
+                "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
                 copiedLink
-                  ? 'bg-green-600 text-white'
-                  : 'bg-teal-600 text-white hover:bg-teal-500'
+                  ? "bg-green-600 text-white"
+                  : "bg-teal-600 text-white hover:bg-teal-500"
               )}
             >
               {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -880,7 +807,7 @@ export default function EnhancedInvoiceModal({
             </button>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 
@@ -898,7 +825,7 @@ export default function EnhancedInvoiceModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[10050] flex items-center justify-center p-4 pt-safe pb-safe md:pl-64">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 pt-safe pb-safe md:pl-64">
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
       <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-slate-800">

@@ -184,26 +184,25 @@ class ClientActivityService {
      */
     private async getClientPayments(clientId: string): Promise<ClientActivity[]> {
         const { data } = await supabase
-            .from('business_invoices')
+            .from('invoices')
             .select('*')
-            .eq('client_id', clientId)
+            .eq('user_id', clientId)
             .order('created_at', { ascending: false });
 
         return (data || []).map((invoice: any) => {
             const isPaid = invoice.status === 'paid';
-            const amount = Number(invoice.total || 0);
             return {
                 id: invoice.id,
                 client_id: clientId,
                 activity_type: (isPaid ? 'payment' : 'invoice') as any,
                 title: isPaid 
-                    ? `Payment received: $${amount.toLocaleString()}` 
-                    : `Invoice ${invoice.status.toUpperCase()}: $${amount.toLocaleString()}`,
-                description: `${invoice.notes || invoice.description || 'No description'}. Due: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}`,
+                    ? `Payment received: $${invoice.amount.toLocaleString()}`
+                    : `Invoice ${invoice.status.toUpperCase()}: $${invoice.amount.toLocaleString()}`,
+                description: `${invoice.description || 'No description'}. Due: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'N/A'}`,
                 metadata: {
                     invoice_id: invoice.id,
-                    amount,
-                    currency: invoice.currency || invoice.currency_code,
+                    amount: invoice.amount,
+                    currency: invoice.currency,
                     status: invoice.status,
                     due_date: invoice.due_date,
                 },

@@ -65,10 +65,8 @@ export function resolveToolWorkaround(
     throw new Error(`[known_broken_tool] ${toolName}: ${entry.reason}`);
   }
 
-  // block_automation must NOT fail interactive/MCP calls — playbooks check
-  // isAutomationBlockedTool() and skip those tools themselves.
   if (entry.action === 'block_automation') {
-    return { toolName, args, redirected: false, note: entry.reason };
+    throw new Error(`[known_broken_tool] ${toolName}: ${entry.reason}`);
   }
 
   return { toolName, args, redirected: false };

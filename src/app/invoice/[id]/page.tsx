@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useParams, useSearchParams } from 'next/navigation';
 import { Card, Button } from '@/components/ui/UIComponents';
@@ -8,7 +8,7 @@ import { FileText, CreditCard, Download, ShieldCheck, CheckCircle2, Building2 } 
 import InvoiceStatusPipeline, { InvoiceStatus } from '@/components/invoice/InvoiceStatusPipeline';
 import type { TenantBranding } from '@/lib/tenantBranding';
 
-function PublicInvoiceContent() {
+export default function PublicInvoicePage() {
     const params = useParams();
     const searchParams = useSearchParams();
     const invoiceId = params?.id as string;
@@ -28,14 +28,14 @@ function PublicInvoiceContent() {
         if (invoiceId) {
             loadInvoice();
         }
-    }, [invoiceId, publicToken]);
+    }, [invoiceId]);
 
     // Fire read receipt silently on mount (web portal view)
     useEffect(() => {
-        if (invoiceId && publicToken) {
-            fetch(`/api/invoices/${invoiceId}/view?token=${encodeURIComponent(publicToken)}`).catch(() => {});
+        if (invoiceId) {
+            fetch(`/api/invoices/${invoiceId}/view`).catch(() => {});
         }
-    }, [invoiceId, publicToken]);
+    }, [invoiceId]);
 
     useEffect(() => {
         if (paymentResult === 'success') {
@@ -45,9 +45,10 @@ function PublicInvoiceContent() {
 
     const loadInvoice = async () => {
         try {
-            const qs = new URLSearchParams({ id: invoiceId });
-            if (publicToken) qs.set('token', publicToken);
-            const response = await fetch(`/api/invoices/public?${qs.toString()}`, { cache: 'no-store' });
+            const qs = publicToken
+                ? `token=${encodeURIComponent(publicToken)}`
+                : `id=${encodeURIComponent(invoiceId)}`;
+            const response = await fetch(`/api/invoices/public?${qs}`, { cache: 'no-store' });
             const payload = await response.json();
             if (!response.ok || !payload.invoice) {
                 setError(payload.error || 'Invoice not found');
@@ -414,13 +415,5 @@ function PublicInvoiceContent() {
                 <p className="text-xs">&copy; {new Date().getFullYear()} {branding.name}</p>
             </div>
         </div>
-    );
-}
-
-export default function PublicInvoicePage() {
-    return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">Loading invoice…</div>}>
-            <PublicInvoiceContent />
-        </Suspense>
     );
 }

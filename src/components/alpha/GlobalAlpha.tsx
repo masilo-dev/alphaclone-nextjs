@@ -1,16 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, X, Zap, ChevronRight, Activity, Cpu } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
-import { useTenant } from '@/contexts/TenantContext';
 
 export default function GlobalAlpha() {
     const { user, loading } = useAuth();
-    const { currentTenant } = useTenant();
     const pathname = usePathname();
     
     const [isOpen, setIsOpen] = useState(false);
@@ -26,14 +24,14 @@ export default function GlobalAlpha() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!prompt.trim() || isDeploying || !currentTenant?.id) return;
+        if (!prompt.trim() || isDeploying) return;
 
         setIsDeploying(true);
         try {
             const res = await fetch('/api/alpha', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ description: prompt, tenantId: currentTenant.id })
+                body: JSON.stringify({ description: prompt })
             });
 
             if (res.ok) {
@@ -86,7 +84,7 @@ export default function GlobalAlpha() {
                         <div className="p-3 border-b border-[#00FFD1]/10 flex items-center justify-between bg-[#001720]">
                             <div className="flex items-center gap-3">
                                 <Activity className="w-3 h-3 text-[#00FFD1] animate-pulse" />
-                                <span className="text-xs font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive</span>
+                                <span className="text-xs font-bold tracking-[0.4em] text-[#00FFD1] uppercase">Alpha_Executive_Beta</span>
                             </div>
                             <button onClick={() => setIsOpen(false)} className="hover:text-red-400 transition-colors">
                                 <X className="w-4 h-4" />
@@ -96,7 +94,7 @@ export default function GlobalAlpha() {
                         <div className="p-6 space-y-5">
                             <div className="space-y-1">
                                 <div className="text-[11px] text-white font-bold tracking-tight mb-1">
-                                    GREETINGS, {(user.name || user.email || 'OPERATOR').toUpperCase()}
+                                    GREETINGS, {user.name.toUpperCase()}
                                 </div>
                                 <div className="text-xs text-[#00FFD1]/60 flex items-center gap-2">
                                     <Terminal className="w-2.5 h-2.5" />
@@ -104,8 +102,8 @@ export default function GlobalAlpha() {
                                 </div>
                             </div>
 
-                            <div className="border border-[#00FFD1]/20 bg-[#00FFD1]/5 p-3 text-xs leading-relaxed text-[#00FFD1]/80">
-                                Missions are stored in your active workspace. Open Alpha Mission Control to review progress, approvals, results, and prior runs.
+                            <div className="border border-yellow-500/20 bg-yellow-500/10 p-3 text-xs leading-relaxed text-yellow-200">
+                                Assisted execution is available. Persistent autonomous mission control is still in beta and may not retain mission history across sessions yet.
                             </div>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
@@ -124,19 +122,13 @@ export default function GlobalAlpha() {
                                     )}
                                 </div>
 
-                                {status === 'error' && (
-                                    <p className="text-xs text-red-300" role="alert">
-                                        Mission dispatch failed. Confirm a workspace is selected and try again.
-                                    </p>
-                                )}
-
                                 <div className="flex gap-2">
                                     <button
                                         type="submit"
-                                        disabled={isDeploying || !prompt.trim() || !currentTenant?.id}
+                                        disabled={isDeploying || !prompt.trim()}
                                         className="flex-1 py-3 bg-[#00FFD1] text-black text-xs font-bold tracking-[0.2em] transition-all hover:bg-[#00D1FF] disabled:opacity-30 disabled:grayscale"
                                     >
-                                        {isDeploying ? 'DISPATCHING...' : 'START MISSION'}
+                                        {isDeploying ? 'DISPATCHING...' : 'START BETA TASK'}
                                     </button>
                                     <Link 
                                         href="/alpha" 

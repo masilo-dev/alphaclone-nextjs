@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoCRMService } from '../../../../../services/zoho/ZohoCRMService';
 import { ZohoAuthExpiredError } from '../../../../../services/zoho/ZohoService';
-import { requireTenantAccess } from '@/lib/apiAuth';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function POST(req: NextRequest) {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const zohoCRM = new ZohoCRMService(user.id);
+
     try {
-        const { module, tenantId } = await req.json();
-        const { user } = await requireTenantAccess(String(tenantId || ''), req);
-        const zohoCRM = new ZohoCRMService(user.id, tenantId);
+        const { module } = await req.json();
 
         let syncedCount = 0;
         if (module === 'Contacts' || !module) {

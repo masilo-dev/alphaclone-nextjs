@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Avatar } from '@/components/ui/Avatar';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 interface UserPresenceProps {
@@ -54,13 +54,28 @@ export default function UserPresence({
 
   return (
     <div className={cn("relative inline-block", className)}>
-      <Avatar
-        src={user.avatar_url}
-        name={user.name}
-        email={user.email}
-        size={size === 'sm' ? 24 : size === 'lg' ? 40 : 32}
-        className={cn(getSizeClasses())}
-      />
+      {user.avatar_url ? (
+        <div className={cn(getSizeClasses(), "rounded-full overflow-hidden relative")}>
+          <Image
+            src={user.avatar_url}
+            alt={user.name}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        </div>
+      ) : (
+        <div
+          className={cn(
+            getSizeClasses(),
+            "rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
+          )}
+        >
+          <span className="text-white font-medium text-sm">
+            {user.name.charAt(0).toUpperCase()}
+          </span>
+        </div>
+      )}
       
       {showStatus && (
         <div

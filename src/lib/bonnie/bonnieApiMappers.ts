@@ -1,5 +1,4 @@
 import type { BonnieToolResult } from '@/lib/bonnie/bonnieToolTypes';
-import { humanizeTechnicalFailure, isTechnicalJargonText } from '@/lib/copy/businessFriendlyErrors';
 
 export type BonnieToolApiShape = {
   tool: string;
@@ -15,9 +14,7 @@ export function mapToolResultsForApi(results: BonnieToolResult[]): BonnieToolApi
   return results.map((t) => ({
     tool: t.tool,
     success: t.success,
-    summary: isTechnicalJargonText(t.summary)
-      ? humanizeTechnicalFailure(t.summary, { tool: t.tool })
-      : t.summary,
+    summary: t.summary,
     approvalRequired: t.approvalRequired,
     approvalId: t.approvalId,
     riskClass: t.riskClass,

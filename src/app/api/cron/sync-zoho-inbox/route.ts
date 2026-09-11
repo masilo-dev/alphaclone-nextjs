@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
-import { withCronJob } from '@/lib/cron/withCronJob';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { ZohoAuthExpiredError } from '@/services/zoho/ZohoService';
@@ -26,7 +25,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 async function syncUserInbox(userId: string, tenantId: string) {
   try {
     const admin = createSupabaseAdminClient();
-    const zoho = new ZohoMailService(userId, tenantId);
+    const zoho = new ZohoMailService(userId);
     const folders = await withTimeout(zoho.getFolders(), PER_USER_TIMEOUT_MS);
     const inbox = folders.find((f) => f.folderName?.toLowerCase() === 'inbox') || folders[0];
     if (!inbox) {
@@ -83,7 +82,6 @@ export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
   if (denied) return denied;
 
-  return withCronJob('sync-zoho-inbox', async () => {
   const admin = createSupabaseAdminClient();
 
   const { data: integrations, error } = await admin
@@ -112,5 +110,4 @@ export async function GET(req: NextRequest) {
     processed: results.length,
     results,
   });
-  }, { maxDurationMs: 25_000, lockTtlSec: 180 });
 }

@@ -11,15 +11,11 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const pageId = searchParams.get('pageId');
-    const tenantId = searchParams.get('tenantId');
 
-    if (!pageId || !tenantId) return NextResponse.json({ error: 'pageId and tenantId required' }, { status: 400 });
-    const { data: membership } = await supabase.from('tenant_users').select('tenant_id')
-        .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!pageId) return NextResponse.json({ error: 'pageId required' }, { status: 400 });
 
     const admin = createSupabaseAdminClient();
-    const integration = await getFacebookIntegration(admin, { tenantId, userId: user.id, pageId });
+    const integration = await getFacebookIntegration(admin, { userId: user.id, pageId });
 
     const tokens = integration ? await getFacebookTokens(admin, integration) : { pageAccessToken: null, userAccessToken: null };
     const token = tokens.pageAccessToken || tokens.userAccessToken;
@@ -29,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     try {
         // Fetch page feed (posts, comments, etc.)
-        const res = await fetch(`https://graph.facebook.com/v21.0/${pageId}/feed?fields=id,message,created_time,story,full_picture,permalink_url,actions,shares,comments.summary(true),reactions.summary(true)&limit=10&access_token=${token}`);
+        const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/feed?fields=id,message,created_time,story,full_picture,permalink_url,actions,shares,comments.summary(true),reactions.summary(true)&limit=10&access_token=${token}`);
         
         const data = await res.json();
         

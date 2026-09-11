@@ -5,71 +5,50 @@ import { Download, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { usePWA } from '@/contexts/PWAContext';
 import { pwaService } from '@/services/pwaService';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { Button } from '@/components/ui/UIComponents';
 
-const DISMISS_KEY = 'ac_pwa_install_dismissed_until';
-const DISMISS_MS = 90 * 24 * 60 * 60 * 1000;
-const SESSION_SHOWN_KEY = 'ac_pwa_install_shown_session';
-const ENGAGEMENT_KEY = 'ac_pwa_engaged_sessions';
+const DISMISS_KEY = 'ac_pwa_install_dismissed';
+const DISMISS_DAYS = 7;
 
-function isDismissed(): boolean {
-  if (typeof window === 'undefined') return true;
-  const until = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
-  if (until && Date.now() < until) return true;
-  const legacy = localStorage.getItem('ac_pwa_install_dismissed');
-  if (legacy) {
-    const days = (Date.now() - new Date(legacy).getTime()) / (1000 * 60 * 60 * 24);
-    if (days < 90) return true;
-  }
-  return false;
-}
-
-/** Value-first install prompt. Never interrupts the first marketing visit. */
+/**
+ * Global install banner — works on laptop (Chrome/Edge) via beforeinstallprompt
+ * and shows manual steps when the browser has no native prompt (Safari, Firefox).
+ */
 export default function PwaInstallPrompt() {
   const pathname = usePathname();
   const { isPWA, isLoading } = usePWA();
   const [visible, setVisible] = useState(false);
   const [canNativeInstall, setCanNativeInstall] = useState(false);
   const [installing, setInstalling] = useState(false);
-  const { t } = useLanguage();
 
   useEffect(() => {
     if (typeof window === 'undefined' || isLoading || isPWA) return;
-    if (window.matchMedia('(display-mode: standalone)').matches || isDismissed()) return;
-    if (sessionStorage.getItem(SESSION_SHOWN_KEY) === '1') return;
-    if (pathname?.startsWith('/auth') || pathname?.startsWith('/authorize') || pathname?.startsWith('/login')) return;
-    if (!pathname?.startsWith('/dashboard')) return;
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
 
-    const engagedSessions = Math.min(3, Number(localStorage.getItem(ENGAGEMENT_KEY) || '0') + 1);
-    localStorage.setItem(ENGAGEMENT_KEY, String(engagedSessions));
-    if (engagedSessions < 2) return;
+    const dismissed = localStorage.getItem(DISMISS_KEY);
+    if (dismissed) {
+      const days = (Date.now() - new Date(dismissed).getTime()) / (1000 * 60 * 60 * 24);
+      if (days < DISMISS_DAYS) return;
+    }
 
-    let cancelled = false;
     void pwaService.registerServiceWorker();
 
-    const show = (native: boolean) => {
-      if (cancelled || isDismissed()) return;
-      sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
-      setCanNativeInstall(native);
+    void pwaService.getInstallPrompt().then(({ prompt }) => {
+      setCanNativeInstall(Boolean(prompt));
       setVisible(true);
-    };
+    });
 
-    void pwaService.getInstallPrompt().then(({ prompt }) => show(Boolean(prompt)));
     const timer = window.setTimeout(() => {
-      if (!cancelled) show(pwaService.isInstallable());
-    }, 30000);
+      setVisible((prev) => prev || pwaService.isInstallable());
+    }, 2500);
 
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [isLoading, isPWA]);
+    return () => window.clearTimeout(timer);
+  }, [isLoading, isPWA, pathname]);
 
   if (!visible) return null;
 
   const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_MS));
-    sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
+    localStorage.setItem(DISMISS_KEY, new Date().toISOString());
     setVisible(false);
   };
 
@@ -78,55 +57,64 @@ export default function PwaInstallPrompt() {
     const { success } = await pwaService.promptInstall();
     setInstalling(false);
     if (success) {
-      localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_MS));
-      sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
       setVisible(false);
       return;
     }
     dismiss();
   };
 
+  const isAuth = pathname?.startsWith('/auth');
+  const isMarketing = !pathname?.startsWith('/dashboard');
+
   return (
-    <div className="fixed bottom-20 left-3 right-3 z-[130] pointer-events-none md:bottom-6 md:left-auto md:right-6 md:max-w-md">
-      <div className="ac-v3-floating pointer-events-auto p-4 sm:p-5">
+    <div
+      className={`fixed z-[130] pointer-events-none ${
+        isAuth
+          ? 'bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-sm'
+          : isMarketing
+            ? 'bottom-4 left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:max-w-md'
+            : 'bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:max-w-md'
+      }`}
+    >
+      <div className="pointer-events-auto rounded-2xl border border-cyan-500/25 bg-slate-950/95 backdrop-blur-xl shadow-2xl p-4 sm:p-5">
         <div className="flex items-start gap-3">
-          <div className="ac-v3-intelligence flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px]">
-            <Download className="h-5 w-5 text-[var(--ac-accent)]" aria-hidden />
+          <div className="p-2.5 rounded-xl bg-cyan-500/15 text-cyan-400 shrink-0">
+            <Download className="w-5 h-5" aria-hidden />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-[var(--text-primary)]">{t('Install AlphaClone')}</p>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white">Install AlphaClone on this device</p>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
               {canNativeInstall
-                ? t('Access your business from anywhere. AlphaClone opens like an app with the mobile Companion experience.')
-                : t('Add AlphaClone to your phone or computer from your browser menu for a focused app experience.')}
+                ? 'Add the app to your laptop or phone — opens in its own window, no browser toolbar.'
+                : 'Use your browser menu: Install app (Chrome/Edge) or Add to Dock (Safari). Works on laptop and mobile.'}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mt-3">
               {canNativeInstall ? (
-                <button
-                  type="button"
+                <Button
                   onClick={handleInstall}
                   disabled={installing}
-                  className="min-h-11 rounded-[12px] bg-[var(--ac-accent)] px-4 text-xs font-semibold text-white active:scale-[0.98] disabled:opacity-60"
+                  size="sm"
+                  className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold"
                 >
-                  {installing ? t('Installing…') : t('Install AlphaClone')}
-                </button>
+                  {installing ? 'Installing…' : 'Install now'}
+                </Button>
               ) : null}
               <button
                 type="button"
                 onClick={dismiss}
-                className="min-h-11 rounded-[12px] border border-[var(--border-default)] px-4 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]"
+                className="text-xs font-semibold px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
               >
-                {canNativeInstall ? t('Not now') : t('Got it')}
+                {canNativeInstall ? 'Not now' : 'Got it'}
               </button>
             </div>
           </div>
           <button
             type="button"
             onClick={dismiss}
-            className="min-h-11 min-w-11 rounded-xl text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
-            aria-label={t('Dismiss install prompt')}
+            className="p-1 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 shrink-0"
+            aria-label="Dismiss install prompt"
           >
-            <X className="mx-auto h-4 w-4" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>

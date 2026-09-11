@@ -1,39 +1,18 @@
-/**
- * Shared Redis facade — re-exports centralized adapter.
- * Prefer getRedisAsync() for coordination paths (locks, required ops).
- */
-
-export {
-  closeRedis,
-  getActiveRedisBackend,
-  getRedis,
-  getRedisAsync,
-  getRedisBackend,
-  getRedisConnectionState,
-  isRedisConfigured,
-  redisBackend,
-  redisEnabled,
-  type RedisBackend,
-  type RedisCommands,
-} from '@/lib/redis/client';
-
-import { getRedis, isRedisConfigured, type RedisCommands } from '@/lib/redis/client';
+import { Redis } from '@upstash/redis';
+import { ENV } from '@/config/env';
 
 /**
- * Backward-compatible lazy proxy for list/cache operations (memorySystem, etc.).
+ * Shared Upstash Redis client for server-side persistence,
+ * rate limiting, and cross-session memory for AI Agents.
  */
-export const redis: RedisCommands = new Proxy({} as RedisCommands, {
-  get(_target, prop) {
-    const client = getRedis();
-    if (!client) {
-      if (prop === 'then') return undefined;
-      throw new Error(
-        'Redis is not configured. Set REDIS_URL or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.'
-      );
-    }
-    const value = (client as unknown as Record<string | symbol, unknown>)[prop];
-    return typeof value === 'function' ? value.bind(client) : value;
-  },
+export const redis = new Redis({
+  url: ENV.UPSTASH_REDIS_REST_URL || '',
+  token: ENV.UPSTASH_REDIS_REST_TOKEN || '',
 });
 
-export { isRedisConfigured as defaultIsRedisConfigured };
+/**
+ * Utility to check if Redis is correctly configured
+ */
+export const isRedisConfigured = () => {
+  return !!ENV.UPSTASH_REDIS_REST_URL && !!ENV.UPSTASH_REDIS_REST_TOKEN;
+};

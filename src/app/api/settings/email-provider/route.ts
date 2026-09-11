@@ -8,15 +8,10 @@ import {
   normalizeDeliveryProvider,
   type DeliveryEmailProvider,
 } from '@/lib/email/emailProviderOptions';
-import {
-  normalizeEmailAutoReplyMode,
-  type EmailAutoReplyMode,
-} from '@/lib/email/autoReplySettings';
 
 const patchSchema = z.object({
   tenantId: z.string().uuid(),
-  defaultProvider: z.enum(['auto', 'zoho', 'microsoft', 'brevo', 'sendgrid', 'resend', 'gmail']).optional(),
-  autoReplyMode: z.enum(['off', 'draft_only', 'auto_send']).optional(),
+  defaultProvider: z.enum(['auto', 'zoho', 'microsoft', 'brevo', 'sendgrid', 'resend', 'gmail']),
 });
 
 type ConnectedProvider = {
@@ -39,52 +34,34 @@ async function getConnectedProviders(
   admin: ReturnType<typeof createSupabaseAdminClient>
 ): Promise<ConnectedProvider[]> {
   const types = ['zoho', 'brevo', 'sendgrid', 'resend', 'gmail'] as const;
-  const { data: userIntegrations } = await admin
+  const { data: integrations } = await admin
     .from('integrations')
     .select('type, enabled, config')
     .eq('user_id', userId)
     .in('type', [...types]);
 
-  const { data: tenantIntegrations } = await admin
-    .from('integrations')
-    .select('type, enabled, config')
-    .eq('tenant_id', tenantId)
-    .in('type', [...types])
-    .order('updated_at', { ascending: false });
-
-  const allIntegrations = [...(userIntegrations || []), ...(tenantIntegrations || [])];
-  const byType = new Map<string, IntegrationRow>();
-  for (const item of allIntegrations) {
-    if (!byType.has(item.type) || item.enabled) {
-      byType.set(item.type, item);
-    }
-  }
+  const byType = new Map<string, IntegrationRow>(
+    ((integrations || []) as IntegrationRow[]).map((i) => [i.type, i])
+  );
 
   const { data: msConn } = await admin
     .from('microsoft_connections')
     .select('microsoft_email')
-    .or(`user_id.eq.${userId},tenant_id.eq.${tenantId}`)
+    .eq('user_id', userId)
     .maybeSingle();
 
   const zohoRow = byType.get('zoho');
   const zohoConfig = (zohoRow?.config || {}) as Record<string, unknown>;
-  // Zoho is connected if the tenant has stored their own OAuth tokens in the integrations DB.
-  // process.env ZOHO_CLIENT_ID/SECRET are platform OAuth app credentials — NOT a tenant connection.
-  const zohoConnected = Boolean(
-    zohoRow?.enabled &&
-    (zohoConfig.refreshToken || zohoConfig.refresh_token || zohoConfig.access_token || zohoConfig.apiKey || zohoConfig.api_key)
-  );
+  const zohoConnected = Boolean(zohoRow?.enabled && zohoConfig.refreshToken);
 
   const checkApi = (type: string) => {
     const row = byType.get(type);
     if (!row?.enabled) return false;
     const cfg = (row.config || {}) as Record<string, unknown>;
     if (type === 'gmail') {
-      // Gmail requires fromEmail + App Password stored by the tenant in their own integration row
       return Boolean(cfg.fromEmail || cfg.from_email) && Boolean(cfg.appPassword || cfg.app_password);
     }
-    // All other API-key providers (Brevo, SendGrid, Resend): tenant must have stored their own API key
-    return Boolean(cfg.apiKey || cfg.api_key);
+    return Boolean(cfg.apiKey || cfg.api_key || type === 'zoho');
   };
 
   return [
@@ -130,7 +107,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const { user, admin } = await requireTenantAccess(tenantId);
+    const { user } = await requireTenantAccess(tenantId);
+    const admin = createSupabaseAdminClient();
 
     const { data: business } = await admin
       .from('business_settings')
@@ -143,16 +121,12 @@ export async function GET(req: NextRequest) {
     const defaultProvider = normalizeDeliveryProvider(
       emailSettings.default_provider || emailSettings.defaultProvider || 'auto'
     );
-    const autoReplyMode = normalizeEmailAutoReplyMode(
-      emailSettings.auto_reply_mode || emailSettings.autoReplyMode
-    );
 
     const connected = await getConnectedProviders(tenantId, user.id, admin);
     const connectedIds = connected.filter((p) => p.connected).map((p) => p.id);
 
     return NextResponse.json({
       defaultProvider,
-      autoReplyMode,
       connectedProviders: connected,
       connectedIds,
       campaignsProvider: NATIVE_CAMPAIGNS_PROVIDER,
@@ -167,9 +141,10 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = patchSchema.parse(await req.json());
-    const { user, admin } = await requireTenantAccess(body.tenantId);
+    const { user } = await requireTenantAccess(body.tenantId);
+    const admin = createSupabaseAdminClient();
 
-    if (body.defaultProvider !== undefined && body.defaultProvider !== 'auto') {
+    if (body.defaultProvider !== 'auto') {
       const connected = await getConnectedProviders(body.tenantId, user.id, admin);
       const hit = connected.find((p) => p.id === body.defaultProvider);
       if (!hit?.connected) {
@@ -191,19 +166,13 @@ export async function PATCH(req: NextRequest) {
 
     const prevSettings = (existing?.settings || {}) as Record<string, unknown>;
     const prevEmail = (prevSettings.email || {}) as Record<string, unknown>;
-    const nextEmail: Record<string, unknown> = {
-      ...prevEmail,
-      updated_at: new Date().toISOString(),
-    };
-    if (body.defaultProvider !== undefined) {
-      nextEmail.default_provider = body.defaultProvider;
-    }
-    if (body.autoReplyMode !== undefined) {
-      nextEmail.auto_reply_mode = body.autoReplyMode;
-    }
     const nextSettings = {
       ...prevSettings,
-      email: nextEmail,
+      email: {
+        ...prevEmail,
+        default_provider: body.defaultProvider,
+        updated_at: new Date().toISOString(),
+      },
     };
 
     const { error } = await admin.from('business_settings').upsert(
@@ -219,9 +188,8 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      defaultProvider: normalizeDeliveryProvider(nextEmail.default_provider),
-      autoReplyMode: normalizeEmailAutoReplyMode(nextEmail.auto_reply_mode) as EmailAutoReplyMode,
-      savedAt: nextEmail.updated_at,
+      defaultProvider: body.defaultProvider,
+      savedAt: nextSettings.email.updated_at,
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to save email provider settings', req);

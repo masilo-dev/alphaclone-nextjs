@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { ACTIVE_DEAL_STAGES } from '@/lib/crmPipelineStages';
 
 const querySchema = z.object({
@@ -28,7 +28,9 @@ export async function GET(req: NextRequest) {
     }
 
     const { tenantId, limit } = parsed.data;
-    const { admin } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'member', 'super_admin'], req);
+    await requireTenantAccess(tenantId);
+
+    const admin = createSupabaseAdminClient();
     const now = new Date();
     const nowIso = now.toISOString();
     const staleIso = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();

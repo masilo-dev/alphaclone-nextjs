@@ -18,11 +18,9 @@ interface ScheduleHubProps {
 export default function ScheduleHub({ children }: ScheduleHubProps) {
   return (
     <HubShell
-      title="Calendar"
+      title="Schedule & meet"
       description="Calendar, booking links, video meetings, and Teams"
       tabs={SCHEDULE_TABS}
-      moduleId="calendar"
-      accent="violet"
     >
       {children}
     </HubShell>

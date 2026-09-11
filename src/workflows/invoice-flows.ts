@@ -1,5 +1,4 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { runProjectAutomationEvent } from '@/lib/projects/projectAutomationService';
 
 /**
  * Invoice Created Workflow
@@ -18,68 +17,16 @@ async function notifyInvoiceCreatedStep(tenantId: string, payload: any) {
 
   const { data: invoice } = await supabase
     .from('business_invoices')
-    .select('invoice_number, total, client_id')
+    .select('invoice_number, total_amount, client_id')
     .eq('id', invoiceId)
     .maybeSingle();
 
   await supabase.from('notifications').insert({
     tenant_id: tenantId,
     title: 'Invoice created',
-    message: `Invoice ${invoice?.invoice_number || invoiceId} was created${invoice?.total ? ` for $${invoice.total}` : ''}.`,
+    message: `Invoice ${invoice?.invoice_number || invoiceId} was created${invoice?.total_amount ? ` for $${invoice.total_amount}` : ''}.`,
     type: 'info',
     metadata: { invoiceId, clientId: invoice?.client_id || null },
-  });
-}
-
-/**
- * Invoice/payment received workflow.
- * Re-evaluates the configured project kickoff policy against database truth.
- * This does not create a second project flow: the automation service delegates
- * eligible kickoff to the canonical contract-signed invoice/project workflow.
- */
-export async function invoicePaidWorkflow({
-  tenantId,
-  payload,
-  eventId,
-}: {
-  tenantId: string;
-  payload: any;
-  eventId?: string;
-}) {
-  "use workflow";
-  await evaluatePaidInvoiceForProjectStep(tenantId, payload, eventId);
-}
-
-async function evaluatePaidInvoiceForProjectStep(
-  tenantId: string,
-  payload: any,
-  eventId?: string,
-) {
-  "use step";
-  const supabase = createSupabaseAdminClient();
-  const invoiceId = String(payload?.invoiceId || payload?.payment?.invoiceId || '');
-  const payloadContractId = String(payload?.contractId || '');
-
-  let contractId = payloadContractId || null;
-  if (!contractId && invoiceId) {
-    const { data: invoice, error } = await supabase
-      .from('business_invoices')
-      .select('contract_id, metadata')
-      .eq('tenant_id', tenantId)
-      .eq('id', invoiceId)
-      .maybeSingle();
-    if (error) throw error;
-    contractId = invoice?.contract_id || (invoice?.metadata as any)?.contract_id || null;
-  }
-
-  if (!contractId) return { status: 'skipped', reason: 'no_contract_link' };
-
-  return runProjectAutomationEvent({
-    tenantId,
-    contractId,
-    trigger: 'payment.received',
-    actorUserId: typeof payload?.actorUserId === 'string' ? payload.actorUserId : undefined,
-    correlationId: eventId,
   });
 }
 
@@ -92,29 +39,29 @@ export async function invoiceOverdueWorkflow({ tenantId, payload }: { tenantId: 
   
   const { invoiceId } = payload;
 
+  // 1. Send Transactional Reminder Email
   await sendReminderEmailStep(invoiceId, tenantId);
+
+  // 2. Update Lead/Client Status to 'at_risk' or 'delinquent'
   await updateClientStatusStep(invoiceId, tenantId);
+
+  // 3. Create Follow-up Task for Billing
   await createBillingTaskStep(invoiceId, tenantId);
 }
 
 async function sendReminderEmailStep(invoiceId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
-  const { data: invoice } = await supabase
-    .from('business_invoices')
-    .select('invoice_number, client_id, business_clients:client_id(email, name)')
-    .eq('id', invoiceId)
-    .eq('tenant_id', tenantId)
-    .maybeSingle();
+  const { data: invoice } = await supabase.from('invoices').select('*, clients(*)').eq('id', invoiceId).single();
   
-  const clientEmail = (invoice as any)?.business_clients?.email;
-  if (clientEmail) {
-    console.log(`[Email] Sending overdue reminder to ${clientEmail} for invoice ${invoice?.invoice_number}`);
+  if (invoice?.clients?.email) {
+    // In a real app, call your email service here
+    console.log(`[Email] Sending overdue reminder to ${invoice.clients.email} for invoice ${invoice.invoice_number}`);
     
     await supabase.from('lead_outreach_log').insert({
       tenant_id: tenantId,
-      lead_email: clientEmail,
-      subject: `Overdue Payment: ${invoice?.invoice_number}`,
+      lead_email: invoice.clients.email,
+      subject: `Overdue Payment: ${invoice.invoice_number}`,
       status: 'sent',
       provider: 'system_automation'
     });
@@ -124,12 +71,7 @@ async function sendReminderEmailStep(invoiceId: string, tenantId: string) {
 async function updateClientStatusStep(invoiceId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
-  const { data: invoice } = await supabase
-    .from('business_invoices')
-    .select('client_id')
-    .eq('id', invoiceId)
-    .eq('tenant_id', tenantId)
-    .maybeSingle();
+  const { data: invoice } = await supabase.from('invoices').select('client_id').eq('id', invoiceId).single();
   
   if (invoice?.client_id) {
     await supabase.from('leads').update({ 
@@ -142,12 +84,7 @@ async function updateClientStatusStep(invoiceId: string, tenantId: string) {
 async function createBillingTaskStep(invoiceId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
-  const { data: invoice } = await supabase
-    .from('business_invoices')
-    .select('invoice_number')
-    .eq('id', invoiceId)
-    .eq('tenant_id', tenantId)
-    .maybeSingle();
+  const { data: invoice } = await supabase.from('invoices').select('invoice_number').eq('id', invoiceId).single();
 
   await supabase.from('tasks').insert({
     tenant_id: tenantId,

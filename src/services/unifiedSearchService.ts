@@ -8,7 +8,7 @@ import { tenantService } from './tenancy/TenantService';
 
 export interface SearchResult {
   id: string;
-  type: 'contact' | 'company' | 'deal' | 'project' | 'task' | 'invoice' | 'campaign' | 'contract' | 'document' | 'ticket' | 'message';
+  type: 'contact' | 'company' | 'deal' | 'project' | 'task' | 'invoice' | 'campaign' | 'contract' | 'ticket' | 'message';
   title: string;
   subtitle: string;
   content: string;
@@ -42,7 +42,7 @@ export async function unifiedSearch(
     }
 
     const searchTerm = query.toLowerCase().trim();
-    const types = filters?.types || ['contact', 'company', 'deal', 'project', 'task', 'invoice', 'campaign', 'contract', 'document'];
+    const types = filters?.types || ['contact', 'company', 'deal', 'project', 'task', 'invoice'];
     const limit = filters?.limit || 50;
 
     // Parallel searches across all tables
@@ -68,12 +68,6 @@ export async function unifiedSearch(
     }
     if (types.includes('campaign')) {
       searchPromises.push(searchCampaigns(searchTerm, tenantId, limit));
-    }
-    if (types.includes('contract')) {
-      searchPromises.push(searchContracts(searchTerm, tenantId, limit));
-    }
-    if (types.includes('document')) {
-      searchPromises.push(searchDocuments(searchTerm, tenantId, limit));
     }
 
     const results = (await Promise.all(searchPromises)).flat();
@@ -110,66 +104,27 @@ export async function unifiedSearch(
   }
 }
 
-interface ContactRow {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string | null;
-  phone: string | null;
-  title: string | null;
-  company_id: string | null;
-  status: string;
-  updated_at: string;
-  companies?: { name: string | null } | null;
-}
-interface ClientRow { id: string; name: string; email: string | null; phone: string | null; industry: string | null; sales_stage: string | null; updated_at: string }
+interface ContactRow { id: string; first_name: string; last_name: string; email: string | null; phone: string | null; title: string | null; company: string | null; status: string; updated_at: string }
 
 async function searchContacts(term: string, tenantId: string, limit: number): Promise<SearchResult[]> {
-  const [{ data: contactRows }, { data: clientRows }] = await Promise.all([
-    supabase
-      .from('contacts')
-      .select('id, first_name, last_name, email, phone, title, company_id, status, updated_at, companies(name)')
-      .eq('tenant_id', tenantId)
-      .is('deleted_at', null)
-      .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,title.ilike.%${term}%`)
-      .limit(limit),
-    supabase
-      .from('business_clients')
-      .select('id, name, email, phone, industry, sales_stage, updated_at')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,industry.ilike.%${term}%`)
-      .limit(limit),
-  ]);
+  const { data } = await supabase
+    .from('contacts')
+    .select('id, first_name, last_name, email, phone, title, company, status, updated_at')
+    .eq('tenant_id', tenantId)
+    .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,email.ilike.%${term}%,title.ilike.%${term}%`)
+    .limit(limit);
 
-  const fromContacts = (contactRows || []).map((c: ContactRow) => {
-    const companyName = c.companies?.name || null;
-    return {
+  return (data || []).map((c: ContactRow) => ({
     id: c.id,
-    type: 'contact' as const,
-    title: `${c.first_name} ${c.last_name}`.trim(),
+    type: 'contact',
+    title: `${c.first_name} ${c.last_name}`,
     subtitle: c.email || c.phone || '',
-    content: c.title ? `${c.title}${companyName ? ` at ${companyName}` : ''}` : companyName || '',
-    metadata: { status: c.status, company: companyName, source: 'contacts' },
+    content: c.title ? `${c.title} at ${c.company || 'Unknown Company'}` : '',
+    metadata: { status: c.status, company: c.company },
     score: 0,
     updatedAt: c.updated_at,
-    route: `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(c.id)}`,
-  };
-  });
-
-  const fromClients = (clientRows || []).map((c: ClientRow) => ({
-    id: c.id,
-    type: 'contact' as const,
-    title: c.name,
-    subtitle: c.email || c.phone || '',
-    content: [c.industry, c.sales_stage].filter(Boolean).join(' · '),
-    metadata: { stage: c.sales_stage, industry: c.industry, source: 'business_clients' },
-    score: 0,
-    updatedAt: c.updated_at,
-    route: `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(c.id)}`,
+    route: `/dashboard/crm/contacts/${c.id}`,
   }));
-
-  return [...fromClients, ...fromContacts].slice(0, limit);
 }
 
 interface CompanyRow { id: string; name: string; industry: string | null; website: string | null; updated_at: string }
@@ -191,7 +146,7 @@ async function searchCompanies(term: string, tenantId: string, limit: number): P
     metadata: { industry: c.industry },
     score: 0,
     updatedAt: c.updated_at,
-    route: `/dashboard/crm/accounts?company=${encodeURIComponent(c.id)}`,
+    route: `/dashboard/crm/companies/${c.id}`,
   }));
 }
 
@@ -214,7 +169,7 @@ async function searchDeals(term: string, tenantId: string, limit: number): Promi
     metadata: { value: d.value, stage: d.stage },
     score: 0,
     updatedAt: d.updated_at,
-    route: `/dashboard/deals?deal=${encodeURIComponent(d.id)}`,
+    route: `/dashboard/crm/deals/${d.id}`,
   }));
 }
 
@@ -237,7 +192,7 @@ async function searchProjects(term: string, tenantId: string, limit: number): Pr
     metadata: { status: p.status },
     score: 0,
     updatedAt: p.updated_at,
-    route: `/dashboard/business/projects/manage?project=${encodeURIComponent(p.id)}`,
+    route: `/dashboard/projects/${p.id}`,
   }));
 }
 
@@ -260,7 +215,7 @@ async function searchTasks(term: string, tenantId: string, limit: number): Promi
     metadata: { status: t.status, priority: t.priority },
     score: 0,
     updatedAt: t.updated_at,
-    route: `/dashboard/tasks?task=${encodeURIComponent(t.id)}`,
+    route: `/dashboard/tasks/${t.id}`,
   }));
 }
 
@@ -306,41 +261,7 @@ async function searchCampaigns(term: string, tenantId: string, limit: number): P
     metadata: { status: c.status },
     score: 0,
     updatedAt: c.updated_at,
-    route: `/dashboard/business/campaigns?campaign=${encodeURIComponent(String(c.id))}`,
-  }));
-}
-
-interface ContractSearchRow { id: string; title: string; content: string | null; status: string; lifecycle_status?: string | null; updated_at: string }
-
-async function searchContracts(term: string, tenantId: string, limit: number): Promise<SearchResult[]> {
-  const { data } = await supabase.from('contracts')
-    .select('id, title, content, status, lifecycle_status, updated_at')
-    .eq('tenant_id', tenantId)
-    .or(`title.ilike.%${term}%,content.ilike.%${term}%`)
-    .limit(limit);
-  return (data || []).map((contract: ContractSearchRow) => ({
-    id: contract.id, type: 'contract', title: contract.title,
-    subtitle: String(contract.lifecycle_status || contract.status || 'draft').replaceAll('_', ' '),
-    content: contract.content?.replace(/<[^>]+>/g, ' ').slice(0, 220) || '',
-    metadata: { status: contract.status, lifecycleStatus: contract.lifecycle_status }, score: 0,
-    updatedAt: contract.updated_at, route: `/dashboard/business/contracts?contractId=${contract.id}`,
-  }));
-}
-
-interface DocumentSearchRow { id: string; name: string | null; title: string | null; summary: string | null; extracted_text: string | null; document_type: string | null; intelligence_status?: string | null; updated_at: string }
-
-async function searchDocuments(term: string, tenantId: string, limit: number): Promise<SearchResult[]> {
-  const { data } = await supabase.from('documents')
-    .select('id, name, title, summary, extracted_text, document_type, intelligence_status, updated_at')
-    .eq('tenant_id', tenantId).is('deleted_at', null)
-    .or(`name.ilike.%${term}%,title.ilike.%${term}%,summary.ilike.%${term}%,extracted_text.ilike.%${term}%`)
-    .limit(limit);
-  return (data || []).map((document: DocumentSearchRow) => ({
-    id: document.id, type: 'document', title: document.title || document.name || 'Document',
-    subtitle: document.document_type || 'Document',
-    content: document.summary || document.extracted_text?.slice(0, 220) || '',
-    metadata: { documentType: document.document_type, intelligenceStatus: document.intelligence_status }, score: 0,
-    updatedAt: document.updated_at, route: `/dashboard/business/documents?documentId=${document.id}`,
+    route: `/dashboard/marketing/campaigns/${c.id}`,
   }));
 }
 
@@ -381,8 +302,6 @@ function calculateRelevanceScore(result: SearchResult, term: string): number {
     task: 4,
     invoice: 4,
     campaign: 3,
-    contract: 7,
-    document: 6,
   };
   score += typePriority[result.type] || 0;
 
@@ -449,7 +368,7 @@ export async function getRecentItems(types?: SearchResult['type'][]): Promise<Se
         metadata: {},
         score: 0,
         updatedAt: c.updated_at,
-        route: `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(c.id)}`,
+        route: `/dashboard/crm/contacts/${c.id}`,
       })));
     }
 
@@ -470,7 +389,7 @@ export async function getRecentItems(types?: SearchResult['type'][]): Promise<Se
         metadata: { value: d.value },
         score: 0,
         updatedAt: d.updated_at,
-        route: `/dashboard/deals?deal=${encodeURIComponent(d.id)}`,
+        route: `/dashboard/crm/deals/${d.id}`,
       })));
     }
 

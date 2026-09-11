@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseAdminClient, hasSupabaseServiceRole } from './supabase-admin';
+import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient } from './supabase-admin';
 import { clientErrorResponse } from './api/clientErrorResponse';
 import { RouteAuthError } from './api/routeAuthError';
 import { ENV } from '@/config/env';
-import { isPlatformAdminRole } from '@/lib/platformAdmin';
-import { normalizePlatformRole } from '@/lib/platformAdmin';
 
 export { RouteAuthError };
 
@@ -31,24 +30,21 @@ async function getSupabaseServerClient() {
  * Ensures the request is authenticated (cookie session or Authorization Bearer).
  * NOTE: This is designed for App Router API routes/Server Actions.
  */
-export async function requireAuthenticatedUser(
-    req?: Request,
-    options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
-) {
+export async function requireAuthenticatedUser(req?: Request) {
     const bearer = req?.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
     if (bearer) {
-        if (!ENV.VITE_SUPABASE_URL) {
+        if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
             throw new RouteAuthError(500, 'Server configuration error', 'INTERNAL_ERROR');
         }
-        const admin = hasSupabaseServiceRole()
-            ? createSupabaseAdminClient()
-            : createSupabaseAdminClient(bearer);
+        const admin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false },
+        });
         const { data, error } = await admin.auth.getUser(bearer);
         if (error || !data?.user?.id) {
             throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
         }
-        await requireActiveProfile(admin, data.user.id, options);
-        return { supabase: admin, user: data.user, admin };
+        const supabase = await getSupabaseServerClient();
+        return { supabase, user: data.user };
     }
 
     const supabase = await getSupabaseServerClient();
@@ -58,64 +54,22 @@ export async function requireAuthenticatedUser(
         throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
     }
 
-    await requireActiveProfile(supabase, data.user.id, options);
-
-    // Prefer service-role admin. Without it, reuse the cookie-authenticated server
-    // client so RLS still works even when getSession() has no access_token.
-    const { data: { session } } = await supabase.auth.getSession();
-    const admin = hasSupabaseServiceRole()
-        ? createSupabaseAdminClient()
-        : session?.access_token
-            ? createSupabaseAdminClient(session.access_token)
-            : supabase;
-
     return {
         supabase,
         user: data.user,
-        admin,
     };
-}
-
-async function requireActiveProfile(
-    supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
-    userId: string,
-    options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
-) {
-    const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('id, role, account_status, scheduled_deletion_at')
-        .eq('id', userId)
-        .maybeSingle();
-
-    if (error) {
-        console.error('[apiAuth] Failed to verify account status:', error);
-        throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'INTERNAL_ERROR');
-    }
-    if (!profile) {
-        if (options?.allowMissingProfile) return null;
-        throw new RouteAuthError(403, 'Account profile is unavailable', 'FORBIDDEN');
-    }
-
-    const status = String(profile.account_status || 'active');
-    if (status === 'deleted' || status === 'suspended' || status === 'disabled') {
-        throw new RouteAuthError(403, 'Account is not active', 'FORBIDDEN');
-    }
-    if (status === 'pending_deletion' && !options?.allowPendingDeletion) {
-        throw new RouteAuthError(403, 'Account deletion is pending', 'FORBIDDEN');
-    }
-    return profile;
 }
 
 /**
  * Ensures the user has access to a specific tenant.
  * NOTE: This is designed for App Router API routes/Server Actions.
  */
-export async function requireTenantAccess(tenantId: string, req?: Request) {
+export async function requireTenantAccess(tenantId: string) {
     if (!tenantId?.trim()) {
         throw new RouteAuthError(400, 'tenantId required', 'BAD_REQUEST');
     }
 
-    const { supabase, user, admin } = await requireAuthenticatedUser(req);
+    const { supabase, user } = await requireAuthenticatedUser();
 
     const { data, error } = await supabase
         .from('tenant_users')
@@ -137,30 +91,18 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
         supabase,
         user,
         membership: data as TenantMembership,
-        admin,
     };
 }
 
-export async function requireTenantRole(tenantId: string, allowedRoles: string[], req?: Request) {
-    const access = await requireTenantAccess(tenantId, req);
-    const normalizedRole = normalizePlatformRole(access.membership.role);
-    const allowed = new Set(allowedRoles.map((r) => normalizePlatformRole(r)));
-    if (!allowed.has(normalizedRole)) {
-        throw new RouteAuthError(403, 'Insufficient workspace permissions', 'FORBIDDEN');
-    }
-    return access;
-}
-
 /**
- * Platform super-admin: profiles.role is a platform admin alias (not tenant-scoped).
- * Business/workspace owners are intentionally excluded — they manage membership, not platform accounts.
+ * Platform super-admin: profiles.role in ('admin', 'super_admin') (not tenant-scoped).
  */
 export async function requirePlatformSuperAdmin() {
-    const { supabase, user, admin } = await requireAuthenticatedUser();
+    const { supabase, user } = await requireAuthenticatedUser();
 
     const { data: profile, error } = await supabase
         .from('profiles')
-        .select('id, role, email, account_status')
+        .select('role')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -169,74 +111,17 @@ export async function requirePlatformSuperAdmin() {
         throw new RouteAuthError(500, 'Failed to verify admin access', 'INTERNAL_ERROR');
     }
 
-    if (!isPlatformAdminRole(profile?.role)) {
-        throw new RouteAuthError(
-            403,
-            'Platform admin role required to manage platform users. Workspace owners can remove members from Team settings instead.',
-            'FORBIDDEN'
-        );
+    if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
+        throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
     }
 
-    return { supabase, user, profile, admin };
-}
-
-/**
- * Counts total active super admins in the system to prevent accidental lockout.
- */
-export async function countActiveSuperAdmins(adminClient?: any): Promise<number> {
-    const admin = adminClient || createSupabaseAdminClient();
-    const { data, error } = await admin
-        .from('profiles')
-        .select('id, role, account_status');
-
-    if (error || !data) return 0;
-    const active = data.filter(
-        (p: { role?: string; account_status?: string }) =>
-            isPlatformAdminRole(p.role) && (p.account_status === 'active' || !p.account_status)
-    );
-    return active.length;
+    return { supabase, user };
 }
 
 /**
  * Standard utility for returning error responses from API routes.
  * Does not expose internal Error.message to the client (fallbackMessage is safe copy only).
  */
-/**
- * Helper to get authenticated user and tenantId from request.
- */
-export async function getApiAuthUser(req?: Request) {
-  try {
-    const { user, supabase } = await requireAuthenticatedUser(req);
-    const tenantIdHeader = req?.headers.get('x-tenant-id')?.trim();
-    if (tenantIdHeader) {
-      const { data: member } = await supabase
-        .from('tenant_users')
-        .select('tenant_id')
-        .eq('tenant_id', tenantIdHeader)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (!member?.tenant_id) {
-        return null;
-      }
-      return { user, tenantId: member.tenant_id };
-    }
-
-    const { data: member } = await supabase
-      .from('tenant_users')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .limit(1)
-      .maybeSingle();
-    const tenantId = member?.tenant_id;
-    if (!tenantId) {
-      return null;
-    }
-    return { user, tenantId };
-  } catch {
-    return null;
-  }
-}
-
 export function routeErrorResponse(
     error: unknown,
     fallbackMessage = 'The request failed on our side. Try again; if it repeats, send support the request ID.',

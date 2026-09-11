@@ -3,8 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { extractTenantBranding } from '@/lib/tenantBranding';
 import { buildPublicInvoiceUrl } from '@/lib/invoices/publicInvoiceAccess';
-import { AppUrls, buildValidatedPublicUrl } from '@/lib/urls';
-import { buildCanonicalProjectPortalUrl } from '@/lib/projects/portalLinks';
+import { AppUrls } from '@/lib/urls';
 
 export type ClientFinancePortalData = {
   client: { id: string; name: string; email?: string | null };
@@ -25,14 +24,6 @@ export type ClientFinancePortalData = {
     status: string;
     totalAmount: number;
     validUntil?: string | null;
-    viewUrl: string;
-  }>;
-  projects: Array<{
-    id: string;
-    name: string;
-    status: string;
-    stage: string | null;
-    progress: number;
     viewUrl: string;
   }>;
   summary: {
@@ -80,11 +71,13 @@ export async function getClientFinancePortalData(
     .order('issue_date', { ascending: false })
     .limit(50);
 
+  const base = origin || process.env.NEXT_PUBLIC_APP_URL || '';
+
   const invoiceRows = (invoices || []).map((inv) => {
     const metadata = (inv.metadata || {}) as Record<string, string>;
     const publicToken = metadata.public_token || '';
     const payUrl = publicToken
-      ? buildPublicInvoiceUrl(inv.id, publicToken)
+      ? buildPublicInvoiceUrl(inv.id, publicToken, base)
       : AppUrls.payInvoice(inv.id);
     return {
       id: inv.id,
@@ -96,36 +89,6 @@ export async function getClientFinancePortalData(
       payUrl,
     };
   });
-
-  const { data: publicProjects } = await admin
-    .from('projects')
-    .select('id, name, status, current_stage, progress, portal_token, portal_expires_at')
-    .eq('tenant_id', client.tenant_id)
-    .eq('client_id', client.id)
-    .eq('portal_enabled', true)
-    .eq('is_public', true)
-    .not('portal_token', 'is', null)
-    .order('updated_at', { ascending: false })
-    .limit(50);
-
-  const projectRows = (publicProjects || [])
-    .filter((project) => !project.portal_expires_at || new Date(project.portal_expires_at).getTime() >= Date.now())
-    .flatMap((project) => {
-      const token = String(project.portal_token || '');
-      if (!token) return [];
-      try {
-        return [{
-          id: String(project.id),
-          name: String(project.name || 'Untitled project'),
-          status: String(project.status || 'active'),
-          stage: project.current_stage ? String(project.current_stage) : null,
-          progress: Number(project.progress || 0),
-          viewUrl: buildCanonicalProjectPortalUrl(token),
-        }];
-      } catch {
-        return [];
-      }
-    });
 
   let quotesQuery = admin
     .from('quotes')
@@ -149,7 +112,6 @@ export async function getClientFinancePortalData(
       branding: extractTenantBranding(tenant),
       invoices: invoiceRows,
       quotes: [],
-      projects: projectRows,
       summary: {
         openInvoices: invoiceRows.filter((i) => i.status !== 'paid').length,
         openBalance: invoiceRows.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.total, 0),
@@ -170,7 +132,7 @@ export async function getClientFinancePortalData(
       status: q.status,
       totalAmount: Number(q.total_amount || 0),
       validUntil: q.valid_until,
-      viewUrl: quoteToken ? buildValidatedPublicUrl(`/quote/${encodeURIComponent(quoteToken)}`) : '',
+      viewUrl: quoteToken ? `${base.replace(/\/$/, '')}/quote/${quoteToken}` : '',
     };
   });
 
@@ -183,7 +145,6 @@ export async function getClientFinancePortalData(
     branding: extractTenantBranding(tenant),
     invoices: invoiceRows,
     quotes: quoteRows,
-    projects: projectRows,
     summary: {
       openInvoices: openInvoices.length,
       openBalance,
@@ -200,35 +161,15 @@ export async function getOrCreateClientPortalUrl(
 ): Promise<string> {
   const { data: client, error } = await admin
     .from('business_clients')
-    .select('id, finance_portal_token')
+    .select('finance_portal_token')
     .eq('id', clientId)
     .eq('tenant_id', tenantId)
-    .maybeSingle();
+    .single();
 
-  if (error) throw error;
-  if (!client) {
+  if (error || !client?.finance_portal_token) {
     throw new Error('Client not found');
   }
 
-  let token = client.finance_portal_token as string | null;
-  if (!token) {
-    const { data: updated, error: updateError } = await admin
-      .from('business_clients')
-      .update({ finance_portal_token: crypto.randomUUID() })
-      .eq('id', clientId)
-      .eq('tenant_id', tenantId)
-      .select('finance_portal_token')
-      .single();
-
-    if (updateError || !updated?.finance_portal_token) {
-      throw updateError || new Error('Failed to create client portal token');
-    }
-    token = updated.finance_portal_token;
-  }
-
-  if (!token) {
-    throw new Error('Failed to create client portal token');
-  }
-
-  return AppUrls.clientFinancePortal(token);
+  const base = (origin || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+  return `${base}/portal/${client.finance_portal_token}`;
 }

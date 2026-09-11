@@ -1,14 +1,9 @@
 import type { Metadata } from 'next';
-import { buildMarketingMetadata } from '@/lib/seo/metadata';
-import { MARKETING_PRICING } from '@/config/pricingPlans';
 import ServicesPage from '@/components/pages/ServicesPage';
-import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
-import { absoluteUrl } from '@/lib/siteUrl';
 
-export const metadata: Metadata = buildMarketingMetadata({
+export const metadata: Metadata = {
     title: 'Operating System | Unified AI Business OS for Service Teams',
-    description: `AlphaClone is the business operating system for service teams: CRM, invoicing, contracts, meetings, accounting, and AI workflows in one backbone. ${MARKETING_PRICING.metaPriceSnippet}`,
-    pathname: '/services',
+    description: 'AlphaClone is the business operating system for service teams: CRM, invoicing, contracts, meetings, accounting, and AI workflows in one backbone.',
     keywords: [
         'AI business operating system',
         'reduce SaaS tool sprawl',
@@ -23,7 +18,19 @@ export const metadata: Metadata = buildMarketingMetadata({
         'business operating system software',
         'Data Sovereignty',
     ],
-});
+    alternates: { canonical: 'https://alphaclonesystems.com/services' },
+    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+        title: 'Operating System | AlphaClone Unified AI Business OS',
+        description: 'Run AI sales workflows, CRM, projects, invoicing, contracts, and meetings from one operating backbone.',
+        url: 'https://alphaclonesystems.com/services',
+        type: 'website',
+    },
+    twitter: { images: ['/twitter-image'],
+        card: 'summary_large_image',
+        title: 'Operating System | AlphaClone Unified AI Business OS',
+        description: 'One workspace for AI sales workflows, CRM, projects, invoicing, contracts, and meetings. Starting at $15/month.',
+    },
+};
 
 const faqSchema = {
     '@context': 'https://schema.org',
@@ -74,7 +81,7 @@ const faqSchema = {
             name: 'How much does AlphaClone cost?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: `AlphaClone offers a free plan plus paid Pro and Premium tiers for growing teams. All plans include integrated video meetings. Current plan details are on the pricing page. ${MARKETING_PRICING.metaPriceSnippet}`,
+                text: 'AlphaClone starts at $15/month for Starter, with Pro and Enterprise tiers for growing teams. All plans include integrated video meetings. Current plan details are on the pricing page.',
             },
         },
     ],
@@ -100,9 +107,7 @@ export default function Page() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
-            <MarketingLandingShell>
-                <ServicesPage />
-            </MarketingLandingShell>
+            <ServicesPage />
         </>
     );
 }

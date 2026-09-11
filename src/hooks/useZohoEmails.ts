@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { InboxFolder, UnifiedInboxMessage } from '@/types/unifiedInbox';
 import { isAuthErrorMessage, refreshZohoTokenIfNeeded } from '@/lib/email/tokenRefresh';
 import { formatMailFrom } from '@/lib/email/parseEmailHeader';
-import { decodeHtmlEntities } from '@/lib/email/decodeHtmlEntities';
 
 interface ZohoFolderRow {
   folderId: string;
@@ -18,10 +17,8 @@ function resolveFolderId(folders: ZohoFolderRow[], kind: InboxFolder): string {
       ? pick((n) => n.includes('inbox'))
       : kind === 'sent'
         ? pick((n) => n.includes('sent'))
-      : kind === 'drafts'
-        ? pick((n) => n.includes('draft'))
-        : kind === 'spam'
-          ? pick((n) => n.includes('spam') || n.includes('junk'))
+        : kind === 'drafts'
+          ? pick((n) => n.includes('draft'))
           : pick((n) => n.includes('trash') || n.includes('deleted'));
 
   return id || folders[0]?.folderId || '1';
@@ -38,20 +35,19 @@ function mapZohoMessage(row: Record<string, unknown>, folderId: string): Unified
   return {
     id: String(row.messageId || row.id || ''),
     provider: 'zoho',
-    subject: decodeHtmlEntities(String(row.subject || '')),
+    subject: String(row.subject || ''),
     from: formatMailFrom({
       name: String(row.sender || ''),
       address: String(row.fromAddress || row.from || ''),
       raw: String(row.sender || row.fromAddress || row.from || ''),
     }),
-    // Zoho returns snippets HTML-escaped (&#39;, &amp;); the list renders text.
-    snippet: decodeHtmlEntities(String(row.snippet || row.summary || '')),
+    snippet: String(row.snippet || row.summary || ''),
     receivedAt: parseZohoTime(String(row.receivedTime || row.sentDateInGMT || '')),
     zohoFolderId: folderId,
   };
 }
 
-export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
+export function useZohoEmails(limit = 40, enabled = true) {
   const [emails, setEmails] = useState<UnifiedInboxMessage[]>([]);
   const [folder, setFolder] = useState<InboxFolder>('inbox');
   const [folders, setFolders] = useState<ZohoFolderRow[]>([]);
@@ -67,27 +63,24 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
 
   const checkConnected = useCallback(async () => {
     try {
-      if (!tenantId) return false;
-      const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
+      const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       return res.ok && data.isConnected === true;
     } catch {
       return false;
     }
-  }, [tenantId]);
+  }, []);
 
   const fetchZoho = useCallback(
     async (url: string, retried = false): Promise<Response> => {
-      if (!tenantId) throw new Error('Select a workspace to use Zoho Mail.');
-      const target = `${url}${url.includes('?') ? '&' : '?'}tenantId=${encodeURIComponent(tenantId)}`;
-      const res = await fetch(target, { credentials: 'include' });
+      const res = await fetch(url, { credentials: 'include' });
       if ((res.status === 401 || res.status === 403) && !retried) {
-        const refreshed = await refreshZohoTokenIfNeeded(true, tenantId);
+        const refreshed = await refreshZohoTokenIfNeeded(true);
         if (refreshed) return fetchZoho(url, true);
       }
       return res;
     },
-    [tenantId]
+    []
   );
 
   const refresh = useCallback(
@@ -97,7 +90,7 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
       setError(null);
       try {
         if (!retried) {
-          await refreshZohoTokenIfNeeded(false, tenantId);
+          await refreshZohoTokenIfNeeded(false);
         }
 
         const isConnected = await checkConnected();
@@ -133,7 +126,7 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
           refreshError instanceof Error ? refreshError.message : 'Failed to load Zoho mail';
 
         if (!retried && isAuthErrorMessage(raw)) {
-          const refreshed = await refreshZohoTokenIfNeeded(true, tenantId);
+          const refreshed = await refreshZohoTokenIfNeeded(true);
           if (refreshed) {
             await refresh(true);
             return;
@@ -150,7 +143,7 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
         setLoading(false);
       }
     },
-    [checkConnected, folder, limit, enabled, fetchZoho, tenantId]
+    [checkConnected, folder, limit, enabled, fetchZoho]
   );
 
   useEffect(() => {
@@ -175,9 +168,19 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
       if (cached) return cached;
 
       const folderId = message.zohoFolderId || activeFolderId;
-      const res = await fetchZoho(
-        `/api/zoho/mail?action=content&messageId=${encodeURIComponent(message.id)}&folderId=${encodeURIComponent(folderId)}`
+      let res = await fetch(
+        `/api/zoho/mail?action=content&messageId=${encodeURIComponent(message.id)}&folderId=${encodeURIComponent(folderId)}`,
+        { credentials: 'include' }
       );
+      if (res.status === 401 || res.status === 403) {
+        const refreshed = await refreshZohoTokenIfNeeded(true);
+        if (refreshed) {
+          res = await fetch(
+            `/api/zoho/mail?action=content&messageId=${encodeURIComponent(message.id)}&folderId=${encodeURIComponent(folderId)}`,
+            { credentials: 'include' }
+          );
+        }
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || 'Failed to load message');
@@ -189,7 +192,7 @@ export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
       );
       return content;
     },
-    [activeFolderId, fetchZoho]
+    [activeFolderId]
   );
 
   return {

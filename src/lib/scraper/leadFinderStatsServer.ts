@@ -21,13 +21,12 @@ export type LeadFinderStats = {
     total: number;
     active: number;
   };
-    pipeline: {
-      discovered: number;
-      contactable: number;
-      enriched: number;
-      crmSynced: number;
-      contacted: number;
-    };
+  pipeline: {
+    discovered: number;
+    enriched: number;
+    crmSynced: number;
+    contacted: number;
+  };
   sources: Record<string, number>;
   recentRuns: Array<{
     id: string;
@@ -102,7 +101,6 @@ export async function getLeadFinderStats(tenantId: string): Promise<LeadFinderSt
 
   const withEmail = leads.filter((l) => Boolean(l.email?.trim())).length;
   const withPhone = leads.filter((l) => Boolean(l.phone?.trim())).length;
-  const contactable = leads.filter((l) => Boolean(l.email?.trim() || l.phone?.trim())).length;
   const crmSynced = leads.filter((l) => Boolean(l.crm_lead_id)).length;
   const contacted = leads.filter((l) => l.status === 'contacted').length;
   const enriched = leads.filter((l) =>
@@ -125,7 +123,6 @@ export async function getLeadFinderStats(tenantId: string): Promise<LeadFinderSt
     },
     pipeline: {
       discovered: leads.length,
-      contactable,
       enriched,
       crmSynced,
       contacted,

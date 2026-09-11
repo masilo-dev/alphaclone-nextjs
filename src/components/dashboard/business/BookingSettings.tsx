@@ -4,18 +4,45 @@ import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant, TenantSettings } from '@/services/tenancy/types';
 import { Settings, Copy, Plus, X, ExternalLink, Globe, Calendar } from 'lucide-react';
 import { Card, Button } from '@/components/ui/UIComponents';
-import { PLATFORM_BOOKING_URL } from '@/constants';
+import { supabase } from '@/lib/supabase';
+import { PLATFORM_CALENDLY_URL } from '@/constants';
+
+function slugifyMeetingType(name: string): string {
+    const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return base || 'meeting';
+}
 
 async function syncBookingTypesToDb(
     tenantId: string,
     meetingTypes: Array<{ id: string; name: string; duration: number; price?: number }>,
     enabled: boolean
 ) {
-    const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/booking-types`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ meetingTypes, enabled }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || 'Booking types could not be saved');
+    if (!enabled) return;
+    for (const mt of meetingTypes) {
+        const slug = slugifyMeetingType(mt.name);
+        const { data: existing } = await supabase
+            .from('booking_types')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .eq('slug', slug)
+            .maybeSingle();
+
+        const row = {
+            tenant_id: tenantId,
+            name: mt.name,
+            slug,
+            duration: mt.duration || 30,
+            price: mt.price ?? 0,
+            is_active: true,
+            updated_at: new Date().toISOString(),
+        };
+
+        if (existing?.id) {
+            await supabase.from('booking_types').update(row).eq('id', existing.id);
+        } else {
+            await supabase.from('booking_types').insert(row);
+        }
+    }
 }
 
 interface BookingSettingsProps {
@@ -112,26 +139,26 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-10 overscroll-contain">
-                    {/* Platform Cal.com — for talking to Bonnie / sales */}
+                    {/* Platform Calendly — for talking to Bonnie / sales */}
                     <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-start gap-4">
                             <div className="p-2 bg-purple-500/20 rounded-lg shrink-0">
                                 <Calendar className="w-5 h-5 text-purple-400" />
                             </div>
                             <div>
-                                <h3 className="text-sm font-bold text-purple-200">Platform booking (Cal.com)</h3>
+                                <h3 className="text-sm font-bold text-purple-200">Platform Calendly</h3>
                                 <p className="text-xs text-purple-400/80 leading-relaxed">
                                     For prospects who want to talk to you directly. Native booking below is for your clients booking your services.
                                 </p>
                             </div>
                         </div>
                         <a
-                            href={PLATFORM_BOOKING_URL}
+                            href={PLATFORM_CALENDLY_URL}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-100 text-xs font-bold uppercase tracking-wider shrink-0"
                         >
-                            <ExternalLink className="w-4 h-4" /> Open Cal.com
+                            <ExternalLink className="w-4 h-4" /> Open Calendly
                         </a>
                     </div>
 
@@ -384,7 +411,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         ...settings,
                                         meetingTypes: [
                                             ...settings.meetingTypes,
-                                            { id: crypto.randomUUID(), name: 'New Meeting', duration: 30, price: 0 }
+                                            { id: Math.random().toString(36).substr(2, 9), name: 'New Meeting', duration: 30, price: 0 }
                                         ]
                                     })}
                                     className="text-xs flex items-center gap-2 bg-slate-800 border border-slate-700 hover:border-slate-600 hover:bg-slate-700 px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-white active:scale-95"

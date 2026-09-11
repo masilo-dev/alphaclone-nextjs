@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import UnifiedInbox from './UnifiedInbox';
+import UnifiedInboxView from './UnifiedInboxView';
 import { Loader2 } from 'lucide-react';
 
 const MessagesPage: React.FC = () => {
@@ -16,7 +16,7 @@ const MessagesPage: React.FC = () => {
                         </div>
                     }
                 >
-                    <UnifiedInbox />
+                    <UnifiedInboxView />
                 </Suspense>
             </div>
         </div>

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { registerServiceWorkerSafely } from '@/lib/pwa/registerServiceWorker';
 import { isPushSupported, isPushUnavailableError } from '@/lib/push/isPushSupported';
-import { useTenant } from '@/contexts/TenantContext';
 
 // Helper to convert VAPID public key
 function urlBase64ToUint8Array(base64String: string) {
@@ -22,7 +21,6 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export function usePushNotifications() {
-    const { currentTenant } = useTenant();
     const [isSubscribed, setIsSubscribed] = useState(false);
     const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
     const [pushSupported] = useState(() => isPushSupported());
@@ -45,7 +43,7 @@ export function usePushNotifications() {
     }, [pushSupported]);
 
     const subscribeToPush = useCallback(async () => {
-        if (!pushSupported || !currentTenant?.id) return false;
+        if (!pushSupported) return false;
 
         if (!registration) {
             return false;
@@ -57,8 +55,7 @@ export function usePushNotifications() {
                 return false;
             }
 
-            const vapidPublicKey =
-                process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VITE_VAPID_PUBLIC_KEY;
+            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
             if (!vapidPublicKey) {
                 return false;
             }
@@ -72,7 +69,7 @@ export function usePushNotifications() {
             const response = await fetch('/api/push/subscribe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId: currentTenant.id, subscription: subscription.toJSON() }),
+                body: JSON.stringify(subscription),
             });
 
             if (!response.ok) {
@@ -88,7 +85,7 @@ export function usePushNotifications() {
             }
             return false;
         }
-    }, [pushSupported, registration, currentTenant?.id]);
+    }, [pushSupported, registration]);
 
     const unsubscribeFromPush = useCallback(async () => {
         if (!registration) return false;
@@ -96,12 +93,6 @@ export function usePushNotifications() {
         try {
             const subscription = await registration.pushManager.getSubscription();
             if (subscription) {
-                if (currentTenant?.id) {
-                    await fetch('/api/push/subscribe', {
-                        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ tenantId: currentTenant.id, endpoint: subscription.endpoint }),
-                    });
-                }
                 const unsubscribed = await subscription.unsubscribe();
                 if (unsubscribed) {
                     setIsSubscribed(false);
@@ -115,7 +106,7 @@ export function usePushNotifications() {
             }
             return false;
         }
-    }, [registration, currentTenant?.id]);
+    }, [registration]);
 
     return {
         isSubscribed,

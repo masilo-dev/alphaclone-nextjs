@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '../../../types';
-import { useTenant, useTenantRole } from '../../../contexts/TenantContext';
-import { tenantService } from '@/services/tenancy/TenantService';
+import { useTenant } from '../../../contexts/TenantContext';
+import { supabase } from '../../../lib/supabase';
 import {
     Users as UsersIcon,
     Plus,
@@ -31,8 +31,6 @@ interface TeamPageProps {
 const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     const router = useRouter();
     const { currentTenant } = useTenant();
-    const tenantRole = useTenantRole();
-    const canManageTeam = ['owner', 'admin', 'tenant_admin', 'super_admin'].includes(tenantRole || '');
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -49,8 +47,22 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
 
         setLoading(true);
         try {
-            const data = await tenantService.getTenantUsers(currentTenant.id);
-            setTeamMembers(data);
+            const { data, error } = await supabase
+                .from('tenant_users')
+                .select(`
+                    *,
+                    user:user_id (
+                        id,
+                        email,
+                        name,
+                        avatar
+                    )
+                `)
+                .eq('tenant_id', currentTenant.id);
+
+            if (!error && data) {
+                setTeamMembers(data);
+            }
         } catch (error) {
             console.error('Error loading team members:', error);
         } finally {
@@ -62,7 +74,16 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
         if (!currentTenant) return;
 
         try {
-            await tenantService.createInvitation(currentTenant.id, email, role as any, user.id);
+            const { error } = await supabase
+                .from('tenant_invitations')
+                .insert({
+                    tenant_id: currentTenant.id,
+                    email,
+                    role,
+                    invited_by: user.id
+                });
+
+            if (error) throw error;
 
             toast.success(`Invitation sent to ${email}`);
             setShowInviteModal(false);
@@ -73,34 +94,18 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     };
 
     const handleRemoveMember = async (userId: string) => {
+        if (!confirm('Are you sure you want to remove this team member?')) return;
+
         if (!currentTenant) return;
 
-        const member = teamMembers.find((m) => m.user_id === userId);
-        const ownerCount = teamMembers.filter((m) =>
-            ['owner', 'tenant_admin'].includes(String(m.role || '').toLowerCase())
-        ).length;
-        const isLastOwner =
-            ['owner', 'tenant_admin'].includes(String(member?.role || '').toLowerCase()) &&
-            ownerCount <= 1;
-        if (isLastOwner) {
-            toast.error('The final workspace owner cannot be removed');
-            return;
-        }
+        const { error } = await supabase
+            .from('tenant_users')
+            .delete()
+            .eq('tenant_id', currentTenant.id)
+            .eq('user_id', userId);
 
-        if (!confirm('Remove this person from the workspace? Their platform account will remain unless you choose to delete it next.')) {
-            return;
-        }
-
-        const purge = confirm(
-            'Also permanently delete their platform account?\n\nOnly works if they belong to this workspace alone.\n\nOK = delete account\nCancel = workspace remove only'
-        );
-
-        try {
-            const result = await tenantService.removeUserFromTenant(currentTenant.id, userId, { purge });
-            setTeamMembers(teamMembers.filter((m) => m.user_id !== userId));
-            toast.success(result.message || (result.purged ? 'User deleted' : 'Team member removed'));
-        } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Team member could not be removed');
+        if (!error) {
+            setTeamMembers(teamMembers.filter(m => m.user_id !== userId));
         }
     };
 
@@ -159,7 +164,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                             exit={{ opacity: 0, y: -10 }}
                             className="space-y-6"
                         >
-                            {canManageTeam && <div className="flex justify-end">
+                            <div className="flex justify-end">
                                 <button
                                     onClick={() => setShowInviteModal(true)}
                                     className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors text-white font-bold shadow-lg shadow-teal-500/20"
@@ -167,7 +172,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                     <UserPlus className="w-4 h-4" />
                                     Invite Member
                                 </button>
-                            </div>}
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {teamMembers.map(member => (
                                     <TeamMemberCard
@@ -175,7 +180,6 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                         member={member}
                                         onRemove={handleRemoveMember}
                                         isCurrentUser={member.user_id === user.id}
-                                        canManage={canManageTeam}
                                     />
                                 ))}
                             </div>
@@ -194,7 +198,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                 <h3 className="text-xl font-bold text-white mb-2">Organization Structure</h3>
                                 <p className="text-slate-400 mb-8">
                                     Visualize your team's hierarchy and reporting lines.
-                                    Owners and administrators are shown above the rest of the workspace team.
+                                    (Currently showing flat structure)
                                 </p>
                                 <div className="flex flex-col items-center gap-4 relative">
                                     {/* Simple Tree Visualization */}
@@ -203,7 +207,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                     </div>
                                     <div className="h-8 w-px bg-slate-700"></div>
                                     <div className="flex gap-4 overflow-x-auto p-4 w-full justify-center">
-                                        {teamMembers.filter(m => !['admin', 'owner', 'tenant_admin'].includes(m.role)).map(member => (
+                                        {teamMembers.filter(m => m.role !== 'admin').map(member => (
                                             <div key={member.user_id} className="flex flex-col items-center relative group">
                                                 <div className="absolute -top-4 left-1/2 w-px h-4 bg-slate-700"></div>
                                                 <div className="p-3 bg-slate-800 border border-slate-700 rounded-xl min-w-[140px] text-center hover:border-teal-500/50 transition-all">
@@ -333,7 +337,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     );
 };
 
-const TeamMemberCard = ({ member, onRemove, isCurrentUser, canManage }: any) => {
+const TeamMemberCard = ({ member, onRemove, isCurrentUser }: any) => {
     const roleColors = {
         admin: 'bg-red-500/10 text-red-400 border-red-500/20',
         manager: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
@@ -352,12 +356,11 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser, canManage }: any) => 
                         <p className="text-xs text-slate-400 font-mono">{member.user?.email}</p>
                     </div>
                 </div>
-                {canManage && !isCurrentUser && (
+                {!isCurrentUser && (
                     <button
                         onClick={() => onRemove(member.user_id)}
-                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 hover:bg-red-500/10 rounded-lg transition-all"
-                        title="Remove from workspace or delete account"
-                        aria-label="Remove team member"
+                        className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/10 rounded-lg transition-all"
+                        title="Remove Member"
                     >
                         <Trash2 className="w-4 h-4 text-red-400" />
                     </button>
@@ -413,7 +416,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                     <div>
                         <label className="block text-sm font-bold text-slate-300 mb-2">Role</label>
                         <div className="grid grid-cols-3 gap-2">
-                            {['member', 'client', 'admin'].map((r) => (
+                            {['member', 'manager', 'admin'].map((r) => (
                                 <button
                                     key={r}
                                     type="button"

@@ -10,16 +10,6 @@ export type VerificationResult = {
 };
 
 export async function verifyLeadCreated(tenantId: string, leadId: string): Promise<VerificationResult> {
-  const trimmed = String(leadId || '').trim();
-  if (!trimmed || !/^[0-9a-f-]{36}$/i.test(trimmed)) {
-    return {
-      status: 'failed',
-      retryable: false,
-      message: 'lead_id must be a valid UUID',
-      evidence: { lead_id: leadId },
-    };
-  }
-
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from('leads')
@@ -107,15 +97,15 @@ export async function verifySocialPostPublished(
 export async function verifyInvoiceSent(tenantId: string, invoiceId: string): Promise<VerificationResult> {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
-    .from('business_invoices')
-    .select('id, status, issued_at, updated_at, canonical_delivery_status')
+    .from('invoices')
+    .select('id, status, sent_at, updated_at')
     .eq('tenant_id', tenantId)
     .eq('id', invoiceId)
     .maybeSingle();
   if (error) return { status: 'unknown', retryable: true, message: error.message, evidence: { invoice_id: invoiceId } };
   if (!data) return { status: 'pending', retryable: true, message: 'Invoice not found.', evidence: { invoice_id: invoiceId } };
   const status = String(data.status || '').toLowerCase();
-  if (status === 'sent' || status === 'paid' || data.issued_at || data.canonical_delivery_status === 'sent') {
+  if (status === 'sent' || status === 'paid' || data.sent_at) {
     return { status: 'verified', retryable: false, message: `Invoice status is ${status}.`, evidence: data as Record<string, unknown> };
   }
   return { status: 'pending', retryable: true, message: `Invoice status is ${status || 'unknown'}.`, evidence: data as Record<string, unknown> };

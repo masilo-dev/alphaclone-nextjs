@@ -18,9 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTenant } from '@/contexts/TenantContext';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import type { ZohoCampaignSummary, ZohoMailingList } from '@/services/zoho/ZohoCampaignsService';
 
@@ -32,7 +30,6 @@ interface ZohoCampaignsHubProps {
 
 export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   const { user } = useAuth();
-  const { currentTenant } = useTenant();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('campaigns');
   const [loading, setLoading] = useState(true);
@@ -54,19 +51,19 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   const [subscribeEmail, setSubscribeEmail] = useState('');
   const [subscribeListKey, setSubscribeListKey] = useState('');
 
-  const apiBase = `/api/zoho/campaigns?tenantId=${encodeURIComponent(currentTenant?.id || '')}`;
+  const apiBase = `/api/zoho/campaigns?userId=${encodeURIComponent(userId || user?.id || '')}`;
 
   const loadStatus = useCallback(async () => {
     const [statusRes, zohoRes] = await Promise.all([
       fetch(`${apiBase}&action=status`, { credentials: 'include' }).then((r) => r.json().catch(() => ({}))),
-      fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(currentTenant?.id || '')}`, { credentials: 'include' }).then((r) => r.json().catch(() => ({}))),
+      fetch('/api/auth/zoho/status', { credentials: 'include' }).then((r) => r.json().catch(() => ({}))),
     ]);
     setCampaignsReady(statusRes?.campaignsReady === true);
     setBaseConnected(zohoRes?.baseConnected === true || zohoRes?.isConnected === true);
     if (statusRes?.reconnect || statusRes?.code === 'ZOHO_RECONNECT') {
       setCampaignsReady(false);
     }
-  }, [apiBase, currentTenant?.id]);
+  }, [apiBase]);
 
   const loadCampaigns = useCallback(async () => {
     const res = await fetch(`${apiBase}&action=campaigns&range=30`, { credentials: 'include' });
@@ -116,12 +113,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   }, [refresh]);
 
   const connectZoho = () => {
-    if (!currentTenant?.id) {
-      toast.error('Select a workspace before connecting Zoho.');
-      return;
-    }
-
-    router.push(`/api/auth/zoho/connect?tenantId=${encodeURIComponent(currentTenant.id)}`);
+    router.push('/api/auth/zoho/connect?region=EU');
   };
 
   const handleCreateAndSend = async () => {
@@ -142,7 +134,6 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'create',
-          tenantId: currentTenant?.id,
           ...compose,
         }),
       });
@@ -153,7 +144,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
       const sendRes = await fetch('/api/zoho/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send', tenantId: currentTenant?.id, campaignKey: createData.campaignKey }),
+        body: JSON.stringify({ action: 'send', campaignKey: createData.campaignKey }),
       });
       const sendData = await sendRes.json().catch(() => ({}));
       if (!sendRes.ok) throw new Error(sendData.error || 'Send failed');
@@ -180,7 +171,6 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'subscribe',
-          tenantId: currentTenant?.id,
           listKey: subscribeListKey,
           email: subscribeEmail.trim(),
         }),
@@ -350,9 +340,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
       ) : tab === 'campaigns' ? (
         <div className="space-y-3">
           {campaigns.length === 0 ? (
-            <div className="py-6">
-              <EmptyStateFromPreset moduleId="campaigns" onAction={() => setTab('compose')} />
-            </div>
+            <p className="text-sm text-slate-500 text-center py-12">No campaigns yet. Create one in the New Campaign tab.</p>
           ) : (
             campaigns.map((c) => {
               const report = c.campaignKey ? reports[c.campaignKey] : undefined;

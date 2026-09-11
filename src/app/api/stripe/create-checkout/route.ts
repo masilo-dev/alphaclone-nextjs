@@ -2,27 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
-import { requireTenantRole } from '@/lib/apiAuth';
-import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: NextRequest) {
+    const authClient = await createSupabaseServerClient();
+    const { data: { user } } = await authClient.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     try {
         const body = await req.json();
         const { plan, tenantId } = body;
         const turnstileToken = readTurnstileToken(body);
+        const userId = user.id;
 
         if (!plan || !tenantId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
-        const userId = user.id;
-
         if (isTurnstileEnforced()) {
             if (!turnstileToken) {
                 return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
             }
-            const verified = await verifyTurnstileToken(turnstileToken, readClientIp(req));
+            const verified = await verifyTurnstileToken(turnstileToken);
             if (!verified) {
                 return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
             }

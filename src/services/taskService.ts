@@ -61,7 +61,7 @@ export interface Task {
     relatedToDeal?: string;
     relatedToLead?: string;
     priority: 'low' | 'medium' | 'high' | 'urgent';
-    status: 'ideas' | 'todo' | 'in_progress' | 'review' | 'blocked' | 'completed' | 'cancelled';
+    status: 'ideas' | 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
     dueDate?: string;
     startDate?: string;
     completedAt?: string;
@@ -97,7 +97,7 @@ export interface CreateTaskInput {
     relatedToDeal?: string;
     relatedToLead?: string;
     priority?: 'low' | 'medium' | 'high' | 'urgent';
-    status?: 'ideas' | 'todo' | 'in_progress' | 'review' | 'blocked' | 'completed' | 'cancelled';
+    status?: 'ideas' | 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
     dueDate?: string;
     startDate?: string;
     estimatedHours?: number;
@@ -150,8 +150,7 @@ export const taskService = {
             let query = supabase
                 .from('tasks')
                 .select('*', { count: 'exact' }) // Request exact count for pagination
-                .eq('tenant_id', tenantId)
-                .is('deleted_at', null);
+                .eq('tenant_id', tenantId);
 
             if (filters?.assignedTo) {
                 query = query.eq('assigned_to', filters.assignedTo);
@@ -231,7 +230,6 @@ export const taskService = {
                 .select('*')
                 .eq('id', taskId)
                 .eq('tenant_id', tenantId)
-                .is('deleted_at', null)
                 .single();
 
             if (error) throw error;
@@ -309,9 +307,9 @@ export const taskService = {
                 taskTitle: taskData.title,
             }, tenantId);
 
-            // EMIT AUTOMATION EVENT (client-safe — server emit via API)
-            const { requestBusinessEvent } = await import('../lib/automation/request-event');
-            await requestBusinessEvent(tenantId, 'task_created', {
+            // EMIT AUTOMATION EVENT
+            const { emitBusinessEvent } = await import('../lib/automation/emit-event');
+            await emitBusinessEvent(tenantId, 'task_created', {
                 taskId: data.id,
                 title: data.title,
                 priority: data.priority,
@@ -440,7 +438,7 @@ export const taskService = {
                     .single();
 
                 if (existingTask) {
-                    const statusOrder = ['ideas', 'todo', 'in_progress', 'review', 'blocked', 'completed'];
+                    const statusOrder = ['ideas', 'todo', 'in_progress', 'review', 'completed'];
                     const currentIdx = statusOrder.indexOf(existingTask.status);
                     const newIdx = statusOrder.indexOf(updates.status);
 
@@ -547,8 +545,7 @@ export const taskService = {
                         const { data: creatorData } = await supabase.from('profiles').select('name, email').eq('id', data.created_by).single();
                         if (creatorData?.email && data.created_by !== currentUser.id) {
                             const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
-                            const { absoluteUrl } = await import('@/lib/siteUrl');
-                            const actionUrl = absoluteUrl(`/dashboard/tasks/${data.id}`);
+                            const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${data.id}` : '';
 
                             await sendNotificationEmail({
                                 tenantId,
@@ -666,6 +663,14 @@ export const taskService = {
         } catch (err) {
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
         }
+    },
+
+    /**
+     * AI-powered task outline generation (Placeholder for MVP)
+     */
+    async generateTaskOutline(title: string): Promise<{ outline: string; error: string | null }> {
+        const mockOutline = `Strategy for: ${title}\n\n1. Define core objectives\n2. Identify key stakeholders\n3. Establish timeline and milestones\n4. Allocate necessary resources\n5. Execute initial phase\n6. Review and optimize progress`;
+        return { outline: mockOutline, error: null };
     },
 
     /**
@@ -846,8 +851,7 @@ export const taskService = {
      */
     async getOverdueTasks(userId?: string): Promise<{ tasks: Task[]; error: string | null }> {
         try {
-            const tenantId = tenantService.getCurrentTenantId();
-            if (!tenantId) return { tasks: [], error: null };
+            const tenantId = this.getTenantId();
             const today = new Date();
 
             let query = supabase
@@ -950,51 +954,6 @@ export const taskService = {
             return { score, status, risks, recommendations, error: null };
         } catch (err) {
             return { score: 0, status: 'critical', risks: [], recommendations: [], error: err instanceof Error ? err.message : 'Unknown error' };
-        }
-    },
-
-    /**
-     * Escalation engine: promotes all overdue non-completed tasks to high priority.
-     * Returns the count of tasks escalated.
-     */
-    async escalateOverdueTasks(userId?: string): Promise<{ escalated: number; error: string | null }> {
-        try {
-            const tenantId = tenantService.getCurrentTenantId();
-            if (!tenantId) return { escalated: 0, error: 'No active workspace' };
-
-            const { tasks, error } = await this.getOverdueTasks(userId);
-            if (error) throw new Error(error);
-
-            const toEscalate = tasks.filter(t => t.priority !== 'urgent' && t.priority !== 'high');
-            if (!toEscalate.length) return { escalated: 0, error: null };
-
-            const ids = toEscalate.map(t => t.id);
-
-            const { error: updateError } = await supabase
-                .from('tasks')
-                .update({ priority: 'high', metadata: { escalated: true, escalated_at: new Date().toISOString() } })
-                .eq('tenant_id', tenantId)
-                .in('id', ids)
-                .neq('status', 'completed')
-                .neq('status', 'cancelled');
-
-            if (updateError) throw updateError;
-
-            // Log one activity per escalated task (non-blocking)
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
-            const actorId = currentUser?.id || userId || 'system';
-            for (const task of toEscalate) {
-                activityService.logActivity(actorId, 'Task Escalated', {
-                    taskId: task.id,
-                    taskTitle: task.title,
-                    reason: 'overdue_auto_escalation',
-                }, tenantId).catch(() => undefined);
-            }
-
-            return { escalated: toEscalate.length, error: null };
-        } catch (err) {
-            console.error('[taskService] escalateOverdueTasks error:', err);
-            return { escalated: 0, error: err instanceof Error ? err.message : 'Escalation failed' };
         }
     },
 };

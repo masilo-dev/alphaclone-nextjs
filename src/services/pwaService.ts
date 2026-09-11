@@ -48,6 +48,20 @@ export const pwaService = {
         }
 
         try {
+            const purgeKey = 'pwa_purge_v2';
+            const shouldPurge = typeof window !== 'undefined' && window.localStorage?.getItem(purgeKey) !== '1';
+            if (shouldPurge) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map((registration) => registration.unregister()));
+
+                if ('caches' in window) {
+                    const cacheKeys = await caches.keys();
+                    await Promise.all(cacheKeys.map((key) => caches.delete(key)));
+                }
+
+                window.localStorage?.setItem(purgeKey, '1');
+            }
+
             if (process.env.NODE_ENV !== 'production') {
                 return { success: false, error: 'Service worker is only available in production builds' };
             }
@@ -87,13 +101,11 @@ export const pwaService = {
         if (typeof window === 'undefined') return;
 
         const notification = document.createElement('div');
-        if (document.getElementById('alphaclone-update-available')) return;
-        notification.id = 'alphaclone-update-available';
-        notification.className = 'fixed bottom-20 md:bottom-5 left-3 right-3 md:left-auto md:right-5 md:max-w-md bg-slate-950 border border-teal-400/30 text-white px-5 py-4 rounded-2xl shadow-2xl z-[140] flex items-center gap-4';
+        notification.className = 'fixed bottom-4 right-4 bg-teal-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-4';
         notification.innerHTML = `
             <div>
                 <p class="font-semibold">Update Available</p>
-                <p class="text-sm opacity-70">Finish or save current work, then update when ready.</p>
+                <p class="text-sm opacity-90">A new version is available. Refresh to update.</p>
             </div>
             <button id="pwa-update-btn" class="px-4 py-2 bg-white text-teal-600 rounded font-semibold hover:bg-teal-50 transition-colors">
                 Update
@@ -104,16 +116,13 @@ export const pwaService = {
 
         const updateBtn = notification.querySelector('#pwa-update-btn');
         updateBtn?.addEventListener('click', () => {
-            void navigator.serviceWorker.getRegistration('/').then((registration) => {
-                const waiting = registration?.waiting;
-                if (!waiting) {
-                    window.location.reload();
-                    return;
-                }
-                navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
-                waiting.postMessage({ type: 'SKIP_WAITING' });
-            });
+            window.location.reload();
         });
+
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 10000);
     },
 
     /**
@@ -171,15 +180,7 @@ export const pwaService = {
             return { prompt: null, error: 'Not in browser environment' };
         }
 
-        // Reuse the prompt captured by the app shell. Waiting only for a new
-        // browser event made Android install actions feel stuck even though an
-        // install prompt was already available.
-        const capturedPrompt = (window as any).deferredPrompt;
-        if (capturedPrompt) {
-            return { prompt: capturedPrompt, error: null };
-        }
-
-        // Listen for the next beforeinstallprompt event when none was captured.
+        // Listen for beforeinstallprompt event
         return new Promise((resolve) => {
             const handler = (e: Event) => {
                 e.preventDefault();

@@ -28,7 +28,7 @@ interface Invoice {
  * Cron Job Service for Automated Recurring Invoices
  * 
  * This service handles the scheduling and generation of recurring invoices.
- * In production, triggered by Railway cron jobs (see railway.crons.json).
+ * In production, this would be triggered by Vercel Cron Jobs or an external scheduler.
  */
 export const cronService = {
   /**
@@ -126,16 +126,16 @@ export const cronService = {
     dueDate.setDate(dueDate.getDate() + 30);
 
     // Create invoice in database
-    const { error } = await supabase.from('business_invoices').insert({
+    const { error } = await supabase.from('invoices').insert({
       invoice_number: invoiceNumber,
-      client_id: null,
-      total: parseFloat(config.amount),
-      subtotal: parseFloat(config.amount),
+      client_id: config.tenantId, // In production, this would be the actual client ID
+      amount: parseFloat(config.amount),
       status: 'sent',
-      due_date: dueDate.toISOString().slice(0, 10),
-      issue_date: new Date().toISOString().slice(0, 10),
+      due_date: dueDate.toISOString(),
       tenant_id: config.tenantId,
-      notes: config.description,
+      description: config.description,
+      is_recurring: true,
+      recurring_config_id: config.id
     });
 
     if (error) {

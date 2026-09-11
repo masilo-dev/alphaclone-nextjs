@@ -11,23 +11,13 @@ export async function GET(req: NextRequest) {
   if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const pageId = req.nextUrl.searchParams.get('pageId');
-  const tenantId = req.nextUrl.searchParams.get('tenantId');
-  if (!pageId || !tenantId) return NextResponse.json({ error: 'pageId and tenantId are required' }, { status: 400 });
-  const { data: membership } = await supabase.from('tenant_users').select('tenant_id')
-    .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
-  if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!pageId) return NextResponse.json({ error: 'pageId is required' }, { status: 400 });
 
   const admin = createSupabaseAdminClient();
-  const integration = await getFacebookIntegration(admin, { tenantId, userId: user.id, pageId });
+  const integration = await getFacebookIntegration(admin, { userId: user.id, pageId });
 
   if (!integration) {
-    return NextResponse.json({
-      success: false,
-      connected: false,
-      error: 'Facebook page not connected',
-      action: 'reconnect',
-      capabilities: {},
-    });
+    return NextResponse.json({ error: 'Facebook page not connected', action: 'reconnect' }, { status: 404 });
   }
 
   const tokens = await getFacebookTokens(admin, integration);
@@ -51,7 +41,6 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    connected: true,
     page_id: integration.page_id,
     page_name: integration.page_name,
     scope_mode: integration.metadata?.scope_mode || 'advanced',

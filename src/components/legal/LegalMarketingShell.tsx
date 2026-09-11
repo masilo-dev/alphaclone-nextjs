@@ -1,13 +1,19 @@
-import type { ReactNode } from 'react';
-import MarketingShell from '@/components/marketing/system/MarketingShell';
+'use client';
 
-/** Unified legal/trust shell using the shared marketing header and footer. */
+import type { ReactNode } from 'react';
+import PublicNavigation from '@/components/PublicNavigation';
+import LegalNav from '@/components/legal/LegalNav';
+import AppLegalFooter from '@/components/legal/AppLegalFooter';
+
 export default function LegalMarketingShell({ children }: { children: ReactNode }) {
   return (
-    <MarketingShell>
-      <div className="flex min-h-[calc(100vh-5rem)] flex-col">
+    <div className="min-h-screen bg-slate-950">
+      <PublicNavigation onLoginClick={() => {}} />
+      <div className="pt-20 flex min-h-[calc(100vh-5rem)] flex-col">
+        <LegalNav />
         <div className="flex-1">{children}</div>
+        <AppLegalFooter />
       </div>
-    </MarketingShell>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   PLATFORM_HELP_SECTIONS,
   type PlatformHelpSection,
 } from '@/config/platformGlossary';
-import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
+import { APP_NAME } from '@/constants';
 
 export default function PlatformHelpTab() {
   const [query, setQuery] = useState('');
@@ -31,7 +31,12 @@ export default function PlatformHelpTab() {
 
   return (
     <ModulePageLayout
-      header={<EnterprisePageHeader moduleKey="help" />}
+      header={
+        <div className="px-1 pb-2">
+          <h1 className="text-xl font-semibold text-white">Platform guide</h1>
+          <p className="text-sm text-slate-400 mt-1">Learn {APP_NAME} — terms, hubs, and where to work</p>
+        </div>
+      }
       toolbar={
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" aria-hidden />

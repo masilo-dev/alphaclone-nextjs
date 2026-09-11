@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   ChevronRight, ArrowLeft, Plus, TrendingUp, Clock,
   User, Mail, Phone, FileText, CheckSquare, ArrowRight,
@@ -19,14 +19,12 @@ import { CommunicationModal } from './crm/CommunicationModal';
 import type { EmailRecipient } from './crm/emailRecipient';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { DealRevenueTimeline } from './deals/DealRevenueTimeline';
-import EmptyState, { EmptyStateFromPreset } from '../ui/EmptyState';
+import EmptyState from '../ui/EmptyState';
 import { DetailDrawer } from '../ui/DetailDrawer';
 import { ModulePageLayout } from '../ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
-import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { resolveDealStagePrimaryAction } from '@/lib/behavioral/dealStagePrimaryAction';
 import {
   getDealStageProgress,
   getForwardStageTarget,
@@ -35,16 +33,11 @@ import {
 } from '@/lib/stageProgression';
 import { ACTIVE_DEAL_STAGES, isActiveDealStage } from '@/lib/crmPipelineStages';
 import { showDealStageNextSteps } from '@/lib/dealStageActions';
-import { showActionNextSteps, showInvoiceCreatedWithSendPrompt } from '@/components/common/showActionNextSteps';
 import { CRMNav } from './crm/CRMNav';
 import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
+import { usePathname } from 'next/navigation';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
-import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
-import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types/moduleExecution';
-import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
-import { DEALS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
-import { usePersistentPreference } from '@/hooks/usePersistentPreference';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -74,7 +67,6 @@ interface Deal {
   name: string;
   value: number;
   stage: DealStage;
-  contact_id?: string | null;
   contact_name?: string;
   contact_email?: string;
   score?: number;
@@ -148,7 +140,7 @@ const SwipeableDealRow: React.FC<{
           {deal.contact_name && <span className="text-[13px] text-slate-500 opacity-55 block truncate">{deal.contact_name}</span>}
           <div className="mt-1.5 flex items-center gap-2">
             <div className="flex-1 h-1 rounded-full bg-slate-800 overflow-hidden">
-              <div className="h-full bg-[var(--brand-blue-500)] rounded-full" style={{ width: `${progress.percent}%` }} />
+              <div className="h-full bg-teal-500 rounded-full" style={{ width: `${progress.percent}%` }} />
             </div>
             <span className="text-[10px] font-bold text-slate-500 tabular-nums shrink-0">
               {progress.step}/{progress.total} · {progress.percent}%
@@ -156,7 +148,7 @@ const SwipeableDealRow: React.FC<{
           </div>
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <span className="text-[15px] font-bold text-[var(--brand-blue-400)]">${(deal.value || 0).toLocaleString()}</span>
+          <span className="text-[15px] font-bold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
           <span className="text-[11px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded-full">{daysInStage(deal.updated_at)}d</span>
         </div>
       </motion.div>
@@ -171,24 +163,11 @@ const DealDetail: React.FC<{
   onBack: () => void;
   onStageChange: (id: string, stage: DealStage) => void;
   onComposeEmail?: (recipient: EmailRecipient, subject: string) => void;
-  onNavigate?: (path: string) => void;
   inDrawer?: boolean;
-}> = ({ deal, user, onBack, onStageChange, onComposeEmail, onNavigate, inDrawer }) => {
-  const router = useRouter();
+}> = ({ deal, user, onBack, onStageChange, onComposeEmail, inDrawer }) => {
   const col = STAGE_COLORS[deal.stage];
   const progress = getDealStageProgress(deal.stage);
   const nextStage = getForwardStageTarget(deal.stage);
-  const stagePrimary = resolveDealStagePrimaryAction(deal.stage);
-
-  const handleStagePrimary = () => {
-    if (stagePrimary.href) {
-      navigate(stagePrimary.href);
-      return;
-    }
-    if (stagePrimary.advanceStage && nextStage) {
-      onStageChange(deal.id, nextStage);
-    }
-  };
 
   const [products, setProducts] = useState<DealProduct[]>([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -197,14 +176,6 @@ const DealDetail: React.FC<{
   const [logging, setLogging] = useState(false);
   const [activityNote, setActivityNote] = useState('');
   const [creatingInvoice, setCreatingInvoice] = useState(false);
-
-  const navigate = useCallback(
-    (path: string) => {
-      if (onNavigate) onNavigate(path);
-      else router.push(path);
-    },
-    [onNavigate, router],
-  );
 
   const loadProducts = useCallback(async () => {
     setProductsLoading(true);
@@ -216,17 +187,6 @@ const DealDetail: React.FC<{
   useEffect(() => { loadProducts(); }, [loadProducts]);
 
   const productsTotal = products.reduce((s, p) => s + (p.total || 0), 0);
-
-  const resolveClientIdForInvoice = useCallback(async (): Promise<string | undefined> => {
-    if (!deal.contact_id || !deal.tenant_id) return undefined;
-    const { data } = await supabase
-      .from('business_clients')
-      .select('id')
-      .eq('tenant_id', deal.tenant_id)
-      .eq('crm_contact_id', deal.contact_id)
-      .maybeSingle();
-    return data?.id as string | undefined;
-  }, [deal.contact_id, deal.tenant_id]);
 
   const handleAddProduct = async () => {
     const qty = parseFloat(newProduct.quantity) || 0;
@@ -248,7 +208,7 @@ const DealDetail: React.FC<{
   };
 
   const handleDeleteProduct = async (id: string) => {
-    const { error } = await dealService.deleteDealProduct(deal.id, id);
+    const { error } = await dealService.deleteDealProduct(id);
     if (error) { toast.error('Could not remove product'); return; }
     setProducts(prev => prev.filter(p => p.id !== id));
   };
@@ -263,109 +223,57 @@ const DealDetail: React.FC<{
   };
 
   const handleCreateInvoice = async () => {
-    if (!deal.tenant_id) { toast.error('Missing workspace'); return; }
+    if (!deal.tenant_id) { toast.error('Missing tenant'); return; }
     setCreatingInvoice(true);
-    try {
-      const lineItems = products.length > 0
-        ? products.map(p => ({ description: p.productName, quantity: p.quantity, rate: p.unitPrice, amount: p.total }))
-        : [{ description: deal.name, quantity: 1, rate: deal.value || 0, amount: deal.value || 0 }];
-      const subtotal = lineItems.reduce((s, li) => s + (li.amount || 0), 0);
-      const clientId = await resolveClientIdForInvoice();
-      const { invoice, error } = await businessInvoiceService.createInvoice(deal.tenant_id, {
-        status: 'draft',
-        issueDate: new Date().toISOString().split('T')[0],
-        lineItems,
-        subtotal,
-        total: subtotal,
-        notes: `Generated from deal: ${deal.name}`,
-        ...(clientId ? { clientId } : {}),
-      });
-      if (error) {
-        toast.error(error);
-        return;
-      }
-      const billingPath = invoice?.id
-        ? `/dashboard/business/billing/manage?invoiceId=${encodeURIComponent(invoice.id)}`
-        : '/dashboard/business/billing/manage';
-      navigate(billingPath);
-      showInvoiceCreatedWithSendPrompt(navigate);
-      showActionNextSteps('invoice_created', navigate);
-    } finally {
-      setCreatingInvoice(false);
-    }
+    const lineItems = products.length > 0
+      ? products.map(p => ({ description: p.productName, quantity: p.quantity, rate: p.unitPrice, amount: p.total }))
+      : [{ description: deal.name, quantity: 1, rate: deal.value || 0, amount: deal.value || 0 }];
+    const subtotal = lineItems.reduce((s, li) => s + (li.amount || 0), 0);
+    const { error } = await businessInvoiceService.createInvoice(deal.tenant_id, {
+      status: 'draft',
+      issueDate: new Date().toISOString().split('T')[0],
+      lineItems,
+      subtotal,
+      total: subtotal,
+      notes: `Generated from deal: ${deal.name}`,
+    });
+    setCreatingInvoice(false);
+    if (error) { toast.error(error); return; }
+    toast.success('Draft invoice created in Billing');
   };
 
   return (
     <div className={inDrawer ? 'space-y-4 pb-6' : 'flex flex-col h-full'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--ws-border)]">
-        <button onClick={onBack} className="w-8 h-8 rounded-full bg-[var(--ws-surface-tertiary)] flex items-center justify-center">
-          <ArrowLeft className="w-4 h-4 text-[var(--ws-text-secondary)]" />
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
+        <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
+          <ArrowLeft className="w-4 h-4 text-slate-300" />
         </button>
-        <span className="text-[15px] font-semibold text-[var(--ws-text-primary)] flex-1">Pipeline record</span>
+        <span className="text-[15px] font-bold text-white flex-1">Pipeline Record</span>
       </div>
       )}
 
       <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-4 space-y-4 pb-28'}>
-        <RecordHeader
-          moduleId="pipeline"
-          title={deal.name}
-          subtitle={deal.contact_name || undefined}
-          status={
-            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border capitalize ${col.bg} ${col.text} ${col.border}`}>
-              {deal.stage.replace(/_/g, ' ')}
-            </span>
-          }
-          meta={
-            <>
-              <span className="tabular-nums font-semibold text-[var(--ws-text-primary)]">
-                ${(deal.value || 0).toLocaleString()}
-              </span>
-              <span>Step {progress.step} of {progress.total}</span>
-            </>
-          }
-          actions={
-            <AskBonnieButton
-              compact
-              mode="analyse"
-              contexts={[
-                { type: 'Deal', id: deal.id, label: deal.name },
-                ...(deal.contact_name
-                  ? [{ type: 'Contact', label: deal.contact_name }]
-                  : []),
-              ]}
-            />
-          }
-        />
-
         {/* Value hero */}
         <div className="flex flex-col items-center py-4 gap-2">
-          <span className="text-[28px] font-bold text-[var(--ws-text-primary)] tabular-nums">${(deal.value || 0).toLocaleString()}</span>
+          <span className="text-[32px] font-extrabold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
           <div className="w-full max-w-xs px-2">
-            <div className="flex justify-between text-[10px] text-[var(--ws-text-muted)] font-semibold uppercase tracking-wide mb-1">
+            <div className="flex justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1">
               <span>Pipeline step {progress.step} of {progress.total}</span>
               <span>{progress.percent}%</span>
             </div>
-            <div className="h-2 rounded-full bg-[var(--ws-surface-tertiary)] overflow-hidden">
-              <div className="h-full bg-[#E69222] rounded-full transition-all" style={{ width: `${progress.percent}%` }} />
+            <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${progress.percent}%` }} />
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleStagePrimary}
-            className="px-5 py-2 rounded-full text-[13px] font-bold bg-teal-500/20 border border-teal-500/40 text-teal-100 hover:bg-teal-500/30 transition-colors"
-          >
-            {stagePrimary.label}
-          </button>
-          {nextStage && stagePrimary.advanceStage ? (
+          {nextStage && (
             <button
-              type="button"
               onClick={() => onStageChange(deal.id, nextStage)}
-              className={`px-3 py-1 rounded-full text-[11px] font-semibold border capitalize ${col.bg} ${col.text} ${col.border} opacity-80`}
+              className={`px-4 py-1.5 rounded-full text-[13px] font-bold border capitalize ${col.bg} ${col.text} ${col.border}`}
             >
-              Or move to {nextStage.replace('_', ' ')}
+              Move to {nextStage.replace('_', ' ')}
             </button>
-          ) : null}
+          )}
           {deal.stage !== 'closed_won' && deal.stage !== 'closed_lost' && (
             <button
               onClick={() => onStageChange(deal.id, 'closed_lost')}
@@ -397,7 +305,7 @@ const DealDetail: React.FC<{
                     { name: deal.contact_name || deal.name, email: deal.contact_email! },
                     `Re: ${deal.name}`
                   )}
-                  className="shrink-0 text-xs font-bold text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)]"
+                  className="shrink-0 text-xs font-bold text-teal-400 hover:text-teal-300"
                 >
                   Follow up
                 </button>
@@ -434,14 +342,14 @@ const DealDetail: React.FC<{
                     <p className="text-[12px] text-slate-500">{p.quantity} × ${p.unitPrice.toLocaleString()}</p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-[14px] font-bold text-[var(--brand-blue-400)]">${(p.total || 0).toLocaleString()}</span>
+                    <span className="text-[14px] font-bold text-teal-400">${(p.total || 0).toLocaleString()}</span>
                     <button onClick={() => handleDeleteProduct(p.id)} className="text-slate-600 hover:text-red-400 text-[12px]">Remove</button>
                   </div>
                 </div>
               ))}
               <div className="flex items-center justify-between pt-2.5">
                 <span className="text-[13px] font-bold text-slate-300">Total</span>
-                <span className="text-[15px] font-black text-[var(--brand-blue-400)]">${productsTotal.toLocaleString()}</span>
+                <span className="text-[15px] font-black text-teal-400">${productsTotal.toLocaleString()}</span>
               </div>
             </div>
           )}
@@ -482,58 +390,26 @@ const DealDetail: React.FC<{
               value={activityNote}
               onChange={e => setActivityNote(e.target.value)}
               placeholder="Log a call, email, or note…"
-              className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-[var(--brand-blue-500)] resize-none h-20"
+              className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-[13px] text-white focus:outline-none focus:border-teal-500 resize-none h-20"
             />
-            <button onClick={handleLogActivity} className="w-full py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg text-[13px] font-bold text-white">Save activity</button>
+            <button onClick={handleLogActivity} className="w-full py-2 bg-teal-600 hover:bg-teal-500 rounded-lg text-[13px] font-bold text-white">Save activity</button>
           </div>
         )}
       </div>
 
       {inDrawer ? (
-        <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(deal.contact_id ? `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/unified-contacts')}
-              className="min-h-11 px-3 text-[13px] text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
-            >
-              Open customer
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)}
-              className="min-h-11 px-3 text-[13px] text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
-            >
-              Create quote
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard/business/calendar')}
-              className="min-h-11 px-3 text-[13px] text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
-            >
-              Schedule follow-up
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 text-[13px] text-slate-400 font-bold rounded-xl border border-white/10 hover:bg-white/5">Log Activity</button>
-            <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 min-h-11 py-2.5 text-[13px] text-emerald-400 font-bold rounded-xl border border-emerald-500/20 hover:bg-emerald-500/10 disabled:opacity-50">
-              {creatingInvoice ? 'Creating…' : 'Create Invoice'}
-            </button>
-          </div>
-        </div>
-      ) : (
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
-        <div className="flex divide-x divide-white/5 overflow-x-auto">
-          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/crm/unified-contacts?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/unified-contacts')} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Customer</button>
-          <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Quote</button>
-          <button type="button" onClick={() => navigate('/dashboard/business/calendar')} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Follow-up</button>
-        </div>
-        <div className="flex divide-x divide-white/5">
-          <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 text-[13px] text-slate-400 font-bold hover:bg-white/5 transition-colors">Log Activity</button>
-          <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 text-[13px] text-emerald-400 font-bold hover:bg-white/5 transition-colors disabled:opacity-50">
+        <div className="flex gap-2 pt-2 border-t border-white/5">
+          <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 text-[13px] text-slate-400 font-bold rounded-xl border border-white/10 hover:bg-white/5">Log Activity</button>
+          <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 min-h-11 py-2.5 text-[13px] text-emerald-400 font-bold rounded-xl border border-emerald-500/20 hover:bg-emerald-500/10 disabled:opacity-50">
             {creatingInvoice ? 'Creating…' : 'Create Invoice'}
           </button>
         </div>
+      ) : (
+      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
+        <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 text-[13px] text-slate-400 font-bold hover:bg-white/5 transition-colors">Log Activity</button>
+        <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 text-[13px] text-emerald-400 font-bold hover:bg-white/5 transition-colors disabled:opacity-50">
+          {creatingInvoice ? 'Creating…' : 'Create Invoice'}
+        </button>
       </div>
       )}
     </div>
@@ -544,7 +420,6 @@ const DealDetail: React.FC<{
 const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const router = useRouter();
   const pathname = usePathname() || '';
-  const searchParams = useSearchParams();
   const { currentTenant } = useTenant();
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -554,30 +429,13 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const [newDeal, setNewDeal] = useState({ name: '', value: '', stage: 'lead' as DealStage, contact_name: '', contact_email: '' });
 
   // View mode states
-  const [viewMode, setViewMode] = usePersistentPreference<'board' | 'list' | 'mobile-stage'>(
-    currentTenant?.id && user.id ? `deal_view_${currentTenant.id}_${user.id}` : null,
-    'board',
-    (value): value is 'board' | 'list' | 'mobile-stage' =>
-      value === 'board' || value === 'list' || value === 'mobile-stage',
-  );
+  const [viewMode, setViewMode] = useState<'board' | 'list' | 'mobile-stage'>('board');
 
   // Table List View Search/Filter/Sort states
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStage, setFilterStage] = usePersistentPreference<string>(
-    currentTenant?.id && user.id ? `deal_stage_filter_${currentTenant.id}_${user.id}` : null,
-    'all',
-    (value): value is string => value === 'all' || STAGES.includes(value as DealStage),
-  );
-  const [sortBy, setSortBy] = usePersistentPreference<'value' | 'created_at'>(
-    currentTenant?.id && user.id ? `deal_sort_by_${currentTenant.id}_${user.id}` : null,
-    'created_at',
-    (value): value is 'value' | 'created_at' => value === 'value' || value === 'created_at',
-  );
-  const [sortOrder, setSortOrder] = usePersistentPreference<'asc' | 'desc'>(
-    currentTenant?.id && user.id ? `deal_sort_order_${currentTenant.id}_${user.id}` : null,
-    'desc',
-    (value): value is 'asc' | 'desc' => value === 'asc' || value === 'desc',
-  );
+  const [filterStage, setFilterStage] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'value' | 'created_at'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Create Deal modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -590,10 +448,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const [savingNewDeal, setSavingNewDeal] = useState(false);
   const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (searchParams.get('create') === 'true') setShowCreateModal(true);
-  }, [searchParams]);
   const [visibleCount, setVisibleCount] = useState(40);
   const loadMoreDeals = useCallback(() => setVisibleCount((c) => c + 30), []);
   const [selectedDealIds, setSelectedDealIds] = useState<Set<string>>(new Set());
@@ -607,13 +461,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       return next;
     });
   };
-
-  const openSingleSelectedDeal = useCallback(() => {
-    const [id] = [...selectedDealIds];
-    if (!id) return;
-    const deal = deals.find((d) => d.id === id);
-    if (deal) setSelectedDeal(deal);
-  }, [deals, selectedDealIds]);
 
   const handleBulkDeleteDeals = async () => {
     const ids = [...selectedDealIds];
@@ -677,16 +524,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   }, [currentTenant?.id]);
 
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    const dealId = searchParams?.get('deal') || searchParams?.get('dealId');
-    if (!dealId || deals.length === 0) return;
-    const match = deals.find((d) => d.id === dealId);
-    if (match) {
-      setSelectedDeal(match);
-      router.replace('/dashboard/deals', { scroll: false });
-    }
-  }, [searchParams, deals, router]);
 
   const applyStageChange = async (id: string, newStage: DealStage) => {
     const deal = deals.find((d) => d.id === id);
@@ -775,22 +612,23 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
     setSavingNewDeal(true);
     try {
-      const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/deals`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase
+        .from('deals')
+        .insert({
           name: newDealName.trim(),
           value: parseFloat(newDealValue) || 0,
           stage: newDealStage,
-          contactName: newDealContactName.trim(),
-          contactEmail: newDealContactEmail.trim(),
-          description: newDealDescription.trim(),
-        }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Error creating deal');
-      const data = payload.deal;
+          contact_name: newDealContactName.trim() || null,
+          contact_email: newDealContactEmail.trim() || null,
+          description: newDealDescription.trim() || null,
+          tenant_id: currentTenant.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
 
       toast.success('Deal created successfully');
       setDeals((prev) => [data as Deal, ...prev]);
@@ -936,17 +774,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       e.dataTransfer.setData('text/plain', deal.id);
                     }}
                     onClick={() => setSelectedDeal(deal)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setSelectedDeal(deal);
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Open deal: ${deal.name}`}
                     className={`bg-slate-950 border hover:border-slate-800 border-l-4 ${probabilityAccent(deal.probability)} p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98] ${
-                      selectedDealIds.has(deal.id) ? 'border-[var(--brand-blue-500)]/40' : 'border-white/5'
+                      selectedDealIds.has(deal.id) ? 'border-teal-500/40' : 'border-white/5'
                     }`}
                   >
                     <button
@@ -955,17 +784,16 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                         e.stopPropagation();
                         toggleDealSelection(deal.id);
                       }}
-                      className="absolute top-3 right-3 z-10 text-slate-500 hover:text-[var(--brand-blue-400)]"
-                      aria-label={`Select ${deal.name} for bulk actions`}
-                      title="Select for bulk actions"
+                      className="absolute top-3 right-3 z-10 text-slate-500 hover:text-teal-400"
+                      aria-label={`Select ${deal.name}`}
                     >
                       {selectedDealIds.has(deal.id)
-                        ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" />
+                        ? <CheckSquare className="w-4 h-4 text-teal-400" />
                         : <Square className="w-4 h-4" />}
                     </button>
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-[13px] font-bold text-white group-hover:text-[var(--brand-blue-400)] transition-colors leading-tight truncate">{deal.name}</h4>
+                        <h4 className="text-[13px] font-bold text-white group-hover:text-teal-400 transition-colors leading-tight truncate">{deal.name}</h4>
                         {deal.score != null && (
                           <span className={`text-[10px] font-extrabold flex-shrink-0 px-1.5 py-0.5 rounded-md ${scoreColor(deal.score)} bg-white/5`}>
                             ★ {deal.score}
@@ -978,7 +806,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       <div className="mt-2 flex items-center gap-2">
                         <div className="flex-1 h-1 rounded-full bg-slate-800 overflow-hidden">
                           <div
-                            className="h-full bg-[var(--brand-blue-500)]/80 rounded-full"
+                            className="h-full bg-teal-500/80 rounded-full"
                             style={{ width: `${getDealStageProgress(deal.stage).percent}%` }}
                           />
                         </div>
@@ -989,7 +817,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     </div>
 
                     <div className="flex items-center justify-between border-t border-white/5 pt-2 mt-1 shrink-0">
-                      <span className="text-[13px] font-extrabold text-[var(--brand-blue-400)]">${(deal.value || 0).toLocaleString()}</span>
+                      <span className="text-[13px] font-extrabold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-slate-550" />
                         <span className={`text-[10px] font-semibold tabular-nums ${daysInStage(deal.updated_at) >= STALL_DAYS ? 'text-amber-400' : 'text-slate-550'}`}>
@@ -1022,7 +850,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             placeholder="Search deals or contacts..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950/60 border border-white/5 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+            className="w-full pl-9 pr-4 py-2 bg-slate-950/60 border border-white/5 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500/50"
           />
         </div>
 
@@ -1033,7 +861,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             <select
               value={filterStage}
               onChange={(e) => setFilterStage(e.target.value)}
-              className="bg-slate-950/60 border border-white/5 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+              className="bg-slate-950/60 border border-white/5 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-teal-500/50 capitalize"
             >
               <option value="all">All Stages</option>
               {STAGES.map((s) => (
@@ -1053,7 +881,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               }
             }}
             className={`flex items-center gap-1 px-3 py-1.5 bg-slate-950/60 border border-white/5 rounded-xl text-xs shrink-0 ${
-              sortBy === 'value' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-slate-400'
+              sortBy === 'value' ? 'text-teal-400 border-teal-500/20' : 'text-slate-400'
             }`}
           >
             <ArrowUpDown className="w-3 h-3" />
@@ -1071,7 +899,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               }
             }}
             className={`flex items-center gap-1 px-3 py-1.5 bg-slate-950/60 border border-white/5 rounded-xl text-xs shrink-0 ${
-              sortBy === 'created_at' ? 'text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' : 'text-slate-400'
+              sortBy === 'created_at' ? 'text-teal-400 border-teal-500/20' : 'text-slate-400'
             }`}
           >
             <Clock className="w-3 h-3" />
@@ -1121,27 +949,17 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   <tr
                     key={deal.id}
                     onClick={() => setSelectedDeal(deal)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setSelectedDeal(deal);
-                      }
-                    }}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Open deal: ${deal.name}`}
-                    className={`hover:bg-white/5 transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-[var(--brand-blue-500)]/5' : ''}`}
+                    className={`hover:bg-white/5 transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-teal-500/5' : ''}`}
                   >
                     <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => toggleDealSelection(deal.id)}
-                        className="text-slate-500 hover:text-[var(--brand-blue-400)] transition-colors"
-                        aria-label={`Select ${deal.name} for bulk actions`}
-                        title="Select for bulk actions"
+                        className="text-slate-500 hover:text-teal-400 transition-colors"
+                        aria-label={`Select ${deal.name}`}
                       >
                         {selectedDealIds.has(deal.id)
-                          ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
+                          ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" />
                           : <Square className="w-3.5 h-3.5" />}
                       </button>
                     </td>
@@ -1152,7 +970,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       <StandardStatusBadge variant={resolveStatusVariant(deal.stage)}>{deal.stage.replace('_', ' ')}</StandardStatusBadge>
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-[12px] font-black text-[var(--brand-blue-400)]">${(deal.value || 0).toLocaleString()}</span>
+                      <span className="text-[12px] font-black text-teal-400">${(deal.value || 0).toLocaleString()}</span>
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-col gap-0.5">
@@ -1220,8 +1038,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   if (!loading && deals.length === 0) {
     return (
       <div className="relative flex flex-col h-full bg-slate-950 p-6">
-        <EmptyStateFromPreset
-          moduleId="deals"
+        <EmptyState
+          icon={TrendingUp}
+          title="No pipeline records yet"
+          description="Create your first deal to start tracking movement, value, and next-step risk."
+          actionLabel="Create deal"
           onAction={() => setShowCreateModal(true)}
         />
       </div>
@@ -1229,56 +1050,25 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   }
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="pipeline">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950">
       <div className="px-4 pt-3 shrink-0 space-y-2.5">
         <CRMNav pathname={pathname} />
         <CrmSyncToolbar />
         <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
-        <UniversalModuleExecutionHeader
-          moduleName="Deals & Sales Pipeline"
-          recordTitle="Opportunity Progression & Revenue Forecasting"
-          nextActionState={{
-            currentState: 'Opportunity Pipeline',
-            owner: user.name || user.email || 'Sales Lead',
-            nextAction: 'Advance deal stages → Draft quotes & contracts → Close won',
-            deadline: '7-day stage stall threshold',
-            blocker: deals.length === 0 ? 'No active deals' : null,
-            expectedOutcome: 'Closed won revenue & converted contracts',
-            outcomeStatus: totalPipelineValue > 0 ? 'verified' : 'pending',
-            verifiedResult: `$${totalPipelineValue.toLocaleString()} active open pipeline across ${deals.length} deals`,
-            authorityLevel: 'automatic_logged',
-          }}
-          questions={{
-            whatCameIn: `${deals.length} active deals totaling $${totalPipelineValue.toLocaleString()} in open opportunity value`,
-            whatDoesItMean: 'Sales opportunities in active proposal, negotiation, or qualification stages',
-            whatShouldHappen: 'Progress forward stage-by-stage, complete quotes, and execute contracts',
-            whoOwnsIt: user.name || user.email || 'Sales Lead',
-            canAlphaCloneAct: 'automatic_logged',
-            whatActuallyHappened: `${deals.length} deals actively tracked across board columns`,
-            didItProduceExpectedOutcome: totalPipelineValue > 0 ? 'YES' : 'IN_PROGRESS',
-            whatHappensNext: 'Generate invoice upon closing deal or send proposal follow-up',
-          }}
-          onExecuteNextAction={() => setShowCreateModal(true)}
-        />
-        <ExecutionDecisionGuide
-          steps={DEALS_EXECUTION_STEPS}
-          onNavigate={(href) => router.push(href)}
-        />
       </div>
       <ModulePageLayout
+        showBonnieDock
         toolbar={(
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] sticky top-0 z-20 shrink-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-white/5 bg-slate-950/80 sticky top-0 z-20 backdrop-blur-md shrink-0">
         <div>
-          <h2 className="text-sm font-semibold text-[var(--ws-text-primary)]">Sales pipeline</h2>
-          <p className="text-[12px] text-[var(--ws-text-muted)] mt-0.5 font-medium">
-            Open pipeline: <span className="text-[var(--module-pipeline-primary,#E69222)] font-semibold tabular-nums">${totalPipelineValue.toLocaleString()}</span> • {deals.length} active deals
+          <h1 className="text-[15px] font-black text-white">Pipeline Workspace</h1>
+          <p className="text-[11px] text-slate-500 mt-0.5 font-semibold">
+            Open pipeline: <span className="text-teal-400 font-bold">${totalPipelineValue.toLocaleString()}</span> • {deals.length} active deals
             {pipelineHealth != null && (
-              <> • Avg progress <span className="text-[var(--brand-blue-500)] font-semibold tabular-nums">{pipelineHealth}%</span></>
+              <> • Avg progress <span className="text-teal-400 font-bold">{pipelineHealth}%</span></>
             )}
           </p>
-          <p className="text-[11px] text-[var(--ws-text-disabled)] mt-1 max-w-md leading-relaxed">
-            {PIPELINE_FORWARD_ONLY_HINT} Click any deal card to open full details.
-          </p>
+          <p className="text-[10px] text-slate-600 mt-1 max-w-md leading-relaxed">{PIPELINE_FORWARD_ONLY_HINT}</p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
@@ -1291,15 +1081,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               >
                 Clear
               </button>
-              {selectedDealIds.size === 1 && (
-                <button
-                  type="button"
-                  onClick={openSingleSelectedDeal}
-                  className="h-7 px-3 rounded-full text-[11px] font-bold text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 transition-colors hover:text-[var(--brand-blue-200)]"
-                >
-                  Open deal
-                </button>
-              )}
               <button
                 type="button"
                 onClick={handleBulkEmailDeals}
@@ -1367,7 +1148,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         stats={!loading && deals.length > 0 ? (
           <div className="p-4 border-b border-white/5 bg-slate-900/20 space-y-4 shrink-0">
             <RevenueLeakagePanel deals={deals} heading="What to fix next" />
-            <ModuleStatCards stats={dealStats} hub="deals" />
+            <ModuleStatCards stats={dealStats} />
             <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pipeline by Stage</h3>
@@ -1443,7 +1224,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     value={newDealValue}
                     onChange={(e) => setNewDealValue(e.target.value)}
                     placeholder="e.g. 15000"
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-teal-500/50"
                   />
                 </div>
                 <div>
@@ -1451,7 +1232,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   <select
                     value={newDealStage}
                     onChange={(e) => setNewDealStage(e.target.value as DealStage)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-teal-500/50 capitalize"
                   >
                     {STAGES.map((s) => (
                       <option key={s} value={s}>{s.replace('_', ' ')}</option>
@@ -1467,7 +1248,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   value={newDealContactName}
                   onChange={(e) => setNewDealContactName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-teal-500/50"
                 />
               </div>
 
@@ -1478,7 +1259,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   value={newDealContactEmail}
                   onChange={(e) => setNewDealContactEmail(e.target.value)}
                   placeholder="e.g. john@acme.com"
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
+                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-teal-500/50"
                 />
               </div>
 
@@ -1489,7 +1270,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                   onChange={(e) => setNewDealDescription(e.target.value)}
                   placeholder="Add brief details about the deal..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
+                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-teal-500/50 resize-none"
                 />
               </div>
 
@@ -1517,7 +1298,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             onBack={() => setSelectedDeal(null)}
             onStageChange={handleStageChange}
             onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
-            onNavigate={(path) => router.push(path)}
             inDrawer
           />
         )}

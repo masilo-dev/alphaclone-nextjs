@@ -1,39 +1,76 @@
-import { ENV } from '@/config/env';
-import { createBrowserClient } from '@supabase/ssr';
-import { createUnavailableSupabaseClient, isSupabaseConfigured } from './supabase-shared';
+import { ENV } from '@/config/env'
+import { createBrowserClient } from '@supabase/ssr'
 
-export { isSupabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE } from './supabase-shared';
+const isPlaceholder = (val?: string) => !val || val === 'undefined' || val.includes('placeholder');
 
-export const createClient = () => {
-    if (!isSupabaseConfigured()) {
-        return createUnavailableSupabaseClient('Supabase');
-    }
+const createUnavailableClient = () => {
+    const configError = { message: 'Supabase client is not configured' };
+    const queryResult = Promise.resolve({ data: null, error: configError, count: 0 });
 
-    const supabaseUrl =
-        ENV.VITE_SUPABASE_URL ||
-        process.env.NEXT_PUBLIC_SUPABASE_URL ||
-        process.env.SUPABASE_URL!;
-    const supabaseAnonKey =
-        ENV.VITE_SUPABASE_ANON_KEY ||
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
-
-    return createBrowserClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
+    const queryChain: any = new Proxy(() => { }, {
+        get: (_, prop) => {
+            if (prop === 'then') return queryResult.then.bind(queryResult);
+            if (prop === 'catch') return queryResult.catch.bind(queryResult);
+            if (prop === 'finally') return queryResult.finally.bind(queryResult);
+            if (prop === 'data') return null;
+            if (prop === 'error') return configError;
+            if (prop === 'count') return 0;
+            if (typeof prop === 'symbol') return undefined;
+            return (..._args: any[]) => queryChain;
         },
-        global: {
-            fetch: (...args) => fetch(...args),
-        },
-        realtime: {
-            params: {
-                eventsPerSecond: 10,
-            },
-            timeout: 30000,
+        apply: () => queryChain,
+    });
+
+    return new Proxy({} as any, {
+        get: (_target, prop) => {
+            if (prop === 'auth') {
+                return {
+                    getSession: async () => ({ data: { session: null }, error: configError }),
+                    getUser: async () => ({ data: { user: null }, error: configError }),
+                    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
+                    signOut: async () => ({ error: configError }),
+                };
+            }
+
+            if (prop === 'from' || prop === 'rpc') {
+                return (..._args: any[]) => queryChain;
+            }
+
+            if (typeof prop === 'symbol') return undefined;
+            return queryChain;
         },
     });
+};
+
+export const createClient = () => {
+    if (isPlaceholder(ENV.VITE_SUPABASE_URL) || isPlaceholder(ENV.VITE_SUPABASE_ANON_KEY)) {
+        console.warn('[Supabase] Missing credentials, returning unavailable client');
+        return createUnavailableClient();
+    }
+
+    const supabaseUrl = ENV.VITE_SUPABASE_URL;
+
+    return createBrowserClient(
+        supabaseUrl,
+        ENV.VITE_SUPABASE_ANON_KEY,
+        {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+            },
+            global: {
+                fetch: (...args) => fetch(...args),
+            },
+            realtime: {
+                params: {
+                    eventsPerSecond: 10,
+                },
+                // Increased timeout for connection attempts to be more resilient
+                timeout: 30000,
+            }
+        }
+    );
 };
 
 // Legacy compatibility

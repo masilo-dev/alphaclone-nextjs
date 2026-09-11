@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addUnsubscribe } from '@/lib/email/unsubscribe';
-import { verifyEmailUnsubscribeSignature, verifyUnsubscribeToken } from '@/lib/email/unsubscribeToken';
+import { addUnsubscribe, verifyEmailUnsubscribeSignature, verifyUnsubscribeToken } from '@/lib/email/unsubscribe';
 
 export const dynamic = 'force-dynamic';
 

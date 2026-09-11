@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createClient } from '@supabase/supabase-js';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { microsoftServerService } from '@/services/server/microsoftServerService';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
-import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+
+// Initialize Clients
+// Initialize Clients inside handler to avoid build-time errors if env vars missing
+// const supabase = createClient(...);
+
+import { ENV } from '@/config/env';
+import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: Request) {
     try {
-        const supabase = createSupabaseAdminClient();
+        // Initialize Supabase Client
+        const supabase = createClient(
+            ENV.VITE_SUPABASE_URL,
+            ENV.SUPABASE_SERVICE_ROLE_KEY
+        );
 
         const body = await req.json();
         const {
@@ -40,7 +50,7 @@ export async function POST(req: Request) {
             if (!turnstile_token) {
                 return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
             }
-            const ok = await verifyTurnstileToken(turnstile_token, readClientIp(req));
+            const ok = await verifyTurnstileToken(turnstile_token);
             if (!ok) {
                 return NextResponse.json(
                     { error: 'Security verification failed. Please try again.' },
@@ -115,7 +125,7 @@ export async function POST(req: Request) {
         }
 
         // 3. Create meeting provider room/link
-        const roomName = `booking-${crypto.randomUUID()}`;
+        const roomName = `booking-${Date.now()}-${Math.random().toString(36).substring(7)}`;
         const jitsiRoomName = `alphaclone-${roomName}`;
         let dailyRoomUrl = '';
         let roomId = '';

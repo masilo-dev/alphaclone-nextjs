@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { runWorkflow, WorkflowDefinition, ExecutionContext } from '@/services/engine/WorkflowExecutor';
-import { z } from 'zod';
-
-const bodySchema = z.object({ trigger_type: z.enum(['lead_created', 'facebook_lead_received', 'ingestion_event', 'sms_received', 'form_submitted', 'manual']), tenant_id: z.string().uuid(), data: z.record(z.string(), z.unknown()).default({}) });
+import { runWorkflow, WorkflowDefinition, ExecutionContext, TriggerType } from '@/services/engine/WorkflowExecutor';
 
 /**
  * WORKFLOW EXECUTION ENGINE
@@ -20,9 +17,16 @@ export async function POST(req: NextRequest) {
     const supabase = createSupabaseAdminClient();
 
     try {
-        const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
-        if (!parsed.success) return NextResponse.json({ error: 'Valid trigger_type, tenant_id, and data are required' }, { status: 400 });
-        const { trigger_type, tenant_id, data } = parsed.data;
+        const body = await req.json();
+        const { trigger_type, tenant_id, data } = body as {
+            trigger_type: TriggerType;
+            tenant_id: string;
+            data: Record<string, unknown>;
+        };
+
+        if (!trigger_type || !tenant_id) {
+            return NextResponse.json({ error: 'trigger_type and tenant_id required' }, { status: 400 });
+        }
 
         // Fetch all active workflows for this tenant + trigger
         const { data: workflows, error } = await supabase
@@ -45,7 +49,7 @@ export async function POST(req: NextRequest) {
             results.push(result);
 
             // Log execution to DB
-            const { error: executionError } = await supabase.from('workflow_executions').insert({
+            await supabase.from('workflow_executions').insert({
                 workflow_id: wf.id,
                 tenant_id,
                 trigger_data: data,
@@ -55,12 +59,13 @@ export async function POST(req: NextRequest) {
                 duration_ms: result.durationMs,
                 error_message: result.actionsTaken.find(a => a.status === 'failed')?.error || null,
             });
-            if (executionError) throw executionError;
 
             // Update workflow run count
             if (result.conditionsMet) {
-                const { error: countError } = await supabase.rpc('increment_workflow_definition_run', { p_tenant_id: tenant_id, p_workflow_id: wf.id });
-                if (countError) throw countError;
+                await supabase
+                    .from('workflow_definitions')
+                    .update({ run_count: (wf.run_count || 0) + 1, last_run_at: new Date().toISOString() })
+                    .eq('id', wf.id);
             }
         }
 

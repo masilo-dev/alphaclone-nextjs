@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { leadService, Lead } from '@/services/leadService';
-import { generateEmailReply } from '@/services/unifiedAIService';
+import { generateEmailReply, generateText } from '@/services/unifiedAIService';
 import { integrationsService, IntegrationConfig } from '@/services/integrationsService';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -44,7 +44,50 @@ export default function LeadOutreachModal({ isOpen, onClose, onEmailDrafted }: L
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!query) return;
-        window.location.href = `/dashboard/leads/finder?q=${encodeURIComponent(query)}`;
+        setSearching(true);
+        try {
+            const prompt = `You are a B2B lead generation assistant. Generate 4 realistic potential business leads matching this search criteria: "${query}".
+
+Return ONLY a valid JSON array with no markdown, no explanation, no code blocks. Each object must have:
+- id: unique string like "ai_1", "ai_2", etc.
+- businessName: company name
+- industry: industry/sector
+- location: city, state/country
+- email: realistic contact email
+- website: domain only (no https://)
+- notes: 1-2 sentences about why they're a good fit
+
+Example: [{"id":"ai_1","businessName":"Acme Corp","industry":"SaaS","location":"Austin, TX","email":"hello@acme.com","website":"acme.com","notes":"Rapidly growing SaaS startup."}]`;
+
+            const { text } = await generateText(prompt, 800);
+            if (text) {
+                // Robust parsing: extract JSON from markdown code blocks if present
+                let jsonStr = text.trim();
+                const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                if (match) {
+                    jsonStr = match[1];
+                }
+
+                try {
+                    const parsed: Partial<Lead>[] = JSON.parse(jsonStr);
+                    setResults(parsed);
+                } catch (parseErr) {
+                    console.error('Failed to parse AI leads JSON:', parseErr, 'Raw text:', text);
+                    // Fallback: try to find anything that looks like an array
+                    const arrayMatch = jsonStr.match(/\[\s*\{[\s\S]*\}\s*\]/);
+                    if (arrayMatch) {
+                        setResults(JSON.parse(arrayMatch[0]));
+                    } else {
+                        throw parseErr;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('AI lead search failed:', err);
+            setResults([]);
+        } finally {
+            setSearching(false);
+        }
     };
 
     const handleSyncAndEngage = async (lead: Partial<Lead>) => {

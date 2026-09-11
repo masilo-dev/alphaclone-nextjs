@@ -20,11 +20,9 @@ interface WorkspaceHubProps {
 export default function WorkspaceHub({ children }: WorkspaceHubProps) {
   return (
     <HubShell
-      title="Settings & Nexus"
+      title="Workspace"
       description="Integrations, automations, and system settings"
       tabs={WORKSPACE_TABS}
-      moduleId="nexus"
-      accent="violet"
     >
       {children}
     </HubShell>

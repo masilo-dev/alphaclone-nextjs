@@ -22,7 +22,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
-import { EmptyState, EmptyStateFromPreset } from '@/components/ui/EmptyState';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 import type { FormField, FormFieldType, TenantForm } from '@/types/tenantForms';
@@ -351,8 +351,11 @@ export default function FormsHub() {
       {forms.length > 0 && <ModuleStatCards stats={formStats} />}
 
       {forms.length === 0 ? (
-        <EmptyStateFromPreset
-          moduleId="forms"
+        <EmptyState
+          icon={ClipboardList}
+          title="No forms yet"
+          description="Create your first branded form to capture leads on your domain — like a built-in OpnForm."
+          actionLabel="Create first form"
           onAction={handleNewForm}
         />
       ) : (

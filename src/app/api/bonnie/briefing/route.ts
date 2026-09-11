@@ -39,7 +39,9 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId and notificationId required' }, { status: 400 });
     }
 
-    const { admin } = await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId);
+
+    const admin = createSupabaseAdminClient();
     const { error } = await admin
       .from('notifications')
       .update({ read: true })

@@ -80,30 +80,28 @@ class EmailService {
     private provider: EmailProvider | null;
     private defaultFrom: string;
 
-    private getEnvProvider(): EmailProvider | null {
-        if (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY) {
-            return 'brevo';
-        } else if (process.env.SENDGRID_API_KEY) {
-            return 'sendgrid';
-        } else if (process.env.RESEND_API_KEY) {
-            return 'resend';
-        } else if (process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET) {
-            return 'zoho';
-        } else if (process.env.OUTLOOK_CLIENT_ID && process.env.OUTLOOK_CLIENT_SECRET) {
-            return 'outlook';
-        } else if (process.env.SMTP_HOST && process.env.SMTP_PORT) {
-            return 'smtp';
-        }
-        return null;
-    }
-
     constructor() {
-        this.provider = this.getEnvProvider();
+        if (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY) {
+            this.provider = 'brevo';
+        } else if (process.env.SENDGRID_API_KEY) {
+            this.provider = 'sendgrid';
+        } else if (process.env.RESEND_API_KEY) {
+            this.provider = 'resend';
+        } else if (process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET) {
+            this.provider = 'zoho';
+        } else if (process.env.OUTLOOK_CLIENT_ID && process.env.OUTLOOK_CLIENT_SECRET) {
+            this.provider = 'outlook';
+        } else if (process.env.SMTP_HOST && process.env.SMTP_PORT) {
+            this.provider = 'smtp';
+        } else {
+            this.provider = null;
+        }
+
         this.defaultFrom = process.env.EMAIL_FROM || 'notifications@alphaclonesystems.com';
     }
 
     /**
-     * Send email — prefers tenant-aware routing when tenantId is provided, or dynamic integration resolution when available.
+     * Send email — prefers tenant-aware routing when tenantId is provided.
      */
     async send(options: EmailOptions & { tenantId?: string }): Promise<{ success: boolean; error?: string; provider?: string }> {
         if (options.tenantId) {
@@ -126,29 +124,11 @@ class EmailService {
             };
         }
 
-        // Try dynamic integration resolution if tenantId is missing
-        let resolvedProvider = options.provider || this.getEnvProvider();
-        if (!resolvedProvider) {
-            try {
-                const { resolveEmailProviderConfig } = await import('@/lib/email/providerIntegrationResolver');
-                const config = await resolveEmailProviderConfig({
-                    preferredUserId: options.userId || null,
-                    preferredProvider: options.provider,
-                    fallbackToEnv: true,
-                });
-                if (config) {
-                    resolvedProvider = config.provider;
-                }
-            } catch (err) {
-                console.warn('[emailService] Dynamic integration resolution fallback error:', err);
-            }
-        }
-
-        const provider = resolvedProvider;
+        const provider = options.provider || this.provider;
         if (!provider) {
             return {
                 success: false,
-                error: 'No email provider configured. Pass tenantId for tenant routing or set BREVO/SENDGRID/RESEND/ZOHO env keys or active DB integration.',
+                error: 'No email provider configured. Pass tenantId for tenant routing or set BREVO/SENDGRID/RESEND/ZOHO env keys.',
             };
         }
 
@@ -294,13 +274,6 @@ class EmailService {
             html: options.html,
             text: options.text,
             replyTo: options.replyTo,
-            cc: options.cc,
-            bcc: options.bcc,
-            attachments: options.attachments?.map((attachment) => ({
-                filename: attachment.filename,
-                content: attachment.content,
-                contentType: attachment.contentType,
-            })),
             userId: options.userId,
         });
 

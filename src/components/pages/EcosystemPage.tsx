@@ -2,12 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare } from 'lucide-react';
+import PublicNavigation from '../PublicNavigation';
 import AnimateIn from '../common/AnimateIn';
-import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
-import { PUBLIC_INTEGRATIONS } from '@/config/integrations';
+import MarketingFooter from '../landing/MarketingFooter';
 
 const EcosystemPage: React.FC = () => {
+    const [, setIsLoginOpen] = React.useState(false);
+
     const advantages = [
         {
             name: 'Lightning-Fast Delivery',
@@ -60,14 +62,9 @@ const EcosystemPage: React.FC = () => {
         },
     ];
 
-    const integrations = PUBLIC_INTEGRATIONS.map((item) => ({
-        name: item.name,
-        desc: item.description,
-        status: item.statusLabel,
-    }));
-
     return (
         <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
+            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
             <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
                 <AnimateIn type="fadeIn">
                     <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8">
@@ -184,8 +181,8 @@ const EcosystemPage: React.FC = () => {
                                 <Layers className="w-10 h-10 text-teal-400 mb-4" />
                                 <h3 className="text-xl font-bold mb-4">Infrastructure</h3>
                                 <ul className="space-y-2 text-slate-400">
-                                    <li>Railway deployment</li>
-                                    <li>Managed app hosting</li>
+                                    <li>Vercel Edge Network</li>
+                                    <li>Managed hosting on Vercel</li>
                                     <li>Global CDN</li>
                                     <li>Auto-scaling</li>
                                 </ul>
@@ -201,25 +198,23 @@ const EcosystemPage: React.FC = () => {
                             Core <span className="text-teal-400">Integrations</span>
                         </h2>
                         <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
-                            Built-in integrations and AI provider connections, managed from one workspace.
+                            Built-in integrations with essential business tools. More integrations coming soon.
                         </p>
                     </AnimateIn>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto min-w-0 px-1">
-                        {integrations.map((integration, idx) => (
+                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8 max-w-4xl mx-auto min-w-0 px-1">
+                        {[
+                            { name: 'Stripe', desc: 'Payment processing' },
+                            { name: 'Supabase', desc: 'Database & Auth' },
+                            { name: 'Vercel', desc: 'Hosting & Deploy' },
+                            { name: 'Email', desc: 'SMTP & Notifications' }
+                        ].map((integration, idx) => (
                             <AnimateIn key={idx} type="stagger" index={idx}>
-                                <div className="bg-slate-900/50 backdrop-blur-sm p-5 rounded-xl border border-slate-800 hover:border-teal-500/50 transition-all text-center group">
+                                <div className="bg-slate-900/50 backdrop-blur-sm p-6 rounded-xl border border-slate-800 hover:border-teal-500/50 transition-all text-center group">
                                     <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl mx-auto mb-4 flex items-center justify-center group-hover:from-slate-700 group-hover:to-slate-800 transition-all">
                                         <span className="text-lg font-black text-teal-400">{integration.name.slice(0, 2)}</span>
                                     </div>
                                     <p className="text-base font-bold text-white mb-1">{integration.name}</p>
                                     <p className="text-xs text-slate-500">{integration.desc}</p>
-                                    <span className={`mt-3 inline-flex rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
-                                        integration.status === 'Coming soon'
-                                            ? 'border border-amber-500/20 bg-amber-500/10 text-amber-200'
-                                            : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-200'
-                                    }`}>
-                                        {integration.status}
-                                    </span>
                                 </div>
                             </AnimateIn>
                         ))}
@@ -239,14 +234,26 @@ const EcosystemPage: React.FC = () => {
                                     Start a 14-day trial and test the CRM, billing, contracts, project, and meeting workflows in one workspace. No credit card required.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                                    <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
-                                    <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
+                                    <Link
+                                        href="/register"
+                                        className="inline-flex items-center gap-2 px-8 py-4 bg-slate-950 text-white font-bold rounded-xl hover:bg-slate-900 transition-all shadow-2xl"
+                                    >
+                                        Start Free Trial
+                                        <ArrowRight className="w-5 h-5" />
+                                    </Link>
+                                    <Link
+                                        href="/docs"
+                                        className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 transition-all border border-white/20"
+                                    >
+                                        View Documentation
+                                    </Link>
                                 </div>
                             </div>
                         </div>
                     </AnimateIn>
                 </section>
             </div>
+            <MarketingFooter />
         </div>
     );
 };

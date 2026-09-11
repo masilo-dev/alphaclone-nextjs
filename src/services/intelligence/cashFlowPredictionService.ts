@@ -100,20 +100,43 @@ class CashFlowPredictionService {
 
     // 1. Fetch all outstanding invoices
     const { data: outstandingRaw } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, client_id, amount, total_amount, status, due_date, created_at')
+      .eq('tenant_id', tenantId)
+      .not('status', 'in', '(paid,cancelled)')
+      .order('due_date', { ascending: true })
+      .limit(500);
+    const outstanding = Array.isArray(outstandingRaw) ? outstandingRaw : [];
+
+    // Also check business_invoices
+    const { data: bizOutstandingRaw } = await supabase
       .from('business_invoices')
       .select('id, invoice_number, client_id, total, status, due_date, created_at')
       .eq('tenant_id', tenantId)
-      .not('status', 'in', '(paid,cancelled,void)')
+      .not('status', 'in', '(paid,cancelled)')
       .order('due_date', { ascending: true })
       .limit(500);
-    const allOutstanding = (Array.isArray(outstandingRaw) ? outstandingRaw : []).map((inv: any) => ({
-      id: inv.id,
-      invoice_number: inv.invoice_number,
-      client_id: inv.client_id,
-      amount: Number(inv.total || 0),
-      due_date: inv.due_date,
-      created_at: inv.created_at,
-    }));
+    const bizOutstanding = Array.isArray(bizOutstandingRaw) ? bizOutstandingRaw : [];
+
+    // Normalize to common format
+    const allOutstanding = [
+      ...outstanding.map((inv: any) => ({
+        id: inv.id,
+        invoice_number: inv.invoice_number,
+        client_id: inv.client_id,
+        amount: Number(inv.total_amount || inv.amount || 0),
+        due_date: inv.due_date,
+        created_at: inv.created_at
+      })),
+      ...bizOutstanding.map((inv: any) => ({
+        id: inv.id,
+        invoice_number: inv.invoice_number,
+        client_id: inv.client_id,
+        amount: Number(inv.total || 0),
+        due_date: inv.due_date,
+        created_at: inv.created_at
+      }))
+    ];
 
     // 2. Build client payment profiles from historical data
     const clientIds = [...new Set(allOutstanding.map(inv => inv.client_id).filter(Boolean))];
@@ -121,20 +144,15 @@ class CashFlowPredictionService {
 
     for (const clientId of clientIds) {
       const { data: paidHistory } = await supabase
-        .from('business_invoices')
-        .select('created_at, paid_at, due_date, total')
+        .from('invoices')
+        .select('created_at, paid_at, due_date, amount')
         .eq('tenant_id', tenantId)
         .eq('client_id', clientId)
         .eq('status', 'paid')
         .order('paid_at', { ascending: false })
         .limit(50);
 
-      const profile = analyzeClientPaymentBehavior(
-        (Array.isArray(paidHistory) ? paidHistory : []).map((row: any) => ({
-          ...row,
-          amount: Number(row.total || 0),
-        }))
-      );
+      const profile = analyzeClientPaymentBehavior(Array.isArray(paidHistory) ? paidHistory : []);
       clientProfiles.set(clientId, profile);
     }
 

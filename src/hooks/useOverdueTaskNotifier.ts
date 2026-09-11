@@ -2,11 +2,9 @@ import { useEffect, useRef } from 'react';
 import { taskService } from '../services/taskService';
 import { User } from '../types';
 import toast from 'react-hot-toast';
-import { useTenant } from '../contexts/TenantContext';
 
 export function useOverdueTaskNotifier(user: User | null) {
-    const { currentTenant } = useTenant();
-    const isEnabled = !!user && !!currentTenant?.id;
+    const isEnabled = !!user;
     // Use a ref to track if we already started the interval to prevent multiple instances
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -92,5 +90,5 @@ export function useOverdueTaskNotifier(user: User | null) {
                 intervalRef.current = null;
             }
         };
-    }, [user?.id, isEnabled, currentTenant?.id]);
+    }, [user?.id, isEnabled]);
 }
