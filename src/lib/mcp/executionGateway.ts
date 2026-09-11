@@ -1,13 +1,15 @@
 /**
  * Unified MCP execution gateway for high-risk external writes.
  * Resolves target, assigns action IDs, enforces idempotency, persists receipts.
+ *
+ * Important: a normal MCP write is NOT a durable agent mission. Callers that
+ * intentionally want the Bonnie durable runtime must opt in explicitly.
  */
 
 import { randomUUID } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { persistActionReceipt, findReceiptByIdempotency } from '@/lib/mcp/actionReceipts';
 import type { ActionReceipt } from '@/lib/mcp/standardResponse';
-import { processNormalizedTrigger } from '@/lib/bonnie/runtime/triggerGateway';
 import { stripHeavyPayloadFields } from '@/lib/media/stripHeavyPayload';
 
 export type ExecutionTarget = {
@@ -38,6 +40,11 @@ export type ExecuteMcpWriteParams<TResult> = {
   target: ExecutionTarget;
   payload: Record<string, unknown>;
   idempotencyKey?: string | null;
+  /**
+   * Explicit opt-in only. Most connector commands are single verified writes
+   * and should not create an agent_run merely for observability.
+   */
+  mirrorToDurableRuntime?: boolean;
   execute: (ctx: { actionId: string; correlationId: string }) => Promise<TResult>;
   buildReceipt: (result: TResult) => ActionReceipt | null;
   isSuccess?: (result: TResult) => boolean;
@@ -56,9 +63,9 @@ export type ExecuteMcpWriteResult<TResult> = {
 
 const ERROR_REMEDIATION: Record<string, string> = {
   TARGET_AMBIGUOUS:
-    'Call connected_accounts or get_social_identities, then pass identity_id (internal UUID) or identity_type to disambiguate LinkedIn personal vs organization.',
+    'Choose Personal, Organization, or Page. If more than one matching identity exists, call connected_accounts or get_social_identities and pass identity_id.',
   MISSING_IDENTITY:
-    'Call connected_accounts or get_social_identities and pass identity_id for the publish destination.',
+    'Call connected_accounts or get_social_identities and choose the publish destination.',
   IDENTITY_NOT_FOUND:
     'Use identity_id from connected_accounts or get_social_identities — not the raw Facebook page id or LinkedIn org id.',
   IDENTITY_NOT_PUBLISHABLE:
@@ -122,6 +129,40 @@ async function recordExternalAction(params: {
   }
 }
 
+async function mirrorWriteToDurableRuntime(params: {
+  tenantId: string;
+  userId: string;
+  tool: string;
+  action: string;
+  mode: ExecutionMode;
+  target: ExecutionTarget;
+  correlationId: string;
+  idempotencyKey: string;
+}) {
+  try {
+    const { processNormalizedTrigger } = await import('@/lib/bonnie/runtime/triggerGateway');
+    await processNormalizedTrigger({
+      tenant_id: params.tenantId,
+      user_id: params.userId,
+      trigger_type: 'api_request',
+      event_type: `mcp.${params.action}`,
+      source: params.tool,
+      correlation_id: params.correlationId,
+      deduplication_key: params.idempotencyKey,
+      payload: {
+        tool: params.tool,
+        action: params.action,
+        mode: params.mode,
+        target: params.target,
+      },
+    });
+  } catch (error) {
+    // Mirroring is observability/orchestration only; it must never make the
+    // requested direct connector action fail.
+    console.warn('[executionGateway] durable mirror failed:', error);
+  }
+}
+
 export async function executeMcpWrite<TResult>(
   params: ExecuteMcpWriteParams<TResult>
 ): Promise<ExecuteMcpWriteResult<TResult>> {
@@ -157,21 +198,19 @@ export async function executeMcpWrite<TResult>(
     }
   }
 
-  await processNormalizedTrigger({
-    tenant_id: params.tenantId,
-    user_id: params.userId,
-    trigger_type: 'api_request',
-    event_type: `mcp.${params.action}`,
-    source: params.tool,
-    correlation_id: correlationId,
-    deduplication_key: idempotencyKey,
-    payload: {
+  if (params.mirrorToDurableRuntime === true) {
+    // Do not await a second agent workflow before the user's requested action.
+    void mirrorWriteToDurableRuntime({
+      tenantId: params.tenantId,
+      userId: params.userId,
       tool: params.tool,
       action: params.action,
       mode: params.mode,
       target: params.target,
-    },
-  }).catch(() => undefined);
+      correlationId,
+      idempotencyKey,
+    });
+  }
 
   const auditLogId = await recordExternalAction({
     tenantId: params.tenantId,

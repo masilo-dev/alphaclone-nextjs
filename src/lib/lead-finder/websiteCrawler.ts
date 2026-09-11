@@ -21,6 +21,34 @@ export function extractPublicEmails(html: string, sourceUrl: string) {
   }));
 }
 
+export function extractPublicPhones(html: string, sourceUrl: string) {
+  const $ = load(html);
+  const candidates = new Set<string>();
+
+  $('a[href^="tel:"]').each((_, el) => {
+    const raw = (($(el).attr('href') || '').slice(4).split('?')[0] || '').trim();
+    if (raw) candidates.add(raw);
+  });
+
+  // JSON-LD often contains a cleaner business telephone even when the visible
+  // page renders it dynamically. We keep the raw public value here and let the
+  // country-aware worker normalize/validate it before persistence.
+  const jsonLd = $('script[type="application/ld+json"]').text();
+  for (const match of jsonLd.matchAll(/"telephone"\s*:\s*"([^"]{7,32})"/gi)) {
+    if (match[1]) candidates.add(match[1].trim());
+  }
+
+  return [...candidates]
+    .filter((phone) => phone.replace(/\D/g, '').length >= 7)
+    .map((phone) => ({
+      phone,
+      source_url: sourceUrl,
+      source_type: 'public_website',
+      confidence: 90,
+      verification_status: 'publicly_published' as const,
+    }));
+}
+
 export function analyzeWebsiteQuality(html: string, url: string, responseBytes = 0) {
   const $ = load(html); const problems: string[] = [];
   if (!url.startsWith('https://')) problems.push('https_missing');
@@ -71,6 +99,12 @@ export async function crawlPublicWebsite(value: string, options: { maxPages?: nu
     await new Promise(resolve => setTimeout(resolve, 300));
   }
   const emails = pages.flatMap((page) => extractPublicEmails(page.html, page.url));
+  const phones = pages.flatMap((page) => extractPublicPhones(page.html, page.url));
   const first = pages[0];
-  return { pages_crawled: pages.length, emails: [...new Map(emails.map((x) => [x.email, x])).values()], quality: first ? analyzeWebsiteQuality(first.html, first.url, first.bytes) : null };
+  return {
+    pages_crawled: pages.length,
+    emails: [...new Map(emails.map((x) => [x.email, x])).values()],
+    phones: [...new Map(phones.map((x) => [x.phone, x])).values()],
+    quality: first ? analyzeWebsiteQuality(first.html, first.url, first.bytes) : null,
+  };
 }

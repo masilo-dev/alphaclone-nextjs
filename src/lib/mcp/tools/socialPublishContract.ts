@@ -11,9 +11,12 @@ export const PUBLISH_EXECUTION_STATUS_VALUES = [
   'scheduled',
 ] as const;
 
+export const SOCIAL_DESTINATION_VALUES = ['personal', 'organization', 'page'] as const;
+
 export const publishSocialTargetSchema = z
   .object({
     integration: z.enum(['facebook', 'linkedin']).optional(),
+    destination: z.enum(SOCIAL_DESTINATION_VALUES).optional(),
     identity_type: z
       .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
       .optional(),
@@ -27,6 +30,7 @@ export const publishSocialPostInputSchema = z
   .object({
     tenant_id: z.string().uuid().optional(),
     target: publishSocialTargetSchema,
+    destination: z.enum(SOCIAL_DESTINATION_VALUES).optional(),
     identity_id: z.string().min(1).optional(),
     platform: z.enum(['facebook', 'linkedin']).optional(),
     identity_type: z
@@ -68,34 +72,52 @@ export const publishSocialPostInputSchema = z
 
 export type PublishSocialPostArgs = z.infer<typeof publishSocialPostInputSchema>;
 
+export function destinationToIdentityType(
+  platform: 'facebook' | 'linkedin' | undefined,
+  destination: (typeof SOCIAL_DESTINATION_VALUES)[number] | undefined
+): 'facebook_page' | 'linkedin_person' | 'linkedin_organization' | undefined {
+  if (!destination) return undefined;
+  if (destination === 'personal') return platform === 'linkedin' ? 'linkedin_person' : undefined;
+  if (destination === 'organization') return platform === 'linkedin' ? 'linkedin_organization' : undefined;
+  if (destination === 'page') return platform === 'facebook' ? 'facebook_page' : undefined;
+  return undefined;
+}
+
 export const publishSocialPostJsonSchema = {
   type: 'object' as const,
   properties: {
     target: {
       type: 'object',
       description:
-        'Optional publish destination envelope. Use when multiple identities are connected on the same platform.',
+        'Optional destination envelope. If the user says personal, organization/company, or Facebook page, set destination accordingly. If the user already named a destination, do not ask again.',
       properties: {
         integration: { type: 'string', enum: ['facebook', 'linkedin'] },
+        destination: {
+          type: 'string',
+          enum: [...SOCIAL_DESTINATION_VALUES],
+          description: 'Human-friendly target: personal = LinkedIn personal profile, organization = LinkedIn company page, page = Facebook Page.',
+        },
         identity_type: {
           type: 'string',
           enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
-          description:
-            'Disambiguates LinkedIn personal vs organization when multiple LinkedIn identities are connected.',
+          description: 'Low-level identity type; destination is preferred when the user speaks naturally.',
         },
         identity_id: {
           type: 'string',
-          description:
-            'Internal identity UUID from connected_accounts or get_social_identities (not the Facebook page id or LinkedIn org id).',
+          description: 'Internal identity UUID from connected_accounts or get_social_identities.',
         },
         resource_type: { type: 'string' },
         resource_id: { type: 'string' },
       },
     },
+    destination: {
+      type: 'string',
+      enum: [...SOCIAL_DESTINATION_VALUES],
+      description: 'Set from the user intent. personal routes to LinkedIn personal; organization routes to LinkedIn organization; page routes to Facebook Page.',
+    },
     identity_id: {
       type: 'string',
-      description:
-        'Internal identity UUID from connected_accounts or get_social_identities. Required when multiple identities exist on the requested platform. Not the provider page/org id.',
+      description: 'Internal identity UUID from connected_accounts or get_social_identities. Required only when more than one identity of the selected type exists.',
     },
     platform: {
       type: 'string',
@@ -105,43 +127,29 @@ export const publishSocialPostJsonSchema = {
     identity_type: {
       type: 'string',
       enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
-      description:
-        'Optional when exactly one publishable identity matches this type on the platform; required to disambiguate LinkedIn personal vs organization.',
+      description: 'Low-level target type. Prefer destination for personal/organization/page language.',
     },
     caption: { type: 'string' },
     content: { type: 'string', description: 'Alias for caption' },
-    media: {
-      type: 'array',
-      description:
-        'Unified media inputs: {type:asset_id|base64|data_url|url, ...}. Prefer upload_media then asset_id.',
-      items: { type: 'object' },
-    },
+    media: { type: 'array', items: { type: 'object' } },
     media_asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
-    media_ids: {
-      type: 'array',
-      description: 'Canonical alias for media_asset_ids returned by upload_social_media.',
-      items: { type: 'string', format: 'uuid' },
-    },
+    media_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
     media_urls: { type: 'array', items: { type: 'string' } },
-    media_url: { type: 'string', description: 'Single public HTTPS media URL from upload_social_media' },
-    image_url: { type: 'string', description: 'Alias for media_url' },
-    media_id: { type: 'string', format: 'uuid', description: 'Single media_id from upload_social_media' },
-    media_asset_id: { type: 'string', format: 'uuid', description: 'Alias for media_id' },
+    media_url: { type: 'string' },
+    image_url: { type: 'string' },
+    media_id: { type: 'string', format: 'uuid' },
+    media_asset_id: { type: 'string', format: 'uuid' },
     link_url: { type: 'string' },
-    publish_now: { type: 'boolean', description: 'Publish immediately (preferred over status)' },
-    status: {
-      type: 'string',
-      enum: [...PUBLISH_EXECUTION_STATUS_VALUES],
-      description: 'Use execute_now or publish_now for immediate publish; draft or scheduled otherwise.',
-    },
+    publish_now: { type: 'boolean', description: 'Publish immediately.' },
+    status: { type: 'string', enum: [...PUBLISH_EXECUTION_STATUS_VALUES] },
     scheduled_at: { type: 'string', format: 'date-time' },
     idempotency_key: { type: 'string' },
-    page_id: { type: 'string', description: 'Legacy Facebook page id alias' },
-    linkedin_organization_id: { type: 'string', description: 'Legacy LinkedIn org id alias' },
-    content_base64: { type: 'string', description: 'Inline base64 image (uploaded before publish)' },
-    data_url: { type: 'string', description: 'data:image/...;base64,... string' },
-    source_url: { type: 'string', description: 'Public HTTPS image URL' },
-    dry_run: { type: 'boolean', description: 'Validate only — no provider write' },
+    page_id: { type: 'string' },
+    linkedin_organization_id: { type: 'string' },
+    content_base64: { type: 'string' },
+    data_url: { type: 'string' },
+    source_url: { type: 'string' },
+    dry_run: { type: 'boolean' },
   },
   required: [] as string[],
 };
