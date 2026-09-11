@@ -133,10 +133,85 @@ html.dark {
   backdrop-filter: blur(var(--ac-v3-glass-blur)) saturate(var(--ac-v3-glass-saturate));
 }
 
+/* Companion/mobile containment rules.
+   Only the application viewport owns page scrolling. Nested module wrappers are
+   allowed to grow, while purpose-built panes (mail/chat/sheets) can still own
+   their explicit overflow-y-auto region. This prevents clipped actions and the
+   common "scroll inside a scroll" trap on 320–430px screens. */
+html.ac-pwa-mobile,
+html.ac-pwa-tablet {
+  height: 100%;
+  overflow: hidden;
+}
+
+html.ac-pwa-mobile body,
+html.ac-pwa-tablet body {
+  height: 100%;
+  overflow: hidden;
+}
+
+html.ac-pwa-mobile .app-viewport,
+html.ac-pwa-tablet .app-viewport {
+  min-height: 0;
+  overscroll-behavior-y: contain;
+  scroll-padding-top: max(env(safe-area-inset-top, 0px), 8px);
+  scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+
+html.ac-pwa-mobile :is(.ac-enterprise-module, .ac-module-frame, .ac-module-section),
+html.ac-pwa-tablet :is(.ac-enterprise-module, .ac-module-frame, .ac-module-section) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+html.ac-pwa-mobile .ac-scroll-full:not(.overflow-y-auto):not([data-scroll-region="true"]),
+html.ac-pwa-tablet .ac-scroll-full:not(.overflow-y-auto):not([data-scroll-region="true"]) {
+  overflow: visible;
+  max-height: none;
+}
+
+html.ac-pwa-mobile :is(table, .ac-data-table),
+html.ac-pwa-tablet :is(table, .ac-data-table) {
+  max-width: 100%;
+}
+
+html.ac-pwa-mobile :is(input, textarea, select),
+html.ac-pwa-tablet :is(input, textarea, select) {
+  max-width: 100%;
+}
+
+/* Sticky controls must clear the Companion bottom navigation and iOS safe area. */
+html.ac-pwa-mobile [data-mobile-sticky-action="true"],
+html.ac-pwa-tablet [data-mobile-sticky-action="true"] {
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+}
+
 /* Strong, brand-consistent accessibility. */
 :where(button, a, input, textarea, select, [role="button"], [role="tab"]):focus-visible {
   outline: 2px solid color-mix(in srgb, var(--ac-accent) 72%, white 8%);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ac-v3-floating,
+  .ac-v3-glass,
+  .ac-v3-command-surface,
+  .ac-v3-sheet,
+  .ac-v3-popover {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: var(--surface-elevated) !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .ac-v3-content,
+  .ac-v3-elevated,
+  .ac-v3-floating,
+  .ac-v3-intelligence,
+  .ac-workspace-panel {
+    border-color: var(--border-strong) !important;
+  }
 }
 
 /* Motion must never be required to understand the interface. */
