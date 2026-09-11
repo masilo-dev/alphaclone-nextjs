@@ -3,73 +3,74 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
+import { usePWA } from '@/contexts/PWAContext';
 import Splash from '@/components/pwa/Splash';
+import CompanionNetworkStatus from '@/components/pwa/CompanionNetworkStatus';
+import CompanionCapabilityBoundary from '@/components/pwa/CompanionCapabilityBoundary';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-    const { user, loading: authLoading, needsMfa } = useAuth();
-    const router = useRouter();
-    const pathname = usePathname();
-    const [isRedirecting, setIsRedirecting] = useState(false);
+  const { user, loading: authLoading, needsMfa } = useAuth();
+  const { appSurface } = usePWA();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
-    useEffect(() => {
-        // If auth is still loading, do nothing
-        if (authLoading) return;
+  useEffect(() => {
+    if (authLoading) return;
 
-        const handleRedirection = async () => {
-            if (!user) {
-                // Not authenticated
-                const isAuthCallback = typeof window !== 'undefined' && (
-                    window.location.search.includes('code=') ||
-                    window.location.pathname.includes('/auth/callback') ||
-                    sessionStorage.getItem('auth_callback_in_progress') === 'true'
-                );
+    const handleRedirection = async () => {
+      if (!user) {
+        const isAuthCallback = typeof window !== 'undefined' && (
+          window.location.search.includes('code=') ||
+          window.location.pathname.includes('/auth/callback') ||
+          sessionStorage.getItem('auth_callback_in_progress') === 'true'
+        );
 
-                if (pathname && pathname !== '/auth/login' && !pathname.startsWith('/auth/') && !isAuthCallback) {
-                    console.log('AppShell: No user and not in auth callback, redirecting to login');
-                    setIsRedirecting(true);
-                    await router.replace('/auth/login');
-                } else {
-                    setIsRedirecting(false);
-                }
-            } else {
-                // Authenticated — needsMfa already available from top-level useAuth()
-                if (needsMfa && pathname && pathname !== '/auth/login' && !pathname.startsWith('/auth/')) {
-                    console.log('AppShell: MFA required, redirecting to login challenge');
-                    setIsRedirecting(true);
-                    await router.replace('/auth/login?reason=mfa_required');
-                    return;
-                }
+        if (pathname && pathname !== '/auth/login' && !pathname.startsWith('/auth/') && !isAuthCallback) {
+          setIsRedirecting(true);
+          await router.replace('/auth/login');
+        } else {
+          setIsRedirecting(false);
+        }
+        return;
+      }
 
-                // Prevent access to landing page (root) and login page in PWA mode
-                // UNLESS needsMfa is true (in which case we stay on login for the challenge)
-                if ((pathname === '/' || pathname === '/auth/login') && !needsMfa) {
-                    console.log('AppShell: Logged in and MFA satisfied, redirecting to dashboard');
-                    setIsRedirecting(true);
-                    await router.replace('/dashboard');
-                } else {
-                    // We are where we should be
-                    setIsRedirecting(false);
-                }
-            }
-        };
+      if (needsMfa && pathname && pathname !== '/auth/login' && !pathname.startsWith('/auth/')) {
+        setIsRedirecting(true);
+        await router.replace('/auth/login?reason=mfa_required');
+        return;
+      }
 
-        handleRedirection();
-    }, [user, authLoading, needsMfa, pathname, router]);
+      if ((pathname === '/' || pathname === '/auth/login') && !needsMfa) {
+        setIsRedirecting(true);
+        await router.replace('/dashboard');
+      } else {
+        setIsRedirecting(false);
+      }
+    };
 
-    // Show splash during initial auth load OR while redirecting
-    if (authLoading || isRedirecting) {
-        return <Splash />;
-    }
+    void handleRedirection();
+  }, [user, authLoading, needsMfa, pathname, router]);
 
-    return (
-        <div className="flex flex-col h-screen w-screen bg-[#020617] overflow-hidden overscroll-none text-white fixed inset-0">
-            {/* 
-         Here we could add a PWA-specific top bar or navigation if needed for the 'App' 
-         For now, we render children (Dashboard or Login) 
-       */}
-            <div className="flex-1 overflow-y-auto app-viewport ios-scroll">
-                {children}
-            </div>
-        </div>
-    );
+  if (authLoading || isRedirecting) return <Splash />;
+
+  const isCompanion = appSurface === 'pwa-mobile' || appSurface === 'pwa-tablet';
+
+  return (
+    <div
+      className={`fixed inset-0 flex h-[100dvh] w-screen flex-col overflow-hidden overscroll-none bg-[var(--background-app)] text-[var(--text-primary)] ${isCompanion ? 'ac-companion-shell' : 'ac-installed-desktop-shell'}`}
+      data-companion={isCompanion ? 'true' : 'false'}
+    >
+      {isCompanion ? <CompanionNetworkStatus /> : null}
+      <div
+        className="app-viewport ios-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+        style={{
+          paddingTop: isCompanion ? 'env(safe-area-inset-top, 0px)' : undefined,
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        {isCompanion ? <CompanionCapabilityBoundary>{children}</CompanionCapabilityBoundary> : children}
+      </div>
+    </div>
+  );
 }
