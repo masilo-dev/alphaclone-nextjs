@@ -35,6 +35,20 @@ function resultNeedsAction(value: unknown): boolean {
     );
 }
 
+async function autoTaskAlreadyExists(admin: any, tenantId: string, sourceKey: string): Promise<boolean> {
+    try {
+        const { data } = await admin
+            .from('tasks')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .contains('metadata', { autoSourceKey: sourceKey })
+            .limit(1);
+        return Array.isArray(data) && data.length > 0;
+    } catch {
+        return true;
+    }
+}
+
 export class AlphaNexus {
     private tenantId: string;
     private admin = createSupabaseAdminClient();

@@ -3,8 +3,6 @@ import { mcpStore } from '@/services/mcp/mcpStore';
 import type { BusinessAIAgentMode } from '@/services/mcp/businessAIState';
 import { resolveEffectiveAgentMode } from '@/lib/ai/resolveEffectiveAgentMode';
 import { evaluateBusinessAIState } from '@/services/mcp/businessAIState';
-import { notificationService } from '@/services/notificationService';
-import crypto from 'crypto';
 
 /**
  * ToolPolicyGate — EU AI Act Art. 14 human oversight + ISO 42001 A.4.
@@ -171,29 +169,6 @@ export async function evaluateToolPolicy(params: {
 
   const admin = createSupabaseAdminClient();
 
-  // 1. Hourly Idempotency Check
-  const payloadString = JSON.stringify(args || {});
-  const hourBucket = new Date().toISOString().substring(0, 13); // "YYYY-MM-DDTHH"
-  const idempotencyString = `${toolName}:${tenantId}:${payloadString}:${hourBucket}`;
-  const idempotencyHash = crypto.createHash('sha256').update(idempotencyString).digest('hex');
-
-  const { data: existingApp } = await admin
-    .from('autonomous_runner_approvals')
-    .select('id, status')
-    .eq('tenant_id', tenantId)
-    .eq('action_key', `${source}:${toolName}`)
-    .eq('payload->>idempotency_hash', idempotencyHash)
-    .limit(1);
-
-  if (existingApp && existingApp.length > 0 && ['executed', 'approved'].includes(existingApp[0].status)) {
-    return {
-      outcome: 'allow',
-      riskClass,
-      reason: `Policy bypassed: Action already executed within the current hourly bucket (idempotent check). Hash: ${idempotencyHash}`,
-      isDuplicate: true,
-    };
-  }
-
   const [{ data: rulesRow }, aiState] = await Promise.all([
     admin
       .from('autonomous_runner_rules')
@@ -204,46 +179,20 @@ export async function evaluateToolPolicy(params: {
   ]);
 
   const highRiskRequired = rulesRow?.high_risk_approval_required !== false;
-  // Default workspace mode to autonomous if rules enable it, else resolve
-  const agentMode = resolveEffectiveAgentMode(aiState.agent_mode || 'autonomous', rulesRow);
+  const agentMode = resolveEffectiveAgentMode(aiState.agent_mode, rulesRow);
 
-  // 2. Classify into Tiers 1-4
-  let tier: 1 | 2 | 3 | 4 = 1;
-
-  if (HIGH_RISK_CONFIRM_TOOLS.has(toolName.toLowerCase())) {
-    tier = 4; // Hard confirm
-  } else if (riskClass === 'bulk' || riskClass === 'financial') {
-    tier = 3; // Auto + reversible delay
-  } else if (riskClass === 'send') {
-    tier = 2; // Auto + notify
-  } else {
-    tier = 1; // Auto (read/draft)
+  if (modeBlocksExecution(agentMode, riskClass)) {
+    return {
+      outcome: 'deny',
+      riskClass,
+      reason: `Agent mode "${agentMode}" blocks ${riskClass} actions for tool "${toolName}".`,
+    };
   }
 
-  // Tier 1: Executes immediately, logged only
-  if (tier === 1) {
-    // Log as executed in the approvals table for idempotency tracking
-    await admin
-      .from('autonomous_runner_approvals')
-      .insert({
-        tenant_id: tenantId,
-        action_key: `${source}:${toolName}`,
-        risk_level: 'low',
-        confidence_score: 100,
-        status: 'executed',
-        reason: `Tier 1 Auto-executed: ${toolName}.`,
-        payload: {
-          source,
-          tool_name: toolName,
-          args,
-          user_id: userId,
-          idempotency_hash: idempotencyHash,
-          tier,
-        },
-      })
-      .catch(() => {});
+  let needsApproval = requiresApproval(agentMode, riskClass, highRiskRequired);
+  let readinessReason: string | undefined;
 
-  if (effectiveAgentMode === 'autonomous' && riskClass !== 'read') {
+  if (agentMode === 'autonomous' && riskClass !== 'read') {
     const evaluation = evaluateBusinessAIState(aiState, {
       requires_external_action: riskClass === 'send' || riskClass === 'bulk',
       requires_financial_action: riskClass === 'financial',
@@ -254,17 +203,14 @@ export async function evaluateToolPolicy(params: {
       evaluation.recommended_mode !== 'autonomous' &&
       (riskClass === 'send' || riskClass === 'bulk' || riskClass === 'financial')
     ) {
-      if (process.env.MCP_AUTO_EXECUTE !== 'true') {
-        needsApproval = true;
-        readinessReason = `Readiness gate: workspace recommends "${evaluation.recommended_mode}" (score ${evaluation.readiness_score}). ${evaluation.reasons[0] || 'Improve reliability before autonomous execution.'}`;
-      }
+      needsApproval = true;
+      readinessReason = `Readiness gate: workspace recommends "${evaluation.recommended_mode}" (score ${evaluation.readiness_score}). ${evaluation.reasons[0] || 'Improve reliability before autonomous execution.'}`;
     }
-    return { outcome: 'allow', riskClass, reason: 'Tier 2 Policy allows execution with active notification.' };
   }
 
-  // Tier 3 or 4: Must queue approval with specific risk levels and custom statuses
-  const isTier4 = tier === 4;
-  const riskLevel = isTier4 ? 'high' : 'medium';
+  if (!needsApproval) {
+    return { outcome: 'allow', riskClass, reason: 'Policy allows execution.' };
+  }
 
   const { data: approval, error } = await admin
     .from('autonomous_runner_approvals')
@@ -272,8 +218,8 @@ export async function evaluateToolPolicy(params: {
       tenant_id: tenantId,
       run_id: null,
       action_key: `${source}:${toolName}`,
-      risk_level: riskLevel,
-      confidence_score: isTier4 ? 50 : 85, // Tier 4 always starts with lower auto-approve confidence so it requires hard confirm
+      risk_level: riskClass === 'bulk' || riskClass === 'financial' ? 'high' : 'medium',
+      confidence_score: 70,
       status: 'pending',
       source: 'autonomous_runner',
       workflow_id: workflowId || null,

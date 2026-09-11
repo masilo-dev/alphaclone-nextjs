@@ -79,10 +79,9 @@ const nextConfig: NextConfig = {
   experimental: {
     scrollRestoration: true,
     webpackMemoryOptimizations: true,
-    // This project has a substantial custom webpack hook. The isolated build
-    // worker repeatedly stalls during application compilation; compile in the
-    // main build process so failures and progress remain observable.
-    webpackBuildWorker: false,
+    // Keep Webpack compilation isolated from the main Next.js process. This
+    // materially lowers peak memory for Railway's containerized builds.
+    webpackBuildWorker: true,
     optimizePackageImports: [
       '@heroicons/react',
       '@tremor/react',

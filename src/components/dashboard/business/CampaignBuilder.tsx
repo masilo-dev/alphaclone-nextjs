@@ -257,43 +257,6 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
     });
 
     const previewRecipient = useMemo(() => {
-        const firstContact = contacts[0];
-        if (firstContact) {
-            return {
-                id: firstContact.id,
-                email: firstContact.email,
-                firstName: firstContact.firstName || firstContact.name?.split(/\s+/)[0] || 'John',
-                lastName: firstContact.lastName || firstContact.name?.split(/\s+/).slice(1).join(' ') || 'Doe',
-                company: firstContact.company || 'Acme Corp',
-                fromName: form.fromName || 'AlphaClone Systems',
-                senderName: form.fromName || 'AlphaClone Systems',
-            };
-        }
-        return {
-            id: 'mock-id',
-            email: 'john.doe@example.com',
-            firstName: 'John',
-            lastName: 'Doe',
-            company: 'Acme Corp',
-            fromName: form.fromName || 'AlphaClone Systems',
-            senderName: form.fromName || 'AlphaClone Systems',
-        };
-    }, [contacts, form.fromName]);
-
-    const previewSubject = useMemo(() => {
-        const rawSubject = String(form.subject || '').trim();
-        if (!rawSubject) return '';
-        return emailCampaignService.injectVariables(rawSubject, previewRecipient);
-    }, [form.subject, previewRecipient]);
-
-    const sanitizedBodyHtml = useMemo(() => {
-        const html = String(form.bodyHtml || '').trim();
-        if (!html) return '';
-        const interpolated = emailCampaignService.injectVariables(html, previewRecipient);
-        return DOMPurify.sanitize(interpolated, { USE_PROFILES: { html: true } });
-    }, [form.bodyHtml, previewRecipient]);
-
-    const previewRecipient = useMemo(() => {
         if (selectedContactIds.length > 0) {
             const selectedId = selectedContactIds[0];
             const found = contacts.find(c => c.id === selectedId);

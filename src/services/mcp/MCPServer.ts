@@ -4637,6 +4637,9 @@ class AlphaCloneMCPServer {
         case 'send_invoice': {
           const a = args as Record<string, any>;
           const tenant_id = String(this.requireTenant(a) || '').trim();
+          const user_id = String(this.requireProfileUser(a) || '').trim();
+          const recipient_email = typeof a.recipient_email === 'string' ? a.recipient_email.trim() : '';
+          const preferredProvider = a.preferredProvider || a.provider;
           const invoice_id = String(a.invoice_id || '').trim();
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
@@ -4704,7 +4707,7 @@ class AlphaCloneMCPServer {
             status: 'sent',
             message: `Invoice lifecycle started successfully via background workflow.`,
             invoice_id,
-            runId
+            provider: dispatch.provider || preferredProvider || null
           }, null, 2) }] };
           break;
         }

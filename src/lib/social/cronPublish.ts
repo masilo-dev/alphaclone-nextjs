@@ -85,7 +85,7 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
     const saved = await admin.from('social_posts').update({ error_message: result.error, last_error: result.error, error_code: result.error_code, provider_response: result.provider_response }).eq('id', postId).eq('tenant_id', post.tenant_id);
     if (saved.error) throw new Error(saved.error.message);
   }
-  return { ok: result.ok && result.verified && Boolean(result.provider_post_id), platform: 'facebook', reason: result.error };
+  return { ok: result.ok && result.verified && Boolean(result.provider_post_id), platform: 'facebook', reason: result.error || undefined };
 }
 
 async function publishToLinkedIn(postId: string): Promise<PublishResult> {
