@@ -1,6 +1,7 @@
 /**
- * Forward-only funnel rules across CRM: stages only advance or exit via "lost",
- * never backward. Terminal states cannot be reopened in-place.
+ * CRM funnel rules.
+ * Deals and leads can move backward for re-qualification, but terminal states
+ * remain terminal unless a new record is created.
  */
 
 export const DEAL_STAGE_SEQUENCE = [
@@ -42,20 +43,6 @@ export function assertDealStageTransition(
         return { ok: true };
     }
 
-    if (next === 'closed_lost') {
-        return { ok: true };
-    }
-
-    const i = DEAL_STAGE_SEQUENCE.indexOf(current);
-    const j = DEAL_STAGE_SEQUENCE.indexOf(next);
-    if (j < i) {
-        return {
-            ok: false,
-            message:
-                'Pipeline moves forward only. Use Closed lost to exit when the opportunity is dead.',
-        };
-    }
-
     return { ok: true };
 }
 
@@ -70,6 +57,53 @@ export function getForwardDealStages(currentStage: string): PipelineDealStage[] 
     const i = DEAL_STAGE_SEQUENCE.indexOf(current);
     return DEAL_STAGE_SEQUENCE.filter((_, idx) => idx >= i);
 }
+
+/** Next stage when moving forward (never advances into closed_lost). */
+export function getForwardStageTarget(currentStage: string): PipelineDealStage | null {
+    const current = (currentStage || 'lead') as PipelineDealStage;
+    if (!DEAL_STAGE_SEQUENCE.includes(current) || DEAL_TERMINAL.includes(current)) {
+        return null;
+    }
+    const i = DEAL_STAGE_SEQUENCE.indexOf(current);
+    const next = DEAL_STAGE_SEQUENCE[i + 1];
+    if (!next || next === 'closed_lost') return null;
+    return next;
+}
+
+/** Deal pipeline progress for UI (1–6 steps ending at closed won). */
+export function getDealStageProgress(stage: string): {
+    step: number;
+    total: number;
+    percent: number;
+    label: string;
+} {
+    const current = (stage || 'lead') as PipelineDealStage;
+    const total = 6;
+
+    if (current === 'closed_won') {
+        return { step: total, total, percent: 100, label: 'Closed won' };
+    }
+    if (current === 'closed_lost') {
+        return { step: 0, total, percent: 0, label: 'Closed lost' };
+    }
+
+    const i = DEAL_STAGE_SEQUENCE.indexOf(current);
+    if (i === -1) {
+        return { step: 1, total, percent: Math.round(100 / total), label: 'Lead' };
+    }
+
+    const step = i + 1;
+    const percent = Math.round((step / total) * 100);
+    return {
+        step,
+        total,
+        percent,
+        label: current.replace('_', ' '),
+    };
+}
+
+export const PIPELINE_FORWARD_ONLY_HINT =
+    'Use drag-and-drop to move deals between stages. Closed states stay terminal, but active deals can move backward for re-qualification.';
 
 export const LEAD_STAGE_SEQUENCE = [
     'lead',
@@ -112,13 +146,6 @@ export function assertLeadStageTransition(
     if (i === -1) {
         return { ok: false, message: 'Lead has an unrecognized stage.' };
     }
-    if (j < i) {
-        return {
-            ok: false,
-            message: 'Lead pipeline moves forward only. Use Lost to disqualify.',
-        };
-    }
-
     return { ok: true };
 }
 

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getFacebookIntegration, getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 
 export async function GET(req: NextRequest) {
     const supabase = await createSupabaseServerClient();
@@ -8,30 +11,34 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const pageId = searchParams.get('pageId');
+    const tenantId = searchParams.get('tenantId');
 
-    if (!pageId) return NextResponse.json({ error: 'pageId required' }, { status: 400 });
+    if (!pageId || !tenantId) return NextResponse.json({ error: 'pageId and tenantId required' }, { status: 400 });
+    const { data: membership } = await supabase.from('tenant_users').select('tenant_id')
+        .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
+    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-    const { data: integration } = await supabase
-        .from('facebook_integrations')
-        .select('page_access_token, user_access_token')
-        .eq('user_id', user.id)
-        .eq('page_id', pageId)
-        .eq('is_active', true)
-        .single();
+    const admin = createSupabaseAdminClient();
+    const integration = await getFacebookIntegration(admin, { tenantId, userId: user.id, pageId });
 
-    const token = integration?.page_access_token || integration?.user_access_token;
+    const tokens = integration ? await getFacebookTokens(admin, integration) : { pageAccessToken: null, userAccessToken: null };
+    const token = tokens.pageAccessToken || tokens.userAccessToken;
     if (!token) {
         return NextResponse.json({ error: 'Facebook page not connected or token missing — please reconnect' }, { status: 400 });
     }
 
     try {
         // Fetch page feed (posts, comments, etc.)
-        const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/feed?fields=id,message,created_time,story,full_picture,permalink_url,actions,shares,comments.summary(true),reactions.summary(true)&limit=10&access_token=${token}`);
+        const res = await fetch(`https://graph.facebook.com/v21.0/${pageId}/feed?fields=id,message,created_time,story,full_picture,permalink_url,actions,shares,comments.summary(true),reactions.summary(true)&limit=10&access_token=${token}`);
         
         const data = await res.json();
         
         if (data.error) {
-            return NextResponse.json({ error: data.error.message }, { status: 400 });
+            console.error('[Facebook activity] Graph error:', data.error);
+            return NextResponse.json(
+                { error: 'Facebook could not load activity for this page.', code: 'FACEBOOK_GRAPH_ERROR' },
+                { status: 400 }
+            );
         }
 
         return NextResponse.json({ 
@@ -39,6 +46,6 @@ export async function GET(req: NextRequest) {
             activity: data.data || [] 
         });
     } catch (err: any) {
-        return NextResponse.json({ error: err.message || 'Failed to fetch activity' }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'facebook/activity' });
     }
 }

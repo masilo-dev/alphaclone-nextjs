@@ -40,7 +40,8 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     // Filter projects
-    const portfolioProjects = isAdmin ? projects : projects.filter(
+    const safeProjects = projects || [];
+    const portfolioProjects = isAdmin ? safeProjects : safeProjects.filter(
         (p) => p.status === 'Completed' || p.status === 'Active'
     );
 
@@ -133,35 +134,30 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             setUploadProgress(40);
 
             // Generate unique filename
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
             setUploadProgress(60);
 
-            // Upload with timeout (30 seconds)
-            const uploadPromise = supabase.storage
-                .from('project-images')
-                .upload(fileName, compressedBlob, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+            // Import fileUploadService
+            const { fileUploadService } = await import('../../services/fileUploadService');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Authentication required');
 
-            const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Upload timeout - network too slow')), 30000)
+            const uploadRes = await fileUploadService.uploadFile(
+                compressedBlob as any, 
+                'project-images', 
+                editingProject?.id || 'new',
+                user.id,
+                tenantService.getCurrentTenantId() || '',
+                { category: 'Portfolio', tags: ['Project'] }
             );
 
-            const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
-
-            if (error) {
-                console.error('Upload error:', error);
-                toast.error('Failed to upload image. Please try again.');
-                return null;
+            if (!uploadRes.success || !uploadRes.proxiedUrl) {
+                throw new Error(uploadRes.error || 'Upload failed');
             }
 
             setUploadProgress(80);
 
-            // Get public URL
-            const publicUrl = `/api/storage/project-images/${fileName}`;
+            // Get public URL from the service result
+            const publicUrl = uploadRes.proxiedUrl;
 
             setUploadProgress(100);
 

@@ -51,6 +51,10 @@ export function ResendIntegration() {
   const checkResendStatus = async () => {
     try {
       const response = await fetch(`/api/integrations/status?service=resend&tenant_id=${currentTenant?.id}`);
+      if (!response.ok) {
+        console.warn('Resend status API not available');
+        return;
+      }
       const data = await response.json();
       
       if (data.resend) {
@@ -83,13 +87,15 @@ export function ResendIntegration() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/resend/connect`, {
+      const response = await fetch('/api/integrations/email-providers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tenant_id: currentTenant?.id,
-          api_key: apiKey.trim(),
-          domain: domain.trim()
+          tenantId: currentTenant?.id,
+          provider: 'resend',
+          apiKey: apiKey.trim(),
+          fromEmail: `noreply@${domain.trim()}`,
+          fromName: 'AlphaClone Systems',
         })
       });
 
@@ -116,10 +122,10 @@ export function ResendIntegration() {
   const disconnectResend = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/resend/disconnect`, {
-        method: 'POST',
+      const response = await fetch('/api/integrations/email-providers', {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant_id: currentTenant?.id })
+        body: JSON.stringify({ tenantId: currentTenant?.id, provider: 'resend' })
       });
       
       if (response.ok) {
@@ -240,6 +246,33 @@ export function ResendIntegration() {
         message: 'Cannot connect to Resend servers right now.',
         suggestion: 'Please check your internet connection and try again.',
         type: 'warning'
+      };
+    }
+    
+    if (errorMessage.includes('zoho') || errorMessage.includes('Zoho')) {
+      return {
+        title: 'Zoho Mail Error',
+        message: 'There was an issue with the Zoho Mail integration.',
+        suggestion: 'Please check your Zoho Mail connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('outlook') || errorMessage.includes('Outlook') || errorMessage.includes('microsoft')) {
+      return {
+        title: 'Microsoft Outlook Error',
+        message: 'There was an issue with the Microsoft Outlook integration.',
+        suggestion: 'Please check your Outlook connection in Settings → Integrations.',
+        type: 'error'
+      };
+    }
+    
+    if (errorMessage.includes('gmail') || errorMessage.includes('Gmail') || errorMessage.includes('google')) {
+      return {
+        title: 'Gmail Error',
+        message: 'There was an issue with the Gmail integration.',
+        suggestion: 'Please check your Gmail connection in Settings → Integrations.',
+        type: 'error'
       };
     }
     

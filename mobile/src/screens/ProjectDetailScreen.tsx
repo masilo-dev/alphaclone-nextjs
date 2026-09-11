@@ -2,15 +2,18 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import type { MobileProject } from '../types';
 
-export default function ProjectDetailScreen({ route, navigation }) {
-  const { project } = route.params || {
+export default function ProjectDetailScreen({ route, navigation }: { route: { params?: { project?: MobileProject } }; navigation: any }) {
+  const { project } = route.params || {};
+  const currentProject: MobileProject = project || {
+    id: 'demo-project',
     title: 'Website Redesign',
     client: 'Tech Corp',
     status: 'in-progress',
     progress: 75,
     deadline: '2024-02-15',
-    budget: '$5,000',
+    budget: 5000,
     description: 'Complete redesign of the company website with modern UI/UX principles.',
   };
 
@@ -55,12 +58,12 @@ export default function ProjectDetailScreen({ route, navigation }) {
 
           {/* Project Info */}
           <View style={styles.projectInfo}>
-            <Text style={styles.projectTitle}>{project.title}</Text>
-            <Text style={styles.projectClient}>{project.client}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(project.status) + '20' }]}>
-              <Ionicons name="time" size={16} color={getStatusColor(project.status)} />
-              <Text style={[styles.statusText, { color: getStatusColor(project.status) }]}>
-                {project.status.replace('-', ' ').toUpperCase()}
+            <Text style={styles.projectTitle}>{currentProject.title}</Text>
+            <Text style={styles.projectClient}>{currentProject.client}</Text>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(currentProject.status) + '20' }]}>
+              <Ionicons name="time" size={16} color={getStatusColor(currentProject.status)} />
+              <Text style={[styles.statusText, { color: getStatusColor(currentProject.status) }]}>
+                {currentProject.status.replace('-', ' ').toUpperCase()}
               </Text>
             </View>
           </View>
@@ -73,13 +76,13 @@ export default function ProjectDetailScreen({ route, navigation }) {
                 style={[
                   styles.progressFill, 
                   { 
-                    width: `${project.progress}%`, 
-                    backgroundColor: getStatusColor(project.status) 
+                    width: `${currentProject.progress}%`, 
+                    backgroundColor: getStatusColor(currentProject.status) 
                   }
                 ]} 
               />
             </View>
-            <Text style={styles.progressText}>{project.progress}% Complete</Text>
+            <Text style={styles.progressText}>{currentProject.progress}% Complete</Text>
           </View>
 
           {/* Project Details */}
@@ -89,14 +92,14 @@ export default function ProjectDetailScreen({ route, navigation }) {
               <Ionicons name="calendar" size={20} color="#94A3B8" />
               <View style={styles.detailText}>
                 <Text style={styles.detailLabel}>Deadline</Text>
-                <Text style={styles.detailValue}>{project.deadline}</Text>
+                <Text style={styles.detailValue}>{currentProject.deadline || 'No deadline'}</Text>
               </View>
             </View>
             <View style={styles.detailRow}>
               <Ionicons name="cash" size={20} color="#94A3B8" />
               <View style={styles.detailText}>
                 <Text style={styles.detailLabel}>Budget</Text>
-                <Text style={styles.detailValue}>{project.budget}</Text>
+                <Text style={styles.detailValue}>${Math.round(currentProject.budget || 0).toLocaleString()}</Text>
               </View>
             </View>
           </View>
@@ -121,7 +124,7 @@ export default function ProjectDetailScreen({ route, navigation }) {
           {/* Description */}
           <View style={styles.descriptionSection}>
             <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.descriptionText}>{project.description}</Text>
+            <Text style={styles.descriptionText}>{currentProject.description || 'No description yet.'}</Text>
           </View>
         </View>
       </LinearGradient>

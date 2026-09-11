@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess } from '@/lib/apiAuth';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
+import { integrationActionSchema } from '@/schemas/validation';
+import { upsertSlackIntegration, getSlackIntegrationWithSecrets } from '@/services/slack/slackIntegrationService';
+import {
+  getFacebookIntegrationWithToken,
+  upsertFacebookIntegration,
+} from '@/services/facebook/facebookIntegrationService';
+import { getValidHubSpotAccessToken } from '@/services/hubspot/hubspotIntegrationService';
+import { getValidGoogleAccessToken } from '@/services/google/googleAccessTokenService';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -8,16 +19,24 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const { tenantId, integrationType, action, config } = await req.json();
-
-    if (!tenantId || !integrationType || !action) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    const payload = await req.json();
+    const parsed = integrationActionSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { tenantId, integrationType, action, config } = parsed.data;
 
+    const { membership } = await requireTenantAccess(tenantId);
+    if ((action === 'connect' || action === 'disconnect') && !['owner', 'admin', 'tenant_admin', 'super_admin'].includes(membership.role)) {
+      return NextResponse.json({ error: 'Insufficient workspace permissions' }, { status: 403 });
+    }
     const supabase = createSupabaseAdminClient();
 
     // Set tenant context for RLS
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
     let result: any = { success: false, data: null, error: null };
 
@@ -26,19 +45,19 @@ export async function POST(req: NextRequest) {
         result = await handleSlackAction(tenantId, action, config, supabase);
         break;
       case 'facebook':
-        result = await handleFacebookAction(tenantId, action, config, supabase);
+        result = await handleFacebookAction(tenantId, action, config, supabase, user.id);
         break;
       case 'twilio':
         result = await handleTwilioAction(tenantId, action, config, supabase);
         break;
       case 'google_calendar':
-        result = await handleGoogleCalendarAction(tenantId, action, config, supabase);
+        result = await handleGoogleCalendarAction(tenantId, action, config, supabase, user.id);
         break;
       case 'stripe':
         result = await handleStripeAction(tenantId, action, config, supabase);
         break;
       case 'hubspot':
-        result = await handleHubSpotAction(tenantId, action, config, supabase);
+        result = await handleHubSpotAction(tenantId, action, config, supabase, user.id);
         break;
       case 'sendgrid':
         result = await handleSendGridAction(tenantId, action, config, supabase);
@@ -49,151 +68,129 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Integration action error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return clientErrorResponse(error, { request: req, scope: 'integrations/actions.POST' });
   }
 }
 
 async function handleSlackAction(tenantId: string, action: string, config: any, supabase: any) {
   try {
     switch (action) {
-      case 'connect':
-        // Save Slack integration
-        const { data, error } = await supabase
-          .from('slack_integrations')
-          .upsert({
-            tenant_id: tenantId,
-            team_id: config.teamId,
-            team_name: config.teamName,
-            bot_user_id: config.botUserId,
-            bot_access_token: config.botAccessToken,
-            webhook_url: config.webhookUrl,
-            default_channel: config.defaultChannel || '#general',
-            is_active: true,
-            connected_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+      case 'connect': {
+        const saveResult = await upsertSlackIntegration({
+          tenantId,
+          teamId: config.teamId,
+          teamName: config.teamName,
+          botUserId: config.botUserId,
+          botAccessToken: config.botAccessToken,
+          webhookUrl: config.webhookUrl,
+          defaultChannel: config.defaultChannel || '#general',
+        });
+        if (!saveResult.integrationId) throw new Error(saveResult.error || 'Failed to save Slack integration');
 
-        if (error) throw error;
+        const integration = await getSlackIntegrationWithSecrets(supabase, tenantId);
+        const testResult = await testSlackIntegration(integration?.webhookUrl || config.webhookUrl);
 
-        // Test the integration
-        const testResult = await testSlackIntegration(config.webhookUrl);
-        
-        return { 
-          success: true, 
-          data: { integration: data, test: testResult },
-          message: 'Slack integration connected successfully'
+        return {
+          success: true,
+          data: { integration, test: testResult },
+          message: 'Slack integration connected successfully',
         };
+      }
 
-      case 'send_message':
-        // Send message to Slack
-        const slackIntegration = await supabase
-          .from('slack_integrations')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('is_active', true)
-          .single();
-
-        if (!slackIntegration.data) {
+      case 'send_message': {
+        const integration = await getSlackIntegrationWithSecrets(supabase, tenantId);
+        if (!integration?.webhookUrl) {
           return { success: false, error: 'Slack integration not found' };
         }
 
         const messagePayload = {
           text: config.message,
           blocks: config.blocks || [],
-          channel: config.channel || slackIntegration.data.default_channel
+          channel: config.channel || integration.default_channel,
         };
 
-        const response = await fetch(slackIntegration.data.webhook_url, {
+        const response = await fetch(integration.webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(messagePayload)
+          body: JSON.stringify(messagePayload),
         });
 
         const result = await response.json();
 
-        // Log the message
         await supabase.from('slack_message_logs').insert({
           tenant_id: tenantId,
-          channel: config.channel || slackIntegration.data.default_channel,
+          channel: config.channel || integration.default_channel,
           message_text: config.message,
           status: response.ok ? 'sent' : 'failed',
-          metadata: { payload: messagePayload, response: result }
+          metadata: { payload: messagePayload, response: result },
         });
 
-        return { 
-          success: response.ok, 
+        return {
+          success: response.ok,
           data: result,
-          message: response.ok ? 'Message sent successfully' : 'Failed to send message'
+          message: response.ok ? 'Message sent successfully' : 'Failed to send message',
         };
+      }
 
-      case 'disconnect':
-        // Disconnect Slack integration
+      case 'disconnect': {
         const { error: disconnectError } = await supabase
           .from('slack_integrations')
-          .update({ is_active: false })
+          .update({ is_active: false, updated_at: new Date().toISOString() })
           .eq('tenant_id', tenantId);
 
         if (disconnectError) throw disconnectError;
 
         return { success: true, message: 'Slack integration disconnected' };
+      }
 
       default:
         return { success: false, error: 'Unsupported Slack action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
-async function handleFacebookAction(tenantId: string, action: string, config: any, supabase: any) {
+async function handleFacebookAction(tenantId: string, action: string, config: any, supabase: any, userId: string) {
   try {
     switch (action) {
-      case 'connect':
-        // Save Facebook integration
-        const { data, error } = await supabase
-          .from('facebook_integrations')
-          .upsert({
-            tenant_id: tenantId,
-            page_id: config.pageId,
-            page_name: config.pageName,
-            page_access_token: config.pageAccessToken,
-            user_access_token: config.userAccessToken,
-            app_scoped_user_id: config.appScopedUserId,
-            is_active: true,
-            connected_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+      case 'connect': {
+        const fbResult = await upsertFacebookIntegration({
+          userId,
+          tenantId,
+          pageId: config.pageId,
+          pageName: config.pageName,
+          pageAccessToken: config.pageAccessToken,
+          userAccessToken: config.userAccessToken,
+          appScopedUserId: config.appScopedUserId,
+          expiresAt: config.expiresAt || null,
+          metadata: config.metadata || {},
+        });
 
-        if (error) throw error;
+        if (!fbResult.integrationId) {
+          throw new Error(fbResult.error || 'Facebook integration upsert failed');
+        }
 
-        // Test the integration by fetching page info
         const testResult = await testFacebookIntegration(config.pageAccessToken);
-        
-        return { 
-          success: true, 
-          data: { integration: data, test: testResult },
-          message: 'Facebook integration connected successfully'
+
+        return {
+          success: true,
+          data: { integrationId: fbResult.integrationId, test: testResult },
+          message: 'Facebook integration connected successfully',
         };
+      }
 
-      case 'get_leads':
-        // Get Facebook leads
-        const facebookIntegration = await supabase
-          .from('facebook_integrations')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('is_active', true)
-          .single();
+      case 'get_leads': {
+        const integration = await getFacebookIntegrationWithToken(supabase, { tenantId });
 
-        if (!facebookIntegration.data) {
+        if (!integration?.pageAccessToken) {
           return { success: false, error: 'Facebook integration not found' };
         }
 
         const leadsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${facebookIntegration.data.page_id}/leadgen_forms?access_token=${facebookIntegration.data.page_access_token}`
+          `https://graph.facebook.com/v21.0/${integration.page_id}/leadgen_forms?access_token=${integration.pageAccessToken}`
         );
         
         const leadsData = await leadsResponse.json();
@@ -203,6 +200,7 @@ async function handleFacebookAction(tenantId: string, action: string, config: an
           data: leadsData,
           message: leadsResponse.ok ? 'Leads retrieved successfully' : 'Failed to retrieve leads'
         };
+      }
 
       case 'disconnect':
         // Disconnect Facebook integration
@@ -219,7 +217,7 @@ async function handleFacebookAction(tenantId: string, action: string, config: an
         return { success: false, error: 'Unsupported Facebook action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -317,48 +315,20 @@ async function handleTwilioAction(tenantId: string, action: string, config: any,
         return { success: false, error: 'Unsupported Twilio action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
-async function handleGoogleCalendarAction(tenantId: string, action: string, config: any, supabase: any) {
+async function handleGoogleCalendarAction(tenantId: string, action: string, config: any, supabase: any, userId: string) {
   try {
     switch (action) {
-      case 'connect':
-        // Save Google Calendar integration
-        const { data, error } = await supabase
-          .from('google_calendar_tokens')
-          .upsert({
-            tenant_id: tenantId,
-            access_token: config.accessToken,
-            refresh_token: config.refreshToken,
-            expires_at: config.expiresAt,
-            is_active: true
-          })
-          .select()
-          .single();
+      case 'connect': {
+        return { success: false, error: 'Connect Google Calendar through its secure OAuth setup.' };
+      }
 
-        if (error) throw error;
-
-        // Test the integration
-        const testResult = await testGoogleCalendarIntegration(config.accessToken);
-        
-        return { 
-          success: true, 
-          data: { integration: data, test: testResult },
-          message: 'Google Calendar integration connected successfully'
-        };
-
-      case 'sync_events':
-        // Sync calendar events
-        const calendarIntegration = await supabase
-          .from('google_calendar_tokens')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('is_active', true)
-          .single();
-
-        if (!calendarIntegration.data) {
+      case 'sync_events': {
+        const accessToken = await getValidGoogleAccessToken({ admin: supabase, userId, tenantId });
+        if (!accessToken) {
           return { success: false, error: 'Google Calendar integration not found' };
         }
 
@@ -366,35 +336,39 @@ async function handleGoogleCalendarAction(tenantId: string, action: string, conf
           'https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=10',
           {
             headers: {
-              'Authorization': `Bearer ${calendarIntegration.data.access_token}`
-            }
+              Authorization: `Bearer ${accessToken}`,
+            },
           }
         );
-        
+
         const eventsData = await eventsResponse.json();
 
-        return { 
-          success: eventsResponse.ok, 
+        return {
+          success: eventsResponse.ok,
           data: eventsData,
-          message: eventsResponse.ok ? 'Events synced successfully' : 'Failed to sync events'
+          message: eventsResponse.ok ? 'Events synced successfully' : 'Failed to sync events',
         };
+      }
 
-      case 'disconnect':
-        // Disconnect Google Calendar integration
+      case 'disconnect': {
+        const { error: secretError } = await supabase.from('google_calendar_secrets').delete().eq('user_id', userId).eq('tenant_id', tenantId);
+        if (secretError) throw secretError;
         const { error: disconnectError } = await supabase
           .from('google_calendar_tokens')
-          .update({ is_active: false })
+          .delete()
+          .eq('user_id', userId)
           .eq('tenant_id', tenantId);
 
         if (disconnectError) throw disconnectError;
 
         return { success: true, message: 'Google Calendar integration disconnected' };
+      }
 
       default:
         return { success: false, error: 'Unsupported Google Calendar action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -402,125 +376,66 @@ async function handleStripeAction(tenantId: string, action: string, config: any,
   try {
     switch (action) {
       case 'connect':
-        // Save Stripe integration
-        const { data, error } = await supabase
-          .from('integrations')
-          .upsert({
-            tenant_id: tenantId,
-            type: 'stripe',
-            name: 'Stripe Connect',
-            config: {
-              account_id: config.accountId,
-              publishable_key: config.publishableKey,
-              secret_key: config.secretKey
-            },
-            enabled: true
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        return { 
-          success: true, 
-          data: data,
-          message: 'Stripe integration connected successfully'
-        };
+        return { success: false, error: 'Connect Stripe through the secure Stripe Connect onboarding flow.' };
 
       case 'create_payment_intent':
-        // Create payment intent
-        const stripeIntegration = await supabase
-          .from('integrations')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('type', 'stripe')
-          .eq('enabled', true)
-          .single();
-
-        if (!stripeIntegration.data) {
-          return { success: false, error: 'Stripe integration not found' };
-        }
-
-        // This would use Stripe SDK - for now return mock response
-        return { 
-          success: true, 
-          data: { client_secret: 'pi_test_client_secret' },
-          message: 'Payment intent created successfully'
-        };
+        return { success: false, error: 'Create payments from a canonical invoice payment action.' };
 
       default:
         return { success: false, error: 'Unsupported Stripe action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
-async function handleHubSpotAction(tenantId: string, action: string, config: any, supabase: any) {
+async function handleHubSpotAction(tenantId: string, action: string, config: any, supabase: any, userId: string) {
   try {
     switch (action) {
-      case 'connect':
-        // Save HubSpot integration
-        const { data, error } = await supabase
-          .from('integrations')
-          .upsert({
-            tenant_id: tenantId,
-            type: 'hubspot',
-            name: 'HubSpot CRM',
-            config: {
-              access_token: config.accessToken,
-              refresh_token: config.refreshToken,
-              portal_id: config.portalId
-            },
-            enabled: true
-          })
-          .select()
-          .single();
+      case 'connect': {
+        return { success: false, error: 'Connect HubSpot through its secure OAuth setup.' };
+      }
 
-        if (error) throw error;
-
-        return { 
-          success: true, 
-          data: data,
-          message: 'HubSpot integration connected successfully'
-        };
-
-      case 'sync_contacts':
-        // Sync contacts from HubSpot
-        const hubspotIntegration = await supabase
-          .from('integrations')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('type', 'hubspot')
-          .eq('enabled', true)
-          .single();
-
-        if (!hubspotIntegration.data) {
-          return { success: false, error: 'HubSpot integration not found' };
-        }
+      case 'sync_contacts': {
+        const accessToken = await getValidHubSpotAccessToken(supabase, userId, tenantId);
 
         const contactsResponse = await fetch(
           'https://api.hubapi.com/crm/v3/objects/contacts?limit=10',
           {
             headers: {
-              'Authorization': `Bearer ${hubspotIntegration.data.config.access_token}`
-            }
+              Authorization: `Bearer ${accessToken}`,
+            },
           }
         );
-        
+
         const contactsData = await contactsResponse.json();
 
-        return { 
-          success: contactsResponse.ok, 
+        return {
+          success: contactsResponse.ok,
           data: contactsData,
-          message: contactsResponse.ok ? 'Contacts synced successfully' : 'Failed to sync contacts'
+          message: contactsResponse.ok ? 'Contacts synced successfully' : 'Failed to sync contacts',
         };
+      }
+
+      case 'disconnect': {
+        const { error: disconnectError } = await supabase
+          .from('integrations')
+          .update({ enabled: false })
+          .eq('user_id', userId)
+          .eq('type', 'hubspot');
+
+        if (disconnectError) throw disconnectError;
+
+        await supabase.from('hubspot_integration_secrets').delete().eq('user_id', userId);
+
+        return { success: true, message: 'HubSpot integration disconnected' };
+      }
 
       default:
         return { success: false, error: 'Unsupported HubSpot action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -600,7 +515,7 @@ async function handleSendGridAction(tenantId: string, action: string, config: an
         return { success: false, error: 'Unsupported SendGrid action' };
     }
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('integrations/actions', error);
   }
 }
 
@@ -626,20 +541,22 @@ async function testSlackIntegration(webhookUrl: string) {
 
     return { success: response.ok, status: response.status };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    console.error('[integrations/actions] testSlack:', error);
+    return { success: false, error: OPERATION_FAILED_MESSAGE };
   }
 }
 
 async function testFacebookIntegration(accessToken: string) {
   try {
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/me?access_token=${accessToken}&fields=id,name`
+      `https://graph.facebook.com/v21.0/me?access_token=${accessToken}&fields=id,name`
     );
     
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    console.error('[integrations/actions] testFacebook:', error);
+    return { success: false, error: OPERATION_FAILED_MESSAGE };
   }
 }
 
@@ -659,7 +576,8 @@ async function testTwilioIntegration(accountSid: string, authToken: string) {
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    console.error('[integrations/actions] testTwilio:', error);
+    return { success: false, error: OPERATION_FAILED_MESSAGE };
   }
 }
 
@@ -672,6 +590,7 @@ async function testGoogleCalendarIntegration(accessToken: string) {
     const data = await response.json();
     return { success: response.ok, data };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    console.error('[integrations/actions] testGoogleCalendar:', error);
+    return { success: false, error: OPERATION_FAILED_MESSAGE };
   }
 }

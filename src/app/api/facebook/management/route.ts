@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { operationFailed } from '@/lib/api/operationResult';
+import { BrowserManager } from '@/lib/scraper/browserManager';
+import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
+import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
+import { getSocialPublishingService } from '@/lib/social/SocialPublishingService';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -14,12 +20,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
+    const { data: membership } = await authClient.from('tenant_users').select('tenant_id')
+      .eq('tenant_id', tenantId).eq('user_id', user.id).maybeSingle();
+    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    if (action === 'create_post' && !isSocialPublishEnabled()) {
+      return NextResponse.json({ error: 'Publishing disabled' }, { status: 403 });
+    }
+
     const supabase = createSupabaseAdminClient();
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
     switch (action) {
       case 'create_post':
-        return NextResponse.json(await createFacebookPost(tenantId, config, supabase));
+        return NextResponse.json(await createFacebookPost(tenantId, user.id, config));
       case 'manage_page':
         return NextResponse.json(await manageFacebookPage(tenantId, config, supabase));
       case 'generate_contract':
@@ -31,73 +48,35 @@ export async function POST(req: NextRequest) {
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Facebook management error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return clientErrorResponse(error, { request: req, scope: 'facebook/management.POST' });
   }
 }
 
-async function createFacebookPost(tenantId: string, config: any, supabase: any) {
+async function createFacebookPost(tenantId: string, userId: string, config: any) {
   try {
     const { pageId, message, imageUrl, link, scheduledTime } = config;
-
-    // Get Facebook integration
-    const { data: integration, error } = await supabase
-      .from('facebook_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .single();
-
-    if (error || !integration) {
-      return { success: false, error: 'Facebook integration not found' };
-    }
-
-    // Create post content
-    const postContent = {
-      message: message,
-      link: link || undefined,
-      picture: imageUrl || undefined,
-      published: !scheduledTime,
-      scheduled_publish_time: scheduledTime || undefined
-    };
-
-    // Make API call to Facebook
-    const response = await fetch(
-      `https://graph.facebook.com/v18.0/${pageId}/feed?access_token=${integration.page_access_token}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(postContent)
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return { success: false, error: result.error?.message || 'Failed to create post' };
-    }
-
-    // Save post to database
-    await supabase.from('facebook_posts').insert({
-      tenant_id: tenantId,
-      page_id: pageId,
-      post_id: result.id,
-      message: message,
-      image_url: imageUrl,
-      link: link,
-      scheduled_time: scheduledTime,
-      status: scheduledTime ? 'scheduled' : 'published',
-      created_at: new Date().toISOString()
+    const result = await getSocialPublishingService().publish({
+      tenantId,
+      userId,
+      platform: 'facebook',
+      identityType: 'facebook_page',
+      identityId: pageId,
+      caption: message,
+      linkUrl: link || null,
+      mediaUrls: imageUrl ? [imageUrl] : [],
+      scheduledAt: scheduledTime || null,
+      publishNow: !scheduledTime,
     });
-
     return {
-      success: true,
-      data: result,
-      message: scheduledTime ? 'Post scheduled successfully' : 'Post published successfully'
+      success: result.ok,
+      data: result.data,
+      error: result.error?.message,
+      message: scheduledTime ? 'Post scheduled successfully' : 'Post published successfully',
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -105,17 +84,13 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
   try {
     const { pageId, action: pageAction, pageData } = config;
 
-    // Get Facebook integration
-    const { data: integration, error } = await supabase
-      .from('facebook_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .single();
+    const integration = await getFacebookIntegrationWithToken(supabase, { tenantId, pageId });
 
-    if (error || !integration) {
+    if (!integration?.pageAccessToken) {
       return { success: false, error: 'Facebook integration not found' };
     }
+
+    const pageAccessToken = integration.pageAccessToken;
 
     let result;
 
@@ -123,7 +98,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_page_info':
         // Get page information
         const pageInfoResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}?access_token=${integration.page_access_token}&fields=id,name,username,followers_count,talking_about_count,website,phone,about,category`
+          `https://graph.facebook.com/v21.0/${pageId}?access_token=${pageAccessToken}&fields=id,name,username,followers_count,talking_about_count,website,phone,about,category`
         );
         result = await pageInfoResponse.json();
         break;
@@ -131,7 +106,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'update_page_info':
         // Update page information
         const updateResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}?access_token=${integration.page_access_token}`,
+          `https://graph.facebook.com/v21.0/${pageId}?access_token=${pageAccessToken}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -144,7 +119,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_page_insights':
         // Get page insights
         const insightsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}/insights?access_token=${integration.page_access_token}&metric=page_impressions,page_engaged_users,page_fan_adds,page_fan_removes&period=day`
+          `https://graph.facebook.com/v21.0/${pageId}/insights?access_token=${pageAccessToken}&metric=page_impressions,page_engaged_users,page_fan_adds,page_fan_removes&period=day`
         );
         result = await insightsResponse.json();
         break;
@@ -152,7 +127,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_posts':
         // Get page posts
         const postsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}/posts?access_token=${integration.page_access_token}&fields=id,message,created_time,likes.summary(true),comments.summary(true),shares&limit=10`
+          `https://graph.facebook.com/v21.0/${pageId}/posts?access_token=${pageAccessToken}&fields=id,message,created_time,likes.summary(true),comments.summary(true),shares&limit=10`
         );
         result = await postsResponse.json();
         break;
@@ -167,7 +142,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       message: `Page ${pageAction} completed successfully`
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -225,7 +200,7 @@ async function generateContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract generated successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -253,7 +228,7 @@ async function updateContract(tenantId: string, config: any, supabase: any) {
       message: 'Contract updated successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -286,13 +261,14 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
       success: true,
       data: {
         filename: `${contract.title.replace(/\s+/g, '_')}.${format}`,
-        buffer: pdfBuffer,
+        bufferBase64: pdfBuffer.toString('base64'),
+        mimeType: 'application/pdf',
         size: pdfBuffer.length
       },
       message: 'Contract downloaded successfully'
     };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    return operationFailed('facebook/management', error);
   }
 }
 
@@ -373,62 +349,64 @@ async function generateContractContent(params: any) {
 }
 
 async function generateOptimizedPDF(params: any) {
-  // This would use a PDF library like puppeteer or jsPDF
-  // For now, return a mock buffer
   const { content, fontSize, lineSpacing, targetPages, format } = params;
-  
-  // Calculate optimal content distribution
-  const contentLength = content.length;
-  const charactersPerPage = Math.floor(contentLength / targetPages);
-  
-  // Split content into pages with proper spacing
-  const pages = [];
-  for (let i = 0; i < targetPages; i++) {
-    const start = i * charactersPerPage;
-    const end = Math.min(start + charactersPerPage, contentLength);
-    pages.push(content.substring(start, end));
+  const html = wrapFacebookContractHtml(content, fontSize, lineSpacing);
+  const { page, close } = await BrowserManager.createPage();
+  try {
+    await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.emulateMedia({ media: 'print' });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+    });
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      preferCSSPageSize: true,
+      margin: {
+        top: '20mm',
+        right: '15mm',
+        bottom: '20mm',
+        left: '15mm',
+      },
+    });
+    return Buffer.from(pdf);
+  } finally {
+    await close().catch(() => undefined);
   }
-  
-  // Generate PDF with optimized layout
-  const pdfContent = `
-    %PDF-1.4
-    1 0 obj
-    << /Type /Catalog /Pages 2 0 R >>
-    endobj
-    
-    2 0 obj
-    << /Type /Pages /Kids [3 0 R] /Count ${targetPages} >>
-    endobj
-    
-    3 0 obj
-    << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-    endobj
-    
-    4 0 obj
-    << /Length ${pages.join('').length} >>
-    stream
-    ${pages.join('')}
-    endstream
-    endobj
-    
-    5 0 obj
-    << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-    endobj
-    
-    xref
-    0 6
-    0000000000 65535 f 
-    0000000009 00000 n 
-    0000000058 00000 n 
-    0000000115 00000 n 
-    0000000204 00000 n 
-    0000000300 00000 n 
-    trailer
-    << /Size 6 /Root 1 0 R >>
-    startxref
-    400
-    %%EOF
-  `;
-  
-  return Buffer.from(pdfContent);
+}
+
+function wrapFacebookContractHtml(content: string, fontSize: number, lineSpacing: number): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #111827;
+      font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif;
+      font-size: ${fontSize}px;
+      line-height: ${lineSpacing};
+    }
+    * {
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    @media print {
+      html, body {
+        font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+<body>
+${content}
+</body>
+</html>`;
 }

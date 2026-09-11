@@ -13,6 +13,7 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -44,7 +45,13 @@
     "supabase",
     "mobile",
     "demo_data_fix.ts",
+    "scratch_*.ts",
+    "scratch",
     "scripts",
-    "tmp"
+    "tmp",
+    "check_tags.js",
+    "register_clients.js",
+    "find_table.js",
+    "parse_lint.js"
   ]
 }

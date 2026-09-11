@@ -14,6 +14,7 @@ import {
     FileText,
 } from 'lucide-react';
 import { Button, Card, Input } from '../../ui/UIComponents';
+import { ModulePageLayout } from '../../ui/ModulePageLayout';
 import toast from 'react-hot-toast';
 import type { PlatformEnvStatus, PlatformGlobalSettings } from '@/types/platformSettings';
 
@@ -131,7 +132,28 @@ const GlobalSettingsTab: React.FC = () => {
     const support = settings.support ?? {};
 
     return (
-        <div className="space-y-6 animate-fade-in pb-8">
+        <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module animate-fade-in pb-8">
+            <ModulePageLayout
+                header={(
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between pb-2">
+                        <div className="min-w-0">
+                            <h2 className="text-xl sm:text-2xl font-bold text-white">Global Settings</h2>
+                            <p className="text-slate-400 mt-1 text-xs sm:text-sm font-medium uppercase tracking-wider">
+                                Super admin
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={saving || loading || !!loadError}
+                            className="bg-teal-600 hover:bg-teal-500 text-white px-6 w-full sm:w-auto shrink-0"
+                        >
+                            {saving || loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                            Save
+                        </Button>
+                    </div>
+                )}
+            >
             {loadError && (
                 <div
                     role="alert"
@@ -156,24 +178,6 @@ const GlobalSettingsTab: React.FC = () => {
                 </div>
             )}
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                    <h2 className="text-xl sm:text-2xl font-bold text-white">Global Settings</h2>
-                    <p className="text-slate-400 mt-1 text-xs sm:text-sm font-medium uppercase tracking-wider">
-                        Super admin
-                    </p>
-                </div>
-                <Button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saving || loading || !!loadError}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 w-full sm:w-auto shrink-0"
-                >
-                    {saving || loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                    Save
-                </Button>
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-1 flex flex-row lg:flex-col gap-2 overflow-x-auto pb-1 -mx-1 px-1 lg:overflow-visible lg:pb-0 lg:mx-0 lg:px-0 [scrollbar-width:thin]">
                     {sections.map((section) => (
@@ -182,7 +186,7 @@ const GlobalSettingsTab: React.FC = () => {
                             key={section.id}
                             onClick={() => setActiveSection(section.id)}
                             aria-current={activeSection === section.id ? 'true' : undefined}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 lg:w-full lg:shrink ${activeSection === section.id
+                            className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs sm:text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 lg:w-full lg:shrink ${activeSection === section.id
                                 ? 'bg-indigo-600 border border-indigo-500 text-white shadow-lg shadow-indigo-600/20'
                                 : 'bg-white/5 border border-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
                                 }`}
@@ -204,28 +208,29 @@ const GlobalSettingsTab: React.FC = () => {
                                         placeholder="AlphaClone Systems"
                                         value={branding.platformName ?? ''}
                                         onChange={(e) => setBranding({ platformName: e.target.value })}
+                                        validate={(v) => !v.trim() ? 'Platform name is required' : undefined}
                                     />
                                     <Input
                                         label="Support Email"
                                         placeholder="support@example.com"
                                         value={branding.supportEmail ?? ''}
                                         onChange={(e) => setBranding({ supportEmail: e.target.value })}
+                                        validate={(v) => v.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? 'Enter a valid email' : undefined}
                                     />
                                     <Input
                                         label="Platform URL"
                                         placeholder="https://app.example.com"
                                         value={branding.platformUrl ?? ''}
                                         onChange={(e) => setBranding({ platformUrl: e.target.value })}
+                                        validate={(v) => v.trim() && !/^https?:\/\/.+/.test(v.trim()) ? 'Enter a valid URL (https://…)' : undefined}
                                     />
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-300">Logo Assets</label>
-                                        <div className="flex gap-4">
-                                            <div className="w-16 h-16 bg-slate-900 rounded-xl border border-white/5 flex items-center justify-center">
-                                                <Globe className="w-8 h-8 text-indigo-500" />
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-16 h-16 shrink-0 bg-slate-900 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
+                                                {branding.logoUrl ? <img src={branding.logoUrl} alt="Platform logo preview" className="h-full w-full object-contain" /> : <Globe className="w-8 h-8 text-indigo-500" />}
                                             </div>
-                                            <Button type="button" variant="outline" size="sm" disabled title="Upload is not configured yet">
-                                                Update Logo
-                                            </Button>
+                                            <div className="flex-1"><Input label="Logo URL" placeholder="https://cdn.example.com/logo.svg" value={branding.logoUrl ?? ''} onChange={(e) => setBranding({ logoUrl: e.target.value })} validate={(v) => v.trim() && !/^https:\/\/.+/.test(v.trim()) ? 'Use a secure HTTPS logo URL' : undefined} /></div>
                                         </div>
                                     </div>
                                 </div>
@@ -265,6 +270,48 @@ const GlobalSettingsTab: React.FC = () => {
                                         configured={envStatus.googleOAuth}
                                         description="Sign-in and calendar integrations."
                                         details="GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET"
+                                    />
+                                    <IntegrationItem
+                                        name="WhatsApp"
+                                        configured={envStatus.whatsapp}
+                                        description="WhatsApp Business API for messaging."
+                                        details="TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN"
+                                    />
+                                    <IntegrationItem
+                                        name="LinkedIn"
+                                        configured={envStatus.linkedin}
+                                        description="LinkedIn API for social posting."
+                                        details="LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET"
+                                    />
+                                    <IntegrationItem
+                                        name="Microsoft 365"
+                                        configured={envStatus.microsoft365 || envStatus.outlook}
+                                        description="Outlook mail, calendar, and Teams integration."
+                                        details="AZURE_CLIENT_ID / AZURE_CLIENT_SECRET (or the MICROSOFT_* aliases)"
+                                    />
+                                    <IntegrationItem
+                                        name="Instagram"
+                                        configured={envStatus.instagram}
+                                        description="Instagram Graph API for posting."
+                                        details="INSTAGRAM_APP_ID and INSTAGRAM_APP_SECRET"
+                                    />
+                                    <IntegrationItem
+                                        name="Twitter/X"
+                                        configured={envStatus.twitter}
+                                        description="Twitter/X API for social posting."
+                                        details="TWITTER_API_KEY and TWITTER_API_SECRET"
+                                    />
+                                    <IntegrationItem
+                                        name="Cloudflare Turnstile"
+                                        configured={envStatus.turnstile}
+                                        description="Bot protection on public forms and login."
+                                        details="TURNSTILE_SECRET (or TURNSTILE_SECRET_KEY) and NEXT_PUBLIC_TURNSTILE_SITE_KEY"
+                                    />
+                                    <IntegrationItem
+                                        name="Web Push (VAPID)"
+                                        configured={envStatus.webPush}
+                                        description="Browser push notifications for the PWA."
+                                        details="VITE_VAPID_PUBLIC_KEY / NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY"
                                     />
                                 </div>
                             </div>
@@ -387,6 +434,7 @@ const GlobalSettingsTab: React.FC = () => {
                     </Card>
                 </div>
             </div>
+            </ModulePageLayout>
         </div>
     );
 };
@@ -416,14 +464,14 @@ const IntegrationItem = ({
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h4 className="text-sm font-bold text-white">{name}</h4>
                     <div
-                        className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${configured ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-slate-700 text-slate-400'
+                        className={`px-2 py-0.5 rounded-full text-xs font-black uppercase tracking-widest ${configured ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-slate-700 text-slate-400'
                             }`}
                     >
                         {status}
                     </div>
                 </div>
                 <p className="text-xs text-slate-400">{description}</p>
-                <p className="text-[10px] text-slate-600 mt-1 uppercase font-mono break-words">{details}</p>
+                <p className="text-xs text-slate-600 mt-1 uppercase font-mono break-words">{details}</p>
             </div>
             <Button type="button" variant="outline" size="sm" className="w-full md:w-auto shrink-0" disabled title="Configure via environment variables">
                 Configure

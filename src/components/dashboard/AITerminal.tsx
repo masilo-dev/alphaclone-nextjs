@@ -39,7 +39,7 @@ const AITerminal = () => {
                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
                     <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
                 </div>
-                <div className="flex items-center gap-2 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-widest font-bold">
                     <Terminal className="w-3 h-3" />
                     Growth OS v2.0
                 </div>
@@ -67,7 +67,7 @@ const AITerminal = () => {
 
                         {/* Progress Bar */}
                         <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                            <div className="flex justify-between text-xs text-slate-500 uppercase tracking-widest font-bold">
                                 <span>Processing...</span>
                                 <span>{progress}%</span>
                             </div>
@@ -103,3 +103,4 @@ const AITerminal = () => {
 };
 
 export default AITerminal;
+

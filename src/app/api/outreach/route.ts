@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
+import { UNITS_PER_OUTREACH_EMAIL } from '@/config/aiUsageQuotas';
+import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
 import { gmailServerService } from '../../../services/server/gmailServerService';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '../../../lib/supabase-server';
 import { routeAIRequest as generateText } from '../../../services/aiRouter';
@@ -28,6 +32,42 @@ export async function POST(req: NextRequest) {
         if (leadsError || !leads) {
             return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500 });
         }
+
+        if (leads.length === 0) {
+            return NextResponse.json({ success: true, results: [] });
+        }
+
+        const tenantId = (leads[0] as { tenant_id?: string }).tenant_id;
+        if (!tenantId) {
+            return NextResponse.json({ error: 'Leads must belong to a workspace' }, { status: 400 });
+        }
+        for (const lead of leads) {
+            if ((lead as { tenant_id?: string }).tenant_id !== tenantId) {
+                return NextResponse.json({ error: 'All leads must belong to the same workspace' }, { status: 400 });
+            }
+        }
+
+        const { data: membership } = await authClient
+            .from('user_tenant_roles')
+            .select('tenant_id')
+            .eq('user_id', userId)
+            .eq('tenant_id', tenantId)
+            .maybeSingle();
+
+        if (!membership?.tenant_id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const { data: tenantRow } = await supabaseAdmin
+            .from('tenants')
+            .select('subscription_plan')
+            .eq('id', tenantId)
+            .maybeSingle();
+        const plan = (tenantRow?.subscription_plan as string) || 'free';
+
+        const totalUnits = UNITS_PER_OUTREACH_EMAIL * leads.length;
+        const quotaBlock = await consumeAiUnitsOr429(supabaseAdmin, tenantId, plan, totalUnits);
+        if (quotaBlock) return quotaBlock;
 
         const results = [];
 
@@ -76,15 +116,15 @@ export async function POST(req: NextRequest) {
                 });
 
                 results.push({ name: lead.businessName, status: 'success' });
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error(`Failed to send outreach to ${lead.businessName}:`, err);
-                results.push({ name: lead.businessName, status: 'error', error: err.message });
+                results.push({ name: lead.businessName, status: 'error', error: OPERATION_FAILED_MESSAGE });
             }
         }
 
         return NextResponse.json({ success: true, results });
     } catch (err: any) {
         console.error('Gmail Outreach Error:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'outreach' });
     }
 }

@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { microsoftServerService } from '@/services/server/microsoftServerService';
+import {
+  getFacebookIntegrationWithToken,
+  getFacebookIntegration,
+} from '@/services/facebook/facebookIntegrationService';
+import { getWhatsAppIntegrationWithToken } from '@/services/whatsapp/whatsappIntegrationService';
+import { getInstagramIntegrationWithToken } from '@/services/instagram/instagramIntegrationService';
+import { getLinkedInIntegrationWithToken } from '@/services/linkedin/linkedinIntegrationService';
+import { getSlackIntegrationWithSecrets } from '@/services/slack/slackIntegrationService';
+import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 
 export async function GET(req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   try {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId') || searchParams.get('tenant_id');
@@ -15,12 +21,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
     }
 
-    const supabase = createSupabaseAdminClient();
+    const { user, admin: supabase } = await requireTenantAccess(tenantId);
     
     // Set tenant context for RLS
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
-    const integrationStatus = await checkAllIntegrations(tenantId, supabase);
+    const integrationStatus = await checkAllIntegrations(tenantId, user.id, supabase);
     
     // Map integrations by type so UI components like data.sendgrid and data.resend work
     const mappedIntegrations = integrationStatus.reduce((acc, int) => ({
@@ -37,13 +46,13 @@ export async function GET(req: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Integration status check error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    return routeErrorResponse(error, undefined, req);
   }
 }
 
-async function checkAllIntegrations(tenantId: string, supabase: any) {
+async function checkAllIntegrations(tenantId: string, userId: string, supabase: any) {
   const integrations = [
     {
       name: 'Slack',
@@ -54,6 +63,21 @@ async function checkAllIntegrations(tenantId: string, supabase: any) {
       name: 'Facebook',
       type: 'facebook',
       checkFunction: checkFacebookIntegration
+    },
+    {
+      name: 'Instagram',
+      type: 'instagram',
+      checkFunction: checkInstagramIntegration
+    },
+    {
+      name: 'LinkedIn',
+      type: 'linkedin',
+      checkFunction: checkLinkedInIntegration
+    },
+    {
+      name: 'WhatsApp',
+      type: 'whatsapp',
+      checkFunction: checkWhatsAppIntegration
     },
     {
       name: 'Twilio',
@@ -84,6 +108,21 @@ async function checkAllIntegrations(tenantId: string, supabase: any) {
       name: 'Resend',
       type: 'resend',
       checkFunction: checkResendIntegration
+    },
+    {
+      name: 'Brevo',
+      type: 'brevo',
+      checkFunction: checkBrevoIntegration
+    },
+    {
+      name: 'Zoho',
+      type: 'zoho',
+      checkFunction: checkZohoIntegration
+    },
+    {
+      name: 'Microsoft 365',
+      type: 'microsoft',
+      checkFunction: checkMicrosoftIntegration
     }
   ];
 
@@ -91,19 +130,20 @@ async function checkAllIntegrations(tenantId: string, supabase: any) {
 
   for (const integration of integrations) {
     try {
-      const status = await integration.checkFunction(tenantId, supabase);
+      const status = await integration.checkFunction(tenantId, supabase, userId);
       results.push({
         name: integration.name,
         type: integration.type,
         ...status
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('[integrations/status]', integration.type, error);
       results.push({
         name: integration.name,
         type: integration.type,
         status: 'error',
         percentage: 0,
-        issues: [error.message],
+        issues: ['Status check failed'],
         actions: [],
         connected: false
       });
@@ -114,45 +154,44 @@ async function checkAllIntegrations(tenantId: string, supabase: any) {
 }
 
 async function checkSlackIntegration(tenantId: string, supabase: any) {
-  const { data: integration, error } = await supabase
-    .from('slack_integrations')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
-    .single();
+  const integration = await getSlackIntegrationWithSecrets(supabase, tenantId);
 
-  if (error || !integration) {
+  if (!integration) {
     return {
       status: 'not_connected',
       percentage: 0,
       issues: ['Slack integration not connected'],
       actions: ['Connect Slack workspace'],
-      connected: false
+      connected: false,
+      reconnectRequired: false,
     };
   }
 
   const issues = [];
   const actions = [];
   let percentage = 0;
+  let reconnectRequired = false;
 
-  // Check required fields
   if (!integration.team_id) {
     issues.push('Team ID missing');
     actions.push('Reconnect Slack to get Team ID');
+    reconnectRequired = true;
   } else {
     percentage += 25;
   }
 
-  if (!integration.bot_access_token) {
+  if (!integration.botAccessToken) {
     issues.push('Bot access token missing');
-    actions.push('Reconnect Slack to get bot access token');
+    actions.push('Reconnect Slack to refresh bot access token');
+    reconnectRequired = true;
   } else {
     percentage += 25;
   }
 
-  if (!integration.webhook_url) {
+  if (!integration.webhookUrl) {
     issues.push('Webhook URL missing');
-    actions.push('Configure webhook URL');
+    actions.push('Configure webhook URL or reconnect Slack');
+    reconnectRequired = true;
   } else {
     percentage += 25;
   }
@@ -165,9 +204,9 @@ async function checkSlackIntegration(tenantId: string, supabase: any) {
   }
 
   // Test webhook if available
-  if (integration.webhook_url && percentage === 100) {
+  if (integration.webhookUrl && percentage === 100) {
     try {
-      const testResponse = await fetch(integration.webhook_url, {
+      const testResponse = await fetch(integration.webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -200,19 +239,19 @@ async function checkSlackIntegration(tenantId: string, supabase: any) {
     issues,
     actions,
     connected: true,
+    reconnectRequired,
     lastChecked: new Date().toISOString()
   };
 }
 
-async function checkFacebookIntegration(tenantId: string, supabase: any) {
-  const { data: integration, error } = await supabase
-    .from('facebook_integrations')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
-    .single();
+async function checkFacebookIntegration(tenantId: string, supabase: any, userId: string) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getFacebookIntegration(admin, { tenantId, requireActive: true });
+  const withToken = integration
+    ? await getFacebookIntegrationWithToken(admin, { tenantId, pageId: integration.page_id })
+    : null;
 
-  if (error || !integration) {
+  if (!integration || !withToken) {
     return {
       status: 'not_connected',
       percentage: 0,
@@ -222,48 +261,240 @@ async function checkFacebookIntegration(tenantId: string, supabase: any) {
     };
   }
 
-  const issues = [];
-  const actions = [];
+  const issues: string[] = [];
+  const actions: string[] = [];
   let percentage = 0;
+  const encryptionConfigured = Boolean(getIntegrationEncryptionSecret());
 
-  // Check required fields
-  if (!integration.page_id) {
+  if (integration.page_id) percentage += 25;
+  else {
     issues.push('Page ID missing');
     actions.push('Reconnect Facebook to get Page ID');
-  } else {
-    percentage += 33;
   }
 
-  if (!integration.page_access_token) {
-    issues.push('Page access token missing');
-    actions.push('Reconnect Facebook to get page access token');
-  } else {
-    percentage += 33;
+  if (withToken.pageAccessToken) percentage += 35;
+  else {
+    issues.push('Page access token missing or expired');
+    actions.push('Reconnect Facebook to refresh page token');
   }
 
-  if (!integration.user_access_token) {
-    issues.push('User access token missing');
-    actions.push('Reconnect Facebook to get user access token');
+  if (integration.metadata && !(integration.metadata as { no_pages?: boolean }).no_pages) {
+    percentage += 20;
+  } else if ((integration.metadata as { no_pages?: boolean })?.no_pages) {
+    issues.push('No Facebook Pages linked');
+    actions.push('Grant pages_show_list and connect a Page');
   } else {
-    percentage += 34;
+    percentage += 20;
   }
 
-  // Test API access if tokens are available
-  if (integration.page_access_token && percentage === 100) {
+  if (encryptionConfigured) percentage += 20;
+  else {
+    issues.push('ENCRYPTION_SECRET not configured');
+    actions.push('Set ENCRYPTION_SECRET (32 chars) in production');
+  }
+
+  if (withToken.pageAccessToken && percentage >= 80) {
     try {
       const testResponse = await fetch(
-        `https://graph.facebook.com/v18.0/${integration.page_id}?access_token=${integration.page_access_token}&fields=id,name`
+        `https://graph.facebook.com/v21.0/${integration.page_id}?fields=id,name&access_token=${encodeURIComponent(withToken.pageAccessToken)}`
       );
-
       if (!testResponse.ok) {
         issues.push('Facebook API access failed');
         actions.push('Reconnect Facebook page');
-        percentage -= 34;
+        percentage = Math.max(0, percentage - 35);
+      } else {
+        percentage = 100;
       }
-    } catch (error) {
+    } catch {
       issues.push('Facebook API unreachable');
       actions.push('Check Facebook API permissions');
-      percentage -= 34;
+      percentage = Math.max(0, percentage - 35);
+    }
+  }
+
+  void userId;
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkInstagramIntegration(tenantId: string, _supabase: any, userId: string) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getInstagramIntegrationWithToken(admin, { tenantId, userId });
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Instagram integration not connected'],
+      actions: ['Connect Facebook to link Instagram Business account'],
+      connected: false
+    };
+  }
+
+  const issues: string[] = [];
+  const actions: string[] = [];
+  let percentage = 0;
+
+  if (integration.instagram_account_id) percentage += 30;
+  if (integration.username) percentage += 20;
+  if (integration.pageAccessToken) percentage += 30;
+  else {
+    issues.push('Instagram page token missing');
+    actions.push('Reconnect Facebook/Instagram');
+  }
+  if (getIntegrationEncryptionSecret()) percentage += 20;
+  else {
+    issues.push('ENCRYPTION_SECRET not configured');
+    actions.push('Set ENCRYPTION_SECRET (32 chars)');
+  }
+
+  if (integration.pageAccessToken && percentage >= 80) {
+    try {
+      const res = await fetch(
+        `https://graph.facebook.com/v21.0/${integration.instagram_account_id}?fields=id,username&access_token=${encodeURIComponent(integration.pageAccessToken)}`
+      );
+      if (res.ok) percentage = 100;
+      else {
+        issues.push('Instagram API check failed');
+        actions.push('Reconnect Instagram via Facebook OAuth');
+        percentage = Math.max(0, percentage - 30);
+      }
+    } catch {
+      issues.push('Instagram API unreachable');
+      percentage = Math.max(0, percentage - 30);
+    }
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkLinkedInIntegration(tenantId: string, _supabase: any, userId: string) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getLinkedInIntegrationWithToken(admin, { tenantId, userId });
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['LinkedIn integration not connected'],
+      actions: ['Connect LinkedIn account'],
+      connected: false
+    };
+  }
+
+  const issues: string[] = [];
+  const actions: string[] = [];
+  let percentage = 0;
+  const scopes = Array.isArray(integration.scopes) ? integration.scopes : [];
+
+  if (integration.linkedin_member_id) percentage += 25;
+  if (integration.accessToken) percentage += 35;
+  else {
+    issues.push('LinkedIn access token missing');
+    actions.push('Reconnect LinkedIn');
+  }
+  if (scopes.some((s) => ['w_member_social', 'w_organization_social'].includes(String(s)))) {
+    percentage += 20;
+  } else {
+    issues.push('Publishing scopes not granted');
+    actions.push('Reconnect LinkedIn with social publishing scopes');
+  }
+  if (getIntegrationEncryptionSecret()) percentage += 20;
+  else {
+    issues.push('ENCRYPTION_SECRET not configured');
+    actions.push('Set ENCRYPTION_SECRET (32 chars)');
+  }
+
+  if (integration.accessToken && percentage >= 80) {
+    try {
+      const res = await fetch('https://api.linkedin.com/v2/userinfo', {
+        headers: { Authorization: `Bearer ${integration.accessToken}` },
+      });
+      if (res.ok) percentage = 100;
+      else {
+        issues.push('LinkedIn API check failed');
+        actions.push('Reconnect LinkedIn');
+        percentage = Math.max(0, percentage - 35);
+      }
+    } catch {
+      issues.push('LinkedIn API unreachable');
+      percentage = Math.max(0, percentage - 35);
+    }
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkWhatsAppIntegration(tenantId: string, _supabase: any) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getWhatsAppIntegrationWithToken(admin, { tenantId });
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['WhatsApp integration not connected'],
+      actions: ['Add WhatsApp Business credentials under Integrations'],
+      connected: false
+    };
+  }
+
+  const issues: string[] = [];
+  const actions: string[] = [];
+  let percentage = 0;
+
+  if (integration.waba_id) percentage += 20;
+  if (integration.phone_number_id) percentage += 25;
+  if (integration.accessToken) percentage += 25;
+  else {
+    issues.push('WhatsApp access token missing');
+    actions.push('Reconnect WhatsApp credentials');
+  }
+  if (integration.webhook_verified) percentage += 10;
+  else {
+    issues.push('Webhook not verified with Meta');
+    actions.push('Re-save WhatsApp integration to auto-subscribe webhook');
+  }
+  if (getIntegrationEncryptionSecret()) percentage += 20;
+  else {
+    issues.push('ENCRYPTION_SECRET not configured');
+    actions.push('Set ENCRYPTION_SECRET (32 chars)');
+  }
+
+  if (integration.accessToken && percentage >= 70) {
+    try {
+      const res = await fetch(
+        `https://graph.facebook.com/v21.0/${integration.phone_number_id}?fields=id&access_token=${encodeURIComponent(integration.accessToken)}`
+      );
+      if (res.ok) percentage = 100;
+      else {
+        issues.push('WhatsApp API check failed');
+        actions.push('Refresh Meta Cloud API token');
+        percentage = Math.max(0, percentage - 25);
+      }
+    } catch {
+      issues.push('WhatsApp API unreachable');
+      percentage = Math.max(0, percentage - 25);
     }
   }
 
@@ -612,16 +843,26 @@ async function checkSendGridIntegration(tenantId: string, supabase: any) {
 }
 
 async function checkResendIntegration(tenantId: string, supabase: any) {
-  // Use tenant_integrations for Resend (as per send/route.ts)
-  const { data: integration, error } = await supabase
+  // Support both storage models used across the app.
+  const { data: tenantIntegration } = await supabase
     .from('tenant_integrations')
     .select('*')
     .eq('tenant_id', tenantId)
     .eq('integration_type', 'resend')
     .eq('status', 'active')
-    .single();
+    .maybeSingle();
 
-  if (error || !integration) {
+  const { data: userIntegration } = await supabase
+    .from('integrations')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('type', 'resend')
+    .eq('enabled', true)
+    .maybeSingle();
+
+  const integration = tenantIntegration || userIntegration;
+
+  if (!integration) {
     return {
       status: 'not_connected',
       percentage: 0,
@@ -636,14 +877,18 @@ async function checkResendIntegration(tenantId: string, supabase: any) {
   let percentage = 0;
 
   // Check required fields
-  if (!integration.access_token) {
+  const config = integration.config || {};
+  const apiKey = integration.access_token || config.api_key || config.apiKey;
+  const domain = integration.domain || config.domain;
+
+  if (!apiKey) {
     issues.push('API key missing');
     actions.push('Reconnect Resend to get API key');
   } else {
     percentage += 50;
   }
 
-  if (!integration.domain) {
+  if (!domain) {
     issues.push('Domain missing');
     actions.push('Set domain');
   } else {
@@ -655,10 +900,170 @@ async function checkResendIntegration(tenantId: string, supabase: any) {
     percentage,
     issues,
     actions,
-    domain: integration.domain,
+    domain: domain || undefined,
     updated_at: integration.updated_at,
     connected: true,
     lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkBrevoIntegration(tenantId: string, supabase: any) {
+  const { data: integration } = await supabase
+    .from('integrations')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('type', 'brevo')
+    .eq('enabled', true)
+    .maybeSingle();
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Brevo integration not connected'],
+      actions: ['Connect Brevo account'],
+      connected: false
+    };
+  }
+
+  const issues = [];
+  const actions = [];
+  let percentage = 0;
+  const config = integration.config || {};
+
+  if (!config.api_key && !config.apiKey) {
+    issues.push('API key missing');
+    actions.push('Reconnect Brevo to get API key');
+  } else {
+    percentage += 50;
+  }
+
+  if (!config.from_email && !config.fromEmail) {
+    issues.push('From email missing');
+    actions.push('Set default from email');
+  } else {
+    percentage += 50;
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkZohoIntegration(_tenantId: string, supabase: any, userId: string) {
+  const { data: integration } = await supabase
+    .from('integrations')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('type', 'zoho')
+    .eq('enabled', true)
+    .maybeSingle();
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Zoho integration not connected'],
+      actions: ['Connect Zoho account'],
+      connected: false
+    };
+  }
+
+  const config = integration.config || {};
+  const hasRefreshToken = Boolean(config.refreshToken);
+  const hasMailHost = Boolean(config.mailApiHost);
+  const hasAccountsServer = Boolean(config.accountsServer);
+  const issues = [];
+  const actions = [];
+  let percentage = 0;
+
+  if (hasRefreshToken) percentage += 30;
+  else {
+    issues.push('Refresh token missing');
+    actions.push('Reconnect Zoho account');
+  }
+
+  if (hasMailHost) percentage += 25;
+  else {
+    issues.push('Mail API host missing');
+    actions.push('Reconnect Zoho account');
+  }
+
+  if (hasAccountsServer) percentage += 25;
+  else {
+    issues.push('Accounts server missing');
+    actions.push('Reconnect Zoho account');
+  }
+
+  if (getIntegrationEncryptionSecret()) percentage += 20;
+  else {
+    issues.push('ZOHO_ENCRYPTION_SECRET / ENCRYPTION_SECRET not configured');
+    actions.push('Set encryption secret (32 chars)');
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkMicrosoftIntegration(_tenantId: string, supabase: any, userId: string) {
+  const { data: connection, error } = await supabase
+    .from('microsoft_connections')
+    .select('microsoft_email, display_name, token_expiry')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !connection) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Microsoft 365 is not connected'],
+      actions: ['Connect Microsoft 365'],
+      connected: false,
+    };
+  }
+
+  const issues = [];
+  const actions = [];
+  let percentage = 60;
+
+  if (connection.microsoft_email) percentage += 20;
+  else {
+    issues.push('Microsoft email missing');
+    actions.push('Reconnect Microsoft 365');
+  }
+
+  if (connection.token_expiry && new Date(connection.token_expiry).getTime() > Date.now()) {
+    percentage += 20;
+  } else {
+    try {
+      await microsoftServerService.getConnection(userId);
+      percentage += 20;
+    } catch {
+      issues.push('Microsoft token refresh required');
+      actions.push('Reconnect Microsoft 365');
+    }
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    email: connection.microsoft_email,
+    displayName: connection.display_name,
+    lastChecked: new Date().toISOString(),
   };
 }
 

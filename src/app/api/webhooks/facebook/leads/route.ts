@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 import crypto from 'crypto';
 import { ENV } from '@/config/env';
 
@@ -99,22 +100,30 @@ export async function POST(req: NextRequest) {
 
                 // Find the page integration to get the access token
                 const supabaseAdmin = createSupabaseAdminClient();
-                const { data: integration } = await supabaseAdmin
-                    .from('facebook_integrations')
-                    .select('page_access_token, user_id, tenant_id')
-                    .eq('page_id', pageId)
-                    .eq('is_active', true)
-                    .single();
+                const integration = await getFacebookIntegrationWithToken(supabaseAdmin, { pageId });
 
-                if (!integration?.page_access_token) continue;
+                if (!integration?.pageAccessToken) continue;
 
                 // Fetch lead details from Graph API
                 const leadRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${leadgenId}?access_token=${integration.page_access_token}&fields=id,created_time,field_data,ad_id,form_id`
+                    `https://graph.facebook.com/v21.0/${leadgenId}?access_token=${integration.pageAccessToken}&fields=id,created_time,field_data,ad_id,form_id`
                 );
                 const leadData = await leadRes.json();
 
-                if (!leadData.id) continue;
+                if (!leadRes.ok || !leadData.id) {
+                    console.error('[Facebook Leads Webhook] Failed to fetch lead data:', leadData);
+                    
+                    // Log the error to the integration record for visibility
+                    await supabaseAdmin.from('facebook_integrations').update({
+                        metadata: {
+                            last_webhook_error: leadData.error?.message || 'Failed to fetch lead data',
+                            last_webhook_error_at: new Date().toISOString(),
+                            last_webhook_error_id: leadgenId
+                        }
+                    }).eq('page_id', pageId);
+                    
+                    continue;
+                }
 
                 // Parse field_data into named fields
                 const fields: Record<string, string> = {};
@@ -160,6 +169,15 @@ export async function POST(req: NextRequest) {
                     console.error('[Facebook Leads Webhook] Failed to upsert facebook_lead:', fbLeadError);
                     continue;
                 }
+
+                // Update last success timestamp on integration
+                await supabaseAdmin.from('facebook_integrations').update({
+                    updated_at: new Date().toISOString(),
+                    metadata: {
+                        last_sync_at: new Date().toISOString(),
+                        last_sync_status: 'success'
+                    }
+                }).eq('page_id', pageId);
 
                 // Auto-create a lead in the main leads table
                 if (fbLead && (email || phone || firstName)) {

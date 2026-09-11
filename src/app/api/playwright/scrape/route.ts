@@ -43,7 +43,7 @@ const CLIENT_ERRORS = {
     type: 'warning'
   },
   NO_LEADS_FOUND: {
-    title: 'No Leads Found',
+    title: 'No Matching Leads',
     message: 'We could not find any business leads on this page.',
     suggestion: 'Try a different page or check if this website contains business information.',
     type: 'info'
@@ -55,7 +55,7 @@ const CLIENT_ERRORS = {
     type: 'error'
   },
   UNKNOWN_ERROR: {
-    title: 'Something Went Wrong',
+    title: 'Lead Discovery Error',
     message: 'We encountered an unexpected issue while finding leads.',
     suggestion: 'Please try again. If this continues, contact our support team.',
     type: 'error'
@@ -151,14 +151,14 @@ async function loadPageHtml(url: string) {
     console.warn('[Playwright Scrape] Static fetch failed, falling back to browser engine:', error);
   }
 
-  const { page } = await BrowserManager.createPage();
+  const { page, close } = await BrowserManager.createPage();
 
   try {
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
     await page.waitForTimeout(1500);
     return await page.content();
   } finally {
-    await page.context().close().catch(() => undefined);
+    await close().catch(() => undefined);
   }
 }
 

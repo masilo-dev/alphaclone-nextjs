@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { getUnifiedContacts, type UnifiedContact } from '../lib/crm/unifiedContacts';
 
 export interface Contact {
     id: string;
@@ -68,9 +69,33 @@ export const contactService = {
         ownerId?: string;
         status?: string;
         search?: string;
-    }): Promise<{ contacts: ContactWithCompany[]; error: string | null }> {
+        page?: number;
+        limit?: number;
+        sort?: 'created_at' | 'name';
+        direction?: 'asc' | 'desc';
+    }): Promise<{ contacts: ContactWithCompany[]; error: string | null; pagination?: { page: number; limit: number; total: number; pages: number } }> {
         try {
             const tenantId = this.getTenantId();
+
+            const params = new URLSearchParams();
+            if (filters?.search) params.set('search', filters.search);
+            if (filters?.status) params.set('status', filters.status);
+            if (filters?.page) params.set('page', String(filters.page));
+            if (filters?.limit) params.set('limit', String(filters.limit));
+            if (filters?.sort) params.set('sort', filters.sort);
+            if (filters?.direction) params.set('direction', filters.direction);
+
+            const url = `/api/tenant/${encodeURIComponent(tenantId)}/contacts${params.toString() ? `?${params.toString()}` : ''}`;
+            const response = await fetch(url, { credentials: 'include' });
+            const payload = await response.json().catch(() => ({}));
+
+            if (response.ok && Array.isArray(payload.contacts)) {
+                return {
+                    contacts: (payload.contacts || []).map(this.mapContact),
+                    error: null,
+                    pagination: payload.pagination || undefined,
+                };
+            }
 
             let query = supabase
                 .from('contacts')
@@ -81,27 +106,16 @@ export const contactService = {
                 .eq('tenant_id', tenantId)
                 .is('deleted_at', null);
 
-            // Apply filters
-            if (filters?.companyId) {
-                query = query.eq('company_id', filters.companyId);
-            }
-            if (filters?.ownerId) {
-                query = query.eq('owner_id', filters.ownerId);
-            }
-            if (filters?.status) {
-                query = query.eq('status', filters.status);
-            }
+            if (filters?.companyId) query = query.eq('company_id', filters.companyId);
+            if (filters?.ownerId) query = query.eq('owner_id', filters.ownerId);
+            if (filters?.status) query = query.eq('status', filters.status);
             if (filters?.search) {
-                query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+                query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
             }
 
             const { data, error } = await query.order('created_at', { ascending: false });
-
             if (error) throw error;
-
-            const contacts = (data || []).map(this.mapContact);
-
-            return { contacts, error: null };
+            return { contacts: (data || []).map(this.mapContact), error: null };
         } catch (err: any) {
             console.error('Error fetching contacts:', err);
             return { contacts: [], error: err.message };
@@ -141,47 +155,10 @@ export const contactService = {
     async createContact(contact: Partial<Contact>): Promise<{ contact: Contact | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData } = await supabase.auth.getUser();
-
-            const { data, error } = await supabase
-                .from('contacts')
-                .insert({
-                    tenant_id: tenantId,
-                    company_id: contact.companyId,
-                    first_name: contact.firstName,
-                    last_name: contact.lastName,
-                    title: contact.title,
-                    department: contact.department,
-                    email: contact.email,
-                    phone: contact.phone,
-                    mobile: contact.mobile,
-                    address_line1: contact.addressLine1,
-                    address_line2: contact.addressLine2,
-                    city: contact.city,
-                    state: contact.state,
-                    postal_code: contact.postalCode,
-                    country: contact.country,
-                    linkedin_url: contact.linkedinUrl,
-                    facebook_url: contact.facebookUrl,
-                    twitter_url: contact.twitterUrl,
-                    bio: contact.bio,
-                    notes: contact.notes,
-                    status: contact.status || 'active',
-                    lead_source: contact.leadSource,
-                    owner_id: contact.ownerId,
-                    email_opt_in: contact.emailOptIn ?? true,
-                    sms_opt_in: contact.smsOptIn ?? false,
-                    preferred_contact_method: contact.preferredContactMethod || 'email',
-                    tags: contact.tags || [],
-                    custom_fields: contact.customFields || {},
-                    created_by: userData.user?.id,
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            return { contact: this.mapContact(data), error: null };
+            const response = await fetch(`/api/tenant/${tenantId}/contacts`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(contact) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.contact) throw new Error(payload.error || 'Contact could not be created');
+            return { contact: this.mapContact(payload.contact), error: null };
         } catch (err: any) {
             console.error('Error creating contact:', err);
             return { contact: null, error: err.message };
@@ -194,53 +171,10 @@ export const contactService = {
     async updateContact(contactId: string, updates: Partial<Contact>): Promise<{ contact: Contact | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData } = await supabase.auth.getUser();
-
-            const updateData: any = {};
-
-            // Map camelCase to snake_case
-            if (updates.companyId !== undefined) updateData.company_id = updates.companyId;
-            if (updates.firstName !== undefined) updateData.first_name = updates.firstName;
-            if (updates.lastName !== undefined) updateData.last_name = updates.lastName;
-            if (updates.title !== undefined) updateData.title = updates.title;
-            if (updates.department !== undefined) updateData.department = updates.department;
-            if (updates.email !== undefined) updateData.email = updates.email;
-            if (updates.phone !== undefined) updateData.phone = updates.phone;
-            if (updates.mobile !== undefined) updateData.mobile = updates.mobile;
-            if (updates.addressLine1 !== undefined) updateData.address_line1 = updates.addressLine1;
-            if (updates.addressLine2 !== undefined) updateData.address_line2 = updates.addressLine2;
-            if (updates.city !== undefined) updateData.city = updates.city;
-            if (updates.state !== undefined) updateData.state = updates.state;
-            if (updates.postalCode !== undefined) updateData.postal_code = updates.postalCode;
-            if (updates.country !== undefined) updateData.country = updates.country;
-            if (updates.linkedinUrl !== undefined) updateData.linkedin_url = updates.linkedinUrl;
-            if (updates.facebookUrl !== undefined) updateData.facebook_url = updates.facebookUrl;
-            if (updates.twitterUrl !== undefined) updateData.twitter_url = updates.twitterUrl;
-            if (updates.bio !== undefined) updateData.bio = updates.bio;
-            if (updates.notes !== undefined) updateData.notes = updates.notes;
-            if (updates.status !== undefined) updateData.status = updates.status;
-            if (updates.leadSource !== undefined) updateData.lead_source = updates.leadSource;
-            if (updates.ownerId !== undefined) updateData.owner_id = updates.ownerId;
-            if (updates.emailOptIn !== undefined) updateData.email_opt_in = updates.emailOptIn;
-            if (updates.smsOptIn !== undefined) updateData.sms_opt_in = updates.smsOptIn;
-            if (updates.preferredContactMethod !== undefined) updateData.preferred_contact_method = updates.preferredContactMethod;
-            if (updates.tags !== undefined) updateData.tags = updates.tags;
-            if (updates.customFields !== undefined) updateData.custom_fields = updates.customFields;
-
-            updateData.updated_by = userData.user?.id;
-
-            const { data, error } = await supabase
-                .from('contacts')
-                .update(updateData)
-                .eq('id', contactId)
-                .eq('tenant_id', tenantId)
-                .is('deleted_at', null)
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            return { contact: this.mapContact(data), error: null };
+            const response = await fetch(`/api/tenant/${tenantId}/contacts`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contactId, ...updates }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.contact) throw new Error(payload.error || 'Contact could not be updated');
+            return { contact: this.mapContact(payload.contact), error: null };
         } catch (err: any) {
             console.error('Error updating contact:', err);
             return { contact: null, error: err.message };
@@ -253,23 +187,66 @@ export const contactService = {
     async deleteContact(contactId: string): Promise<{ error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData } = await supabase.auth.getUser();
-
-            const { error } = await supabase
-                .from('contacts')
-                .update({
-                    deleted_at: new Date().toISOString(),
-                    updated_by: userData.user?.id,
-                })
-                .eq('id', contactId)
-                .eq('tenant_id', tenantId);
-
-            if (error) throw error;
-
-            return { error: null };
+            const response = await fetch(`/api/tenant/${tenantId}/contacts`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [contactId] }) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Contact could not be deleted' };
         } catch (err: any) {
             console.error('Error deleting contact:', err);
             return { error: err.message };
+        }
+    },
+
+    async restoreContact(contactId: string): Promise<{ error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const response = await fetch('/api/data/deleted-records', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, action: 'restore', type: 'contact', id: contactId }) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Contact could not be restored' };
+        } catch (err: any) {
+            return { error: err.message };
+        }
+    },
+
+    async purgeContact(contactId: string): Promise<{ error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const response = await fetch('/api/data/deleted-records', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, action: 'purge', type: 'contact', id: contactId }) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Contact could not be permanently deleted' };
+        } catch (err: any) {
+            return { error: err.message };
+        }
+    },
+
+    async getDeletedContacts(): Promise<{ contacts: ContactWithCompany[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { data, error } = await supabase
+                .from('contacts')
+                .select(`*, company:companies(id, name, industry, website)`)
+                .eq('tenant_id', tenantId)
+                .not('deleted_at', 'is', null)
+                .order('deleted_at', { ascending: false });
+
+            if (error) throw error;
+            return { contacts: (data || []).map((row: Record<string, unknown>) => this.mapContact(row)), error: null };
+        } catch (err: any) {
+            return { contacts: [], error: err.message };
+        }
+    },
+
+    async bulkDeleteContacts(contactIds: string[]): Promise<{ error: string | null; count: number }> {
+        if (!contactIds.length) return { error: null, count: 0 };
+        try {
+            const tenantId = this.getTenantId();
+            const uniqueIds = [...new Set(contactIds)];
+            const response = await fetch(`/api/tenant/${tenantId}/contacts`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: uniqueIds }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Contacts could not be deleted');
+            return { error: null, count: Number(payload.count || 0) };
+        } catch (err: any) {
+            console.error('Error bulk deleting contacts:', err);
+            return { error: err.message, count: 0 };
         }
     },
 
@@ -284,7 +261,7 @@ export const contactService = {
             companyName?: string;
             contactName?: string; // NEW PARAMETER
         }
-    ): Promise<{ contactId: string | null; error: string | null }> {
+    ): Promise<{ contactId: string | null; clientId?: string; error: string | null }> {
         try {
             const { data, error } = await supabase.rpc('convert_lead_to_contact', {
                 lead_id: leadId,
@@ -295,7 +272,16 @@ export const contactService = {
 
             if (error) throw error;
 
-            return { contactId: data, error: null };
+            const payload =
+                typeof data === 'string'
+                    ? (JSON.parse(data) as { contact_id?: string; client_id?: string })
+                    : (data as { contact_id?: string; client_id?: string } | null);
+
+            return {
+                contactId: payload?.contact_id || null,
+                clientId: payload?.client_id || undefined,
+                error: null,
+            };
         } catch (err: any) {
             console.error('Error converting lead to contact:', JSON.stringify(err, null, 2), err);
             return { contactId: null, error: err.message || 'Unknown error occurred during conversion' };
@@ -383,5 +369,176 @@ export const contactService = {
             deletedAt: data.deleted_at,
             company: data.company,
         };
+    },
+
+    /**
+     * Merged contacts + business_clients without a contacts row (canonical CRM read path).
+     */
+    async getUnifiedContactsList(options?: {
+        limit?: number;
+        search?: string;
+        status?: string;
+    }): Promise<{ contacts: UnifiedContact[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const contacts = await getUnifiedContacts(supabase, tenantId, options);
+            return { contacts, error: null };
+        } catch (err) {
+            console.error('Error fetching unified contacts:', err);
+            return {
+                contacts: [],
+                error: err instanceof Error ? err.message : 'Unknown error',
+            };
+        }
+    },
+
+    async bulkUpsertOutlookImports(
+        tenantId: string,
+        contacts: Array<{
+            name: string;
+            email: string;
+            phone?: string;
+            industry?: string;
+            location?: string | null;
+        }>
+    ): Promise<{ processed: number; error: string | null }> {
+        try {
+            const emails = contacts.map((c) => c.email).filter(Boolean);
+            if (emails.length === 0) {
+                return { processed: 0, error: null };
+            }
+
+            const { data: existingClients, error: existingError } = await supabase
+                .from('business_clients')
+                .select('id, email')
+                .eq('tenant_id', tenantId)
+                .in('email', emails);
+
+            if (existingError) throw existingError;
+
+            const existingByEmail = new Map(
+                ((existingClients as Array<{ id: string; email: string }>) || []).map((client) => [client.email, client.id])
+            );
+
+            const inserts = contacts
+                .filter((contact) => !existingByEmail.has(contact.email))
+                .map((contact) => ({
+                    name: contact.name,
+                    email: contact.email,
+                    phone: contact.phone,
+                    industry: contact.industry,
+                    location: contact.location || null,
+                    salesStage: 'lead',
+                    value: 0,
+                    description: 'Imported from Outlook contacts',
+                    customFields: { importSource: 'outlook' },
+                }));
+
+            const updates = contacts.filter((contact) => existingByEmail.has(contact.email));
+
+            if (inserts.length > 0) {
+                const response = await fetch(`/api/tenant/${tenantId}/clients`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clients: inserts }),
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.error || 'Outlook contacts could not be created');
+            }
+
+            const results = await Promise.all(updates.map(async (contact) => {
+                const response = await fetch(`/api/tenant/${tenantId}/clients`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clientId: existingByEmail.get(contact.email), name: contact.name, phone: contact.phone || null, industry: contact.industry || null, location: contact.location || null }),
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.error || `Outlook contact ${contact.email} could not be updated`);
+                return true;
+            }));
+
+            return { processed: inserts.length + results.length, error: null };
+        } catch (err) {
+            console.error('bulkUpsertOutlookImports failed:', err);
+            return {
+                processed: 0,
+                error: err instanceof Error ? err.message : 'Outlook sync failed',
+            };
+        }
+    },
+
+    /**
+     * Sanitizes strings against CSV Formula Injection (=, +, -, @) before generating downloadable reports.
+     */
+    sanitizeCsvValue(value: string | number | null | undefined): string {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        if (/^[=+\-@\t\r]/.test(str)) {
+            return `'${str}`;
+        }
+        return str;
+    },
+
+    /**
+     * Exports given contacts to a sanitized CSV string.
+     */
+    exportContactsToCsv(contacts: ContactWithCompany[]): string {
+        const headers = ['Full Name', 'Email', 'Phone', 'Company', 'Title', 'Status', 'Created At'];
+        const rows = contacts.map(c => [
+            this.sanitizeCsvValue(c.fullName),
+            this.sanitizeCsvValue(c.email),
+            this.sanitizeCsvValue(c.phone),
+            this.sanitizeCsvValue(c.company?.name),
+            this.sanitizeCsvValue(c.title),
+            this.sanitizeCsvValue(c.status),
+            this.sanitizeCsvValue(c.createdAt),
+        ]);
+
+        return [headers.join(','), ...rows.map(r => r.map(val => `"${val.replace(/"/g, '""')}"`).join(','))].join('\n');
+    },
+
+    /**
+     * Duplicate Contact Detection — checks for existing contacts with matching email or full name.
+     * Call before createContact to surface potential duplicates for review.
+     */
+    async findDuplicates(tenantId: string, email?: string, firstName?: string, lastName?: string): Promise<{ duplicates: ContactWithCompany[]; error: string | null }> {
+        try {
+            if (!email && !firstName && !lastName) return { duplicates: [], error: null };
+
+            const filters: string[] = [];
+            if (email?.trim()) filters.push(`email.ilike.${email.trim()}`);
+            if (firstName?.trim() && lastName?.trim()) {
+                filters.push(`and(first_name.ilike.${firstName.trim()},last_name.ilike.${lastName.trim()})`);
+            }
+
+            if (!filters.length) return { duplicates: [], error: null };
+
+            const { data, error } = await supabase
+                .from('contacts')
+                .select('*, companies(id, name)')
+                .eq('tenant_id', tenantId)
+                .is('deleted_at', null)
+                .or(filters.join(','))
+                .limit(5);
+
+            if (error) throw error;
+
+            const duplicates: ContactWithCompany[] = (data || []).map((c: any) => ({
+                id: c.id,
+                tenantId: c.tenant_id,
+                firstName: c.first_name,
+                lastName: c.last_name,
+                fullName: `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+                email: c.email,
+                phone: c.phone,
+                title: c.title,
+                status: c.status,
+                company: c.companies ? { id: c.companies.id, name: c.companies.name } : undefined,
+                createdAt: c.created_at,
+                updatedAt: c.updated_at,
+            }));
+
+            return { duplicates, error: null };
+        } catch (err) {
+            console.error('[contactService] findDuplicates error:', err);
+            return { duplicates: [], error: err instanceof Error ? err.message : 'Duplicate check failed' };
+        }
     },
 };

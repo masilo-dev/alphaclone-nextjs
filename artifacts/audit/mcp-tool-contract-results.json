@@ -1,0 +1,4745 @@
+{
+  "generated_at": "2026-09-02T09:56:56.628Z",
+  "total_tools": 526,
+  "passed": 470,
+  "failed": 0,
+  "skipped": 56,
+  "before_failure_count": 8,
+  "after_failure_count": 0,
+  "results": [
+    {
+      "tool": "accept_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "accounting_snapshot",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "activate_skill_for_session",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "add_note",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "add_task_dependency",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "ai_business_readiness_score",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "AI_usage_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "amend_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "analytics",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "analyze_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "analyze_document_intelligence",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "analyze_workspace_document_url",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "appointments",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "approve_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "approve_dream_update",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "approve_pending_action",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "approve_workflow_step",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "archive_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "ask_bonnie_operations",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "audit_platform",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "auto_create_lead_from_message",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "automate_expense_entry",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "autonomous_reply",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "award_points",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "backfill_contact_phone_country_codes",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "book_calendar_meeting",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "bulk_add_to_segment",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "bulk_archive_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "bulk_assign_campaign",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "bulk_create_leads",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "bulk_update_leads",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "bulk_update_records",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "bulk_upload_media",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "bulk_upsert_contacts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "business_memory_graph",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "calcom_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "calendly_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "campaign_brief",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "campaign_diagnose",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "campaign_metrics",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "campaigns",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "cancel_meeting",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "cancel_run",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "capture_linkedin_comment_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "change_pipeline_stage",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "chase_contract_signature",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "check_mcp_execution_readiness",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "classify_outreach_reply",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "client_pulse",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "compare_contract_versions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "compare_document_versions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "compare_versions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "connected_accounts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "conversions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_bank_account",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_bulk_email_batch",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_bulk_email_campaign",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_business_event",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_client",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_client_portal_event",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_contact",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_contract",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_contract_template",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_contract_version",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_deal",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_document",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_document_version",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_email_draft",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_email_sequence",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_expense",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_follow_up",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_in_app_notification",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_invoice",
+      "classification": "financial",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_invoice_collection_mission",
+      "classification": "financial",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_journal_entry",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_lead",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_leads",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_linkedin_comment",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_linkedin_event",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_linkedin_post",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_linkedin_reaction",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_meeting",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_post",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_post_with_ai_image",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_project",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_project_task",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_quote",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_reconciliation_session",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_social_post",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_social_post_with_ai_image",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_social_post_with_media",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_subscription_checkout",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_task",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_tasks_batch",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_ticket",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "create_vendor_bill",
+      "classification": "financial",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "customer_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "dashboard_metrics",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "deal_to_cash_flow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "decline_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "deepseek_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "define_outcome",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "delete_contact",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "delete_facebook_post",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "delete_lead",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "delete_media",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "delete_media_asset",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "delete_post",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "delete_social_post",
+      "classification": "delete",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "disable_whatsapp_chatbot",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "dispatch_tool",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "document_qa",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "document_url_qa",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "document_versions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "draft_reply",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "drafts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "email_campaigns",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "enable_lead_auto_outreach",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "enable_whatsapp_chatbot",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "engagement_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "enroll_contact_in_sequence",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "escalate_ticket",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "evaluate_business_ai_readiness",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "events",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "execute_action",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "execute_internal_tool",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "execute_strategic_intelligence",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "export_document_record",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "export_to_google_workspace",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "fetch",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "find_and_qualify_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "funnels",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_ai_image",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_business_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_contract_draft",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_contract_signing_token",
+      "classification": "authentication",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_expense_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_grok_video",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_image",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_market_authority_report",
+      "classification": "authentication",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_outreach_draft",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "generate_viral_video_script",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_account_overview",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_accounts_payable_aging",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_accounts_receivable_aging",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_action_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_agentic_os_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_api_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_audit_logs",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_automation_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_balance_sheet",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_bank_accounts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_batch_job_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_business_ai_state",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_business_digital_twin",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_business_events",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_business_health_summary",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_business_snapshot",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_calendly_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_cash_flow_statement",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_chatbot_conversations",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_chatbot_performance",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_chatbot_persona",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_client_by_id",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_client_email_history",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_client_history",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_clients",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_contact_activity",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_contacts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_contract_approvals",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_contract_templates",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_contract_versions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_contracts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_conversation",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_current_user",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_dashboard_stats",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_deals",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_delivery_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_document_timeline",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_documents",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_dream_sessions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_email_campaign_delivery_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_email_campaign_stats",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_environment",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_execution_assurance_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_expenses",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_facebook_identities",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_facebook_page_capabilities",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_facebook_post_insights",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_facebook_token",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_failure_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_feature_flags",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_file_download_url",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_finance_snapshot",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_gamification_leaderboard",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_invoice_line_items",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_invoices",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_linkedin_ad_accounts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_linkedin_ad_campaigns",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_linkedin_identities",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_linkedin_member_profile",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_linkedin_post_stats",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_linkedin_posts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_media",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_media_asset",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_meetings",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_momentum_score",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_nexus_memory",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_orchestration_history",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_outcome_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_pipeline_summary",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_platform_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_pnl_statement",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_post_analytics",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_post_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_project_details",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_project_milestones",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_project_summary",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_project_tasks",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_project_timeline",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_projects",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_quotes",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_recent_errors",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_recent_messages",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_reconciliation_sessions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_revenue_summary",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_run_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_scheduled_posts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_scraper_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_sequence_stats",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_signature_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_social_accounts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_social_identities",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_social_post",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_social_post_insights",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_social_posts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_strategic_plan",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_system_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_tasks",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_tenant_messages",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_throughput_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_ticket_stats",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_tickets",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_today_operational_hud",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_user_points",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_vendor_bills",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_version",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_whatsapp_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_workflow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_workflow_run",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_workspace_widgets",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_x_profile",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_x_timeline",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_zoho_mail_messages",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_zoho_mail_thread",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "github_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "gmail_get_thread",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "gmail_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "gmail_list_threads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "gmail_send_email",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "google_calendar_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "growth_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "ingest_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_agent_reasoning",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_embeddings",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_executor",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_memory",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_planner",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_prompts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_rag",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_scheduler",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_task_queue",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_tools",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "inspect_vector_store",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "integrations_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "invoices",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "kickoff_project_automation",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "landing_pages",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_capabilities",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_companies",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_contacts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_conversations",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_department_agents",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_document_versions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_email_accounts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_event_subscriptions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_files",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_media_assets",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_modules",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_pending_approvals",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_playbooks",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_scheduled_social_posts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_skills",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_supported_outcomes",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_tools",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_workflows",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "load_module_tools",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "load_skill",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "log_contact_activity",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "mark_invoice_paid",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "mark_message_read",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_connection_diagnostic",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_create_chat",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_create_event",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_create_meeting",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_create_task",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_get_calendar",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_get_chats",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_get_contacts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_get_emails",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_get_joined_teams",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_get_tasks",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_get_team_channels",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_get_teams_messages",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_send_channel_message",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_send_chat_message",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_send_email",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "microsoft_upload_file",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "monitor_campaign_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "move_deal_stage",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "negotiate_capabilities",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_calendar_nexus",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_content_synthesis",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_contract_drafter",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_design_audit",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_email_triage",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_invoice_chasing",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_lead_enrichment",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_market_pulse",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_meeting_intelligence",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_month_end_close",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_onboarding_flow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_payroll_sync",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_project_architect",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_sales_campaign",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_strategic_orchestrator",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "nexus_support_triage",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "onboard_user_automation",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "openai_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "opportunities",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "orchestrate_meeting_workflow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "orchestrate_task",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "owner_autopilot_queue",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "parse_lead_criteria",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "payments",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "pipeline_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "place_legal_hold",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "plan_social_calendar",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "post_x_tweet",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "predict_deal_win_probability",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "preflight_social_publish",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "prepare_contract_renewal",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "preview_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_facebook_album",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_facebook_multi_photo",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_facebook_photo",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_facebook_reel",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_facebook_video",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_instagram_carousel",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_instagram_photo",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_instagram_reel",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_linkedin_document",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_linkedin_image",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_now",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_post",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_social_post",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_x_image",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "publish_x_video",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "qualify_crm_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "queue_email_campaign_send",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "quotes",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "railway_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "read_email_content",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "read_emails",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "read_url_content",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "recommend_next_steps",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reconcile_execution_receipts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reconcile_outreach_vs_logs",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reconcile_payment",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "record_document_view",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "refresh_business_digital_twin",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reject_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reject_pending_action",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reject_workflow_step",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "release_legal_hold",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reminders",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "render_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reorder_widgets",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reply_to_email",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reply_to_x_tweet",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "reply_to_zoho_mail",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "request_changes",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "request_contract_approval",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "request_outcome",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "restart_service",
+      "classification": "administrative",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "restore_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "resume_workflow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "retrieve_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "retry_run_step",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "retry_social_post",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "revenue_dashboard",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "revenue_recovery_agent",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "revenue_report",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "review_contract_approval",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_autonomous_scan",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_chief_of_staff_routine",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_cognitive_loop",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_growth_lifecycle",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_mcp_agent_workflow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_playbook",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_strategic_pnl_audit",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_workflow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "save_contract",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "schedule_post",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "schedule_social_automation",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "schedule_social_post",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "scheduled_posts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "score_deal",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_clients",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_contacts",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_documents",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_documents_os",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_emails",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_facebook_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_tools",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_x_tweets",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "search_x_users",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "segment_clients_by_criteria",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_batch_outreach",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_bulk_email",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_bulk_email_campaign",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_contract",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_document",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_document_to_claude",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_email",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_for_signature",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_invoice",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_message",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_project_email",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_quote",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_receipt",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_task_email",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_tenant_message",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_transactional_email",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_whatsapp_message",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "send_x_dm",
+      "classification": "external-send",
+      "registered": true,
+      "has_schema": true,
+      "status": "skipped",
+      "reason": "staging_only",
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "set_chatbot_handoff_rules",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "set_outreach_limits",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "set_task_recurrence",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "show_related_records",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "solo_owner_operator_brief",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "solo_owner_time_savings_meter",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "solo_owner_value_map",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "start_contract_lifecycle",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "start_email_campaign",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "start_invoice_lifecycle",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "start_lead_campaign",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "start_lead_nurture",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "stop_workflow",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "store_facebook_token",
+      "classification": "authentication",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "stripe_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "submit_for_review",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "subscribe_events",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "subscriptions",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "summarize_ticket",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "summarize_workspace",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "supabase_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "supersede_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "supervise_task",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "sync_all_inboxes",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "sync_calendly_events",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "sync_knowledge_graph",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "task_create",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "task_delete",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "task_get_results",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "task_list",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "task_pause",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "task_resume",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "tasks",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "toggle_widget_visibility",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "train_chatbot",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "trigger_bonnie_dream",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "trigger_deal_automation",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "trust_ledger",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "unsubscribe_event",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_business_ai_state",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_chatbot_persona",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_client",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_client_metadata",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_client_status_batch",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_company",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_contact",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_contract_status",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_deal",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_document",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_invoice",
+      "classification": "financial",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_lead",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_lead_status",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_project",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_project_status",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_project_task",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_quote",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_task",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_ticket",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "upload_document",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "upload_file",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "upload_media",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "upload_media_asset",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "upload_social_media",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "upsert_nexus_memory",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "validate_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "verify_invoice_sent",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "verify_lead_created",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "verify_outreach_delivery",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "verify_social_post_published",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "voice_action_router",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "void_document",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "write_audit_log",
+      "classification": "administrative",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "write_task_note",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "x_connection_diagnostic",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "zoho_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    }
+  ]
+}

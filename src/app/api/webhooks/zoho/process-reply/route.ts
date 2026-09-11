@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { isProduction } from '@/lib/security/productionGuard';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { Receiver } from '@upstash/qstash';
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
+import { extractEmailAddress } from '@/lib/email/parseEmailHeader';
 
 const receiver = new Receiver({
     currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY || '',
@@ -9,10 +13,14 @@ const receiver = new Receiver({
 });
 
 export async function POST(req: NextRequest) {
-    // 1. Verify QStash signature (Optional but recommended for security)
     const signature = req.headers.get('upstash-signature');
+    const signingKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
+    if (isProduction() && (!signature || !signingKey)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     let data: any;
-    if (signature && process.env.QSTASH_CURRENT_SIGNING_KEY) {
+    if (signature && signingKey) {
         const body = await req.text();
         const isValid = await receiver.verify({
             signature,
@@ -28,26 +36,94 @@ export async function POST(req: NextRequest) {
         data = await req.json();
     }
 
-    const { userId, messageId, folderId, replyText, senderEmail, logId } = data;
+    const { userId, tenantId, messageId, folderId, replyText, senderEmail, originalSubject, logId } = data;
 
-    if (!userId || !messageId || !replyText) {
+    if (!userId || !tenantId || !messageId || !replyText) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const zohoMail = new ZohoMailService(userId);
-    const supabase = await createSupabaseServerClient();
+    const { processNormalizedTrigger } = await import('@/lib/bonnie/runtime/triggerGateway');
+    await processNormalizedTrigger({
+        tenant_id: tenantId,
+        user_id: userId,
+        trigger_type: 'webhook',
+        event_type: 'email.reply.process',
+        source: 'webhooks/zoho/process-reply',
+        correlation_id: String(logId || messageId),
+        deduplication_key: `zoho-reply:${tenantId}:${messageId}`,
+        payload: { messageId, folderId, senderEmail },
+    }).catch(() => undefined);
+
+    const zohoMail = new ZohoMailService(userId, tenantId);
+    const supabase = createSupabaseAdminClient();
 
     try {
-        // Fetch message content to get subject etc. correctly if needed, 
-        // but we usually have it from the previous step.
-        const msgContent = await zohoMail.getMessageContent(messageId, folderId);
+        const normalizedSubject = String(originalSubject || '').trim() || 'Re: Conversation';
+        const normalizedReply = String(replyText || '').trim();
+        if (!normalizedReply) {
+            return NextResponse.json({ error: 'Reply text is empty' }, { status: 400 });
+        }
+
+        const recipientEmail = extractEmailAddress(senderEmail || '');
+        if (!recipientEmail.includes('@')) {
+            if (logId) {
+                await supabase
+                    .from('zoho_auto_responder_logs')
+                    .update({
+                        triage_status: 'error',
+                        error_message: 'invalid_recipient_email',
+                    })
+                    .eq('id', logId);
+            }
+            console.warn('[Zoho Auto-Responder Worker] Skipping reply: invalid recipient email', {
+                senderEmail,
+                messageId,
+                logId,
+            });
+            return NextResponse.json({ success: false, skipped: true, reason: 'invalid_recipient_email' });
+        }
         
         // 2. Send the reply
         await zohoMail.sendEmail({
-            toAddress: senderEmail,
-            subject: `Re: ${msgContent.content ? 'Inquiry' : 'Message'}`, // Ideally pass subject in data
-            content: replyText,
+            toAddress: recipientEmail,
+            subject: normalizedSubject,
+            content: normalizedReply,
         });
+
+        const admin = createSupabaseAdminClient();
+        const { data: zohoIntegration } = await admin
+            .from('integrations')
+            .select('tenant_id')
+            .eq('tenant_id', tenantId)
+            .eq('user_id', userId)
+            .eq('type', 'zoho')
+            .eq('enabled', true)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (zohoIntegration?.tenant_id) {
+            await captureUnifiedMessageFromWebhook({
+                supabase: admin as any,
+                tenantId: zohoIntegration.tenant_id,
+                source: 'zoho',
+                channel: 'email',
+                direction: 'outbound',
+                externalId: messageId || null,
+                threadId: messageId || null,
+                from: `zoho:${userId}`,
+                to: recipientEmail,
+                subject: normalizedSubject,
+                text: normalizedReply,
+                html: null,
+                sentAt: new Date().toISOString(),
+                metadata: {
+                    logId,
+                    folderId,
+                    originalMessageId: messageId,
+                },
+            });
+        }
 
         // 3. Update log
         if (logId) {
@@ -61,19 +137,19 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ success: true });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('[Zoho Auto-Responder Worker] Failed to send reply:', err);
-        
+
         if (logId) {
             await supabase
                 .from('zoho_auto_responder_logs')
-                .update({ 
-                    triage_status: 'error', 
-                    error_message: err.message 
+                .update({
+                    triage_status: 'error',
+                    error_message: 'Auto-reply failed',
                 })
                 .eq('id', logId);
         }
-        
-        return NextResponse.json({ error: err.message }, { status: 500 });
+
+        return clientErrorResponse(err, { request: req, scope: 'webhooks/zoho/process-reply' });
     }
 }

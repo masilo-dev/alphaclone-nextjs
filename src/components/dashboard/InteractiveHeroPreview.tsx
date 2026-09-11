@@ -54,7 +54,9 @@ const InteractiveHeroPreview = () => {
     return (
         <div
             onMouseMove={handleMouseMove}
-            className="relative w-full max-w-4xl mx-auto h-[500px] perspective-1000 hidden md:block"
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+            className="relative w-full max-w-4xl mx-auto h-[500px] perspective-1000 hidden md:block select-none"
         >
             {/* Main Dashboard Frame */}
             <motion.div
@@ -144,7 +146,7 @@ const InteractiveHeroPreview = () => {
                                         <div className={`w-2 h-2 rounded-full bg-${proj.color}-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]`} />
                                         <span className="text-sm font-medium text-slate-300">{proj.title}</span>
                                     </div>
-                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-${proj.color}-500/10 text-${proj.color}-400 border border-${proj.color}-500/20 uppercase tracking-wider`}>
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-${proj.color}-500/10 text-${proj.color}-400 border border-${proj.color}-500/20 uppercase tracking-wider`}>
                                         {proj.status}
                                     </span>
                                 </motion.div>
@@ -162,7 +164,7 @@ const InteractiveHeroPreview = () => {
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                        <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Growth Agent Active</span>
+                        <span className="text-xs font-bold text-teal-400 uppercase tracking-widest">Growth Agent Active</span>
                     </div>
                     <div className="flex gap-1">
                         <div className="w-2.5 h-2.5 rounded-full bg-slate-800" />
@@ -183,3 +185,4 @@ const InteractiveHeroPreview = () => {
 };
 
 export default InteractiveHeroPreview;
+

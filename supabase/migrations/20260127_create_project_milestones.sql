@@ -18,6 +18,7 @@ ALTER TABLE project_milestones ENABLE ROW LEVEL SECURITY;
 -- Policies
 
 -- Public Read Access: Allow if the parent project is public
+DROP POLICY IF EXISTS "Public read access for project_milestones" ON project_milestones;
 CREATE POLICY "Public read access for project_milestones"
     ON project_milestones FOR SELECT
     USING (
@@ -30,6 +31,7 @@ CREATE POLICY "Public read access for project_milestones"
 
 -- Authenticated Management: Allow users to manage milestones for their own projects (or admins)
 -- Assuming 'projects' uses owner_id for ownership and there's a tenant_id check
+DROP POLICY IF EXISTS "Users can manage milestones for their projects" ON project_milestones;
 CREATE POLICY "Users can manage milestones for their projects"
     ON project_milestones FOR ALL
     USING (

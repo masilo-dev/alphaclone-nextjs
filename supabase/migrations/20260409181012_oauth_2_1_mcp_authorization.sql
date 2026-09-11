@@ -42,4 +42,4 @@ CREATE TABLE mcp_oauth_tokens (
 ALTER TABLE mcp_oauth_tokens ENABLE ROW LEVEL SECURITY;
 
 -- Index for token lookups on the SSE route
-CREATE INDEX idx_mcp_oauth_tokens_access_token ON mcp_oauth_tokens(access_token);
+CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_access_token ON mcp_oauth_tokens(access_token);

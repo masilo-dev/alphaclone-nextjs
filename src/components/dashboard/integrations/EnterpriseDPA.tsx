@@ -117,7 +117,7 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
 
       <div className="px-6 py-4 bg-slate-950/50 border-t border-slate-800 flex items-center gap-2">
         <AlertCircle className="w-4 h-4 text-amber-400" />
-        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">
+        <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">
           Acceptance will be cryptographically logged for compliance.
         </p>
       </div>
@@ -126,3 +126,4 @@ const EnterpriseDPA: React.FC<EnterpriseDPAProps> = ({ tenantId, userId, onAccep
 };
 
 export default EnterpriseDPA;
+

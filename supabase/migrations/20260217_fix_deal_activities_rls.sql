@@ -31,6 +31,7 @@ AND da.tenant_id IS NULL;
 
 -- 3. Add RLS policy for deal_activities
 -- Allow users to view/insert/update/delete activities for their tenant
+DROP POLICY IF EXISTS "tenant_isolation_policy" ON public"."deal_activities;
 CREATE POLICY "tenant_isolation_policy" ON "public"."deal_activities"
 AS PERMISSIVE FOR ALL
 TO public

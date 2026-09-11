@@ -22,6 +22,11 @@ import InvoiceDetailScreen from './src/screens/InvoiceDetailScreen';
 import TabBarIcon from './src/components/TabBarIcon';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 
+type TabIconProps = {
+  color: string;
+  size: number;
+};
+
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
@@ -43,7 +48,7 @@ function MainTabs() {
         name="Dashboard" 
         component={DashboardScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: TabIconProps) => (
             <TabBarIcon name="home" color={color} size={size} />
           ),
         }}
@@ -52,7 +57,7 @@ function MainTabs() {
         name="Projects" 
         component={ProjectsScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: TabIconProps) => (
             <TabBarIcon name="folder" color={color} size={size} />
           ),
         }}
@@ -61,8 +66,8 @@ function MainTabs() {
         name="CRM" 
         component={CRMScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <TabBarIcon name="users" color={color} size={size} />
+          tabBarIcon: ({ color, size }: TabIconProps) => (
+            <TabBarIcon name="people" color={color} size={size} />
           ),
         }}
       />
@@ -70,8 +75,8 @@ function MainTabs() {
         name="Finance" 
         component={FinanceScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
-            <TabBarIcon name="dollar-sign" color={color} size={size} />
+          tabBarIcon: ({ color, size }: TabIconProps) => (
+            <TabBarIcon name="cash" color={color} size={size} />
           ),
         }}
       />
@@ -79,7 +84,7 @@ function MainTabs() {
         name="Settings" 
         component={SettingsScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, size }: TabIconProps) => (
             <TabBarIcon name="settings" color={color} size={size} />
           ),
         }}

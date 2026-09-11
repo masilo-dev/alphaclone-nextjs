@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback, useMemo } from 'react';
 import { tenantService } from '../services/tenancy/TenantService';
 import type { Tenant, SubscriptionPlan } from '../services/tenancy/types';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import { resetPlatformState } from '@/lib/platformReset';
 
 export interface TenantContextType {
   currentTenant: Tenant | null;
@@ -14,7 +15,7 @@ export interface TenantContextType {
   switchTenant: (tenantId: string) => Promise<void>;
   refreshTenants: () => Promise<void>;
   createTenant: (data: CreateTenantData) => Promise<Tenant>;
-  getDashboardStats: (tenantId: string, userId: string) => Promise<{ stats: any | null; error: string | null }>;
+  getDashboardStats: (tenantId: string, userId: string, forceRefresh?: boolean) => Promise<{ stats: any | null; error: string | null }>;
 }
 
 interface CreateTenantData {
@@ -27,22 +28,11 @@ export const TenantContext = createContext<TenantContextType | undefined>(undefi
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(() => {
-    // Synchronously read from cache so the dashboard renders immediately
-    if (typeof window !== 'undefined') {
-      return tenantService.getCachedCurrentTenant() || null;
-    }
-    return null;
-  });
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [userTenants, setUserTenants] = useState<Array<Tenant & { role: string }>>([]);
-  // Start as false if we already have a cached tenant — no need to block the UI
-  const [isLoading, setIsLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !tenantService.getCachedCurrentTenant();
-    }
-    return true;
-  });
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasResolvedOnceRef = useRef(false);
 
   // Load user's tenants when user logs in
   useEffect(() => {
@@ -67,22 +57,29 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       throw new Error('Tenant not found or no access');
     }
 
-    // Update context
-    setCurrentTenant(tenant);
+    setIsLoading(true);
+    setError(null);
 
-    // Persist to localStorage
+    // Cancel prior-tenant work and clear every protected client cache before
+    // making the new tenant observable to consumers.
+    await resetPlatformState({ reason: 'tenant-switch', clearAuth: false });
+
+    setCurrentTenant(tenant);
     tenantService.setCurrentTenant(tenantId);
 
     // Reload the page to fetch new tenant's data
     window.location.reload();
   }, [userTenants]);
 
-  const loadUserTenants = useCallback(async function loadUserTenantsImpl(timeoutId?: NodeJS.Timeout) {
+  const loadUserTenants = useCallback(async function loadUserTenantsImpl(timeoutId?: NodeJS.Timeout, retryCount = 0) {
     if (!user?.id) return;
 
     try {
-      setIsLoading(true);
       setError(null); // Clear previous errors
+      const hasCachedTenant = !!tenantService.getCachedCurrentTenant();
+      if (!hasCachedTenant && !hasResolvedOnceRef.current) {
+        setIsLoading(true);
+      }
 
       // Get all tenants user belongs to
       const tenants = await tenantService.getUserTenants(user.id);
@@ -91,12 +88,12 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       // Clear timeout on successful load
       if (timeoutId) clearTimeout(timeoutId);
 
-      if (tenants.length === 0 && !timeoutId) {
-        // If no tenants found, and this is the first attempt, try once more with a small delay
-        // This handles replication lag or transient database issues during rapid redirects
-        console.log('[TenantContext] No tenants found on first attempt, retrying in 1s...');
-        await new Promise(r => setTimeout(r, 1000));
-        return await loadUserTenantsImpl(undefined); // undefined to mark it as the retry
+      if (tenants.length === 0 && retryCount < 3) {
+        // Back-off retry: handles replication lag during rapid post-signup redirects
+        const delay = Math.min(1000 * Math.pow(2, retryCount), 8000);
+        console.log(`[TenantContext] No tenants found (attempt ${retryCount + 1}/3), retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+        return await loadUserTenantsImpl(timeoutId, retryCount + 1);
       }
 
       if (tenants.length > 0) {
@@ -110,8 +107,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         if (savedTenant) {
           console.log('[TenantContext] Using saved tenant:', savedTenant.id);
           setCurrentTenant(savedTenant);
-          // Refresh the full object cache
           tenantService.setCurrentTenant(savedTenant);
+          hasResolvedOnceRef.current = true;
+          setIsLoading(false);
+        } else if (savedTenantId) {
+          console.warn('[TenantContext] Cached tenant not in membership list, clearing stale cache:', savedTenantId);
+          tenantService.clearCurrentTenant();
+          const firstTenant = tenants[0];
+          setCurrentTenant(firstTenant);
+          tenantService.setCurrentTenant(firstTenant);
+          hasResolvedOnceRef.current = true;
           setIsLoading(false);
         } else {
           // Default to first tenant
@@ -119,70 +124,18 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           console.log('[TenantContext] No saved tenant valid, defaulting to:', firstTenant.id);
           setCurrentTenant(firstTenant);
           tenantService.setCurrentTenant(firstTenant);
+          hasResolvedOnceRef.current = true;
           setIsLoading(false);
-        }
-      } else if (user.role !== 'client') {
-        // Any non-client user with no tenants gets a default org auto-created
-        console.log(`[TenantContext] No tenants found for user with role ${user.role}, auto-creating...`);
-        // ... (rest of creation logic)
-
-        try {
-          // Generate tenant name based on role
-          // Super admin gets "ALPHACLONE SYSTEMS" as default organization
-          const tenantName = user.role === 'admin'
-            ? 'ALPHACLONE SYSTEMS'
-            : `${user.name || user.email?.split('@')[0] || 'User'}'s Organization`;
-          const tenantSlug = user.role === 'admin'
-            ? 'alphaclone-systems'
-            : `org-${user.id.substring(0, 8)}`;
-
-          const newTenant = await tenantService.createTenant({
-            name: tenantName,
-            slug: tenantSlug,
-            adminUserId: user.id,
-            plan: 'free'
-          });
-
-          console.log('Default tenant created:', newTenant.id);
-
-          // Set as current tenant
-          setCurrentTenant(newTenant);
-          setUserTenants([{ ...newTenant, role: 'tenant_admin' }]);
-          tenantService.setCurrentTenant(newTenant.id);
-          if (timeoutId) clearTimeout(timeoutId);
-          setIsLoading(false);
-        } catch (error: any) {
-          console.error('Failed to auto-create default tenant:', error);
-          console.error('Auto-create error details:', {
-            message: error?.message,
-            code: error?.code,
-            details: error?.details,
-            hint: error?.hint
-          });
-
-          // Handle specific function overload error
-          let errorMessage = 'Unable to create your organization. Please contact support.';
-          if (error?.code === 'PGRST203') {
-            errorMessage = 'Database function conflict detected. Please refresh the page and try again.';
-          } else if (error?.message?.includes('Failed to fetch')) {
-            errorMessage = 'Network connection unstable. Please check your internet connection and try again.';
-          }
-
-          // CRITICAL: Set loading to false and error immediately
-          setCurrentTenant(null);
-          setUserTenants([]);
-          tenantService.clearCurrentTenant();
-          setError(errorMessage);
-          if (timeoutId) clearTimeout(timeoutId);
-          setIsLoading(false);
-
-          // Early return to prevent further execution
-          return;
         }
       } else {
-        // No tenants and not an admin/creator
-        console.warn(`[TenantContext] No tenants found for user: ${user.id} (Role: ${user.role}) after retry.`);
+        // No access is a real state, not permission to create data implicitly.
+        // The dashboard presents an explicit workspace-creation action for owners.
+        tenantService.clearCurrentTenant();
         setCurrentTenant(null);
+        setUserTenants([]);
+        setError('You do not currently have access to a workspace. Create one or ask an owner for an invitation.');
+        if (timeoutId) clearTimeout(timeoutId);
+        hasResolvedOnceRef.current = true;
         setIsLoading(false);
       }
     } catch (error: any) {
@@ -212,23 +165,25 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       }
 
       setError(errorMessage);
+      tenantService.clearCurrentTenant();
       setCurrentTenant(null);
       setUserTenants([]);
       if (timeoutId) clearTimeout(timeoutId);
+      hasResolvedOnceRef.current = true;
       setIsLoading(false);
 
       // For network errors, retry after a delay
       if (isNetworkError && !timeoutId) {
         console.log('[TenantContext] Network error detected, scheduling retry...');
         setTimeout(() => {
-          if (user?.id && !currentTenant) {
+          if (user?.id) {
             console.log('[TenantContext] Retrying tenant load after network error...');
             loadUserTenants();
           }
         }, 3000); // Retry after 3 seconds
       }
     }
-  }, [user]);
+  }, [user?.id]);
 
   const refreshTenants = useCallback(async () => {
     if (user?.id) {
@@ -257,7 +212,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return tenant;
   }, [user, refreshTenants, switchTenant]);
 
-  const getDashboardStats = useCallback(async (tenantId: string, userId?: string) => {
+  const getDashboardStats = useCallback(async (tenantId: string, userId?: string, forceRefresh = false) => {
     if (!tenantId) {
       console.warn('[TenantContext] getDashboardStats called with missing tenantId');
       return { stats: null, error: 'Missing tenantId' };
@@ -269,8 +224,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      const stats = await tenantService.getDashboardStats(tenantId, userId);
-      return { stats, error: null };
+      // tenantService.getDashboardStats already returns { stats, error }
+      const result = await tenantService.getDashboardStats(tenantId, userId, forceRefresh);
+      return result; // pass through directly — do NOT double-wrap
     } catch (error) {
       console.error('[TenantContext] getDashboardStats failed:', error);
       return { stats: null, error: 'Failed to fetch stats' };
@@ -295,6 +251,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
       return () => clearTimeout(timeoutId);
     } else {
+      hasResolvedOnceRef.current = false;
+      tenantService.clearCurrentTenant();
       setCurrentTenant(null);
       setUserTenants([]);
       setIsLoading(false);

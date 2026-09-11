@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import * as cheerio from 'cheerio';
+import { scraperEmailDiscoverySchema } from '@/schemas/validation';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { assertSafeExternalHttpUrl } from '@/lib/security/externalUrl';
 
 /**
  * CLIENT-SIDE EMAIL DISCOVERY ENGINE
@@ -187,7 +191,6 @@ async function discoverViaGitHub(companyName: string, domain: string): Promise<E
  */
 async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]> {
   const results: EmailResult[] = [];
-  let browserInstance = null;
   
   const urlsToTry = [
     `https://${domain}`,
@@ -198,9 +201,19 @@ async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]
     `https://www.${domain}/contact`
   ];
   
+  let closeSession: (() => Promise<void>) | null = null;
   try {
-    const { page, browser } = await BrowserManager.createPage();
-    browserInstance = browser;
+    const { page, close } = await BrowserManager.createPage();
+    closeSession = close;
+    await page.route('**/*', async (route) => {
+      if (!route.request().isNavigationRequest()) return route.continue();
+      try {
+        await assertSafeExternalHttpUrl(route.request().url());
+        await route.continue();
+      } catch {
+        await route.abort('blockedbyclient');
+      }
+    });
     
     for (const url of urlsToTry) {
       try {
@@ -295,7 +308,7 @@ async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]
     console.warn('[EmailDiscovery] Website scraping failed:', err);
     return [];
   } finally {
-    // Don't close browser to allow reuse
+    if (closeSession) await closeSession().catch(() => null);
   }
 }
 
@@ -306,9 +319,11 @@ async function discoverViaWebsiteScraping(domain: string): Promise<EmailResult[]
 async function discoverViaLinkedIn(companyName: string): Promise<EmailResult[]> {
   const results: EmailResult[] = [];
   
+  let closeSession: (() => Promise<void>) | null = null;
   try {
     // Use Playwright to search LinkedIn
-    const { page, browser } = await BrowserManager.createPage();
+    const { page, close } = await BrowserManager.createPage();
+    closeSession = close;
     
     // Search for company employees on LinkedIn (public pages only)
     const searchUrl = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(companyName)}`;
@@ -319,11 +334,12 @@ async function discoverViaLinkedIn(companyName: string): Promise<EmailResult[]> 
     // Note: LinkedIn blocks most scraping, this is a best-effort attempt
     // In practice, this may return empty results due to LinkedIn's anti-scraping
     
-    await browser.close();
     return results;
   } catch (err) {
     console.warn('[EmailDiscovery] LinkedIn lookup failed:', err);
     return [];
+  } finally {
+    if (closeSession) await closeSession().catch(() => null);
   }
 }
 
@@ -379,17 +395,15 @@ function processResults(results: EmailResult[]): EmailResult[] {
  */
 export async function POST(request: Request) {
   try {
+    await requireAuthenticatedUser(request);
     const body = await request.json();
-    const { 
-      domain,
-      company_name,
-      methods = ['all'],
-      verify = false 
-    } = body;
-
-    if (!domain) {
-      return NextResponse.json({ error: 'Domain required' }, { status: 400 });
+    const parsed = scraperEmailDiscoverySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { domain: domainInput, company_name, methods = ['all'], verify = false } = parsed.data;
+    const domainUrl = await assertSafeExternalHttpUrl(`https://${domainInput}`);
+    const domain = domainUrl.hostname.toLowerCase();
 
     const company = company_name || domain.replace(/\.\w+$/, '');
     const allResults: EmailResult[] = [];
@@ -430,11 +444,12 @@ export async function POST(request: Request) {
           status: 'success', 
           count: results.length 
         };
-      } catch (err: any) {
-        sourceStatus[method] = { 
-          status: 'error', 
+      } catch (err: unknown) {
+        console.warn('[EmailDiscovery] method failed:', method, err);
+        sourceStatus[method] = {
+          status: 'error',
           count: 0,
-          error: err.message 
+          error: 'This discovery method did not complete. Try again.',
         };
       }
     }
@@ -477,12 +492,9 @@ export async function POST(request: Request) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[EmailDiscovery] Fatal error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Internal error' 
-    }, { status: 500 });
+    return clientErrorResponse(error, { request, scope: 'scraper/email-discovery.POST' });
   }
 }
 
@@ -490,20 +502,20 @@ export async function POST(request: Request) {
  * GET handler for simple domain check
  */
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const domain = searchParams.get('domain');
-  
-  if (!domain) {
-    return NextResponse.json({ error: 'Domain required' }, { status: 400 });
+  try {
+    await requireAuthenticatedUser(request);
+    const { searchParams } = new URL(request.url);
+    const domainInput = searchParams.get('domain');
+    if (!domainInput) return NextResponse.json({ error: 'Domain required' }, { status: 400 });
+    const domain = (await assertSafeExternalHttpUrl(`https://${domainInput}`)).hostname.toLowerCase();
+    const results = await discoverViaDNS(domain);
+    return NextResponse.json({
+      domain,
+      has_email_capability: results.length > 0,
+      emails: results,
+      source: 'dns_lookup'
+    });
+  } catch (error) {
+    return routeErrorResponse(error, 'Domain lookup failed', request);
   }
-
-  // Simple DNS check only for GET requests
-  const results = await discoverViaDNS(domain);
-  
-  return NextResponse.json({
-    domain,
-    has_email_capability: results.length > 0,
-    emails: results,
-    source: 'dns_lookup'
-  });
 }

@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { getPlanLimits } from '@/lib/planLimits';
+import { SubscriptionPlan } from './tenancy/types';
 
 /**
  * Quota Enforcement Service
@@ -42,8 +44,46 @@ export const quotaEnforcementService = {
         tenantId: string,
         metricName: MetricName
     ): Promise<{ allowed: boolean; reason?: string; currentUsage?: number; limit?: number }> {
-        // Platform is now Unlimited as per user request
-        return { allowed: true };
+        try {
+            const cachedTenant = tenantService.getCachedCurrentTenant();
+            let plan = (cachedTenant?.id === tenantId
+                ? cachedTenant.subscription_plan
+                : null) as SubscriptionPlan | null;
+
+            if (!plan) {
+                const { data: tenantRow, error: tenantError } = await supabase
+                    .from('tenants')
+                    .select('subscription_plan')
+                    .eq('id', tenantId)
+                    .single();
+
+                if (tenantError) throw tenantError;
+                plan = (tenantRow?.subscription_plan as SubscriptionPlan) || 'free';
+            }
+
+            const limits = getPlanLimits(plan);
+            const usage = await this.getUsageSummary(tenantId);
+            const metricUsage = usage.find((item) => item.metric_name === metricName);
+            const fallbackLimit = this.getFallbackLimitForMetric(metricName, limits);
+            const currentUsage = metricUsage?.current_value ?? 0;
+            const limit = metricUsage?.limit_value ?? fallbackLimit;
+
+            if (limit < 0) {
+                return { allowed: true, currentUsage, limit };
+            }
+
+            const allowed = currentUsage < limit;
+
+            return {
+                allowed,
+                reason: allowed ? undefined : `You've reached your ${this.formatMetricLabel(metricName)} limit for the ${plan} plan.`,
+                currentUsage,
+                limit,
+            };
+        } catch (error) {
+            console.error('Error checking quota:', error);
+            return { allowed: true };
+        }
     },
 
     /**
@@ -86,6 +126,17 @@ export const quotaEnforcementService = {
      * Get usage summary for tenant
      */
     async getUsageSummary(tenantId: string): Promise<UsageSummary[]> {
+        if (!tenantId || tenantId === 'undefined' || tenantId === 'null') {
+            return [];
+        }
+        
+        // Simple UUID format check
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(tenantId)) {
+            console.warn('[QuotaService] Invalid tenantId format:', tenantId);
+            return [];
+        }
+
         try {
             const { data, error } = await supabase.rpc('get_tenant_usage_summary', {
                 p_tenant_id: tenantId,
@@ -345,11 +396,38 @@ export const quotaEnforcementService = {
     formatUsage(usage: UsageSummary): string {
         const { current_value, limit_value, percentage_used } = usage;
 
-        if (limit_value === 999999) {
-            return `${current_value.toLocaleString()} (Unlimited)`;
+        if (limit_value < 0) {
+            return `${current_value.toLocaleString()} (Unlimited plan)`;
         }
 
         return `${current_value.toLocaleString()} / ${limit_value.toLocaleString()} (${percentage_used.toFixed(1)}%)`;
+    },
+
+    getFallbackLimitForMetric(metricName: MetricName, limits: ReturnType<typeof getPlanLimits>): number {
+        switch (metricName) {
+            case 'users':
+                return limits.users;
+            case 'projects':
+                return limits.projects;
+            case 'storage_mb':
+                return limits.storage === -1 ? -1 : limits.storage * 1024;
+            case 'api_calls':
+                return limits.apiCallsPerMonth;
+            case 'contracts':
+                return limits.contractTemplates;
+            case 'team_members':
+                return limits.teamMembers;
+            case 'ai_requests':
+                return limits.aiQueriesPerMonth;
+            case 'video_minutes':
+                return -1;
+            default:
+                return -1;
+        }
+    },
+
+    formatMetricLabel(metricName: MetricName): string {
+        return metricName.replace(/_/g, ' ');
     },
 
     /**

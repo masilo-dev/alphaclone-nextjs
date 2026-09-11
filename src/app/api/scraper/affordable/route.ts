@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
+import { requireAuthenticatedUser, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { freePlacesService } from '@/services/freePlacesService';
+import { apolloService } from '@/services/apolloService';
+import { scraperAffordableSchema } from '@/schemas/validation';
+import { loadLeadProviderPolicy, paidProviderAllowed } from '@/lib/lead-finder/providerPolicy';
 
 // Affordable Scraping Tools Integration
 // Replaces expensive Apollo/ZoomInfo with cost-effective alternatives
@@ -32,8 +37,24 @@ interface GooglePlaceResult {
   website?: string;
   rating?: number;
   reviews?: number;
-  opening_hours?: string[];
   place_id: string;
+  maps_url?: string;
+}
+
+interface ApolloEnrichmentResult {
+  matched: boolean;
+  raw: unknown;
+  person: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    title?: string;
+    email?: string;
+    phone?: string;
+    linkedinUrl?: string;
+    organizationName?: string;
+    domain?: string;
+  } | null;
 }
 
 /**
@@ -155,79 +176,37 @@ async function builtWithLookup(domain: string): Promise<BuiltWithResult | null> 
 }
 
 /**
- * GOOGLE PLACES API - Local Business Data
- * Cost: $200 free tier/month, then pay-per-use (~$17 per 1000 requests)
- * Best for: Local business search with real data
+ * FREE PLACES SEARCH - Foursquare + OSM (zero API cost)
+ * Replaces Google Places API ($200+ free tier, then pay-per-use)
  */
-async function googlePlacesSearch(
-  query: string, 
-  location: string, 
+async function freePlacesSearch(
+  query: string,
+  location: string,
   radius: number = 5000
 ): Promise<GooglePlaceResult[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) {
-    console.warn('[AffordableScraper] Google Places API key not configured');
-    return [];
-  }
-
   try {
-    // Step 1: Geocode the location
-    const geoRes = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    
-    const geoData = await geoRes.json();
-    if (!geoData.results?.[0]?.geometry?.location) {
-      console.warn('[AffordableScraper] Could not geocode location:', location);
-      return [];
-    }
-    
-    const { lat, lng } = geoData.results[0].geometry.location;
+    const placesResult = await freePlacesService.searchPlacesForLeads(query, location, undefined, {
+      radiusKm: Math.min(Math.max(Math.round(radius / 1000), 1), 50),
+      maxResults: 10,
+    });
 
-    // Step 2: Search places
-    const searchRes = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=${radius}&keyword=${encodeURIComponent(query)}&key=${apiKey}`,
-      { signal: AbortSignal.timeout(10000) }
-    );
-
-    const searchData = await searchRes.json();
-    if (searchData.status !== 'OK') {
-      console.warn('[AffordableScraper] Google Places error:', searchData.status);
+    if (placesResult.error && placesResult.places.length === 0) {
+      console.warn('[AffordableScraper] Free places error:', placesResult.error);
       return [];
     }
 
-    // Step 3: Get details for each place
-    const results: GooglePlaceResult[] = [];
-    
-    for (const place of searchData.results.slice(0, 10)) {
-      try {
-        const detailsRes = await fetch(
-          `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,opening_hours&key=${apiKey}`,
-          { signal: AbortSignal.timeout(8000) }
-        );
-
-        const details = await detailsRes.json();
-        if (details.status === 'OK' && details.result) {
-          results.push({
-            name: details.result.name,
-            address: details.result.formatted_address,
-            phone: details.result.formatted_phone_number,
-            website: details.result.website,
-            rating: details.result.rating,
-            reviews: details.result.user_ratings_total,
-            opening_hours: details.result.opening_hours?.weekday_text,
-            place_id: place.place_id,
-          });
-        }
-      } catch (e) {
-        console.warn('[AffordableScraper] Failed to get place details:', e);
-      }
-    }
-
-    return results;
+    return placesResult.places.map((place) => ({
+      name: place.businessName,
+      address: place.formattedAddress,
+      phone: place.phone || undefined,
+      website: place.website || undefined,
+      rating: place.rating,
+      reviews: place.userRatingCount,
+      place_id: place.placeId,
+      maps_url: place.googleMapsUri,
+    }));
   } catch (err) {
-    console.error('[AffordableScraper] Google Places error:', err);
+    console.error('[AffordableScraper] Free places error:', err);
     return [];
   }
 }
@@ -239,20 +218,28 @@ async function googlePlacesSearch(
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { 
-      action,
-      domain,
-      email,
-      query,
-      location,
-      tenant_id 
-    } = body;
+    const parsed = scraperAffordableSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
+    }
+    const { action, domain, email, query, location, tenant_id, first_name, last_name, organization_name, linkedin_url } = parsed.data;
 
-    if (!action) {
-      return NextResponse.json({ error: 'Action required' }, { status: 400 });
+    if (tenant_id) {
+      await requireTenantAccess(tenant_id);
+    } else {
+      await requireAuthenticatedUser();
     }
 
     let results: any = {};
+    const policy = tenant_id
+      ? await loadLeadProviderPolicy(createSupabaseAdminClient(), tenant_id)
+      : { freeOnly: true, providers: {} };
+    const allowHunter = paidProviderAllowed(policy, 'hunter', process.env.HUNTER_API_KEY);
+    const allowBuiltWith = paidProviderAllowed(policy, 'builtwith', process.env.BUILTWITH_API_KEY);
+    const allowApollo = paidProviderAllowed(policy, 'apollo', process.env.APOLLO_API_KEY);
+    if ((action.startsWith('hunter_') && !allowHunter) || (action === 'builtwith' && !allowBuiltWith)) {
+      return NextResponse.json({ success: true, status: 'skipped', reason: 'provider_not_enabled_or_configured', results: [] });
+    }
 
     switch (action) {
       case 'hunter_domain': {
@@ -303,13 +290,13 @@ export async function POST(request: Request) {
         if (!query || !location) {
           return NextResponse.json({ error: 'Query and location required' }, { status: 400 });
         }
-        const places = await googlePlacesSearch(query, location);
+        const places = await freePlacesSearch(query, location);
         results = {
           success: true,
-          source: 'google.places',
+          source: 'free.places',
           places,
           count: places.length,
-          cost_estimate: `$${(places.length * 0.017).toFixed(2)}`
+          cost_estimate: 'FREE (Foursquare + OSM)'
         };
         break;
       }
@@ -320,9 +307,19 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Domain required for enrichment' }, { status: 400 });
         }
 
-        const [emails, techData] = await Promise.all([
-          hunterDomainSearch(domain),
-          builtWithLookup(domain)
+        const [emails, techData, apolloMatch] = await Promise.all([
+          allowHunter ? hunterDomainSearch(domain) : Promise.resolve([]),
+          allowBuiltWith ? builtWithLookup(domain) : Promise.resolve(null),
+          allowApollo && (first_name || last_name || email || organization_name || linkedin_url || domain)
+            ? apolloService.matchPerson({
+                firstName: first_name,
+                lastName: last_name,
+                email,
+                domain,
+                organizationName: organization_name,
+                linkedinUrl: linkedin_url,
+              })
+            : Promise.resolve(null),
         ]);
 
         // Verify top emails
@@ -333,17 +330,37 @@ export async function POST(request: Request) {
           })
         );
 
+        const apolloPerson = (apolloMatch as ApolloEnrichmentResult | null)?.person || null;
+        if (apolloPerson?.email) {
+          verifiedEmails.unshift({
+            email: apolloPerson.email,
+            score: 90,
+            type: 'apollo',
+            first_name: apolloPerson.firstName,
+            last_name: apolloPerson.lastName,
+            position: apolloPerson.title,
+            valid: false,
+          });
+        }
+
         results = {
           success: true,
           domain,
           emails: verifiedEmails,
           technology: techData,
+          apollo: apolloMatch
+            ? {
+                matched: apolloMatch.matched,
+                person: apolloPerson,
+              }
+            : null,
           cost_estimate: {
             hunter: '$0.50-1.00',
             builtwith: 'Free tier',
-            total: '~$1.00 vs Apollo $5-10'
+            apollo: apolloMatch ? '$0 (internal enrichment)' : '$0 (not used)',
+            total: '~$1.00 vs external Apollo enrichment'
           },
-          savings: '80-90% vs premium tools'
+          savings: 'Cost varies by provider and usage'
         };
         break;
       }
@@ -375,11 +392,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(results);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[AffordableScraper] Fatal error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Internal error' 
-    }, { status: 500 });
+    return routeErrorResponse(error, undefined, request);
   }
 }

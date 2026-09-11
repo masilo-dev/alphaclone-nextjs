@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { refreshCalendlyTokenIfNeeded } from '@/services/calendly/calendlyIntegrationService';
 
 export async function GET(req: Request) {
     try {
@@ -10,19 +12,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing tenant ID' }, { status: 400 });
         }
 
-        const supabase = createSupabaseAdminClient();
-        const { data: tenant, error } = await supabase
-            .from('tenants')
-            .select('settings')
-            .eq('id', tenantId)
-            .single();
-
-        if (error || !tenant) {
-            return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
-        }
-
-        const config = tenant.settings?.calendly;
-        if (!config || !config.accessToken || !config.calendlyUserUri) {
+        const { admin: supabase } = await requireTenantAccess(tenantId, req);
+        const config = await refreshCalendlyTokenIfNeeded(supabase, tenantId);
+        if (!config?.accessToken || !config.calendlyUserUri) {
             return NextResponse.json({ error: 'Calendly OAuth is not configured for this tenant' }, { status: 400 });
         }
 
@@ -53,17 +45,18 @@ export async function GET(req: Request) {
                 }, { status: 403 });
             }
 
-            return NextResponse.json({ 
-                error: `Calendly API error: ${response.status}`, 
-                details: errorText 
-            }, { status: response.status });
+            console.error('Calendly event-types error body:', errorText);
+            return NextResponse.json(
+                { error: 'Calendly request failed', code: 'CALENDLY_API_ERROR', status: response.status },
+                { status: response.status }
+            );
         }
 
         const data = await response.json();
         return NextResponse.json({ eventTypes: data.collection || [] });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('API /calendly/event-types Error:', err);
-        return NextResponse.json({ error: 'Internal Server Error', details: err.message }, { status: 500 });
+        return routeErrorResponse(err, undefined, req);
     }
 }

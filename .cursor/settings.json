@@ -2,6 +2,25 @@
   "plugins": {
     "vercel": {
       "enabled": true
+    },
+    "supabase": {
+      "enabled": true
+    },
+    "cursor-team-kit": {
+      "enabled": true
+    },
+    "create-plugin": {
+      "enabled": true
+    },
+    "shadcn": {
+      "enabled": true
+    },
+    "context7-plugin": {
+      "enabled": true
+    },
+    "stripe": {
+      "enabled": true
     }
-  }
+  },
+  "css.lint.unknownAtRules": "ignore"
 }

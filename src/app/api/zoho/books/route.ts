@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ZohoBooksService } from '../../../../services/zoho/ZohoBooksService';
 import { ZohoAuthExpiredError } from '../../../../services/zoho/ZohoService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess } from '@/lib/apiAuth';
 
 async function getUser(req: NextRequest) {
     const supabase = await createSupabaseServerClient();
@@ -16,11 +17,14 @@ async function getUser(req: NextRequest) {
 
 function handleError(err: unknown): NextResponse {
     if (err instanceof ZohoAuthExpiredError) {
-        return NextResponse.json({ error: err.message, reconnect: true }, { status: 401 });
+        console.error('[Zoho Books API] auth expired:', err);
+        return NextResponse.json(
+            { error: 'Zoho Books session expired. Reconnect Zoho.', code: 'ZOHO_BOOKS_RECONNECT', reconnect: true },
+            { status: 401 }
+        );
     }
-    const msg = err instanceof Error ? err.message : 'Internal server error';
-    console.error('[Zoho Books API]', msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[Zoho Books API]', err);
+    return NextResponse.json({ error: 'Zoho Books request failed on our side. Try again or reconnect Zoho if it repeats.', code: 'INTERNAL_ERROR' }, { status: 500 });
 }
 
 // GET /api/zoho/books?action=<action>
@@ -33,8 +37,9 @@ export async function GET(req: NextRequest) {
     const tenantId = searchParams.get('tenantId');
 
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+    await requireTenantAccess(tenantId, req);
 
-    const books = new ZohoBooksService(user.id);
+    const books = new ZohoBooksService(user.id, tenantId);
 
     try {
         switch (action) {
@@ -84,8 +89,9 @@ export async function POST(req: NextRequest) {
 
     const { action, tenantId, ...payload } = await req.json();
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+    await requireTenantAccess(tenantId, req);
 
-    const books = new ZohoBooksService(user.id);
+    const books = new ZohoBooksService(user.id, tenantId);
 
     try {
         switch (action) {

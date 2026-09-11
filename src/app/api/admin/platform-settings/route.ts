@@ -3,6 +3,7 @@ import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requirePlatformSuperAdmin, routeErrorResponse } from '@/lib/apiAuth';
 import type { PlatformEnvStatus, PlatformGlobalSettings } from '@/types/platformSettings';
+import { isVapidConfigured } from '@/lib/push/vapidEnv';
 
 const SINGLETON = 'default';
 
@@ -19,6 +20,27 @@ function buildEnvStatus(): PlatformEnvStatus {
     anthropic: !!ENV.ANTHROPIC_API_KEY,
     openai: !!ENV.OPENAI_API_KEY,
     gemini: !!ENV.VITE_GEMINI_API_KEY,
+    whatsapp: !!(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID),
+    linkedin: !!(process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET),
+    instagram: !!(process.env.INSTAGRAM_ACCESS_TOKEN),
+    twitter: !!(process.env.TWITTER_API_KEY && process.env.TWITTER_API_SECRET),
+    zoho: !!(process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET),
+    microsoft365: !!(
+      (ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID) &&
+      (ENV.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET)
+    ),
+    outlook: !!(
+      (ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID) &&
+      (ENV.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET)
+    ),
+    gmail: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+    deepseek: !!process.env.DEEPSEEK_API_KEY,
+    turnstile: !!(
+      ((process.env.TURNSTILE_SECRET && process.env.TURNSTILE_SECRET !== 'placeholder') ||
+        (process.env.TURNSTILE_SECRET_KEY && process.env.TURNSTILE_SECRET_KEY !== 'placeholder')) &&
+      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    ),
+    webPush: isVapidConfigured(),
   };
 }
 
@@ -39,7 +61,7 @@ export async function GET() {
       .maybeSingle();
 
     if (error) {
-      console.error('[platform-settings] GET:', error.message);
+      console.error('[platform-settings] GET:', error);
       return NextResponse.json({ error: 'Failed to load settings' }, { status: 500 });
     }
 
@@ -89,7 +111,7 @@ export async function PUT(req: NextRequest) {
     );
 
     if (error) {
-      console.error('[platform-settings] PUT:', error.message);
+      console.error('[platform-settings] PUT:', error);
       return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
     }
 

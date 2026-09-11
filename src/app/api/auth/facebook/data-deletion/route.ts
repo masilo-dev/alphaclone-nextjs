@@ -30,7 +30,7 @@ function parseSignedRequest(signedRequest: string, appSecret: string): Record<st
 }
 
 export async function GET() {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
     return NextResponse.json({
         url: `${appUrl}/data-deletion`,
         instructions: 'Visit the URL to submit a data deletion request.',
@@ -39,7 +39,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     const appSecret = process.env.FACEBOOK_APP_SECRET;
-    const appUrl    = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
+    const appUrl    = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
 
     if (!appSecret) {
         return NextResponse.json({ error: 'App not configured' }, { status: 500 });

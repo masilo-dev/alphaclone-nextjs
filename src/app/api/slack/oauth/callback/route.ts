@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { upsertSlackIntegration } from '@/services/slack/slackIntegrationService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { slackService } from '@/services/slackService';
 
 export async function GET(request: NextRequest) {
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
@@ -12,13 +13,23 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('[Slack OAuth] Error:', error);
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=${encodeURIComponent(error)}`
+        `${appUrl}/dashboard/marketplace?error=${encodeURIComponent(error)}`
       );
     }
 
-    if (!code) {
+    if (!code || !state) {
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=missing_code`
+        `${appUrl}/dashboard/marketplace?error=missing_code`
+      );
+    }
+
+    const admin = createSupabaseAdminClient();
+    const { data: stateData, error: stateError } = await admin.from('oauth_states')
+      .delete().eq('id', state).select('user_id, tenant_id, metadata, created_at').single();
+    const stateCreatedAt = stateData?.created_at ? new Date(stateData.created_at).getTime() : 0;
+    if (stateError || !stateData?.tenant_id || !stateData?.user_id || stateData.metadata?.provider !== 'slack' || !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60_000) {
+      return NextResponse.redirect(
+        `${appUrl}/dashboard/marketplace?error=invalid_state`
       );
     }
 
@@ -41,7 +52,7 @@ export async function GET(request: NextRequest) {
     if (!tokenData.ok) {
       console.error('[Slack OAuth] Token exchange failed:', tokenData);
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=token_exchange_failed`
+        `${appUrl}/dashboard/marketplace?error=token_exchange_failed`
       );
     }
 
@@ -54,46 +65,52 @@ export async function GET(request: NextRequest) {
     });
 
     const teamData = await teamInfo.json();
+    const tenantId = stateData.tenant_id;
 
-    // Save integration to database
-    const supabase = createSupabaseAdminClient();
-    
-    // Get tenant from state or use default
-    const tenantId = state || 'default';
+    const { integrationId, error: saveError } = await upsertSlackIntegration({
+      tenantId,
+      teamId: tokenData.team.id,
+      teamName: teamData.team?.name || tokenData.team.name,
+      botUserId: tokenData.bot_user_id,
+      botAccessToken: tokenData.access_token,
+      userAccessToken: tokenData.authed_user?.access_token ?? null,
+      webhookUrl: tokenData.incoming_webhook?.url ?? null,
+      defaultChannel: tokenData.incoming_webhook?.channel_id,
+      scope: tokenData.scope,
+    });
 
-    const { error: dbError } = await supabase
-      .from('slack_integrations')
-      .upsert({
-        tenant_id: tenantId,
-        team_id: tokenData.team.id,
-        team_name: teamData.team?.name || tokenData.team.name,
-        bot_user_id: tokenData.bot_user_id,
-        bot_access_token: tokenData.access_token,
-        user_access_token: tokenData.authed_user?.access_token,
-        webhook_url: tokenData.incoming_webhook?.url,
-        default_channel: tokenData.incoming_webhook?.channel_id,
-        scope: tokenData.scope,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (dbError) {
-      console.error('[Slack OAuth] Database error:', dbError);
+    if (!integrationId || saveError) {
+      console.error('[Slack OAuth] Database error:', saveError);
       return NextResponse.redirect(
-        `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=database_error`
+        `${appUrl}/dashboard/marketplace?error=database_error`
       );
     }
+
+    const { error: connectionError } = await admin.from('tenant_integrations').upsert({
+      tenant_id: tenantId,
+      integration_id: 'slack',
+      status: 'connected',
+      connected_at: new Date().toISOString(),
+      configured_by: stateData.user_id,
+      metadata: { teamId: tokenData.team.id, teamName: teamData.team?.name || tokenData.team.name },
+    }, { onConflict: 'tenant_id,integration_id' });
+    if (connectionError) throw connectionError;
+    await admin.from('business_automation_events').insert({
+      tenant_id: tenantId,
+      event_type: 'integration_connected',
+      payload: { integrationId: 'slack', actorUserId: stateData.user_id },
+    });
 
     console.log('[Slack OAuth] Integration saved successfully');
 
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/integrations?success=slack_connected`
+      `${appUrl}/dashboard/marketplace?success=slack_connected`
     );
 
   } catch (error) {
     console.error('[Slack OAuth] Unexpected error:', error);
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=unexpected_error`
+      `${appUrl}/dashboard/marketplace?error=unexpected_error`
     );
   }
 }

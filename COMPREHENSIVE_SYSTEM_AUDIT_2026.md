@@ -248,7 +248,7 @@ image:1 Failed to load resource: the server responded with a status of 400 ()
 
 ### Error 4: Google Calendar Token Error
 ```
-ehekzoioqvtweugemktn.supabase.co/rest/v1/google_calendar_tokens?select=id&user_id=eq.xxx: 406
+<your-project-ref>.supabase.co/rest/v1/google_calendar_tokens?select=id&user_id=eq.xxx: 406
 ```
 
 **Root Cause:** Missing RLS policies or incorrect Accept headers

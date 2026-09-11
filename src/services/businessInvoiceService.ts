@@ -1,246 +1,89 @@
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
-import { journalEntryService } from './accounting/journalEntryService';
-import { chartOfAccountsService } from './accounting/chartOfAccountsService';
-import { activityService } from './activityService';
-import { quotaService } from './quotaService';
+import autoTable from 'jspdf-autotable';
+import { resolveInvoiceSenderName } from '@/lib/invoices/invoiceBranding';
+import { tenantService } from './tenancy/TenantService';
 
+function drawWrappedText(doc: any, text: string, x: number, y: number, maxWidth: number, options: { align?: 'left' | 'center' | 'right'; fontSize?: number; maxLines?: number } = {}): number {
+    const lines = doc.splitTextToSize(String(text || '').trim(), maxWidth);
+    const safeLines = Array.isArray(lines) ? lines : [String(lines || '')];
+    const displayLines = options.maxLines ? safeLines.slice(0, options.maxLines) : safeLines;
+    if (options.fontSize) doc.setFontSize(options.fontSize);
+    doc.text(displayLines.length ? displayLines : [''], x, y, { align: options.align || 'left' });
+    return Math.max(displayLines.length, 1);
+}
+
+export interface InvoiceLineItem { description: string; quantity: number; rate: number; amount: number }
 export interface BusinessInvoice {
     id: string;
     tenantId: string;
     clientId?: string;
     projectId?: string;
+    contractId?: string;
     invoiceNumber: string;
     issueDate: string;
     dueDate: string;
-    status: 'draft' | 'sent' | 'paid' | 'overdue';
+    status: 'draft' | 'sent' | 'viewed' | 'partially_paid' | 'paid' | 'overdue' | 'disputed' | 'void' | 'cancelled';
     subtotal: number;
     taxRate: number;
     tax: number;
     discountAmount: number;
     total: number;
+    amountPaid?: number;
+    balanceDue?: number;
+    autoFollowupEnabled?: boolean;
     lineItems: InvoiceLineItem[];
     notes?: string;
     isPublic: boolean;
     senderName?: string;
     bankDetails?: string;
     mobilePaymentDetails?: string;
-    signature?: { type: 'draw' | 'type', data: string };
+    signature?: { type: 'draw' | 'type'; data: string };
     createdAt: string;
     updatedAt: string;
 }
 
-export interface InvoiceLineItem {
-    description: string;
-    quantity: number;
-    rate: number;
-    amount: number;
+function mapInvoice(row: any): BusinessInvoice {
+    const lineRows = row.invoice_line_items || row.line_items || [];
+    return {
+        id: row.id, tenantId: row.tenant_id, clientId: row.client_id, projectId: row.project_id, contractId: row.contract_id,
+        invoiceNumber: row.invoice_number, issueDate: row.issue_date, dueDate: row.due_date, status: row.status,
+        subtotal: Number(row.subtotal || 0), taxRate: Number(row.tax_rate || 0), tax: Number(row.tax || 0),
+        discountAmount: Number(row.discount_amount || 0), total: Number(row.total || 0), amountPaid: Number(row.amount_paid || 0),
+        balanceDue: Number(row.balance_due ?? Number(row.total || 0) - Number(row.amount_paid || 0)), autoFollowupEnabled: row.auto_followup_enabled !== false,
+        lineItems: lineRows.map((item: any) => ({ description: item.description, quantity: Number(item.quantity || 0), rate: Number(item.rate ?? item.unit_price ?? 0), amount: Number(item.amount ?? Number(item.quantity || 0) * Number(item.rate ?? item.unit_price ?? 0)) })),
+        notes: row.notes, isPublic: Boolean(row.is_public), senderName: row.sender_name, bankDetails: row.bank_details,
+        mobilePaymentDetails: row.mobile_payment_details, signature: row.signature, createdAt: row.created_at, updatedAt: row.updated_at,
+    };
 }
 
 export const businessInvoiceService = {
-    /**
-     * Parse receipt metadata from notes field
-     */
+    normalizeLineItems(lineItems: InvoiceLineItem[] | undefined): InvoiceLineItem[] {
+        return (lineItems || []).map((item) => { const quantity = Number(item.quantity || 0); const rate = Number(item.rate || 0); return { description: item.description || '', quantity, rate, amount: Math.round(quantity * rate * 100) / 100 }; });
+    },
+
     parseMetadata(notes: string | undefined): any {
         if (!notes) return null;
-        try {
-            const match = notes.match(/---METADATA---([\s\S]*?)---METADATA---/);
-            if (match && match[1]) {
-                return JSON.parse(match[1]);
-            }
-        } catch (e) {
-            console.error('Error parsing metadata:', e);
-        }
-        return null;
+        try { const match = notes.match(/---METADATA---([\s\S]*?)---METADATA---/); return match?.[1] ? JSON.parse(match[1]) : null; }
+        catch { return null; }
     },
 
-    /**
-     * Get all invoices for a tenant
-     */
     async getInvoices(tenantId: string): Promise<{ invoices: BusinessInvoice[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .from('business_invoices')
-                .select('*')
-                .eq('tenant_id', tenantId)
-                .order('created_at', { ascending: false });
-
+            const { data, error } = await supabase.from('business_invoices').select('*, invoice_line_items(*)').eq('tenant_id', tenantId).order('created_at', { ascending: false });
             if (error) throw error;
-
-            const invoices = (data || []).map((inv: any) => ({
-                id: inv.id,
-                tenantId: inv.tenant_id,
-                clientId: inv.client_id,
-                projectId: inv.project_id,
-                invoiceNumber: inv.invoice_number,
-                issueDate: inv.issue_date,
-                dueDate: inv.due_date,
-                status: inv.status,
-                subtotal: parseFloat(inv.subtotal || 0),
-                taxRate: parseFloat(inv.tax_rate || 0),
-                tax: parseFloat(inv.tax || 0),
-                discountAmount: parseFloat(inv.discount_amount || 0),
-                total: parseFloat(inv.total || 0),
-                lineItems: inv.line_items || [],
-                notes: inv.notes,
-                isPublic: inv.is_public || false,
-                senderName: inv.sender_name,
-                bankDetails: inv.bank_details,
-                mobilePaymentDetails: inv.mobile_payment_details,
-                signature: inv.signature,
-                createdAt: inv.created_at,
-                updatedAt: inv.updated_at
-            }));
-
-            return { invoices, error: null };
-        } catch (err: any) {
-            console.error('Error fetching invoices:', err);
-            return { invoices: [], error: err.message };
-        }
+            return { invoices: (data || []).map(mapInvoice), error: null };
+        } catch (error) { return { invoices: [], error: error instanceof Error ? error.message : 'Invoices could not be loaded' }; }
     },
 
-    /**
-     * Create a new invoice
-     */
     async createInvoice(tenantId: string, invoice: Partial<BusinessInvoice>): Promise<{ invoice: BusinessInvoice | null; error: string | null }> {
         try {
-            // Check quota limits
-            if (invoice.status !== 'draft') {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) throw new Error('Authentication required');
-
-                const quotaCheck = await quotaService.checkQuota('invoices', user.id);
-                if (!quotaCheck.allowed) {
-                    return { invoice: null, error: quotaCheck.message };
-                }
-            }
-
-            // Generate invoice number if not provided
-            const invoiceNumber = invoice.invoiceNumber || await this.generateInvoiceNumber(tenantId);
-
-            // Calculate default due date (14 days from issue date or today)
-            const issueDateObj = invoice.issueDate ? new Date(invoice.issueDate) : new Date();
-            const defaultDueDate = new Date(issueDateObj.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-            const payload = {
-                tenant_id: tenantId,
-                client_id: invoice.clientId || null,
-                project_id: invoice.projectId || null,
-                invoice_number: invoiceNumber,
-                issue_date: invoice.issueDate || new Date().toISOString().split('T')[0],
-                due_date: invoice.dueDate || defaultDueDate, // Fix: Use default instead of null
-                status: invoice.status || 'draft',
-                subtotal: invoice.subtotal || 0,
-                tax_rate: invoice.taxRate || 0,
-                tax: invoice.tax || 0,
-                discount_amount: invoice.discountAmount || 0,
-                total: invoice.total || 0,
-                line_items: invoice.lineItems || [],
-                notes: invoice.notes,
-                is_public: invoice.isPublic || false,
-                sender_name: invoice.senderName,
-                bank_details: invoice.bankDetails,
-                mobile_payment_details: invoice.mobilePaymentDetails,
-                signature: invoice.signature || null
-            };
-
-            // Debug logging
-            console.log('Creating invoice with payload:', payload);
-
-            let insertError;
-            let retryCount = 0;
-            const maxRetries = 2;
-            let currentPayload = { ...payload };
-            let finalData;
-
-            while (retryCount <= maxRetries) {
-                const { data, error } = await supabase
-                    .from('business_invoices')
-                    .insert(currentPayload)
-                    .select()
-                    .single();
-
-                if (!error) {
-                    finalData = data;
-                    break;
-                }
-
-                insertError = error;
-                // Check for duplicate key violation (PostgreSQL error code 23505)
-                if (error.code === '23505' && error.message?.includes('invoice_number')) {
-                    console.warn(`Duplicate invoice number detected. Retry ${retryCount + 1}/${maxRetries}...`);
-                    const nextInvoiceNumber = await this.generateInvoiceNumber(tenantId);
-                    currentPayload.invoice_number = nextInvoiceNumber;
-                    retryCount++;
-                } else {
-                    // Not a duplicate key error we can handle by retrying
-                    break;
-                }
-            }
-
-            if (!finalData) {
-                console.error('Final attempt to create invoice failed:', insertError);
-                throw insertError;
-            }
-
-            const data = finalData;
-
-            const newInvoice: BusinessInvoice = {
-                id: data.id,
-                tenantId: data.tenant_id,
-                clientId: data.client_id,
-                projectId: data.project_id,
-                invoiceNumber: data.invoice_number,
-                issueDate: data.issue_date,
-                dueDate: data.due_date,
-                status: data.status,
-                subtotal: parseFloat(data.subtotal || 0),
-                taxRate: parseFloat(data.tax_rate || 0),
-                tax: parseFloat(data.tax || 0),
-                discountAmount: parseFloat(data.discount_amount || 0),
-                total: parseFloat(data.total || 0),
-                lineItems: data.line_items || [],
-                notes: data.notes,
-                isPublic: data.is_public || false,
-                senderName: data.sender_name,
-                bankDetails: data.bank_details,
-                mobilePaymentDetails: data.mobile_payment_details,
-                signature: data.signature,
-                createdAt: data.created_at,
-                updatedAt: data.updated_at
-            };
-
-            if (newInvoice.id) {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    await activityService.logActivity(user.id, 'Invoice Created', {
-                        invoiceId: newInvoice.id,
-                        invoiceNumber: newInvoice.invoiceNumber,
-                        amount: newInvoice.total
-                    }, newInvoice.tenantId);
-                }
-
-                // Increment quota usage if invoice is not draft
-                if (newInvoice.status !== 'draft') {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                        const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('invoices', user.id);
-                        if (!quotaSuccess) {
-                            console.warn('Failed to increment invoice quota:', quotaError);
-                        }
-                    }
-                }
-            }
-
-            return { invoice: newInvoice, error: null };
-        } catch (err: any) {
-            console.error('Error creating invoice:', err);
-            // Enhanced logging for non-enumerable properties (like Error objects)
-            if (typeof err === 'object' && err !== null) {
-                console.error('Error details (JSON):', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-            }
-            return { invoice: null, error: err.message || 'Unknown error occurred during invoice creation' };
-        }
+            const lineItems = this.normalizeLineItems(invoice.lineItems);
+            const response = await fetch('/api/invoices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ...invoice, lineItems }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.invoice) throw new Error(payload.error || 'Invoice could not be created');
+            return { invoice: mapInvoice({ ...payload.invoice, line_items: lineItems }), error: null };
+        } catch (error) { return { invoice: null, error: error instanceof Error ? error.message : 'Invoice could not be created' }; }
     },
 
     /**
@@ -248,68 +91,19 @@ export const businessInvoiceService = {
      */
     async updateInvoice(invoiceId: string, updates: Partial<BusinessInvoice>): Promise<{ error: string | null }> {
         try {
-            // Get current invoice data to detect status changes
-            const { data: currentInvoice, error: fetchError } = await supabase
-                .from('business_invoices')
-                .select('*')
-                .eq('id', invoiceId)
-                .single();
-
-            if (fetchError) throw fetchError;
-
-            const updateData: Record<string, any> = {};
-
-            if (updates.clientId !== undefined) updateData.client_id = updates.clientId || null;
-            if (updates.projectId !== undefined) updateData.project_id = updates.projectId || null;
-            if (updates.issueDate !== undefined) updateData.issue_date = updates.issueDate;
-
-            // Fix: due_date is NOT NULL, so fallback to calculated date if cleared
-            if (updates.dueDate !== undefined) {
-                const baseDate = updates.issueDate ? new Date(updates.issueDate) : new Date();
-                const defaultDue = new Date(baseDate.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                updateData.due_date = updates.dueDate || defaultDue;
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { error: 'Select a workspace before updating an invoice' };
+            const body: Record<string, unknown> = { tenantId };
+            const mapping: Record<string, string> = { clientId: 'client_id', projectId: 'project_id', contractId: 'contract_id', issueDate: 'issue_date', dueDate: 'due_date', taxRate: 'tax_rate', discountAmount: 'discount_amount', lineItems: 'line_items', isPublic: 'is_public', senderName: 'sender_name', bankDetails: 'bank_details', mobilePaymentDetails: 'mobile_payment_details' };
+            for (const [key, value] of Object.entries(updates)) {
+                if (value === undefined || ['id', 'tenantId', 'invoiceNumber', 'createdAt', 'updatedAt'].includes(key)) continue;
+                body[mapping[key] || key] = key === 'lineItems' && Array.isArray(value)
+                    ? value.map((item: any) => ({ description: item.description, quantity: Number(item.quantity), unit_price: Number(item.rate ?? item.unit_price) }))
+                    : value;
             }
-
-            if (updates.status !== undefined) updateData.status = updates.status;
-            if (updates.subtotal !== undefined) updateData.subtotal = updates.subtotal;
-            if (updates.taxRate !== undefined) updateData.tax_rate = updates.taxRate;
-            if (updates.tax !== undefined) updateData.tax = updates.tax;
-            if (updates.discountAmount !== undefined) updateData.discount_amount = updates.discountAmount;
-            if (updates.total !== undefined) updateData.total = updates.total;
-            if (updates.lineItems !== undefined) updateData.line_items = updates.lineItems;
-            if (updates.notes !== undefined) updateData.notes = updates.notes;
-            if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
-            if (updates.senderName !== undefined) updateData.sender_name = updates.senderName;
-            if (updates.bankDetails !== undefined) updateData.bank_details = updates.bankDetails;
-            if (updates.mobilePaymentDetails !== undefined) updateData.mobile_payment_details = updates.mobilePaymentDetails;
-            if (updates.signature !== undefined) updateData.signature = updates.signature;
-
-            updateData.updated_at = new Date().toISOString();
-
-            const { error } = await supabase
-                .from('business_invoices')
-                .update(updateData)
-                .eq('id', invoiceId);
-
-            if (error) throw error;
-
-            // GL INTEGRATION: Post to accounting when status changes
-            if (updates.status && currentInvoice) {
-                const oldStatus = currentInvoice.status;
-                const newStatus = updates.status;
-
-                // When invoice is sent: DR Accounts Receivable, CR Revenue
-                if (oldStatus === 'draft' && newStatus === 'sent') {
-                    await this.postInvoiceToGL(invoiceId, currentInvoice);
-                }
-
-                // When invoice is paid: DR Cash, CR Accounts Receivable
-                if ((oldStatus === 'sent' || oldStatus === 'overdue') && newStatus === 'paid') {
-                    await this.postPaymentToGL(invoiceId, currentInvoice);
-                }
-            }
-
-            return { error: null };
+            const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Invoice could not be updated' };
         } catch (err: any) {
             console.error('Error updating invoice:', err);
             return { error: err.message };
@@ -323,83 +117,96 @@ export const businessInvoiceService = {
      */
     async deleteInvoice(invoiceId: string): Promise<{ error: string | null }> {
         try {
-            // CRITICAL: Check invoice status before deletion
-            const { data: existing, error: fetchError } = await supabase
-                .from('business_invoices')
-                .select('status, invoice_number')
-                .eq('id', invoiceId)
-                .single();
-
-            if (fetchError) {
-                return { error: fetchError.message };
-            }
-
-            // ACCOUNTING PROTECTION: Prevent deletion of posted invoices
-            if (existing?.status !== 'draft') {
-                return {
-                    error: `Cannot delete ${existing?.status} invoice ${existing?.invoice_number}. Posted invoices must be voided/cancelled to maintain audit trail.`
-                };
-            }
-
-            // Only draft invoices can be permanently deleted
-            const { error } = await supabase
-                .from('business_invoices')
-                .delete()
-                .eq('id', invoiceId);
-
-            if (error) throw error;
-
-            return { error: null };
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { error: 'Select a workspace before deleting an invoice' };
+            const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId }) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Invoice could not be deleted' };
         } catch (err: any) {
             console.error('Error deleting invoice:', err);
             return { error: err.message };
         }
     },
 
+    async bulkUpdateInvoices(
+        invoiceIds: string[],
+        changes: { status?: 'void' | 'cancelled'; disableFollowups?: true },
+        reason?: string,
+    ): Promise<{ error: string | null; count: number }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { error: 'Select a workspace before updating invoices', count: 0 };
+            const ids = [...new Set(invoiceIds)];
+            if (!ids.length) return { error: null, count: 0 };
+            if (ids.length > 200) return { error: 'Bulk invoice updates are limited to 200 invoices.', count: 0 };
+            const response = await fetch('/api/invoices/bulk', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, ids, changes, reason, finalConfirmation: true }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            return {
+                error: response.ok && payload.success ? null : payload.error || 'Invoices could not be updated in bulk',
+                count: Number(payload.updated || 0),
+            };
+        } catch (err: any) {
+            console.error('Error updating invoices in bulk:', err);
+            return { error: err.message, count: 0 };
+        }
+    },
+
+    async bulkDeleteInvoices(invoiceIds: string[]): Promise<{ error: string | null; count: number; skipped: number }> {
+        if (!invoiceIds.length) return { error: null, count: 0, skipped: 0 };
+        const uniqueIds = [...new Set(invoiceIds)];
+        let count = 0;
+        let skipped = 0;
+        for (const id of uniqueIds) {
+            const { error } = await this.deleteInvoice(id);
+            if (error) skipped += 1;
+            else count += 1;
+        }
+        return { error: null, count, skipped };
+    },
+
     /**
      * Generate next invoice number
-     * IMPROVED: Using a more robust approach to avoid race conditions
+     * Uses recent invoices and picks the highest numeric suffix to avoid lexicographic collisions.
      */
     async generateInvoiceNumber(tenantId: string): Promise<string> {
         try {
-            // Fetch the highest invoice number for this tenant
-            // Sorting by invoice_number descending instead of created_at
             const { data, error } = await supabase
                 .from('business_invoices')
                 .select('invoice_number')
                 .eq('tenant_id', tenantId)
-                .order('invoice_number', { ascending: false })
-                .limit(1);
+                .order('created_at', { ascending: false })
+                .limit(100);
 
             if (error) throw error;
 
-            if (data && data.length > 0) {
-                const lastNumber = data[0].invoice_number;
-                // Regular expression to find the numeric part (handling variations like INV-0001 or INV1001)
+            let maxNum = 1000;
+            let prefix = 'INV-';
+
+            for (const row of data || []) {
+                const lastNumber = row.invoice_number || '';
                 const match = lastNumber.match(/\d+/g);
-                if (match && match.length > 0) {
-                    // Take the last match (useful if the prefix has numbers)
-                    const lastNumericPart = match[match.length - 1];
-                    const nextNum = parseInt(lastNumericPart) + 1;
+                if (!match?.length) continue;
 
-                    // Maintain original padding if it was numeric lead
-                    const padding = lastNumericPart.length;
-                    const nextNumString = nextNum.toString().padStart(padding, '0');
+                const numeric = parseInt(match[match.length - 1], 10);
+                if (Number.isNaN(numeric) || numeric < maxNum) continue;
 
-                    // Reconstruct with original prefix
-                    const prefixMatch = lastNumber.match(/^[A-Z-]+/i);
-                    const prefix = prefixMatch ? prefixMatch[0] : 'INV-';
-
-                    return `${prefix}${nextNumString}`;
+                maxNum = numeric;
+                const prefixMatch = lastNumber.match(/^[A-Za-z-]+/);
+                if (prefixMatch?.[0]) {
+                    prefix = prefixMatch[0];
                 }
             }
 
-            // Default fallback
-            return 'INV-1001';
+            const nextNum = maxNum + 1;
+            const padding = Math.max(4, String(maxNum).length);
+            return `${prefix}${nextNum.toString().padStart(padding, '0')}`;
         } catch (err) {
             console.error('Error generating invoice number:', err);
-            // Unique enough to avoid collision but clearly a fallback
-            return `INV-${Date.now().toString().slice(-6)}`;
+            return `INV-${Date.now().toString().slice(-8)}`;
         }
     },
 
@@ -407,7 +214,8 @@ export const businessInvoiceService = {
      * Calculate invoice totals
      */
     calculateTotals(lineItems: InvoiceLineItem[], taxRate: number = 0, discountAmount: number = 0): { subtotal: number; tax: number; total: number } {
-        const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
+        const normalized = this.normalizeLineItems(lineItems);
+        const subtotal = normalized.reduce((sum, item) => sum + item.amount, 0);
         const tax = (subtotal - discountAmount) * (taxRate / 100);
         const total = (subtotal - discountAmount) + tax;
 
@@ -421,9 +229,11 @@ export const businessInvoiceService = {
     /**
      * Get an invoice with its related tenant and client details
      */
-    async getInvoiceWithDetails(invoiceId: string): Promise<{ invoice: any | null; error: string | null }> {
+    async getInvoiceWithDetails(invoiceId: string, tenantId?: string): Promise<{ invoice: any | null; error: string | null }> {
         try {
-            const { data, error } = await supabase
+            const activeTenantId = tenantId || tenantService.getCurrentTenantId();
+            if (!activeTenantId) throw new Error('Select a workspace before loading invoice details');
+            let query = supabase
                 .from('business_invoices')
                 .select(`
                     *,
@@ -436,7 +246,6 @@ export const businessInvoiceService = {
                         id,
                         name,
                         email,
-                        company,
                         phone
                     ),
                     project:project_id (
@@ -444,8 +253,11 @@ export const businessInvoiceService = {
                         name
                     )
                 `)
-                .eq('id', invoiceId)
-                .single();
+                .eq('id', invoiceId);
+
+            query = query.eq('tenant_id', activeTenantId);
+
+            const { data, error } = await query.single();
 
             if (error) throw error;
 
@@ -465,36 +277,15 @@ export const businessInvoiceService = {
      */
     async markAsPaid(invoiceId: string): Promise<{ error: string | null }> {
         try {
-            // Get invoice data first for GL posting
-            const { data: invoice, error: fetchError } = await supabase
-                .from('business_invoices')
-                .select('*')
-                .eq('id', invoiceId)
-                .single();
-
-            if (fetchError) throw fetchError;
-
-            const { error } = await supabase
-                .from('business_invoices')
-                .update({ status: 'paid', updated_at: new Date().toISOString() })
-                .eq('id', invoiceId);
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before recording payment');
+            const { data: invoice, error } = await supabase.from('business_invoices').select('total,amount_paid').eq('tenant_id', tenantId).eq('id', invoiceId).maybeSingle();
             if (error) throw error;
-
-            // GL INTEGRATION: Post payment to accounting
-            await this.postPaymentToGL(invoiceId, invoice);
-
-            // Log activity
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                await activityService.logActivity(user.id, 'Invoice Paid', {
-                    invoiceId: invoiceId,
-                    invoiceNumber: invoice.invoice_number,
-                    amount: invoice.total
-                }, invoice.tenant_id);
-            }
-
-            return { error: null };
+            if (!invoice) throw new Error('Invoice not found');
+            const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
+            if (!remaining) return { error: null };
+            const result = await this.recordPayment(invoiceId, remaining);
+            return { error: result.error };
         } catch (err: any) {
             console.error('Error marking invoice as paid:', err);
             return { error: err.message };
@@ -502,9 +293,38 @@ export const businessInvoiceService = {
     },
 
     /**
+     * Record a payment against an invoice (supports deposits / partials).
+     * Updates `amount_paid` and moves status to `partially_paid` or `paid`.
+     */
+    async recordPayment(
+        invoiceId: string,
+        amount: number
+    ): Promise<{ error: string | null; status?: BusinessInvoice['status']; amountPaid?: number }> {
+        try {
+            const paymentAmount = Number(amount || 0);
+            if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+                return { error: 'Payment amount must be greater than zero.' };
+            }
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before recording payment');
+            const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}/payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, amount: paymentAmount, idempotencyKey: crypto.randomUUID() }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.invoice) throw new Error(payload.error || 'Payment could not be recorded');
+            return { error: null, status: payload.invoice.status, amountPaid: Number(payload.invoice.amount_paid || 0) };
+        } catch (err: any) {
+            console.error('Error recording invoice payment:', err);
+            return { error: err.message || 'Failed to record payment' };
+        }
+    },
+
+    /**
      * Generate a professional PDF for a business invoice
      */
-    generatePDF(invoice: any, tenant: any, client: any, signature?: { type: 'draw' | 'type', data: string }) {
+    generatePDF(invoice: any, tenant: any, client: any, signature?: { type: 'draw' | 'type', data: string }, businessSettings?: { trading_name?: string | null; business_name?: string | null }) {
         const metadata = this.parseMetadata(invoice.notes);
         const isReceipt = metadata?.type === 'receipt' || (invoice.invoice_number || invoice.invoiceNumber || '').startsWith('REC-');
         
@@ -538,8 +358,12 @@ export const businessInvoiceService = {
         doc.rect(0, 0, pageWidth, 45, 'F');
 
         // --- HEADER SECTION ---
-        const logoUrl = tenant.logo_url || tenant.settings?.branding?.logo;
-        const senderName = invoice.senderName || tenant.name || 'AlphaClone Partner';
+        const logoUrl = tenant?.logo_url || tenant?.settings?.branding?.logo;
+        const senderName = resolveInvoiceSenderName(
+            { senderName: invoice.senderName },
+            tenant,
+            businessSettings
+        );
 
         // Logo
         if (logoUrl) {
@@ -549,7 +373,7 @@ export const businessInvoiceService = {
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(20);
                 doc.setTextColor(colors.white);
-                doc.text(senderName, margin + 28, 22);
+                drawWrappedText(doc, senderName, margin + 28, 18, 80, { fontSize: 20, maxLines: 2 });
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
@@ -561,13 +385,13 @@ export const businessInvoiceService = {
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(24);
                 doc.setTextColor(colors.white);
-                doc.text(senderName, margin, 25);
+                drawWrappedText(doc, senderName, margin, 21, 90, { fontSize: 24, maxLines: 2 });
             }
         } else {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(24);
             doc.setTextColor(colors.white);
-            doc.text(senderName, margin, 25);
+            drawWrappedText(doc, senderName, margin, 21, 90, { fontSize: 24, maxLines: 2 });
         }
 
         // Invoice Label & Number (Right Aligned in header)
@@ -587,72 +411,123 @@ export const businessInvoiceService = {
         doc.text(`ISSUED: ${invoice.issue_date || invoice.issueDate}`, pageWidth - margin, 31, { align: 'right' });
 
         // --- INFO BOXES ---
-        let currentY = 60;
+        let currentY = 55;
+        const colWidth = (contentWidth - 10) / 3;
 
-        // Bill To Box
+        // 1. FROM (Tenant) Box
         doc.setFillColor(colors.light);
-        doc.roundedRect(margin, currentY, contentWidth / 2 - 5, 40, 2, 2, 'F');
-
+        doc.roundedRect(margin, currentY, colWidth, 55, 2, 2, 'F');
+        
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         doc.setTextColor(colors.accent);
-        doc.text('CLIENT / BILL TO', margin + 5, currentY + 8);
+        doc.text('FROM', margin + 5, currentY + 8);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(colors.dark);
+        drawWrappedText(doc, senderName, margin + 5, currentY + 16, colWidth - 10, { fontSize: 10, maxLines: 2 });
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(colors.text);
+        let fromY = currentY + 22;
+        const tenantAddress = tenant?.address || tenant?.settings?.profile?.address;
+        const tenantPhone = tenant?.phone || tenant?.settings?.profile?.phone;
+        const tenantTaxId = tenant?.vat_number || tenant?.tax_id || tenant?.settings?.profile?.tax_id || tenant?.settings?.profile?.vat_number || tenant?.settings?.profile?.taxId;
+        
+        if (tenantAddress) {
+            const addrText = doc.splitTextToSize(tenantAddress, colWidth - 10);
+            doc.text(addrText, margin + 5, fromY);
+            fromY += (addrText.length * 4);
+        }
+        if (tenantPhone) {
+            doc.text(`Tel: ${tenantPhone}`, margin + 5, fromY);
+            fromY += 4;
+        }
+        if (tenantTaxId) {
+            doc.text(`Tax ID: ${tenantTaxId}`, margin + 5, fromY);
+        }
 
-        doc.setFontSize(11);
+        // 2. CLIENT / BILL TO Box
+        doc.setFillColor(colors.light);
+        doc.roundedRect(margin + colWidth + 5, currentY, colWidth, 55, 2, 2, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(colors.accent);
+        doc.text('CLIENT / BILL TO', margin + colWidth + 10, currentY + 8);
+        
+        doc.setFontSize(10);
         doc.setTextColor(colors.dark);
         const clientName = client?.name || invoice.client?.name || 'Valued Client';
-        doc.text(clientName, margin + 5, currentY + 16);
-
+        drawWrappedText(doc, clientName, margin + colWidth + 10, currentY + 16, colWidth - 10, { fontSize: 10, maxLines: 2 });
+        
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setTextColor(colors.text);
         let detailY = currentY + 22;
         const clientEmail = client?.email || invoice.client?.email;
         const clientCompany = client?.company || invoice.client?.company;
+        const clientAddress = client?.address || invoice.client?.address;
+        const clientPhone = client?.phone || invoice.client?.phone;
+        const clientTaxId = client?.tax_id || invoice.client?.tax_id || client?.vat_number;
 
         if (clientCompany) {
-            doc.text(clientCompany, margin + 5, detailY);
-            detailY += 5;
+            doc.text(clientCompany, margin + colWidth + 10, detailY);
+            detailY += 4;
         }
         if (clientEmail) {
-            doc.text(clientEmail, margin + 5, detailY);
+            doc.text(clientEmail, margin + colWidth + 10, detailY);
+            detailY += 4;
+        }
+        if (clientAddress) {
+            const addrText = doc.splitTextToSize(clientAddress, colWidth - 10);
+            doc.text(addrText, margin + colWidth + 10, detailY);
+            detailY += (addrText.length * 4);
+        }
+        if (clientPhone) {
+            doc.text(`Tel: ${clientPhone}`, margin + colWidth + 10, detailY);
+            detailY += 4;
+        }
+        if (clientTaxId) {
+            doc.text(`Tax ID: ${clientTaxId}`, margin + colWidth + 10, detailY);
         }
 
-        // Status / Dates Box
+        // 3. DOCUMENT DETAILS Box
         const status = invoice.status?.toUpperCase() || 'DRAFT';
         const isPaid = status === 'PAID';
 
         doc.setFillColor(colors.light);
-        doc.roundedRect(pageWidth / 2 + 5, currentY, contentWidth / 2 - 5, 40, 2, 2, 'F');
-
+        doc.roundedRect(margin + (colWidth * 2) + 10, currentY, colWidth, 55, 2, 2, 'F');
+        
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         doc.setTextColor(colors.accent);
-        doc.text('DOCUMENT DETAILS', pageWidth / 2 + 10, currentY + 8);
-
+        doc.text('DOCUMENT DETAILS', margin + (colWidth * 2) + 15, currentY + 8);
+        
         doc.setFontSize(9);
         doc.setTextColor(colors.text);
         doc.setFont('helvetica', 'normal');
-        doc.text('Due Date:', pageWidth / 2 + 10, currentY + 16);
+        doc.text('Due Date:', margin + (colWidth * 2) + 15, currentY + 18);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(colors.dark);
-        doc.text(invoice.due_date || invoice.dueDate, pageWidth / 2 + 35, currentY + 16);
-
+        doc.text(invoice.due_date || invoice.dueDate, margin + (colWidth * 2) + 15, currentY + 24);
+        
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(colors.text);
-        doc.text('Status:', pageWidth / 2 + 10, currentY + 23);
-
+        doc.text('Status:', margin + (colWidth * 2) + 15, currentY + 34);
+        
         // Status Badge
         const badgeColor = isPaid ? colors.success : (status === 'OVERDUE' ? colors.danger : colors.primary);
         doc.setFillColor(badgeColor);
-        doc.roundedRect(pageWidth / 2 + 35, currentY + 19, 20, 5, 1, 1, 'F');
+        doc.roundedRect(margin + (colWidth * 2) + 15, currentY + 38, 25, 6, 1, 1, 'F');
         doc.setFontSize(7);
         doc.setTextColor(colors.white);
         doc.setFont('helvetica', 'bold');
-        doc.text(status, pageWidth / 2 + 45, currentY + 22.5, { align: 'center' });
+        doc.text(status, margin + (colWidth * 2) + 27.5, currentY + 42.5, { align: 'center' });
 
         // --- LINE ITEMS TABLE ---
-        currentY = 115;
+        currentY = 120;
 
         doc.setFillColor(colors.primary);
         doc.roundedRect(margin, currentY, contentWidth, 10, 1, 1, 'F');
@@ -665,7 +540,7 @@ export const businessInvoiceService = {
         doc.text('AMOUNT', margin + 165, currentY + 6.5, { align: 'right' });
 
         currentY += 10;
-        const items = invoice.line_items || invoice.lineItems || [];
+        const items = this.normalizeLineItems(invoice.line_items || invoice.lineItems || []);
 
         items.forEach((item: any, index: number) => {
             if (index % 2 === 1) {
@@ -695,9 +570,15 @@ export const businessInvoiceService = {
         // --- TOTALS ---
         currentY += 10;
         const totalsX = pageWidth - margin - 60;
-        const subtotal = invoice.subtotal || 0;
-        const total = invoice.total || 0;
-        const tax = invoice.tax || 0;
+        const subtotalFromItems = Math.round(items.reduce((sum, item) => sum + item.amount, 0) * 100) / 100;
+        const discount = Number(invoice.discountAmount || invoice.discount_amount || 0);
+        const resolvedTaxRate = Number(invoice.taxRate ?? invoice.tax_rate ?? 0);
+        const computedTax = Math.round(Math.max(0, subtotalFromItems - discount) * (resolvedTaxRate / 100) * 100) / 100;
+        const subtotal = Number.isFinite(Number(invoice.subtotal)) ? Number(invoice.subtotal) : subtotalFromItems;
+        const tax = Number.isFinite(Number(invoice.tax)) ? Number(invoice.tax) : computedTax;
+        const total = Number.isFinite(Number(invoice.total))
+            ? Number(invoice.total)
+            : Math.round(((subtotalFromItems - discount) + computedTax) * 100) / 100;
 
         doc.setFontSize(9);
         doc.setTextColor(colors.text);
@@ -707,11 +588,10 @@ export const businessInvoiceService = {
 
         if (tax > 0) {
             currentY += 6;
-            doc.text(`Tax (${invoice.taxRate || invoice.tax_rate}%):`, totalsX, currentY);
+            doc.text(`Tax (${resolvedTaxRate}%):`, totalsX, currentY);
             doc.text(`$${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, pageWidth - margin, currentY, { align: 'right' });
         }
 
-        const discount = invoice.discountAmount || invoice.discount_amount || 0;
         if (discount > 0) {
             currentY += 6;
             doc.text('Discount:', totalsX, currentY);
@@ -793,154 +673,28 @@ export const businessInvoiceService = {
     },
 
     /**
-     * Post invoice to General Ledger when sent
-     * DR Accounts Receivable (1100)
-     *   CR Revenue (4100)
+     * Stages a 1-click payment reminder notification for an overdue invoice.
+     * Marks the invoice lifecycle_status as 'reminder_sent' and returns the staged email body.
      */
-    async postInvoiceToGL(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
+    async sendPaymentReminder(invoiceId: string, clientName: string, balanceDue: number, dueDate: string): Promise<{ success: boolean; message: string; error: string | null }> {
         try {
-            // Get account IDs for AR and Revenue
-            let { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
-            let { account: revenueAccount } = await chartOfAccountsService.getAccountByCode('4100');
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before sending a reminder');
 
-            if (!arAccount || !revenueAccount) {
-                console.warn('Accounts Receivable (1100) or Service Revenue (4100) not found. Attempting to initialize default accounts...');
-                await chartOfAccountsService.initializeDefaultAccounts();
+            // Stage the lifecycle status update so the team knows a reminder was triggered
+            await supabase
+                .from('business_invoices')
+                .update({ lifecycle_status: 'reminder_sent' })
+                .eq('tenant_id', tenantId)
+                .eq('id', invoiceId);
 
-                // Retry fetching accounts
-                const arRetry = await chartOfAccountsService.getAccountByCode('1100');
-                const revRetry = await chartOfAccountsService.getAccountByCode('4100');
+            const message = `Dear ${clientName},\n\nThis is a friendly reminder that your invoice of $${balanceDue.toFixed(2)} was due on ${dueDate} and remains outstanding.\n\nPlease arrange payment at your earliest convenience.\n\nThank you for your prompt attention.\n\nAlphaClone Billing Team`;
 
-                arAccount = arRetry.account;
-                revenueAccount = revRetry.account;
-
-                if (!arAccount || !revenueAccount) {
-                    console.error('Failed to initialize or retrieve required accounts (1100, 4100). Skipping GL post.');
-                    return { error: 'Required accounts not found and could not be initialized in Chart of Accounts' };
-                }
-            }
-
-            const total = parseFloat(invoiceData.total || '0');
-            const issueDate = invoiceData.issue_date || invoiceData.issueDate || new Date().toISOString().split('T')[0];
-            const invoiceNumber = invoiceData.invoice_number || invoiceData.invoiceNumber;
-
-            // Create journal entry
-            const { entry, error } = await journalEntryService.createEntry({
-                entryDate: issueDate,
-                description: `Invoice ${invoiceNumber} - Service Revenue`,
-                reference: invoiceNumber,
-                sourceType: 'invoice',
-                sourceId: invoiceId,
-                lines: [
-                    {
-                        accountId: arAccount.id,
-                        debitAmount: total,
-                        creditAmount: 0,
-                        description: `AR - Invoice ${invoiceNumber}`,
-                        entityType: 'invoice',
-                        entityId: invoiceId,
-                    },
-                    {
-                        accountId: revenueAccount.id,
-                        debitAmount: 0,
-                        creditAmount: total,
-                        description: `Revenue - Invoice ${invoiceNumber}`,
-                        entityType: 'invoice',
-                        entityId: invoiceId,
-                    },
-                ],
-            });
-
-            if (error) {
-                console.error('Failed to create journal entry for invoice:', error);
-                return { error };
-            }
-
-            // Auto-post the entry
-            if (entry) {
-                await journalEntryService.postEntry(entry.id);
-            }
-
-            return { error: null };
+            return { success: true, message, error: null };
         } catch (err: any) {
-            console.error('Error posting invoice to GL:', err);
-            return { error: err.message };
+            console.error('[businessInvoiceService] sendPaymentReminder error:', err);
+            return { success: false, message: '', error: err.message || 'Failed to stage payment reminder' };
         }
     },
 
-    /**
-     * Post payment to General Ledger when invoice is paid
-     * DR Cash (1000)
-     *   CR Accounts Receivable (1100)
-     */
-    async postPaymentToGL(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
-        try {
-            // Get account IDs for Cash and AR
-            let { account: cashAccount } = await chartOfAccountsService.getAccountByCode('1000');
-            let { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
-
-            if (!cashAccount || !arAccount) {
-                console.warn('Cash (1000) or Accounts Receivable (1100) not found. Attempting to initialize default accounts...');
-                await chartOfAccountsService.initializeDefaultAccounts();
-
-                // Retry fetching accounts
-                const cashRetry = await chartOfAccountsService.getAccountByCode('1000');
-                const arRetry = await chartOfAccountsService.getAccountByCode('1100');
-
-                cashAccount = cashRetry.account;
-                arAccount = arRetry.account;
-
-                if (!cashAccount || !arAccount) {
-                    console.error('Failed to initialize or retrieve required accounts (1000, 1100). Skipping GL post.');
-                    return { error: 'Required accounts not found and could not be initialized in Chart of Accounts' };
-                }
-            }
-
-            const total = parseFloat(invoiceData.total || '0');
-            const paymentDate = new Date().toISOString().split('T')[0];
-            const invoiceNumber = invoiceData.invoice_number || invoiceData.invoiceNumber;
-
-            // Create journal entry
-            const { entry, error } = await journalEntryService.createEntry({
-                entryDate: paymentDate,
-                description: `Payment received for Invoice ${invoiceNumber}`,
-                reference: invoiceNumber,
-                sourceType: 'payment',
-                sourceId: invoiceId,
-                lines: [
-                    {
-                        accountId: cashAccount.id,
-                        debitAmount: total,
-                        creditAmount: 0,
-                        description: `Cash received - Invoice ${invoiceNumber}`,
-                        entityType: 'invoice',
-                        entityId: invoiceId,
-                    },
-                    {
-                        accountId: arAccount.id,
-                        debitAmount: 0,
-                        creditAmount: total,
-                        description: `AR collected - Invoice ${invoiceNumber}`,
-                        entityType: 'invoice',
-                        entityId: invoiceId,
-                    },
-                ],
-            });
-
-            if (error) {
-                console.error('Failed to create journal entry for payment:', error);
-                return { error };
-            }
-
-            // Auto-post the entry
-            if (entry) {
-                await journalEntryService.postEntry(entry.id);
-            }
-
-            return { error: null };
-        } catch (err: any) {
-            console.error('Error posting payment to GL:', err);
-            return { error: err.message };
-        }
-    },
 };

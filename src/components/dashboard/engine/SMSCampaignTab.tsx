@@ -8,6 +8,11 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+} from '../../ui/ResponsiveTable';
 
 interface SMSCampaign {
     id: string;
@@ -98,21 +103,19 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
         const [campRes, msgRes, twilioRes] = await Promise.all([
             supabase.from('sms_campaigns').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }),
             supabase.from('sms_messages').select('*').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(100),
-            supabase.from('twilio_integrations').select('is_active, phone_number').eq('tenant_id', tenant.id).maybeSingle(),
+            fetch(`/api/twilio/credentials?tenantId=${encodeURIComponent(tenant.id)}`).then(async (response) => ({
+                ok: response.ok,
+                data: await response.json().catch(() => ({})),
+            })),
         ]);
         
         if (!campRes.error) setCampaigns(campRes.data || []);
         if (!msgRes.error) setMessages(msgRes.data || []);
         
-        if (twilioRes.data) {
-            setTwilioIntegration({ 
-                active: !!twilioRes.data.is_active, 
-                phone: twilioRes.data.phone_number 
-            });
-            // Auto-fill form from_number if empty
-            if (twilioRes.data.phone_number) {
-                setForm(f => ({ ...f, from_number: f.from_number || twilioRes.data.phone_number }));
-            }
+        if (twilioRes.ok && twilioRes.data.connected) {
+            // The browser only receives masked credential status; unmasked
+            // Twilio credentials and phone numbers stay server-side.
+            setTwilioIntegration({ active: true, phone: twilioRes.data.phoneNumberMasked });
         } else {
             setTwilioIntegration(null);
         }
@@ -173,7 +176,9 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this campaign?')) return;
-        await supabase.from('sms_campaigns').delete().eq('id', id);
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/sms/campaign?tenantId=${encodeURIComponent(tenant.id)}&campaignId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Campaign could not be deleted');
         setCampaigns(prev => prev.filter(c => c.id !== id));
         toast.success('Deleted');
     };
@@ -266,7 +271,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                             <p className="text-xs text-teal-300">
                                 <span className="font-semibold">Twilio Connected:</span> {twilioIntegration.phone || 'Ready to send'}
                             </p>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-teal-500/20 text-teal-400 rounded-md font-mono uppercase tracking-tight">Active</span>
+                            <span className="text-xs px-1.5 py-0.5 bg-teal-500/20 text-teal-400 rounded-md font-mono uppercase tracking-tight">Active</span>
                         </div>
                     </div>
                 ) : (
@@ -275,7 +280,7 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                         <div className="text-xs text-amber-300 flex-1">
                             <p className="font-semibold">Twilio Integration Missing or Inactive</p>
                             <p className="mt-1 opacity-80">You need to connect your Twilio credentials in the <span className="underline">Settings → Twilio</span> tab before you can send SMS campaigns.</p>
-                            <p className="mt-2 text-amber-500 text-[10px]">Required: SID · Auth Token · Phone Number</p>
+                            <p className="mt-2 text-amber-500 text-xs">Required: SID · Auth Token · Phone Number</p>
                         </div>
                     </div>
                 )
@@ -498,7 +503,25 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                             <p className="text-slate-500 text-sm">No messages yet</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto rounded-2xl border border-slate-800 min-w-0">
+                        <>
+                        <ResponsiveTableMobile>
+                            {messages.map((msg) => (
+                                <MobileDataCard key={msg.id} className="border-slate-800 bg-slate-900/40">
+                                    <p className="text-slate-300 text-xs font-mono">{msg.to_number}</p>
+                                    <p className="text-slate-400 text-sm line-clamp-3">{msg.body}</p>
+                                    <div className="flex flex-wrap justify-between gap-2 text-xs">
+                                        <span className={`px-2 py-0.5 rounded-full border ${
+                                            msg.status === 'sent' || msg.status === 'delivered' ? 'bg-green-500/15 text-green-400 border-green-500/30'
+                                            : msg.status === 'failed' ? 'bg-red-500/15 text-red-400 border-red-500/30'
+                                            : 'bg-slate-700/50 text-slate-400 border-slate-700'}`}>
+                                            {msg.status}
+                                        </span>
+                                        <span className="text-slate-600">{msg.sent_at ? new Date(msg.sent_at).toLocaleString() : '—'}</span>
+                                    </div>
+                                </MobileDataCard>
+                            ))}
+                        </ResponsiveTableMobile>
+                        <ResponsiveTableDesktop className="rounded-2xl border border-slate-800 min-w-0">
                             <table className="w-full min-w-[640px] text-sm">
                                 <thead>
                                     <tr className="border-b border-slate-800 bg-slate-900/50">
@@ -526,7 +549,8 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
+                        </ResponsiveTableDesktop>
+                        </>
                     )}
                 </div>
             )}

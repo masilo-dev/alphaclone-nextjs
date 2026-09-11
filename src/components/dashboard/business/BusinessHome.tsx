@@ -1,16 +1,100 @@
 'use client';
 
-import React from 'react';
-import { User } from '../../../types';
-import EngagingDashboard from './EngagingDashboard';
+import React, { useEffect, useState } from 'react';
+import type { User } from '@/types';
+import { useTenant } from '@/contexts/TenantContext';
+import { OperatingSystemHome } from '../OperatingSystemHome';
+import { AttentionFirstDashboard } from '../AttentionFirstDashboard';
+import { useWorkspacePreferences } from '@/hooks/useWorkspacePreferences';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
+import { OverviewDashboard } from '../views/ModuleDashboardView';
+import { PlatformAdvantageHome } from '../platform-advantage/PlatformAdvantageHome';
+import { IntegratedIntelligencePanel } from '../IntegratedIntelligencePanel';
+import {
+  NewUserSetupPanel,
+  dismissSetupChecklist,
+  isNewWorkspaceStats,
+  isSetupChecklistDismissed,
+} from './NewUserSetupPanel';
 
 interface BusinessHomeProps {
-    user: User;
-    stats?: any;
+  user: User;
 }
 
-const BusinessHome: React.FC<BusinessHomeProps> = ({ user, stats }) => {
-    return <EngagingDashboard user={user} stats={stats} />;
+/**
+ * Alphaclone OS home. Installed mobile/tablet PWA intentionally uses the
+ * attention-first business briefing only; desktop keeps the complete OS home.
+ */
+const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
+  const { currentTenant, getDashboardStats } = useTenant();
+  const device = useDeviceExperience();
+  const [stats, setStats] = useState<Record<string, unknown> | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(() => isSetupChecklistDismissed(user.id));
+  const [showMoreContext, setShowMoreContext] = useState(false);
+  const { dashboardHomeLayout, loading: prefsLoading } = useWorkspacePreferences();
+
+  const isCompanion = device.isInstalledMobileCompanion;
+  const homeLayout = isCompanion ? 'attention_first' : prefsLoading ? 'operating_system' : dashboardHomeLayout;
+
+  useEffect(() => {
+    // Companion Home delegates its summary fetch to AttentionFirstDashboard and
+    // deliberately avoids the extra desktop setup/context request path.
+    if (isCompanion || !currentTenant?.id || !user.id) return;
+    let active = true;
+    void getDashboardStats(currentTenant.id, user.id).then((result) => {
+      if (!active) return;
+      setStats((result.stats as Record<string, unknown>) ?? null);
+      setStatsError(result.error ?? null);
+    });
+    return () => {
+      active = false;
+    };
+  }, [currentTenant?.id, user.id, getDashboardStats, isCompanion]);
+
+  if (isCompanion) {
+    return (
+      <div className="ac-companion-home ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home" data-experience="companion">
+        <AttentionFirstDashboard />
+      </div>
+    );
+  }
+
+  const showSetup = !dismissed && !statsError && stats !== null && isNewWorkspaceStats(stats);
+
+  return (
+    <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
+      {showSetup ? (
+        <NewUserSetupPanel
+          user={user}
+          onDismiss={() => {
+            dismissSetupChecklist(user.id);
+            setDismissed(true);
+          }}
+        />
+      ) : null}
+
+      {homeLayout === 'attention_first' ? <AttentionFirstDashboard /> : <OperatingSystemHome />}
+
+      <div className="flex justify-center pt-1">
+        <button
+          type="button"
+          onClick={() => setShowMoreContext((v) => !v)}
+          className="text-xs font-medium text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-500)] transition-colors underline-offset-2 hover:underline"
+        >
+          {showMoreContext ? 'Hide extra workspace context' : 'Show platform insights & overview'}
+        </button>
+      </div>
+
+      {showMoreContext ? (
+        <div className="space-y-4 animate-fade-in">
+          <PlatformAdvantageHome />
+          <IntegratedIntelligencePanel />
+          <OverviewDashboard />
+        </div>
+      ) : null}
+    </div>
+  );
 };
 
 export default BusinessHome;

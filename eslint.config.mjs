@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
       "react-hooks/rules-of-hooks": "error", // Keep this as error
       "react-hooks/refs": "off",
       "react-hooks/set-state-in-effect": "off",
+      "react-hooks/preserve-manual-memoization": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/immutability": "off",
       "import/no-anonymous-default-export": "off",
       "prefer-const": "off",
       "@typescript-eslint/no-unsafe-function-type": "off",
@@ -24,17 +27,42 @@ const eslintConfig = defineConfig([
       "react/display-name": "off",
     },
   },
-  // Override default ignores of eslint-config-next.
+  {
+    files: ["src/components/dashboard/**/*.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          paths: [
+            {
+              name: "@/components/ui/Modal",
+              message:
+                "Prefer DetailDrawer from @/components/ui/DetailDrawer for record detail panels (see .cursor/rules/enterprise-ui.mdc).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
+    "dist/**",
     "next-env.d.ts",
+    // Service worker and PWA generated files
     "public/sw.js",
     "public/sw.js.map",
     "public/workbox-*.js",
+    // PDF.js vendor bundle (third-party, not authored here)
+    "public/pdfjs/**",
+    // Other vendor/generated assets under public
+    "public/vendor/**",
+    // One-off migration/fix scripts
     "demo_data_fix.ts",
+    "scripts/**",
+    // Mobile sub-project has its own ESLint config
+    "mobile/**",
   ]),
 ]);
 

@@ -40,6 +40,10 @@ export function SlackIntegration() {
   const checkSlackStatus = async () => {
     try {
       const response = await fetch(`/api/integrations/status?service=slack&tenant_id=${currentTenant?.id}`);
+      if (!response.ok) {
+        console.warn('Slack status API not available');
+        return;
+      }
       const data = await response.json();
       
       if (data.slack) {
@@ -308,7 +312,7 @@ export function SlackIntegration() {
                   'Deal won'
                 ].map((event) => (
                   <label key={event} className="flex items-center gap-3 text-sm text-slate-300">
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input type="checkbox" className="rounded" />
                     <span>{event}</span>
                   </label>
                 ))}

@@ -5,33 +5,93 @@ import { motion } from 'framer-motion';
 import { Button } from '../../ui/UIComponents';
 import {
   Settings,
-  Globe,
   TrendingUp,
-  CheckCircle,
-  ArrowRight,
   Loader2,
-  XCircle,
   Clock,
   AlertTriangle,
   RefreshCw,
+  Calendar,
+  Facebook,
+  Linkedin,
+  Instagram,
+  Bot,
+  KeyRound,
+  Mail,
 } from 'lucide-react';
-import { SlackIntegration } from '../integrations/SlackIntegration';
-import { SendGridIntegration } from '../integrations/SendGridIntegration';
-import { ResendIntegration } from '../integrations/ResendIntegration';
-import { PlaywrightIntegration } from '../integrations/PlaywrightIntegration';
-import { IntegrationMarketplaceDashboard } from '../integrations/IntegrationMarketplaceDashboard';
-import { VideoMeetingsAndMcpSetup } from './VideoMeetingsAndMcpSetup';
+import BusinessSendGridIntegration from '../business/SendGridIntegration';
+import BusinessResendIntegration from '../business/ResendIntegration';
+import BusinessBrevoIntegration from '../business/BrevoIntegration';
+import CustomEmailIntegration from '../business/CustomEmailIntegration';
+import Microsoft365Integration from '../business/Microsoft365Integration';
+import WhatsAppIntegration from '../business/WhatsAppIntegration';
+import ZernioIntegration from '../business/ZernioIntegration';
+import { MessageCircle } from 'lucide-react';
 import { useIntegrations } from '../../../hooks/useIntegrations';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
+import ModuleJumpSelect from '../common/ModuleJumpSelect';
+
+const PREF_ROWS = [
+  { id: 'enableNotifications', label: 'Enable notifications', sub: 'Receive alerts for integration events', defaultChecked: false },
+  { id: 'errorReporting', label: 'Error reporting', sub: 'Share anonymous error data to improve reliability', defaultChecked: false },
+  { id: 'apiKeyRotation', label: 'API key rotation', sub: 'Auto-rotate API keys every 90 days', defaultChecked: false },
+  { id: 'require2fa', label: 'Require 2FA for actions', sub: 'Extra confirmation before connecting or disconnecting', defaultChecked: false },
+] as const;
+
+const INTEGRATION_OVERVIEW = [
+  { label: 'Calendly', status: 'Available', detail: 'OAuth and booking-link scheduling sync', Icon: Calendar },
+  { label: 'LinkedIn', status: 'Available', detail: 'OAuth, posting, company pages, lead forms', Icon: Linkedin },
+  { label: 'Facebook', status: 'Available', detail: 'Pages, publishing, lead capture, inbox hooks', Icon: Facebook },
+  { label: 'DeepSeek API', status: 'Available', detail: 'Bonnie planning and cost-efficient agent loops', Icon: Bot },
+  { label: 'Claude API', status: 'Available', detail: 'AI fallback and agent reasoning provider', Icon: Bot },
+  { label: 'OpenAI API', status: 'Available', detail: 'AI fallback, generation, and compatible agent work', Icon: Bot },
+  { label: 'OpenRouter API', status: 'Available', detail: 'Optional model routing provider', Icon: KeyRound },
+  { label: 'Microsoft 365', status: 'Available', detail: 'Outlook, calendar, Teams, and To Do', Icon: Mail },
+  { label: 'WhatsApp', status: 'Coming soon', detail: 'Dashboard connection is being finalized', Icon: MessageCircle },
+  { label: 'Instagram', status: 'Coming soon', detail: 'Business publishing and inbox controls are being finalized', Icon: Instagram },
+] as const;
+
+type PrefId = (typeof PREF_ROWS)[number]['id'];
+
+function prefsStorageKey(tenantId: string) {
+  return `integration_prefs_${tenantId}`;
+}
 
 export function IntegrationSettings() {
   const { currentTenant } = useTenant();
-  const { integrations, loading, connected, disconnect, refresh } = useIntegrations();
-  const [activeTab, setActiveTab] = useState('marketplace');
+  const { integrations, loading, connected, refresh } = useIntegrations();
+  const [activeTab, setActiveTab] = useState('providers');
   const [syncStatus, setSyncStatus] = useState<Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }>>({});
   const [errorLogs, setErrorLogs] = useState<Array<{ id: string; integration: string; error: string; timestamp: string }>>([]);
   const [errorLogsLoading, setErrorLogsLoading] = useState(false);
+  const [prefs, setPrefs] = useState<Record<PrefId, boolean>>({
+    enableNotifications: false,
+    errorReporting: false,
+    apiKeyRotation: false,
+    require2fa: false,
+  });
+
+  useEffect(() => {
+    if (!currentTenant?.id || typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(prefsStorageKey(currentTenant.id));
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<Record<PrefId, boolean>>;
+      setPrefs((prev) => ({ ...prev, ...parsed }));
+    } catch {
+      // ignore corrupt storage
+    }
+  }, [currentTenant?.id]);
+
+  const updatePref = (id: PrefId, checked: boolean) => {
+    setPrefs((prev) => {
+      const next = { ...prev, [id]: checked };
+      if (currentTenant?.id && typeof window !== 'undefined') {
+        localStorage.setItem(prefsStorageKey(currentTenant.id), JSON.stringify(next));
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const next: Record<string, { lastSync: string; status: 'synced' | 'syncing' | 'error' }> = {};
@@ -82,26 +142,51 @@ export function IntegrationSettings() {
   }, [activeTab, currentTenant?.id]);
 
   const tabs = [
-    { id: 'marketplace', label: 'Marketplace',  icon: Globe        },
-    { id: 'connected',   label: 'Connected',    icon: CheckCircle  },
+    { id: 'providers',   label: 'Email Providers', icon: Settings  },
+    { id: 'whatsapp',    label: 'WhatsApp Accounts', icon: MessageCircle },
     { id: 'preferences', label: 'Preferences',  icon: Settings     },
     { id: 'activity',    label: 'Activity',     icon: TrendingUp   },
   ];
 
+  const connectedCount = connected.length;
+  const providerCount = integrations.length;
+  const errorCount = errorLogs.length;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white mb-1">Integrations</h1>
-        <p className="text-slate-400 text-sm">
-          Connect tools that power your workflow. All connections are stored securely per workspace.
-        </p>
+    <div className="space-y-5 ac-scroll-full ac-enterprise-module">
+      <div className="ac-workspace-panel rounded-lg p-4 md:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-teal-400">Workspace Integrations</div>
+            <h1 className="text-xl md:text-2xl font-bold text-white mt-1">Connections & provider setup</h1>
+            <p className="text-slate-400 text-sm mt-1">
+          Configure provider API keys and sender identities for this workspace.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 md:min-w-[320px]">
+            <div className="rounded-lg border border-white/5 bg-slate-950/45 px-3 py-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Connected</div>
+              <div className="text-lg font-bold text-white">{connectedCount}</div>
+            </div>
+            <div className="rounded-lg border border-white/5 bg-slate-950/45 px-3 py-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Providers</div>
+              <div className="text-lg font-bold text-white">{providerCount}</div>
+            </div>
+            <div className="rounded-lg border border-white/5 bg-slate-950/45 px-3 py-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Errors</div>
+              <div className="text-lg font-bold text-white">{errorCount}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <VideoMeetingsAndMcpSetup />
-
-      {/* Tab bar */}
-      <div className="flex gap-1 bg-slate-800/50 p-1 rounded-lg overflow-x-auto">
+      <ModuleJumpSelect
+        options={tabs.map((t) => ({ label: t.label, href: t.id }))}
+        currentHref={activeTab}
+        label="Integrations section"
+        onNavigate={setActiveTab}
+      />
+      <div className="hidden md:flex gap-1 ac-workspace-panel rounded-lg p-1 overflow-x-auto">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -110,13 +195,13 @@ export function IntegrationSettings() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${
-                active ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                active ? 'bg-slate-800 text-white border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <Icon className="w-4 h-4" />
               {tab.label}
-              {tab.id === 'connected' && connected.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-teal-500/20 text-teal-400 rounded-full">
+              {tab.id === 'providers' && connected.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs font-bold bg-teal-500/20 text-teal-400 rounded-full">
                   {connected.length}
                 </span>
               )}
@@ -128,102 +213,112 @@ export function IntegrationSettings() {
       {/* Tab content */}
       <div className="min-h-[400px]">
 
-        {/* ── Marketplace ── */}
-        {activeTab === 'marketplace' && <IntegrationMarketplaceDashboard />}
-
-        {/* ── Connected ── */}
-        {activeTab === 'connected' && (
+        {/* ── Providers ── */}
+        {activeTab === 'providers' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Connected Integrations</h2>
-              <span className="text-sm text-slate-400">
-                {loading ? '…' : `${connected.length} of ${integrations.length} connected`}
-              </span>
+            <div className="ac-workspace-panel rounded-lg p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Provider map</div>
+                  <h2 className="text-lg font-semibold text-white mt-1">Connected app framework</h2>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Core OAuth and API providers used by Bonnie, Hermes, social, scheduling, mail, and automation.
+                  </p>
+                </div>
+                <span className="inline-flex w-fit items-center rounded-md border border-teal-500/20 bg-teal-500/10 px-2.5 py-1 text-xs font-bold text-teal-200">
+                  Same workspace policy
+                </span>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {INTEGRATION_OVERVIEW.map(({ label, status, detail, Icon }) => {
+                  const comingSoon = status === 'Coming soon';
+                  return (
+                    <div key={label} className="rounded-lg border border-white/5 bg-slate-950/45 p-3">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-md border border-white/10 bg-white/5 p-2 text-slate-200">
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <h3 className="truncate text-sm font-semibold text-white">{label}</h3>
+                            <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                              comingSoon
+                                ? 'border border-amber-500/20 bg-amber-500/10 text-amber-200'
+                                : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-200'
+                            }`}>
+                              {status}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-400">{detail}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-6 h-6 text-teal-400 animate-spin" />
-              </div>
-            ) : connected.length > 0 ? (
-              <div className="space-y-4">
-                {/* Config panels for integrations that have dedicated UI */}
-                {connected.some(i => i.id === 'slack')    && <SlackIntegration />}
-                {connected.some(i => i.id === 'sendgrid') && <SendGridIntegration />}
-                {connected.some(i => i.id === 'resend')   && <ResendIntegration />}
-                {connected.some(i => i.id === 'playwright') && <PlaywrightIntegration />}
+            <div className="ac-workspace-panel rounded-lg p-4">
+              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Email providers</div>
+              <h2 className="text-lg font-semibold text-white mt-1">Provider credentials & sender identity</h2>
+              <p className="text-sm text-slate-400 mt-1">
+                Use any verified sender email from your provider account. It does not need to match your login email.
+              </p>
+            </div>
 
-                {/* Generic disconnect cards for everything else */}
-                {connected
-                  .filter(i => !['slack','sendgrid','resend','playwright'].includes(i.id))
-                  .map(int => (
-                    <motion.div
-                      key={int.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center">
-                          <Globe className="w-5 h-5 text-teal-400" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-white text-sm">{int.name}</p>
-                          <p className="text-xs text-slate-400">{int.description}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1 text-xs text-teal-400">
-                          <CheckCircle className="w-3.5 h-3.5" /> Connected
-                        </span>
-                        <button
-                          onClick={() => disconnect(int.id)}
-                          className="p-1.5 rounded-lg hover:bg-red-500/10 text-slate-500 hover:text-red-400 transition-colors"
-                          title="Disconnect"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
+            <Microsoft365Integration />
+            <CustomEmailIntegration />
+            <BusinessSendGridIntegration />
+            <BusinessResendIntegration />
+            <BusinessBrevoIntegration />
+          </div>
+        )}
+
+        {/* ── WhatsApp ── */}
+        {activeTab === 'whatsapp' && (
+          <div className="space-y-6">
+            <div className="ac-workspace-panel rounded-lg p-5">
+              <div className="flex items-start gap-3">
+                <div className="rounded-md border border-amber-500/20 bg-amber-500/10 p-2 text-amber-200">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-black uppercase tracking-widest text-amber-300">Coming soon</div>
+                  <h2 className="mt-1 text-lg font-semibold text-white">WhatsApp dashboard connection</h2>
+                  <p className="mt-1 text-sm text-slate-400">
+                    The send/webhook engine exists, but the self-serve dashboard connection is marked coming soon until provider onboarding is finalized.
+                  </p>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-14">
-                <Globe className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                <h3 className="text-base font-semibold text-white mb-2">No integrations connected yet</h3>
-                <p className="text-slate-400 text-sm mb-5">
-                  Head to the Marketplace tab to connect your first integration.
-                </p>
-                <Button onClick={() => setActiveTab('marketplace')}>
-                  <ArrowRight className="w-4 h-4 mr-2" /> Browse Marketplace
-                </Button>
-              </div>
-            )}
+            </div>
+            <div className="opacity-60">
+              <WhatsAppIntegration />
+              <ZernioIntegration />
+            </div>
           </div>
         )}
 
         {/* ── Preferences ── */}
         {activeTab === 'preferences' && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-white">Global Preferences</h2>
+            <div>
+              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Workspace policy</div>
+              <h2 className="text-lg font-semibold text-white mt-1">Global preferences</h2>
+            </div>
             <p className="text-sm text-slate-500">
-              Workspace-wide integration policies are managed from Security and Billing. Toggles below are UI placeholders until synced settings are enabled.
+              Workspace-wide integration policies. Preferences are saved per workspace on this device.
             </p>
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
-              {[
-                { label: 'Enable notifications', sub: 'Receive alerts for integration events', defaultChecked: true },
-                { label: 'Error reporting',       sub: 'Share anonymous error data to improve reliability', defaultChecked: true },
-                { label: 'API key rotation',      sub: 'Auto-rotate API keys every 90 days', defaultChecked: false },
-                { label: 'Require 2FA for actions', sub: 'Extra confirmation before connecting or disconnecting', defaultChecked: false },
-              ].map(row => (
-                <div key={row.label} className="flex items-center justify-between">
+            <div className="ac-workspace-panel rounded-lg p-6 space-y-4">
+              {PREF_ROWS.map((row) => (
+                <div key={row.id} className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-white">{row.label}</p>
                     <p className="text-xs text-slate-400">{row.sub}</p>
                   </div>
                   <input
                     type="checkbox"
-                    defaultChecked={row.defaultChecked}
+                    checked={prefs[row.id]}
+                    onChange={(e) => updatePref(row.id, e.target.checked)}
                     className="rounded accent-teal-500 w-4 h-4"
                   />
                 </div>
@@ -235,10 +330,12 @@ export function IntegrationSettings() {
         {/* ── Activity ── */}
         {activeTab === 'activity' && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-white">Integration Health</h2>
+            <div>
+              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Monitoring</div>
+              <h2 className="text-lg font-semibold text-white mt-1">Integration health</h2>
+            </div>
             
-            {/* Sync Status */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="ac-workspace-panel rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-white">Sync Status</h3>
                 <button
@@ -264,7 +361,7 @@ export function IntegrationSettings() {
                       : 'Not recorded';
                     
                     return (
-                      <div key={int.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+                      <div key={int.id} className="flex items-center justify-between p-3 bg-slate-950/45 rounded-lg border border-white/5">
                         <div className="flex items-center gap-3">
                           <div className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`} />
                           <span className="text-sm text-white">{int.name}</span>
@@ -285,7 +382,7 @@ export function IntegrationSettings() {
             </div>
 
             {/* Error Logs */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="ac-workspace-panel rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-white">Workspace error log</h3>
                 <span className="text-xs text-slate-500">

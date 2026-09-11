@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { cleanupRealtimeChannel } from '../lib/realtime';
 
 /**
  * Automatically cleanup Supabase subscriptions to prevent memory leaks
@@ -24,8 +24,7 @@ export function useCleanupSubscription(
     // Cleanup function
     return () => {
       if (channelRef.current) {
-        channelRef.current.unsubscribe();
-        supabase.removeChannel(channelRef.current);
+        cleanupRealtimeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
@@ -50,8 +49,7 @@ export function useBatchCleanupSubscriptions(
     // Cleanup all
     return () => {
       channelsRef.current.forEach(channel => {
-        channel.unsubscribe();
-        supabase.removeChannel(channel);
+        cleanupRealtimeChannel(channel);
       });
       channelsRef.current = [];
     };

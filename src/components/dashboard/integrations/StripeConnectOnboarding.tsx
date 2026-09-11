@@ -43,7 +43,7 @@ export const StripeConnectOnboarding: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/stripe/connect/create', {
+      const response = await fetch('/api/stripe/connect/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -70,14 +70,14 @@ export const StripeConnectOnboarding: React.FC = () => {
   };
 
   const handleManageAccount = async () => {
-    if (!status?.accountId) return;
+    if (!status?.accountId || !currentTenant?.id) return;
 
     setLoading(true);
     try {
-      const response = await fetch('/api/stripe/connect/login-link', {
+      const response = await fetch('/api/stripe/connect/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId: status.accountId })
+        body: JSON.stringify({ tenantId: currentTenant.id })
       });
 
       const data = await response.json();

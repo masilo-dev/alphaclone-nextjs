@@ -24,6 +24,7 @@ export interface MediaState {
     isAudioEnabled: boolean;
     isVideoEnabled: boolean;
     isScreenSharing: boolean;
+    isRecording: boolean;
     participants: Map<string, ParticipantMediaState>;
     localSessionId: string | null;
 }
@@ -65,6 +66,7 @@ export class MediaStateManager {
             isAudioEnabled: true,
             isVideoEnabled: true,
             isScreenSharing: false,
+            isRecording: false,
             participants: new Map(),
             localSessionId: null,
         };
@@ -81,6 +83,7 @@ export class MediaStateManager {
             isAudioEnabled: this.state.isAudioEnabled,
             isVideoEnabled: this.state.isVideoEnabled,
             isScreenSharing: this.state.isScreenSharing,
+            isRecording: this.state.isRecording,
             participants: this.state.participants, // Map reference (replaced on changes)
             localSessionId: this.state.localSessionId,
         };
@@ -215,6 +218,17 @@ export class MediaStateManager {
         // When track stops
         this.engine.on('track-stopped', () => {
             this.syncParticipants();
+            this.notifyListeners();
+        });
+
+        // Recording events
+        this.engine.on('recording-started', () => {
+            this.state.isRecording = true;
+            this.notifyListeners();
+        });
+
+        this.engine.on('recording-stopped', () => {
+            this.state.isRecording = false;
             this.notifyListeners();
         });
     }

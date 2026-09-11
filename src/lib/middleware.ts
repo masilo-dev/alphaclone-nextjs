@@ -3,40 +3,62 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { rateLimitMiddleware, rateLimitConfigs } from './rateLimit'
 
 export async function updateSession(request: NextRequest) {
-    // Apply rate limiting based on route
     const pathname = request.nextUrl.pathname;
+    const accept = request.headers.get('accept') || '';
+    const fetchDest = request.headers.get('sec-fetch-dest') || '';
+    const isProtectedPage = pathname.startsWith('/dashboard') || pathname === '/alpha';
+    const isDashboardNavigation =
+        isProtectedPage &&
+        (fetchDest === 'document' || accept.includes('text/html'));
+    const requestId = request.headers.get('x-request-id')?.trim() || crypto.randomUUID();
+    const forwardHeaders = new Headers(request.headers);
+    forwardHeaders.set('x-request-id', requestId);
+
+    const withRequestIdHeader = (res: NextResponse) => {
+        res.headers.set('x-request-id', requestId);
+        return res;
+    };
+
+    // Rate limit direct Supabase endpoints (/auth/v1/, /storage/v1/, /rest/v1/) to prevent resource exhaustion
+    if (pathname.includes('/auth/v1/') || pathname.includes('/storage/v1/') || pathname.includes('/rest/v1/')) {
+        const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.supabase.standard);
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
+    }
 
     // DIRECT BYPASS: Ensure direct Supabase Auth and Storage calls are never intercepted by application middleware logic
     // This is a safety layer for the "Unexpected end of JSON input" error and prevents binary corruption
     if (pathname.includes('/auth/v1/') || pathname.includes('/storage/v1/')) {
-        return NextResponse.next();
+        return withRequestIdHeader(
+            NextResponse.next({ request: { headers: forwardHeaders } })
+        );
     }
 
     // Authentication routes - enabled for Phase 1 hardening
-    if (pathname.includes('/api/auth/login') || pathname.includes('/auth/login')) {
+    // Only rate limit POST requests to prevent Next.js prefetching or standard page loads from triggering 429s.
+    if ((pathname.includes('/api/auth/login') || pathname.includes('/auth/login')) && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.login);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
-    if (pathname.includes('/api/auth/signup') || pathname.includes('/auth/signup') || pathname.includes('/auth/register')) {
+    if ((pathname.includes('/api/auth/signup') || pathname.includes('/auth/signup') || pathname.includes('/auth/register')) && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.signup);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
-    if (pathname.includes('password-reset') || pathname.includes('reset-password') || pathname.includes('/api/auth/reset')) {
+    if ((pathname.includes('password-reset') || pathname.includes('reset-password') || pathname.includes('/api/auth/reset')) && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.auth.passwordReset);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
     // AI Agent and Scraper routes - Protection against resource/cost exhaustion
-    if (pathname.includes('/api/alpha/')) {
+    if (pathname === '/api/alpha' || pathname.startsWith('/api/alpha/')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.api.heavy);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
     if (pathname.includes('/api/scraper/')) {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.api.standard);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
 
@@ -45,20 +67,22 @@ export async function updateSession(request: NextRequest) {
         const isHeavyEndpoint = pathname.includes('/ai/') || pathname.includes('/export') || pathname.includes('/generate');
         const config = isHeavyEndpoint ? rateLimitConfigs.api.heavy : rateLimitConfigs.api.standard;
         const rateLimitResponse = await rateLimitMiddleware(request, config);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
     // Contact form - prevent spam
     if (pathname.includes('/contact') && request.method === 'POST') {
         const rateLimitResponse = await rateLimitMiddleware(request, rateLimitConfigs.public.contact);
-        if (rateLimitResponse) return rateLimitResponse;
+        if (rateLimitResponse) return withRequestIdHeader(rateLimitResponse);
     }
 
-    let response = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
-    })
+    let response = withRequestIdHeader(
+        NextResponse.next({
+            request: {
+                headers: forwardHeaders,
+            },
+        })
+    );
 
     try {
         // Direct access to environment variables to avoid importing 'zod' or heavy config modules in Edge Runtime
@@ -67,8 +91,13 @@ export async function updateSession(request: NextRequest) {
         const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
-            // Log error but allow request to proceed (as unauthenticated) to prevent 500 crash
-            console.error('Middleware Warning: Missing Supabase Environment Variables');
+            if (isDashboardNavigation) {
+                const url = request.nextUrl.clone();
+                url.pathname = '/maintenance';
+                url.search = '';
+                url.searchParams.set('reason', 'authentication_unavailable');
+                return withRequestIdHeader(NextResponse.redirect(url));
+            }
             return response;
         }
 
@@ -81,12 +110,28 @@ export async function updateSession(request: NextRequest) {
                         return request.cookies.getAll()
                     },
                     setAll(cookiesToSet) {
-                        cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+                        const allCookies = request.cookies.getAll();
+                        const sbCookieNames = allCookies
+                            .map(c => c.name)
+                            .filter(name => name.startsWith('sb-') && name.includes('-auth-token'));
+                        
+                        const newCookieNames = new Set(cookiesToSet.map(c => c.name));
+                        
+                        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+                        
                         response = NextResponse.next({
                             request: {
-                                headers: request.headers,
+                                headers: forwardHeaders,
                             },
                         })
+                        response.headers.set('x-request-id', requestId);
+
+                        sbCookieNames.forEach(oldName => {
+                            if (!newCookieNames.has(oldName)) {
+                                response.cookies.set(oldName, '', { expires: new Date(0), path: '/' });
+                            }
+                        });
+
                         cookiesToSet.forEach(({ name, value, options }) =>
                             response.cookies.set(name, value, options)
                         )
@@ -95,22 +140,77 @@ export async function updateSession(request: NextRequest) {
             }
         )
 
-        // OPTIMIZATION: Only fetch user if we strictly need it for server-side redirection.
-        // Currently, redirection is handled client-side or commented out, so we skip this to save ~500ms-2s of TTFB.
-        /*
-        const {
-            data: { user },
-        } = await supabase.auth.getUser()
+        // HARD GATE: Enforce trial and subscription status for dashboard routes
+        if (isProtectedPage) {
+            if (!isDashboardNavigation) {
+                return response;
+            }
 
-        if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
-            return NextResponse.redirect(new URL('/', request.url))
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                const url = request.nextUrl.clone();
+                url.pathname = '/auth/login';
+                url.searchParams.set('next', pathname);
+                return NextResponse.redirect(url);
+            }
+
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('account_status')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (profileError) throw profileError;
+
+            if (!profile || profile.account_status === 'deleted' || profile.account_status === 'pending_deletion') {
+                const url = request.nextUrl.clone();
+                url.pathname = '/auth/login';
+                url.searchParams.set('reason', profile?.account_status === 'pending_deletion' ? 'account_deletion_scheduled' : 'account_removed');
+                const redirect = NextResponse.redirect(url);
+                redirect.cookies.getAll()
+                    .filter((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'))
+                    .forEach((c) => redirect.cookies.set(c.name, '', { expires: new Date(0), path: '/' }));
+                return redirect;
+            }
+
+            if (profile.account_status === 'suspended') {
+                const url = request.nextUrl.clone();
+                url.pathname = '/auth/login';
+                url.searchParams.set('reason', 'account_suspended');
+                const redirect = NextResponse.redirect(url);
+                redirect.cookies.getAll()
+                    .filter((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'))
+                    .forEach((c) => redirect.cookies.set(c.name, '', { expires: new Date(0), path: '/' }));
+                return redirect;
+            }
+
+            const provider = user.app_metadata?.provider;
+            const isEmailPasswordUser = !provider || provider === 'email';
+            if (
+                isEmailPasswordUser &&
+                !user.email_confirmed_at &&
+                !pathname.startsWith('/auth/verify')
+            ) {
+                const url = request.nextUrl.clone();
+                url.pathname = '/auth/login';
+                url.searchParams.set('reason', 'email_not_verified');
+                url.searchParams.set('email', user.email || '');
+                return withRequestIdHeader(NextResponse.redirect(url));
+            }
+
+            // Tenant membership and subscription authorization are enforced by
+            // tenant-scoped server routes. Never trust user_metadata.tenant_id here.
         }
-        */
     } catch (e) {
-        // Catch any other errors (e.g. Supabase connection issues) to prevent 500s
         console.error('Middleware Logic Error:', e);
-        // On error, we just return the response as-is, defaulting to "not logged in" behavior implicitly
-        // or letting the page handle the unauth state.
+        if (isDashboardNavigation) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/maintenance';
+            url.search = '';
+            url.searchParams.set('reason', 'authentication_unavailable');
+            return withRequestIdHeader(NextResponse.redirect(url));
+        }
         return response;
     }
 

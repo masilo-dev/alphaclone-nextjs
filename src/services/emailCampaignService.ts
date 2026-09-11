@@ -77,13 +77,101 @@ export interface RecipientData {
     [key: string]: any;
 }
 
+export interface MarketingContact {
+    id: string;
+    name: string;
+    email: string;
+    company?: string;
+    firstName?: string;
+    lastName?: string;
+    industry?: string;
+}
+
+type EmailTemplateRow = {
+    id: string;
+    name: string;
+    subject: string;
+    body_html: string;
+    body_text: string | null;
+    category: string | null;
+    variables: unknown;
+    thumbnail_url: string | null;
+    created_by: string | null;
+    is_system: boolean | null;
+    metadata: unknown;
+    created_at: string;
+    updated_at: string;
+    tenant_id: string | null;
+};
+
+function dedupeTemplatesByName(rows: EmailTemplateRow[], tenantId: string | null): EmailTemplateRow[] {
+    const map = new Map<string, EmailTemplateRow>();
+    for (const row of rows) {
+        const existing = map.get(row.name);
+        if (!existing) {
+            map.set(row.name, row);
+            continue;
+        }
+        const score = (r: EmailTemplateRow) =>
+            tenantId && r.tenant_id === tenantId ? 2 : r.tenant_id === null ? 1 : 0;
+        if (score(row) > score(existing)) {
+            map.set(row.name, row);
+        }
+    }
+    return Array.from(map.values());
+}
+
+function pickTemplateRow(rows: EmailTemplateRow[], tenantId: string | null): EmailTemplateRow | null {
+    if (!rows.length) return null;
+    if (tenantId) {
+        return rows.find((r) => r.tenant_id === tenantId) ?? rows.find((r) => r.tenant_id === null) ?? rows[0] ?? null;
+    }
+    return rows.find((r) => r.tenant_id === null) ?? rows[0] ?? null;
+}
+
 export const emailCampaignService = {
+    async getMarketingContacts(): Promise<{ contacts: MarketingContact[]; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { contacts: [], error: 'No active tenant' };
+            const res = await fetch(`/api/email/campaigns?tenantId=${encodeURIComponent(tenantId)}&mode=contacts`);
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to load contacts');
+            const contacts: MarketingContact[] = (payload.contacts || [])
+                .filter((c: any) => typeof c.email === 'string' && c.email.trim().length > 0)
+                .map((c: any) => {
+                    const safeName = String(c.name || '').trim();
+                    const parts = safeName.split(/\s+/).filter(Boolean);
+                    return {
+                        id: c.id,
+                        name: safeName || String(c.email),
+                        email: String(c.email).trim(),
+                        company: c.website || undefined,
+                        industry: c.industry || undefined,
+                        firstName: parts[0] || undefined,
+                        lastName: parts.length > 1 ? parts.slice(1).join(' ') : undefined,
+                    };
+                });
+
+            return { contacts, error: null };
+        } catch (err) {
+            return { contacts: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
     /**
      * Get all email templates
      */
     async getTemplates(category?: string): Promise<{ templates: EmailTemplate[]; error: string | null }> {
         try {
-            let query = supabase.from('email_templates').select('*').eq('tenant_id', tenantService.getCurrentTenantId());
+            const tenantId = tenantService.getCurrentTenantId();
+            let query = supabase.from('email_templates').select('*');
+
+            if (tenantId) {
+                query = query.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
+            } else {
+                query = query.is('tenant_id', null);
+            }
 
             if (category) {
                 query = query.eq('category', category);
@@ -93,18 +181,22 @@ export const emailCampaignService = {
 
             if (error) throw error;
 
-            const templates: EmailTemplate[] = (data || []).map((t: any) => ({
+            const rows = dedupeTemplatesByName((data || []) as EmailTemplateRow[], tenantId).sort(
+                (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+
+            const templates: EmailTemplate[] = rows.map((t: EmailTemplateRow) => ({
                 id: t.id,
                 name: t.name,
                 subject: t.subject,
                 bodyHtml: t.body_html,
-                bodyText: t.body_text,
-                category: t.category,
-                variables: t.variables || [],
-                thumbnailUrl: t.thumbnail_url,
-                createdBy: t.created_by,
-                isSystem: t.is_system,
-                metadata: t.metadata || {},
+                bodyText: t.body_text ?? undefined,
+                category: t.category ?? undefined,
+                variables: (t.variables as string[]) || [],
+                thumbnailUrl: t.thumbnail_url ?? undefined,
+                createdBy: t.created_by ?? undefined,
+                isSystem: Boolean(t.is_system),
+                metadata: (t.metadata as object) || {},
                 createdAt: t.created_at,
                 updatedAt: t.updated_at,
             }));
@@ -240,15 +332,13 @@ export const emailCampaignService = {
      */
     async getCampaigns(limit?: number): Promise<{ campaigns: EmailCampaign[]; error: string | null }> {
         try {
-            let query = supabase.from('email_campaigns')
-                .select('*')
-                .eq('tenant_id', tenantService.getCurrentTenantId());
-
-            const { data, error } = await query.order('created_at', { ascending: false }).limit(limit || 100);
-
-            if (error) throw error;
-
-            const campaigns: EmailCampaign[] = (data || []).map((c: any) => ({
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { campaigns: [], error: 'No active tenant' };
+            const res = await fetch(`/api/email/campaigns?tenantId=${encodeURIComponent(tenantId)}`);
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to load campaigns');
+            const rows = Array.isArray(payload.campaigns) ? payload.campaigns.slice(0, limit || 100) : [];
+            const campaigns: EmailCampaign[] = rows.map((c: any) => ({
                 id: c.id,
                 name: c.name,
                 subject: c.subject,
@@ -294,27 +384,25 @@ export const emailCampaignService = {
             replyTo?: string;
             scheduledAt?: string;
             segmentFilter?: any;
+            metadata?: any;
         }
     ): Promise<{ campaign: EmailCampaign | null; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .from('email_campaigns')
-                .insert({
-                    name: campaignData.name,
-                    subject: campaignData.subject,
-                    template_id: campaignData.templateId,
-                    from_name: campaignData.fromName,
-                    from_email: campaignData.fromEmail,
-                    reply_to: campaignData.replyTo,
-                    scheduled_at: campaignData.scheduledAt,
-                    segment_filter: campaignData.segmentFilter || {},
-                    created_by: userId,
-                    tenant_id: tenantService.getCurrentTenantId(),
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const res = await fetch('/api/email/campaigns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mode: 'create',
+                    tenantId,
+                    userId,
+                    ...campaignData,
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to create campaign');
+            const data = payload.campaign;
 
             const campaign: EmailCampaign = {
                 id: data.id,
@@ -348,6 +436,35 @@ export const emailCampaignService = {
         }
     },
 
+    async addRecipientsToCampaign(
+        campaignId: string,
+        contactIds: string[],
+        options?: { skipPreviouslyContacted?: boolean }
+    ): Promise<{ added: number; skipped: number; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { added: 0, skipped: 0, error: 'No active tenant' };
+            const uniqueContactIds = Array.from(new Set(contactIds.filter(Boolean)));
+            if (uniqueContactIds.length === 0) return { added: 0, skipped: 0, error: null };
+            const res = await fetch('/api/email/campaigns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mode: 'add_recipients',
+                    tenantId,
+                    campaignId,
+                    contactIds: uniqueContactIds,
+                    skipPreviouslyContacted: options?.skipPreviouslyContacted !== false,
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to add recipients');
+            return { added: Number(payload.added || 0), skipped: Number(payload.skipped || 0), error: null };
+        } catch (err) {
+            return { added: 0, skipped: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
     /**
      * Update campaign
      */
@@ -356,22 +473,24 @@ export const emailCampaignService = {
         updates: Partial<EmailCampaign>
     ): Promise<{ campaign: EmailCampaign | null; error: string | null }> {
         try {
-            const updateData: any = {};
-
-            if (updates.name !== undefined) updateData.name = updates.name;
-            if (updates.subject !== undefined) updateData.subject = updates.subject;
-            if (updates.status !== undefined) updateData.status = updates.status;
-            if (updates.scheduledAt !== undefined) updateData.scheduled_at = updates.scheduledAt;
-
-            const { data, error } = await supabase
-                .from('email_campaigns')
-                .update(updateData)
-                .eq('id', campaignId)
-                .eq('tenant_id', tenantService.getCurrentTenantId())
-                .select()
-                .single();
-
-            if (error) throw error;
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const res = await fetch('/api/email/campaigns', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    campaignId,
+                    name: updates.name,
+                    subject: updates.subject,
+                    status: updates.status,
+                    scheduledAt: updates.scheduledAt,
+                    metadata: updates.metadata,
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to update campaign');
+            const data = payload.campaign;
 
             const campaign: EmailCampaign = {
                 id: data.id,
@@ -410,14 +529,15 @@ export const emailCampaignService = {
      */
     async deleteCampaign(campaignId: string): Promise<{ success: boolean; error: string | null }> {
         try {
-            const { error } = await supabase
-                .from('email_campaigns')
-                .delete()
-                .eq('id', campaignId)
-                .eq('tenant_id', tenantService.getCurrentTenantId())
-                .in('status', ['draft', 'cancelled']);
-
-            if (error) throw error;
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const res = await fetch('/api/email/campaigns', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, campaignId }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to delete campaign');
 
             return { success: true, error: null };
         } catch (err) {
@@ -516,6 +636,8 @@ export const emailCampaignService = {
             lastName: recipient.lastName || '',
             company: recipient.company || '',
             name: recipient.firstName ? (recipient.firstName + (recipient.lastName ? ' ' + recipient.lastName : '')) : recipient.email,
+            fromName: recipient.fromName || recipient.senderName || 'AlphaClone Systems',
+            senderName: recipient.senderName || recipient.fromName || 'AlphaClone Systems',
             ...recipient
         };
 
@@ -532,91 +654,65 @@ export const emailCampaignService = {
      */
     async sendCampaign(campaignId: string): Promise<{ success: boolean; error: string | null }> {
         try {
-            // 1. Get campaign and recipients
-            const { data: campaign, error: cError } = await supabase
-                .from('email_campaigns')
-                .select('*')
-                .eq('id', campaignId)
-                .single();
-
-            if (cError) throw cError;
-
-            const { data: recipients, error: rError } = await supabase
-                .from('campaign_recipients')
-                .select('*')
-                .eq('campaign_id', campaignId)
-                .eq('status', 'pending');
-
-            if (rError) throw rError;
-
-            if (!recipients || recipients.length === 0) {
-                return { success: true, error: 'No pending recipients' };
-            }
-
-            // 2. Update status to sending
-            await supabase.from('email_campaigns').update({ status: 'sending', sent_at: new Date().toISOString() }).eq('id', campaignId);
-
-            // 3. Send emails
-            let sentCount = 0;
-            let failCount = 0;
-
-            for (const recipient of recipients) {
-                // 3a. Get contact data for personalization
-                const { data: contact } = await supabase
-                    .from('contacts')
-                    .select('*')
-                    .eq('id', recipient.contact_id)
-                    .single();
-
-                const recipientData: RecipientData = {
-                    id: recipient.contact_id,
-                    email: recipient.email,
-                    firstName: contact?.first_name,
-                    lastName: contact?.last_name,
-                    company: contact?.company_name,
-                    ...(contact?.metadata || {})
-                };
-
-                const personalizedHtml = this.injectVariables(
-                    campaign.metadata?.bodyHtml || campaign.body_html || 'Empty email body',
-                    recipientData
-                );
-
-                const personalizedSubject = this.injectVariables(campaign.subject, recipientData);
-
-                const result = await emailProviderService.sendEmail({
-                    to: recipient.email,
-                    subject: personalizedSubject,
-                    html: personalizedHtml,
-                    fromName: campaign.from_name,
-                    from: campaign.from_email,
-                    replyTo: campaign.reply_to
-                });
-
-                if (result.success) {
-                    sentCount++;
-                    await supabase.from('campaign_recipients')
-                        .update({ status: 'sent', sent_at: new Date().toISOString() })
-                        .eq('id', recipient.id);
-                } else {
-                    failCount++;
-                    await supabase.from('campaign_recipients')
-                        .update({ status: 'failed', error_message: result.error || 'Unknown error' })
-                        .eq('id', recipient.id);
-                }
-            }
-
-            // 4. Update metrics
-            await supabase.from('email_campaigns').update({
-                status: 'sent',
-                total_sent: sentCount,
-                completed_at: new Date().toISOString()
-            }).eq('id', campaignId);
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const res = await fetch('/api/email/campaigns/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, campaignId }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to send campaign');
             return { success: true, error: null };
         } catch (err) {
             console.error('Campaign sending failed:', err);
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    async retryFailedRecipients(campaignId: string): Promise<{ success: boolean; reset: number; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const res = await fetch('/api/email/campaigns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, campaignId, mode: 'retry_failed' }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to reset failed recipients');
+            return { success: true, reset: Number(payload.reset || 0), error: null };
+        } catch (err) {
+            return { success: false, reset: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    async diagnoseCampaign(campaignId: string): Promise<{
+        issues: string[];
+        warnings: string[];
+        info: string[];
+        error: string | null;
+    }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const params = new URLSearchParams({ tenantId, campaignId });
+            const res = await fetch(`/api/email/campaigns/diagnose?${params.toString()}`);
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to diagnose campaign');
+            return {
+                issues: Array.isArray(payload.issues) ? payload.issues : [],
+                warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
+                info: Array.isArray(payload.info) ? payload.info : [],
+                error: null,
+            };
+        } catch (err) {
+            return {
+                issues: [],
+                warnings: [],
+                info: [],
+                error: err instanceof Error ? err.message : 'Unknown error',
+            };
         }
     },
 
@@ -635,34 +731,47 @@ export const emailCampaignService = {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const { count, error: countError } = await supabase
-                .from('email_logs')
-                .select('*', { count: 'exact', head: true })
-                .eq('tenant_id', tenantId)
-                .gte('sent_at', today.toISOString());
+            if (tenantId) {
+                const { count, error: countError } = await supabase
+                    .from('email_logs')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('tenant_id', tenantId)
+                    .gte('created_at', today.toISOString());
 
-            if (countError) console.error('Error checking email limit:', countError);
+                if (countError) console.error('Error checking email limit:', countError);
 
-            if (count !== null && count >= 100) {
-                console.warn(`Daily email limit reached for tenant ${tenantId}. Skipping transactional email: ${templateName}`);
-                return { success: false, error: 'Daily email limit reached' };
+                if (count !== null && count >= 100) {
+                    console.warn(
+                        `Daily email limit reached for tenant ${tenantId}. Skipping transactional email: ${templateName}`
+                    );
+                    return { success: false, error: 'Daily email limit reached' };
+                }
             }
 
-            // 2. Fetch template
-            const { data: template, error: tError } = await supabase
-                .from('email_templates')
-                .select('*')
-                .eq('name', templateName)
-                .single();
+            // 2. Fetch template (tenant override wins over global rows)
+            let templateQuery = supabase.from('email_templates').select('*').eq('name', templateName);
+            if (tenantId) {
+                templateQuery = templateQuery.or(`tenant_id.eq.${tenantId},tenant_id.is.null`);
+            } else {
+                templateQuery = templateQuery.is('tenant_id', null);
+            }
 
-            if (tError || !template) {
+            const { data: templateRows, error: tError } = await templateQuery;
+
+            if (tError) {
+                throw new Error(`Template not found: ${templateName}`);
+            }
+
+            const template = pickTemplateRow((templateRows || []) as EmailTemplateRow[], tenantId);
+
+            if (!template) {
                 throw new Error(`Template not found: ${templateName}`);
             }
 
             // 3. Replace variables in subject and body
             let subject = template.subject;
             let html = template.body_html;
-            let text = template.body_text || '';
+            let text = template.body_text ?? '';
 
             Object.entries(variables).forEach(([key, value]) => {
                 const regex = new RegExp(`{{${key}}}`, 'g');
@@ -678,7 +787,7 @@ export const emailCampaignService = {
                 html,
                 text: text || undefined,
                 fromName: 'AlphaClone Systems',
-                from: 'notifications@alphaclone.tech'
+                from: 'notifications@alphaclonesystems.com'
             });
 
             // 5. Log the email

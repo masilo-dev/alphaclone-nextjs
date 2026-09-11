@@ -63,73 +63,34 @@ export const securityLogService = {
      */
     async getAllLogs(limit: number = 100): Promise<{ logs: SecurityLog[]; error: string | null }> {
         try {
-            const { data, error } = await anonClient
-                .from('security_logs')
-                .select(`
-                    *,
-                    tenant:tenant_id (name),
-                    user:user_id (name, email)
-                `)
-                .order('created_at', { ascending: false })
-                .limit(limit);
-
-            if (error) throw error;
-
-            const logs = (data || []).map((log: any) => ({
-                id: log.id,
-                tenantId: log.tenant_id,
-                userId: log.user_id,
-                eventType: log.event_type,
-                ipAddress: log.ip_address,
-                userAgent: log.user_agent,
-                location: log.location,
-                deviceInfo: log.device_info,
-                eventDetails: log.event_details,
-                severity: log.severity,
-                createdAt: log.created_at,
-                tenant: log.tenant,
-                user: log.user
-            }));
-
-            return { logs, error: null };
-        } catch (err: any) {
+            const res = await fetch(`/api/admin/security-logs?limit=${limit}`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { logs: [], error: data.error || 'Failed to fetch security logs' };
+            }
+            return { logs: data.logs || [], error: null };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch security logs';
             console.error('Error fetching security logs:', err);
-            return { logs: [], error: err.message };
+            return { logs: [], error: message };
         }
     },
 
     /**
-     * Get security logs for a specific tenant
+     * Get security logs for a specific tenant (platform super admin — server-side)
      */
     async getTenantLogs(tenantId: string, limit: number = 100): Promise<{ logs: SecurityLog[]; error: string | null }> {
         try {
-            const { data, error } = await anonClient
-                .from('security_logs')
-                .select('*')
-                .eq('tenant_id', tenantId)
-                .order('created_at', { ascending: false })
-                .limit(limit);
-
-            if (error) throw error;
-
-            const logs = (data || []).map((log: any) => ({
-                id: log.id,
-                tenantId: log.tenant_id,
-                userId: log.user_id,
-                eventType: log.event_type,
-                ipAddress: log.ip_address,
-                userAgent: log.user_agent,
-                location: log.location,
-                deviceInfo: log.device_info,
-                eventDetails: log.event_details,
-                severity: log.severity,
-                createdAt: log.created_at
-            }));
-
-            return { logs, error: null };
-        } catch (err: any) {
+            const res = await fetch(`/api/admin/security-logs?tenantId=${encodeURIComponent(tenantId)}&limit=${limit}`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { logs: [], error: data.error || 'Failed to fetch tenant security logs' };
+            }
+            return { logs: data.logs || [], error: null };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch tenant security logs';
             console.error('Error fetching tenant logs:', err);
-            return { logs: [], error: err.message };
+            return { logs: [], error: message };
         }
     },
 

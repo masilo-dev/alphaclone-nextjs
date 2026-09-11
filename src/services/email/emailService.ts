@@ -3,10 +3,15 @@
  * Handles all transactional and marketing emails
  *
  * Supports:
- * - Resend (recommended)
+ * - Brevo
  * - SendGrid
- * - AWS SES
+ * - Resend
+ * - Zoho
+ * - Outlook (Microsoft Graph)
+ * - SMTP (generic)
  */
+import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
+import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
 
 export interface EmailOptions {
     to: string | string[];
@@ -18,6 +23,8 @@ export interface EmailOptions {
     cc?: string[];
     bcc?: string[];
     attachments?: EmailAttachment[];
+    provider?: EmailProvider; // optional override for specific send
+    userId?: string; // for Zoho/Outlook OAuth
 }
 
 export interface EmailAttachment {
@@ -70,38 +77,97 @@ export const EMAIL_TEMPLATES = {
 };
 
 class EmailService {
-    private provider: 'resend' | 'sendgrid' | 'ses';
+    private provider: EmailProvider | null;
     private defaultFrom: string;
 
-    constructor() {
-        // Determine provider based on environment variables
-        if (process.env.RESEND_API_KEY) {
-            this.provider = 'resend';
+    private getEnvProvider(): EmailProvider | null {
+        if (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY) {
+            return 'brevo';
         } else if (process.env.SENDGRID_API_KEY) {
-            this.provider = 'sendgrid';
-        } else if (process.env.AWS_SES_REGION) {
-            this.provider = 'ses';
-        } else {
-            this.provider = 'resend'; // default
+            return 'sendgrid';
+        } else if (process.env.RESEND_API_KEY) {
+            return 'resend';
+        } else if (process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET) {
+            return 'zoho';
+        } else if (process.env.OUTLOOK_CLIENT_ID && process.env.OUTLOOK_CLIENT_SECRET) {
+            return 'outlook';
+        } else if (process.env.SMTP_HOST && process.env.SMTP_PORT) {
+            return 'smtp';
         }
+        return null;
+    }
 
-        this.defaultFrom = process.env.EMAIL_FROM || 'noreply@alphaclone.com';
+    constructor() {
+        this.provider = this.getEnvProvider();
+        this.defaultFrom = process.env.EMAIL_FROM || 'notifications@alphaclonesystems.com';
     }
 
     /**
-     * Send email
+     * Send email — prefers tenant-aware routing when tenantId is provided, or dynamic integration resolution when available.
      */
-    async send(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
+    async send(options: EmailOptions & { tenantId?: string }): Promise<{ success: boolean; error?: string; provider?: string }> {
+        if (options.tenantId) {
+            const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+            const result = await sendEmailServer({
+                tenantId: options.tenantId,
+                to: options.to,
+                subject: options.subject,
+                html: options.html,
+                text: options.text,
+                fromName: options.from,
+                userId: options.userId,
+                replyTo: options.replyTo,
+                preferredProvider: options.provider as import('@/lib/email/sendEmail').OutboundEmailProvider | undefined,
+            });
+            return {
+                success: result.success,
+                error: result.error,
+                provider: result.provider,
+            };
+        }
+
+        // Try dynamic integration resolution if tenantId is missing
+        let resolvedProvider = options.provider || this.getEnvProvider();
+        if (!resolvedProvider) {
+            try {
+                const { resolveEmailProviderConfig } = await import('@/lib/email/providerIntegrationResolver');
+                const config = await resolveEmailProviderConfig({
+                    preferredUserId: options.userId || null,
+                    preferredProvider: options.provider,
+                    fallbackToEnv: true,
+                });
+                if (config) {
+                    resolvedProvider = config.provider;
+                }
+            } catch (err) {
+                console.warn('[emailService] Dynamic integration resolution fallback error:', err);
+            }
+        }
+
+        const provider = resolvedProvider;
+        if (!provider) {
+            return {
+                success: false,
+                error: 'No email provider configured. Pass tenantId for tenant routing or set BREVO/SENDGRID/RESEND/ZOHO env keys or active DB integration.',
+            };
+        }
+
         try {
-            switch (this.provider) {
+            switch (provider) {
+                case 'brevo':
+                    return await this.sendWithBrevo(options);
                 case 'resend':
                     return await this.sendWithResend(options);
                 case 'sendgrid':
                     return await this.sendWithSendGrid(options);
-                case 'ses':
-                    return await this.sendWithSES(options);
+                case 'zoho':
+                    return await this.sendWithZoho(options);
+                case 'outlook':
+                    return await this.sendWithOutlook(options);
+                case 'smtp':
+                    return await this.sendWithSmtp(options);
                 default:
-                    throw new Error('No email provider configured');
+                    throw new Error(`No email provider configured for ${provider}`);
             }
         } catch (error) {
             console.error('Error sending email:', error);
@@ -112,35 +178,66 @@ class EmailService {
         }
     }
 
+    private async sendWithBrevo(options: EmailOptions) {
+        const apiKey = process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY;
+        if (!apiKey) {
+            throw new Error('BREVO_API_KEY not configured');
+        }
+
+        const result = await sendWithProviderSdk('brevo', {
+            apiKey,
+            fromEmail: options.from || process.env.BREVO_FROM_EMAIL || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
+            attachments: options.attachments?.map(a => ({
+                filename: a.filename,
+                content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+                contentType: a.contentType
+            }))
+        });
+
+        if (!result.ok) {
+            throw new Error(`Brevo SDK error: ${result.error || 'unknown error'}`);
+        }
+
+        return { success: true };
+    }
+
     /**
      * Send email using Resend (recommended)
      */
     private async sendWithResend(options: EmailOptions) {
-        if (!process.env.RESEND_API_KEY) {
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
             throw new Error('RESEND_API_KEY not configured');
         }
 
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-            },
-            body: JSON.stringify({
-                from: options.from || this.defaultFrom,
-                to: Array.isArray(options.to) ? options.to : [options.to],
-                subject: options.subject,
-                html: options.html,
-                text: options.text,
-                reply_to: options.replyTo,
-                cc: options.cc,
-                bcc: options.bcc,
-            }),
+        const result = await sendWithProviderSdk('resend', {
+            apiKey,
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
+            attachments: options.attachments?.map(a => ({
+                filename: a.filename,
+                content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+                contentType: a.contentType
+            }))
         });
 
-        if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`Resend API error: ${error}`);
+        if (!result.ok) {
+            throw new Error(`Resend SDK error: ${result.error || 'unknown error'}`);
         }
 
         return { success: true };
@@ -150,52 +247,139 @@ class EmailService {
      * Send email using SendGrid
      */
     private async sendWithSendGrid(options: EmailOptions) {
-        if (!process.env.SENDGRID_API_KEY) {
+        const apiKey = process.env.SENDGRID_API_KEY;
+        if (!apiKey) {
             throw new Error('SENDGRID_API_KEY not configured');
         }
 
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
-            },
-            body: JSON.stringify({
-                personalizations: [
-                    {
-                        to: Array.isArray(options.to)
-                            ? options.to.map(email => ({ email }))
-                            : [{ email: options.to }],
-                        subject: options.subject,
-                    },
-                ],
-                from: { email: options.from || this.defaultFrom },
-                content: [
-                    {
-                        type: 'text/html',
-                        value: options.html || '',
-                    },
-                ],
-            }),
+        const result = await sendWithProviderSdk('sendgrid', {
+            apiKey,
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
+            attachments: options.attachments?.map(a => ({
+                filename: a.filename,
+                content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+                contentType: a.contentType
+            }))
         });
 
-        if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`SendGrid API error: ${error}`);
+        if (!result.ok) {
+            throw new Error(`SendGrid SDK error: ${result.error || 'unknown error'}`);
         }
 
         return { success: true };
     }
 
     /**
-     * Send email using AWS SES
+     * Send email using Zoho Mail
      */
-    private async sendWithSES(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
-        // Would use AWS SDK here
-        return {
-            success: false,
-            error: 'AWS SES implementation pending',
-        };
+    private async sendWithZoho(options: EmailOptions) {
+        if (!options.userId) {
+            throw new Error('Zoho send requires a userId');
+        }
+
+        const result = await sendWithProviderSdk('zoho', {
+            apiKey: 'oauth', // Zoho uses OAuth, key is ignored in providerSdk if userId is present
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
+            attachments: options.attachments?.map((attachment) => ({
+                filename: attachment.filename,
+                content: attachment.content,
+                contentType: attachment.contentType,
+            })),
+            userId: options.userId,
+        });
+
+        if (!result.ok) {
+            throw new Error(`Zoho error: ${result.error || 'unknown error'}`);
+        }
+
+        return { success: true };
+    }
+
+    /**
+     * Send email using Outlook (Microsoft Graph API)
+     */
+    private async sendWithOutlook(options: EmailOptions) {
+        if (!options.userId) {
+            throw new Error('Outlook send requires a userId');
+        }
+
+        const result = await sendWithProviderSdk('outlook', {
+            apiKey: 'oauth', // Outlook uses OAuth
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            userId: options.userId,
+        });
+
+        if (!result.ok) {
+            throw new Error(`Outlook error: ${result.error || 'unknown error'}`);
+        }
+
+        return { success: true };
+    }
+
+    /**
+     * Send email using generic SMTP
+     */
+    private async sendWithSmtp(options: EmailOptions) {
+        const host = process.env.SMTP_HOST;
+        const port = parseInt(process.env.SMTP_PORT || '587', 10);
+        const user = process.env.SMTP_USER;
+        const pass = process.env.SMTP_PASS;
+
+        if (!host || !port) {
+            throw new Error('SMTP_HOST and SMTP_PORT not configured');
+        }
+
+        // Use the provider SDK with SMTP parameters
+        const result = await sendWithProviderSdk('smtp', {
+            apiKey: pass || '', // SMTP uses password as apiKey in some SDKs
+            fromEmail: options.from || this.defaultFrom,
+            fromName: 'AlphaClone Systems',
+            to: options.to,
+            subject: options.subject,
+            html: options.html,
+            text: options.text,
+            replyTo: options.replyTo,
+            cc: options.cc,
+            bcc: options.bcc,
+            attachments: options.attachments?.map(a => ({
+                filename: a.filename,
+                content: typeof a.content === 'string' ? a.content : a.content.toString('base64'),
+                contentType: a.contentType
+            })),
+            // Additional SMTP-specific parameters
+            smtpHost: host,
+            smtpPort: port,
+            smtpUser: user,
+            smtpPass: pass,
+        });
+
+        if (!result.ok) {
+            throw new Error(`SMTP error: ${result.error || 'unknown error'}`);
+        }
+
+        return { success: true };
     }
 
     /**
@@ -204,7 +388,8 @@ class EmailService {
     async sendTemplate(
         template: string,
         to: string | string[],
-        variables: Record<string, any>
+        variables: Record<string, any>,
+        options?: Partial<EmailOptions>
     ): Promise<{ success: boolean; error?: string }> {
         const emailTemplate = this.getTemplate(template);
 
@@ -229,13 +414,14 @@ class EmailService {
             to,
             subject,
             html,
+            ...options,
         });
     }
 
     /**
      * Get email template
      */
-    private getTemplate(name: string): EmailTemplate | null {
+    getTemplate(name: string): EmailTemplate | null {
         // In production, load from database or file system
         // For now, return inline templates
         const templates: Record<string, EmailTemplate> = {
@@ -280,6 +466,39 @@ class EmailService {
                     </a>
                 `,
                 variables: ['invoice_number', 'amount', 'invoice_url'],
+            },
+            'invoice_receipt': {
+                name: 'invoice_receipt',
+                subject: 'Payment Receipt - {{invoice_number}}',
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                        <h2 style="color: #10B981;">Payment Confirmed ✓</h2>
+                        <p>Hi there,</p>
+                        <p>This is a formal receipt for your payment of <strong>{{amount}}</strong>.</p>
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Invoice Number:</strong></td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{{invoice_number}}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Payment Date:</strong></td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">{{payment_date}}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Amount Paid:</strong></td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-size: 18px; color: #10B981;">{{amount}}</td>
+                            </tr>
+                        </table>
+                        <p>You can download the full PDF receipt here:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="{{receipt_url}}" style="background: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                                Download Receipt
+                            </a>
+                        </div>
+                        <p style="color: #666; font-size: 12px;">Thank you for your business!</p>
+                    </div>
+                `,
+                variables: ['invoice_number', 'amount', 'payment_date', 'receipt_url'],
             },
             [EMAIL_TEMPLATES.QUOTA_WARNING]: {
                 name: 'quota_warning',
@@ -396,6 +615,147 @@ export const emailHelpers = {
             current_usage: currentUsage.toString(),
             limit: limit.toString(),
             upgrade_url: upgradeUrl,
+        });
+    },
+
+    /**
+     * Send payment receipt
+     */
+    async sendReceipt(
+        email: string,
+        invoiceNumber: string,
+        amount: string,
+        receiptUrl: string,
+        provider?: EmailProvider,
+        userId?: string,
+        attachment?: EmailAttachment
+    ) {
+        const template = 'invoice_receipt';
+        const variables = {
+            invoice_number: invoiceNumber,
+            amount,
+            payment_date: new Date().toLocaleDateString(),
+            receipt_url: receiptUrl,
+        };
+
+        const emailTemplate = emailService.getTemplate(template);
+        if (!emailTemplate) throw new Error('Receipt template not found');
+
+        let html = emailTemplate.html;
+        let subject = emailTemplate.subject;
+        Object.entries(variables).forEach(([key, value]) => {
+            const placeholder = new RegExp(`{{${key}}}`, 'g');
+            html = html.replace(placeholder, String(value));
+            subject = subject.replace(placeholder, String(value));
+        });
+
+        const options: EmailOptions = {
+            to: email,
+            subject,
+            html,
+        };
+
+        if (attachment) {
+            options.attachments = [attachment];
+        }
+
+        if (provider) {
+            options.provider = provider;
+        }
+        if (userId) {
+            options.userId = userId;
+        }
+
+        return emailService.send(options);
+    },
+
+    /**
+     * Send invoice email
+     */
+    async sendInvoice(
+        email: string,
+        invoiceNumber: string,
+        amount: string,
+        invoiceUrl: string,
+        attachment?: EmailAttachment
+    ) {
+        const template = EMAIL_TEMPLATES.INVOICE_CREATED;
+        const variables = {
+            invoice_number: invoiceNumber,
+            amount,
+            invoice_url: invoiceUrl,
+        };
+
+        const options: EmailOptions = {
+            to: email,
+            subject: `Invoice ${invoiceNumber} from AlphaClone Systems`,
+            html: invoiceEmailTemplates.invoiceSent({
+                recipientName: 'Valued Client',
+                recipientEmail: email,
+                tenantId: 'platform',
+                invoiceNumber,
+                amount,
+                actionUrl: invoiceUrl,
+                workspaceName: 'AlphaClone Systems',
+            }),
+        };
+
+        if (attachment) {
+            options.attachments = [attachment];
+        }
+
+        return emailService.send(options);
+    },
+
+    /**
+     * Send ticket notification
+     */
+    async sendTicketNotification(
+        email: string,
+        ticketTitle: string,
+        ticketDescription: string,
+        ticketUrl: string,
+        priority?: string
+    ) {
+        const priorityLabel = priority || 'medium';
+        const priorityColor = priorityLabel === 'urgent' ? '#EF4444' : 
+                              priorityLabel === 'high' ? '#F97316' : 
+                              priorityLabel === 'medium' ? '#EAB308' : '#6B7280';
+
+        const html = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #3B82F6;">New Ticket Created</h2>
+                <p>A new support ticket has been created:</p>
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Title:</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${ticketTitle}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Priority:</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${priorityColor}; margin-right: 5px;"></span>
+                            ${priorityLabel.toUpperCase()}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Description:</strong></td>
+                        <td style="padding: 10px; border-bottom: 1px solid #eee;">${ticketDescription}</td>
+                    </tr>
+                </table>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${ticketUrl}" style="background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                        View Ticket
+                    </a>
+                </div>
+                <p style="color: #666; font-size: 12px;">This is an automated notification from AlphaClone Systems.</p>
+            </div>
+        `;
+
+        return emailService.send({
+            to: email,
+            subject: `New Ticket: ${ticketTitle}`,
+            html,
         });
     },
 };

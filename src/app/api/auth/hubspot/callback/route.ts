@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { upsertHubSpotIntegration } from '@/services/hubspot/hubspotIntegrationService';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     const stateNonce = searchParams.get('state');
 
-    // Use standardized appUrl
-    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || 'https://alphaclone.tech').replace(/\/$/, '');
+    const appUrl = PUBLIC_APP_ORIGIN;
 
     if (!code || !stateNonce) {
         return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=missing_params`);
@@ -17,7 +19,6 @@ export async function GET(req: NextRequest) {
     try {
         const supabaseAdmin = createSupabaseAdminClient();
 
-        // 1. Verify and consume the state nonce and get the code_verifier
         const { data: stateData, error: stateError } = await supabaseAdmin
             .from('oauth_states')
             .delete()
@@ -25,27 +26,25 @@ export async function GET(req: NextRequest) {
             .select('*')
             .single();
 
-        if (stateError || !stateData) {
+        const stateCreatedAt = stateData?.created_at ? new Date(stateData.created_at).getTime() : 0;
+        if (stateError || !stateData || !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60_000) {
             console.error('[HubSpot Callback] Invalid state:', stateNonce);
             return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=invalid_state`);
         }
 
         const userId = stateData.user_id;
+        const tenantId = stateData.tenant_id;
         const codeVerifier = stateData.metadata?.code_verifier;
 
-        if (!codeVerifier) {
+        if (!codeVerifier || !tenantId) {
             throw new Error('Code verifier not found in state data');
         }
 
-        // 2. Exchange authorization code for tokens
         const clientId = ENV.HUBSPOT_CLIENT_ID;
         const clientSecret = ENV.HUBSPOT_CLIENT_SECRET;
-        const redirectUri = ENV.HUBSPOT_REDIRECT_URI;
-        const tokenEndpoint = 'https://api.hubapi.com/oauth/v1/token';
+        const redirectUri = OAUTH_CALLBACKS.hubspot;
 
-        console.log(`[HubSpot Callback] Exchanging code for tokens at: ${tokenEndpoint}`);
-
-        const tokenResponse = await fetch(tokenEndpoint, {
+        const tokenResponse = await fetch('https://api.hubapi.com/oauth/v1/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -65,32 +64,34 @@ export async function GET(req: NextRequest) {
             throw new Error(tokens.message || tokens.error_description || 'Failed to exchange token');
         }
 
-        const { access_token, refresh_token, expires_in } = tokens;
-        const expiresAt = new Date(Date.now() + (expires_in || 1800) * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + (tokens.expires_in || 1800) * 1000).toISOString();
 
-        // 3. Save to integrations table
-        const { error: integrationError } = await supabaseAdmin
-            .from('integrations')
-            .upsert({
-                user_id: userId,
-                type: 'hubspot',
-                name: 'HubSpot',
-                enabled: true,
-                config: {
-                    accessToken: access_token,
-                    refreshToken: refresh_token,
-                    expiryDate: expiresAt,
-                    lastSync: new Date().toISOString()
-                }
-            }, {
-                onConflict: 'user_id,type'
-            });
+        await upsertHubSpotIntegration({
+            userId,
+            tenantId,
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token ?? null,
+            expiryDate: expiresAt,
+        });
 
-        if (integrationError) throw integrationError;
+        const { error: connectionError } = await supabaseAdmin.from('tenant_integrations').upsert({
+            tenant_id: tenantId,
+            integration_id: 'hubspot',
+            status: 'connected',
+            connected_at: new Date().toISOString(),
+            configured_by: userId,
+            metadata: { expiresAt },
+        }, { onConflict: 'tenant_id,integration_id' });
+        if (connectionError) throw connectionError;
+        await supabaseAdmin.from('business_automation_events').insert({
+            tenant_id: tenantId,
+            event_type: 'integration_connected',
+            payload: { integrationId: 'hubspot', actorUserId: userId },
+        });
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=connected`);
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('HubSpot Callback Error:', err);
-        return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=${encodeURIComponent(err.message)}`);
+        return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=callback_failed`);
     }
 }

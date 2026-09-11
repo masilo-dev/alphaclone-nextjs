@@ -1,0 +1,1013 @@
+{
+  "database": [
+    {
+      "file": "supabase/migrations/20240403000002_momentum_tracking.sql",
+      "function": "update_user_streak",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20240403120500_consolidated_dashboard_stats.sql",
+      "function": "get_consolidated_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20250618100000_create_tickets.sql",
+      "function": "to",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20250618100000_create_tickets.sql",
+      "function": "update_ticket_updated_at",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "function": "to",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "function": "update_campaign_updated_at",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260122000002_create_improvements_table.sql",
+      "function": "update_improvements_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260129000002_dashboard_stats.sql",
+      "function": "get_tenant_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260210163500_optimize_financial_reporting.sql",
+      "function": "get_account_balances",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260210164500_optimize_post_journal_entry.sql",
+      "function": "post_journal_entry",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260210170000_ensure_default_accounts.sql",
+      "function": "create_default_chart_of_accounts",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260211000004_fix_lead_conversion.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260214000002_force_tenant_admin_google.sql",
+      "function": "handle_new_user",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260214120500_fix_google_signup_role.sql",
+      "function": "handle_new_user",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260216000002_lead_activities.sql",
+      "function": "log_lead_stage_change",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260216000002_lead_activities.sql",
+      "function": "get_tenant_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260216120500_fix_crm_conversion.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260216120500_fix_crm_conversion.sql",
+      "function": "get_tenant_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260217_fix_deal_activities_rls.sql",
+      "function": "log_deal_stage_change",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260218000005_fix_lead_conversion_function.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260227_sync_repair.sql",
+      "function": "handle_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260305000002_fix_convert_lead_to_contact.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260305120500_expand_recent_activity.sql",
+      "function": "get_tenant_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260306_create_integrations_and_oauth.sql",
+      "function": "update_integrations_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260308000002_fix_convert_lead_to_contact_rpc.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260308120500_accounting_compliance_enhancements.sql",
+      "function": "generate_record_fingerprint",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "function": "is_super_admin",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "function": "is_tenant_admin",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "function": "get_user_role",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260309120500_auto_tenant_association.sql",
+      "function": "handle_new_user_registration",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "function": "update_updated_at_column",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "function": "update_opportunity_days_in_stage",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "function": "get_company_activity_summary",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "function": "calculate_contact_engagement_score",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "function": "update_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "function": "generate_expense_number",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "function": "generate_bill_number",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260328120500_pages_system.sql",
+      "function": "update_pages_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260330000002_messenger_tables.sql",
+      "function": "update_messenger_conversations_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260330120500_create_twilio_integrations.sql",
+      "function": "update_twilio_integrations_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260404000007_fix_create_tenant_function.sql",
+      "function": "create_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260404120500_create_contact_submissions.sql",
+      "function": "update_updated_at_column",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260405_create_tenant_integrations.sql",
+      "function": "set_tenant_integrations_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260406000004_create_recurring_invoices.sql",
+      "function": "update_updated_at_column",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260407_worker_activity_tracking.sql",
+      "function": "log_worker_activity",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260407_worker_activity_tracking.sql",
+      "function": "end_worker_session",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260407_worker_activity_tracking.sql",
+      "function": "get_worker_productivity",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260410120500_add_tenant_context_rpc.sql",
+      "function": "set_tenant_context",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260411200000_zoom_video_provider.sql",
+      "function": "set_tenant_zoom_settings_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260412164029_mcp_shared_tenant_ai_units_quota.sql",
+      "function": "consume_tenant_ai_units",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260414173500_fix_lead_conversion_and_triggers_schema_mismatch.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260414173500_fix_lead_conversion_and_triggers_schema_mismatch.sql",
+      "function": "audit_lead_assignment",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260414173500_fix_lead_conversion_and_triggers_schema_mismatch.sql",
+      "function": "log_lead_stage_change",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260423153000_create_tenant_pricing_catalog.sql",
+      "function": "set_tenant_pricing_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260508120500_fix_realtime_and_rpc.sql",
+      "function": "get_consolidated_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "function": "update_updated_at_column",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "function": "get_accounts_receivable_aging",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "function": "get_accounts_payable_aging",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "function": "get_finance_operating_snapshot",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260509120000_fix_dashboard_stats_streak_cast.sql",
+      "function": "get_consolidated_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260509130000_create_mcp_oauth_tables.sql",
+      "function": "cleanup_expired_mcp_codes",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260514120000_harden_new_user_tenant_bootstrap.sql",
+      "function": "create_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260514120000_harden_new_user_tenant_bootstrap.sql",
+      "function": "get_user_tenants",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260514130000_cleanup_create_tenant_overloads.sql",
+      "function": "create_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260514180000_create_x_integrations.sql",
+      "function": "update_x_integrations_updated_at",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260515120000_unify_dashboard_revenue_ledger.sql",
+      "function": "get_consolidated_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260520120000_strategic_intelligence_upgrades.sql",
+      "function": "secure_read_only_query",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260528000000_fix_contract_tables.sql",
+      "function": "update_updated_at_column",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260529000000_create_whatsapp_standalone_messages.sql",
+      "function": "update_updated_at_column",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260602121000_database_repair.sql",
+      "function": "secure_read_only_query",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260611090000_tenant_trial_and_events.sql",
+      "function": "create_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260611090500_fix_is_super_admin.sql",
+      "function": "is_super_admin",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260618_ticketing_system.sql",
+      "function": "generate_ticket_number",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260618_ticketing_system.sql",
+      "function": "set_ticket_sla",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260618_ticketing_system.sql",
+      "function": "for",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260618_ticketing_system.sql",
+      "function": "get_avg_ticket_resolution_time",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260624100000_user_presence_rpc.sql",
+      "function": "update_user_presence",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260624100000_user_presence_rpc.sql",
+      "function": "get_online_users",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "function": "to",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "function": "generate_merged_ticket_number",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "function": "for",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "function": "set_merged_ticket_sla",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "function": "to",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "function": "get_ticket_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "function": "cleanup_expired_mcp_queue",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "get_accounts_receivable_aging",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "get_accounts_payable_aging",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "get_avg_ticket_resolution_time",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "update_account_balances",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "track_tenant_usage",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "increment_quote_view_count",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "increment_article_views",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "increment_workflow_execution_count",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "get_worker_productivity",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "get_popular_searches",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "calculate_contact_engagement_score",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "create_tenant_invitation",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "get_tenant_plugins",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "get_plugin_hooks",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "install_plugin",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "uninstall_plugin",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "function": "log_plugin_activity",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625180000_fix_missing_query_columns.sql",
+      "function": "sync_company_last_activity",
+      "securityDefiner": true,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260625190000_fix_dashboard_stats_enum_cast.sql",
+      "function": "get_consolidated_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260625210000_fix_convert_lead_to_contact_rpc_names.sql",
+      "function": "convert_lead_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260627120000_account_deletion_and_user_api_keys.sql",
+      "function": "request_account_deletion",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260627120000_account_deletion_and_user_api_keys.sql",
+      "function": "cancel_account_deletion",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260627130000_contact_unification_and_deal_repair.sql",
+      "function": "sync_business_client_to_contact",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260627170000_fix_dashboard_stats_active_clients.sql",
+      "function": "get_consolidated_dashboard_stats",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260628170000_fix_contract_columns_cron_presence.sql",
+      "function": "update_user_presence",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260629120000_invoice_journal_and_bank_fields.sql",
+      "function": "auto_journal_on_invoice_paid",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260629120000_invoice_journal_and_bank_fields.sql",
+      "function": "seed_coa_on_tenant_insert",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260707180000_hub_kpi_snapshot_rpc.sql",
+      "function": "get_hub_kpi_snapshot",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260707190000_hub_kpi_snapshot_all_hubs.sql",
+      "function": "get_hub_kpi_snapshot",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260708180000_block_re_signup_after_account_deletion.sql",
+      "function": "prevent_blocked_account_re_signup",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "function": "get_user_tenant_ids",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "function": "user_belongs_to_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "function": "delete_tenant_lead",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "function": "delete_tenant_deal",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "function": "archive_tenant_client",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260708234500_production_schema_drift_fix.sql",
+      "function": "delete_tenant_lead",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260708234600_hub_kpi_snapshot_production.sql",
+      "function": "get_hub_kpi_snapshot",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260710180000_fix_create_tenant_single_overload.sql",
+      "function": "create_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260710183000_bootstrap_tenant_every_new_user.sql",
+      "function": "handle_new_user_registration",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718090000_idempotent_tenant_creation.sql",
+      "function": "create_tenant_idempotent",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718100000_tenant_invitation_completion.sql",
+      "function": "accept_tenant_invitation",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718120000_atomic_quote_updates.sql",
+      "function": "update_tenant_quote_atomic",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718121000_harden_natural_language_query_rpc.sql",
+      "function": "secure_read_only_query",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718122000_scheduled_ai_tasks.sql",
+      "function": "claim_due_scheduled_ai_tasks",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718124000_webhook_delivery_pipeline.sql",
+      "function": "enqueue_business_event_webhooks",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718124000_webhook_delivery_pipeline.sql",
+      "function": "claim_webhook_deliveries",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718130000_atomic_seo_article_views.sql",
+      "function": "increment_published_seo_article_view",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718131000_unique_permanent_meeting_room.sql",
+      "function": "set_meeting_auto_end",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260718143000_atomic_business_invoice_updates.sql",
+      "function": "update_business_invoice_atomic",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718144000_atomic_daily_resource_quotas.sql",
+      "function": "consume_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718144000_atomic_daily_resource_quotas.sql",
+      "function": "release_daily_resource_quota",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718144600_flow_engine_tables.sql",
+      "function": "increment_workflow_definition_run",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718145000_atomic_invoice_payments.sql",
+      "function": "record_business_invoice_payment",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718145200_sales_receipts.sql",
+      "function": "create_posted_sales_receipt",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260718145300_atomic_expense_receipt_payment.sql",
+      "function": "pay_business_receipt",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260722121500_fix_logged_missing_columns.sql",
+      "function": "set_tenant_context",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260723103000_manual_invoice_payment_support.sql",
+      "function": "record_business_invoice_payment",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260723104000_fix_mcp_hash_and_payment_coa.sql",
+      "function": "record_business_invoice_payment",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "function": "doc_os_events_append_only",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "function": "doc_os_versions_immutable_signed",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "function": "touch_leads_updated_at",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "function": "reclaim_stuck_mcp_queue",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "function": "reclaim_stuck_mcp_queue",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "function": "get_user_tenant_ids",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "function": "user_belongs_to_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "function": "is_tenant_member",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "function": "is_tenant_owner",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "function": "current_tenant_id",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "function": "set_tenant_context",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724170000_bonnie_durable_runtime.sql",
+      "function": "create_agent_graph_transaction",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724170000_bonnie_durable_runtime.sql",
+      "function": "claim_agent_task",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724223000_uploads_storage_tenant_rls.sql",
+      "function": "user_belongs_to_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+      "function": "get_user_tenant_ids",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+      "function": "user_belongs_to_tenant",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+      "function": "is_tenant_member",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+      "function": "is_tenant_owner",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260726120000_lead_finder_rebuild.sql",
+      "function": "lead_finder_workspace_member",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260726120000_lead_finder_rebuild.sql",
+      "function": "claim_lead_search_jobs",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260726180000_documents_contracts_shared_platform.sql",
+      "function": "document_activity_append_only",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    },
+    {
+      "file": "supabase/migrations/20260726200000_projects_tasks_operating_system.sql",
+      "function": "is_active_tenant_member",
+      "securityDefiner": true,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260726220000_canonical_finance_foundation.sql",
+      "function": "validate_payment_allocation",
+      "securityDefiner": false,
+      "explicitSearchPath": true
+    },
+    {
+      "file": "supabase/migrations/20260727090000_client_centric_support.sql",
+      "function": "sync_ticket_waiting_responsibility",
+      "securityDefiner": false,
+      "explicitSearchPath": false
+    }
+  ],
+  "edge": [
+    "supabase/functions/get-acs-token/index.ts",
+    "supabase/functions/get-teams-token/index.ts",
+    "supabase/functions/microsoft-oauth-exchange/index.ts",
+    "supabase/functions/microsoft-token-refresh/index.ts",
+    "supabase/functions/workflow-engine/index.ts"
+  ]
+}

@@ -33,8 +33,7 @@ Response Format:
             const aiResponse = await aiService.complete({
                 prompt: `Execute task: ${task.description}`,
                 systemPrompt,
-                provider: 'anthropic',
-                model: agent.model,
+                provider: 'auto',
                 temperature: 0
             });
 

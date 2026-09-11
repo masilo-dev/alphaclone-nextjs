@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 import { X, Calendar, DollarSign, FileText, Send, MessageCircle, CheckCircle, Edit3, Save, Printer, Share2 } from 'lucide-react';
 import { Button, Input, Badge } from '../ui/UIComponents';
 import { SignaturePad } from './SignaturePad';
@@ -20,6 +21,7 @@ import { useBackgroundTasks } from '../../contexts/BackgroundTaskContext';
 import { PLAN_PRICING } from '../../services/tenancy/types';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
 import { Sparkles } from 'lucide-react';
+import type { ClientsResponse } from '../../services/businessClientService';
 
 
 interface Props {
@@ -93,7 +95,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
 
     useEffect(() => {
         if (currentTenant?.id) {
-            businessClientService.getClients(currentTenant.id).then(({ clients }) => {
+            businessClientService.getClients(currentTenant.id).then(({ clients }: ClientsResponse) => {
                 setClients(clients || []);
             });
 
@@ -296,7 +298,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                 content: contractText,
                             });
 
-                            if (error) throw new Error(error);
+                            if (error) throw new Error(String(error));
 
                             if (contract) {
                                 // If pre-signed, apply signature
@@ -728,6 +730,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                     {/* STEP 2: Preview Contract */}
                     {step === 'preview' && (
                         <div className="space-y-6">
+                            <AIOutputDisclaimer type="contract" />
                             {/* Contract Preview */}
                             <div className="bg-white text-black p-10 rounded-lg border-4 border-slate-700 max-h-[600px] overflow-y-auto shadow-inner prose prose-slate max-w-none">
                                 <ReactMarkdown
@@ -765,7 +768,7 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                             <div key={comment.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
                                                 <div className="flex items-center justify-between mb-1">
                                                     <span className="text-teal-400 text-xs font-bold">{comment.userName}</span>
-                                                    <span className="text-slate-500 text-[10px]">
+                                                    <span className="text-slate-500 text-xs">
                                                         {comment.createdAt.toLocaleTimeString()}
                                                     </span>
                                                 </div>

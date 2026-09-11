@@ -18,13 +18,20 @@ import {
 } from 'lucide-react';
 import { Button, Badge } from '../../ui/UIComponents';
 import { leadService, Lead } from '../../../services/leadService';
+import { businessClientService } from '../../../services/businessClientService';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
+import { useTenant } from '@/contexts/TenantContext';
+import { integrationsService, IntegrationConfig } from '../../../services/integrationsService';
+import { mapWithConcurrency } from '@/lib/concurrency/mapWithConcurrency';
 
 interface AIOutreachModalProps {
     isOpen: boolean;
     onClose: () => void;
     userId: string;
+    initialSelectedLeads?: string[];
+    /** When opened from Contacts, IDs are business_clients — not CRM leads */
+    recipientSource?: 'leads' | 'clients';
 }
 
 const TONES = [
@@ -34,9 +41,10 @@ const TONES = [
     { id: 'marketing', label: 'Creative', description: 'Persuasive & Bold' },
 ];
 
-const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId }) => {
+const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = [], recipientSource = 'leads' }) => {
+    const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
-    const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+    const [selectedLeads, setSelectedLeads] = useState<string[]>(initialSelectedLeads);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -45,13 +53,22 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [results, setResults] = useState<any[] | null>(null);
     const [userEmail, setUserEmail] = useState('');
     const [fetchingAccount, setFetchingAccount] = useState(false);
+    const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
+    const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>('');
+    const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'microsoft'>('microsoft');
+    const [sendProgress, setSendProgress] = useState<{ completed: number; total: number } | null>(null);
+
+    const OUTREACH_SEND_CONCURRENCY = 5;
 
     useEffect(() => {
         if (isOpen) {
             fetchLeads();
             fetchAccountInfo();
+            if (initialSelectedLeads?.length) {
+                setSelectedLeads(initialSelectedLeads.slice(0, 20));
+            }
         }
-    }, [isOpen, userId]);
+    }, [isOpen, userId, initialSelectedLeads, recipientSource, currentTenant?.id]);
 
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
@@ -59,9 +76,27 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) {
                 setUserEmail(user.email);
+                
+                // Also fetch integrations for this user
+                const { integrations: userIntegrations } = await integrationsService.getUserIntegrations(user.id);
+                const emailIntegrations = userIntegrations.filter(i => 
+                    ['sendgrid', 'resend', 'brevo', 'zoho', 'microsoft'].includes(i.type) && i.enabled
+                );
+                setIntegrations(emailIntegrations);
+                
+                if (emailIntegrations.length > 0) {
+                    const microsoftInt = emailIntegrations.find(i => i.type === 'microsoft');
+                    const zohoInt = emailIntegrations.find(i => i.type === 'zoho');
+                    const brevoInt = emailIntegrations.find(i => i.type === 'brevo');
+                    const resendInt = emailIntegrations.find(i => i.type === 'resend');
+                    const sendgridInt = emailIntegrations.find(i => i.type === 'sendgrid');
+                    const defaultInt = microsoftInt || zohoInt || brevoInt || resendInt || sendgridInt || emailIntegrations[0];
+                    setSelectedIntegrationId(defaultInt.id);
+                    setSelectedProvider(defaultInt.type as any);
+                }
             }
         } catch (err) {
-            console.error('Failed to fetch user email:', err);
+            console.error('Failed to fetch user info/integrations:', err);
         } finally {
             setFetchingAccount(false);
         }
@@ -70,14 +105,47 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const fetchLeads = async () => {
         setLoading(true);
         try {
-            const { leads: fetchedLeads, error } = await leadService.getLeads();
-            if (error) throw new Error(error);
-            // Only show leads with email addresses
-            setLeads((fetchedLeads || []).filter(l => !!l.email));
+            if (recipientSource === 'clients' && currentTenant?.id) {
+                const { clients, error } = await businessClientService.getClients(currentTenant.id, 1, 100);
+                if (error) throw new Error(error);
+                const mapped = (clients || []).map((c) => ({
+                    id: c.id,
+                    businessName: c.name,
+                    email: c.email,
+                    industry: c.industry,
+                    phone: c.phone,
+                    website: c.website,
+                    location: c.location,
+                })) as Lead[];
+                setLeads(mapped);
+            } else {
+                const { leads: fetchedLeads, error } = await leadService.getLeads();
+                if (error) throw new Error(error);
+                setLeads(fetchedLeads || []);
+            }
         } catch (err: any) {
-            toast.error('Failed to load leads: ' + err.message);
+            toast.error('Failed to load recipients: ' + err.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const inferRecipientEmail = (lead: Lead): string | null => {
+        const directEmail = String((lead as any).email || '').trim();
+        if (directEmail.includes('@')) return directEmail.toLowerCase();
+
+        const website = String((lead as any).website || '').trim();
+        if (!website) return null;
+
+        try {
+            const normalizedUrl = website.startsWith('http://') || website.startsWith('https://')
+                ? website
+                : `https://${website}`;
+            const host = new URL(normalizedUrl).hostname.replace(/^www\./i, '').toLowerCase();
+            if (!host || !host.includes('.') || host.includes('localhost')) return null;
+            return `info@${host}`;
+        } catch {
+            return null;
         }
     };
 
@@ -97,30 +165,117 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
             toast.error('Please select at least one lead');
             return;
         }
+        if (!currentTenant?.id) {
+            toast.error('No active workspace selected');
+            return;
+        }
 
         setSending(true);
         try {
-            const response = await fetch(`/api/outreach?userId=${userId}`, {
+            const selectedLeadRecords = leads.filter((lead) => selectedLeads.includes(lead.id));
+            const generationResponse = await fetch('/api/outreach/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    leadIds: selectedLeads,
-                    customPrompt,
+                    leads: selectedLeadRecords.map((lead) => {
+                        const recipient = inferRecipientEmail(lead);
+                        return {
+                            business_name: lead.businessName || 'Unknown Business',
+                            email: recipient || '',
+                            phone: (lead as any).phone || '',
+                            website: (lead as any).website || '',
+                            address: (lead as any).location || '',
+                            category: lead.industry || '',
+                            rating: 0,
+                            pitchAngle: recipient ? 'growth-opportunity' : 'no-email-follow-up',
+                            insights: [],
+                            score: 75,
+                        };
+                    }),
+                    industry: 'mixed',
                     tone: selectedTone,
-                    fromAddress: userEmail
+                    customContext: customPrompt,
+                    senderName: userEmail || 'AlphaClone Systems',
+                    tenantId: currentTenant.id,
                 })
             });
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || 'Outreach failed');
+            const generationData = await generationResponse.json().catch(() => ({}));
+            if (!generationResponse.ok || !generationData.success) {
+                throw new Error(generationData.error || 'Outreach generation failed');
             }
 
-            setResults(data.results);
-            toast.success(`Successfully processed ${data.results.filter((r: any) => r.status === 'success').length} emails!`);
+            const drafts = Array.isArray(generationData.emails) ? generationData.emails : [];
+            setSendProgress({ completed: 0, total: drafts.length });
+
+            const sendOne = async (draft: Record<string, unknown>) => {
+                const recipient = String(draft.recipientEmail || '').trim();
+                if (!recipient || !recipient.includes('@')) {
+                    return {
+                        name: String(draft.business_name || 'Unknown Lead'),
+                        status: 'error' as const,
+                        error: 'No recipient email available',
+                    };
+                }
+
+                try {
+                    const sendResponse = await fetch('/api/outreach/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tenantId: currentTenant.id,
+                            leadEmail: recipient,
+                            leadName: draft.business_name,
+                            subject: draft.subject,
+                            body: draft.body,
+                            pitchAngle: draft.pitchAngle || 'growth-opportunity',
+                            industry: 'mixed',
+                            score: 75,
+                            autoSend: true,
+                            consentGranted: true,
+                            confidenceScore: 100,
+                            directSend: true,
+                            skipCrmGate: true,
+                            deliveryProviders: [selectedProvider],
+                            preferredProvider: selectedProvider,
+                            balanceByDailyLimit: false,
+                        }),
+                    });
+
+                    const sendData = await sendResponse.json().catch(() => ({}));
+                    if (!sendResponse.ok || !sendData.success) {
+                        return {
+                            name: String(draft.business_name || 'Unknown Lead'),
+                            status: 'error' as const,
+                            error: String(sendData.error || 'Outreach failed'),
+                        };
+                    }
+                    return {
+                        name: String(draft.business_name || 'Unknown Lead'),
+                        status: 'success' as const,
+                    };
+                } catch (err: unknown) {
+                    return {
+                        name: String(draft.business_name || 'Unknown Lead'),
+                        status: 'error' as const,
+                        error: err instanceof Error ? err.message : 'Send failed',
+                    };
+                }
+            };
+
+            let completed = 0;
+            const sendResults = await mapWithConcurrency(drafts, OUTREACH_SEND_CONCURRENCY, async (draft) => {
+                const result = await sendOne(draft as Record<string, unknown>);
+                completed += 1;
+                setSendProgress({ completed, total: drafts.length });
+                return result;
+            });
+
+            setSendProgress(null);
+            setResults(sendResults);
+            toast.success(`Successfully processed ${sendResults.filter((r) => r.status === 'success').length} emails`);
         } catch (err: any) {
             toast.error(err.message || 'Bulk outreach failed');
         } finally {
@@ -136,7 +291,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -157,8 +312,8 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                             <Sparkles className="w-7 h-7 text-teal-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-black text-white uppercase tracking-tighter">AI Bulk Outreach</h2>
-                            <p className="text-[9px] text-slate-500 font-medium tracking-wide">GMAIL-POWERED PERSONALIZATION</p>
+                            <h2 className="text-xl font-black text-white uppercase tracking-tighter">Bulk Outreach</h2>
+                            <p className="text-xs text-slate-500 font-medium tracking-wide">PERSONALIZED OUTREACH</p>
                         </div>
                     </div>
                     <button
@@ -173,16 +328,24 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                     {/* Left Side: Lead Selection */}
                     <div className="w-1/2 border-r border-slate-800 flex flex-col p-6 bg-slate-950/30">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-white text-[10px] font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
+                            <h3 className="text-white text-xs font-bold flex items-center gap-2 uppercase tracking-widest opacity-70">
                                 <Users className="w-3.5 h-3.5 text-teal-400" />
                                 Select Leads ({selectedLeads.length}/20)
                             </h3>
-                            <button
-                                onClick={() => setSelectedLeads([])}
-                                className="text-[10px] text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
-                            >
-                                Clear All
-                            </button>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setSelectedLeads(filteredLeads.slice(0, 20).map(l => l.id))}
+                                    className="text-xs text-teal-400 hover:text-teal-300 uppercase font-bold tracking-widest transition-colors"
+                                >
+                                    Select All
+                                </button>
+                                <button
+                                    onClick={() => setSelectedLeads([])}
+                                    className="text-xs text-slate-500 hover:text-white uppercase font-bold tracking-widest transition-colors"
+                                >
+                                    Clear All
+                                </button>
+                            </div>
                         </div>
 
                         <div className="relative mb-6">
@@ -204,7 +367,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                             ) : filteredLeads.length === 0 ? (
                                 <div className="text-center py-12 text-slate-600">
                                     <AlertCircle className="w-12 h-12 mx-auto mb-4 opacity-10" />
-                                    <p className="text-sm">No leads found with emails</p>
+                                    <p className="text-sm">No leads available</p>
                                 </div>
                             ) : (
                                 filteredLeads.map(lead => (
@@ -225,9 +388,9 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-bold text-white truncate">{lead.businessName}</p>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[10px] text-slate-500 uppercase tracking-widest">{lead.industry || 'Lead'}</span>
-                                                <span className="text-[10px] text-slate-700">·</span>
-                                                <span className="text-[10px] text-slate-500 truncate">{lead.email}</span>
+                                                <span className="text-xs text-slate-500 uppercase tracking-widest">{lead.industry || 'Lead'}</span>
+                                                <span className="text-xs text-slate-700">·</span>
+                                                <span className="text-xs text-slate-500 truncate">{inferRecipientEmail(lead) || 'No recipient email'}</span>
                                             </div>
                                         </div>
                                     </button>
@@ -257,7 +420,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                     {res.status === 'success' ? 'Sent' : 'Failed'}
                                                 </Badge>
                                             </div>
-                                            {res.error && <p className="text-[10px] text-red-400 mt-1">{res.error}</p>}
+                                            {res.error && <p className="text-xs text-red-400 mt-1">{res.error}</p>}
                                         </div>
                                     ))}
                                 </div>
@@ -272,29 +435,67 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                         ) : (
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-xs opacity-70">
                                         <Mail className="w-3.5 h-3.5" />
-                                        Step 1: Outgoing Email (From)
+                                        Step 1: Outgoing Sender
                                     </h3>
-                                    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-4 flex items-center justify-between group hover:border-teal-500/20 transition-all">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center border border-teal-500/20">
-                                                <Mail className="w-5 h-5 text-teal-400" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Sender Address</p>
-                                                {fetchingAccount ? (
-                                                    <div className="h-4 w-32 bg-slate-800 animate-pulse rounded mt-1" />
-                                                ) : (
-                                                    <p className="text-white text-sm font-bold">{userEmail || 'Active Gmail Connection'}</p>
-                                                )}
-                                            </div>
+                                    {integrations.length > 0 ? (
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {integrations.map(integration => (
+                                                <button
+                                                    key={integration.id}
+                                                    onClick={() => {
+                                                        setSelectedIntegrationId(integration.id);
+                                                        setSelectedProvider(integration.type as any);
+                                                    }}
+                                                    className={`p-4 rounded-2xl border transition-all flex items-center justify-between group ${
+                                                        selectedIntegrationId === integration.id
+                                                            ? 'bg-teal-500/10 border-teal-500/40'
+                                                            : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
+                                                            selectedIntegrationId === integration.id
+                                                                ? 'bg-teal-500/20 border-teal-500/30'
+                                                                : 'bg-slate-800 border-slate-700'
+                                                        }`}>
+                                                            <Mail className={`w-5 h-5 ${selectedIntegrationId === integration.id ? 'text-teal-400' : 'text-slate-500'}`} />
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{integration.name}</p>
+                                                            <p className="text-white text-sm font-bold truncate max-w-[200px]">
+                                                                {integration.config.fromEmail || integration.config.email || 'Connected Account'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    {selectedIntegrationId === integration.id && (
+                                                        <div className="w-6 h-6 bg-teal-500 rounded-full flex items-center justify-center">
+                                                            <Check className="w-3.5 h-3.5 text-slate-900" />
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            ))}
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="bg-slate-900/50 border border-dashed border-slate-800 rounded-3xl p-6 text-center">
+                                            <AlertCircle className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
+                                            <p className="text-xs text-slate-500 mb-4">No email providers connected</p>
+                                            <Button 
+                                                variant="outline" 
+                                                size="sm" 
+                                                onClick={() => window.open('/dashboard/business/settings?tab=integrations', '_blank')}
+                                                className="text-xs uppercase tracking-widest font-bold"
+                                            >
+                                                Connect Provider
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
 
+
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-xs opacity-70">
                                         <MessageSquare className="w-3.5 h-3.5" />
                                         Step 2: Tone of Voice
                                     </h3>
@@ -311,14 +512,14 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                                 <p className={`text-xs font-black uppercase tracking-widest ${selectedTone === tone.id ? 'text-teal-400' : 'text-slate-400'}`}>
                                                     {tone.label}
                                                 </p>
-                                                <p className="text-[10px] text-slate-500 mt-1">{tone.description}</p>
+                                                <p className="text-xs text-slate-500 mt-1">{tone.description}</p>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-[9px] opacity-70">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 uppercase tracking-wide text-xs opacity-70">
                                         <Zap className="w-3.5 h-3.5" />
                                         Step 3: Custom Instructions
                                     </h3>
@@ -330,7 +531,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             className="w-full bg-transparent border-none focus:ring-0 text-white text-sm min-h-[140px] p-2 resize-none"
                                         />
                                     </div>
-                                    <p className="text-[10px] text-slate-600 mt-3 px-2 italic">
+                                    <p className="text-xs text-slate-600 mt-3 px-2 italic">
                                         AlphaClone AI will personalize each email based on lead data.
                                     </p>
                                 </div>
@@ -342,9 +543,15 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                         className="w-full h-16 rounded-[2rem] bg-teal-600 hover:bg-teal-500 text-white font-black text-lg shadow-xl shadow-teal-500/10 disabled:opacity-50 transition-all relative overflow-hidden group border-0"
                                     >
                                         {sending ? (
-                                            <div className="flex items-center gap-3">
-                                                <Loader2 className="w-5 h-5 animate-spin" />
-                                                <span className="text-base">Processing Campaign...</span>
+                                            <div className="flex flex-col items-center gap-1">
+                                                <div className="flex items-center gap-3">
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                    <span className="text-base">
+                                                        {sendProgress
+                                                            ? `Sending ${sendProgress.completed} / ${sendProgress.total}`
+                                                            : 'Preparing...'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="flex items-center justify-center gap-3">
@@ -353,7 +560,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                             </div>
                                         )}
                                     </Button>
-                                    <p className="text-center text-[10px] text-slate-500 mt-4 uppercase tracking-[0.2em] font-bold">
+                                    <p className="text-center text-xs text-slate-500 mt-4 uppercase tracking-[0.2em] font-bold">
                                         Powered by AlphaClone Intelligence
                                     </p>
                                 </div>

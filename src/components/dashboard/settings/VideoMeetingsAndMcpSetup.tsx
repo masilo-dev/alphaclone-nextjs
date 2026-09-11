@@ -73,7 +73,7 @@ export function VideoMeetingsAndMcpSetup() {
         <div>
           <h2 className="text-sm font-semibold text-white">Video meetings and MCP</h2>
           <p className="text-xs text-slate-500">
-            Setup order for admins. Built-in Daily video remains the default until Zoom is fully connected.
+            Use built-in Daily.co rooms, LiveKit infrastructure, Microsoft Teams, or Zoom according to your connected provider.
           </p>
         </div>
       </div>
@@ -84,7 +84,9 @@ export function VideoMeetingsAndMcpSetup() {
           onClick={() => setOpenDaily((v) => !v)}
           className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-800/30 transition-colors"
         >
-          <span className="text-sm font-medium text-slate-200">Built-in video (Daily.co)</span>
+          <span className="text-sm font-medium text-slate-200 flex items-center gap-2">
+            Built-in video (Daily.co / LiveKit)
+          </span>
           {openDaily ? (
             <ChevronUp className="w-4 h-4 text-slate-500" />
           ) : (
@@ -101,9 +103,10 @@ export function VideoMeetingsAndMcpSetup() {
             >
               <div className="px-4 pb-4 text-xs text-slate-400 space-y-2 leading-relaxed">
                 <p>
-                  Production meetings today use Daily.co rooms created by the server and joined through your branded
-                  links. No extra configuration is required here beyond the Daily API key in deployment environment
-                  variables.
+                  Native AlphaClone rooms use the configured Daily.co or LiveKit provider and are created from the Meetings module.
+                </p>
+                <p className="text-teal-300/90">
+                  <strong className="text-teal-200">Provider choice:</strong> connect Microsoft 365 for Teams links, or use the built-in provider configured for your workspace.
                 </p>
                 <p className="text-slate-500">
                   Technical reference: <code className="text-slate-400">src/VIDEO_ARCHITECTURE.md</code>
@@ -137,7 +140,7 @@ export function VideoMeetingsAndMcpSetup() {
                 <ol className="space-y-3">
                   {ZOOM_STEPS.map((s) => (
                     <li key={s.n} className="flex gap-3 text-xs text-slate-400 leading-relaxed">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-teal-500/15 border border-teal-500/25 text-teal-400 font-bold flex items-center justify-center text-[10px]">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-teal-500/15 border border-teal-500/25 text-teal-400 font-bold flex items-center justify-center text-xs">
                         {s.n}
                       </span>
                       <div>
@@ -206,16 +209,14 @@ export function VideoMeetingsAndMcpSetup() {
                 <div className="flex items-start gap-2 text-xs text-teal-400/90 bg-teal-500/10 border border-teal-500/20 rounded-lg p-3">
                   <Server className="w-4 h-4 shrink-0 mt-0.5" />
                   <p>
-                    The MCP HTTP endpoint is served at <code className="text-slate-300">/api/mcp/sse</code> (see setup
-                    guide for the full URL and token). OAuth dynamic clients can use{' '}
-                    <code className="text-slate-300">/.well-known/oauth-authorization-server</code> and{' '}
-                    <code className="text-slate-300">/api/oauth/token</code> per your deployment docs.
-                  </p>
+                  The MCP endpoint is <code className="text-slate-300">/api/mcp?api_key=...</code> for Claude, Grok, and ChatGPT, and <code className="text-slate-300">/api/mcp/sse?api_key=...</code> for Manus. The setup
+                  guide copies the correct URL automatically. Workspace and user are resolved from the key.
+                </p>
                 </div>
                 <ol className="space-y-3">
                   {MCP_STEPS.map((s) => (
                     <li key={s.n} className="flex gap-3 text-xs text-slate-400 leading-relaxed">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/15 border border-violet-500/25 text-violet-300 font-bold flex items-center justify-center text-[10px]">
+                      <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-violet-500/15 border border-violet-500/25 text-violet-300 font-bold flex items-center justify-center text-xs">
                         {s.n}
                       </span>
                       <div>

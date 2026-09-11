@@ -1,6 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useBlurValidation } from '@/hooks/useBlurValidation';
 import { Loader2, X, ChevronDown, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
+import { WORKSPACE } from '@/constants/design';
 
 // --- Button ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,20 +22,20 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none active:scale-95";
+  const baseStyles = `inline-flex items-center justify-center rounded-[10px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app)] disabled:opacity-50 disabled:pointer-events-none min-w-11`;
 
   const variants = {
-    primary: "bg-teal-600 text-white hover:bg-teal-500 shadow-lg shadow-teal-900/20",
-    secondary: "bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20",
-    outline: "border border-slate-600 text-white hover:bg-slate-800",
-    ghost: "text-white hover:text-teal-400 hover:bg-slate-800/50",
-    danger: "bg-red-600 text-white hover:bg-red-500",
+    primary: `${WORKSPACE.action.primary} border-0`,
+    secondary: "bg-[var(--interactive-secondary)] text-white hover:bg-[var(--interactive-secondary-hover)]",
+    outline: "border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)]",
+    ghost: "text-[var(--interactive-secondary)] hover:bg-[var(--surface-hover)]",
+    danger: "bg-[var(--danger)] text-white hover:brightness-95",
   };
 
   const sizes = {
-    sm: "h-9 px-3 text-xs", // 36px - Compact
-    md: "h-11 px-5 py-2 text-base", // 44px - Native Standard
-    lg: "h-14 px-6 text-lg", // 56px - Prominent
+    sm: "h-8 px-3 text-xs min-h-11",
+    md: "h-10 px-4 py-2 text-sm min-h-11",
+    lg: "h-12 px-6 text-base min-h-11",
   };
 
   return (
@@ -59,7 +61,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = false, ...props }) => {
   return (
     <div
-      className={`bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 ${hoverEffect ? 'hover:bg-slate-800/80 transition-all duration-300 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-900/10' : ''} ${className}`}
+      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 ${hoverEffect ? 'hover:bg-[var(--ws-surface-2)] transition-all duration-300 hover:border-teal-500/20' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -76,15 +78,15 @@ interface BadgeProps {
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', className = '' }) => {
   const variants = {
-    success: "bg-teal-500/10 text-teal-400 border-teal-500/20",
-    warning: "bg-yellow-500/10 text-yellow-300 border-yellow-500/20",
-    neutral: "bg-slate-500/10 text-slate-300 border-slate-500/20",
-    error: "bg-red-500/10 text-red-300 border-red-500/20",
-    blue: "bg-blue-500/10 text-blue-300 border-blue-500/20",
+    success: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_28%,transparent)]",
+    warning: "bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_28%,transparent)]",
+    neutral: "bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border-default)]",
+    error: "bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_28%,transparent)]",
+    blue: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] border-[color-mix(in_srgb,var(--info)_28%,transparent)]",
   };
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${variants[variant]} ${className}`}>
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap ${variants[variant]} ${className}`}>
       {children}
     </span>
   );
@@ -97,40 +99,96 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTe
   hint?: string;
   textarea?: boolean;
   icon?: React.ReactNode;
+  /** Runs on blur (debounced); sets error when validation fails */
+  validate?: (value: string) => string | undefined;
 }
 
 export const Input: React.FC<InputProps> = ({
   label,
-  error,
+  error: errorProp,
+  hint,
   icon,
   className = '',
   textarea = false,
+  validate,
+  value,
+  defaultValue,
+  onBlur,
+  onChange,
+  id: idProp,
   ...props
 }) => {
+  const generatedId = React.useId();
+  const fieldId = idProp || generatedId;
+  const errorId = `${fieldId}-error`;
+  const hintId = `${fieldId}-hint`;
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = useState(String(defaultValue ?? ''));
+  const fieldValue = isControlled ? String(value) : internalValue;
+  const validateFn = useCallback(
+    (v: string) => validate?.(v),
+    [validate]
+  );
+  const blurValidation = useBlurValidation(fieldValue, validateFn);
+  const error = errorProp ?? (validate ? blurValidation.error : undefined);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!isControlled) setInternalValue(e.target.value);
+    onChange?.(e);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (validate) blurValidation.onBlur();
+    onBlur?.(e);
+  };
+
+  const fieldProps = validate || isControlled
+    ? { value: fieldValue, onChange: handleChange, onBlur: handleBlur }
+    : { defaultValue, onBlur, onChange, ...props };
+
+  const describedBy = [
+    error ? errorId : null,
+    !error && hint ? hintId : null,
+  ].filter(Boolean).join(' ') || undefined;
+
+  const sharedClass = `w-full bg-[var(--surface-primary)] border ${error ? 'border-[var(--danger)]' : 'border-[var(--border-default)]'} rounded-[10px] px-3 py-2 text-sm leading-normal text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--interactive-secondary)] transition-colors ${icon ? 'pl-10' : ''} ${className}`;
+
   return (
     <div className="w-full">
-      {label && <label className="block text-sm font-medium text-white mb-1.5">{label}</label>}
+      {label && (
+        <label htmlFor={fieldId} className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{label}</label>
+      )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--interactive-secondary)] transition-colors" aria-hidden="true">
             {icon}
           </div>
         )}
         {textarea ? (
           <textarea
-            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[100px] resize-y ${icon ? 'pl-11' : ''} ${className}`}
-            {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+            id={fieldId}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
+            className={`${sharedClass} min-h-[80px] resize-y`}
+            {...(validate || isControlled
+              ? { ...props, ...fieldProps }
+              : fieldProps as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
           <input
-            className={`w-full bg-slate-900 border ${error ? 'border-red-500' : 'border-slate-700'} rounded-xl px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-11' : ''} ${className}`}
-            {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+            id={fieldId}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
+            className={sharedClass}
+            {...(validate || isControlled
+              ? { ...props, ...fieldProps }
+              : fieldProps as React.InputHTMLAttributes<HTMLInputElement>)}
           />
         )}
       </div>
-      {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
-      {!error && (props as any).hint && (
-        <p className="mt-1 text-[10px] text-slate-500 italic">{(props as any).hint}</p>
+      {error && <p id={errorId} role="alert" className="mt-1 text-xs text-[var(--danger)]">{error}</p>}
+      {!error && hint && (
+        <p id={hintId} className="mt-1 text-xs text-[var(--text-muted)]">{hint}</p>
       )}
     </div>
   );
@@ -156,19 +214,73 @@ export const Modal: React.FC<ModalProps> = ({
   containerClassName = '',
   className = ''
 }) => {
+  const titleId = React.useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    const focusable = panel?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable?.[0];
+    first?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !panel || !focusable?.length) return;
+      const items = Array.from(focusable);
+      const firstEl = items[0];
+      const lastEl = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === firstEl) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
+        e.preventDefault();
+        firstEl.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      previouslyFocused.current?.focus?.();
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-[100] flex items-center justify-center px-4 pt-safe pb-safe ${containerClassName}`}>
-      <div className={`absolute inset-0 bg-slate-950/80 backdrop-blur-sm`} onClick={onClose} />
-      <div className={`relative bg-slate-900 border border-slate-700 rounded-3xl w-full ${maxWidth} shadow-2xl animate-fade-in overflow-hidden max-h-[85vh] flex flex-col ${className}`}>
-        <div className="flex items-center justify-between p-4 border-b border-slate-800 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-800 rounded-lg">
-            <X className="w-5 h-5" />
+    <div className={`fixed inset-0 z-[1100] flex items-end sm:items-center justify-center px-0 sm:px-4 pt-safe pb-safe ${containerClassName}`}>
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] flex-shrink-0">
+          <h3 id={titleId} className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className={`text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-2 min-h-11 min-w-11 hover:bg-[var(--surface-hover)] ${WORKSPACE.panel.radius}`}
+          >
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="p-4 sm:p-6 overflow-y-auto">
+        <div className="p-4 overflow-y-auto">
           {children}
         </div>
       </div>
@@ -182,7 +294,7 @@ export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ cla
 );
 
 export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ className = '', ...props }) => (
-  <h3 className={`font-semibold leading-none tracking-tight text-white ${className}`} {...props} />
+  <h3 className={`font-semibold leading-none tracking-tight text-[var(--text-primary)] ${className}`} {...props} />
 );
 
 export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
@@ -194,26 +306,29 @@ export const Avatar: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ classNa
   <div className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`} {...props} />
 );
 
-export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', src, alt, ...props }) => (
-  src ? (
-    <Image 
-      src={src} 
-      alt={alt || ''} 
-      fill 
-      className={`object-cover ${className}`} 
-      {...props as any} 
+export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', src, alt, ...props }) => {
+  const imageProps = props as Omit<React.ComponentProps<typeof Image>, 'src' | 'alt' | 'fill'>;
+  const imageSrc = typeof src === 'string' ? src : undefined;
+
+  return imageSrc ? (
+    <Image
+      {...imageProps}
+      src={imageSrc}
+      alt={alt || ''}
+      fill
+      className={`object-cover ${className}`}
     />
-  ) : null
-);
+  ) : null;
+};
 
 export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
   <div className={`flex h-full w-full items-center justify-center rounded-full bg-slate-800 text-slate-400 ${className}`} {...props} />
 );
 
-// --- Table ---
+// --- Table (enterprise: sticky header, alternating rows via ac-data-table) ---
 export const Table: React.FC<React.HTMLAttributes<HTMLTableElement>> = ({ className = '', ...props }) => (
-  <div className="relative w-full overflow-auto">
-    <table className={`w-full caption-bottom text-sm text-left ${className}`} {...props} />
+  <div className="relative w-full overflow-x-auto ac-scroll-full">
+    <table className={`ac-data-table w-full caption-bottom text-sm text-left ${className}`} {...props} />
   </div>
 );
 

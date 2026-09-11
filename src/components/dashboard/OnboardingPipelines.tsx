@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, MoreVertical, Mail, Phone, Calendar, DollarSign, Edit, Trash2, X, Loader2 } from 'lucide-react';
+import { useTenant } from '@/contexts/TenantContext';
+import { Plus, MoreVertical, Mail, Phone, Calendar, DollarSign, Edit, Trash2, X, Loader2, Sparkles } from 'lucide-react';
 import { Button, Card, Modal, Input } from '../ui/UIComponents';
 import { User } from '../../types';
 import { leadService, Lead } from '../../services/leadService';
-import LeadDetailView from './leads/LeadDetailView';
+import LeadDetailModal from './leads/LeadDetailModal';
 import toast from 'react-hot-toast';
 
 interface OnboardingPipelinesProps {
@@ -18,6 +19,7 @@ interface OnboardingPipelinesProps {
  * - Proper error handling
  */
 const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
+    const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,11 +47,17 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
     const loadLeads = async () => {
         setLoading(true);
         try {
-            const { leads: data } = await leadService.getLeads();
-            setLeads(data || []);
-        } catch (err) {
+            const { leads: data, error } = await leadService.getLeads();
+            if (error) {
+                console.error('Lead Service Error:', error);
+                toast.error(error);
+                setLeads([]);
+            } else {
+                setLeads(data || []);
+            }
+        } catch (err: any) {
             console.error('Failed to load leads:', err);
-            toast.error('Failed to load leads');
+            toast.error(err.message || 'Failed to load leads');
         } finally {
             setLoading(false);
         }
@@ -225,10 +233,28 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                     <h2 className="text-2xl font-bold text-white">Onboarding Pipelines</h2>
                     <p className="text-slate-400 mt-1">Manage leads and track conversion progress</p>
                 </div>
-                <Button onClick={handleAddLead} className="bg-teal-600 hover:bg-teal-500">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Lead
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={async () => {
+                            toast.loading('Nexus: Optimizing onboarding flow...', { id: 'nexus-onboarding' });
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'onboarding_flow' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-onboarding' });
+                        }}
+                        className="bg-slate-900 hover:bg-slate-800 text-violet-400 border-white/5"
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Nexus Flow
+                    </Button>
+                    <Button onClick={handleAddLead} className="bg-teal-600 hover:bg-teal-500">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Lead
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -480,17 +506,17 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
             )}
 
             {/* Lead Detail View */}
-            <LeadDetailView
+            <LeadDetailModal
                 lead={selectedLead!}
                 isOpen={showDetailView}
                 onClose={() => {
                     setShowDetailView(false);
                     setSelectedLead(null);
                 }}
-                onUpdate={(updatedLead) => {
+                onLeadUpdate={(updatedLead) => {
                     setLeads(leads.map(l => l.id === updatedLead.id ? updatedLead : l));
                 }}
-                onDelete={(leadId) => {
+                onLeadDelete={(leadId) => {
                     setLeads(leads.filter(l => l.id !== leadId));
                     setShowDetailView(false);
                     setSelectedLead(null);

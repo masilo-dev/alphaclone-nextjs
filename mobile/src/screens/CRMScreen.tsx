@@ -1,38 +1,36 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
+import { getLeads } from '../services/mobileData';
+import type { MobileLead } from '../types';
 
-export default function CRMScreen() {
-  const leads = [
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john@techcorp.com',
-      company: 'Tech Corp',
-      status: 'hot',
-      value: '$5,000',
-      lastContact: '2 hours ago',
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah@startupxyz.com',
-      company: 'StartupXYZ',
-      status: 'warm',
-      value: '$12,000',
-      lastContact: '1 day ago',
-    },
-    {
-      id: 3,
-      name: 'Mike Davis',
-      email: 'mike@enterprise.com',
-      company: 'Enterprise Solutions',
-      status: 'cold',
-      value: '$25,000',
-      lastContact: '3 days ago',
-    },
-  ];
+export default function CRMScreen({ navigation }: { navigation: any }) {
+  const { activeTenant } = useAuth();
+  const [leads, setLeads] = useState<MobileLead[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadLeads = async () => {
+      if (!activeTenant) return;
+      setLoading(true);
+      try {
+        const rows = await getLeads(activeTenant.id);
+        if (mounted) setLeads(rows);
+      } catch (error) {
+        console.error('Leads load error:', error);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    loadLeads();
+    return () => {
+      mounted = false;
+    };
+  }, [activeTenant]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -78,15 +76,15 @@ export default function CRMScreen() {
           {/* Stats */}
           <View style={styles.statsContainer}>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>48</Text>
+              <Text style={styles.statNumber}>{leads.length}</Text>
               <Text style={styles.statLabel}>Total Leads</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>12</Text>
+              <Text style={styles.statNumber}>{leads.filter((lead) => !['won', 'lost'].includes(lead.status)).length}</Text>
               <Text style={styles.statLabel}>Active Deals</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNumber}>$42K</Text>
+              <Text style={styles.statNumber}>${Math.round(leads.reduce((sum, lead) => sum + (lead.value || 0), 0)).toLocaleString()}</Text>
               <Text style={styles.statLabel}>Pipeline Value</Text>
             </View>
           </View>
@@ -95,7 +93,7 @@ export default function CRMScreen() {
           <View style={styles.leadsSection}>
             <Text style={styles.sectionTitle}>Recent Leads</Text>
             {leads.map((lead) => (
-              <TouchableOpacity key={lead.id} style={styles.leadCard}>
+              <TouchableOpacity key={lead.id} style={styles.leadCard} onPress={() => navigation.navigate('LeadDetail', { lead })}>
                 <View style={styles.leadHeader}>
                   <View style={styles.leadInfo}>
                     <Text style={styles.leadName}>{lead.name}</Text>
@@ -113,12 +111,14 @@ export default function CRMScreen() {
                 <View style={styles.leadFooter}>
                   <View style={styles.valueContainer}>
                     <Ionicons name="cash" size={16} color="#94A3B8" />
-                    <Text style={styles.valueText}>{lead.value}</Text>
+                    <Text style={styles.valueText}>${Math.round(lead.value || 0).toLocaleString()}</Text>
                   </View>
                   <Text style={styles.lastContactText}>{lead.lastContact}</Text>
                 </View>
               </TouchableOpacity>
             ))}
+            {loading && <ActivityIndicator color="#00D2A0" />}
+            {!loading && leads.length === 0 && <Text style={styles.emptyText}>No leads yet.</Text>}
           </View>
         </ScrollView>
       </LinearGradient>
@@ -255,5 +255,9 @@ const styles = StyleSheet.create({
   lastContactText: {
     fontSize: 12,
     color: '#64748B',
+  },
+  emptyText: {
+    color: '#94A3B8',
+    fontSize: 14,
   },
 });

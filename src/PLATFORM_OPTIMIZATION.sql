@@ -35,7 +35,7 @@ BEGIN
     -- 1. Aggregate basic counts
     SELECT COUNT(*) INTO v_total_projects FROM public.projects WHERE tenant_id = p_tenant_id;
     SELECT COUNT(*) INTO v_total_clients FROM public.business_clients WHERE tenant_id = p_tenant_id;
-    SELECT COUNT(*) INTO v_total_leads FROM public.leads WHERE tenant_id = p_tenant_id;
+    SELECT COUNT(*) INTO v_total_leads FROM public.leads WHERE tenant_id = p_tenant_id AND is_test_data = false;
 
     -- 2. Fetch deals for calculations
     SELECT json_agg(json_build_object(
@@ -45,7 +45,7 @@ BEGIN
         'stage', stage
     )) INTO v_deals_data 
     FROM public.deals 
-    WHERE tenant_id = p_tenant_id;
+    WHERE tenant_id = p_tenant_id AND is_test_data = false;
 
     -- 3. Fetch invoices for revenue calculations
     SELECT json_agg(json_build_object(
@@ -55,7 +55,7 @@ BEGIN
         'due_date', due_date
     )) INTO v_invoices_data 
     FROM public.business_invoices 
-    WHERE tenant_id = p_tenant_id;
+    WHERE tenant_id = p_tenant_id AND is_test_data = false;
 
     -- 4. Construct final JSON
     v_result := jsonb_build_object(

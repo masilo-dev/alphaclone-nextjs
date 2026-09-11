@@ -7,6 +7,7 @@ export type DashboardConversationEntry = {
 };
 
 export type PermanentMeetingLinkPrefs = {
+  roomId?: string;
   roomName?: string;
   roomUrl?: string;
   link?: string;
@@ -53,6 +54,7 @@ function parsePreferences(raw: unknown): DashboardPreferencesPayload {
   } else if (o.permanentMeetingLink && typeof o.permanentMeetingLink === 'object') {
     const p = o.permanentMeetingLink as Record<string, unknown>;
     permanentMeetingLink = {
+      roomId: typeof p.roomId === 'string' ? p.roomId : undefined,
       roomName: typeof p.roomName === 'string' ? p.roomName : undefined,
       roomUrl: typeof p.roomUrl === 'string' ? p.roomUrl : undefined,
       link: typeof p.link === 'string' ? p.link : undefined,

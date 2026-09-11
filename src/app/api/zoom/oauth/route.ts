@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess, RouteAuthError } from '@/lib/apiAuth';
+import { requireTenantRole, RouteAuthError } from '@/lib/apiAuth';
 
 /**
  * Starts Zoom OAuth for a tenant workspace.
@@ -16,7 +16,11 @@ export async function GET(req: NextRequest) {
 
     let userId: string;
     try {
-      const { user } = await requireTenantAccess(tenantId.trim());
+      const { user } = await requireTenantRole(
+        tenantId.trim(),
+        ['owner', 'admin', 'tenant_admin', 'super_admin'],
+        req
+      );
       userId = user.id;
     } catch (e) {
       const status = e instanceof RouteAuthError ? e.status : 401;
@@ -29,14 +33,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Zoom OAuth is not configured' }, { status: 500 });
     }
 
-    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech').replace(
+    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(
       /\/$/,
       ''
     );
     const redirectUri = `${appUrl}/api/zoom/oauth/callback`;
 
     const admin = createSupabaseAdminClient();
-    const insertPayload: { user_id: string; tenant_id?: string } = { user_id: userId, tenant_id: tenantId.trim() };
+    const insertPayload = {
+      user_id: userId,
+      tenant_id: tenantId.trim(),
+      metadata: { provider: 'zoom' },
+    };
 
     const { data: stateRow, error: stErr } = await admin
       .from('oauth_states')

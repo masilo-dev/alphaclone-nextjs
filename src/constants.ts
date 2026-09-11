@@ -11,6 +11,7 @@ import {
   Calendar,
   FileText,
   DollarSign,
+  Receipt,
   Activity,
   Clock,
   Layers,
@@ -24,15 +25,38 @@ import {
   FolderOpen,
   Presentation,
   Globe,
+  PenSquare,
   Facebook,
+  Linkedin,
+  Instagram,
   Smartphone,
+
+  Bell,
   Bot,
   Search,
-  Star
+  Star,
+  Twitter,
+  MessageCircle,
+  Database,
+  Target,
+  Brain,
+  BookOpen,
+  ShieldAlert,
+  BellRing,
+  CreditCard,
+  Monitor,
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
-export const APP_NAME = "AlphaClone Systems";
+export const APP_NAME = "Alphaclone Systems";
+export const APP_SHORT_NAME = "Alphaclone";
+export const APP_TAGLINE = "Your business operating system";
+
+/** Platform public booking page (Cal.com) for marketing demo/sales calls. */
+export const PLATFORM_BOOKING_URL = 'https://cal.com/alphaclonesystems/demo-for-for-alphaclone-systems';
+
+/** Legacy Calendly URL — tenant OAuth integrations only; public marketing uses PLATFORM_BOOKING_URL. */
+export const PLATFORM_CALENDLY_URL = 'https://calendly.com/bonniealphaclonesystems/30min';
 
 /** Shown in Settings; keep in sync with package.json version. */
 export const APP_VERSION = '1.0.0';
@@ -42,156 +66,197 @@ export const LOGO_URL = "/logo.png";
 // --- CLIENT NAVIGATION ---
 export const CLIENT_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
-  { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
-  { label: 'Meetings', href: '/dashboard/conference', icon: Video },
-  { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
-  { label: 'Mail', href: '/dashboard/mail', icon: Mail },
-  { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
-  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
-  { label: 'Documents', href: '/dashboard/submit', icon: FileText },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
-];
-
-// --- ADMIN NAVIGATION ---
-export const ADMIN_NAV_ITEMS: NavItem[] = [
-  { label: 'Tenants', href: '/dashboard/admin/tenants', icon: Users },
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Live Stats', href: '/dashboard/analytics', icon: Activity },
+  {
+    label: 'Workspace',
+    href: '#',
+    icon: Briefcase,
+    subItems: [
+      { label: 'Projects', href: '/dashboard/projects', icon: Briefcase },
+      { label: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
+    ]
+  },
   {
     label: 'Communication',
     href: '#',
     icon: MessageSquare,
     subItems: [
-      { label: 'Calendar', href: '/dashboard/calendar' },
-      { label: 'Meetings', href: '/dashboard/meetings' },
-      { label: 'Mail', href: '/dashboard/mail' },
-      { label: 'Messages', href: '/dashboard/messages' },
+      { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+      { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+      { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     ]
   },
   {
-    label: 'Creative Intel',
+    label: 'Resources',
     href: '#',
-    icon: Layers,
+    icon: FileText,
     subItems: [
-      { label: 'SEO', href: '/dashboard/articles' },
-      { label: 'Improvements', href: '/dashboard/admin/improvements' },
+      { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+      { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
+      { label: 'AI Studio', href: '/dashboard/ai-studio', icon: Palette },
+      { label: 'Documents', href: '/dashboard/submit', icon: FileText },
     ]
   },
-  {
-    label: 'Enterprise CRM',
-    href: '#',
-    icon: TrendingUp,
-    subItems: [
-      { label: 'Tasks', href: '/dashboard/tasks' },
-      { label: 'Deals', href: '/dashboard/deals' },
-      { label: 'Forecast', href: '/dashboard/forecast' },
-    ]
-  },
-  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
-  { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
+];
+
+// --- ADMIN NAVIGATION ---
+export const ADMIN_NAV_ITEMS: NavItem[] = [
+  { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Operations Command', href: '/dashboard/operations', icon: Activity },
+  { label: 'Tenants', href: '/dashboard/admin/tenants', icon: Users },
+  { label: 'Ops & logs', href: '/dashboard/admin/operations', icon: Activity },
+  { label: 'MCP monitor', href: '/dashboard/admin/mcp-sessions', icon: Monitor },
+  { label: 'Pre-customer review', href: '/dashboard/admin/improvements', icon: Zap },
+  { label: 'Platform Users', href: '/dashboard/admin/users', icon: Users },
   { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
+  { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
+  { label: 'Subscriptions', href: '/dashboard/admin/subscriptions', icon: CreditCard },
+  { label: 'Contact intake', href: '/dashboard/contact-submissions', icon: Mail },
+  { label: 'Bonnie AI', href: '/dashboard/bonnie', icon: Brain },
+  { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
+  { label: 'Chase inbox', href: '/dashboard/bonnie/chases', icon: BellRing },
+  {
+    label: 'Platform insights',
+    href: '#',
+    icon: BarChart3,
+    subItems: [
+      { label: 'Analytics', href: '/dashboard/analytics' },
+      { label: 'Performance', href: '/dashboard/performance' },
+      { label: 'Reporting', href: '/dashboard/reporting' },
+    ],
+  },
+  {
+    label: 'Support desk',
+    href: '#',
+    icon: MessageSquare,
+    subItems: [
+      { label: 'Deep-Desk Tickets', href: '/dashboard/tickets' },
+      { label: 'Messages', href: '/dashboard/messages' },
+      { label: 'Mail', href: '/dashboard/mail' },
+    ],
+  },
+  { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
 ];
 
-// --- TENANT_ADMIN NAVIGATION (Business OS - Sequence of Momentum) ---
+// --- TENANT_ADMIN NAVIGATION (purpose groups: Customers → Settings + Bonnie) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
-  // ── 0. Action HUD ──
-  { label: 'Momentum Dashboard', href: '/dashboard', icon: Zap },
+  { label: 'Home', href: '/dashboard', icon: Zap },
+  { label: 'Operations Command', href: '/dashboard/operations', icon: Activity },
 
-  // ── 1. FIND (Lead Generation) ──
   {
-    label: 'Find Leads', href: '#', icon: Search,
+    label: 'Relationships',
+    href: '#',
+    icon: Users,
     subItems: [
-      { label: 'AI Lead Finder',  href: '/dashboard/sales-agent?tab=finder', icon: Search },
-      { label: 'Growth Agent Chat', href: '/dashboard/sales-agent?tab=chat',   icon: Bot   },
-      { label: 'Omni Crawler',  href: '/dashboard/sales-agent?tab=finder', icon: Zap },
-    ]
+      { label: 'Customer workspace', href: '/dashboard/crm/workspace', icon: Users },
+      { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
+      { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
+      { label: 'Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
+    ],
   },
 
-  // ── 2. CONTACT (CRM & Outreach) ──
   {
-    label: 'Contact & CRM', href: '#', icon: Users,
+    label: 'Sales',
+    href: '#',
+    icon: Target,
     subItems: [
-      { label: 'Active Leads',    href: '/dashboard/crm?stage=lead',          icon: TrendingUp },
-      { label: 'Contacts',        href: '/dashboard/crm?stage=customer',      icon: Users },
-      { label: 'Gmail',           href: '/dashboard/mail',                   icon: Mail },
-      { label: 'Facebook Inbox',  href: '/dashboard/business/facebook',      icon: Facebook },
-      { label: 'Zoho Mail',       href: '/dashboard/zoho/mail',               icon: Mail },
-      { label: 'SMS Outreach',    href: '/dashboard/business/sms',            icon: Smartphone },
-    ]
+      { label: 'Lead Finder', href: '/dashboard/leads/campaigns', icon: Search },
+      { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
+      { label: 'Deals', href: '/dashboard/deals', icon: Target },
+      { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
+      { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
+      { label: 'Sales overview', href: '/dashboard/crm', icon: BarChart3 },
+    ],
   },
 
-  // ── 3. TRACK (Meetings & Scheduling) ──
   {
-    label: 'Track & Schedule', href: '#', icon: Clock,
+    label: 'Growth',
+    href: '#',
+    icon: Globe,
     subItems: [
+      { label: 'Email campaigns', href: '/dashboard/business/campaigns', icon: Presentation },
+      { label: 'Social', href: '/dashboard/business/social', icon: Globe },
+      { label: 'Compose post', href: '/dashboard/business/social/compose', icon: PenSquare },
+      { label: 'Forms', href: '/dashboard/business/forms', icon: FileText },
+      { label: 'SMS', href: '/dashboard/business/sms', icon: Smartphone },
+      { label: 'Social command', href: '/dashboard/business/social-command', icon: Calendar },
+    ],
+  },
+
+  {
+    label: 'Money',
+    href: '#',
+    icon: DollarSign,
+    subItems: [
+      { label: 'Invoices', href: '/dashboard/business/billing/manage', icon: DollarSign },
+      { label: 'Billing overview', href: '/dashboard/business/billing', icon: DollarSign },
+      { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
+      { label: 'Expenses', href: '/dashboard/business/expenses', icon: Receipt },
+      { label: 'Cash flow', href: '/dashboard/business/cash-flow', icon: TrendingUp },
+      { label: 'Banking', href: '/dashboard/accounting/banking', icon: DollarSign },
+    ],
+  },
+
+  {
+    label: 'Work',
+    href: '#',
+    icon: Briefcase,
+    subItems: [
+      { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+      { label: 'Projects', href: '/dashboard/business/projects', icon: Layers },
       { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
-      { label: 'Booking Links',  href: '/dashboard/business/booking',  icon: Clock   },
-      { label: 'Conference Space', href: '/dashboard/business/meetings', icon: Video   },
-    ]
+      { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
+      { label: 'Booking links', href: '/dashboard/business/booking', icon: Clock },
+    ],
   },
 
-  // ── 4. CLOSE (Deals & Legal) ──
   {
-    label: 'Close Deals', href: '#', icon: Briefcase,
+    label: 'Communication',
+    href: '#',
+    icon: MessageSquare,
     subItems: [
-      { label: 'Deal Pipeline', href: '/dashboard/deals',             icon: TrendingUp },
-      { label: 'Proposals/Quotes',    href: '/dashboard/business/quotes',    icon: FileText },
-      { label: 'Active Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
-    ]
+      { label: 'Unified Inbox', href: '/dashboard/comms', icon: Mail },
+      { label: 'WhatsApp', href: '/dashboard/business/whatsapp', icon: MessageCircle },
+      { label: 'Team messages', href: '/dashboard/business/messages', icon: MessageSquare },
+      { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
+    ],
   },
 
-  // ── 5. INVOICE (Billing & Revenue) ──
   {
-    label: 'Invoice & Pay', href: '#', icon: DollarSign,
+    label: 'Knowledge',
+    href: '#',
+    icon: FolderOpen,
     subItems: [
-      { label: 'Billing Center',   href: '/dashboard/business/billing',    icon: DollarSign },
-      { label: 'Accounting Hub',    href: '/dashboard/accounting',          icon: BarChart3  },
-      { label: 'Revenue Analytics', href: '/dashboard/business/daily-summary', icon: TrendingUp },
-    ]
+      { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
+      { label: 'Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
+      { label: 'Vault', href: '/dashboard/business/vault', icon: ShieldCheck },
+    ],
   },
 
-  // ── 6. EXECUTE (Production) ──
   {
-    label: 'Execute Work', href: '#', icon: CheckSquare,
+    label: 'Intelligence',
+    href: '#',
+    icon: Brain,
     subItems: [
-      { label: 'Active Projects',       href: '/dashboard/business/projects', icon: Layers  },
-      { label: 'Production Tasks',      href: '/dashboard/tasks',             icon: CheckSquare },
-      { label: 'Shared Documents',  href: '/dashboard/business/documents',  icon: FolderOpen },
-    ]
+      { label: 'Bonnie AI', href: '/dashboard/business/bonnie', icon: Brain },
+      { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
+      { label: 'Chase inbox', href: '/dashboard/bonnie/chases', icon: BellRing },
+      { label: 'Automations', href: '/dashboard/business/workflows', icon: Zap },
+      { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
+      { label: 'Executive view', href: '/dashboard/executive', icon: BarChart3 },
+    ],
   },
 
-  // ── 7. AUTOMATE (The Engine) ──
   {
-    label: 'Action Engine', href: '#', icon: Zap,
+    label: 'Administration',
+    href: '#',
+    icon: Settings,
     subItems: [
-      { label: 'Integration Marketplace', href: '/dashboard/marketplace', icon: Globe       },
-      { label: 'Marketing Campaigns',  href: '/dashboard/business/campaigns', icon: Presentation },
-      { label: 'System Settings', href: '/dashboard/business/settings',    icon: Settings     },
-    ]
+      { label: 'System settings', href: '/dashboard/business/settings', icon: Settings },
+      { label: 'Audit trail', href: '/dashboard/business/audit', icon: Activity },
+      { label: 'Integrations', href: '/dashboard/marketplace', icon: Globe },
+      { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
+    ],
   },
 ];
-
-
-
-export const ADMIN_STATS: DashboardStat[] = [
-  { label: 'Total Clients', value: '24', icon: Users, color: 'bg-indigo-600' },
-  { label: 'Active Projects', value: '18', icon: Briefcase, color: 'bg-teal-600' },
-  { label: 'Revenue (MTD)', value: '$124k', icon: DollarSign, color: 'bg-green-600' },
-  { label: 'System Health', value: '99.9%', icon: Activity, color: 'bg-rose-600' },
-];
-
-export const CLIENT_STATS: DashboardStat[] = [
-  { label: 'Active Projects', value: '1', icon: Briefcase, color: 'bg-teal-600' },
-  { label: 'Pending Invoices', value: '1', icon: DollarSign, color: 'bg-yellow-600' },
-  { label: 'Unread Messages', value: '3', icon: MessageSquare, color: 'bg-blue-600' },
-  { label: 'Upcoming Meetings', value: '2', icon: Video, color: 'bg-purple-600' },
-];
-
-export const DOCUMENTATION_VIDEOS = {
-  DASHBOARD_TOUR: "3a7000c925c145b7882089688b0ceb5d",
-  AI_INFRASTRUCTURE: "023023e9a7e84120894768393d9ce454",
-  CLIENT_ONBOARDING: "7e5e33d0e2e54e4e84b8e8a8b8b8b8b8", // Placeholder
-};

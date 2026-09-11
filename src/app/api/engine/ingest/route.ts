@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { processContent } from '@/services/engine/ProcessingEngine';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { runInBackground } from '@/lib/server/backgroundTask';
+import { getPublicAppUrl } from '@/lib/server/appUrl';
+import { z } from 'zod';
+import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+
+const schema = z.object({ source: z.string().trim().min(1).max(100), raw_content: z.string().max(500_000).default(''), author_name: z.string().max(300).nullable().optional(), author_contact: z.string().max(500).nullable().optional(), url: z.string().url().max(5000).nullable().optional(), tenant_id: z.string().uuid(), metadata: z.record(z.string(), z.unknown()).default({}) });
 
 /**
  * INGESTION ENGINE endpoint
@@ -8,19 +16,26 @@ import { processContent } from '@/services/engine/ProcessingEngine';
  * Accepts raw content, runs processing, stores event, triggers workflows
  */
 export async function POST(req: NextRequest) {
-    const internalKey = req.headers.get('x-internal-api-key');
-    if (!internalKey || internalKey !== process.env.INTERNAL_API_KEY) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const supabase = createSupabaseAdminClient();
 
     try {
-        const body = await req.json();
-        const { source, raw_content, author_name, author_contact, url, tenant_id, metadata } = body;
+        const parsed = schema.safeParse(await req.json().catch(() => ({})));
+        if (!parsed.success) return NextResponse.json({ error: 'Invalid ingestion payload', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+        const { source, raw_content, author_name, author_contact, url, tenant_id, metadata } = parsed.data;
 
-        if (!tenant_id) return NextResponse.json({ error: 'tenant_id required' }, { status: 400 });
-        if (!source)    return NextResponse.json({ error: 'source required' }, { status: 400 });
+        const internalKey = req.headers.get('x-internal-api-key');
+        const hasInternalKey =
+            Boolean(internalKey) &&
+            Boolean(process.env.INTERNAL_API_KEY) &&
+            internalKey === process.env.INTERNAL_API_KEY;
+
+        let actorUserId: string | null = null;
+        if (!hasInternalKey) actorUserId = (await requireTenantAccess(tenant_id, req)).user.id;
+        else {
+            const { data: member, error: memberError } = await supabase.from('tenant_users').select('user_id').eq('tenant_id', tenant_id).limit(1).maybeSingle();
+            if (memberError) throw memberError;
+            actorUserId = member?.user_id || null;
+        }
 
         // Run processing engine
         const processed = processContent(raw_content || '');
@@ -47,12 +62,14 @@ export async function POST(req: NextRequest) {
             .select()
             .single();
 
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        if (error) return clientErrorResponse(error, { request: req, scope: 'engine/ingest' });
 
         // Auto-create a lead if intent is high/urgent
         let lead_id: string | null = null;
         if (['high', 'urgent'].includes(processed.intent_label)) {
-            const { data: lead } = await supabase
+            if (!actorUserId) throw new Error('Workspace has no member available for automated lead ownership');
+            await validateDailyResourceQuota(tenant_id, actorUserId, 'leads');
+            const { data: lead, error: leadError } = await supabase
                 .from('leads')
                 .insert({
                     tenant_id,
@@ -70,8 +87,11 @@ export async function POST(req: NextRequest) {
                 .select('id')
                 .single();
 
+            if (leadError) throw leadError;
+
             if (lead) {
                 lead_id = lead.id;
+                await recordDailyResourceQuota(tenant_id, actorUserId, 'leads', 1, `ingest-lead:${lead.id}`);
                 await supabase
                     .from('ingestion_events')
                     .update({ lead_id, workflow_triggered: false })
@@ -99,16 +119,18 @@ export async function POST(req: NextRequest) {
                 author_name,
             };
 
-            // Fire workflow execution in background via webhook
-            fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/engine/execute`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    trigger_type: lead_id ? 'lead_created' : 'ingestion_event',
-                    tenant_id,
-                    data: contextData,
-                }),
-            }).catch(console.error);
+            // Fire workflow execution in background after response
+            runInBackground(
+                fetch(`${getPublicAppUrl()}/api/engine/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-internal-api-key': process.env.INTERNAL_API_KEY || '' },
+                    body: JSON.stringify({
+                        trigger_type: lead_id ? 'lead_created' : 'ingestion_event',
+                        tenant_id,
+                        data: contextData,
+                    }),
+                }).catch(console.error)
+            );
 
             workflowsTriggered = workflows.length;
         }
@@ -124,6 +146,6 @@ export async function POST(req: NextRequest) {
 
     } catch (err) {
         console.error('Ingestion error:', err);
-        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+        return routeErrorResponse(err, 'Ingestion failed');
     }
 }

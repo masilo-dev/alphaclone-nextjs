@@ -47,15 +47,16 @@ export async function POST(request: NextRequest) {
         channel: channel,
         text: message,
         username: 'AlphaClone Bot',
-        icon_url: 'https://alphaclone.tech/logo.png'
+        icon_url: 'https://alphaclonesystems.com/logo.png'
       })
     });
 
     const slackData = await slackResponse.json();
 
     if (!slackData.ok) {
+      console.error('[slack/send] Slack API error:', slackData.error);
       return NextResponse.json(
-        { error: 'Failed to send Slack message', details: slackData.error },
+        { error: 'Failed to send Slack message', code: 'SLACK_API_ERROR' },
         { status: 500 }
       );
     }

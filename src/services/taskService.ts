@@ -3,6 +3,52 @@ import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
 import { projectService } from './projectService';
 import { taskDependencyService } from './taskDependencyService';
+import { notificationService } from './notificationService';
+import { taskEmailTemplates } from '../lib/email/taskEmailTemplates';
+
+async function sendNotificationEmail(params: {
+    tenantId: string;
+    to: string;
+    subject: string;
+    templateName: string;
+    html: string;
+}) {
+    const emailPayload = {
+        tenantId: params.tenantId,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        isPlatformNotification: true,
+        fromName: 'AlphaClone Tasks',
+        templateName: params.templateName,
+    };
+
+    if (typeof window === 'undefined') {
+        try {
+            const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+            await sendEmailServer(emailPayload);
+        } catch (err) {
+            console.error('Error sending email programmatically:', err);
+        }
+    } else {
+        try {
+            await fetch('/api/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: params.tenantId,
+                    to: params.to,
+                    subject: params.subject,
+                    body_html: params.html,
+                    isPlatformNotification: true,
+                }),
+            });
+        } catch (err) {
+            console.error('Error sending email via fetch:', err);
+        }
+    }
+}
+
 
 export interface Task {
     id: string;
@@ -15,7 +61,7 @@ export interface Task {
     relatedToDeal?: string;
     relatedToLead?: string;
     priority: 'low' | 'medium' | 'high' | 'urgent';
-    status: 'ideas' | 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
+    status: 'ideas' | 'todo' | 'in_progress' | 'review' | 'blocked' | 'completed' | 'cancelled';
     dueDate?: string;
     startDate?: string;
     completedAt?: string;
@@ -51,7 +97,7 @@ export interface CreateTaskInput {
     relatedToDeal?: string;
     relatedToLead?: string;
     priority?: 'low' | 'medium' | 'high' | 'urgent';
-    status?: 'ideas' | 'todo' | 'in_progress' | 'review' | 'completed' | 'cancelled';
+    status?: 'ideas' | 'todo' | 'in_progress' | 'review' | 'blocked' | 'completed' | 'cancelled';
     dueDate?: string;
     startDate?: string;
     estimatedHours?: number;
@@ -87,6 +133,10 @@ export const taskService = {
         relatedToProject?: string;
         relatedToDeal?: string;
         relatedToLead?: string;
+        /** ISO date or datetime; tasks with due_date >= this */
+        dueAfter?: string;
+        /** ISO date or datetime; tasks with due_date <= this */
+        dueBefore?: string;
         limit?: number;
         page?: number;     // NEW
         offset?: number;   // NEW
@@ -100,7 +150,8 @@ export const taskService = {
             let query = supabase
                 .from('tasks')
                 .select('*', { count: 'exact' }) // Request exact count for pagination
-                .eq('tenant_id', tenantId);
+                .eq('tenant_id', tenantId)
+                .is('deleted_at', null);
 
             if (filters?.assignedTo) {
                 query = query.eq('assigned_to', filters.assignedTo);
@@ -119,6 +170,12 @@ export const taskService = {
             }
             if (filters?.relatedToLead) {
                 query = query.eq('related_to_lead', filters.relatedToLead);
+            }
+            if (filters?.dueAfter?.trim()) {
+                query = query.gte('due_date', filters.dueAfter.trim());
+            }
+            if (filters?.dueBefore?.trim()) {
+                query = query.lte('due_date', filters.dueBefore.trim());
             }
 
             // Apply pagination
@@ -174,6 +231,7 @@ export const taskService = {
                 .select('*')
                 .eq('id', taskId)
                 .eq('tenant_id', tenantId)
+                .is('deleted_at', null)
                 .single();
 
             if (error) throw error;
@@ -251,9 +309,85 @@ export const taskService = {
                 taskTitle: taskData.title,
             }, tenantId);
 
+            // EMIT AUTOMATION EVENT (client-safe — server emit via API)
+            const { requestBusinessEvent } = await import('../lib/automation/request-event');
+            await requestBusinessEvent(tenantId, 'task_created', {
+                taskId: data.id,
+                title: data.title,
+                priority: data.priority,
+                assignedTo: data.assigned_to,
+                dueDate: data.due_date
+            }).catch(err => console.error('Failed to emit task_created event:', err));
+
             // Trigger project progress recalculation if linked to a project
             if (data.related_to_project) {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            }
+
+            if (data.due_date) {
+                void import('@/lib/calendar/taskCalendarSync')
+                    .then(({ syncTaskToAllCalendars }) =>
+                        syncTaskToAllCalendars(tenantId, userId, {
+                            id: data.id,
+                            title: data.title,
+                            description: data.description,
+                            due_date: data.due_date,
+                            priority: data.priority,
+                            google_calendar_event_id: data.google_calendar_event_id,
+                            status: data.status,
+                            related_to_project: data.related_to_project,
+                        })
+                    )
+                    .then(async ({ eventId }) => {
+                        if (eventId && eventId !== data.google_calendar_event_id) {
+                            await supabase
+                                .from('tasks')
+                                .update({ google_calendar_event_id: eventId })
+                                .eq('id', data.id);
+                        }
+                    })
+                    .catch((err) => console.error('[taskService] calendar sync failed:', err));
+            }
+
+            // Notify assigned user
+            if (taskData.assignedTo && taskData.assignedTo !== userId) {
+                await notificationService.sendPlatformNotification({
+                    userId: taskData.assignedTo,
+                    title: 'New Task Assigned',
+                    message: `You have been assigned a new task: ${taskData.title}. Priority: ${taskData.priority || 'medium'}.`,
+                    link: `/dashboard/tasks/${data.id}`,
+                    priority: taskData.priority || 'medium',
+                    tenantId
+                });
+
+                // Send Email Notification
+                try {
+                    const { data: assigneeData } = await supabase.from('profiles').select('name, email').eq('id', taskData.assignedTo).single();
+                    if (assigneeData?.email) {
+                        const { data: assignerData } = await supabase.from('profiles').select('name').eq('id', userId).single();
+                        const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
+                        const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${data.id}` : '';
+
+                        await sendNotificationEmail({
+                            tenantId,
+                            to: assigneeData.email,
+                            subject: `New Task Assigned: ${taskData.title}`,
+                            templateName: 'taskAssigned',
+                            html: taskEmailTemplates.taskAssigned({
+                                recipientName: assigneeData.name || 'Team Member',
+                                assignerName: assignerData?.name,
+                                taskTitle: taskData.title,
+                                taskDescription: taskData.description,
+                                dueDate: taskData.dueDate,
+                                priority: taskData.priority === 'urgent' ? 'high' : taskData.priority,
+                                actionUrl,
+                                workspaceName
+                            })
+                        });
+                    }
+                } catch (err) {
+                    console.error('Failed to send task assignment email:', err);
+                }
             }
 
             const task: Task = {
@@ -306,7 +440,7 @@ export const taskService = {
                     .single();
 
                 if (existingTask) {
-                    const statusOrder = ['ideas', 'todo', 'in_progress', 'review', 'completed'];
+                    const statusOrder = ['ideas', 'todo', 'in_progress', 'review', 'blocked', 'completed'];
                     const currentIdx = statusOrder.indexOf(existingTask.status);
                     const newIdx = statusOrder.indexOf(updates.status);
 
@@ -365,6 +499,74 @@ export const taskService = {
             // Trigger project progress recalculation if linked to a project
             if (data.related_to_project) {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            }
+
+            if (updates.dueDate !== undefined || updates.status !== undefined) {
+                const { data: { user: syncUser } } = await supabase.auth.getUser();
+                if (syncUser?.id) {
+                    void import('@/lib/calendar/taskCalendarSync')
+                        .then(({ syncTaskToAllCalendars }) =>
+                            syncTaskToAllCalendars(tenantId, syncUser.id, {
+                                id: data.id,
+                                title: data.title,
+                                description: data.description,
+                                due_date: data.due_date,
+                                priority: data.priority,
+                                google_calendar_event_id: data.google_calendar_event_id,
+                                status: data.status,
+                                related_to_project: data.related_to_project,
+                            })
+                        )
+                        .then(async ({ eventId }) => {
+                            if (eventId && eventId !== data.google_calendar_event_id) {
+                                await supabase
+                                    .from('tasks')
+                                    .update({ google_calendar_event_id: eventId })
+                                    .eq('id', data.id);
+                            }
+                        })
+                        .catch((err) => console.error('[taskService] calendar sync failed:', err));
+                }
+            }
+
+            // Notify assigned user of status change if someone else updated it
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (updates.status && data.assigned_to && currentUser && data.assigned_to !== currentUser.id) {
+                await notificationService.sendPlatformNotification({
+                    userId: data.assigned_to,
+                    title: 'Task Status Updated',
+                    message: `The task "${data.title}" has been moved to ${data.status.replace('_', ' ')}. Check if any further action is required.`,
+                    link: `/dashboard/tasks/${data.id}`,
+                    priority: data.priority,
+                    tenantId
+                });
+
+                // Send Email Notification for status change (especially completion)
+                try {
+                    if (updates.status === 'completed') {
+                        const { data: creatorData } = await supabase.from('profiles').select('name, email').eq('id', data.created_by).single();
+                        if (creatorData?.email && data.created_by !== currentUser.id) {
+                            const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
+                            const { absoluteUrl } = await import('@/lib/siteUrl');
+                            const actionUrl = absoluteUrl(`/dashboard/tasks/${data.id}`);
+
+                            await sendNotificationEmail({
+                                tenantId,
+                                to: creatorData.email,
+                                subject: `Task Completed: ${data.title}`,
+                                templateName: 'taskCompleted',
+                                html: taskEmailTemplates.taskCompleted({
+                                    recipientName: creatorData.name || 'Task Creator',
+                                    taskTitle: data.title,
+                                    actionUrl,
+                                    workspaceName
+                                })
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to send task status email:', err);
+                }
             }
 
             // --- AUTO-DEPENDENCY DATE SHIFTING ---
@@ -467,14 +669,6 @@ export const taskService = {
     },
 
     /**
-     * AI-powered task outline generation (Placeholder for MVP)
-     */
-    async generateTaskOutline(title: string): Promise<{ outline: string; error: string | null }> {
-        const mockOutline = `Strategy for: ${title}\n\n1. Define core objectives\n2. Identify key stakeholders\n3. Establish timeline and milestones\n4. Allocate necessary resources\n5. Execute initial phase\n6. Review and optimize progress`;
-        return { outline: mockOutline, error: null };
-    },
-
-    /**
      * Get task comments
      */
     async getTaskComments(taskId: string): Promise<{ comments: TaskComment[]; error: string | null }> {
@@ -541,6 +735,45 @@ export const taskService = {
                 attachments: data.attachments || [],
                 createdAt: data.created_at,
             };
+
+            // Notify task assignee & creator
+            try {
+                const { data: taskData } = await supabase.from('tasks').select('title, assigned_to, created_by, tenant_id').eq('id', taskId).single();
+                if (taskData) {
+                    const notifyUsers = new Set<string>();
+                    if (taskData.assigned_to && taskData.assigned_to !== userId) notifyUsers.add(taskData.assigned_to);
+                    if (taskData.created_by && taskData.created_by !== userId) notifyUsers.add(taskData.created_by);
+
+                    if (notifyUsers.size > 0) {
+                        const { data: commenterData } = await supabase.from('profiles').select('name').eq('id', userId).single();
+                        const { data: usersToNotify } = await supabase.from('profiles').select('id, name, email').in('id', Array.from(notifyUsers));
+
+                        const workspaceName = tenantService.getCachedCurrentTenant()?.name || 'Your Workspace';
+                        const actionUrl = typeof window !== 'undefined' ? `${window.location.origin}/dashboard/tasks/${taskId}` : '';
+
+                        for (const notifyUser of usersToNotify || []) {
+                            if (notifyUser.email) {
+                                await sendNotificationEmail({
+                                    tenantId: taskData.tenant_id,
+                                    to: notifyUser.email,
+                                    subject: `New Comment on Task: ${taskData.title}`,
+                                    templateName: 'taskComment',
+                                    html: taskEmailTemplates.taskComment({
+                                        recipientName: notifyUser.name || 'Team Member',
+                                        commenterName: commenterData?.name,
+                                        commentText: comment,
+                                        taskTitle: taskData.title,
+                                        actionUrl,
+                                        workspaceName
+                                    })
+                                }).catch(e => console.error('Error sending comment email:', e));
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to notify task comment:', err);
+            }
 
             return { comment: taskComment, error: null };
         } catch (err) {
@@ -613,7 +846,8 @@ export const taskService = {
      */
     async getOverdueTasks(userId?: string): Promise<{ tasks: Task[]; error: string | null }> {
         try {
-            const tenantId = this.getTenantId();
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { tasks: [], error: null };
             const today = new Date();
 
             let query = supabase
@@ -716,6 +950,51 @@ export const taskService = {
             return { score, status, risks, recommendations, error: null };
         } catch (err) {
             return { score: 0, status: 'critical', risks: [], recommendations: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Escalation engine: promotes all overdue non-completed tasks to high priority.
+     * Returns the count of tasks escalated.
+     */
+    async escalateOverdueTasks(userId?: string): Promise<{ escalated: number; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { escalated: 0, error: 'No active workspace' };
+
+            const { tasks, error } = await this.getOverdueTasks(userId);
+            if (error) throw new Error(error);
+
+            const toEscalate = tasks.filter(t => t.priority !== 'urgent' && t.priority !== 'high');
+            if (!toEscalate.length) return { escalated: 0, error: null };
+
+            const ids = toEscalate.map(t => t.id);
+
+            const { error: updateError } = await supabase
+                .from('tasks')
+                .update({ priority: 'high', metadata: { escalated: true, escalated_at: new Date().toISOString() } })
+                .eq('tenant_id', tenantId)
+                .in('id', ids)
+                .neq('status', 'completed')
+                .neq('status', 'cancelled');
+
+            if (updateError) throw updateError;
+
+            // Log one activity per escalated task (non-blocking)
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const actorId = currentUser?.id || userId || 'system';
+            for (const task of toEscalate) {
+                activityService.logActivity(actorId, 'Task Escalated', {
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    reason: 'overdue_auto_escalation',
+                }, tenantId).catch(() => undefined);
+            }
+
+            return { escalated: toEscalate.length, error: null };
+        } catch (err) {
+            console.error('[taskService] escalateOverdueTasks error:', err);
+            return { escalated: 0, error: err instanceof Error ? err.message : 'Escalation failed' };
         }
     },
 };

@@ -30,6 +30,7 @@ export const permissionsService = {
     /**
      * Check if user has permission
      * SECURITY: Always checks within tenant context
+     * GDPR compliant: access control is logged for audit purposes
      */
     async hasPermission(
         userId: string,

@@ -1,4 +1,5 @@
 import { toast } from 'react-hot-toast';
+import { tenantService } from '@/services/tenancy/TenantService';
 
 export interface EmailPayload {
     to: string;
@@ -8,6 +9,7 @@ export interface EmailPayload {
     from?: string;
     fromName?: string;
     replyTo?: string;
+    tenantId?: string;
 }
 
 /**
@@ -20,12 +22,17 @@ export const emailProviderService = {
      */
     async sendEmail(payload: EmailPayload): Promise<{ success: boolean; error: string | null }> {
         try {
+            const tenantId = payload.tenantId || tenantService.getCurrentTenantId();
+            if (!tenantId) {
+                return { success: false, error: 'No active tenant for email send' };
+            }
+
             const response = await fetch('/api/email/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({ ...payload, tenantId }),
             });
 
             const data = await response.json();

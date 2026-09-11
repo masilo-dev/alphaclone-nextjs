@@ -1,8 +1,9 @@
 import { supabase } from '../lib/supabase';
+import { encryptIntegrationConfig } from '@/lib/integration/integrationTokenCrypto';
 
 export interface IntegrationConfig {
     id: string;
-    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid';
+    type: 'slack' | 'github' | 'google_calendar' | 'discord' | 'jira' | 'linear' | 'zapier' | 'twilio' | 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail' | 'facebook' | 'microsoft';
     name: string;
     enabled: boolean;
     config: Record<string, any>;
@@ -41,13 +42,14 @@ export const integrationsService = {
         userId: string
     ): Promise<{ integration: IntegrationConfig | null; error: string | null }> {
         try {
+            const encryptedConfig = await encryptIntegrationConfig(config);
             const { data, error } = await supabase
                 .from('integrations')
                 .upsert({
                     type,
                     name: this.getIntegrationName(type),
                     enabled: true,
-                    config,
+                    config: encryptedConfig,
                     user_id: userId,
                 }, {
                     onConflict: 'type,user_id',
@@ -90,16 +92,39 @@ export const integrationsService = {
 
             if (error) throw error;
 
+            const { data: microsoftConnection } = await supabase
+                .from('microsoft_connections')
+                .select('id, microsoft_email, display_name, created_at')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            const integrations = (data || []).map((i: any) => ({
+                id: i.id,
+                type: i.type,
+                name: i.name,
+                enabled: i.enabled,
+                config: i.config,
+                userId: i.user_id,
+                createdAt: i.created_at,
+            }));
+
+            if (microsoftConnection) {
+                integrations.unshift({
+                    id: microsoftConnection.id,
+                    type: 'microsoft',
+                    name: 'Microsoft 365',
+                    enabled: true,
+                    config: {
+                        fromEmail: microsoftConnection.microsoft_email,
+                        displayName: microsoftConnection.display_name,
+                    },
+                    userId,
+                    createdAt: microsoftConnection.created_at,
+                });
+            }
+
             return {
-                integrations: (data || []).map((i: any) => ({
-                    id: i.id,
-                    type: i.type,
-                    name: i.name,
-                    enabled: i.enabled,
-                    config: i.config,
-                    userId: i.user_id,
-                    createdAt: i.created_at,
-                })),
+                integrations,
                 error: null,
             };
         } catch (error) {
@@ -192,60 +217,6 @@ export const integrationsService = {
     },
 
     /**
-     * Sync event to Google Calendar
-     */
-    async syncToGoogleCalendar(
-        config: GoogleCalendarConfig,
-        event: {
-            summary: string;
-            description?: string;
-            start: { dateTime: string; timeZone: string };
-            end: { dateTime: string; timeZone: string };
-            attendees?: Array<{ email: string }>;
-        }
-    ): Promise<{ eventId: string | null; error: string | null }> {
-        try {
-            // In production, use OAuth2 to get access token from refresh token
-            // For now, this is a placeholder structure
-            const accessToken = await this.getGoogleAccessToken(config);
-
-            const response = await fetch(
-                `https://www.googleapis.com/calendar/v3/calendars/${config.calendarId || 'primary'}/events`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(event),
-                }
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error?.message || 'Google Calendar API error');
-            }
-
-            const createdEvent = await response.json();
-            return { eventId: createdEvent.id, error: null };
-        } catch (error) {
-            return {
-                eventId: null,
-                error: error instanceof Error ? error.message : 'Google Calendar sync failed',
-            };
-        }
-    },
-
-    /**
-     * Get Google OAuth access token (placeholder)
-     */
-    async getGoogleAccessToken(config: GoogleCalendarConfig): Promise<string> {
-        // In production, exchange refresh token for access token
-        // This would use Google OAuth2 API
-        return config.refreshToken; // Placeholder
-    },
-
-    /**
      * Send Discord webhook
      */
     async sendDiscordNotification(
@@ -325,6 +296,12 @@ export const integrationsService = {
             zapier: 'Zapier',
             twilio: 'Twilio',
             sendgrid: 'SendGrid',
+            resend: 'Resend',
+            brevo: 'Brevo',
+            zoho: 'Zoho Mail',
+            gmail: 'Gmail',
+            facebook: 'Facebook',
+            microsoft: 'Microsoft 365',
         };
         return names[type] || type;
     },
@@ -371,4 +348,3 @@ export const integrationsService = {
         }
     },
 };
-

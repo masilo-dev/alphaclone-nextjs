@@ -214,7 +214,7 @@ const LeadSearchVisual: React.FC<LeadSearchVisualProps> = ({ industry, location 
                         </div>
                         <div className="bg-slate-800/50 rounded-lg py-2 border border-slate-700/50">
                             <div className="text-xs text-slate-400 mb-1">Data Quality</div>
-                            <div className="text-emerald-400 font-mono font-bold">99.8%</div>
+                            <div className="text-emerald-400 font-mono font-bold">Quality check</div>
                         </div>
                     </div>
                 </div>

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface DashboardCardProps {
   activity: {
-    id: number;
+    id: string;
     title: string;
     time: string;
     type: 'lead' | 'project' | 'finance' | 'calendar';

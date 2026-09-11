@@ -109,11 +109,21 @@ export const EventTypes = {
     INVOICE_PAID: 'invoice.paid',
     INVOICE_OVERDUE: 'invoice.overdue',
 
+    // Lead / CRM events
+    LEAD_CREATED: 'lead.created',
+    LEAD_QUALIFIED: 'lead.qualified',
+    DEAL_STAGE_CHANGED: 'deal.stage_changed',
+    TICKET_CREATED: 'ticket.created',
+    EMAIL_RECEIVED: 'email.received',
+    PAYMENT_FAILED: 'payment.failed',
+    APPROVAL_REQUESTED: 'approval.requested',
+
     // Task events
     TASK_CREATED: 'task.created',
     TASK_UPDATED: 'task.updated',
     TASK_COMPLETED: 'task.completed',
     TASK_ASSIGNED: 'task.assigned',
+    TASK_OVERDUE: 'task.overdue',
 
     // Workflow events
     WORKFLOW_STARTED: 'workflow.started',

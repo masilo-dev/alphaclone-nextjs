@@ -9,7 +9,7 @@ import {
   ExternalLink, Info, DollarSign, Briefcase, Star, Search
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
+import { useCurrentTenantSafe, useTenantLoadingSafe } from '@/hooks/useTenantSafe';
 import { MCPAuthService } from '@/services/mcp/MCPAuthService';
 import { supabase } from '@/lib/supabase';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
@@ -61,7 +61,7 @@ const SETUP_STEPS = [
     number: 4,
     emoji: '📋',
     title: 'Paste this text into that file',
-    body: 'Open the file, delete everything in it, and paste the text below. Then save the file.',
+    body: 'Open the file, delete everything in it, and paste the Claude Desktop text below (or the Claude Code snippet if you use Claude Code). Then save the file.',
     isConfigStep: true,
   },
   {
@@ -84,17 +84,325 @@ const SETUP_STEPS = [
   },
 ];
 
+type McpSetupType = 'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor';
+
+/** Platform OAuth client IDs — same for all AlphaClone users; copy into connector settings. */
+const MCP_OAUTH_PLATFORM_CONFIG: Record<
+  McpSetupType,
+  { title: string; clientId: string; scopes: string; hint: string }
+> = {
+  claude: {
+    title: 'Claude OAuth Credentials',
+    clientId: '1778309945386-41bab8272f61',
+    scopes: 'read write mcp:tools mcp:resources openid profile',
+    hint: 'In Claude.ai → Settings → Connectors → MCP, paste Client ID when the connector asks for OAuth credentials.',
+  },
+  grok: {
+    title: 'Grok OAuth Credentials',
+    clientId: 'grok-connector',
+    scopes: 'read write mcp:tools mcp:resources',
+    hint: 'In Grok → Settings → MCP / Connectors, paste Client ID when OAuth is requested.',
+  },
+  chatgpt: {
+    title: 'ChatGPT OAuth Credentials',
+    clientId: 'chatgpt-connector',
+    scopes: 'read write mcp:tools mcp:resources',
+    hint: 'In ChatGPT → Settings → Connectors → MCP, paste Client ID if the form asks for one (OAuth sign-in is usually automatic).',
+  },
+  manus: {
+    title: 'Manus OAuth Credentials',
+    clientId: 'manus-ai',
+    scopes: 'read write mcp:tools mcp:resources',
+    hint: 'In Manus → MCP / Tools settings, paste Client ID when connecting via OAuth.',
+  },
+  cursor: {
+    title: 'Cursor MCP (API key)',
+    clientId: 'cursor-connector',
+    scopes: 'read write mcp:tools mcp:resources',
+    hint: 'In Cursor → Settings → MCP, add the HTTP server below. Use your personal connection key as the Bearer token (shown in Step 2).',
+  },
+};
+
+function CopyableCredentialRow({
+  label,
+  value,
+  onCopy,
+}: {
+  label: string;
+  value: string;
+  onCopy: (text: string, label: string) => void;
+}) {
+  return (
+    <div>
+      <p className="text-xs text-slate-500 uppercase font-bold mb-1">{label}</p>
+      <div className="flex items-center gap-2">
+        <code className="flex-1 text-[11px] text-teal-300 bg-black/30 p-1.5 rounded break-all border border-slate-700/50">
+          {value}
+        </code>
+        <button
+          type="button"
+          onClick={() => onCopy(value, label)}
+          className="p-1.5 hover:text-teal-400 transition-colors shrink-0"
+          aria-label={`Copy ${label}`}
+        >
+          <Copy className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function McpOAuthCredentialsPanel({
+  setupType,
+  mcpOrigin,
+  onCopy,
+}: {
+  setupType: McpSetupType;
+  mcpOrigin: string;
+  onCopy: (text: string, label: string) => void;
+}) {
+  const config = MCP_OAUTH_PLATFORM_CONFIG[setupType];
+  const serverUrl = `${mcpOrigin}/api/mcp`;
+  const authUrl = `${mcpOrigin}/api/mcp/authorize`;
+  const tokenUrl = `${mcpOrigin}/api/mcp/token`;
+
+  return (
+    <div className="mb-6 p-5 rounded-2xl bg-slate-800/60 border border-slate-700/80 space-y-4">
+      <div>
+        <p className="text-sm font-bold text-white flex items-center gap-2">
+          <Shield className="w-4 h-4 text-teal-400" />
+          {config.title}
+        </p>
+        <p className="text-xs text-slate-400 mt-1 leading-relaxed">{config.hint}</p>
+        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+          <span className="text-slate-400 font-medium">Note:</span> Client ID identifies the AI app to AlphaClone — it is not your personal API key. Your personal connection key is shown in Step 2 below.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CopyableCredentialRow label="Client ID" value={config.clientId} onCopy={onCopy} />
+        <CopyableCredentialRow label="Scopes" value={config.scopes} onCopy={onCopy} />
+        <div className="md:col-span-2">
+          <CopyableCredentialRow label="MCP Server URL" value={serverUrl} onCopy={onCopy} />
+        </div>
+        <div className="md:col-span-2">
+          <CopyableCredentialRow label="Authorization Endpoint" value={authUrl} onCopy={onCopy} />
+        </div>
+        <div className="md:col-span-2">
+          <CopyableCredentialRow label="Token Endpoint" value={tokenUrl} onCopy={onCopy} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Paste at the start of a session so the AI uses AlphaClone MCP correctly. */
+const MCP_MASTER_INSTRUCTION = `You are connected to my AlphaClone business workspace via MCP. Use AlphaClone tools for CRM, leads, deals, tasks, invoices, contracts, email, social publishing, and media — do not guess or make up data. MCP tool calls execute immediately (no dashboard approval queue).
+
+Rules:
+1. Before creating records, search for duplicates (same email, company, or name).
+2. Confirm destructive actions (delete, close deal, mark paid) with me in chat before executing.
+3. Summarize what you changed after each action (what was created/updated and IDs if returned).
+4. If a tool fails, tell me the error and suggest one fix — do not retry blindly.
+5. Keep responses concise: bullet lists for data, short paragraphs for recommendations.
+
+Images & media (required workflow):
+- NEVER pass local paths like /mnt/data/… to publish tools — they are blocked.
+- When I attach or generate an image: call upload_media with content_base64 or data_url (or source_url if already HTTPS).
+- Use the returned media_url or media_asset_id in publish_social_post, publish_post, publish_linkedin_image, or send_email attachments.
+- Flow: upload_media → publish_social_post (or send_email with attachments). Use get_post_status to verify publish.
+
+When I ask about "my business", pull live data from AlphaClone first, then answer.`;
+
+const MCP_BUSINESS_PROMPT_GROUPS: {
+  title: string;
+  description: string;
+  prompts: string[];
+}[] = [
+  {
+    title: 'Verify connection',
+    description: 'Run these first to confirm MCP is working.',
+    prompts: [
+      'Using AlphaClone, give me a quick snapshot of my workspace: open leads count, active deals, tasks due today, and outstanding invoice total.',
+      'List my 5 most recent leads and tell me which ones have no follow-up task scheduled.',
+    ],
+  },
+  {
+    title: 'Daily check-in',
+    description: 'Morning routine — copy one prompt each day.',
+    prompts: [
+      'Good morning. Review my AlphaClone workspace and give me today\'s priorities: overdue tasks, stale leads (no contact in 7+ days), deals stuck in the same stage, and unpaid invoices.',
+      'What happened in my CRM since yesterday? Summarize new leads, deal stage changes, and messages I should reply to.',
+    ],
+  },
+  {
+    title: 'Leads & CRM',
+    description: 'Add, search, and qualify prospects.',
+    prompts: [
+      'Search AlphaClone for leads matching "Acme". If none exist, create a lead: Jane Smith, jane@acme.com, Acme Ltd, source: referral, notes: met at conference.',
+      'Show all new uncontacted leads. For each one, suggest a short outreach message I can send today.',
+      'Find leads with no activity in the last 14 days and create a high-priority follow-up task for each (due tomorrow).',
+    ],
+  },
+  {
+    title: 'Deals & pipeline',
+    description: 'Move opportunities through your pipeline.',
+    prompts: [
+      'List my open deals by stage with total value per stage. Flag any deal over 30 days in the same stage.',
+      'Create a deal for Acme Ltd: £5,000, stage proposal, linked to the Acme lead if it exists. Add a task to send the proposal by Friday.',
+      'Which deals are most likely to close this month based on stage and last activity? Recommend next actions for the top 3.',
+    ],
+  },
+  {
+    title: 'Tasks & follow-ups',
+    description: 'Stay on top of work without switching apps.',
+    prompts: [
+      'Show my open tasks sorted by due date. Group by overdue, today, and this week.',
+      'Create a task: "Call John re: proposal" — high priority, due tomorrow, linked to the Acme deal if it exists.',
+      'After every sales call I describe, create the follow-up task and log a brief activity note in AlphaClone.',
+    ],
+  },
+  {
+    title: 'Revenue & invoices',
+    description: 'Cash flow and billing questions.',
+    prompts: [
+      'What is my total outstanding invoice amount and which clients owe the most?',
+      'List invoices overdue by more than 14 days. Draft a polite payment reminder I can send for each.',
+      'Summarize paid vs unpaid revenue this month from AlphaClone.',
+    ],
+  },
+  {
+    title: 'Email, social & images',
+    description: 'Send mail, upload images, and publish to LinkedIn/Facebook.',
+    prompts: [
+      'Send an email via AlphaClone to bonnie@example.com — subject "Quick update", body: thank them for the call today.',
+      'I have an image to post. Upload it with upload_media (use my attached image as base64 or data URL), then publish to LinkedIn with a professional caption about AlphaClone.',
+      'Upload this image to AlphaClone media library and publish it to my connected Facebook Page with caption: "Building smarter with AlphaClone."',
+      'Create a LinkedIn post with the image I attached — upload first, then publish_linkedin_image or publish_social_post. Confirm the live URL when done.',
+      'List my media assets in AlphaClone and show the 5 most recent uploads.',
+    ],
+  },
+  {
+    title: 'Contracts & documents',
+    description: 'Draft and track agreements.',
+    prompts: [
+      'Draft a mutual NDA for Acme Ltd: 12-month term, standard confidentiality clauses. Save it to my AlphaClone contracts.',
+      'List contracts waiting for signature or review and what I need to do next on each.',
+    ],
+  },
+  {
+    title: 'Support & operations',
+    description: 'Tickets and team coordination.',
+    prompts: [
+      'Show open support tickets by priority. Summarize the oldest unresolved ones.',
+      'Create a support ticket: "Billing question — invoice #12345" — category billing, priority medium.',
+    ],
+  },
+];
+
+function McpBusinessPromptPlaybook({
+  agentLabel,
+  onCopy,
+}: {
+  agentLabel: string;
+  onCopy: (text: string, label: string) => void;
+}) {
+  const [expandedGroup, setExpandedGroup] = useState<string | null>('Verify connection');
+
+  return (
+    <div className="mb-8 rounded-2xl border border-amber-500/25 bg-gradient-to-br from-amber-500/5 to-slate-900/40 overflow-hidden">
+      <div className="p-5 border-b border-amber-500/15">
+        <div className="flex items-center gap-2 mb-2">
+          <Sparkles className="w-5 h-5 text-amber-400" />
+          <h2 className="text-lg font-bold text-white">Business prompt playbook</h2>
+        </div>
+        <p className="text-slate-400 text-sm leading-relaxed">
+          Copy these prompts into {agentLabel} after MCP is connected. Edit names, amounts, and dates for your business — the structure helps {agentLabel} use AlphaClone tools correctly.
+        </p>
+      </div>
+
+      <div className="p-5 space-y-4 border-b border-slate-800/60">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-amber-400/90 mb-1">
+            Master instruction (paste once per session)
+          </p>
+          <p className="text-xs text-slate-500 mb-3">
+            Send this first so {agentLabel} knows how to work with your AlphaClone data.
+          </p>
+          <div className="relative">
+            <pre className="p-4 pr-12 rounded-xl bg-slate-950 border border-slate-700 text-slate-300 text-xs leading-relaxed whitespace-pre-wrap font-sans max-h-48 overflow-y-auto">
+              {MCP_MASTER_INSTRUCTION}
+            </pre>
+            <button
+              type="button"
+              onClick={() => onCopy(MCP_MASTER_INSTRUCTION, 'Master instruction')}
+              className="absolute top-3 right-3 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              aria-label="Copy master instruction"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="divide-y divide-slate-800/60">
+        {MCP_BUSINESS_PROMPT_GROUPS.map((group) => {
+          const isOpen = expandedGroup === group.title;
+          return (
+            <div key={group.title}>
+              <button
+                type="button"
+                onClick={() => setExpandedGroup(isOpen ? null : group.title)}
+                className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-slate-800/30 transition-colors"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-white">{group.title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{group.description}</p>
+                </div>
+                <ChevronRight className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+              </button>
+              {isOpen && (
+                <div className="px-4 pb-4 space-y-2">
+                  {group.prompts.map((prompt) => (
+                    <div
+                      key={prompt}
+                      className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/70 border border-slate-800"
+                    >
+                      <MessageSquare className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                      <p className="flex-1 text-sm text-slate-300 leading-relaxed">{prompt}</p>
+                      <button
+                        type="button"
+                        onClick={() => onCopy(prompt, group.title)}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-teal-400 transition-colors shrink-0"
+                        aria-label="Copy prompt"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 interface MCPSetupGuideProps {
-  initialType?: 'claude' | 'manus';
+  initialType?: 'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor';
 }
 
 const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   const currentTenant = useCurrentTenantSafe();
-  const [setupType, setSetupType] = useState<'claude' | 'manus'>(initialType ?? 'claude');
+  const tenantLoading = useTenantLoadingSafe();
+  const [setupType, setSetupType] = useState<'claude' | 'manus' | 'grok' | 'chatgpt' | 'cursor'>(initialType ?? 'claude');
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [expandedStep, setExpandedStep] = useState<number>(1);
   const [connectionToken, setConnectionToken] = useState<string | null>(null);
+  const [keyNeedsRegenerate, setKeyNeedsRegenerate] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const [isDpaAccepted, setIsDpaAccepted] = useState<boolean>(true); // Default to true for non-enterprise
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -112,24 +420,40 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         setSetupType('manus');
       } else if (mcpParam === 'claude') {
         setSetupType('claude');
+      } else if (mcpParam === 'grok') {
+        setSetupType('grok');
+      } else if (mcpParam === 'chatgpt') {
+        setSetupType('chatgpt');
+      } else if (mcpParam === 'cursor') {
+        setSetupType('cursor');
       }
     }
   }, [initialType]);
 
 
   const isEnterprise = currentTenant?.subscription_plan === 'enterprise';
-  const tenantId = currentTenant?.id ?? 'your-workspace-id';
+  const tenantId = currentTenant?.id;
 
-  const mcpOrigin =
-    typeof window !== 'undefined' ? window.location.origin : 'https://alphaclone.tech';
+  const mcpOrigin = (typeof window !== 'undefined' ? window.location.origin : 'https://alphaclonesystems.com')
+    .replace('//www.', '//');
 
-  const buildConnectionUrl = (token: string | null, workspaceId: string, userId: string) => {
+  const agentLabel =
+    setupType === 'claude' ? 'Claude'
+    : setupType === 'manus' ? 'Manus'
+    : setupType === 'chatgpt' ? 'ChatGPT'
+    : setupType === 'cursor' ? 'Cursor'
+    : 'Grok';
+
+  /** Single-query URL: tenant and user are resolved from the key server-side. */
+  const buildConnectionUrl = (token: string | null) => {
+    const path = (setupType === 'claude' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor') ? '/api/mcp' : '/api/mcp/sse';
+    if (setupType === 'chatgpt') {
+      return `${mcpOrigin}${path}`;
+    }
     const params = new URLSearchParams({
       api_key: token || 'YOUR_KEY_HERE',
-      tenant_id: workspaceId,
-      user_id: userId || 'YOUR_USER_ID_HERE',
     });
-    return `${mcpOrigin}/api/mcp/sse?${params.toString()}`;
+    return `${mcpOrigin}${path}?${params.toString()}`;
   };
 
   // Auth + per-user MCP token (reloads when session or workspace changes)
@@ -139,19 +463,43 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     async function loadForUser(user: User | null) {
       setCurrentUser(user);
 
-      if (tenantId === 'your-workspace-id' || !user?.id) {
+      if (tenantLoading) {
+        return;
+      }
+
+      if (!tenantId || !user?.id) {
         if (!cancelled) {
           setConnectionToken(null);
+          setKeyNeedsRegenerate(false);
+          setTokenError(!tenantId ? 'Select or create a workspace first.' : null);
           setIsLoading(false);
         }
         return;
       }
 
-      if (!cancelled) setIsLoading(true);
+      if (!cancelled) {
+        setIsLoading(true);
+        setTokenError(null);
+        setKeyNeedsRegenerate(false);
+      }
       try {
         const { token, error: tokenErr } = await MCPAuthService.getOrCreateToken(tenantId, user.id);
         if (tokenErr) console.error('MCP token:', tokenErr);
-        if (!cancelled) setConnectionToken(token);
+        if (!cancelled) {
+          if (token) {
+            setConnectionToken(token);
+            setKeyNeedsRegenerate(false);
+            setTokenError(null);
+          } else if (tokenErr?.includes('cannot be retrieved')) {
+            setConnectionToken(null);
+            setKeyNeedsRegenerate(true);
+            setTokenError(null);
+          } else {
+            setConnectionToken(null);
+            setKeyNeedsRegenerate(false);
+            setTokenError(tokenErr || 'Could not load connection key.');
+          }
+        }
 
         if (isEnterprise) {
           const accepted = await MCPAuthService.isDPAAccepted(tenantId);
@@ -180,11 +528,11 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, [tenantId, isEnterprise]);
+  }, [tenantId, isEnterprise, tenantLoading]);
 
   const handleRotateToken = async () => {
-    if (!currentUser?.id) {
-      toast.error('You must be signed in to regenerate your connection key.');
+    if (!currentUser?.id || !tenantId) {
+      toast.error('You must be signed in with a workspace to regenerate your connection key.');
       return;
     }
     if (!window.confirm('Are you sure? Your old connection key will stop working immediately.')) return;
@@ -192,22 +540,52 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
     const { token, error } = await MCPAuthService.rotateToken(tenantId, currentUser.id);
     if (token) {
       setConnectionToken(token);
+      setKeyNeedsRegenerate(false);
+      setTokenError(null);
       toast.success('Connection key regenerated!');
     } else {
       toast.error(error || 'Failed to regenerate key');
     }
   };
 
-  const userIdForMcp = currentUser?.id ?? '';
-  const connectionUrl = buildConnectionUrl(connectionToken, tenantId, userIdForMcp);
-
-  const configJson = `{
+  const connectionUrl = buildConnectionUrl(connectionToken);
+  const mcpKey = connectionToken || 'YOUR_KEY_HERE';
+  // Claude Desktop's claude_desktop_config.json only accepts stdio (command/args).
+  // A bare "url" entry is invalid there and is skipped/stripped. Bridge via mcp-remote.
+  // Claude Code requires "type": "http" (or "sse"/"ws"); url-without-type is treated as stdio and fails.
+  // See: https://code.claude.com/docs/en/mcp#option-1-add-a-remote-http-server
+  const desktopConfigJson = `{
   "mcpServers": {
     "alphaclone": {
-      "url": "${connectionUrl}",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "${connectionUrl}"
+      ]
+    }
+  }
+}`;
+
+  const claudeCodeConfigJson = `{
+  "mcpServers": {
+    "alphaclone": {
+      "type": "http",
+      "url": "${mcpOrigin}/api/mcp",
       "headers": {
-        "x-tenant-id": "${tenantId}",
-        "x-user-id": "${userIdForMcp || 'YOUR_USER_ID_HERE'}"
+        "Authorization": "Bearer ${mcpKey}"
+      }
+    }
+  }
+}`;
+
+  const cursorMcpConfigJson = `{
+  "mcpServers": {
+    "alphaclone": {
+      "type": "http",
+      "url": "${mcpOrigin}/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${mcpKey}"
       }
     }
   }
@@ -233,7 +611,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   }
 
   // Enforce DPA Gate for Enterprise
-  if (isEnterprise && !isDpaAccepted && currentUser) {
+  if (isEnterprise && !isDpaAccepted && currentUser && tenantId) {
     return (
       <div className="p-6">
         <EnterpriseDPA 
@@ -255,7 +633,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
             <Bot className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : 'Manus'} AI to Your Account</h1>
+            <h1 className="text-2xl font-bold text-white">Connect {setupType === 'claude' ? 'Claude' : setupType === 'manus' ? 'Manus' : setupType === 'chatgpt' ? 'ChatGPT' : setupType === 'cursor' ? 'Cursor' : 'Grok'} AI to Your Account</h1>
             <p className="text-slate-400 text-sm mt-0.5">Takes about 2 minutes. No tech skills needed.</p>
           </div>
         </div>
@@ -274,12 +652,75 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           >
             Manus AI
           </button>
+          <button
+            onClick={() => setSetupType('grok')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'grok' ? 'bg-fuchsia-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Grok AI
+          </button>
+          <button
+            onClick={() => setSetupType('chatgpt')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'chatgpt' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            ChatGPT
+          </button>
+          <button
+            onClick={() => setSetupType('cursor')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${setupType === 'cursor' ? 'bg-sky-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Cursor
+          </button>
         </div>
+
+        {setupType !== 'cursor' && (
+          <McpOAuthCredentialsPanel setupType={setupType} mcpOrigin={mcpOrigin} onCopy={copyText} />
+        )}
+
+        {setupType === 'cursor' && (
+          <div className="mb-6 p-5 rounded-2xl bg-sky-500/10 border border-sky-500/20 space-y-3">
+            <p className="text-slate-200 text-sm">
+              In <strong>Cursor → Settings → MCP</strong>, click <strong>Add MCP server</strong> and paste the JSON from Step 4 below.
+              Your personal connection key (Step 2) goes in the <code className="text-teal-400 text-xs">Authorization</code> header.
+            </p>
+            <p className="text-slate-400 text-xs">
+              Registered client ID: <code className="text-sky-300">cursor-connector</code> — full platform tool catalog (same executable surface as Claude and Manus).
+            </p>
+          </div>
+        )}
+
+        {setupType === 'chatgpt' && (
+          <div className="mb-6 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
+            <p className="text-slate-200 text-sm">
+              In ChatGPT, go to <strong>Settings → Connectors → MCP</strong> and add the <strong>MCP Server URL</strong> from the OAuth credentials box above.
+              When ChatGPT asks you to sign in, approve access on AlphaClone — your workspace is attached automatically.
+            </p>
+            <p className="text-slate-400 text-xs">
+              Registered client ID: <code className="text-emerald-300">chatgpt-connector</code> — full platform tool catalog (500+ tools).
+            </p>
+            <p className="text-slate-500 text-xs leading-relaxed">
+              After connect, ChatGPT receives the <strong>full compact catalog</strong> (500+ tools) on the first sync — leads, email, image upload, LinkedIn/Facebook/Instagram publish, CRM, and finance tools are prioritized at the top. For images: ChatGPT must call <code className="text-teal-400">upload_media</code> first (base64 or data URL), then <code className="text-teal-400">publish_social_post</code> — local <code className="text-slate-500">/mnt/data</code> paths do not work. Paste the <strong>Master instruction</strong> below into ChatGPT once per session.
+            </p>
+          </div>
+        )}
+
+        {setupType === 'claude' && (
+          <div className="mb-6 p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-2">
+            <p className="text-slate-200 text-sm">
+              <strong>Claude.ai web connector:</strong> use the OAuth credentials above (Client ID + MCP Server URL). Remote MCP is added as a Custom Connector — not via a bare <code className="text-teal-400 text-xs">url</code> in Desktop settings.
+            </p>
+            <p className="text-slate-200 text-sm">
+              <strong>Claude Desktop:</strong> paste the <em>stdio</em> config from Step 4 into <code className="text-teal-400 text-xs">claude_desktop_config.json</code>. Desktop only accepts <code className="text-teal-400 text-xs">command</code>/<code className="text-teal-400 text-xs">args</code> (we bridge with <code className="text-teal-400 text-xs">mcp-remote</code>).
+            </p>
+            <p className="text-slate-200 text-sm">
+              <strong>Claude Code:</strong> use the separate Claude Code snippet in Step 4 — it must include <code className="text-teal-400 text-xs">&quot;type&quot;: &quot;http&quot;</code>. A <code className="text-teal-400 text-xs">url</code> without <code className="text-teal-400 text-xs">type</code> is treated as stdio and fails.
+            </p>
+          </div>
+        )}
 
         {/* What this does */}
         <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-teal-500/10 border border-indigo-500/20 mb-6">
           <p className="text-slate-200 text-sm leading-relaxed">
-            <span className="text-white font-semibold">What does this do?</span> When you connect {setupType === 'claude' ? 'Claude' : 'Manus'} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
+            <span className="text-white font-semibold">What does this do?</span> When you connect {agentLabel} to your AlphaClone account, you can just <span className="text-teal-400 font-medium">talk to your AI Agent</span> and it will update your CRM for you. No clicking through menus. No typing in forms. Just have a normal conversation, and your business data gets updated automatically.
           </p>
         </div>
 
@@ -300,42 +741,63 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         <div className="flex items-start gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/20 mb-8">
           <Shield className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe 🔒</p>
-            <p className="text-slate-400 text-xs leading-relaxed">{setupType === 'claude' ? 'Claude' : 'Manus'} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace.</p>
+            <p className="text-green-300 text-sm font-semibold mb-1">Your data is safe</p>
+            <p className="text-slate-400 text-xs leading-relaxed">{agentLabel} can only see YOUR business data. It cannot delete anything. It cannot access your passwords or payment details. It can only read and add things inside your AlphaClone workspace. Workspace and user IDs are injected automatically — you never pass tenant_id or user_id manually.</p>
           </div>
         </div>
       </div>
+
+      <McpBusinessPromptPlaybook agentLabel={agentLabel} onCopy={copyText} />
 
       {/* Step-by-step guide */}
       <div className="mb-8">
         <h2 className="text-lg font-bold text-white mb-5">Step-by-step setup guide</h2>
         <div className="space-y-4">
-          {SETUP_STEPS.filter(s => setupType === 'claude' || [1, 2, 3, 6].includes(s.number)).map((step, idx) => {
+          {SETUP_STEPS.filter((s) => {
+            if (setupType === 'claude') return true;
+            if (setupType === 'cursor') return [1, 2, 3, 4, 6].includes(s.number);
+            return [1, 2, 3, 6].includes(s.number);
+          }).map((step, idx) => {
+            const isWebAgent = setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor';
             const displayNum = idx + 1;
             const isDone = completedSteps.has(step.number);
             const isOpen = expandedStep === step.number;
 
-            // Adjust title/body/action for Manus
-            const stepTitle = setupType === 'manus'
-              ? step.number === 1 ? 'Open Manus AI'
-              : step.number === 2 ? 'Copy your Connection URL'
-              : step.number === 3 ? 'Add AlphaClone to Manus MCP Settings'
+            const stepTitle = isWebAgent
+              ? step.number === 1 ? `Open ${agentLabel}`
+              : step.number === 2 ? (setupType === 'chatgpt' ? 'Copy your MCP Server URL' : setupType === 'cursor' ? 'Copy your connection key' : 'Copy your Connection URL')
+              : step.number === 3 ? (setupType === 'chatgpt' ? 'Add AlphaClone connector in ChatGPT' : setupType === 'cursor' ? 'Add AlphaClone in Cursor MCP settings' : `Add AlphaClone to ${agentLabel} MCP Settings`)
+              : step.number === 4 && setupType === 'cursor' ? 'Paste MCP server JSON'
               : 'Test your connection'
               : step.title;
 
-            const stepBody = setupType === 'manus'
-              ? step.number === 1 ? 'Manus AI is a powerful autonomous agent. Open the Manus dashboard to get started — you\'ll need to be logged in.'
-              : step.number === 2 ? 'Copy your unique Connection URL below. This is what tells Manus which AlphaClone account to connect to. Keep it private.'
-              : step.number === 3 ? 'In your Manus dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.'
-              : 'In Manus, start a new conversation and try one of these prompts to verify everything is connected:'
+            const stepBody = isWebAgent
+              ? step.number === 1 ? `Open ${agentLabel} and sign in to your account.`
+              : step.number === 2 ? (setupType === 'chatgpt'
+                ? 'Copy your MCP Server URL below (no API key in the URL — ChatGPT uses OAuth). When you approve access, your workspace and user are attached automatically.'
+                : setupType === 'cursor'
+                  ? 'Copy your personal connection key below. Cursor sends it as a Bearer token so AlphaClone knows which workspace is yours.'
+                : `Copy your unique Connection URL below. This is what tells ${agentLabel} which AlphaClone account to connect to. Keep it private.`)
+              : step.number === 3 ? (setupType === 'chatgpt'
+                ? 'In ChatGPT: Settings → Connectors → MCP → Add connector. Paste the MCP Server URL from Step 2. Choose OAuth when prompted, then sign in on the AlphaClone consent page with your connection key.'
+                : setupType === 'cursor'
+                  ? 'In Cursor: Settings → MCP → Add MCP server. You can paste JSON directly or edit your user/project mcp.json file.'
+                : `In your ${agentLabel} dashboard, go to Settings → MCP Servers (or Tools) → Add New Server. Set the name to "AlphaClone" and paste your Connection URL from Step 2. Save and confirm.`)
+              : step.number === 4 && setupType === 'cursor'
+                ? 'Paste the JSON below into Cursor MCP settings. Replace YOUR_KEY_HERE with your connection key from Step 2 if needed, then save and reload Cursor.'
+              : `In ${agentLabel}, start a new conversation and try one of these prompts to verify everything is connected:`
               : step.body;
 
-            const actionLabel = setupType === 'manus' && step.number === 1 ? 'Open Manus AI' : step.action?.label;
-            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im' : step.action?.url;
+            const actionLabel = isWebAgent && step.number === 1 ? `Open ${agentLabel}` : step.action?.label;
+            const actionUrl = setupType === 'manus' && step.number === 1 ? 'https://manus.im'
+              : setupType === 'grok' && step.number === 1 ? 'https://grok.com'
+              : setupType === 'chatgpt' && step.number === 1 ? 'https://chatgpt.com'
+              : setupType === 'cursor' && step.number === 1 ? 'https://cursor.com'
+              : step.action?.url;
 
-            // For Manus: don't show the Claude config JSON or Mac/Windows file paths
             const showSubSteps = setupType === 'claude' && step.subSteps;
-            const showConfigStep = setupType === 'claude' && step.isConfigStep;
+            const showConfigStep = (setupType === 'claude' && step.isConfigStep) || (setupType === 'cursor' && step.number === 4);
+            const showCursorConfigOnly = setupType === 'cursor' && step.number === 4;
 
             return (
               <motion.div
@@ -388,7 +850,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                             href={actionUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-teal-600 hover:bg-teal-500'}`}
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mb-4 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
                           >
                             <Download className="w-4 h-4" />
                             {actionLabel}
@@ -399,27 +861,48 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {/* Copy key step */}
                         {step.isCopyStep && (
                           <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 mb-4">
-                            <p className="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wider">Your Connection URL</p>
+                            <p className="text-xs text-slate-400 mb-2 font-medium uppercase tracking-wider">
+                              {setupType === 'cursor' ? 'Your Connection Key' : 'Your Connection URL'}
+                            </p>
                             <div className="flex items-center gap-3">
                               <code className="flex-1 text-teal-400 text-xs font-mono break-all bg-black/40 p-2 rounded border border-slate-700">
-                                {connectionToken ? connectionUrl : 'Loading your key...'}
+                                {connectionToken
+                                  ? (setupType === 'cursor' ? connectionToken : connectionUrl)
+                                  : keyNeedsRegenerate
+                                    ? 'Key already exists — click Regenerate Key below to reveal a new one.'
+                                    : tokenError
+                                      ? tokenError
+                                      : tenantLoading || isLoading
+                                        ? 'Loading your key...'
+                                        : 'No workspace selected.'}
                               </code>
                               <button
-                                onClick={() => copyText(connectionToken ? connectionUrl : '', 'Connection URL')}
+                                onClick={() => copyText(
+                                  connectionToken
+                                    ? (setupType === 'cursor' ? connectionToken : connectionUrl)
+                                    : '',
+                                  setupType === 'cursor' ? 'Connection key' : 'Connection URL'
+                                )}
                                 disabled={!connectionToken}
                                 className="flex-shrink-0 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-all disabled:opacity-50"
                               >
                                 <Copy className="w-4 h-4" />
                               </button>
                             </div>
-                            
+
+                            <div className="mt-4 pt-4 border-t border-slate-700/50">
+                              <p className="text-xs text-slate-400 mb-2">
+                                Need OAuth Client ID for a web connector? Copy from the <strong className="text-slate-300">OAuth credentials</strong> section at the top of this page.
+                              </p>
+                            </div>
+
                             <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between pt-4 border-t border-slate-700/50">
                               <p className="text-xs text-slate-500 leading-relaxed">
-                                <span className="text-amber-400 font-medium italic">🚨 Security Warning:</span> This key grants AI agents read/write access to your CRM. Never share it publicly.
+                                <span className="text-amber-400 font-medium">Security warning:</span> This key grants AI agents read/write access to your CRM. Never share it publicly.
                               </p>
                               <button
                                 onClick={handleRotateToken}
-                                className="text-[10px] uppercase font-bold tracking-widest text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
+                                className="text-xs uppercase font-bold tracking-widest text-slate-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
                               >
                                 <Lock className="w-3 h-3" />
                                 Regenerate Key
@@ -455,46 +938,108 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
                         {/* Config JSON copy */}
                         {showConfigStep && (
-                          <div className="mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Text to paste into the file:</p>
-                              <button
-                                onClick={() => copyText(configJson, 'Config text')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-all"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                                Copy all
-                              </button>
+                          <div className="mb-4 space-y-5">
+                            {showCursorConfigOnly ? (
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Cursor — MCP server JSON:</p>
+                                  <button
+                                    onClick={() => copyText(cursorMcpConfigJson, 'Cursor MCP config')}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition-all"
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                    Copy Cursor config
+                                  </button>
+                                </div>
+                                <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-sky-300 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                                  {cursorMcpConfigJson}
+                                </pre>
+                              </div>
+                            ) : (
+                              <>
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Claude Desktop — paste into claude_desktop_config.json:</p>
+                                <button
+                                  onClick={() => copyText(desktopConfigJson, 'Desktop config')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-all"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                  Copy Desktop
+                                </button>
+                              </div>
+                              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-teal-400 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                                {desktopConfigJson}
+                              </pre>
+                              <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                                Requires Node.js so <code className="text-slate-400">npx mcp-remote</code> can bridge Desktop&apos;s stdio-only config to our HTTP MCP endpoint. Open the file, replace its contents with this JSON, save, then restart Claude.
+                              </p>
                             </div>
-                            <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-teal-400 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
-                              {configJson}
-                            </pre>
-                            <p className="text-slate-500 text-xs mt-2 leading-relaxed">
-                              📝 <span className="text-slate-400">What to do:</span> Open the file, select all the text inside (Ctrl+A or Cmd+A), delete it, then paste this text. Save the file (Ctrl+S or Cmd+S).
-                            </p>
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Claude Code — .mcp.json or claude mcp add-json:</p>
+                                <button
+                                  onClick={() => copyText(claudeCodeConfigJson, 'Claude Code config')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                  Copy Claude Code
+                                </button>
+                              </div>
+                              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-indigo-300 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                                {claudeCodeConfigJson}
+                              </pre>
+                              <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                                <code className="text-slate-400">&quot;type&quot;: &quot;http&quot;</code> is required. Prefer the Bearer header over putting the key in the URL. Prefer <code className="text-slate-400">${'{ALPHACLONE_MCP_KEY}'}</code> in shared configs so the secret is not committed.
+                              </p>
+                            </div>
+                              </>
+                            )}
                           </div>
                         )}
 
                         {/* Test prompts */}
-                        {(step.testPrompts || (setupType === 'manus' && step.number === 6)) && (
+                        {(step.testPrompts || ((setupType === 'manus' || setupType === 'grok' || setupType === 'chatgpt' || setupType === 'cursor') && step.number === 6)) && (
                           <div className="mb-4">
                             <p className="text-slate-400 text-xs font-medium mb-3">
-                              Try saying these to {setupType === 'claude' ? 'Claude' : 'Manus'}:
+                              Quick test — try saying these to {agentLabel}:
                             </p>
                             <div className="space-y-2">
-                              {(setupType === 'manus' ? [
-                                '"Show me all my leads"',
-                                '"Add a new lead: Jane Smith, jane@acme.com, Acme Ltd"',
-                                '"What is my outstanding revenue?"',
-                                '"Draft an NDA for client Acme Ltd, 12-month term"',
-                                '"Log a $50 expense for software subscription"',
-                              ] : step.testPrompts ?? []).map((prompt: string) => (
-                                <div key={prompt} className={`flex items-center gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
-                                  <MessageSquare className={`w-4 h-4 flex-shrink-0 ${setupType === 'manus' ? 'text-teal-400' : 'text-indigo-400'}`} />
-                                  <span className={`text-sm font-medium ${setupType === 'manus' ? 'text-teal-300' : 'text-indigo-300'}`}>{prompt}</span>
+                              {(setupType === 'chatgpt'
+                                ? [
+                                    'Using AlphaClone, give me a quick snapshot: open leads, active deals, tasks due today, outstanding invoices.',
+                                    'Add a new lead: Jane Smith, jane@acme.com, Acme Ltd, source: website.',
+                                    'Send an email via AlphaClone to a contact — subject and body from our conversation.',
+                                    'Upload the image I attached with upload_media, then publish it to LinkedIn with a short caption.',
+                                    'Search AlphaClone tools for invoice tools, then create an invoice for Acme Ltd.',
+                                  ]
+                                : setupType === 'manus' || setupType === 'grok' || setupType === 'cursor'
+                                  ? [
+                                      'Using AlphaClone, give me a quick snapshot: open leads, active deals, tasks due today, outstanding invoices.',
+                                      'Show me all my leads and flag any with no follow-up in the last 7 days.',
+                                      'Add a new lead: Jane Smith, jane@acme.com, Acme Ltd, source: website.',
+                                      'What is my total outstanding invoice amount?',
+                                      'Create a high-priority task: follow up with Acme Ltd — due tomorrow.',
+                                    ]
+                                  : step.testPrompts ?? []
+                              ).map((prompt: string) => (
+                                <div key={prompt} className={`flex items-start gap-3 p-3 rounded-lg border ${setupType === 'manus' ? 'bg-teal-500/10 border-teal-500/20' : setupType === 'grok' ? 'bg-fuchsia-500/10 border-fuchsia-500/20' : setupType === 'chatgpt' ? 'bg-emerald-500/10 border-emerald-500/20' : setupType === 'cursor' ? 'bg-sky-500/10 border-sky-500/20' : 'bg-indigo-500/10 border-indigo-500/20'}`}>
+                                  <MessageSquare className={`w-4 h-4 flex-shrink-0 mt-0.5 ${setupType === 'manus' ? 'text-teal-400' : setupType === 'grok' ? 'text-fuchsia-400' : setupType === 'chatgpt' ? 'text-emerald-400' : setupType === 'cursor' ? 'text-sky-400' : 'text-indigo-400'}`} />
+                                  <span className={`flex-1 text-sm font-medium leading-relaxed ${setupType === 'manus' ? 'text-teal-300' : setupType === 'grok' ? 'text-fuchsia-300' : setupType === 'chatgpt' ? 'text-emerald-300' : setupType === 'cursor' ? 'text-sky-300' : 'text-indigo-300'}`}>{prompt}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => copyText(prompt, 'Test prompt')}
+                                    className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors shrink-0"
+                                    aria-label="Copy test prompt"
+                                  >
+                                    <Copy className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               ))}
                             </div>
+                            <p className="text-xs text-slate-500 mt-3">
+                              More prompts for daily workflows are in the <strong className="text-slate-400">Business prompt playbook</strong> section above.
+                            </p>
                           </div>
                         )}
 
@@ -502,7 +1047,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
                         {!isDone && (
                           <button
                             onClick={() => markDone(step.number)}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold transition-all mt-2"
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all mt-2 ${setupType === 'claude' ? 'bg-indigo-600 hover:bg-indigo-500' : setupType === 'manus' ? 'bg-teal-600 hover:bg-teal-500' : 'bg-fuchsia-600 hover:bg-fuchsia-500'}`}
                           >
                             <CheckCircle className="w-4 h-4" />
                             {step.number === SETUP_STEPS.length ? 'I\'m done!' : 'Done — next step'}
@@ -529,7 +1074,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
           <div className="text-4xl mb-3">🎉</div>
           <h3 className="text-xl font-bold text-white mb-2">You're connected!</h3>
           <p className="text-slate-300 text-sm leading-relaxed max-w-md mx-auto">
-            Claude can now see and update your AlphaClone account. Just open Claude and start talking. No more clicking through menus — just describe what you want!
+            {agentLabel} can now see and update your AlphaClone account. Just open the app and start talking. No more clicking through menus — just describe what you want!
           </p>
         </motion.div>
       )}
@@ -542,7 +1087,7 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         </div>
         <p className="text-slate-400 text-sm leading-relaxed">
           If something isn't working, just email us at{' '}
-          <a href="mailto:support@alphaclone.tech" className="text-teal-400 hover:underline">support@alphaclone.tech</a>{' '}
+          <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a>{' '}
           and tell us which step you're stuck on. We'll sort it out for you — usually within a few hours.
         </p>
       </div>
@@ -551,3 +1096,4 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 };
 
 export default MCPSetupGuide;
+

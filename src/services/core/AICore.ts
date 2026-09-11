@@ -16,6 +16,14 @@ interface AIContext {
  */
 export class AICore {
   /**
+   * Check if AI providers are configured
+   */
+  isConfigured(): boolean {
+    return !!(process.env.ANTHROPIC_API_KEY || process.env.VITE_ANTHROPIC_API_KEY || 
+              process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY);
+  }
+
+  /**
    * MARKETING: AI generates marketing strategies
    */
   async generateMarketingStrategy(context: AIContext, goals: string[]): Promise<{
@@ -45,7 +53,6 @@ Format as JSON with these exact keys: strategy, tactics (array), timeline, budge
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.7 
       });
       const response = result.content;
@@ -103,7 +110,6 @@ Make it professional, legally sound, and clear.
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.3 
       });
       const contract = result.content;
@@ -166,7 +172,6 @@ Format as JSON with keys: summary, message, nextSteps (array)
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
       });
       const response = result.content;
 
@@ -215,7 +220,6 @@ Keep each reply under 100 words. Format as array of strings.
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
       });
       const response = result.content;
 
@@ -267,8 +271,7 @@ Return JSON array with: title, description, priority, estimatedHours
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
+        prompt
       });
       const response = result.content;
 
@@ -325,8 +328,7 @@ Format as JSON with keys: summary, strengths, improvements, recommendations (all
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
+        prompt
       });
       const response = result.content;
 
@@ -375,8 +377,7 @@ Format as JSON with keys: subject, preview, body, variations (array of {subject,
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-6-20260217',
+        prompt,
         temperature: 0.8 
       });
       const response = result.content;
@@ -464,8 +465,7 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-3-5-sonnet-20241022' 
+        prompt
       });
       const response = result.content;
 
@@ -497,7 +497,7 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
         supabase.from('projects').select('*').eq('tenant_id', tenantId).limit(5),
         supabase.from('deals').select('*').eq('tenant_id', tenantId).limit(5),
         supabase.from('business_clients').select('*').eq('tenant_id', tenantId).limit(5),
-        supabase.from('invoices').select('*').eq('tenant_id', tenantId).eq('status', 'pending').limit(5)
+        supabase.from('business_invoices').select('*').eq('tenant_id', tenantId).in('status', ['sent', 'overdue', 'partially_paid', 'draft']).limit(5)
       ]);
 
       return `
@@ -542,7 +542,7 @@ Return a JSON array of objects with:
 - description: 1 sentence explanation
 - priority: "low", "medium", "high"
 - actionLabel: Button text (e.g., "Draft Contract", "Follow-up")
-- actionType: Identifier for the action (e.g., "DRAFT_CONTRACT", "CLIENT_FOLLOWUP")
+- actionType: one of "DRAFT_CONTRACT", "REVIEW_OVERDUE_INVOICES", "REVIEW_STALE_LEADS", or "REVIEW_TASKS". Use DRAFT_CONTRACT only when metadata includes a real projectId.
 - metadata: Relevant IDs
 
 Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handle any industry contextually.
@@ -550,8 +550,7 @@ Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handl
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-6-20260217',
+        prompt,
         temperature: 0.6 
       });
       const response = result.content;
@@ -583,24 +582,25 @@ Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handl
    */
   async generateLeadOutreach(lead: any): Promise<{ subject: string; body: string }> {
     const prompt = `
-You are the AlphaClone High-Stakes Growth Engine. Generate a personalized, high-converting outreach email for this lead.
+You are the best sales rep, copywriter and founder rolled into one — the kind whose cold emails actually get replies. Write a personalized, high-converting outreach email for this lead.
 Lead Name: ${lead.name}
 Industry: ${lead.industry || 'Business Services'}
 Description: ${lead.description || 'Professional engagement'}
 Website: ${lead.website || 'N/A'}
 
 Rules:
-1. Invisible AI: No conversational fluff, no [Placeholders], no "As an AI".
-2. Hook: Start with a specific, industry-relevant value proposition.
-3. Call to Action: Professional and low-friction.
-4. Tone: High-Stakes Corporate / Professional intro.
-5. Return Format: JSON object with "subject" and "body". No other text.
+1. Write like a sharp human, not a corporation. Conversational, confident, warm — zero stiff corporate jargon, zero "I hope this email finds you well", zero "As an AI", no [placeholders].
+2. OPENING LINE: Lead with a pattern-interrupt that grabs attention in the first 8 words — a specific observation about THEIR business, a bold/curious statement, or a sharp question. Never a generic intro. This single line decides if they keep reading.
+3. Body: 60–110 words. One concrete, specific value angle tied to their industry. Make it about them, not us. Easy to skim.
+4. CTA: one low-friction, casual ask (e.g. "Worth a quick look?" / "Want me to send a 2-min example?"). No pressure, no salesy fluff.
+5. Subject line: punchy, curiosity-driven, max 7 words. Never clickbait-spammy.
+6. No asterisks, hashtags, or markdown symbols.
+7. Return Format: JSON object with "subject" and "body". No other text.
 `;
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-6-20260217',
+        prompt,
         temperature: 0.7 
       });
       const response = result.content;

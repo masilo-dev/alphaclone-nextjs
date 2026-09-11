@@ -63,7 +63,7 @@ export const voiceCommandService = {
             - Return ONLY the JSON object.
         `;
 
-        const { text, error } = await generateText(prompt, 500);
+        const { text, error } = await generateText(prompt, 500, 'deepseek-chat');
 
         if (error || !text) {
             return { action: 'unknown', entities: {} };
@@ -149,7 +149,7 @@ export const voiceCommandService = {
                         Format: 2-3 short paragraphs. Friendly professional tone.
                     `;
                     
-                    const { text: summaryText } = await generateText(summaryPrompt, 300);
+                    const { text: summaryText } = await generateText(summaryPrompt, 300, 'deepseek-chat');
                     return {
                         success: true,
                         message: summaryText || "Here is your dashboard summary.",

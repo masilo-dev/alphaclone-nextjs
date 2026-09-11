@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,18 +12,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
+    const { data: tenantUsersData } = await supabase
+      .from('tenant_users')
+      .select('user_id')
+      .eq('tenant_id', tenantId);
+    const tenantUserIds = (tenantUsersData || [])
+      .map((row: any) => String((row as { user_id?: string }).user_id || '').trim())
+      .filter((value: any) => value.length > 0);
+    const fallbackUserId = '00000000-0000-0000-0000-000000000000';
+    const intelligenceSnapshotPromise = integratedIntelligenceService
+      .generateSnapshot(supabase, tenantId, { persist: false })
+      .catch((error) => {
+        const details =
+          error instanceof Error
+            ? error.message || error.name || 'Unknown error'
+            : JSON.stringify(error ?? 'Unknown error');
+        console.error('[dashboard/progress] intelligence snapshot failed:', details, error);
+        return null;
+      });
 
     const [
       clientsResult,
       projectsResult,
-      invoicesResult,
       businessInvoicesResult,
       leadsResult,
       meetingsResult,
-      integrationsResult
+      integrationsResult,
+      intelligenceSnapshot
     ] = await Promise.all([
       supabase
         .from('business_clients')
@@ -31,10 +48,6 @@ export async function GET(request: NextRequest) {
       supabase
         .from('projects')
         .select('id, status, created_at')
-        .eq('tenant_id', tenantId),
-      supabase
-        .from('invoices')
-        .select('id, amount, total_amount, status, created_at')
         .eq('tenant_id', tenantId),
       supabase
         .from('business_invoices')
@@ -47,17 +60,15 @@ export async function GET(request: NextRequest) {
       supabase
         .from('meetings')
         .select('id, status, created_at')
-        .eq('tenant_id', tenantId),
+        .in('host_id', tenantUserIds.length > 0 ? tenantUserIds : [fallbackUserId]),
       supabase
         .from('integrations')
         .select('id, provider, status, created_at')
-        .eq('tenant_id', tenantId)
+        .eq('tenant_id', tenantId),
+      intelligenceSnapshotPromise
     ]);
 
-    const normalizedInvoices = normalizeInvoiceRows(
-      invoicesResult.data || [],
-      businessInvoicesResult.data || []
-    );
+    const normalizedInvoices = normalizeInvoiceRows(businessInvoicesResult.data || []);
 
     const clientCount = clientsResult.data?.length || 0;
     const activeProjects = projectsResult.data?.filter((p: { status?: string }) => p.status === 'active').length || 0;
@@ -91,7 +102,6 @@ export async function GET(request: NextRequest) {
     const recentActivity = [
       ...(clientsResult.data || []),
       ...(projectsResult.data || []),
-      ...(invoicesResult.data || []),
       ...(businessInvoicesResult.data || []),
       ...(leadsResult.data || []),
     ].filter((item: { created_at?: string }) => {
@@ -172,7 +182,8 @@ export async function GET(request: NextRequest) {
         // Quick stats
         recentActivity,
         totalConnections: clientCount + leadCount,
-        productivityScore: Math.min(Math.round((clientCount * 10 + activeProjects * 15 + totalRevenue / 100) / 10), 100)
+        productivityScore: Math.min(Math.round((clientCount * 10 + activeProjects * 15 + totalRevenue / 100) / 10), 100),
+        intelligence: intelligenceSnapshot
       }
     });
 
@@ -183,13 +194,8 @@ export async function GET(request: NextRequest) {
 
 type NormalizedInvoiceRow = { amount: number; status: string; created_at: string };
 
-function normalizeInvoiceRows(legacy: Record<string, unknown>[], business: Record<string, unknown>[]): NormalizedInvoiceRow[] {
-  const fromLegacy = legacy.map((inv) => ({
-    amount: Number(inv.total_amount ?? inv.amount ?? 0),
-    status: String(inv.status ?? '').toLowerCase(),
-    created_at: String(inv.created_at ?? ''),
-  }));
-  const fromBusiness = business.map((inv) => {
+function normalizeInvoiceRows(business: Record<string, unknown>[]): NormalizedInvoiceRow[] {
+  return business.map((inv) => {
     const st = String(inv.status ?? '').toLowerCase();
     return {
       amount: Number(inv.total ?? 0),
@@ -197,7 +203,6 @@ function normalizeInvoiceRows(legacy: Record<string, unknown>[], business: Recor
       created_at: String(inv.created_at ?? ''),
     };
   });
-  return [...fromLegacy, ...fromBusiness];
 }
 
 function calculateMonthlyRevenue(invoices: NormalizedInvoiceRow[]) {

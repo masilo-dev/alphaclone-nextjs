@@ -4,7 +4,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { format, isBefore, addMinutes } from 'date-fns'; // Added addMinutes
-import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarIcon, Video, MapPin, X, Clock, Users as UsersIcon, Loader2, CheckSquare, CreditCard, AlertTriangle, Sparkles, Briefcase, Target, TrendingUp } from 'lucide-react';
 import { Card, Button, Badge, Modal, Input } from '../ui/UIComponents';
 import { calendarService, CalendarEvent } from '../../services/calendarService';
 import { taskService } from '../../services/taskService'; // Added taskService
@@ -12,6 +12,7 @@ import { User } from '../../types';
 import toast from 'react-hot-toast';
 import { PastEventPromptModal } from './PastEventPromptModal';
 import { useTenant } from '@/contexts/TenantContext';
+import { strategicThinkerService } from '../../services/StrategicThinkerService';
 
 /**
  * Helper to parse Calendly Q&A JSON
@@ -52,6 +53,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
     const [showEventModal, setShowEventModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [suggestedBlocks, setSuggestedBlocks] = useState<any[]>([]);
     const [newEvent, setNewEvent] = useState<{
         title: string;
         description: string;
@@ -76,6 +78,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
     const [availableUsers] = useState<any[]>([]);
     const [pastEventsPrompt, setPastEventsPrompt] = useState<CalendarEvent[]>([]);
     const [conflictWarning, setConflictWarning] = useState<CalendarEvent | null>(null);
+    const [conflictAction, setConflictAction] = useState<'event' | 'video' | null>(null);
 
     // UseRef to control FullCalendar API
     const calendarRef = useRef<FullCalendar>(null);
@@ -126,7 +129,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             const now = new Date();
             const unhandledPast = fetchedEvents.filter(e => {
                 // Only prompt for real calendar events, not tasks, invoices, etc.
-                if (e.id.startsWith('task_') || e.id.startsWith('inv_') || e.id.startsWith('contract_') || e.id.startsWith('project_') || e.id.startsWith('milestone_')) {
+                if (e.id.startsWith('task_') || e.id.startsWith('inv_') || e.id.startsWith('contract_') || e.id.startsWith('project_') || e.id.startsWith('milestone_') || e.id.startsWith('lead_') || e.id.startsWith('deal_')) {
                     return false;
                 }
                 const endTime = new Date(e.end_time);
@@ -142,6 +145,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             setEvents([]);
         }
         setIsLoading(false);
+
+        // Fetch AI suggestions
+        const { tasks } = await taskService.getTasks({ assignedTo: user.id });
+        const suggestions = strategicThinkerService.suggestTimeBlocks(tasks || [], fetchedEvents || []);
+        setSuggestedBlocks(suggestions);
     };
 
     // Check for overlapping events
@@ -182,7 +190,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         }
     };
 
-    const handleCreateEvent = async () => {
+    const handleCreateEvent = async (skipConflictCheck = false) => {
         if (!newEvent.title.trim()) {
             toast.error('Title is required');
             return;
@@ -231,10 +239,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                 // Standard Calendar Event - Check for conflicts first
                 const startTime = new Date(newEvent.start_time);
                 const endTime = new Date(newEvent.end_time);
-                const conflict = checkForConflicts(startTime, endTime);
+                const conflict = skipConflictCheck ? null : checkForConflicts(startTime, endTime);
                 
                 if (conflict) {
                     setConflictWarning(conflict);
+                    setConflictAction('event');
                     return; // Don't create the event, show warning instead
                 }
 
@@ -263,7 +272,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         }
     };
 
-    const handleCreateVideoCall = async () => {
+    const handleCreateVideoCall = async (skipConflictCheck = false) => {
         if (!newEvent.title.trim()) {
             toast.error('Video call title is required');
             return;
@@ -291,12 +300,13 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             }
 
             const endTime = addMinutes(startTime, 60);
-            const videoRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const videoRoomId = `room_${crypto.randomUUID()}`;
 
             // Check for conflicts
-            const conflict = checkForConflicts(startTime, endTime);
+            const conflict = skipConflictCheck ? null : checkForConflicts(startTime, endTime);
             if (conflict) {
                 setConflictWarning(conflict);
+                setConflictAction('video');
                 setIsSaving(false);
                 return;
             }
@@ -408,6 +418,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'reminder': return '#f59e0b'; // Orange
             case 'deadline': return '#ef4444'; // Red
             case 'invoice': return '#ef4444'; // Red (Money Owed)
+            case 'project': return '#8b5cf6';
+            case 'milestone': return '#ec4899';
+            case 'lead': return '#14b8a6';
+            case 'deal': return '#f59e0b';
+            case 'suggestion': return '#6366f1'; // Indigo (AI Suggestion)
             default: return '#3b82f6';
         }
     };
@@ -445,22 +460,41 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             case 'deadline': return <Clock className="w-4 h-4" />;
             case 'task': return <CheckSquare className="w-4 h-4" />;
             case 'invoice': return <CreditCard className="w-4 h-4" />;
+            case 'project': return <Briefcase className="w-4 h-4" />;
+            case 'milestone': return <Target className="w-4 h-4" />;
+            case 'lead': return <UsersIcon className="w-4 h-4" />;
+            case 'deal': return <TrendingUp className="w-4 h-4" />;
             default: return <CalendarIcon className="w-4 h-4" />;
         }
     };
 
     const formatEventsForCalendar = () => {
-        return events.map(event => ({
+        const formattedEvents = events.map(event => ({
             id: event.id,
             title: event.title,
             start: event.start_time,
             end: event.end_time,
-            backgroundColor: getEventColor(event.type, event), // Pass full event for logic
+            backgroundColor: getEventColor(event.type, event),
             borderColor: getEventColor(event.type, event),
             allDay: event.is_all_day,
             textColor: '#ffffff',
-            extendedProps: { ...event } // Pass data for click handling
+            extendedProps: { ...event }
         }));
+
+        const suggestions = suggestedBlocks.map(s => ({
+            id: `sug_${s.title}`,
+            title: `[AI Suggestion] ${s.title}`,
+            start: s.start,
+            end: s.end,
+            backgroundColor: 'transparent',
+            borderColor: '#6366f1',
+            borderStyle: 'dashed',
+            textColor: '#818cf8',
+            className: 'ai-suggestion-event',
+            extendedProps: { ...s, isSuggestion: true }
+        }));
+
+        return [...formattedEvents, ...suggestions];
     };
 
     if (isLoading) {
@@ -484,9 +518,27 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     </h2>
                     <p className="text-slate-400 mt-1">Manage your schedule and meetings</p>
                 </div>
-                <Button onClick={() => setShowEventModal(true)} className="bg-teal-600 hover:bg-teal-500">
-                    + New Event
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={async () => {
+                            toast.loading('Nexus: Optimizing schedule...', { id: 'nexus-calendar' });
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'calendar_nexus' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-calendar' });
+                        }}
+                        className="bg-slate-900 hover:bg-slate-800 text-violet-400 border-white/5"
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Nexus Schedule
+                    </Button>
+                    <Button onClick={() => setShowEventModal(true)} className="bg-teal-600 hover:bg-teal-500">
+                        + New Event
+                    </Button>
+                </div>
             </div>
 
             {/* Calendar with Dark Theme */}
@@ -654,6 +706,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                     selectMirror={true}
                     dayMaxEvents={3}
                     weekends={true}
+                    eventOrder="title"
                     height="auto"
                     themeSystem="standard"
                 />
@@ -674,7 +727,10 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             {conflictWarning && (
                 <Modal
                     isOpen={!!conflictWarning}
-                    onClose={() => setConflictWarning(null)}
+                    onClose={() => {
+                        setConflictWarning(null);
+                        setConflictAction(null);
+                    }}
                     title="Schedule Conflict Detected"
                 >
                     <div className="space-y-4">
@@ -696,16 +752,23 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                         <div className="flex gap-3 justify-end">
                             <Button
                                 variant="secondary"
-                                onClick={() => setConflictWarning(null)}
+                                onClick={() => {
+                                    setConflictWarning(null);
+                                    setConflictAction(null);
+                                }}
                             >
                                 Reschedule
                             </Button>
                             <Button
                                 onClick={() => {
+                                    const pendingAction = conflictAction;
                                     setConflictWarning(null);
-                                    // Proceed with creating the event despite conflict
-                                    setIsSaving(true);
-                                    // This will need to be handled differently - for now just close
+                                    setConflictAction(null);
+                                    if (pendingAction === 'video') {
+                                        void handleCreateVideoCall(true);
+                                    } else if (pendingAction === 'event') {
+                                        void handleCreateEvent(true);
+                                    }
                                 }}
                                 className="bg-red-600 hover:bg-red-700"
                             >
@@ -993,7 +1056,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 </Button>
                                 {newEvent.type === 'call' ? (
                                     <Button
-                                        onClick={handleCreateVideoCall}
+                                        onClick={() => void handleCreateVideoCall()}
                                         className="flex-1 bg-teal-600 hover:bg-teal-500"
                                         disabled={isSaving}
                                     >
@@ -1011,7 +1074,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     </Button>
                                 ) : (
                                     <Button
-                                        onClick={handleCreateEvent}
+                                        onClick={() => void handleCreateEvent()}
                                         className="flex-1 bg-teal-600 hover:bg-teal-500"
                                         disabled={isSaving}
                                     >

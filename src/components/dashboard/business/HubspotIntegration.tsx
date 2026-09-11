@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface HubSpotContact {
     id: string;
@@ -36,6 +36,7 @@ interface HubspotIntegrationProps {
 
 export default function HubspotIntegration({ onClose }: HubspotIntegrationProps) {
     const { user } = useAuth();
+    const { currentTenant } = useTenant();
     const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
     const [contacts, setContacts] = useState<HubSpotContact[]>([]);
     const [isLoadingContacts, setIsLoadingContacts] = useState(false);
@@ -58,26 +59,20 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
     }, [contacts, query]);
 
     useEffect(() => {
-        if (user?.id) {
+        if (user?.id && currentTenant?.id) {
             void checkIntegrationStatus();
         }
-    }, [user?.id]);
+    }, [user?.id, currentTenant?.id]);
 
     const checkIntegrationStatus = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setStatus('loading');
         try {
-            const { data, error } = await supabase
-                .from('integrations')
-                .select('id, enabled')
-                .eq('user_id', user.id)
-                .eq('type', 'hubspot')
-                .maybeSingle();
-
-            if (error) throw error;
-
-            if (data?.enabled) {
+            const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/integrations`, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Integration status unavailable');
+            if (payload.integrations?.some((item: any) => item.integrationId === 'hubspot' && item.status === 'connected')) {
                 setStatus('connected');
                 await fetchContacts();
             } else {
@@ -92,39 +87,41 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
 
     const handleConnect = () => {
         if (!user?.id) return;
-        window.location.href = `/api/auth/hubspot/connect?userId=${user.id}`;
+        if (!currentTenant?.id) return;
+        window.location.href = `/api/auth/hubspot/connect?tenantId=${encodeURIComponent(currentTenant.id)}`;
     };
 
     const fetchContacts = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsLoadingContacts(true);
         try {
-            const response = await fetch(`/api/hubspot/sync?userId=${user.id}`);
-            const data = await response.json();
-
+            const response = await fetch(`/api/hubspot/sync?tenantId=${encodeURIComponent(currentTenant.id)}`);
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to fetch contacts');
+                console.warn('HubSpot API not available, showing empty state');
+                setContacts([]);
+                return;
             }
+            const data = await response.json();
 
             setContacts(data.contacts || []);
         } catch (err: any) {
             console.error('Error fetching HubSpot contacts:', err);
-            toast.error(err.message || 'Failed to load HubSpot contacts');
+            setContacts([]);
         } finally {
             setIsLoadingContacts(false);
         }
     };
 
     const handleSync = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsSyncing(true);
         try {
             const response = await fetch('/api/hubspot/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id })
+                body: JSON.stringify({ tenantId: currentTenant.id })
             });
             const data = await response.json();
 
@@ -143,17 +140,14 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
     };
 
     const handleDeleteIntegration = async () => {
-        if (!user?.id) return;
+        if (!user?.id || !currentTenant?.id) return;
 
         setIsDeletingIntegration(true);
         try {
-            const { error } = await supabase
-                .from('integrations')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('type', 'hubspot');
-
-            if (error) throw error;
+            const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/integrations`, {
+                method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ integrationId: 'hubspot' }),
+            });
+            if (!response.ok) throw new Error('HubSpot could not be disconnected');
 
             setStatus('idle');
             setContacts([]);
@@ -171,7 +165,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
 
         setDeletingContactId(id);
         try {
-            const response = await fetch(`/api/hubspot/delete?userId=${user.id}&contactId=${id}`, {
+            const response = await fetch(`/api/hubspot/delete?tenantId=${encodeURIComponent(currentTenant!.id)}&contactId=${encodeURIComponent(id)}`, {
                 method: 'DELETE'
             });
             const data = await response.json();
@@ -192,7 +186,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
 
     if (status === 'loading') {
         return (
-            <div className="max-w-4xl rounded-2xl border border-white/5 bg-slate-900/60 p-5 text-center">
+            <div className="max-w-4xl ac-workspace-panel rounded-lg p-5 text-center">
                 <RefreshCw className="w-5 h-5 animate-spin text-orange-400 mx-auto mb-3" />
                 <p className="text-sm text-slate-400">Checking HubSpot connection...</p>
             </div>
@@ -201,12 +195,13 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
 
     if (status !== 'connected') {
         return (
-            <div className="max-w-4xl rounded-2xl border border-white/5 bg-slate-900/60 p-5">
+            <div className="max-w-4xl ac-workspace-panel rounded-lg p-5">
                 <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
                         <Plug2 className="w-5 h-5 text-orange-400" />
                     </div>
                     <div className="flex-1">
+                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <h2 className="text-base font-bold text-white">HubSpot CRM</h2>
                         <p className="text-sm text-slate-400 mt-1 max-w-2xl">
                             Sync HubSpot contacts into AlphaClone and manage them from one workspace.
@@ -233,14 +228,15 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
         <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-4xl rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden"
+            className="max-w-4xl ac-workspace-panel rounded-lg overflow-hidden"
         >
             <div className="border-b border-white/5 p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
                         <Users className="w-5 h-5 text-orange-400" />
                     </div>
                     <div>
+                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-base font-bold text-white">HubSpot CRM</h2>
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-400 border border-emerald-500/20">
@@ -282,7 +278,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search contacts by name, email, or company..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-10 pr-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/40"
+                        className="w-full rounded-lg border border-slate-800 bg-slate-950/50 pl-10 pr-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/40"
                     />
                 </div>
 
@@ -303,7 +299,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                             return (
                                 <div
                                     key={contact.id}
-                                    className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                                    className="rounded-lg border border-slate-800 bg-slate-950/40 p-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
                                 >
                                     <div className="min-w-0">
                                         <p className="font-semibold text-white truncate">{fullName}</p>

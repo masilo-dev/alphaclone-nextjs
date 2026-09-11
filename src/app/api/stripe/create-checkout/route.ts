@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { isTurnstileEnforced, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { requireTenantRole } from '@/lib/apiAuth';
+import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: NextRequest) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
-        const { plan, tenantId, turnstileToken } = await req.json();
-        const userId = user.id;
+        const body = await req.json();
+        const { plan, tenantId } = body;
+        const turnstileToken = readTurnstileToken(body);
 
         if (!plan || !tenantId) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
+        const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
+        const userId = user.id;
+
         if (isTurnstileEnforced()) {
             if (!turnstileToken) {
                 return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
             }
-            const verified = await verifyTurnstileToken(turnstileToken);
+            const verified = await verifyTurnstileToken(turnstileToken, readClientIp(req));
             if (!verified) {
                 return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
             }
@@ -81,9 +82,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ sessionId: session.id, url: session.url });
     } catch (error: any) {
         console.error('Stripe checkout error:', error);
-        return NextResponse.json(
-            { error: error.message || 'Failed to create checkout session' },
-            { status: 500 }
-        );
+        return clientErrorResponse(error, { request: req, scope: 'stripe/create-checkout' });
     }
 }

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, XCircle, Link, Copy } from 'lucide-react';
+import { Calendar, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, XCircle, Link, Copy, Users, ArrowRightLeft } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
-import { supabase } from '../../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -18,13 +17,16 @@ const CalendlySettings: React.FC = () => {
     const [eventTypes, setEventTypes] = useState<any[]>([]);
     const [loadingEvents, setLoadingEvents] = useState(false);
     const [syncing, setSyncing] = useState(false);
+    const [contactCount, setContactCount] = useState<number | null>(null);
+    const [syncingContacts, setSyncingContacts] = useState(false);
 
     const calendlyConfig = (currentTenant?.settings as any)?.calendly;
-    const isConnected = calendlyConfig?.enabled && calendlyConfig?.accessToken;
+    const isConnected = Boolean(calendlyConfig?.enabled && (calendlyConfig?.calendlyUserUri || calendlyConfig?.isManual));
 
     useEffect(() => {
         if (isConnected && currentTenant) {
             fetchEventTypes();
+            fetchContactCount();
         }
     }, [isConnected, currentTenant]);
 
@@ -45,6 +47,41 @@ const CalendlySettings: React.FC = () => {
             console.error('Failed to fetch event types:', error);
         } finally {
             setLoadingEvents(false);
+        }
+    };
+
+    const fetchContactCount = async () => {
+        try {
+            const res = await fetch(`/api/calendly/contacts?tenantId=${currentTenant?.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setContactCount(data.count ?? null);
+            }
+        } catch {
+            // non-fatal
+        }
+    };
+
+    const handleSyncContactsToCRM = async () => {
+        if (!currentTenant || !user) return;
+        setSyncingContacts(true);
+        try {
+            const res = await fetch('/api/calendly/contacts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId: currentTenant.id }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success(`Synced ${data.synced} CRM clients → Calendly Contacts!`);
+                await fetchContactCount();
+            } else {
+                toast.error(data.error || 'Sync failed');
+            }
+        } catch {
+            toast.error('Failed to sync contacts');
+        } finally {
+            setSyncingContacts(false);
         }
     };
 
@@ -90,29 +127,25 @@ const CalendlySettings: React.FC = () => {
         window.location.href = `/api/auth/calendly/connect?tenantId=${currentTenant.id}`;
     };
 
+    // Fallback: if the API route doesn't exist, show a manual link option
+    useEffect(() => {
+        if (connecting) {
+            const timeout = setTimeout(() => {
+                setConnecting(false);
+                setShowManual(true);
+                toast.error('Calendly connection timed out. Please use the manual link option below.');
+            }, 10000);
+            return () => clearTimeout(timeout);
+        }
+    }, [connecting]);
+
     const handleDisconnect = async () => {
         if (!currentTenant || !window.confirm('Are you sure you want to disconnect Calendly? This will disable the booking page.')) return;
 
         try {
-            const updatedSettings = {
-                ...(currentTenant.settings as any),
-                calendly: {
-                    ...calendlyConfig,
-                    enabled: false,
-                    accessToken: null,
-                    refreshToken: null,
-                    expiresAt: null,
-                    eventUrl: null,
-                    calendlyUserUri: null
-                }
-            };
-
-            const { error } = await supabase
-                .from('tenants')
-                .update({ settings: updatedSettings })
-                .eq('id', currentTenant.id);
-
-            if (error) throw error;
+            const response = await fetch(`/api/calendly/status?tenantId=${encodeURIComponent(currentTenant.id)}`, { method: 'DELETE', credentials: 'include' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Calendly could not be disconnected');
             await refreshTenants();
             setEventTypes([]);
             toast.success('Calendly disconnected successfully.');
@@ -126,22 +159,9 @@ const CalendlySettings: React.FC = () => {
         if (!currentTenant || !manualUrl) return;
         setSaving(true);
         try {
-            const updatedSettings = {
-                ...(currentTenant.settings as any),
-                calendly: {
-                    ...(currentTenant.settings as any)?.calendly,
-                    enabled: true,
-                    eventUrl: manualUrl,
-                    isManual: true
-                }
-            };
-
-            const { error } = await supabase
-                .from('tenants')
-                .update({ settings: updatedSettings })
-                .eq('id', currentTenant.id);
-
-            if (error) throw error;
+            const response = await fetch('/api/calendly/status', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: currentTenant.id, eventUrl: manualUrl }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Calendly link could not be saved');
             await refreshTenants();
             setShowManual(false);
             setManualUrl('');
@@ -217,6 +237,21 @@ const CalendlySettings: React.FC = () => {
                                     <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
                                     {syncing ? 'Syncing...' : 'Sync Events'}
                                 </button>
+                                <button
+                                    onClick={handleSyncContactsToCRM}
+                                    disabled={syncingContacts}
+                                    className="flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white text-sm font-bold rounded-lg transition-all disabled:opacity-50"
+                                    title="Push your CRM clients into Calendly Contacts"
+                                >
+                                    <ArrowRightLeft className={`w-4 h-4 ${syncingContacts ? 'animate-spin' : ''}`} />
+                                    {syncingContacts ? 'Syncing...' : 'Sync CRM → Calendly'}
+                                </button>
+                                {contactCount !== null && (
+                                    <span className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-lg border border-slate-700">
+                                        <Users className="w-3.5 h-3.5 text-violet-400" />
+                                        {contactCount} Calendly Contacts
+                                    </span>
+                                )}
                                 <a
                                     href="https://calendly.com/app/scheduled_events/user/me"
                                     target="_blank"
@@ -269,7 +304,7 @@ const CalendlySettings: React.FC = () => {
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
                                             <h6 className="font-bold text-white truncate pr-2">{et.name}</h6>
-                                            <span className="text-[10px] font-bold px-2 py-1 bg-teal-500/10 text-teal-400 rounded bg-teal-500 border border-teal-500">{et.duration} min</span>
+                                            <span className="text-xs font-bold px-2 py-1 bg-teal-500/10 text-teal-400 rounded bg-teal-500 border border-teal-500">{et.duration} min</span>
                                         </div>
                                         <p className="text-xs text-slate-400 line-clamp-2 mb-4 break-words">
                                             {et.description_plain || 'No description provided.'}
@@ -317,7 +352,7 @@ const CalendlySettings: React.FC = () => {
                                     {saving ? 'SAVING...' : 'SAVE LINK'}
                                 </button>
                             </div>
-                            <p className="text-[10px] text-slate-500 italic">
+                            <p className="text-xs text-slate-500 italic">
                                 Note: Manual links enable the booking page but do not sync dashboard meetings automatically.
                             </p>
                         </div>
@@ -343,7 +378,7 @@ const CalendlySettings: React.FC = () => {
             </div>
 
             {/* Informational Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                 <div className="p-4 bg-slate-900/30 border border-slate-800/50 rounded-xl">
                     <h5 className="text-sm font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-teal-400" />
@@ -360,6 +395,15 @@ const CalendlySettings: React.FC = () => {
                     </h5>
                     <p className="text-xs text-slate-500 leading-relaxed">
                         Bookings are automatically synced to your AlphaClone dashboard and notifications are sent to your team.
+                    </p>
+                </div>
+                <div className="p-4 bg-violet-900/20 border border-violet-800/30 rounded-xl">
+                    <h5 className="text-sm font-bold text-white mb-2 uppercase tracking-wider flex items-center gap-2">
+                        <Users className="w-4 h-4 text-violet-400" />
+                        Contacts API
+                    </h5>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        Sync your CRM clients into Calendly Contacts. Routing form submissions automatically flow in as new leads. <span className="text-violet-400 font-semibold">New May 2026.</span>
                     </p>
                 </div>
             </div>

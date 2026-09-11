@@ -17,9 +17,12 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Zap, Mail, Plus, Play, Save, Settings, Loader2, RefreshCw, History, LayoutTemplate, Maximize, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ModuleJumpSelect from '../common/ModuleJumpSelect';
+import { MobileDataCard, ResponsiveTableDesktop, ResponsiveTableMobile } from '../../ui/ResponsiveTable';
 import { workflowService, Workflow, WorkflowExecution } from '../../../services/workflowService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
+import EmptyState from '@/components/ui/EmptyState';
 
 // Define custom node types for a premium feel
 const TriggerNode = ({ data }: { data: { label: string; description: string } }) => (
@@ -63,7 +66,7 @@ const ActionNode = ({ data }: { data: { label: string; description: string; type
     <div className={`px-4 py-3 shadow-xl rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white min-w-[min(100vw-2rem,200px)] max-w-[min(100vw-2rem,280px)] border-2 ${style.border}`}>
       <Handle type="target" position={Position.Top} className="w-4 h-4 -top-2 bg-slate-400 border-2 border-white dark:border-slate-800 shadow-md cursor-crosshair" />
       <div className="flex items-center gap-2 font-bold text-sm mb-1 min-w-0">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-[9px] font-black text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" title={data.type}>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 text-xs font-black text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300" title={data.type}>
           {abbr}
         </span>
         <span className="truncate">{data.label}</span>
@@ -99,6 +102,112 @@ const initialEdges: Edge[] = [
   { id: 'e1-2', source: 'trigger-1', target: 'action-1', animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } },
 ];
 
+const starterWorkflowTemplates = [
+  {
+    id: 'referral-followup',
+    name: 'Referral Follow-up',
+    category: 'Revenue',
+    icon: '🤝',
+    description: 'When a referral arrives, create the lead, notify the team, and send a warm thank-you.',
+    definition: {
+      description: 'Referral lead intake and follow-up sequence',
+      trigger: { event: 'New referral captured' },
+      steps: [
+        { id: 'create-lead', type: 'zoho', config: { template: 'Create lead with referral source' } },
+        { id: 'notify-team', type: 'notify', config: { template: 'Alert owner and assign follow-up' } },
+        { id: 'send-thanks', type: 'email', config: { template: 'Send referral thank-you email' } },
+      ],
+    },
+  },
+  {
+    id: 'invoice-followup',
+    name: 'Invoice Follow-up',
+    category: 'Finance',
+    icon: '💳',
+    description: 'Track invoice status, notify the owner, and send a polite payment reminder.',
+    definition: {
+      description: 'Invoice reminder and collections sequence',
+      trigger: { event: 'Invoice overdue' },
+      steps: [
+        { id: 'notify-owner', type: 'notify', config: { template: 'Notify team when invoice is overdue' } },
+        { id: 'generate-reminder', type: 'ai', config: { template: 'Draft payment reminder email' } },
+        { id: 'send-reminder', type: 'email', config: { template: 'Send payment reminder' } },
+      ],
+    },
+  },
+  {
+    id: 'lead-nurture',
+    name: 'Lead Nurture',
+    category: 'Sales',
+    icon: '🚀',
+    description: 'Score a new lead, create a task, and launch a personalized outreach email.',
+    definition: {
+      description: 'Lead scoring and outreach sequence',
+      trigger: { event: 'New lead captured' },
+      steps: [
+        { id: 'score-lead', type: 'ai', config: { template: 'Score lead and identify fit' } },
+        { id: 'create-task', type: 'task', config: { template: 'Create follow-up task for owner' } },
+        { id: 'send-outreach', type: 'email', config: { template: 'Send personalized outreach email' } },
+      ],
+    },
+  },
+];
+
+type AutomationComplexity = 'quick' | 'recommended' | 'advanced';
+
+const COMPLEXITY_PRESETS: Record<AutomationComplexity, { label: string; description: string; nodes: Node[]; edges: Edge[] }> = {
+  quick: {
+    label: 'Quick',
+    description: 'One trigger and one action — get value in minutes.',
+    nodes: initialNodes,
+    edges: initialEdges,
+  },
+  recommended: {
+    label: 'Recommended',
+    description: 'Trigger plus follow-up — balanced for most founders.',
+    nodes: [
+      ...initialNodes,
+      {
+        id: 'action-1',
+        type: 'actionNode',
+        position: { x: 250, y: 180 },
+        data: { label: 'Send follow-up email', description: 'Nurture the lead after capture', type: 'email' },
+      },
+    ],
+    edges: [{ id: 'e-trigger-action', source: 'trigger-1', target: 'action-1' }],
+  },
+  advanced: {
+    label: 'Advanced',
+    description: 'Multi-step flows with scoring, tasks, and notifications.',
+    nodes: [
+      ...initialNodes,
+      {
+        id: 'action-score',
+        type: 'actionNode',
+        position: { x: 250, y: 180 },
+        data: { label: 'Score lead', description: 'AI fit scoring', type: 'ai' },
+      },
+      {
+        id: 'action-task',
+        type: 'actionNode',
+        position: { x: 250, y: 320 },
+        data: { label: 'Create task', description: 'Assign follow-up', type: 'task' },
+      },
+      {
+        id: 'action-email',
+        type: 'actionNode',
+        position: { x: 250, y: 460 },
+        data: { label: 'Send outreach', description: 'Personalized email', type: 'email' },
+      },
+    ],
+    edges: [
+      { id: 'e1', source: 'trigger-1', target: 'action-score' },
+      { id: 'e2', source: 'action-score', target: 'action-task' },
+      { id: 'e3', source: 'action-task', target: 'action-email' },
+    ],
+  },
+};
+
 export default function AutomationBuilder() {
   const { currentTenant } = useTenant();
   const [userId, setUserId] = useState<string>('');
@@ -115,8 +224,17 @@ export default function AutomationBuilder() {
   const [workflowTemplates, setWorkflowTemplates] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [setupComplexity, setSetupComplexity] = useState<AutomationComplexity>('recommended');
   
   const rfInstance = useRef<any>(null);
+
+  const applyComplexity = (tier: AutomationComplexity) => {
+    setSetupComplexity(tier);
+    const preset = COMPLEXITY_PRESETS[tier];
+    setNodes(preset.nodes);
+    setEdges(preset.edges);
+    toast.success(`${preset.label} automation template loaded`);
+  };
 
   const fetchWorkflows = useCallback(async (uid: string) => {
     if (!uid) return;
@@ -125,12 +243,14 @@ export default function AutomationBuilder() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getUser().then((res: any) => {
-      if (res.data.user) {
-        setUserId(res.data.user.id);
-        fetchWorkflows(res.data.user.id);
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUserId(data.user.id);
+        fetchWorkflows(data.user.id);
       }
-    });
+    };
+    fetchUser();
   }, [fetchWorkflows]);
 
   const fetchHistory = useCallback(async () => {
@@ -144,7 +264,8 @@ export default function AutomationBuilder() {
   const fetchTemplates = useCallback(async () => {
     setLoadingTemplates(true);
     const { templates, error } = await workflowService.getWorkflowTemplates();
-    if (!error) setWorkflowTemplates(templates);
+    if (!error && templates.length > 0) setWorkflowTemplates(templates);
+    else setWorkflowTemplates(starterWorkflowTemplates);
     setLoadingTemplates(false);
   }, []);
 
@@ -412,7 +533,17 @@ export default function AutomationBuilder() {
     <div className="w-full h-full min-w-0 min-h-[min(100dvh,720px)] sm:min-h-[640px] lg:min-h-[700px] flex flex-col bg-slate-50 dark:bg-slate-950 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-inner">
         {/* Main Tab Controller */}
         <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between z-20 min-w-0">
-            <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto [scrollbar-width:thin] min-w-0">
+            <ModuleJumpSelect
+                options={[
+                    { label: 'Builder', href: 'editor' },
+                    { label: 'Audit Trail', href: 'history' },
+                    { label: 'Templates', href: 'templates' },
+                ]}
+                currentHref={activeTab}
+                label="Automation section"
+                onNavigate={(href) => setActiveTab(href as typeof activeTab)}
+            />
+            <div className="hidden md:flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl overflow-x-auto [scrollbar-width:thin] min-w-0">
                 {[
                     { id: 'editor', label: 'Builder', icon: Zap },
                     { id: 'history', label: 'Audit Trail', icon: History },
@@ -421,7 +552,7 @@ export default function AutomationBuilder() {
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
+                        className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 min-h-11 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
                             activeTab === tab.id
                                 ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
                                 : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
@@ -433,10 +564,33 @@ export default function AutomationBuilder() {
                 ))}
             </div>
             
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
+                <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                  {(Object.keys(COMPLEXITY_PRESETS) as AutomationComplexity[]).map((tier) => {
+                    const preset = COMPLEXITY_PRESETS[tier];
+                    const active = setupComplexity === tier;
+                    return (
+                      <button
+                        key={tier}
+                        type="button"
+                        onClick={() => applyComplexity(tier)}
+                        title={preset.description}
+                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                          active
+                            ? tier === 'recommended'
+                              ? 'bg-teal-600 text-white shadow-sm'
+                              : 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="hidden md:block text-right min-w-0">
                     <div className="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{workflowName}</div>
-                    <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    <div className="text-xs text-slate-500 uppercase tracking-widest font-bold">
                         {workflowId ? 'Syncing Cloud' : 'New Draft'}
                     </div>
                 </div>
@@ -454,7 +608,7 @@ export default function AutomationBuilder() {
             <div className="pointer-events-auto flex items-center gap-2">
                 <button 
                   onClick={centerView}
-                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-2 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition"
+                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-2.5 min-h-11 min-w-11 rounded-xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:text-indigo-500 transition"
                   title="Center View"
                 >
                   <Maximize className="w-5 h-5" />
@@ -495,7 +649,7 @@ export default function AutomationBuilder() {
                                             className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-50 dark:border-slate-700/50 last:border-0 transition"
                                         >
                                             <div className="text-sm font-bold text-slate-800 dark:text-white truncate">{wf.name}</div>
-                                            <div className="text-[10px] text-slate-500 mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
+                                            <div className="text-xs text-slate-500 mt-0.5">{wf.is_active ? 'Active' : 'Draft'} • {new Date(wf.created_at || '').toLocaleDateString()}</div>
                                         </button>
                                     ))
                                 )}
@@ -518,7 +672,7 @@ export default function AutomationBuilder() {
                                     <button
                                         key={cat.id}
                                         onClick={() => setActiveCategory(cat.id)}
-                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
+                                        className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-all ${
                                             activeCategory === cat.id
                                                 ? 'bg-indigo-500 text-white shadow'
                                                 : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -540,7 +694,7 @@ export default function AutomationBuilder() {
                                         </span>
                                         <div className="min-w-0">
                                             <div className="font-semibold text-xs text-slate-900 dark:text-white truncate">{template.label}</div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{template.description}</div>
+                                            <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{template.description}</div>
                                         </div>
                                     </button>
                                 ))}
@@ -580,7 +734,7 @@ export default function AutomationBuilder() {
             }}
             className="bg-slate-50 dark:bg-slate-950"
         >
-            <Controls className="bg-white dark:bg-slate-800 border-none shadow-xl rounded-xl overflow-hidden" />
+            <Controls className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-none dark:border-slate-800 dark:bg-slate-800" />
             <MiniMap 
                 nodeStrokeColor={(n: Node) => {
                     if (n.type === 'triggerNode') return '#4f46e5';
@@ -593,14 +747,14 @@ export default function AutomationBuilder() {
                     return '#fff';
                 }}
                 maskColor="rgba(0, 0, 0, 0.1)"
-                className="bg-white/50 dark:bg-slate-900/50 backdrop-blur rounded-xl shadow-xl border border-slate-200 dark:border-slate-800" 
+                className="rounded-lg border border-slate-200 bg-white/50 shadow-none backdrop-blur dark:border-slate-800 dark:bg-slate-900/50" 
             />
             <Background color="#94a3b8" gap={24} size={1} />
         </ReactFlow>
 
         {/* Footer info */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-            <Panel position="bottom-left" className="pointer-events-auto bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800/30 flex items-center gap-2 shadow-lg">
+            <Panel position="bottom-left" className="pointer-events-auto flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-600 shadow-none dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400">
                 <Settings className="w-3 h-3" />
                 Drag handles to connect actions. No code required.
             </Panel>
@@ -618,26 +772,56 @@ export default function AutomationBuilder() {
                 </div>
 
                 {!workflowId ? (
-                    <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                        <div className="text-center">
-                            <Clock className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                            <p className="text-slate-500 font-medium">Save this workflow to start tracking history</p>
-                        </div>
+                    <div className="flex-1">
+                        <EmptyState
+                            icon={Clock}
+                            title="No history yet"
+                            description="Save this workflow first, then test or run it to start building an audit trail."
+                            className="max-w-none rounded-lg border-2 border-dashed border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900"
+                        />
                     </div>
                 ) : loadingHistory ? (
                     <div className="flex-1 flex items-center justify-center">
                         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
                     </div>
                 ) : executions.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
-                        <div className="text-center">
-                            <Clock className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                            <p className="text-slate-500 font-medium">No execution history found yet.</p>
-                            <button onClick={handleExecute} className="mt-4 text-indigo-500 font-bold hover:underline">Run a Test Now</button>
-                        </div>
+                    <div className="flex-1">
+                        <EmptyState
+                            icon={Clock}
+                            title="No execution history yet"
+                            description="Run a test execution to capture status, timing, and error details for this workflow."
+                            action={
+                                <button onClick={handleExecute} className="mt-4 text-indigo-500 font-bold hover:underline">
+                                    Run a Test Now
+                                </button>
+                            }
+                            className="max-w-none rounded-lg border border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900"
+                        />
                     </div>
                 ) : (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl overflow-x-auto">
+                    <>
+                    <ResponsiveTableMobile className="space-y-3">
+                        {executions.map((ex) => (
+                            <MobileDataCard key={ex.id} className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                                <p className="text-sm font-medium text-slate-900 dark:text-slate-200">
+                                    {new Date(ex.executed_at).toLocaleString()}
+                                </p>
+                                {ex.status === 'completed' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-black uppercase">
+                                        <CheckCircle2 className="w-3 h-3" /> Completed
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-xs font-black uppercase">
+                                        <XCircle className="w-3 h-3" /> {ex.status}
+                                    </span>
+                                )}
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    {ex.error_message || 'Workflow executed successfully.'}
+                                </p>
+                            </MobileDataCard>
+                        ))}
+                    </ResponsiveTableMobile>
+                    <ResponsiveTableDesktop className="rounded-lg border border-slate-200 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900">
                         <table className="w-full min-w-[520px] text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
@@ -654,11 +838,11 @@ export default function AutomationBuilder() {
                                         </td>
                                         <td className="px-6 py-5">
                                             {ex.status === 'completed' ? (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-xs font-black uppercase tracking-wider">
                                                     <CheckCircle2 className="w-3 h-3" /> Completed
                                                 </span>
                                             ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-[10px] font-black uppercase tracking-wider">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 text-xs font-black uppercase tracking-wider">
                                                     <XCircle className="w-3 h-3" /> {ex.status}
                                                 </span>
                                             )}
@@ -670,7 +854,8 @@ export default function AutomationBuilder() {
                                 ))}
                             </tbody>
                         </table>
-                    </div>
+                    </ResponsiveTableDesktop>
+                    </>
                 )}
             </div>
         )}
@@ -681,7 +866,7 @@ export default function AutomationBuilder() {
                     <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                         <LayoutTemplate className="w-6 h-6 text-indigo-500" /> Automation Templates
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Quick-start with industry-standard patterns</p>
+                            <p className="text-slate-500 dark:text-slate-400 mt-1">Quick-start with business-ready patterns like referrals, invoicing, and lead nurture</p>
                 </div>
 
                 {loadingTemplates ? (
@@ -701,7 +886,7 @@ export default function AutomationBuilder() {
                                 </span>
                                 <div className="pr-12">
                                     <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2">{template.name}</h3>
-                                    <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-4">
+                                    <div className="inline-block px-2 py-0.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest mb-4">
                                         {template.category}
                                     </div>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
@@ -709,7 +894,7 @@ export default function AutomationBuilder() {
                                     </p>
                                 </div>
                                 <div className="mt-6 pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                                    <span className="text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
                                         {template.definition.steps.length} Steps
                                     </span>
                                     <Plus className="w-5 h-5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />

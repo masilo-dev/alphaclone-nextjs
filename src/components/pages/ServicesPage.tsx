@@ -1,38 +1,30 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import {
     Zap, Database, Shield, BarChart3, Settings, Globe,
-    ArrowRight, Star, Clock, Users, DollarSign,
+    Clock, Users, DollarSign,
     Mail, Video, FileText, Calendar, TrendingUp, Layers,
-    Award, Lock, RefreshCw, Phone, ChevronRight
+    Award, Lock, RefreshCw
 } from 'lucide-react';
-import { Button } from '../ui/UIComponents';
-import PublicNavigation from '../PublicNavigation';
-import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
-import MarketingFooter from '../landing/MarketingFooter';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
+import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
+import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
+import { MARKETING_PRICING } from '@/config/pricingPlans';
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const ServicesPage: React.FC = () => {
-    const [, setIsLoginOpen] = React.useState(false);
-
     const blufSummary = `AlphaClone Systems is a unified AI-powered Business Operating Platform for service companies. It centralizes CRM, finance, contracts, meetings, messaging, scheduling, and execution workflows in one operational system designed for daily use by founders and teams.`;
 
     const services = [
         {
             icon: Zap,
             title: 'AI Growth Agent',
-            subtitle: 'Your always-on automated sales partner',
+            subtitle: 'AI-assisted lead and outreach workflows',
             color: 'from-teal-500 to-emerald-500',
-            badge: 'Most Popular',
-            description: `The AlphaClone AI Growth Agent is the most powerful feature on the platform — and one that no competing business tool offers at this price point. Think of it as hiring a full-time sales development representative who works 24 hours a day, 7 days a week, and never takes a vacation day.`,
-            extendedDescription: `The Growth Agent works by scanning public business directories and professional databases to identify potential clients in your exact industry and target market. You tell it who you're looking for — "marketing agencies in London with under 50 employees" or "e-commerce brands doing over $1M revenue" — and it builds a qualified lead list automatically. Once it has the leads, it initiates outreach conversations using AI-powered messaging that is crafted to match your tone and service offering. It qualifies each lead by asking intelligent discovery questions, filters out unqualified prospects, and hands you only the warm conversations ready to close. For most businesses, this alone replaces the cost of a dedicated sales hire — at $45/month instead of $5,000/month.`,
+            badge: 'Lead Workflow',
+            description: `The AlphaClone AI Growth Agent helps service teams find public business leads, prepare outreach, and move qualified opportunities into the CRM without scattering work across spreadsheets and inboxes.`,
+            extendedDescription: `The Growth Agent supports targeted searches across public business sources, then helps enrich records, score fit, and prepare outreach drafts that match your services. Teams can review the suggested messages, track responses, and hand qualified conversations into the CRM with context intact.`,
             features: [
                 'Automated lead discovery across public directories',
                 'AI-powered outreach and qualification conversations',
@@ -41,7 +33,7 @@ const ServicesPage: React.FC = () => {
                 'Seamless handoff to your CRM when a lead is qualified',
                 'Full conversation history and context tracking',
             ],
-            impact: 'Average: 40+ qualified leads per month on autopilot',
+            impact: 'Lead discovery, enrichment, outreach drafts, and CRM handoff in one flow',
         },
         {
             icon: Database,
@@ -49,7 +41,7 @@ const ServicesPage: React.FC = () => {
             subtitle: 'Know every client, every deal, every interaction',
             color: 'from-blue-500 to-indigo-500',
             badge: 'Core Feature',
-            description: `Most small businesses track clients in spreadsheets, sticky notes, or their inbox. That approach breaks down the moment you have more than 20 active clients. AlphaClone's Enterprise CRM gives you a professional, searchable, interconnected database of every client relationship — the kind of system that enterprise companies pay $50,000/year for, available to your business from day one.`,
+            description: `Most small businesses track clients in spreadsheets, notes, or their inbox. AlphaClone's CRM gives you a searchable database for client relationships, deals, communication history, projects, and billing context.`,
             extendedDescription: `Every client in the CRM has a full profile: contact history, all email threads (pulled from your Gmail integration), every invoice and contract sent, notes and call logs, associated projects and tasks, and their position in your sales pipeline. The pipeline management is drag-and-drop — you move deals from Discovery to Proposal to Negotiation to Won, and the system automatically updates project statuses and triggers follow-up reminders. The CRM also integrates directly with your calendar, so every meeting you schedule with a client appears on their profile, and every new booking from your public scheduling page automatically creates or updates the right client record. No manual data entry required.`,
             features: [
                 'Full client profiles with communication history',
@@ -59,7 +51,7 @@ const ServicesPage: React.FC = () => {
                 'Client tagging and segmentation',
                 'Activity logs, notes, and call records',
             ],
-            impact: 'Save 5+ hours per week on client administration',
+            impact: 'Client records, pipeline, meetings, invoices, and notes in one profile',
         },
         {
             icon: DollarSign,
@@ -67,7 +59,7 @@ const ServicesPage: React.FC = () => {
             subtitle: 'Professional accounting without the accountant',
             color: 'from-emerald-500 to-teal-500',
             badge: 'Professional Accounting',
-            description: `AlphaClone includes a complete financial management system that handles everything from sending your first invoice to producing year-end financial statements. For the vast majority of small businesses, it provides comprehensive accounting capabilities without the need for separate software.`,
+            description: `AlphaClone includes financial workflows for invoices, quotes, receipts, chart of accounts, journal entries, and financial reports. Teams should confirm their accounting and tax requirements before replacing dedicated accounting software.`,
             extendedDescription: `You can generate, brand, and send a professional invoice in under 60 seconds. Invoices include your logo, itemized line items, payment terms, and a direct payment link. The system tracks payment status automatically — you see at a glance which invoices are paid, pending, or overdue. Beyond invoicing, the full accounting suite gives you a proper Chart of Accounts, journal entry recording, income statements, balance sheets, and cash flow reports. This is the same professional-grade accounting structure that your accountant expects to see at tax time — just presented in a way that a business owner without an accounting degree can actually understand and use.`,
             features: [
                 'Branded professional invoice generation',
@@ -77,25 +69,25 @@ const ServicesPage: React.FC = () => {
                 'P&L statements and balance sheets',
                 'Expense tracking and categorization',
             ],
-            impact: 'Eliminate $300+/month in accounting software costs',
+            impact: 'Invoice, quote, receipt, and reporting workflows connected to CRM records',
         },
         {
             icon: FileText,
             title: 'Contract Engine & E-Signatures',
-            subtitle: 'Legal contracts in minutes, signed without a lawyer',
+            subtitle: 'Draft, review, send, and track agreements',
             color: 'from-violet-500 to-purple-500',
             badge: 'Replaces DocuSign',
-            description: `Every service business sends contracts — but most small businesses either use generic templates downloaded from the internet, or spend hundreds per hour on a lawyer. AlphaClone's Contract Engine solves this permanently by combining AI-assisted contract drafting with built-in electronic signature collection.`,
-            extendedDescription: `When you need a service agreement, NDA, freelance contract, or onboarding agreement, you simply describe the scope of work and key terms, and AlphaClone drafts a professional contract framework in seconds. You review, customize the specifics, and send it to your client for e-signature — all within the same platform. The client receives an email with a secure signing link, signs with a legally valid electronic signature, and both parties receive a signed PDF copy automatically. The signed contracts are stored in your Document Hub, linked to the client's CRM record, so you always know what was agreed and when. This workflow alone saves most service businesses $200-500 per month compared to using DocuSign and a lawyer.`,
+            description: `Every service business sends contracts, but scattered templates and signature tools make it hard to track what was sent, changed, and signed. AlphaClone combines AI-assisted drafting with electronic signature collection and CRM-linked storage.`,
+            extendedDescription: `When you need a service agreement, NDA, freelance contract, or onboarding agreement, describe the scope of work and key terms, then review and customize the generated draft before sending it for e-signature. Signed contracts are stored in your Document Hub and linked to the client record. Contract drafts should still be reviewed for your jurisdiction and business context before use.`,
             features: [
                 'AI-assisted contract drafting',
-                'E-signature collection (legally valid)',
+                'E-signature collection and audit trail',
                 'NDAs, service agreements, proposals',
                 'Automatic signed copy distribution',
                 'Contract storage linked to CRM profiles',
                 'Signature status tracking and reminders',
             ],
-            impact: 'From contract draft to signed in under 10 minutes',
+            impact: 'Drafting, signature status, storage, and CRM context in one workflow',
         },
         {
             icon: Mail,
@@ -119,7 +111,7 @@ const ServicesPage: React.FC = () => {
             icon: Video,
             title: 'HD Video Meetings',
             subtitle: 'Client calls without Zoom or Teams',
-            color: 'from-blue-600 to-cyan-500',
+            color: 'from-blue-600 to-teal-500',
             badge: 'Built-In',
             description: `Video conferencing has become as essential as having a phone number for modern service businesses. But maintaining a separate Zoom subscription, managing meeting links, and then manually updating your CRM after every call adds friction and cost. AlphaClone includes a full HD video meeting platform built directly into the dashboard.`,
             extendedDescription: `You can start an instant call with any client from their CRM profile with one click, or join scheduled board meetings through the Active Meetings panel. Meeting recordings are stored directly in your Document Hub, linked to the relevant client and project. There's no need to share invitation links via email, create dummy calendar events, or update meeting notes separately — everything happens in one place. For businesses that run multiple client calls per week, this alone saves significant time in meeting logistics and follow-up administration.`,
@@ -131,20 +123,20 @@ const ServicesPage: React.FC = () => {
                 'Screen sharing and collaboration',
                 'No external app or plugin required',
             ],
-            impact: 'Run 10+ client calls per week with zero meeting overhead',
+            impact: 'Meeting links, CRM context, and follow-up notes stay in one workspace',
         },
         {
             icon: Calendar,
-            title: 'Smart Scheduling & Calendly Integration',
+            title: 'Smart Scheduling & Cal.com Booking',
             subtitle: 'Branded booking pages that sync automatically',
             color: 'from-indigo-500 to-blue-500',
             badge: 'Auto-Sync',
-            description: `Professional scheduling is the first impression many clients have of your business. An unbranded or clunky booking experience undermines the premium positioning you're trying to establish. AlphaClone gives you a branded client-facing booking page and automatically syncs all new appointments to your dashboard without any manual work.`,
-            extendedDescription: `AlphaClone supports both a quick-start manual URL connection (paste your existing Calendly link in 30 seconds) and a full OAuth integration for two-way automatic syncing. When a prospect books a meeting through your scheduling page, AlphaClone automatically creates or updates the corresponding CRM record, adds the meeting to your dashboard calendar, and sends confirmation details to both parties. If you're running multiple types of meetings — initial consultations, project check-ins, and board reviews, for example — you can configure different booking types with different durations, availability windows, and client question forms.`,
+            description: `Professional scheduling is the first impression many clients have of your business. An unbranded or clunky booking experience undermines the premium positioning you're trying to establish. AlphaClone gives you a branded client-facing booking page and automatically syncs new appointments to your dashboard without manual work.`,
+            extendedDescription: `AlphaClone includes native booking pages at /book/your-slug plus Cal.com for platform demo scheduling. When a prospect books a meeting through your scheduling page, AlphaClone automatically creates or updates the corresponding CRM record, adds the meeting to your dashboard calendar, and sends confirmation details to both parties. If you're running multiple types of meetings — initial consultations, project check-ins, and board reviews, for example — you can configure different booking types with different durations, availability windows, and client question forms.`,
             features: [
                 'Branded client booking pages',
-                'OAuth automatic appointment syncing',
-                'Manual Calendly URL integration option',
+                'Cal.com demo scheduling for prospects',
+                'Native AlphaClone booking at /book/your-slug',
                 'Multiple meeting type configuration',
                 'Auto CRM record creation from bookings',
                 'Confirmation and reminder emails',
@@ -157,17 +149,17 @@ const ServicesPage: React.FC = () => {
             subtitle: 'Enterprise-grade protection for your business data',
             color: 'from-rose-500 to-red-600',
             badge: 'Enterprise-Grade',
-            description: `Data breaches and unauthorized access are not just problems for big corporations — they can be catastrophically damaging for small businesses. A leaked client list, a compromised contract, or an employee accessing data they shouldn't see can mean losing clients, facing legal liability, and destroying the trust you've spent years building. AlphaClone is built with enterprise-grade security at every layer.`,
-            extendedDescription: `Role-Based Access Control (RBAC) means you decide exactly what each team member or contractor can see and do inside the platform. Your accountant can access financial records but not client contracts. A junior project manager can update task status but not view invoices. An external stakeholder can be given limited dashboard access for their project only. Every action on the platform is logged in a continuous SIEM (Security Information and Event Management) audit trail — so you always know who accessed what, when, and from where. The platform also includes real-time IP threat intelligence and automated DDoS mitigation to protect against external attacks.`,
+            description: `Data breaches and unauthorized access can be damaging for small businesses. AlphaClone includes role-based access control, audit logging, and account-level controls for teams handling client and financial data.`,
+            extendedDescription: `Role-Based Access Control (RBAC) means you decide what each team member or contractor can see and do inside the platform. Your accountant can access financial records while other team members stay focused on delivery workflows. Audit logs help you understand key account activity, and public policy pages explain privacy, deletion, and security practices.`,
             features: [
                 'Role-based access control (RBAC)',
-                'Continuous SIEM audit logging',
-                'Real-time IP threat monitoring',
-                'DDoS mitigation',
+                'Audit logging for account activity',
+                'Security policy and support channels',
+                'Account-level access controls',
                 'Data encryption at rest and in transit',
                 'GDPR-compliant data handling',
             ],
-            impact: 'Security posture equivalent to Fortune 500 enterprises',
+            impact: 'Role-based access, audit logging, and policy visibility for teams',
         },
         {
             icon: BarChart3,
@@ -190,16 +182,9 @@ const ServicesPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen page-network-bg text-white">
-            {/* Persistent full-page animated network background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
+        <div className="marketing-theme min-h-screen page-network-bg text-white">
             {/* BLUF Summary — SSR rendered above the fold */}
-            <div className="pt-20 relative overflow-hidden">
+            <div className="relative overflow-hidden">
                 <section className="relative min-h-[60vh] flex flex-col items-center justify-center py-16">
 
                     <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -222,16 +207,8 @@ const ServicesPage: React.FC = () => {
                                 {blufSummary}
                             </p>
                             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                                <Link href="/register">
-                                    <Button className="bg-teal-500 text-slate-950 font-bold px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">Start Free Trial</span>
-                                    </Button>
-                                </Link>
-                                <Link href="/guide">
-                                    <Button variant="outline" className="px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">View Setup Guide</span>
-                                    </Button>
-                                </Link>
+                                <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                         </AnimateIn>
                     </div>
@@ -289,18 +266,8 @@ const ServicesPage: React.FC = () => {
                                                 ))}
                                             </div>
                                             <div className="mt-8 flex flex-col gap-3">
-                                                <Link href="/register">
-                                                    <Button className="w-full bg-teal-600 font-bold py-4 rounded-xl button-fill-hover">
-                                                        <span className="relative z-10 text-slate-950">Try This Free</span>
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    variant="outline"
-                                                    className="w-full py-4 rounded-xl button-fill-hover"
-                                                    onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                                                >
-                                                    <span className="relative z-10">Book a Demo Call</span>
-                                                </Button>
+                                                <PrimaryCTA className="w-full">Try This Free</PrimaryCTA>
+                                                <SecondaryCTA className="w-full">Book a Demo Call</SecondaryCTA>
                                             </div>
                                         </div>
                                     </div>
@@ -319,7 +286,7 @@ const ServicesPage: React.FC = () => {
                                     "I'm Not Technical" — That's Exactly Who This Is For
                                 </h2>
                                 <p className="text-slate-400 text-lg max-w-3xl mx-auto">
-                                    AlphaClone was built specifically for business owners who want enterprise-grade software but don't have an IT department, a CTO, or a technical co-founder. If you can use Gmail, you can run AlphaClone.
+                                    AlphaClone was built for business owners who want operational software without hiring an internal tools team. If you can use Gmail, you can get started in AlphaClone.
                                 </p>
                             </div>
                         </AnimateIn>
@@ -328,17 +295,17 @@ const ServicesPage: React.FC = () => {
                                 {
                                     icon: Clock,
                                     title: 'Set Up in 30 Minutes',
-                                    desc: 'No installation, no configuration files, no developer required. The onboarding wizard walks you through every step in plain English. Most users have their full workspace operational within half an hour of signing up.',
+                                    desc: 'No installation, no configuration files, no developer required. The onboarding flow walks you through setup in plain English.',
                                 },
                                 {
                                     icon: Layers,
                                     title: 'Everything Connected Automatically',
-                                    desc: "When you send an invoice, it automatically links to the right client and project. When a meeting is booked, it updates your calendar and CRM simultaneously. You don't configure these connections — they just work.",
+                                    desc: 'When you send an invoice, it can link to the right client and project. When a meeting is booked, it can update your calendar and CRM context from the same workspace.',
                                 },
                                 {
                                     icon: Users,
                                     title: 'Human Support When You Need It',
-                                    desc: 'Every AlphaClone plan includes access to the support team via email. Enterprise plans include priority response. You\'re never alone trying to figure something out — and our average response time is under 4 hours.',
+                                    desc: 'Every AlphaClone plan includes access to support via email. Use the public support channel when you need help with setup or account questions.',
                                 },
                                 {
                                     icon: RefreshCw,
@@ -352,8 +319,8 @@ const ServicesPage: React.FC = () => {
                                 },
                                 {
                                     icon: Award,
-                                    title: 'Proven by Businesses Like Yours',
-                                    desc: 'AlphaClone serves agencies, consultancies, freelancers, and professional service firms. The people using it every day are accountants, designers, coaches, lawyers, and marketing agencies — not software engineers.',
+                                    title: 'Built for Businesses Like Yours',
+                                    desc: 'AlphaClone is designed for agencies, consultancies, freelancers, and professional service firms that need one operational workspace.',
                                 },
                             ].map((item, i) => (
                                 <AnimateIn key={i} type="stagger" index={i}>
@@ -371,14 +338,8 @@ const ServicesPage: React.FC = () => {
                 {/* Testimonial / Social Proof Strip */}
                 <section className="py-12 bg-transparent">
                     <AnimateIn type="scaleIn">
-                        <div className="max-w-4xl mx-auto px-4 text-center">
-                            <div className="flex justify-center gap-1 mb-4">
-                                {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 text-amber-400 fill-amber-400" />)}
-                            </div>
-                            <blockquote className="text-xl text-slate-200 italic leading-relaxed mb-6">
-                                "Before AlphaClone, operations were fragmented across disconnected workflows and manual follow-up. Now our client operations, finance visibility, and outreach execution run from one platform."
-                            </blockquote>
-                            <cite className="text-teal-400 font-semibold">— Agency Owner, Professional Services</cite>
+                        <div className="max-w-5xl mx-auto px-4">
+                            <MarketingTestimonialsCarousel items={MARKETING_TESTIMONIALS} />
                         </div>
                     </AnimateIn>
                 </section>
@@ -392,33 +353,19 @@ const ServicesPage: React.FC = () => {
                                 from <span className="hero-metallic-text">One Dashboard?</span>
                             </h2>
                             <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl mx-auto">
-                                Start your free trial today. No credit card required for the first 14 days. Cancel anytime. Most businesses see a positive ROI within the first month.
+                                Start your free trial today. No credit card required for the first 14 days. Cancel anytime from your account.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                <Link href="/register">
-                                    <Button className="text-lg px-10 py-5 h-auto bg-teal-500 text-slate-950 font-black shadow-xl shadow-teal-500/20 rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">Start 14-Day Free Trial</span>
-                                    </Button>
-                                </Link>
-                                <Button
-                                    variant="outline"
-                                    className="text-lg px-10 py-5 h-auto rounded-2xl button-fill-hover"
-                                    onClick={() => window.open('https://calendly.com/bonnie-alphaclone-systems/30min', '_blank')}
-                                >
-                                    <span className="relative z-10 flex items-center">
-                                        <Phone className="w-5 h-5 mr-2" />
-                                        Book a Live Demo
-                                    </span>
-                                </Button>
+                                <PrimaryCTA className="w-full sm:w-auto">Start 14-Day Free Trial</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a Live Demo</SecondaryCTA>
                             </div>
                             <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-widest">
-                                Starter from $15/mo · Pro from $45/mo · Enterprise from $80/mo · Cancel anytime
+                                {MARKETING_PRICING.startingPriceLine} · 14-day trial · No card required
                             </p>
                         </AnimateIn>
                     </div>
                 </section>
             </div>
-            <MarketingFooter />
         </div>
     );
 };

@@ -1,11 +1,14 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 
 import { hubspotService } from '@/services/hubspotService';
 import { ZohoCRMService } from '@/services/zoho/ZohoCRMService';
 import { ZohoAuthExpiredError } from '@/services/zoho/ZohoService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { requireTenantRole } from '@/lib/apiAuth';
+import { resolveActiveTenantForUser } from '@/lib/tenant/platformTenant';
 
 export async function POST(req: Request) {
     const supabase = await createSupabaseServerClient();
@@ -16,7 +19,14 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { deal, lead, entityType } = await req.json();
+        const { deal, lead, entityType, tenantId: bodyTenantId } = await req.json();
+        const requestedTenantId =
+            String(bodyTenantId || '').trim() || req.headers.get('x-tenant-id')?.trim() || null;
+        const { tenantId } = await resolveActiveTenantForUser({
+            userId: user.id,
+            hintedTenantId: requestedTenantId,
+        });
+        await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
         const userId = user.id;
 
         // Use Admin client to fetch integrations securely
@@ -25,6 +35,7 @@ export async function POST(req: Request) {
             .from('integrations')
             .select('*')
             .eq('user_id', userId)
+            .eq('tenant_id', tenantId)
             .eq('enabled', true);
 
         if (error || !integrations) {
@@ -33,15 +44,22 @@ export async function POST(req: Request) {
 
         const results = [];
 
-        // Sync to HubSpot (only supports deals/leads as generic objects for now)
+        // Sync to HubSpot using entity-specific behavior to avoid bad writes.
         const hubspot = integrations.find((i: any) => i.type === 'hubspot');
         if (hubspot) {
             try {
-                const res = await hubspotService.syncLeadToHubSpot(userId, deal || lead);
-                results.push({ provider: 'hubspot', status: 'success', data: res });
-            } catch (e: any) {
+                const res =
+                    entityType === 'deal' || deal
+                        ? await hubspotService.syncDealToHubSpot(userId, tenantId, deal)
+                        : await hubspotService.syncLeadToHubSpot(userId, tenantId, lead);
+                results.push({
+                    provider: 'hubspot',
+                    status: res?.success === false && 'skipped' in res && res.skipped ? 'skipped' : 'success',
+                    data: res,
+                });
+            } catch (e: unknown) {
                 console.error('HubSpot Sync Error:', e);
-                results.push({ provider: 'hubspot', status: 'failed', error: e.message });
+                results.push({ provider: 'hubspot', status: 'failed', error: OPERATION_FAILED_MESSAGE });
             }
         }
 
@@ -49,7 +67,7 @@ export async function POST(req: Request) {
         const zoho = integrations.find((i: any) => i.type === 'zoho');
         if (zoho) {
             try {
-                const zohoCRM = new ZohoCRMService(userId);
+                const zohoCRM = new ZohoCRMService(userId, tenantId);
                 let res;
                 // entityType was already destructured from req.json() above
                 if (entityType === 'lead' || lead) {
@@ -58,21 +76,21 @@ export async function POST(req: Request) {
                     res = await zohoCRM.upsertDeal(deal);
                 }
                 results.push({ provider: 'zoho', status: 'success', data: res });
-            } catch (e: any) {
+            } catch (e: unknown) {
                 console.error('Zoho CRM Sync Error:', e);
                 const isAuthExpired = e instanceof ZohoAuthExpiredError;
                 results.push({
                     provider: 'zoho',
                     status: 'failed',
-                    error: e.message,
+                    error: OPERATION_FAILED_MESSAGE,
                     reconnect: isAuthExpired,
                 });
             }
         }
 
         return NextResponse.json({ success: true, results });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('CRM Sync Error:', err);
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'crm/sync/push.POST' });
     }
 }

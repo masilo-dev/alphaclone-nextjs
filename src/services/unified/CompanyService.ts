@@ -53,12 +53,14 @@ export class CompanyService {
   /**
    * Get company by ID
    */
-  async get(id: string): Promise<Company | null> {
-    const { data, error } = await supabase
-      .from('companies')
-      .select('*')
-      .eq('id', id)
-      .single();
+  async get(id: string, tenantId?: string): Promise<Company | null> {
+    const scopedTenantId = tenantId || tenantService.getCurrentTenantId();
+    let query = supabase.from('companies').select('*').eq('id', id);
+    if (scopedTenantId) {
+      query = query.eq('tenant_id', scopedTenantId);
+    }
+
+    const { data, error } = await query.single();
 
     if (error) throw error;
     return data;

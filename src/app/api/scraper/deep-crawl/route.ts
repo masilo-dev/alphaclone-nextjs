@@ -2,20 +2,26 @@ import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import { BrowserManager } from '@/lib/scraper/browserManager';
+import { scraperDeepCrawlSchema } from '@/schemas/validation';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { assertSafeExternalHttpUrl } from '@/lib/security/externalUrl';
 
 // Regex for extracting emails
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 
 export async function POST(request: Request) {
-  let browserInstance = null;
+  let browserClose: (() => Promise<void>) | null = null;
   try {
-    const { url, usePlaywright = false } = await request.json();
-
-    if (!url) {
-      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
+    await requireAuthenticatedUser(request);
+    const payload = await request.json();
+    const parsed = scraperDeepCrawlSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+    const { url, usePlaywright = false } = parsed.data;
 
     const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
+    await assertSafeExternalHttpUrl(cleanUrl);
     let html = '';
     let usedBrowser = false;
 
@@ -32,7 +38,9 @@ export async function POST(request: Request) {
           'Accept-Language': 'en-US,en;q=0.9',
         },
         timeout: 15000,
-        maxRedirects: 5,
+        // Redirects are handled by the browser fallback, where each navigation
+        // is checked. This prevents a public URL redirecting into a private net.
+        maxRedirects: 0,
       });
       html = response.data;
       
@@ -40,18 +48,27 @@ export async function POST(request: Request) {
       if (html.length < 1500 || html.includes('javascript') && !html.includes('<body')) {
           throw new Error('Minimal content detected, switching to Browser Engine');
       }
-    } catch (e: any) {
-      console.log(`[Scraper] Static extraction failed or skipped: ${e.message}. Launching Browser Engine...`);
+    } catch (e: unknown) {
+      console.log('[Scraper] Static extraction failed or skipped. Launching Browser Engine...', e);
       try {
-          const { page, browser } = await BrowserManager.createPage();
-          browserInstance = browser;
+          const { page, close } = await BrowserManager.createPage();
+          browserClose = close;
+          await page.route('**/*', async (route) => {
+            if (!route.request().isNavigationRequest()) return route.continue();
+            try {
+              await assertSafeExternalHttpUrl(route.request().url());
+              await route.continue();
+            } catch {
+              await route.abort('blockedbyclient');
+            }
+          });
           await page.goto(cleanUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
           // Wait a bit for JS to render
           await page.waitForTimeout(2000); 
           html = await page.content();
           usedBrowser = true;
-      } catch (browserError: any) {
-          console.error(`[Scraper] Browser Engine also failed:`, browserError.message);
+      } catch (browserError: unknown) {
+          console.error(`[Scraper] Browser Engine also failed:`, browserError);
           if (!html) throw browserError; // Only throw if we have NOTHING
       }
     }
@@ -117,16 +134,23 @@ export async function POST(request: Request) {
     });
 
   } catch (error: any) {
-    console.error(`Deep Crawl Error:`, error.message);
-    return NextResponse.json({ 
-      success: false, 
-      emails: [],
-      phone: '',
-      social_links: {}
-    }, { status: 200 });
+    console.error(`Deep Crawl Error:`, error);
+    
+    let errorMessage = 'Deep crawl failed';
+    let errorCode = 'DEEP_CRAWL_FAILED';
+    
+    if (error.message?.includes('402') || error.status === 402) {
+      errorMessage = 'Browser Engine Quota Exceeded (402). Static extraction only.';
+      errorCode = 'QUOTA_EXCEEDED';
+    } else if (error.message?.includes('503') || error.message?.includes('CDP')) {
+      errorMessage = 'Browser Engine Temporarily Unavailable (503).';
+      errorCode = 'ENGINE_UNAVAILABLE';
+    }
+
+    return routeErrorResponse(error, errorMessage, request);
   } finally {
-    if (browserInstance) {
-      try { await browserInstance.close(); } catch {}
+    if (browserClose) {
+      await browserClose().catch(() => {});
     }
   }
 }

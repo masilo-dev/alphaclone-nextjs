@@ -1,10 +1,9 @@
 import { supabase } from '../../lib/supabase';
-import { v4 as uuidv4 } from 'uuid';
 
 export class MCPAuthService {
   /**
    * Get or create an MCP connection token for the signed-in user in this workspace.
-   * Each user has their own key and MCP URL (includes tenant_id + user_id).
+   * Each user has their own key; `/api/mcp?api_key=...` resolves tenant and user from the key.
    */
   static async getOrCreateToken(
     tenantId: string,
@@ -14,19 +13,11 @@ export class MCPAuthService {
       return { token: null, error: 'User must be signed in to create an MCP connection key.' };
     }
     try {
-      const { data, error } = await supabase
-        .from('mcp_api_keys')
-        .select('api_key')
-        .eq('tenant_id', tenantId)
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        return { token: null, error: error.message };
-      }
-
-      if (data?.api_key) {
-        return { token: data.api_key };
+      const response = await fetch(`/api/mcp/keys?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
+      const status = await response.json().catch(() => ({}));
+      if (!response.ok) return { token: null, error: status.error || 'MCP key status could not be loaded.' };
+      if (status.exists) {
+        return { token: null, error: 'MCP key exists but cannot be retrieved. Rotate to generate a new key.' };
       }
 
       return await this.rotateToken(tenantId, userId);
@@ -46,27 +37,10 @@ export class MCPAuthService {
       return { token: null, error: 'User must be signed in.' };
     }
     try {
-      const newToken = `ac_mcp_${uuidv4().replace(/-/g, '')}`;
-
-      const { data, error } = await supabase
-        .from('mcp_api_keys')
-        .upsert(
-          {
-            tenant_id: tenantId,
-            user_id: userId,
-            api_key: newToken,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'tenant_id,user_id' }
-        )
-        .select('api_key')
-        .single();
-
-      if (error) {
-        return { token: null, error: error.message };
-      }
-
-      return { token: data.api_key };
+      const response = await fetch('/api/mcp/keys', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) return { token: null, error: data.error || 'MCP key could not be rotated.' };
+      return { token: data.token || null };
     } catch (err) {
       return { token: null, error: String(err) };
     }
@@ -79,23 +53,7 @@ export class MCPAuthService {
     token: string
   ): Promise<{ tenantId: string | null; userId: string | null; error?: string }> {
     try {
-      const { data, error } = await supabase
-        .from('mcp_api_keys')
-        .select('tenant_id, user_id')
-        .eq('api_key', token)
-        .single();
-
-      if (error || !data) {
-        return { tenantId: null, userId: null, error: 'Invalid or expired MCP connection token' };
-      }
-
-      supabase
-        .from('mcp_api_keys')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('api_key', token)
-        .then();
-
-      return { tenantId: data.tenant_id, userId: data.user_id };
+      return { tenantId: null, userId: null, error: 'Static MCP keys are validated only by the server.' };
     } catch (err) {
       return { tenantId: null, userId: null, error: String(err) };
     }

@@ -1,18 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
-    CheckCircle2, ArrowRight, User, CreditCard, Settings, Mail,
+    CheckCircle2, User, CreditCard, Settings, Mail,
     Calendar, Users, DollarSign, Bot, Video, Shield, ChevronDown,
     ChevronUp, Globe, Zap, Clock, Star, Terminal, Layers,
     BookOpen, TrendingUp, Lock, Building2
 } from 'lucide-react';
-import { Button } from '../ui/UIComponents';
-import PublicNavigation from '../PublicNavigation';
+import { MARKETING_PRICING } from '@/config/pricingPlans';
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const PlatformGuide: React.FC = () => {
-    const [, setIsLoginOpen] = React.useState(false);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     const steps = [
@@ -22,7 +20,7 @@ const PlatformGuide: React.FC = () => {
             step: 1,
             title: 'Create Your Account',
             subtitle: 'Takes 2 minutes — no credit card required for trial',
-            detail: `Visit alphaclone.tech/register and click "Create Account." You'll need to provide your email address and create a password. That's it — there's no form with 20 fields, no company size questions, no department dropdowns. We believe in letting you experience the platform before we ask for anything.
+            detail: `Visit alphaclonesystems.com/register and click "Create Account." You'll need to provide your email address and create a password. That's it — there's no form with 20 fields, no company size questions, no department dropdowns. We believe in letting you experience the platform before we ask for anything.
 
 After confirming your email via the link we send, you'll be taken directly into the onboarding wizard. If you have an existing Google account and prefer, you can sign up with Google in a single click, which also pre-fills your name and profile photo automatically.
 
@@ -38,24 +36,24 @@ Your account is created with the Pro plan on a 14-day free trial. You won't be c
             icon: CreditCard,
             color: 'from-blue-500 to-indigo-500',
             step: 2,
-            title: 'Choose Your Plan',
-            subtitle: 'Pick the tier that fits your team and growth stage',
-            detail: `After registration, you'll see a plan selection screen. Here's a plain-English breakdown of what each tier means for your business:
+            title: 'Activate Your Plan',
+            subtitle: MARKETING_PRICING.startingPriceLine,
+            detail: `After registration, choose the plan that fits your workflow.
 
-Every plan includes every feature — CRM, invoicing, contracts, AI assistant, AI Growth Agent, financial suite, task management, and more. The only difference between plans is your usage quotas.
+**Free** — full platform access with daily usage limits on execution actions.
 
-**Starter ($15/month):** 5 users · 5GB storage · 10 projects · 10 contract templates · 50 AI queries/month · 10 AI Growth Agent runs/month · Standard support (48h response).
+**Pro ($45/month)** — higher daily capacity for active teams.
 
-**Pro ($45/month):** 25 users · 25GB storage · 100 projects · 100 contract templates · 500 AI queries/month · 200 AI Growth Agent runs/month · Priority support (12h response). Best for most agencies and service businesses.
+**Premium ($80/month)** — unlimited execution subject to provider and safety limits.
 
-**Enterprise ($80/month):** Unlimited everything — users, storage, projects, contracts, AI queries, and Agent runs. Dedicated support with 4-hour response time. Best for larger teams with scale or compliance requirements.
+You start with a 14-day free trial and no credit card is required to begin. Plan details and limits are on the pricing page.
 
-You can upgrade or downgrade your plan at any time from the Settings page. There's no long-term contract and no penalty for changing tiers.`,
+There is no founder involvement needed to start. Setup is self-serve and guided directly inside the app.`,
             tips: [
-                'All plans include every feature — you only pay more for higher usage quotas',
-                'Start on Starter to try the platform, upgrade when you hit the limits',
-                'Pro is the sweet spot for most agencies — 500 AI queries is enough for heavy daily use',
-                'All plans include a 14-day free trial — you don\'t pay until day 15',
+                'You only need one decision: start the trial and complete onboarding',
+                'The same platform modules are available from day one',
+                'Billing is visible in Settings so owners can review at any time',
+                'No founder call is required to configure the workspace',
             ],
         },
         {
@@ -95,7 +93,7 @@ Once connected, when you click on any client in your CRM, you can see all histor
 **Privacy note:** Your emails are displayed inside AlphaClone but are not stored permanently on our servers. We retrieve them in real time from Gmail's API. If you disconnect Gmail at any time, the email data is immediately removed from your AlphaClone view.`,
             tips: [
                 'You must connect the email address you actually use to communicate with clients',
-                'If you have multiple Gmail accounts, you can connect the primary one for now',
+                'If you have multiple Gmail accounts, connect the account your workspace should send from',
                 'Your personal emails are private — only emails linked to CRM contacts appear contextually',
                 'The connection can be disconnected from Settings > Integrations at any time',
             ],
@@ -124,7 +122,7 @@ You can also configure availability windows directly in AlphaClone without a Cal
         },
         {
             icon: Users,
-            color: 'from-teal-500 to-cyan-500',
+            color: 'from-teal-500 to-emerald-500',
             step: 6,
             title: 'Import Your CRM Contacts',
             subtitle: 'Bring your existing client list in minutes',
@@ -192,7 +190,7 @@ Review the discovered leads and de-select any that aren't relevant. Then click "
         },
         {
             icon: Video,
-            color: 'from-blue-600 to-cyan-500',
+            color: 'from-blue-600 to-teal-500',
             step: 9,
             title: 'Run Client Video Meetings',
             subtitle: 'Built-in HD video — no Zoom account needed',
@@ -284,7 +282,7 @@ The invited person receives an email with a secure invitation link. When they cl
         {
             icon: TrendingUp,
             title: 'The AI Works While You Work — and While You Sleep',
-            desc: 'The Growth Agent is finding and qualifying leads at 2am while you\'re asleep. By the time you open your laptop in the morning, there are warm conversations ready. This is leverage that would cost $5,000/month to hire a human to do.',
+            desc: 'The Growth Agent can qualify leads and queue follow-ups while you are offline — so warm conversations are ready when you start your day. Results vary by industry and setup.',
         },
         {
             icon: Building2,
@@ -293,8 +291,8 @@ The invited person receives an email with a secure invitation link. When they cl
         },
         {
             icon: Clock,
-            title: 'Get 15+ Hours of Your Week Back',
-            desc: 'Manual invoicing, chasing payments, scheduling back-and-forth, manually logging client conversations — AlphaClone automates or eliminates all of these. Most users reclaim over 15 hours per week that they can redirect to revenue-generating work.',
+            title: 'Reduce repetitive admin work',
+            desc: 'Manual invoicing, payment follow-ups, scheduling back-and-forth, and logging client conversations — AlphaClone automates or streamlines many of these steps so you can focus on revenue-generating work.',
         },
         {
             icon: Globe,
@@ -304,30 +302,28 @@ The invited person receives an email with a secure invitation link. When they cl
     ];
 
     return (
-        <div className="min-h-screen bg-transparent text-white">
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
-            <div className="pt-20">
+        <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
+            <div>
                 {/* Hero — BLUF Answer Section */}
-                <section className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-800/50 py-20">
+                <section className="bg-gradient-to-b from-slate-900/70 to-slate-950/70 border-b border-slate-800/50 py-20">
                     <div className="max-w-4xl mx-auto px-4">
                         <div className="flex items-center gap-2 mb-4">
                             <BookOpen className="w-5 h-5 text-teal-400" />
                             <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">Platform Guide</span>
                         </div>
                         <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                            Set Up Your Entire Business OS{' '}
+                            User Guide for First-Time Teams{' '}
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-400">
-                                in Under 30 Minutes
+                                No Technical Background Required
                             </span>
                         </h1>
                         <p className="text-xl text-slate-300 leading-relaxed">
-                            This guide walks you through every step of setting up AlphaClone — from creating your account to activating the AI Growth Agent. No technical knowledge required. Each step includes exact navigation instructions, recommended settings, and tips from experienced users.
+                            This guide explains the platform in plain language so any new user can navigate confidently. It is designed for full self-service onboarding without founder involvement, technical training, or engineering support.
                         </p>
                         <div className="mt-8 grid grid-cols-3 gap-6 max-w-xl">
                             {[
                                 { icon: Clock, label: '30 min', sub: 'average setup time' },
-                                { icon: Zap, label: '10 steps', sub: 'from zero to running' },
+                                { icon: Zap, label: '10 steps', sub: 'clear navigation path' },
                                 { icon: Star, label: 'No IT needed', sub: 'plain-language guide' },
                             ].map((item, i) => (
                                 <div key={i} className="text-center">
@@ -340,12 +336,39 @@ The invited person receives an email with a secure invitation link. When they cl
                     </div>
                 </section>
 
+                {/* First-time navigation map */}
+                <section className="py-16 bg-slate-950/55">
+                    <div className="max-w-4xl mx-auto px-4">
+                        <h2 className="text-3xl font-bold mb-4">Where to Go in the Platform</h2>
+                        <p className="text-slate-400 leading-relaxed mb-10">
+                            Use this map if you are new and want direct navigation without guessing module names.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                                { area: 'Dashboard', purpose: 'See your business summary and today priorities.' },
+                                { area: 'Leads', purpose: 'Find and qualify new prospects.' },
+                                { area: 'Deals', purpose: 'Track active opportunities and pipeline value.' },
+                                { area: 'Projects', purpose: 'Manage delivery work after a deal closes.' },
+                                { area: 'Tasks', purpose: 'Assign and complete day-to-day actions.' },
+                                { area: 'Social', purpose: 'Create, schedule, and publish content.' },
+                                { area: 'Messages', purpose: 'Handle conversations in one place.' },
+                                { area: 'Finance', purpose: 'Create invoices, monitor payments, and reports.' },
+                            ].map((item, i) => (
+                                <div key={i} className="p-5 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60">
+                                    <h3 className="font-bold text-white mb-1">{item.area}</h3>
+                                    <p className="text-slate-400 text-sm leading-relaxed">{item.purpose}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
                 {/* Why AlphaClone — before the how */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-slate-950/55">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Why AlphaClone Changes How You Run Your Business</h2>
                         <p className="text-slate-400 leading-relaxed mb-10">
-                            Before diving into setup, here's why thousands of business owners made the switch — and what changes the moment you start using a unified Business OS.
+                            Before diving into setup, here is what changes when you move from a scattered tool stack to a unified business workspace.
                         </p>
                         <div className="space-y-4">
                             {whyPoints.map((point, i) => (
@@ -429,7 +452,7 @@ The invited person receives an email with a secure invitation link. When they cl
                 </section>
 
                 {/* Integration Quick Reference */}
-                <section className="py-16 bg-slate-950">
+                <section className="py-16 bg-slate-950/55">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Integration Quick Reference</h2>
                         <p className="text-slate-400 mb-8">Where to find each integration in the Settings panel:</p>
@@ -458,7 +481,7 @@ The invited person receives an email with a secure invitation link. When they cl
                 </section>
 
                 {/* FAQ Section with JSON-LD compatible content */}
-                <section className="py-16 bg-slate-900/50 border-t border-slate-800">
+                <section className="py-16 bg-slate-900/55 border-t border-slate-800">
                     <div className="max-w-4xl mx-auto px-4">
                         <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
                         <p className="text-slate-400 mb-8">Answers to the most common questions from new AlphaClone users:</p>
@@ -492,22 +515,13 @@ The invited person receives an email with a secure invitation link. When they cl
                         <Shield className="w-12 h-12 text-teal-400 mx-auto mb-6" />
                         <h2 className="text-3xl font-bold mb-6">Ready to Get Started?</h2>
                         <p className="text-slate-400 text-lg mb-10 leading-relaxed">
-                            Create your free account now. The setup wizard inside the platform mirrors this guide step by step — you'll never feel lost. And if you ever get stuck, our support team responds within 4 hours.
+                            Create your free account now. The setup wizard inside the platform mirrors this guide step by step so first-time users can onboard without founder involvement.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Link href="/register">
-                                <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
-                                    Start Free Trial
-                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                </Button>
-                            </Link>
-                            <Link href="/docs">
-                                <Button variant="outline" className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800">
-                                    View Documentation
-                                </Button>
-                            </Link>
+                            <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
+                            <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                         </div>
-                        <p className="mt-6 text-slate-500 text-sm">14-day free trial · No credit card required · Cancel anytime</p>
+                        <p className="mt-6 text-slate-500 text-sm">{MARKETING_PRICING.startingPriceLine} · No credit card required to start · Cancel anytime</p>
                     </div>
                 </section>
             </div>

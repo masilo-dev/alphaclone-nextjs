@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { APP_TAGLINE } from '@/constants';
 
 interface SplashScreenProps {
   isVisible?: boolean;
@@ -28,8 +29,16 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
           }}
           className={`fixed inset-0 z-[9999] flex items-center justify-center bg-[#050B1E] overflow-hidden ${className}`}
         >
-          {/* Animated Background Gradient */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/10 via-transparent to-transparent" />
+          {/* Animated Background */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-500/15 via-transparent to-transparent" />
+          <motion.div
+            className="absolute inset-0 opacity-30"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+            style={{
+              background: 'conic-gradient(from 0deg, transparent, rgba(20,184,166,0.25), transparent, rgba(59,130,246,0.15), transparent)',
+            }}
+          />
           
           <div className="relative flex flex-col items-center">
             {/* Logo Wrapper */}
@@ -53,9 +62,9 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               <Image 
                 src="/logo.png" 
                 alt="AlphaClone" 
-                width={128}
-                height={128}
-                className="object-contain relative z-10"
+                width={96}
+                height={96}
+                className="object-contain relative z-10 sm:w-28 sm:h-28"
                 priority
               />
             </motion.div>
@@ -70,8 +79,8 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
               <h1 className="text-2xl sm:text-3xl font-black tracking-[0.2em] text-white">
                 ALPHA<span className="text-teal-400">CLONE</span>
               </h1>
-              <p className="text-[10px] uppercase tracking-[0.4em] text-teal-400/60 font-medium">
-                Unified Business Operating System
+              <p className="text-xs uppercase tracking-[0.35em] text-teal-400/60 font-medium text-center px-4">
+                {APP_TAGLINE}
               </p>
             </motion.div>
 
@@ -117,3 +126,4 @@ const SplashScreen: React.FC<SplashScreenProps> = ({
 };
 
 export default SplashScreen;
+

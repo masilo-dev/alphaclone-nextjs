@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
-import { PhoneMissed, X, Phone } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { PhoneMissed, Phone } from 'lucide-react';
 import { missedCallsService, MissedCall } from '../../services/missedCallsService';
 import { Button, Modal } from '../ui/UIComponents';
+import { Avatar } from '@/components/ui/Avatar';
 import toast from 'react-hot-toast';
 
 interface MissedCallsNotificationProps {
@@ -18,6 +18,11 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
     const [showModal, setShowModal] = useState(false);
     const [missedCalls, setMissedCalls] = useState<MissedCall[]>([]);
     const [loading, setLoading] = useState(false);
+    const onCallBackRef = useRef(onCallBack);
+
+    useEffect(() => {
+        onCallBackRef.current = onCallBack;
+    }, [onCallBack]);
 
     const loadUnseenCount = useCallback(async () => {
         const { count } = await missedCallsService.getUnseenMissedCallsCount(userId);
@@ -32,9 +37,8 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
     }, [userId]);
 
     useEffect(() => {
-        loadUnseenCount();
+        void loadUnseenCount();
 
-        // Subscribe to new missed calls
         const unsubscribe = missedCallsService.subscribeToMissedCalls(
             userId,
             (newMissedCall) => {
@@ -50,9 +54,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                             size="sm"
                             onClick={() => {
                                 toast.dismiss(t.id);
-                                if (onCallBack) {
-                                    onCallBack(newMissedCall.caller_id);
-                                }
+                                onCallBackRef.current?.(newMissedCall.caller_id);
                             }}
                         >
                             Call Back
@@ -66,23 +68,20 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
         );
 
         return () => {
-            missedCallsService.unsubscribe(unsubscribe);
+            unsubscribe();
         };
-    }, [userId, loadUnseenCount, onCallBack]);
+    }, [userId, loadUnseenCount]);
 
     const handleOpenModal = useCallback(async () => {
         setShowModal(true);
         await loadMissedCalls();
-        // Mark all as seen
         await missedCallsService.markAllMissedCallsSeen(userId);
         setUnseenCount(0);
     }, [userId, loadMissedCalls]);
 
     const handleCallBack = (callerId: string) => {
         setShowModal(false);
-        if (onCallBack) {
-            onCallBack(callerId);
-        }
+        onCallBackRef.current?.(callerId);
     };
 
     if (unseenCount === 0) return null;
@@ -129,15 +128,12 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3 flex-1">
-                                            <div className="relative w-10 h-10 flex-shrink-0">
-                                                <Image
-                                                    src={call.caller_avatar || '/default-avatar.png'}
-                                                    alt={call.caller_name || 'Unknown'}
-                                                    fill
-                                                    className="rounded-full object-cover"
-                                                    unoptimized
-                                                />
-                                            </div>
+                                            <Avatar
+                                                src={call.caller_avatar}
+                                                name={call.caller_name || 'Unknown'}
+                                                size={40}
+                                                className="flex-shrink-0"
+                                            />
                                             <div>
                                                 <p className="font-medium text-white">
                                                     {call.caller_name || 'Unknown'}

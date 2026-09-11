@@ -3,6 +3,7 @@ export type PlatformGlobalSettings = {
     platformName?: string;
     supportEmail?: string;
     platformUrl?: string;
+    logoUrl?: string;
   };
   security?: {
     enforce2faTenantAdmins?: boolean;
@@ -11,6 +12,23 @@ export type PlatformGlobalSettings = {
   };
   support?: {
     docsUrl?: string;
+  };
+  compliance?: {
+    gdprEnabled?: boolean;
+    ccpaEnabled?: boolean;
+    cookieConsentEnabled?: boolean;
+    dataProcessingAgreementUrl?: string;
+    privacyPolicyUrl?: string;
+    termsOfServiceUrl?: string;
+  };
+  emailProviders?: {
+    zohoEnabled?: boolean;
+    outlookEnabled?: boolean;
+    gmailEnabled?: boolean;
+    sendgridEnabled?: boolean;
+    resendEnabled?: boolean;
+    brevoEnabled?: boolean;
+    customSmtpEnabled?: boolean;
   };
 };
 
@@ -26,4 +44,15 @@ export type PlatformEnvStatus = {
   anthropic: boolean;
   openai: boolean;
   gemini: boolean;
+  whatsapp: boolean;
+  linkedin: boolean;
+  instagram: boolean;
+  twitter: boolean;
+  zoho: boolean;
+  microsoft365: boolean;
+  outlook: boolean;
+  gmail: boolean;
+  deepseek: boolean;
+  turnstile: boolean;
+  webPush: boolean;
 };

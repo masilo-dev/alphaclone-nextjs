@@ -6,33 +6,31 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const userId = searchParams.get('userId');
-        const maxResults = searchParams.get('maxResults') || '20';
-        const pageToken = searchParams.get('pageToken');
-        const labelIds = searchParams.getAll('labelIds');
+        const maxResults = parseInt(searchParams.get('maxResults') || '20');
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        // "?"? SECURITY CHECK "?"?
-        // Verifies user is logged in
         const { user } = await requireAuthenticatedUser();
-
-        // Ensure user can only access their own Gmail data
         if (user.id !== userId) {
-            return NextResponse.json({ error: 'Forbidden: You can only access your own Gmail threads' }, { status: 403 });
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        let endpoint = `threads?maxResults=${maxResults}`;
-        if (pageToken) endpoint += `&pageToken=${pageToken}`;
-        if (labelIds.length > 0) {
-            labelIds.forEach(label => endpoint += `&labelIds=${label}`);
+        // Check if we're asking for a specific thread via sub-path or query
+        const pathParts = req.nextUrl.pathname.split('/');
+        const lastPart = pathParts[pathParts.length - 1];
+        
+        if (lastPart !== 'threads' && lastPart !== '') {
+            const data = await gmailServerService.getThread(userId, lastPart);
+            return NextResponse.json(data);
         }
 
-        const data = await gmailServerService.proxyRequest(userId, endpoint);
+        const data = await gmailServerService.listThreads(userId, maxResults);
         return NextResponse.json(data);
     } catch (err: any) {
         return routeErrorResponse(err, 'Failed to fetch messages');
     }
 }
+
 

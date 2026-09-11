@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
+    const returnTo = searchParams.get('returnTo') || '/dashboard/business/messages';
 
-    console.log('Gmail Connect Request:', { userId });
+    console.log('Gmail Connect Request:', { userId, returnTo });
 
     if (!userId) {
         return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -22,6 +25,8 @@ export async function GET(req: NextRequest) {
         console.error('Missing GOOGLE_CLIENT_ID');
         return NextResponse.json({ error: 'Server configuration error: Missing Google Client ID' }, { status: 500 });
     }
+
+    const safeReturnTo = returnTo.startsWith('/dashboard') ? returnTo : '/dashboard/business/messages';
 
     try {
         console.log('Creating admin client...');
@@ -50,18 +55,17 @@ export async function GET(req: NextRequest) {
 
         if (stateError || !stateRecord) {
             console.error('Failed to create OAuth state:', stateError);
-            return NextResponse.json({
-                error: 'Failed to initialize secure connection',
-                details: stateError?.message || 'State record empty'
-            }, { status: 500 });
+            return NextResponse.json(
+                { error: 'Failed to initialize secure connection', code: 'OAUTH_STATE_FAILED' },
+                { status: 500 }
+            );
         }
 
         const stateNonce = stateRecord.id;
         console.log('State nonce generated:', stateNonce);
 
         const clientId = ENV.GOOGLE_CLIENT_ID;
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclone.tech';
-        const redirectUri = `${appUrl}/api/auth/google/gmail/callback`;
+        const redirectUri = OAUTH_CALLBACKS.googleGmail;
 
         const scopes = [
             'https://www.googleapis.com/auth/gmail.readonly',
@@ -71,6 +75,11 @@ export async function GET(req: NextRequest) {
             'openid'
         ].join(' ');
 
+        const encodedState = JSON.stringify({
+            nonce: stateNonce,
+            returnTo: safeReturnTo,
+        });
+
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
             `client_id=${clientId}&` +
             `redirect_uri=${encodeURIComponent(redirectUri)}&` +
@@ -78,15 +87,12 @@ export async function GET(req: NextRequest) {
             `scope=${encodeURIComponent(scopes)}&` +
             `access_type=offline&` +
             `prompt=consent&` +
-            `state=${stateNonce}`;
+            `state=${encodeURIComponent(encodedState)}`;
 
         console.log('Redirecting to Google Auth URL...');
         return NextResponse.redirect(authUrl);
     } catch (err: any) {
         console.error('Gmail Connect Error (caught):', err);
-        return NextResponse.json({
-            error: 'Internal Server Error',
-            details: err.message || 'Unknown error'
-        }, { status: 500 });
+        return clientErrorResponse(err, { request: req, scope: 'auth/google/gmail/connect' });
     }
 }

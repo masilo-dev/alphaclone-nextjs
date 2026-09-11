@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import AppLegalFooter from '@/components/legal/AppLegalFooter';
 
 export const metadata: Metadata = {
     title: 'Login | AlphaClone',
@@ -7,15 +8,15 @@ export const metadata: Metadata = {
         'AlphaClone login',
         'business software login',
         'CRM login',
-        'client portal login',
+        'business workspace login',
         'business operations platform login',
         'AlphaClone sign in',
     ],
-    alternates: { canonical: 'https://alphaclone.tech/auth/login' },
+    alternates: { canonical: 'https://alphaclonesystems.com/auth/login' },
     openGraph: {
         title: 'Login | AlphaClone',
         description: 'Sign in to AlphaClone to access your connected CRM, billing, scheduling, contracts, and operations workspace.',
-        url: 'https://alphaclone.tech/auth/login',
+        url: 'https://alphaclonesystems.com/auth/login',
         type: 'website',
     },
     twitter: {
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
         title: 'Login | AlphaClone',
         description: 'Sign in to your AlphaClone workspace.',
     },
-    robots: { index: true, follow: true },
+    robots: { index: false, follow: true },
 };
 
 export default function LoginLayout({
@@ -31,5 +32,10 @@ export default function LoginLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return children;
+    return (
+        <>
+            {children}
+            <AppLegalFooter />
+        </>
+    );
 }

@@ -1,0 +1,1664 @@
+[
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 719,
+    "arg": "Boolean).join(\"|\"",
+    "content": "].filter(Boolean).join(\"|\");"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 2962,
+    "arg": "(bind2",
+    "content": "(_a10 = this.bindings.postgres_changes) === null || _a10 === void 0 ? void 0 : _a10.filter((bind2) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 2967,
+    "arg": "(bind2",
+    "content": "(_b2 = this.bindings[typeLower]) === null || _b2 === void 0 ? void 0 : _b2.filter((bind2) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 3045,
+    "arg": "(bind2",
+    "content": "this.bindings[typeLower] = this.bindings[typeLower].filter((bind2) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 13466,
+    "arg": "(k",
+    "content": "return Object.keys(shape).filter((k) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 13733,
+    "arg": "([k, _2]",
+    "content": "return Object.entries(obj).filter(([k, _2]) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 25592,
+    "arg": "(key",
+    "content": "].filter((key) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 35880,
+    "arg": "n2, bi(i2, s)",
+    "content": "return e.filter(n2, bi(i2, s));"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 38578,
+    "arg": "(r",
+    "content": "let e = this.options.filter((r) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 44688,
+    "arg": "(c3",
+    "content": "let l = i2.filter((c3) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 46024,
+    "arg": "b2).map(String",
+    "content": "let b2 = /* @__PURE__ */ __name((x2) => typeof x2 == \"number\" || x2 instanceof String || x2 instanceof Number, \"b\"), w2 = t.filter(b2).map(String);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 76413,
+    "arg": "Boolean).length !== 1) throw new Error(\"Exactly one of payloads, localPaths and streams must be provided\"",
+    "content": "].filter(Boolean).length !== 1) throw new Error(\"Exactly one of payloads, localPaths and streams must be provided\");"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 77747,
+    "arg": "(c3",
+    "content": "return cookies.filter((c3) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 81743,
+    "arg": "predicate",
+    "content": "const events = navigationEvents.filter(predicate);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 81752,
+    "arg": "predicate",
+    "content": "const events = navigationEvents.filter(predicate);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 88372,
+    "arg": "Boolean), \"disabledFeatures\"",
+    "content": "].filter(Boolean), \"disabledFeatures\");"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 88420,
+    "arg": "Boolean), \"chromiumSwitches\"",
+    "content": "].filter(Boolean), \"chromiumSwitches\");"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 94903,
+    "arg": "([name]",
+    "content": "const newHeaders = Object.fromEntries(Object.entries(options2.headers || {}).filter(([name]) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 96344,
+    "arg": "Boolean).map((c3",
+    "content": "const cookies = rawCookies.filter(Boolean).map((c3) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 103746,
+    "arg": "(context2",
+    "content": "contextsToRunIn = this.#browsingContextStorage.getTopLevelContexts().filter((context2) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 103967,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const cdpCookiesToDelete = cdpResponse.cookies.filter("
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 103972,
+    "arg": "(cdpCookie",
+    "content": ").filter((cdpCookie) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 104001,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredBiDiCookies = cdpResponse.cookies.filter("
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 108206,
+    "arg": "({ blockedReasons }",
+    "content": "cookies = this.#request.extraInfo.associatedCookies.filter(({ blockedReasons }) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 108793,
+    "arg": "(header",
+    "content": "overrideHeaders.filter((header) => header.name.localeCompare(\"cookie\", void 0, {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 109102,
+    "arg": "(script",
+    "content": "].filter((script) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 109138,
+    "arg": "(script",
+    "content": "].filter((script) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 109179,
+    "arg": "(realm",
+    "content": "return Array.from(this.#realmMap.values()).filter((realm) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 109582,
+    "arg": "(subscription",
+    "content": "this.#subscriptions = this.#subscriptions.filter((subscription) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 109773,
+    "arg": "(id",
+    "content": "const subscribedNavigableIds = new Set(this.#browsingContextStorage.getTopLevelContexts().map((c3) => c3.id).filter((id) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 109863,
+    "arg": "(_contextId",
+    "content": "Array.from(this.#eventToContextsMap.get(eventName).keys()).filter((_contextId) => ("
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 118358,
+    "arg": "(cookie",
+    "content": "const cookiesToReadd = currentCookies.filter((cookie) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 126324,
+    "arg": "(f",
+    "content": "parsedFrames = parsedFrames.filter((f) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 138716,
+    "arg": "(key",
+    "content": "exports.inspectOpts = Object.keys(process.env).filter((key) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 139830,
+    "arg": "(cookie",
+    "content": "const cookiesToDelete = cookies.filter((cookie) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 149630,
+    "arg": "(range",
+    "content": "return results.filter((range) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 150719,
+    "arg": "newDevice)",
+    "content": "if (waitForDevicePromise.filter(newDevice)) {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 151381,
+    "arg": "(node",
+    "content": "const results = nodes.filter((node) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 152903,
+    "arg": "(frame",
+    "content": "}).filter((frame) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 152956,
+    "arg": "(entry",
+    "content": "}).filter((entry) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 154359,
+    "arg": "(frame",
+    "content": "await Promise.all(this.frames().filter((frame) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 156441,
+    "arg": "(cat",
+    "content": "const excludedCategories = categories.filter((cat) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 156446,
+    "arg": "(cat",
+    "content": "const includedCategories = categories.filter((cat) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 157880,
+    "arg": "(target",
+    "content": "return this.#browser.targets().filter((target) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 157885,
+    "arg": "(target",
+    "content": "const pages = await Promise.all(this.targets().filter((target) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 157890,
+    "arg": "(page",
+    "content": "return pages.filter((page) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 158016,
+    "arg": "(target",
+    "content": "const extensionWorkers = targets.filter((target) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 158039,
+    "arg": "(target",
+    "content": "const extensionPages = targets.filter((target) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 158054,
+    "arg": "(page",
+    "content": "return pages.filter((page) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 159891,
+    "arg": "(t",
+    "content": "const hasTargets = this.targets().filter((t) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 160006,
+    "arg": "(target",
+    "content": "return Array.from(this.#targetManager.getAvailableTargets().values()).filter((target) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 167003,
+    "arg": "(context2",
+    "content": "contextsToRunIn = this.#browsingContextStorage.getTopLevelContexts().filter((context2) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 167233,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const cdpCookiesToDelete = cdpResponse.cookies.filter("
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 167238,
+    "arg": "(cdpCookie",
+    "content": ").filter((cdpCookie) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 167267,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredBiDiCookies = cdpResponse.cookies.filter("
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 171561,
+    "arg": "({ blockedReasons }",
+    "content": "cookies = this.#request.extraInfo.associatedCookies.filter(({ blockedReasons }) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 172197,
+    "arg": "(header",
+    "content": "overrideHeaders.filter((header) => header.name.localeCompare(\"cookie\", void 0, {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 173641,
+    "arg": "(script",
+    "content": "].filter((script) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 173677,
+    "arg": "(script",
+    "content": "].filter((script) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 173721,
+    "arg": "(realm",
+    "content": "return Array.from(this.#realmMap.values()).filter((realm) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 174069,
+    "arg": "(subscription",
+    "content": "this.#subscriptions = this.#subscriptions.filter((subscription) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 174260,
+    "arg": "(id",
+    "content": "const subscribedNavigableIds = new Set(this.#browsingContextStorage.getTopLevelContexts().map((c3) => c3.id).filter((id) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 174350,
+    "arg": "(_contextId",
+    "content": "Array.from(this.#eventToContextsMap.get(eventName).keys()).filter((_contextId) => ("
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 179077,
+    "arg": "(id",
+    "content": "}).filter((id) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 181224,
+    "arg": "(cookie",
+    "content": "}).filter((cookie) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 182995,
+    "arg": "(module2",
+    "content": "] : BidiBrowser2.subscribeModules).filter((module2) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 188089,
+    "arg": "(comp",
+    "content": "rangeList = rangeList.filter((comp) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 195615,
+    "arg": "isNotBlank",
+    "content": "const lines = text3.split(/\\\\r?\\\\n/).filter(isNotBlank);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 196488,
+    "arg": "isNotBlank).filter(isNotMeta",
+    "content": "const lines = rawList.split(REGEX_NEWLINE).filter(isNotBlank).filter(isNotMeta);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 214757,
+    "arg": "(details",
+    "content": "const addresses = addrs.filter((details) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 219066,
+    "arg": "(l",
+    "content": "}).filter((l) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 220159,
+    "arg": "(t",
+    "content": "const browsers = types2.filter((t) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 220170,
+    "arg": "(item",
+    "content": "}).filter((item) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 226544,
+    "arg": "Boolean).forEach(function(opt",
+    "content": "[].concat(opts.array || []).filter(Boolean).forEach(function(opt) {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 226553,
+    "arg": "Boolean).pop(",
+    "content": "}).filter(Boolean).pop();"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 226560,
+    "arg": "Boolean).forEach(function(key",
+    "content": "[].concat(opts.boolean || []).filter(Boolean).forEach(function(key) {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 226564,
+    "arg": "Boolean).forEach(function(key",
+    "content": "[].concat(opts.string || []).filter(Boolean).forEach(function(key) {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 226568,
+    "arg": "Boolean).forEach(function(key",
+    "content": "[].concat(opts.number || []).filter(Boolean).forEach(function(key) {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 226572,
+    "arg": "Boolean).forEach(function(key",
+    "content": "[].concat(opts.count || []).filter(Boolean).forEach(function(key) {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 226576,
+    "arg": "Boolean).forEach(function(key",
+    "content": "[].concat(opts.normalize || []).filter(Boolean).forEach(function(key) {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 226599,
+    "arg": "Boolean).forEach(function(key",
+    "content": "[].concat(opts.config).filter(Boolean).forEach(function(key) {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 227905,
+    "arg": "(m",
+    "content": "this.globalMiddleware = this.globalMiddleware.filter((m) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 228072,
+    "arg": "(c3",
+    "content": "].concat(aliases3).filter((c3) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 228165,
+    "arg": "(c4",
+    "content": "const pc = parentCommands.filter((c4) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 228589,
+    "arg": "filterHiddenOptions",
+    "content": "keys = keys.filter(filterHiddenOptions);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 228688,
+    "arg": "filterHiddenOptions).map((key",
+    "content": "const normalizedKeys = groups[groupName].filter(filterHiddenOptions).map((key) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 228747,
+    "arg": "Boolean).join(\" \"",
+    "content": "].filter(Boolean).join(\" \");"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 230306,
+    "arg": "(key",
+    "content": "__classPrivateFieldGet2(this, _YargsInstance_groups, \"f\")[groupName] = (existing || []).concat(opts).filter((key) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 231528,
+    "arg": "(arg",
+    "content": "const extraArgs = args[\"--\"]?.filter((arg) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 231767,
+    "arg": "(line",
+    "content": "}).filter((line) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 241095,
+    "arg": "([, value]",
+    "content": "return Object.fromEntries(Object.entries(obj).filter(([, value]) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 251490,
+    "arg": "(log",
+    "content": "return this.logs.filter((log) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 251495,
+    "arg": "(log",
+    "content": "return this.logs.filter((log) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 251632,
+    "arg": "criteria",
+    "content": "return this.logs.filter(criteria);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 251635,
+    "arg": "(log",
+    "content": "return this.logs.filter((log) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 266570,
+    "arg": "(warning",
+    "content": "const warnings = headers.warning.split(/,/).filter((warning) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 266784,
+    "arg": "(etag",
+    "content": "const etags = headers[\"if-none-match\"].split(/,/).filter((etag) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 276211,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "if (pagination.filter({"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 280736,
+    "arg": "(child",
+    "content": "this.parentNode.childNodes = children2.filter((child) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 290469,
+    "arg": "adapter2.isTag",
+    "content": "return siblings2.slice(elemIndex + 1).filter(adapter2.isTag);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 291531,
+    "arg": "(child",
+    "content": "this.childNodes = this.childNodes.filter((child) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 295000,
+    "arg": "(arg",
+    "content": "chromeArguments.push(...this.defaultArgs(options2).filter((arg) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 295072,
+    "arg": "(feature",
+    "content": "].filter((feature) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 295083,
+    "arg": "(feature",
+    "content": "].filter((feature) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 295115,
+    "arg": "(arg",
+    "content": "].filter((arg) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 295152,
+    "arg": "(s",
+    "content": "return options2.filter((s) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 295156,
+    "arg": "(s",
+    "content": "}).filter((s) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 295208,
+    "arg": "(arg",
+    "content": "firefoxArguments.push(...this.defaultArgs(options2).filter((arg) => {"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 296579,
+    "arg": "Boolean).join(\" \"",
+    "content": "].filter(Boolean).join(\" \"),"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 308108,
+    "arg": "adapter2.isTag",
+    "content": "return siblings2.slice(elemIndex + 1).filter(adapter2.isTag);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 308680,
+    "arg": "isTag2) : sub.length === 0 ? (Array.isArray(root2",
+    "content": "const elemsNoLimit = sub.length === 0 && !Array.isArray(root2) ? getChildren(root2).filter(isTag2) : sub.length === 0 ? (Array.isArray(root2) ? root2 : ["
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 308682,
+    "arg": "isTag2) : queryForSelector || sub.some(isTraversal",
+    "content": "]).filter(isTag2) : queryForSelector || sub.some(isTraversal) ? findElements(root2, ["
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 308738,
+    "arg": "isTag2",
+    "content": "]).filter(isTag2);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 308741,
+    "arg": "query",
+    "content": "return query === boolbase7.trueFunc ? els : els.filter(query);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 308905,
+    "arg": "isTag2), _removeDuplicates",
+    "content": "var children = _matcher((elem) => getChildren(elem).filter(isTag2), _removeDuplicates);"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 308951,
+    "arg": "getFilterFn(match)",
+    "content": "}) : nodes.filter(getFilterFn(match));"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 308956,
+    "arg": "isTag2), selector, this.options) : selector ? nodes.some(getFilterFn(selector)",
+    "content": "return typeof selector === \"string\" ? some(nodes.filter(isTag2), selector, this.options) : selector ? nodes.some(getFilterFn(selector)) : false;"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 309037,
+    "arg": "selector) : this.prevObject",
+    "content": "return this.prevObject ? this.add(selector ? this.prevObject.filter(selector) : this.prevObject) : this;"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 309361,
+    "arg": "selector",
+    "content": "const elems = selector ? this.filter(selector) : this;"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 309549,
+    "arg": "submittableSelector).toArray(",
+    "content": "return \\$elem.filter(submittableSelector).toArray();"
+  },
+  {
+    "file": "src/app/.well-known/workflow/v1/flow/route.js",
+    "lineNum": 309550,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "}).filter("
+  },
+  {
+    "file": "src/app/api/ai/image/route.ts",
+    "lineNum": 181,
+    "arg": "(p",
+    "content": "const availableProviders = providerOrder.filter((p) =>"
+  },
+  {
+    "file": "src/app/api/ai/leads/route.ts",
+    "lineNum": 327,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const validatedLeads = leads.filter("
+  },
+  {
+    "file": "src/app/api/dashboard/progress/route.ts",
+    "lineNum": 90,
+    "arg": "(m: { status?: string; created_at?: string }",
+    "content": "const upcomingMeetings = meetingsResult.data?.filter((m: { status?: string; created_at?: string }) =>"
+  },
+  {
+    "file": "src/app/api/dashboard/progress/route.ts",
+    "lineNum": 118,
+    "arg": "(item: { created_at?: string }",
+    "content": "].filter((item: { created_at?: string }) => {"
+  },
+  {
+    "file": "src/app/api/dashboard/stats/route.ts",
+    "lineNum": 119,
+    "arg": "'journal_entries.status', 'eq', 'posted'",
+    "content": ".filter('journal_entries.status', 'eq', 'posted')"
+  },
+  {
+    "file": "src/app/api/dashboard/stats/route.ts",
+    "lineNum": 120,
+    "arg": "'journal_entries.voided_at', 'is', null",
+    "content": ".filter('journal_entries.voided_at', 'is', null)"
+  },
+  {
+    "file": "src/app/api/email/campaigns/route.ts",
+    "lineNum": 283,
+    "arg": "(c: any",
+    "content": ".filter((c: any) => {"
+  },
+  {
+    "file": "src/app/api/integrations/readiness/route.ts",
+    "lineNum": 51,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const activeFacebook = facebookRows.filter("
+  },
+  {
+    "file": "src/app/api/leads/management/route.ts",
+    "lineNum": 682,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return leads.filter(lead => {"
+  },
+  {
+    "file": "src/app/api/linkedin/posts/route.ts",
+    "lineNum": 90,
+    "arg": "'platforms', 'cs', '{\"linkedin\"}'",
+    "content": ".filter('platforms', 'cs', '{\"linkedin\"}')"
+  },
+  {
+    "file": "src/app/api/outreach/send/route.ts",
+    "lineNum": 319,
+    "arg": "isProviderConfig",
+    "content": ".filter(isProviderConfig)"
+  },
+  {
+    "file": "src/app/api/outreach/send/route.ts",
+    "lineNum": 345,
+    "arg": "(p",
+    "content": "const activeProviders = providerConfigs.filter((p) =>"
+  },
+  {
+    "file": "src/app/api/outreach/send/route.ts",
+    "lineNum": 404,
+    "arg": "(provider",
+    "content": ".filter((provider) => {"
+  },
+  {
+    "file": "src/app/api/outreach/send/route.ts",
+    "lineNum": 410,
+    "arg": "(provider",
+    "content": ".filter((provider) => {"
+  },
+  {
+    "file": "src/app/api/scraper/search/route.ts",
+    "lineNum": 155,
+    "arg": "Boolean).join(', '",
+    "content": "const addressStr = [addr?.address, addr?.locality, addr?.region, addr?.country].filter(Boolean).join(', ');"
+  },
+  {
+    "file": "src/app/api/scraper/search/route.ts",
+    "lineNum": 471,
+    "arg": "Boolean).join(' '",
+    "content": "].filter(Boolean).join(' '),"
+  },
+  {
+    "file": "src/app/api/sms/campaign/[id]/run/route.ts",
+    "lineNum": 110,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "recipients = recipients.filter(r => {"
+  },
+  {
+    "file": "src/app/api/webhooks/calendly/route.ts",
+    "lineNum": 152,
+    "arg": "'metadata->>calendly_event_uri', 'eq', eventUri",
+    "content": ".filter('metadata->>calendly_event_uri', 'eq', eventUri)"
+  },
+  {
+    "file": "src/app/api/webhooks/calendly/route.ts",
+    "lineNum": 217,
+    "arg": "'email', 'eq', email",
+    "content": ".filter('email', 'eq', email)"
+  },
+  {
+    "file": "src/app/api/webhooks/calendly/route.ts",
+    "lineNum": 218,
+    "arg": "'custom_fields->>calendly_contact_uri', 'not.is', null",
+    "content": ".filter('custom_fields->>calendly_contact_uri', 'not.is', null);"
+  },
+  {
+    "file": "src/app/search/page.tsx",
+    "lineNum": 40,
+    "arg": "(page",
+    "content": "? SITE_PAGES.filter((page) =>"
+  },
+  {
+    "file": "src/components/Dashboard.tsx",
+    "lineNum": 413,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const unreadMessageCount = (filteredMessages || []).filter(m =>"
+  },
+  {
+    "file": "src/components/KeyboardShortcuts.tsx",
+    "lineNum": 61,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredShortcuts = shortcuts.filter("
+  },
+  {
+    "file": "src/components/PublicNavigation.tsx",
+    "lineNum": 97,
+    "arg": "(item",
+    "content": "const primaryMobileItems = navItems.filter((item) =>"
+  },
+  {
+    "file": "src/components/common/LeadSelector.tsx",
+    "lineNum": 62,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredLeads = leads.filter(lead =>"
+  },
+  {
+    "file": "src/components/dashboard/AddExpenseModal.tsx",
+    "lineNum": 98,
+    "arg": "(a: any",
+    "content": "const currentAssets = assetRes.accounts.filter((a: any) =>"
+  },
+  {
+    "file": "src/components/dashboard/CRMTab.tsx",
+    "lineNum": 1022,
+    "arg": "Boolean).join(' '",
+    "content": "[contact.givenName, contact.surname].filter(Boolean).join(' ') ||"
+  },
+  {
+    "file": "src/components/dashboard/CRMTab.tsx",
+    "lineNum": 1266,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredEntities = entities.filter(ent => {"
+  },
+  {
+    "file": "src/components/dashboard/CalendarComponent.tsx",
+    "lineNum": 129,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const unhandledPast = fetchedEvents.filter(e => {"
+  },
+  {
+    "file": "src/components/dashboard/CommandPalette.tsx",
+    "lineNum": 127,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredCommands = commands.filter(cmd =>"
+  },
+  {
+    "file": "src/components/dashboard/DealsTab.tsx",
+    "lineNum": 475,
+    "arg": "(deal",
+    "content": ".filter((deal) => {"
+  },
+  {
+    "file": "src/components/dashboard/EnhancedCreateInvoiceModal.tsx",
+    "lineNum": 515,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "{clients.filter(c =>"
+  },
+  {
+    "file": "src/components/dashboard/EnhancedCreateInvoiceModal.tsx",
+    "lineNum": 521,
+    "arg": "COMPLEX / MULTILINE",
+    "content": ".filter(c =>"
+  },
+  {
+    "file": "src/components/dashboard/EnhancedInvoiceModal.tsx",
+    "lineNum": 341,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "{clients.filter(c =>"
+  },
+  {
+    "file": "src/components/dashboard/EnhancedInvoiceModal.tsx",
+    "lineNum": 347,
+    "arg": "COMPLEX / MULTILINE",
+    "content": ".filter(c =>"
+  },
+  {
+    "file": "src/components/dashboard/KPICards.tsx",
+    "lineNum": 69,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const activeDeals = safeDeals.filter("
+  },
+  {
+    "file": "src/components/dashboard/MarketplacePage.tsx",
+    "lineNum": 394,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filtered = ITEMS.filter(item => {"
+  },
+  {
+    "file": "src/components/dashboard/MessagesTab.tsx",
+    "lineNum": 396,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filtered = unifiedMessages.filter(m => {"
+  },
+  {
+    "file": "src/components/dashboard/MessagesTab.tsx",
+    "lineNum": 403,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "internal = filteredMessages.filter(m =>"
+  },
+  {
+    "file": "src/components/dashboard/MessagesTab.tsx",
+    "lineNum": 568,
+    "arg": "Boolean) as any]",
+    "content": "setPendingAttachments(prev => [...prev, ...uploaded.filter(Boolean) as any]);"
+  },
+  {
+    "file": "src/components/dashboard/MessagesTab.tsx",
+    "lineNum": 627,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredClients = clients.filter(c =>"
+  },
+  {
+    "file": "src/components/dashboard/MicrosoftMailView.tsx",
+    "lineNum": 176,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredMessages = messages.filter(msg => {"
+  },
+  {
+    "file": "src/components/dashboard/PastEventPromptModal.tsx",
+    "lineNum": 20,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const actualCalendarEvents = events.filter(e =>"
+  },
+  {
+    "file": "src/components/dashboard/PortfolioShowcase.tsx",
+    "lineNum": 43,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const portfolioProjects = isAdmin ? projects : projects.filter("
+  },
+  {
+    "file": "src/components/dashboard/PortfolioShowcase.tsx",
+    "lineNum": 47,
+    "arg": "(p",
+    "content": "const filteredProjects = portfolioProjects.filter((p) => {"
+  },
+  {
+    "file": "src/components/dashboard/ResourceAllocationView.tsx",
+    "lineNum": 73,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const assignedProjects = activeProjects.filter(p =>"
+  },
+  {
+    "file": "src/components/dashboard/SecurityDashboard.tsx",
+    "lineNum": 208,
+    "arg": "Boolean).map((tab",
+    "content": "{['logs', 'sessions', 'alerts', 'failed_logins', 'errors', user.role === 'admin' && 'blocked'].filter(Boolean).map((tab) => ("
+  },
+  {
+    "file": "src/components/dashboard/accounting/ChartOfAccountsPage.tsx",
+    "lineNum": 132,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredAccounts = accounts.filter(account => {"
+  },
+  {
+    "file": "src/components/dashboard/admin/SuperAdminTenantsTab.tsx",
+    "lineNum": 55,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredTenants = tenants.filter(t =>"
+  },
+  {
+    "file": "src/components/dashboard/admin/SuperAdminUsersTab.tsx",
+    "lineNum": 74,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredUsers = users.filter(u => {"
+  },
+  {
+    "file": "src/components/dashboard/admin/UserLocationTable.tsx",
+    "lineNum": 96,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredUsers = users.filter(user =>"
+  },
+  {
+    "file": "src/components/dashboard/business/AIOutreachModal.tsx",
+    "lineNum": 78,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const emailIntegrations = userIntegrations.filter(i =>"
+  },
+  {
+    "file": "src/components/dashboard/business/AIOutreachModal.tsx",
+    "lineNum": 273,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredLeads = leads.filter(l =>"
+  },
+  {
+    "file": "src/components/dashboard/business/BusinessDashboard.tsx",
+    "lineNum": 304,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const dueTasks = (tasks || []).filter(t => {"
+  },
+  {
+    "file": "src/components/dashboard/business/CalendarPage.tsx",
+    "lineNum": 341,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return filteredEvents.filter(event => {"
+  },
+  {
+    "file": "src/components/dashboard/business/CalendarPage.tsx",
+    "lineNum": 760,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const dayEvents = events.filter(e => {"
+  },
+  {
+    "file": "src/components/dashboard/business/CampaignBuilder.tsx",
+    "lineNum": 999,
+    "arg": "Boolean))",
+    "content": "{Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).length === 0 && ("
+  },
+  {
+    "file": "src/components/dashboard/business/CampaignBuilder.tsx",
+    "lineNum": 1003,
+    "arg": "Boolean))",
+    "content": "{Array.from(new Set(contacts.map(c => c.industry).filter(Boolean))).map(industry => {"
+  },
+  {
+    "file": "src/components/dashboard/business/ComposeEmailModal.tsx",
+    "lineNum": 115,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredClients = clients.filter(c =>"
+  },
+  {
+    "file": "src/components/dashboard/business/EnhancedBillingPage.tsx",
+    "lineNum": 102,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredInvoices = invoices.filter(inv => {"
+  },
+  {
+    "file": "src/components/dashboard/business/ExpenseTrackerTab.tsx",
+    "lineNum": 207,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filtered = expenses.filter(e => {"
+  },
+  {
+    "file": "src/components/dashboard/business/HubspotIntegration.tsx",
+    "lineNum": 50,
+    "arg": "(contact",
+    "content": "return contacts.filter((contact) => {"
+  },
+  {
+    "file": "src/components/dashboard/business/ResourceAllocation.tsx",
+    "lineNum": 355,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const assignedTeam = teamMembers.filter(member =>"
+  },
+  {
+    "file": "src/components/dashboard/business/ServicesCatalog.tsx",
+    "lineNum": 25,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredServices = services.filter(s =>"
+  },
+  {
+    "file": "src/components/dashboard/business/UnifiedInboxTab.tsx",
+    "lineNum": 237,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredMessages = messages.filter(m => {"
+  },
+  {
+    "file": "src/components/dashboard/business/WhatsAppChatHub.tsx",
+    "lineNum": 313,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return threads.filter(t =>"
+  },
+  {
+    "file": "src/components/dashboard/client/ClientMeetingsView.tsx",
+    "lineNum": 65,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const upcomingMeetings = meetings.filter(m =>"
+  },
+  {
+    "file": "src/components/dashboard/crm/CommunicationModal.tsx",
+    "lineNum": 160,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return clients.filter(contact =>"
+  },
+  {
+    "file": "src/components/dashboard/crm/DealPipeline.tsx",
+    "lineNum": 440,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredDeals = deals.filter(d =>"
+  },
+  {
+    "file": "src/components/dashboard/crm/LeadImportModal.tsx",
+    "lineNum": 98,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredLeads = leads.filter(l =>"
+  },
+  {
+    "file": "src/components/dashboard/engine/IngestionPanel.tsx",
+    "lineNum": 123,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filtered = events.filter(e => {"
+  },
+  {
+    "file": "src/components/dashboard/engine/SocialMediaComposer.tsx",
+    "lineNum": 162,
+    "arg": "(post",
+    "content": "return posts.filter((post) => {"
+  },
+  {
+    "file": "src/components/dashboard/facebook/FacebookIntegrationTab.tsx",
+    "lineNum": 498,
+    "arg": "(p: ScheduledSocialPost",
+    "content": "allPosts.filter((p: ScheduledSocialPost) =>"
+  },
+  {
+    "file": "src/components/dashboard/facebook/FacebookIntegrationTab.tsx",
+    "lineNum": 503,
+    "arg": "(p: ScheduledSocialPost",
+    "content": "allPosts.filter((p: ScheduledSocialPost) =>"
+  },
+  {
+    "file": "src/components/dashboard/integrations/IntegrationMarketplaceDashboard.tsx",
+    "lineNum": 151,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return integrations.filter(i => {"
+  },
+  {
+    "file": "src/components/dashboard/marketing/CampaignList.tsx",
+    "lineNum": 73,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filtered = campaigns.filter(c => {"
+  },
+  {
+    "file": "src/components/dashboard/messenger/MessengerInbox.tsx",
+    "lineNum": 260,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredConversations = conversations.filter(c =>"
+  },
+  {
+    "file": "src/components/dashboard/social/SocialCommandCenter.tsx",
+    "lineNum": 528,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredPosts = posts.filter(post => {"
+  },
+  {
+    "file": "src/components/dashboard/tickets/DeepDeskView.tsx",
+    "lineNum": 273,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredTickets = tickets.filter(ticket => {"
+  },
+  {
+    "file": "src/components/dashboard/video/CustomVideoRoom.tsx",
+    "lineNum": 110,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "renderTimestampsRef.current = renderTimestampsRef.current.filter("
+  },
+  {
+    "file": "src/components/dashboard/video/CustomVideoRoom.tsx",
+    "lineNum": 238,
+    "arg": "Boolean).pop(",
+    "content": "const roomName = resolvedRoomUrl.split('/').filter(Boolean).pop();"
+  },
+  {
+    "file": "src/components/dashboard/zoho/CRMContactPickerModal.tsx",
+    "lineNum": 40,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredLeads = leads.filter(l =>"
+  },
+  {
+    "file": "src/components/dashboard/zoho/ZohoMailView.tsx",
+    "lineNum": 183,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return scoped.filter(msg =>"
+  },
+  {
+    "file": "src/components/documents/DocumentHub.tsx",
+    "lineNum": 654,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const filteredFiles = files.filter(f => {"
+  },
+  {
+    "file": "src/components/leads/LeadMapView.tsx",
+    "lineNum": 267,
+    "arg": "(lead",
+    "content": "return pinnable.filter((lead) => {"
+  },
+  {
+    "file": "src/components/leads/OmniLeadFinder.tsx",
+    "lineNum": 338,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return results.filter(lead => {"
+  },
+  {
+    "file": "src/components/leads/OmniLeadFinder.tsx",
+    "lineNum": 513,
+    "arg": "(entry",
+    "content": "const matches = mapHistory.filter((entry) =>"
+  },
+  {
+    "file": "src/components/meeting/VideoLayout.tsx",
+    "lineNum": 91,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const screenShares = participantIds.filter(id => {"
+  },
+  {
+    "file": "src/components/onboarding/OnboardingWizard.tsx",
+    "lineNum": 148,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const validEmails = teamInvites.filter(email =>"
+  },
+  {
+    "file": "src/components/pages/PublicPortfolio.tsx",
+    "lineNum": 24,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const publicProjects = fetchedProjects.filter(p =>"
+  },
+  {
+    "file": "src/components/pages/PublicPortfolio.tsx",
+    "lineNum": 34,
+    "arg": "(p",
+    "content": "const filteredProjects = projects.filter((p) => {"
+  },
+  {
+    "file": "src/contexts/AuthContext.tsx",
+    "lineNum": 35,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const keys = Object.keys(localStorage).filter("
+  },
+  {
+    "file": "src/lib/accounting/pnl.ts",
+    "lineNum": 95,
+    "arg": "(i",
+    "content": "const outstandingInvoices = invoiceRows.filter((i) => {"
+  },
+  {
+    "file": "src/lib/calendly/syncToNative.ts",
+    "lineNum": 126,
+    "arg": "'metadata->>calendly_event_uri', 'eq', input.eventUri",
+    "content": ".filter('metadata->>calendly_event_uri', 'eq', input.eventUri)"
+  },
+  {
+    "file": "src/lib/calendly/syncToNative.ts",
+    "lineNum": 139,
+    "arg": "'metadata->>calendly_event_uri', 'eq', input.eventUri",
+    "content": ".filter('metadata->>calendly_event_uri', 'eq', input.eventUri);"
+  },
+  {
+    "file": "src/lib/calendly/syncToNative.ts",
+    "lineNum": 144,
+    "arg": "'metadata->>calendly_event_uri', 'eq', input.eventUri",
+    "content": ".filter('metadata->>calendly_event_uri', 'eq', input.eventUri);"
+  },
+  {
+    "file": "src/lib/calendly/syncToNative.ts",
+    "lineNum": 175,
+    "arg": "'metadata->>calendly_event_uri', 'eq', input.eventUri",
+    "content": ".filter('metadata->>calendly_event_uri', 'eq', input.eventUri)"
+  },
+  {
+    "file": "src/lib/calendly/syncToNative.ts",
+    "lineNum": 203,
+    "arg": "'metadata->>calendly_event_uri', 'eq', input.eventUri",
+    "content": ".filter('metadata->>calendly_event_uri', 'eq', input.eventUri)"
+  },
+  {
+    "file": "src/lib/crmNextSteps.ts",
+    "lineNum": 40,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const overdue = open.filter("
+  },
+  {
+    "file": "src/lib/crmNextSteps.ts",
+    "lineNum": 54,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const lateStageNoDate = open.filter("
+  },
+  {
+    "file": "src/lib/crmNextSteps.ts",
+    "lineNum": 69,
+    "arg": "(d",
+    "content": "const staleLeadStage = open.filter((d) => {"
+  },
+  {
+    "file": "src/lib/crmNextSteps.ts",
+    "lineNum": 106,
+    "arg": "(l",
+    "content": "const automationLeads = leads.filter((l) => {"
+  },
+  {
+    "file": "src/lib/email/sendEmail.ts",
+    "lineNum": 208,
+    "arg": "(config, index, all",
+    "content": "return resolved.filter((config, index, all) =>"
+  },
+  {
+    "file": "src/lib/mcp/tools/platform-advantage.ts",
+    "lineNum": 95,
+    "arg": "(invoice",
+    "content": "overdue_invoices: invoices.filter((invoice) => {"
+  },
+  {
+    "file": "src/lib/mcp/tools/platform-advantage.ts",
+    "lineNum": 101,
+    "arg": "(quote",
+    "content": "stale_quotes: quotes.filter((quote) => {"
+  },
+  {
+    "file": "src/lib/mcp/tools/solo-owner.ts",
+    "lineNum": 91,
+    "arg": "(invoice",
+    "content": "const overdueInvoices = invoices.filter((invoice) => {"
+  },
+  {
+    "file": "src/lib/scraper/enrichmentPipeline.ts",
+    "lineNum": 63,
+    "arg": "COMPLEX / MULTILINE",
+    "content": ".filter("
+  },
+  {
+    "file": "src/lib/scraper/freeLeadSearch.ts",
+    "lineNum": 269,
+    "arg": "Boolean).join(' '",
+    "content": "address: [el.tags['addr:housenumber'], el.tags['addr:street'], el.tags['addr:city'], el.tags['addr:country']].filter(Boolean).join(' '),"
+  },
+  {
+    "file": "src/lib/server/sendScheduledCampaignServer.ts",
+    "lineNum": 207,
+    "arg": "(provider: any",
+    "content": "const activeProviders = providerConfigs.filter((provider: any) =>"
+  },
+  {
+    "file": "src/lib/social/alphaNexus.ts",
+    "lineNum": 366,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const overdue_tasks = (tasks || []).filter("
+  },
+  {
+    "file": "src/lib/tax/taxRules.ts",
+    "lineNum": 85,
+    "arg": "(r",
+    "content": "return TAX_RULES_CACHE.filter((r) => {"
+  },
+  {
+    "file": "src/lib/utils.ts",
+    "lineNum": 7,
+    "arg": "Boolean).join(' '",
+    "content": "return classes.filter(Boolean).join(' ')"
+  },
+  {
+    "file": "src/services/OmniCrawlerService.ts",
+    "lineNum": 82,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return leads.filter(lead => {"
+  },
+  {
+    "file": "src/services/StrategicThinkerService.ts",
+    "lineNum": 36,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const overdueInvoices = snapshot.invoices.filter(i => {"
+  },
+  {
+    "file": "src/services/aiRouter.ts",
+    "lineNum": 798,
+    "arg": "(msg, idx",
+    "content": "const validHistory = history.filter((msg, idx) => {"
+  },
+  {
+    "file": "src/services/aiRouter.ts",
+    "lineNum": 879,
+    "arg": "(msg, idx",
+    "content": "const validHistory = history.filter((msg, idx) => {"
+  },
+  {
+    "file": "src/services/aiRouter.ts",
+    "lineNum": 926,
+    "arg": "(msg, idx",
+    "content": "const validHistory = history.filter((msg, idx) => {"
+  },
+  {
+    "file": "src/services/aiRouter.ts",
+    "lineNum": 1046,
+    "arg": "(msg, idx",
+    "content": "const validHistory = history.filter((msg, idx) => {"
+  },
+  {
+    "file": "src/services/aiRouter.ts",
+    "lineNum": 1267,
+    "arg": "(msg, idx",
+    "content": "const validHistory = history.filter((msg, idx) => {"
+  },
+  {
+    "file": "src/services/aiRouter.ts",
+    "lineNum": 1451,
+    "arg": "(msg, idx",
+    "content": "const validHistory = history.filter((msg, idx) => {"
+  },
+  {
+    "file": "src/services/analyticsService.ts",
+    "lineNum": 139,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const thisMonthInvoices = invoices.filter("
+  },
+  {
+    "file": "src/services/analyticsService.ts",
+    "lineNum": 142,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const thisMonthDirect = otherRevenue.filter("
+  },
+  {
+    "file": "src/services/analyticsService.ts",
+    "lineNum": 280,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const newThisMonth = tenantUsers?.filter("
+  },
+  {
+    "file": "src/services/analyticsService.ts",
+    "lineNum": 340,
+    "arg": "(p: { due_date: string | null; updated_at: string }",
+    "content": "const onTime = projects.filter((p: { due_date: string | null; updated_at: string }) => {"
+  },
+  {
+    "file": "src/services/apolloService.ts",
+    "lineNum": 36,
+    "arg": "Boolean).join(' ') || fallback.name || '').trim(",
+    "content": "const name = String(person.name || [person.first_name, person.last_name].filter(Boolean).join(' ') || fallback.name || '').trim();"
+  },
+  {
+    "file": "src/services/calendarService.ts",
+    "lineNum": 555,
+    "arg": "(e: any",
+    "content": "const dayEvents = (events || []).filter((e: any) => {"
+  },
+  {
+    "file": "src/services/databaseOptimizationService.ts",
+    "lineNum": 173,
+    "arg": "",
+    "content": "'Use .eq() instead of .filter() for better index usage',"
+  },
+  {
+    "file": "src/services/emailCampaignService.ts",
+    "lineNum": 447,
+    "arg": "Boolean))",
+    "content": "const uniqueContactIds = Array.from(new Set(contactIds.filter(Boolean)));"
+  },
+  {
+    "file": "src/services/freePlacesService.ts",
+    "lineNum": 132,
+    "arg": "Boolean).join(', '",
+    "content": "].filter(Boolean).join(', ');"
+  },
+  {
+    "file": "src/services/freePlacesService.ts",
+    "lineNum": 223,
+    "arg": "Boolean).join(' '",
+    "content": "].filter(Boolean).join(' ');"
+  },
+  {
+    "file": "src/services/hubspotService.ts",
+    "lineNum": 37,
+    "arg": "Boolean).join(' '",
+    "content": "[lead?.firstName, lead?.lastName].filter(Boolean).join(' ') ||"
+  },
+  {
+    "file": "src/services/intelligence/integratedIntelligenceService.ts",
+    "lineNum": 332,
+    "arg": "(row",
+    "content": "const overdue = tasks.filter((row) => {"
+  },
+  {
+    "file": "src/services/intelligence/integratedIntelligenceService.ts",
+    "lineNum": 337,
+    "arg": "(row",
+    "content": "const active = tasks.filter((row) => {"
+  },
+  {
+    "file": "src/services/intelligence/playbookBuilderService.ts",
+    "lineNum": 145,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "return data.filter(record => {"
+  },
+  {
+    "file": "src/services/intelligence/quantumDealIntelligenceService.ts",
+    "lineNum": 411,
+    "arg": "(a: any",
+    "content": "const recent14d = activityList.filter((a: any) => {"
+  },
+  {
+    "file": "src/services/intelligence/semanticResolutionService.ts",
+    "lineNum": 110,
+    "arg": "Boolean))",
+    "content": "emails: Array.from(new Set([recordA.email, recordB.email].filter(Boolean))),"
+  },
+  {
+    "file": "src/services/intelligence/semanticResolutionService.ts",
+    "lineNum": 111,
+    "arg": "Boolean))",
+    "content": "phones: Array.from(new Set([recordA.phone, recordB.phone].filter(Boolean))),"
+  },
+  {
+    "file": "src/services/intelligence/semanticResolutionService.ts",
+    "lineNum": 112,
+    "arg": "Boolean))",
+    "content": "names: Array.from(new Set([recordA.name, recordB.name].filter(Boolean))),"
+  },
+  {
+    "file": "src/services/intelligence/semanticResolutionService.ts",
+    "lineNum": 113,
+    "arg": "Boolean))",
+    "content": "companies: Array.from(new Set([recordA.company, recordB.company].filter(Boolean)))"
+  },
+  {
+    "file": "src/services/intelligence/semanticResolutionService.ts",
+    "lineNum": 160,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const verifiedBorderline = borderline.filter(b => {"
+  },
+  {
+    "file": "src/services/mcp/MCPServer.ts",
+    "lineNum": 643,
+    "arg": "canPublishFacebookPage",
+    "content": "const publishable = identities.filter(canPublishFacebookPage);"
+  },
+  {
+    "file": "src/services/mcp/MCPServer.ts",
+    "lineNum": 1042,
+    "arg": "(l: any",
+    "content": "const leadsWithNoDeal = (leads || []).filter((l: any) => {"
+  },
+  {
+    "file": "src/services/mcp/MCPServer.ts",
+    "lineNum": 1464,
+    "arg": "Boolean).join(', '",
+    "content": "? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')"
+  },
+  {
+    "file": "src/services/mcp/MCPServer.ts",
+    "lineNum": 1800,
+    "arg": "Boolean).join(', '",
+    "content": "? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')"
+  },
+  {
+    "file": "src/services/mcp/MCPServer.ts",
+    "lineNum": 2161,
+    "arg": "Boolean).join('\\n'",
+    "content": "const enrichedNotes = [notes, ...enrichmentLines].filter(Boolean).join('\\n') || null;"
+  },
+  {
+    "file": "src/services/mcp/MCPServer.ts",
+    "lineNum": 2660,
+    "arg": "Boolean).join('\\n'",
+    "content": "].filter(Boolean).join('\\n'),"
+  },
+  {
+    "file": "src/services/mcp/MCPServer.ts",
+    "lineNum": 3161,
+    "arg": "Boolean).join(', '",
+    "content": "? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')"
+  },
+  {
+    "file": "src/services/mcp/MCPServer.ts",
+    "lineNum": 5547,
+    "arg": "isUuidString",
+    "content": "? a.document_file_ids.map((id: unknown) => String(id || '').trim()).filter(isUuidString)"
+  },
+  {
+    "file": "src/services/monitoringService.ts",
+    "lineNum": 210,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const recentErrors = this.errorLogs.filter("
+  },
+  {
+    "file": "src/services/predictiveAnalyticsService.ts",
+    "lineNum": 282,
+    "arg": "(p: any",
+    "content": "const activeInWeek = projects.filter((p: any) => {"
+  },
+  {
+    "file": "src/services/projectStageService.ts",
+    "lineNum": 124,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const missingFields = target.requiredFields.filter("
+  },
+  {
+    "file": "src/services/projectStageService.ts",
+    "lineNum": 225,
+    "arg": "(nextStage",
+    "content": "return stage.nextStages.filter((nextStage) => {"
+  },
+  {
+    "file": "src/services/projectStageService.ts",
+    "lineNum": 304,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const missingItems = completionStage.requiredFields.filter("
+  },
+  {
+    "file": "src/services/taskDependencyService.ts",
+    "lineNum": 288,
+    "arg": "COMPLEX / MULTILINE",
+    "content": "const dependents = Array.from(graph.values()).filter(t =>"
+  },
+  {
+    "file": "src/services/zoho/ZohoMailService.ts",
+    "lineNum": 226,
+    "arg": "(message: any",
+    "content": "const matches = messages.filter((message: any) =>"
+  },
+  {
+    "file": "src/utils/design.ts",
+    "lineNum": 35,
+    "arg": "Boolean).join(' '",
+    "content": "return classes.filter(Boolean).join(' ');"
+  }
+]

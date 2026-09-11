@@ -4,19 +4,20 @@ import {
   requireTenantAccess,
   routeErrorResponse,
 } from '@/lib/apiAuth';
+import { slackResendSchema } from '@/schemas/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const { tenant_id, tenantId: tenantIdInput, notification_id, notificationId } = await request.json();
-    const tenantId = tenantIdInput || tenant_id;
-    const notificationIdValue = notificationId || notification_id;
-
-    if (!tenantId || !notificationIdValue) {
+    const payload = await request.json();
+    const parsed = slackResendSchema.safeParse(payload);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing tenantId or notificationId' },
+        { error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
+    const tenantId = parsed.data.tenantId || parsed.data.tenant_id!;
+    const notificationIdValue = parsed.data.notificationId || parsed.data.notification_id!;
 
     await requireTenantAccess(tenantId);
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (error || !notification) {
       return NextResponse.json(
-        { error: 'Notification not found' },
+        { error: 'Notification not found', code: 'NOT_FOUND' },
         { status: 404 }
       );
     }
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
 
     if (integrationError || !integration) {
       return NextResponse.json(
-        { error: 'Slack integration not found or inactive' },
+        { error: 'Slack integration not found or inactive', code: 'INTEGRATION_NOT_FOUND' },
         { status: 404 }
       );
     }
@@ -63,15 +64,16 @@ export async function POST(request: NextRequest) {
         channel: notification.channel,
         text: notification.message,
         username: 'AlphaClone Bot',
-        icon_url: 'https://alphaclone.tech/logo.png'
+        icon_url: 'https://alphaclonesystems.com/logo.png'
       })
     });
 
     const slackData = await slackResponse.json();
 
     if (!slackData.ok) {
+      console.error('[slack/resend] Slack API error:', slackData.error);
       return NextResponse.json(
-        { error: 'Failed to resend Slack message', details: slackData.error },
+        { error: 'Failed to resend Slack message', code: 'SLACK_API_ERROR' },
         { status: 500 }
       );
     }
@@ -93,6 +95,6 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    return routeErrorResponse(error, 'Internal server error');
+    return routeErrorResponse(error, 'Failed to resend Slack notification');
   }
 }

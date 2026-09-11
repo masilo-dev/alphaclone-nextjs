@@ -3,14 +3,12 @@ import { Button } from '../ui/UIComponents';
 import { Copy, Check, Video, ExternalLink, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { dailyService } from '../../services/dailyService';
-import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
-import { fetchDashboardPreferences, mergeDashboardPreferences } from '@/services/userDashboardPreferencesService';
 
 interface PermanentMeetingLinkProps {
     user: User;
-    onJoinRoom: (roomUrl: string) => void;
+    onJoinRoom: (meetingId: string) => void;
 }
 
 /**
@@ -22,14 +20,16 @@ interface PermanentMeetingLinkProps {
  * - No re-render loops
  * - Single API call on mount
  */
-const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoinRoom }) => {
+const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom }) => {
     const { currentTenant } = useTenant(); // Added useTenant hook
     const [roomData, setRoomData] = useState<{
+        id: string;
         link: string;
         url: string;
         loading: boolean;
         error: string | null;
     }>({
+        id: '',
         link: '',
         url: '',
         loading: true,
@@ -38,31 +38,16 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
 
     const [copied, setCopied] = useState(false);
 
-    // Memoize the room initialization - ONLY runs once per user.id
+    // Reinitialize whenever the active workspace changes.
     const initializeRoom = useCallback(async () => {
         try {
+            if (!currentTenant?.id) throw new Error('Select a workspace before loading its meeting room');
             setRoomData(prev => ({ ...prev, loading: true, error: null }));
 
-            const prefs = await fetchDashboardPreferences(user.id);
-            const cached = prefs.permanentMeetingLink;
-            if (cached?.link && cached?.roomUrl) {
-                setRoomData({
-                    link: cached.link,
-                    url: cached.roomUrl,
-                    loading: false,
-                    error: null,
-                });
-            }
-
             // Call API to create/get permanent room
-            const response = await fetch('/api/daily/create-permanent-room', {
+            const response = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user.id,
-                    userName: user.name,
-                    tenantId: currentTenant?.id, // Added tenantId to the API call
-                })
             });
 
             if (!response.ok) {
@@ -70,32 +55,23 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
                 throw new Error(errorData.error || 'Failed to create permanent room');
             }
 
-            const data = await response.json();
-
-            // Prefer the slug for the link, fallback to ID
-            const linkIdentifier = data.slug ? data.slug : data.id;
-            const shareLink = dailyService.getWrappedMeetingUrl(linkIdentifier);
+            const payload = await response.json();
+            const data = payload.permanent;
+            const shareLink = dailyService.getWrappedMeetingUrl(data.id);
 
             // Single state update with all data
             setRoomData({
+                id: data.id,
                 link: shareLink,
-                url: data.url,
+                url: data.daily_room_url || '',
                 loading: false,
                 error: null
-            });
-
-            await mergeDashboardPreferences(user.id, {
-                permanentMeetingLink: {
-                    roomName: data.name,
-                    roomUrl: data.url,
-                    link: shareLink,
-                    createdAt: new Date().toISOString(),
-                },
             });
 
         } catch (err) {
             console.error('Failed to initialize permanent room:', err);
             setRoomData({
+                id: '',
                 link: '',
                 url: '',
                 loading: false,
@@ -103,7 +79,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
             });
             toast.error('Failed to load permanent meeting room');
         }
-    }, [user.id, user.name]); // Only depends on user.id and user.name
+    }, [currentTenant?.id]);
 
     // Run initialization ONCE on mount
     useEffect(() => {
@@ -125,10 +101,10 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
     }, [roomData.link]);
 
     const handleJoinNow = useCallback(() => {
-        if (roomData.url) {
-            onJoinRoom(roomData.url);
+        if (roomData.id) {
+            onJoinRoom(roomData.id);
         }
-    }, [roomData.url, onJoinRoom]);
+    }, [roomData.id, onJoinRoom]);
 
     // Loading state
     if (roomData.loading) {
@@ -177,7 +153,7 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
                         </span>
                     </h3>
                     <p className="text-sm text-gray-300">
-                        Perfect for Calendly or email signatures. Always available, no token required.
+                        Perfect for booking tools or email signatures. Guests enter the meeting code you share with them.
                     </p>
                 </div>
             </div>
@@ -219,9 +195,9 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ user, onJoi
                 <div className="flex gap-2">
                     <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                     <div className="text-xs text-gray-300 space-y-1">
-                        <p><strong className="text-white">Zero Friction:</strong> No tokens, no login, just click and join</p>
-                        <p><strong className="text-white">Always Ready:</strong> Link never expires - perfect for booking automation</p>
-                        <p><strong className="text-white">Your Domain:</strong> Professional [alphaclone.tech/meet/...] branding</p>
+                        <p><strong className="text-white">Guest Ready:</strong> No account required; guests join with your secure meeting code</p>
+                        <p><strong className="text-white">Always Ready:</strong> The room stays available until an administrator rotates its code</p>
+                        <p><strong className="text-white">Your Domain:</strong> Professional [alphaclonesystems.com/meet/...] branding</p>
                     </div>
                 </div>
             </div>

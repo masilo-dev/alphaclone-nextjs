@@ -1,1681 +1,972 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { FileText, Plus, Eye, Check, X, DollarSign, Trash2, Download, Upload, Search, Edit, PenLine } from 'lucide-react';
-import { quoteService, Quote, QuoteItem } from '../../services/quoteService';
-import { businessInvoiceService } from '../../services/businessInvoiceService';
-import { businessClientService } from '../../services/businessClientService';
-import { dealService } from '../../services/dealService';
-import { leadService } from '../../services/leadService';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus, DollarSign, Trophy, Clock, FileText, Mail } from 'lucide-react';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
+import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
-import { fileUploadService } from '../../services/fileUploadService';
-import { Button, Modal, Input } from '../ui/UIComponents';
-import { CardSkeleton } from '../ui/Skeleton';
-import { EmptyState } from '../ui/EmptyState';
+import { quoteService } from '../../services/quoteService';
+import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';
-import { useCurrency } from '../../hooks/useCurrency';
-import { exportToCSV } from '../../utils/exportUtils';
-import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '../../services/universalServiceCatalog';
-import { Sparkles, ChevronDown, Copy, FilePlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { showActionNextSteps } from '../common/showActionNextSteps';
+import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
+import { CommunicationModal } from './crm/CommunicationModal';
+import { DetailDrawer } from '../ui/DetailDrawer';
+import { QuoteVersionPanel } from '@/components/documents/QuoteVersionPanel';
+import { ModulePageLayout } from '../ui/ModulePageLayout';
+import { Input } from '../ui/UIComponents';
+import { StatusBadge, quoteStatusVariant } from '../ui/StatusBadge';
+import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
+import { EmptyStateFromPreset } from '../ui/EmptyState';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import type { EmailRecipient } from './crm/emailRecipient';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
+import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import {
+  buildQuoteDocumentInput,
+  resolveDocumentThemeId,
+} from '@/lib/documents/documentBuilders';
+import type { DocumentThemeId } from '@/lib/documents/renderDocument';
+import { QuoteDocumentPreview } from '@/components/documents/QuoteDocumentPreview';
 
-interface QuoteTemplate {
-    id: string;
-    name: string;
-    description: string;
-    lineItems: Partial<QuoteItem>[];
-    notes?: string;
-    validForDays?: string;
+type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
+
+interface QuoteRow {
+  id: string;
+  number?: string;
+  client_name: string;
+  client_email?: string;
+  amount: number;
+  status: QuoteStatus;
+  valid_until?: string;
+  created_at: string;
+  tenant_id: string;
 }
 
-interface QuotesTabProps {
-    userId: string;
-    userRole: string;
+function extractClientEmail(raw: Record<string, unknown>): string | undefined {
+  if (raw.client_email) return String(raw.client_email);
+  const meta = (raw.metadata || {}) as Record<string, unknown>;
+  if (meta.client_email) return String(meta.client_email);
+  const notes = String(raw.notes || '');
+  const match = notes.match(/Recipient:\s*([^\s]+@[^\s]+)/i);
+  return match?.[1];
 }
 
-const QuotesTab: React.FC<QuotesTabProps> = ({ userId, userRole }) => {
-    const router = useRouter();
-    const { currentTenant } = useTenant();
-    const { format, currencyCode } = useCurrency();
-    const [quotes, setQuotes] = useState<Quote[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'draft' | 'sent' | 'accepted'>('all');
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showViewModal, setShowViewModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
-    const [selectedQuoteItems, setSelectedQuoteItems] = useState<QuoteItem[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [signatureData, setSignatureData] = useState<string | null>(null);
-    const [showSignModal, setShowSignModal] = useState(false);
-    const [quoteToSign, setQuoteToSign] = useState<Quote | null>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const isDrawing = useRef(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [storageUsage, setStorageUsage] = useState<number>(0);
-    const MAX_STORAGE = 100 * 1024 * 1024; // 100MB
-    const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+function mapQuoteRow(raw: Record<string, unknown>): QuoteRow {
+  const status = String(raw.status || 'draft') as QuoteStatus;
+  return {
+    id: String(raw.id),
+    number: raw.quote_number ? String(raw.quote_number) : undefined,
+    client_name: String(raw.name || raw.client_name || 'Unnamed Client'),
+    client_email: extractClientEmail(raw),
+    amount: Number(raw.total_amount ?? raw.amount ?? 0),
+    status: ['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'].includes(status) ? status : 'draft',
+    valid_until: raw.valid_until ? String(raw.valid_until) : undefined,
+    created_at: String(raw.created_at || new Date().toISOString()),
+    tenant_id: String(raw.tenant_id),
+  };
+}
 
-    // Pre-defined quote templates
-    const quoteTemplates: QuoteTemplate[] = [
-        {
-            id: 'web-dev',
-            name: 'Web Development Package',
-            description: 'Standard website development with design and deployment',
-            lineItems: [
-                { productName: 'Website Design', description: 'Custom responsive design', quantity: 1, unitPrice: 2500 },
-                { productName: 'Frontend Development', description: 'React/Next.js implementation', quantity: 1, unitPrice: 3500 },
-                { productName: 'Backend Development', description: 'API and database setup', quantity: 1, unitPrice: 3000 },
-                { productName: 'Deployment & Setup', description: 'Production deployment and configuration', quantity: 1, unitPrice: 1000 }
-            ],
-            notes: 'Includes 2 rounds of revisions. Maintenance available at $500/month.',
-            validForDays: '30'
-        },
-        {
-            id: 'consulting',
-            name: 'Consulting Services',
-            description: 'Professional consulting and advisory services',
-            lineItems: [
-                { productName: 'Initial Consultation', description: 'Discovery and strategy session', quantity: 1, unitPrice: 500 },
-                { productName: 'Strategy Planning', description: 'Comprehensive business strategy', quantity: 1, unitPrice: 2000 },
-                { productName: 'Implementation Support', description: 'Ongoing guidance (per hour)', quantity: 10, unitPrice: 150 }
-            ],
-            notes: 'Consulting hours can be adjusted based on needs.',
-            validForDays: '14'
-        },
-        {
-            id: 'maintenance',
-            name: 'Annual Maintenance',
-            description: 'Ongoing support and maintenance package',
-            lineItems: [
-                { productName: 'Monthly Maintenance', description: '24/7 support and updates', quantity: 12, unitPrice: 500 },
-                { productName: 'Security Updates', description: 'Regular security patches', quantity: 4, unitPrice: 200 },
-                { productName: 'Performance Optimization', description: 'Quarterly performance tuning', quantity: 4, unitPrice: 300 }
-            ],
-            notes: 'Includes priority support response time under 4 hours.',
-            validForDays: '60'
-        },
-        {
-            id: 'custom',
-            name: 'Custom Quote',
-            description: 'Start from scratch with custom line items',
-            lineItems: [
-                { productName: '', description: '', quantity: 1, unitPrice: 0 }
-            ],
-            validForDays: '30'
-        }
-    ];
+const STATUS_COLORS: Record<QuoteStatus, string> = {
+  draft:    'bg-slate-500/15 text-slate-400 border-slate-500/20',
+  sent:     'bg-blue-500/15 text-blue-400 border-blue-500/20',
+  accepted: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+  rejected: 'bg-red-500/15 text-red-400 border-red-500/20',
+  expired:  'bg-slate-500/15 text-slate-300 border-slate-500/20',
+  converted: 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)] border-[var(--brand-blue-500)]/20',
+};
 
-    // Create quote form state
-    const [quoteForm, setQuoteForm] = useState({
-        name: '',
-        validForDays: '30',
-        notes: '',
-        currency: currencyCode,
-        contactId: '',
-        dealId: ''
+const FILTERS: QuoteStatus[] = ['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'];
+
+const QuoteListRow: React.FC<{ quote: QuoteRow; onDelete: (id: string) => void; onTap: (q: QuoteRow) => void }> = ({ quote, onDelete, onTap }) => {
+  const x = useMotionValue(0);
+  const rOp = useTransform(x, [-80, 0], [1, 0]);
+  const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => { if (info.offset.x < -80) onDelete(quote.id); x.set(0); };
+
+  const clientName = quote.client_name?.trim() || 'Unnamed Client';
+  const amountDisplay = quote.amount && quote.amount > 0 ? `$${quote.amount.toLocaleString()}` : '$0.00 (Draft)';
+
+  return (
+    <div className="relative overflow-hidden">
+      <motion.div style={{ opacity: rOp }} className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center z-0">
+        <Trash2 className="w-5 h-5 text-white" />
+      </motion.div>
+      <motion.div drag="x" dragConstraints={{ left: -100, right: 0 }} dragElastic={0.1} onDragEnd={handleDragEnd} style={{ x }}
+        onClick={() => onTap(quote)} className="relative z-10 bg-slate-950 flex items-center gap-3 px-4 py-3 cursor-pointer">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-[13px] text-slate-500 opacity-55">#{quote.number || quote.id.slice(0,6)}</span>
+            <span className="text-[15px] font-bold text-white truncate">{clientName}</span>
+          </div>
+          {quote.valid_until && <span className="text-[13px] text-slate-500 opacity-55">Valid until {new Date(quote.valid_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+        </div>
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <span className="text-[15px] font-bold text-white">{amountDisplay}</span>
+          <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const QuoteDetail: React.FC<{
+  quote: QuoteRow;
+  onBack: () => void;
+  onSend: (q: QuoteRow) => void;
+  onConvert: (quote: QuoteRow) => void;
+  onEdit: (quote: QuoteRow) => void;
+  onDelete: (id: string) => void;
+  onComposeEmail?: (recipient: EmailRecipient, subject: string) => void;
+  inDrawer?: boolean;
+}> = ({ quote, onBack, onSend, onConvert, onEdit, onDelete, onComposeEmail, inDrawer }) => {
+  const clientName = quote.client_name?.trim() || 'Unnamed Client';
+  const amountDisplay = quote.amount && quote.amount > 0 ? `$${quote.amount.toLocaleString()}` : '$0.00 (Draft)';
+
+  const actions = (
+    <div className={`grid grid-cols-2 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 native-bottom-bar pb-safe grid-cols-4 divide-x divide-white/5'}`}>
+      <button onClick={() => onEdit(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+        <Edit3 className="w-4 h-4 text-violet-400" />
+        <span className="text-[11px] font-bold">Edit</span>
+      </button>
+      <button onClick={() => onSend(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+        <Send className="w-4 h-4 text-sky-400" />
+        <span className="text-[11px] font-bold">Send</span>
+      </button>
+      <button onClick={() => onConvert(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+        <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
+        <span className="text-[11px] font-bold">Convert</span>
+      </button>
+      <button onClick={() => onDelete(quote.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-red-500/10 text-red-400">
+        <Trash2 className="w-4 h-4 text-red-400" />
+        <span className="text-[11px] font-bold">Delete</span>
+      </button>
+    </div>
+  );
+
+  return (
+    <div className={inDrawer ? 'space-y-4 pb-2' : 'relative flex flex-col min-h-0 ac-scroll-full overflow-hidden'}>
+      {!inDrawer && (
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--ws-border)]">
+        <button onClick={onBack} className="w-8 h-8 rounded-full bg-[var(--ws-surface-tertiary)] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[var(--ws-text-secondary)]" /></button>
+        <span className="text-[15px] font-semibold text-[var(--ws-text-primary)]">Quotation</span>
+      </div>
+      )}
+      <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-4 pb-28 space-y-4'}>
+        <RecordHeader
+          moduleId="quotations"
+          title={`Quote #${quote.number || quote.id.slice(0, 8)}`}
+          subtitle={clientName}
+          status={<StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>}
+          meta={
+            <>
+              <span className="tabular-nums font-semibold text-[var(--ws-text-primary)]">{amountDisplay}</span>
+              {quote.valid_until ? (
+                <span>Valid until {new Date(quote.valid_until).toLocaleDateString('en-GB')}</span>
+              ) : null}
+            </>
+          }
+          actions={
+            <>
+              {onComposeEmail && quote.client_email ? (
+                <button
+                  type="button"
+                  onClick={() => onComposeEmail(
+                    { name: clientName, email: quote.client_email! },
+                    `Quote ${quote.number || quote.id.slice(0, 8)} — ${clientName}`
+                  )}
+                  className="inline-flex items-center gap-1.5 min-h-8 px-2.5 rounded-[8px] text-xs font-semibold text-[var(--brand-blue-500)] border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]"
+                >
+                  <Mail className="w-3.5 h-3.5" /> Compose
+                </button>
+              ) : null}
+              <AskBonnieButton
+                compact
+                mode="draft"
+                contexts={[
+                  { type: 'Quotation', id: quote.id, label: `Quote #${quote.number || quote.id.slice(0, 8)}` },
+                  { type: 'Customer', label: clientName },
+                ]}
+              />
+            </>
+          }
+        />
+        <div className="ac-workspace-panel p-5 text-center space-y-2">
+          <div className="text-[13px] text-[var(--ws-text-muted)]">Quote value</div>
+          <div className="text-[28px] font-bold text-[var(--ws-text-primary)] tabular-nums">{amountDisplay}</div>
+          <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
+        </div>
+        <QuoteDocumentPreview quoteId={quote.id} />
+        {quote.status === 'accepted' && (
+          <button onClick={() => onConvert(quote)} className="w-full min-h-[52px] bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-semibold rounded-[14px] text-[13px] transition-colors flex items-center justify-center gap-2">
+            <ArrowRight className="w-5 h-5" /> Convert to invoice
+          </button>
+        )}
+      </div>
+      {actions}
+    </div>
+  );
+};
+
+const CreateQuoteModal: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onCreated: () => void;
+  tenantId: string;
+}> = ({ open, onClose, onCreated, tenantId }) => {
+  const { currentTenant } = useTenant();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [amount, setAmount] = useState('');
+  const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
+  const [saving, setSaving] = useState(false);
+
+  const previewInput = useMemo(() => {
+    if (!currentTenant || !name.trim()) return null;
+    return buildQuoteDocumentInput(
+      {
+        quote_number: 'DRAFT',
+        name: name.trim(),
+        created_at: new Date().toISOString(),
+        total_amount: parseFloat(amount) || 0,
+        status: 'draft',
+        metadata: { document_theme: documentTheme, client_email: email || undefined },
+      },
+      amount
+        ? [{
+            product_name: name.trim(),
+            description: 'Professional services',
+            quantity: 1,
+            unit_price: parseFloat(amount) || 0,
+            line_total: parseFloat(amount) || 0,
+          }]
+        : [],
+      currentTenant
+    );
+  }, [amount, currentTenant, documentTheme, email, name]);
+
+  if (!open) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error('Client or quote name is required');
+      return;
+    }
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/quotes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim() || undefined,
+          amount: parseFloat(amount) || 0,
+          documentTheme,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to create quote');
+
+      toast.success('Quote created');
+      setName('');
+      setEmail('');
+      setAmount('');
+      setDocumentTheme('executive');
+      onCreated();
+      onClose();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create quote';
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <DetailDrawer open={open} onOpenChange={(o) => !o && onClose()} title="New Quote">
+      <form onSubmit={handleSubmit} className="space-y-3 pb-6">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Client or project name"
+          validate={(v) => !v.trim() ? 'Client or quote name is required' : undefined}
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Recipient email (for sending)"
+          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
+        />
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="Amount (USD)"
+          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
+        />
+        <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+        <DocumentQualityPanel
+          input={{
+            type: 'quote',
+            hasClientName: Boolean(name.trim()),
+            hasPricing: Number(amount) > 0,
+            hasTerms: true,
+            clientEmail: email,
+            hasLogo: Boolean(currentTenant && ((currentTenant as { logo_url?: string }).logo_url)),
+          }}
+        />
+        {previewInput ? <DocumentPreview input={previewInput} /> : null}
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full min-h-11 rounded-xl bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-bold disabled:opacity-50"
+        >
+          {saving ? 'Creating...' : 'Create Quote'}
+        </button>
+      </form>
+    </DetailDrawer>
+  );
+};
+
+type EditableQuoteItem = {
+  id?: string;
+  productName: string;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  discountPercent: string;
+  taxPercent: string;
+};
+
+const QuoteEditModal: React.FC<{
+  open: boolean;
+  quote: QuoteRow | null;
+  onClose: () => void;
+  onSaved: () => void;
+  tenantId: string;
+  userId: string;
+}> = ({ open, quote, onClose, onSaved, tenantId, userId }) => {
+  const { currentTenant } = useTenant();
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<QuoteStatus>('draft');
+  const [name, setName] = useState('');
+  const [validUntil, setValidUntil] = useState('');
+  const [notes, setNotes] = useState('');
+  const [terms, setTerms] = useState('');
+  const [currency, setCurrency] = useState('USD');
+  const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
+  const [items, setItems] = useState<EditableQuoteItem[]>([]);
+  const [quoteNumber, setQuoteNumber] = useState('');
+  const [createdAt, setCreatedAt] = useState('');
+
+  useEffect(() => {
+    if (!open || !quote) return;
+
+    let cancelled = false;
+    setLoading(true);
+
+    (async () => {
+      const [quoteResult, quoteItemsResult] = await Promise.all([
+        quoteService.getQuoteById(quote.id),
+        quoteService.getQuoteItems(quote.id),
+      ]);
+
+      if (cancelled) return;
+
+      if (quoteResult.error || !quoteResult.quote) {
+        toast.error(quoteResult.error || 'Failed to load quote');
+        setLoading(false);
+        return;
+      }
+
+      const fullQuote = quoteResult.quote;
+      setStatus((fullQuote.status as QuoteStatus) || 'draft');
+      setName(fullQuote.name || '');
+      setValidUntil(fullQuote.validUntil ? String(fullQuote.validUntil).slice(0, 10) : '');
+      setNotes(fullQuote.notes || '');
+      setTerms(fullQuote.termsAndConditions || '');
+      setCurrency(fullQuote.currency || 'USD');
+      setDocumentTheme(resolveDocumentThemeId(fullQuote.metadata));
+      setQuoteNumber(fullQuote.quoteNumber || quote.number || '');
+      setCreatedAt(fullQuote.createdAt || quote.created_at);
+
+      const loadedItems = (quoteItemsResult.items || []).map((item) => ({
+        id: item.id,
+        productName: item.productName || '',
+        description: item.description || '',
+        quantity: String(item.quantity ?? 1),
+        unitPrice: String(item.unitPrice ?? 0),
+        discountPercent: String(item.discountPercent ?? 0),
+        taxPercent: String(item.taxPercent ?? 0),
+      }));
+      setItems(loadedItems.length > 0 ? loadedItems : [{
+        productName: fullQuote.name || 'Service',
+        description: '',
+        quantity: '1',
+        unitPrice: String(fullQuote.totalAmount || 0),
+        discountPercent: '0',
+        taxPercent: '0',
+      }]);
+      setLoading(false);
+    })().catch((err) => {
+      if (!cancelled) {
+        toast.error(err instanceof Error ? err.message : 'Failed to load quote');
+        setLoading(false);
+      }
     });
 
-    const [editForm, setEditForm] = useState({
-        id: '',
-        name: '',
-        status: '',
-        notes: '',
-        contactId: '',
-        dealId: ''
-    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, quote?.id]);
 
-    const [availableContacts, setAvailableContacts] = useState<any[]>([]);
-    const [availableDeals, setAvailableDeals] = useState<any[]>([]);
+  const total = items.reduce((sum, item) => {
+    const quantity = Number(item.quantity || 0);
+    const unitPrice = Number(item.unitPrice || 0);
+    const discountPercent = Number(item.discountPercent || 0);
+    const taxPercent = Number(item.taxPercent || 0);
+    const lineBase = quantity * unitPrice;
+    const lineNet = lineBase * (1 - discountPercent / 100);
+    return sum + (lineNet * (1 + taxPercent / 100));
+  }, 0);
 
-    const [lineItems, setLineItems] = useState<Partial<QuoteItem>[]>([
-        { productName: '', description: '', quantity: 1, unitPrice: 0 }
-    ]);
-
-    const [showServiceDropdown, setShowServiceDropdown] = useState<{ index: number; open: boolean }>({ index: -1, open: false });
-    const [showContactDropdown, setShowContactDropdown] = useState(false);
-    const [contactSearch, setContactSearch] = useState('');
-    const serviceDropdownRef = useRef<HTMLDivElement>(null);
-    const contactDropdownRef = useRef<HTMLDivElement>(null);
-
-    const handleServiceSelect = (index: number, service: ServiceItem) => {
-        const newItems = [...lineItems];
-        newItems[index] = {
-            ...newItems[index],
-            productName: service.name,
-            unitPrice: service.defaultPrice,
-            description: service.description || service.name
+  const previewInput = useMemo(() => {
+    if (!currentTenant || !quote) return null;
+    return buildQuoteDocumentInput(
+      {
+        quote_number: quoteNumber || quote.number,
+        name,
+        created_at: createdAt || quote.created_at,
+        valid_until: validUntil || undefined,
+        notes,
+        status,
+        total_amount: total,
+        metadata: { document_theme: documentTheme },
+      },
+      items.map((item) => {
+        const quantity = Number(item.quantity || 0);
+        const unitPrice = Number(item.unitPrice || 0);
+        const discountPercent = Number(item.discountPercent || 0);
+        const taxPercent = Number(item.taxPercent || 0);
+        const lineBase = quantity * unitPrice;
+        const lineNet = lineBase * (1 - discountPercent / 100);
+        const lineTotal = lineNet * (1 + taxPercent / 100);
+        return {
+          product_name: item.productName,
+          description: item.description,
+          quantity,
+          unit_price: unitPrice,
+          line_total: lineTotal,
         };
-        setLineItems(newItems);
-        setShowServiceDropdown({ index: -1, open: false });
-    };
-
-    const handleTemplateSelect = (templateId: string) => {
-        const template = quoteTemplates.find(t => t.id === templateId);
-        if (template) {
-            setSelectedTemplate(templateId);
-            setLineItems(template.lineItems);
-            if (template.notes) {
-                setQuoteForm(prev => ({ ...prev, notes: template.notes || '' }));
-            }
-            if (template.validForDays) {
-                setQuoteForm(prev => ({ ...prev, validForDays: template.validForDays || '30' }));
-            }
-            if (template.id !== 'custom') {
-                setQuoteForm(prev => ({ ...prev, name: template.name }));
-            }
-        }
-    };
-
-    const handleOpenCreateModal = () => {
-        setSelectedTemplate('custom');
-        setQuoteForm({
-            name: '',
-            validForDays: '30',
-            notes: '',
-            currency: currencyCode,
-            contactId: '',
-            dealId: ''
-        });
-        setLineItems([{ productName: '', description: '', quantity: 1, unitPrice: 0 }]);
-        setShowCreateModal(true);
-    };
-
-    useEffect(() => {
-        loadQuotes();
-        if (userRole === 'admin' || userRole === 'tenant_admin') {
-            loadAvailableResources();
-        }
-    }, [filter, userId, userRole]);
-
-    const loadAvailableResources = async () => {
-        try {
-            const [dealsRes, leadsRes, clientsRes] = await Promise.all([
-                dealService.getDeals(),
-                leadService.getLeads(),
-                currentTenant ? businessClientService.getClients(currentTenant.id) : Promise.resolve({ clients: [], count: 0, error: null })
-            ]);
-
-            if (!dealsRes.error) setAvailableDeals(dealsRes.deals);
-
-            // Combine leads and clients for contacts
-            const clients = clientsRes.clients || [];
-            const leads = leadsRes.leads || [];
-
-            const combinedContacts = [
-                ...clients.map((c: any) => ({ id: c.id, name: c.name, type: 'client', email: c.email })),
-                ...leads.map((l: any) => ({ id: l.id, name: l.businessName || l.name, type: 'lead', email: l.email }))
-            ];
-
-            setAvailableContacts(combinedContacts);
-        } catch (err) {
-            console.error('Failed to load resources for linking', err);
-        }
-    };
-
-    const loadQuotes = async () => {
-        setLoading(true);
-        try {
-            const filters: any = {};
-            if (userRole === 'client') {
-                filters.contactId = userId;
-            }
-            if (filter !== 'all') {
-                filters.status = filter;
-            }
-
-            const { quotes: loadedQuotes, error } = await quoteService.getQuotes(filters);
-
-            if (error) {
-                toast.error(`Error loading quotes: ${error}`);
-                setQuotes([]);
-            } else {
-                setQuotes(loadedQuotes);
-            }
-
-            // Load storage usage
-            const usage = await fileUploadService.getUserStorageUsage(userId);
-            setStorageUsage(usage);
-        } catch (err) {
-            toast.error('Failed to load quotes');
-            setQuotes([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'draft':
-                return 'bg-slate-500/10 text-slate-400';
-            case 'sent':
-                return 'bg-blue-500/10 text-blue-400';
-            case 'viewed':
-                return 'bg-purple-500/10 text-purple-400';
-            case 'accepted':
-                return 'bg-green-500/10 text-green-400';
-            case 'rejected':
-                return 'bg-red-500/10 text-red-400';
-            case 'expired':
-                return 'bg-orange-500/10 text-orange-400';
-            default:
-                return 'bg-slate-500/10 text-slate-400';
-        }
-    };
-
-    const formatCurrency = (value: number, currency = currencyCode) => {
-        return format(value, { currencyOverride: currency });
-    };
-
-    const handleCreateQuote = async () => {
-        if (!quoteForm.name.trim()) {
-            toast.error('Quote name is required');
-            return;
-        }
-
-        // Validate line items
-        const validItems = lineItems.filter((item: Partial<QuoteItem>) => item.productName?.trim());
-        if (validItems.length === 0) {
-            toast.error('At least one item with a name is required');
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        try {
-            const { quote, error } = await quoteService.createQuote(userId, {
-                name: quoteForm.name,
-                validForDays: parseInt(quoteForm.validForDays) || 30,
-                notes: quoteForm.notes || undefined,
-                currency: quoteForm.currency,
-                contactId: quoteForm.contactId || undefined,
-                dealId: quoteForm.dealId || undefined
-            });
-
-            if (error) {
-                toast.error(`Failed to create quote header: ${error}`);
-                setIsSubmitting(false); // Reset loading state
-                return;
-            }
-
-            if (quote) {
-                // Add line items
-                for (const item of validItems) {
-                    const { error: itemError } = await quoteService.addQuoteItem(quote.id, {
-                        productName: item.productName!,
-                        description: item.description,
-                        quantity: item.quantity || 1,
-                        unitPrice: item.unitPrice || 0
-                    });
-
-                    if (itemError) throw new Error(`Failed to add item ${item.productName}: ${itemError}`);
-                }
-
-                toast.success('Quote created with line items successfully!');
-
-                // Auto-save to Document Hub
-                try {
-                    const { generateQuotePDF } = await import('../../utils/pdfGenerator');
-                    if (currentTenant) {
-                        // Cast validItems to QuoteItem[] since they don't have IDs yet but PDF gen doesn't strictly need IDs for rendering
-                        const doc = generateQuotePDF(quote as any, validItems as any[], currentTenant);
-                        const pdfBlob = doc.output('blob');
-                        const pdfFile = new File([pdfBlob], `Quote_${quote.quoteNumber || quote.id}.pdf`, { type: 'application/pdf' });
-                        await fileUploadService.uploadFile(pdfFile, 'quote', quote.id);
-                    }
-                } catch (pdfErr) {
-                    console.error('Failed to auto-save quote PDF to Document Hub:', pdfErr);
-                }
-
-                setShowCreateModal(false);
-                // Reset form
-                setQuoteForm({
-                    name: '',
-                    validForDays: '30',
-                    notes: '',
-                    currency: currencyCode,
-                    contactId: '',
-                    dealId: ''
-                });
-                setLineItems([{ productName: '', description: '', quantity: 1, unitPrice: 0 }]);
-                loadQuotes();
-            }
-        } catch (err: any) {
-            console.error(err);
-            toast.error(err.message || 'Failed to create quote');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const addLineItem = () => {
-        setLineItems([...lineItems, { productName: '', description: '', quantity: 1, unitPrice: 0 }]);
-    };
-
-    const removeLineItem = (index: number) => {
-        if (lineItems.length > 1) {
-            setLineItems(lineItems.filter((_: any, i: number) => i !== index));
-        }
-    };
-
-    const updateLineItem = (index: number, field: keyof QuoteItem, value: any) => {
-        const newItems = [...lineItems];
-        newItems[index] = { ...newItems[index], [field]: value };
-        setLineItems(newItems);
-    };
-
-    const calculateSubtotal = () => {
-        return Math.round(lineItems.reduce((sum: number, item: Partial<QuoteItem>) => sum + ((item.quantity || 0) * (item.unitPrice || 0)), 0) * 100) / 100;
-    };
-
-    const handleViewQuote = async (quoteId: string) => {
-        try {
-            const { quote, error } = await quoteService.getQuoteById(quoteId);
-            if (error) {
-                toast.error(`Failed to load quote: ${error}`);
-            } else if (quote) {
-                setSelectedQuote(quote);
-                setSignatureData(quote.signatureUrl || null);
-
-                // Load items
-                const { items, error: itemsError } = await quoteService.getQuoteItems(quoteId);
-                setSelectedQuoteItems(items || []);
-
-                setShowViewModal(true);
-            }
-        } catch (err) {
-            toast.error('Failed to load quote details');
-        }
-    };
-
-    const handleDeleteQuote = async (quoteId: string) => {
-        if (!window.confirm('Are you sure you want to delete this quote? This will also reclaim any associated file storage space.')) {
-            return;
-        }
-
-        try {
-            const { success, error } = await quoteService.deleteQuote(quoteId);
-            if (error) {
-                toast.error(`Failed to delete quote: ${error}`);
-            } else {
-                toast.success('Quote and associated documents deleted successfully');
-                loadQuotes();
-            }
-        } catch (err) {
-            toast.error('Failed to delete quote');
-        }
-    };
-
-    const handleDownloadPDF = (quote: Quote) => {
-        if (quote.pdfUrl) {
-            window.open(quote.pdfUrl, '_blank');
-        } else {
-            toast.error('No PDF version available for this quote yet.');
-        }
-    };
-
-    const handleConvertToInvoice = async (quote: Quote) => {
-        if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return; // Simple check to ensure we are client side or env is loaded
-
-        if (!window.confirm('Generate a draft invoice from this quote?')) return;
-
-        setIsSubmitting(true);
-        try {
-            // 1. Get items
-            const { items, error: itemsError } = await quoteService.getQuoteItems(quote.id);
-            if (itemsError) throw new Error(itemsError);
-
-            // 2. Map to Invoice Line Items
-            const lineItems = (items || []).map(item => ({
-                description: item.productName + (item.description ? ` - ${item.description}` : ''),
-                quantity: item.quantity,
-                rate: item.unitPrice,
-                amount: item.lineTotal
-            }));
-
-            // 3. Create Invoice
-            const { invoice, error: invError } = await businessInvoiceService.createInvoice(currentTenant?.id || '', {
-                clientId: quote.contactId,
-                projectId: quote.dealId, // Assuming deal maps to project roughly, or leave null. 
-                status: 'draft',
-                issueDate: new Date().toISOString().split('T')[0],
-                // dueDate defaults to +14 days in service
-                subtotal: quote.subtotal,
-                total: quote.totalAmount,
-                taxRate: quote.taxPercent,
-                tax: quote.taxAmount,
-                discountAmount: quote.discountAmount,
-                lineItems: lineItems,
-                notes: `Converted from Quote #${quote.quoteNumber}`,
-                senderName: currentTenant?.legal_name || currentTenant?.name
-            });
-
-            if (invError) throw new Error(invError);
-
-            // 4. Update Quote Status
-            await quoteService.updateQuote(quote.id, { status: 'converted' as any }); // Cast to 'any' if 'converted' is not in QuoteStatus type yet
-
-            toast.success('Quote converted to Invoice successfully!');
-            showInvoiceCreatedWithSendPrompt((path) => router.push(path));
-            setShowViewModal(false);
-            loadQuotes();
-        } catch (err: any) {
-            console.error(err);
-            toast.error(err.message || 'Failed to convert quote');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleEditOpen = async (quote: Quote) => {
-        setEditForm({
-            id: quote.id,
-            name: quote.name,
-            status: quote.status,
-            notes: quote.notes || '',
-            contactId: quote.contactId || '',
-            dealId: quote.dealId || ''
-        });
-        
-        // Find contact name to pre-fill search input
-        if (quote.contactId) {
-            const contact = availableContacts.find(c => c.id === quote.contactId);
-            if (contact) {
-                setContactSearch(contact.businessName || contact.name || '');
-            }
-        } else {
-            setContactSearch('');
-        }
-
-        // Fetch items for editing
-        try {
-            const { items, error } = await quoteService.getQuoteItems(quote.id);
-            if (error) {
-                toast.error('Failed to load quote items');
-                setLineItems([]);
-            } else {
-                // Map to compatible format for editor
-                setLineItems(items?.map(i => ({
-                    id: i.id, // Keep ID for updates
-                    productName: i.productName,
-                    description: i.description,
-                    quantity: i.quantity,
-                    unitPrice: i.unitPrice
-                })) || []);
-            }
-        } catch (err) {
-            console.error(err);
-            setLineItems([]);
-        }
-
-        setShowEditModal(true);
-    };
-
-    const handleUpdateQuote = async () => {
-        if (!editForm.name.trim()) return;
-        setIsSubmitting(true);
-        try {
-            // 1. Update Quote Header
-            const { quote, error } = await quoteService.updateQuote(editForm.id, {
-                name: editForm.name,
-                notes: editForm.notes,
-                contactId: editForm.contactId || undefined,
-                dealId: editForm.dealId || undefined,
-                status: editForm.status as any
-            });
-
-            if (error) throw new Error(error);
-
-            // 2. Sync Line Items
-            // Fetch current items from DB to compare
-            const { items: currentDbItems, error: fetchError } = await quoteService.getQuoteItems(editForm.id);
-            if (fetchError) throw new Error(`Failed to fetch current items: ${fetchError}`);
-
-            const currentDbIds = new Set(currentDbItems?.map(i => i.id) || []);
-            const formItemIds = new Set(lineItems.filter((i: any) => i.id).map((i: any) => i.id));
-
-            // Identify items to delete (in DB but not in form)
-            const itemsToDelete = currentDbItems?.filter(i => !formItemIds.has(i.id)) || [];
-
-            // Identify items to add (in form but no ID)
-            const itemsToAdd = lineItems.filter((i: any) => !i.id && i.productName);
-
-            // Identify items to update (in form and has ID)
-            const itemsToUpdate = lineItems.filter((i: any) => i.id && i.productName);
-
-            const promises = [];
-
-            // Execute Deletes
-            for (const item of itemsToDelete) {
-                promises.push(quoteService.deleteQuoteItem(item.id));
-            }
-
-            // Execute Adds
-            for (const item of itemsToAdd) {
-                promises.push(quoteService.addQuoteItem(editForm.id, {
-                    productName: item.productName!,
-                    description: item.description,
-                    quantity: item.quantity || 1,
-                    unitPrice: item.unitPrice || 0
-                }));
-            }
-
-            // Execute Updates
-            for (const item of itemsToUpdate) {
-                promises.push(quoteService.updateQuoteItem(item.id!, {
-                    productName: item.productName,
-                    description: item.description,
-                    quantity: item.quantity,
-                    unitPrice: item.unitPrice,
-                    itemOrder: lineItems.indexOf(item) // Preserve order if needed
-                }));
-            }
-
-            await Promise.all(promises);
-
-            toast.success('Quote updated successfully');
-            setShowEditModal(false);
-            loadQuotes();
-        } catch (err: any) {
-            console.error(err);
-            toast.error(err.message || 'Failed to update quote');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleShareQuote = async (quote: Quote) => {
-        // Build a shareable link using the quote ID — no extra token needed
-        // The public quote page at /quotes/[id] handles access
-        const shareUrl = `${window.location.origin}/quotes/${quote.id}`;
-        try {
-            await navigator.clipboard.writeText(shareUrl);
-            toast.success('Quote link copied to clipboard!');
-        } catch {
-            // Fallback for browsers that block clipboard
-            prompt('Copy this link:', shareUrl);
-        }
-    };
-
-    const handleQuickStatusUpdate = async (quote: Quote, newStatus: string) => {
-        try {
-            if (newStatus === 'accepted') {
-                setQuoteToSign(quote);
-                setShowSignModal(true);
-                return;
-            }
-
-            const updates: any = { status: newStatus as any };
-            if (newStatus === 'sent' && !quote.sentAt) updates.sentAt = new Date().toISOString();
-            if (newStatus === 'rejected') updates.rejectedAt = new Date().toISOString();
-
-            const { error } = await quoteService.updateQuote(quote.id, updates);
-            if (error) throw new Error(error);
-            toast.success(`Quote marked as "${newStatus}"`);
-            loadQuotes();
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to update status');
-        }
-    };
-
-    const handleConfirmAndSign = async () => {
-        if (!quoteToSign) return;
-        if (!signatureData) {
-            toast.error('Please provide a signature to accept the quote.');
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            const updates: any = {
-                status: 'accepted',
-                acceptedAt: new Date().toISOString(),
-                signatureUrl: signatureData
-            };
-
-            const { error } = await quoteService.updateQuote(quoteToSign.id, updates);
-            if (error) throw new Error(error);
-
-            toast.success('Quote accepted and signed successfully!');
-            setShowSignModal(false);
-            setSignatureData(null);
-            setQuoteToSign(null);
-            loadQuotes();
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to sign quote');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleSaveSignature = async () => {
-        if (!selectedQuote || !signatureData) return;
-        setIsSubmitting(true);
-        try {
-            const updates: any = { signatureUrl: signatureData };
-            if (selectedQuote.status !== 'accepted') {
-                updates.status = 'accepted';
-                updates.acceptedAt = new Date().toISOString();
-            }
-            const { error } = await quoteService.updateQuote(selectedQuote.id, updates);
-            if (error) throw new Error(error);
-            toast.success('Signature saved and quote accepted!');
-            setShowViewModal(false);
-            loadQuotes();
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to save signature');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleDownloadActualPDF = async (quote: Quote) => {
-        try {
-            toast.loading('Generating PDF...');
-
-            // 1. Fetch Items
-            const { items, error } = await quoteService.getQuoteItems(quote.id);
-            if (error) throw new Error(error);
-
-            // 2. Generate PDF
-            const { generateQuotePDF } = await import('../../utils/pdfGenerator');
-            if (currentTenant) {
-                const doc = generateQuotePDF(quote, items || [], currentTenant);
-                doc.save(`Quote_${quote.quoteNumber}.pdf`);
-            } else {
-                toast.error("Tenant information missing");
-            }
-
-            toast.dismiss();
-            toast.success('PDF Downloaded');
-
-            // 3. Update Status if Draft
-            if (quote.status === 'draft') {
-                await quoteService.updateQuote(quote.id, { status: 'sent', sentAt: new Date().toISOString() });
-                loadQuotes();
-            }
-        } catch (err) {
-            toast.dismiss();
-            console.error(err);
-            toast.error('Failed to generate PDF');
-        }
-    };
-
-    return (
-        <div className="space-y-6 animate-fade-in h-full flex flex-col">
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
-                <div className="flex-1">
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-violet-500 flex items-center gap-3">
-                        <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-teal-400" /> Quotes & Proposals
-                    </h2>
-                    <p className="text-slate-400 mt-1 text-xs sm:text-sm">{quotes.length} quotes found</p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
-                    <div className="flex gap-4 flex-wrap items-center w-full sm:w-auto">
-                        {/* Storage Usage Indicator */}
-                        <div className="hidden sm:flex items-center gap-3 bg-slate-900/50 border border-white/5 px-3 py-1.5 rounded-xl">
-                            <div className="text-left min-w-[80px]">
-                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Storage</div>
-                                <div className={`text-[10px] font-bold mt-1 ${storageUsage > MAX_STORAGE * 0.9 ? 'text-red-400' : 'text-teal-400'}`}>
-                                    {(storageUsage / 1024 / 1024).toFixed(1)}MB
-                                </div>
-                            </div>
-                            <div className="w-16 h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
-                                <div
-                                    className={`h-full transition-all duration-1000 ${storageUsage > MAX_STORAGE * 0.9 ? 'bg-red-500' : 'bg-teal-500'}`}
-                                    style={{ width: `${Math.min((storageUsage / MAX_STORAGE) * 100, 100)}%` }}
-                                ></div>
-                            </div>
-                        </div>
-
-                        <div className="relative flex-1 sm:flex-none">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                            <input
-                                type="text"
-                                placeholder="Search quotes..."
-                                className="w-full sm:w-64 bg-slate-950/50 border border-white/10 rounded-xl py-2 px-10 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
-                            {['all', 'draft', 'sent', 'accepted'].map(f => (
-                                <button
-                                    key={f}
-                                    onClick={() => setFilter(f as any)}
-                                    className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'bg-slate-950 text-slate-500 hover:text-white border border-white/5'}`}
-                                >
-                                    {f}
-                                </button>
-                            ))}
-                        </div>
-
-                        {(userRole === 'admin' || userRole === 'tenant_admin') && (
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => exportToCSV(quotes, 'Quotes')}
-                                    className="h-10 px-4"
-                                    icon={<Download className="w-4 h-4" />}
-                                >
-                                    Export CSV
-                                </Button>
-                                <Button
-                                    onClick={handleOpenCreateModal}
-                                    className="flex-1 sm:flex-none shadow-lg shadow-teal-500/20 h-10 px-4"
-                                >
-                                    <Plus className="w-4 h-4 mr-2" /> Create
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                </div>
+      }),
+      currentTenant
+    );
+  }, [createdAt, currentTenant, documentTheme, items, name, notes, quote, quoteNumber, status, total, validUntil]);
+
+  if (!open || !quote) return null;
+
+  const updateItem = (index: number, patch: Partial<EditableQuoteItem>) => {
+    setItems((prev) => prev.map((item, idx) => idx === index ? { ...item, ...patch } : item));
+  };
+
+  const addItem = () => {
+    setItems((prev) => [...prev, {
+      productName: '',
+      description: '',
+      quantity: '1',
+      unitPrice: '0',
+      discountPercent: '0',
+      taxPercent: '0',
+    }]);
+  };
+
+  const removeItem = (index: number) => {
+    setItems((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error('Quote name is required');
+      return;
+    }
+    setSaving(true);
+    try {
+      const normalizedItems = items.filter((item) => item.productName.trim()).map((item, index) => ({
+        productName: item.productName.trim(),
+        description: item.description.trim() || undefined,
+        quantity: Number(item.quantity || 0) || 1,
+        unitPrice: Number(item.unitPrice || 0) || 0,
+        discountPercent: Number(item.discountPercent || 0) || 0,
+        taxPercent: Number(item.taxPercent || 0) || 0,
+        itemOrder: index + 1,
+      }));
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/quotes`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        quoteId: quote.id,
+        name: name.trim(),
+        status,
+        validUntil: validUntil || null,
+        notes,
+        termsAndConditions: terms,
+        currency,
+        items: normalizedItems,
+        documentTheme,
+      }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to update quote');
+      toast.success('Quote updated');
+      onSaved();
+      onClose();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update quote';
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open || !quote) return null;
+
+  return (
+    <DetailDrawer
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title="Edit Quote"
+      description={quote.number || quote.id.slice(0, 8)}
+      size="wide"
+    >
+      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] pb-6">
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Input
+                  label="Quote name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  validate={(v) => !v.trim() ? 'Quote name is required' : undefined}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Status</label>
+                <select value={status} onChange={(e) => setStatus(e.target.value as QuoteStatus)} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white">
+                  {(['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'] as QuoteStatus[]).map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Currency</label>
+                <input value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white" />
+              </div>
+              <div>
+                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Valid until</label>
+                <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white" />
+              </div>
             </div>
 
-            {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                        <CardSkeleton key={i} />
-                    ))}
-                </div>
-            ) : quotes.filter(q => (q.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (q.quoteNumber || '').toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
-                <EmptyState
-                    icon={Search}
-                    title="No Matches Found"
-                    description="Adjust your search or filter to find what you're looking for."
-                />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {quotes
-                        .filter(q => (q.name || '').toLowerCase().includes(searchQuery.toLowerCase()) || (q.quoteNumber || '').toLowerCase().includes(searchQuery.toLowerCase()))
-                        .map((quote) => (
-                            <div key={quote.id} className="glass-panel p-5 rounded-2xl border border-white/5 hover:border-teal-500/30 transition-all flex flex-col">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex-1">
-                                        <div className="text-xs text-slate-500 mb-1">{quote.quoteNumber}</div>
-                                        <h3 className="font-bold text-white text-lg">{quote.name}</h3>
-                                    </div>
-                                    {/* Quick Status Update Dropdown */}
-                                    {(userRole === 'admin' || userRole === 'tenant_admin') ? (
-                                        <select
-                                            value={quote.status}
-                                            onChange={(e) => handleQuickStatusUpdate(quote, e.target.value)}
-                                            className={`text-xs font-bold uppercase rounded-full px-2 py-1 border-0 outline-none cursor-pointer bg-transparent ${getStatusColor(quote.status)}`}
-                                            title="Update status"
-                                        >
-                                            <option value="draft">Draft</option>
-                                            <option value="sent">Sent</option>
-                                            <option value="accepted">Accepted</option>
-                                            <option value="rejected">Declined</option>
-                                        </select>
-                                    ) : (
-                                        <span className={`px-2 py-1 text-xs rounded-full font-bold uppercase ${getStatusColor(quote.status)}`}>
-                                            {quote.status}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center gap-2 text-teal-400 text-2xl font-bold mb-4">
-                                    {formatCurrency(quote.totalAmount, quote.currency)}
-                                </div>
-
-                                {quote.validUntil && (
-                                    <div className="text-slate-400 text-xs mb-3">
-                                        Valid until: {new Date(quote.validUntil).toLocaleDateString()}
-                                    </div>
-                                )}
-
-                                {quote.viewCount > 0 && (
-                                    <div className="flex items-center gap-2 text-slate-400 text-xs mb-3">
-                                        <Eye className="w-4 h-4" />
-                                        <span>Viewed {quote.viewCount} times</span>
-                                    </div>
-                                )}
-
-                                {quote.acceptedAt && (
-                                    <div className="flex items-center gap-2 text-green-400 text-xs mb-3">
-                                        <Check className="w-4 h-4" />
-                                        <span>Accepted on {new Date(quote.acceptedAt).toLocaleDateString()}</span>
-                                    </div>
-                                )}
-
-                                {quote.rejectedAt && (
-                                    <div className="flex items-center gap-2 text-red-400 text-xs mb-3">
-                                        <X className="w-4 h-4" />
-                                        <span>Rejected on {new Date(quote.rejectedAt).toLocaleDateString()}</span>
-                                    </div>
-                                )}
-
-                                <div className="mt-auto pt-4 border-t border-white/5 flex gap-2">
-                                    <Button className="flex-1" variant="secondary" onClick={() => handleViewQuote(quote.id)}>
-                                        Details
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="p-2 border-white/10 hover:bg-slate-700 group"
-                                        onClick={() => handleDownloadActualPDF(quote)}
-                                        title="Download PDF"
-                                    >
-                                        <Download className="w-4 h-4 text-slate-300 group-hover:text-white" />
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        className="p-2 border-white/10 hover:bg-slate-700 group"
-                                        onClick={() => handleEditOpen(quote)}
-                                        title="Edit Quote"
-                                    >
-                                        <Edit className="w-4 h-4 text-slate-300 group-hover:text-white" />
-                                    </Button>
-                                    {quote.status === 'accepted' && (userRole === 'admin' || userRole === 'tenant_admin') && (
-                                        <Button
-                                            variant="outline"
-                                            className="p-2 border-white/10 hover:bg-teal-500/10 hover:border-teal-500/30"
-                                            onClick={() => handleConvertToInvoice(quote)}
-                                            title="Convert to Invoice"
-                                        >
-                                            <FileText className="w-4 h-4 text-teal-400" />
-                                        </Button>
-                                    )}
-                                    {(userRole === 'admin' || userRole === 'tenant_admin') && (
-                                        <Button
-                                            variant="outline"
-                                            className="p-2 border-white/10 hover:bg-red-500/10 hover:border-red-500/30 group"
-                                            onClick={() => handleDeleteQuote(quote.id)}
-                                            title="Delete Quote"
-                                        >
-                                            <Trash2 className="w-4 h-4 text-red-400 group-hover:text-red-300" />
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                </div>
-            )}
-
-            <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Create New Quote">
-                <div className="space-y-6">
-                    {/* Template Selector */}
-                    <div className="space-y-3">
-                        <label className="block text-sm font-medium text-slate-300 flex items-center gap-2">
-                            <FilePlus className="w-4 h-4" />
-                            Start from Template
-                        </label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {quoteTemplates.map(template => (
-                                <button
-                                    key={template.id}
-                                    onClick={() => handleTemplateSelect(template.id)}
-                                    className={`p-3 rounded-lg border text-left transition-all ${
-                                        selectedTemplate === template.id
-                                            ? 'bg-teal-600/20 border-teal-500 text-teal-400'
-                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600 hover:bg-slate-700'
-                                    }`}
-                                >
-                                    <div className="font-semibold text-xs mb-1">{template.name}</div>
-                                    <div className="text-[10px] opacity-70 line-clamp-2">{template.description}</div>
-                                </button>
-                            ))}
-                        </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">Line items</h3>
+                <button type="button" onClick={addItem} className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-xs font-bold text-white">
+                  <Plus className="h-4 w-4" /> Add item
+                </button>
+              </div>
+              <div className="space-y-3">
+                {items.map((item, index) => (
+                  <div key={item.id || index} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Item {index + 1}</div>
+                      <button type="button" onClick={() => removeItem(index)} className="inline-flex items-center gap-1 rounded-lg border border-slate-800 px-2 py-1 text-xs font-bold text-slate-400 hover:text-red-400">
+                        <Minus className="h-3.5 w-3.5" /> Remove
+                      </button>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            label="Quote Name *"
-                            value={quoteForm.name}
-                            onChange={(e) => setQuoteForm({ ...quoteForm, name: e.target.value })}
-                            placeholder="e.g. Website Design Project"
-                            required
-                        />
-                        <div className="grid grid-cols-2 gap-2">
-                            <Input
-                                label="Valid For (Days)"
-                                type="number"
-                                value={quoteForm.validForDays}
-                                onChange={(e) => setQuoteForm({ ...quoteForm, validForDays: e.target.value })}
-                                min="1"
-                            />
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-medium text-slate-300">Currency</label>
-                                <select
-                                    value={quoteForm.currency}
-                                    onChange={(e) => setQuoteForm({ ...quoteForm, currency: e.target.value })}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                                >
-                                    <option value="USD">USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                </select>
-                            </div>
-                        </div>
+                    <input value={item.productName} onChange={(e) => updateItem(index, { productName: e.target.value })} placeholder="Product or service" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                    <textarea value={item.description} onChange={(e) => updateItem(index, { description: e.target.value })} placeholder="Description" rows={2} className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white resize-none" />
+                    <div className="grid gap-3 sm:grid-cols-4">
+                      <input type="number" min="0" step="1" value={item.quantity} onChange={(e) => updateItem(index, { quantity: e.target.value })} placeholder="Qty" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                      <input type="number" min="0" step="0.01" value={item.unitPrice} onChange={(e) => updateItem(index, { unitPrice: e.target.value })} placeholder="Unit price" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                      <input type="number" min="0" step="0.01" value={item.discountPercent} onChange={(e) => updateItem(index, { discountPercent: e.target.value })} placeholder="Discount %" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
+                      <input type="number" min="0" step="0.01" value={item.taxPercent} onChange={(e) => updateItem(index, { taxPercent: e.target.value })} placeholder="Tax %" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">Link to Lead/Contact (Optional)</label>
-                            <div className="relative" ref={contactDropdownRef}>
-                                <div className="flex gap-1">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                                        <input
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
-                                            placeholder="Search and select contact/lead *"
-                                            value={contactSearch || (availableContacts.find(c => c.id === quoteForm.contactId)?.name || availableContacts.find(c => c.id === quoteForm.contactId)?.businessName || '')}
-                                            onFocus={() => setShowContactDropdown(true)}
-                                            onChange={(e) => {
-                                                setContactSearch(e.target.value);
-                                                setShowContactDropdown(true);
-                                            }}
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="px-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-teal-400 transition-colors"
-                                        onClick={() => setShowContactDropdown(!showContactDropdown)}
-                                    >
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${showContactDropdown ? 'rotate-180' : ''}`} />
-                                    </button>
-                                </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                                {showContactDropdown && (
-                                    <div className="absolute z-[110] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
-                                        <div className="p-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 bg-slate-950/50">
-                                            Contacts & Leads
-                                        </div>
-                                        {availableContacts
-                                            .filter(c => 
-                                                !contactSearch || 
-                                                (c.name && c.name.toLowerCase().includes(contactSearch.toLowerCase())) || 
-                                                (c.businessName && c.businessName.toLowerCase().includes(contactSearch.toLowerCase())) ||
-                                                (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
-                                            )
-                                            .map((contact) => (
-                                                <button
-                                                    key={contact.id}
-                                                    className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
-                                                    onClick={() => {
-                                                        setQuoteForm({ ...quoteForm, contactId: contact.id });
-                                                        setContactSearch(contact.businessName || contact.name);
-                                                        setShowContactDropdown(false);
-                                                    }}
-                                                    type="button"
-                                                >
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium text-slate-200 group-hover:text-teal-400">{contact.businessName || contact.name || 'Unnamed'}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-slate-500 uppercase font-bold px-1.5 py-0.5 bg-slate-800 rounded">{contact.type}</span>
-                                                            <span className="text-[10px] text-slate-500 truncate max-w-[150px]">{contact.email}</span>
-                                                        </div>
-                                                    </div>
-                                                    {quoteForm.contactId === contact.id && <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />}
-                                                </button>
-                                            ))}
-                                        {availableContacts.filter(c => 
-                                            !contactSearch || 
-                                            (c.name && c.name.toLowerCase().includes(contactSearch.toLowerCase())) || 
-                                            (c.businessName && c.businessName.toLowerCase().includes(contactSearch.toLowerCase())) ||
-                                            (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
-                                        ).length === 0 && (
-                                            <div className="px-4 py-3 text-sm text-slate-500 italic">No contacts found...</div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">Link to Deal (Optional)</label>
-                            <select
-                                value={quoteForm.dealId}
-                                onChange={(e) => setQuoteForm({ ...quoteForm, dealId: e.target.value })}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                            >
-                                <option value="">No Deal Linked</option>
-                                {availableDeals.map(deal => (
-                                    <option key={deal.id} value={deal.id}>{deal.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
+          <div className="space-y-4">
+            <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+            {previewInput ? <DocumentPreview input={previewInput} /> : null}
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Notes</label>
+              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white resize-none" />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Terms & conditions</label>
+              <textarea value={terms} onChange={(e) => setTerms(e.target.value)} rows={8} className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white resize-none" />
+            </div>
 
-                    {/* Line Items Editor */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
-                                <Sparkles className="w-4 h-4" /> Services & Pricing
-                            </h4>
-                            <div className="flex gap-2">
-                                <Button variant="outline" className="h-8 py-0 text-xs border-teal-500/30 text-teal-400" onClick={addLineItem}>
-                                    <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
-                                </Button>
-                            </div>
-                        </div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-2">
+              <div className="flex items-center justify-between text-sm text-slate-400">
+                <span>Estimated total</span>
+                <span className="font-mono text-white">{Number(total).toFixed(2)} {currency || 'USD'}</span>
+              </div>
+              <p className="text-xs text-slate-500">Totals are recalculated from the current line items when you save.</p>
+            </div>
 
-                        {/* Quick Select Services */}
-                        <div className="flex flex-wrap gap-2 py-2">
-                            {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).slice(0, 5).map((service) => (
-                                <button
-                                    key={service.id}
-                                    onClick={() => {
-                                        const emptyIndex = lineItems.findIndex(item => !item.productName);
-                                        const targetIndex = emptyIndex !== -1 ? emptyIndex : lineItems.length;
-                                        if (targetIndex === lineItems.length) {
-                                            const newItems = [...lineItems, { productName: service.name, unitPrice: service.defaultPrice, quantity: 1, description: service.description }];
-                                            setLineItems(newItems);
-                                        } else {
-                                            handleServiceSelect(targetIndex, service);
-                                        }
-                                    }}
-                                    className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:bg-teal-500/20 hover:border-teal-500/50 hover:text-teal-400 transition-all flex items-center gap-1.5"
-                                >
-                                    <Plus className="w-3 h-3" /> {service.name}
-                                </button>
-                            ))}
-                        </div>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || loading}
+              className="w-full min-h-11 rounded-2xl bg-[var(--brand-blue-500)] px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : 'Save Quote'}
+            </button>
+            <QuoteVersionPanel quoteId={quote.id} userId={userId} />
+          </div>
+      </div>
+    </DetailDrawer>
+  );
+};
 
-                        <div className="space-y-3 border border-white/5 rounded-xl p-4 bg-slate-950/30">
-                            {lineItems.map((item: Partial<QuoteItem>, index: number) => (
-                                <div key={index} className="grid grid-cols-12 gap-3 items-start pb-3 border-b border-white/5 last:border-0 last:pb-0">
-                                    <div className="col-span-12 md:col-span-5 relative">
-                                        <div className="flex gap-1">
-                                            <input
-                                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
-                                                placeholder="Service name *"
-                                                value={item.productName}
-                                                onChange={(e) => updateLineItem(index, 'productName', e.target.value)}
-                                            />
-                                            <button
-                                                className="px-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-teal-400 transition-colors"
-                                                onClick={() => setShowServiceDropdown({ index, open: !showServiceDropdown.open || showServiceDropdown.index !== index })}
-                                                type="button"
-                                            >
-                                                <ChevronDown className={`w-4 h-4 transition-transform ${showServiceDropdown.index === index && showServiceDropdown.open ? 'rotate-180' : ''}`} />
-                                            </button>
-                                        </div>
+interface QuotesTabProps { user: User; }
 
-                                        {showServiceDropdown.index === index && showServiceDropdown.open && (
-                                            <div className="absolute z-[100] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
-                                                {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).map((service) => (
-                                                    <button
-                                                        key={service.id}
-                                                        className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
-                                                        onClick={() => handleServiceSelect(index, service)}
-                                                        type="button"
-                                                    >
-                                                        <span>{service.name}</span>
-                                                        <span className="text-teal-500/50 text-xs group-hover:text-teal-500">${service.defaultPrice}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="col-span-4 md:col-span-2">
-                                        <input
-                                            type="number"
-                                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-teal-500/50"
-                                            placeholder="Qty"
-                                            value={item.quantity}
-                                            onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                        />
-                                    </div>
-                                    <div className="col-span-6 md:col-span-4">
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2 text-slate-500 text-sm">
-                                                {quoteForm.currency === 'EUR' ? '€' : quoteForm.currency === 'GBP' ? '£' : '$'}
-                                            </span>
-                                            <input
-                                                type="number"
-                                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-6 pr-3 py-2 text-sm text-slate-200 outline-none focus:border-teal-500/50"
-                                                placeholder="Price"
-                                                value={item.unitPrice}
-                                                onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-span-2 md:col-span-1 flex justify-end">
-                                        <button
-                                            onClick={() => removeLineItem(index)}
-                                            className="p-2 text-slate-600 hover:text-red-400 transition-colors"
-                                            disabled={lineItems.length === 1}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                    <div className="col-span-12">
-                                        <input
-                                            className="w-full bg-transparent border-none px-3 py-1 text-xs text-slate-500 placeholder-slate-700 outline-none"
-                                            placeholder="Optional description..."
-                                            value={item.description}
-                                            onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
+  const router = useRouter();
+  const { currentTenant } = useTenant();
+  const [quotes, setQuotes] = useState<QuoteRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<QuoteStatus | 'all'>('all');
+  const [selected, setSelected] = useState<QuoteRow | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<QuoteRow | null>(null);
+  const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
+  const listRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(40);
+  const loadMoreQuotes = useCallback(() => setVisibleCount((c) => c + 30), []);
 
-                        <div className="flex justify-end pt-2">
-                            <div className="text-right">
-                                <div className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Estimated Subtotal</div>
-                                <div className="text-xl font-bold text-teal-400">{formatCurrency(calculateSubtotal(), quoteForm.currency)}</div>
-                            </div>
-                        </div>
-                    </div>
+  const load = useCallback(async () => {
+    if (!currentTenant?.id) return;
+    setLoading(true);
+    const { data } = await supabase.from('quotes').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false });
+    setQuotes((data || []).map((row: Record<string, unknown>) => mapQuoteRow(row)));
+    setLoading(false);
+  }, [currentTenant?.id]);
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Notes & Terms</label>
-                        <textarea
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-sm"
-                            rows={2}
-                            value={quoteForm.notes}
-                            onChange={(e) => setQuoteForm({ ...quoteForm, notes: e.target.value })}
-                            placeholder="Optional notes for the client"
-                        />
-                    </div>
+  useEffect(() => { load(); }, [load]);
 
-                    <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
-                        <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
-                        <Button onClick={handleCreateQuote} disabled={isSubmitting} className="min-w-[140px] shadow-lg shadow-teal-500/20">
-                            {isSubmitting ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                    Processing...
-                                </div>
-                            ) : 'Generate Quote'}
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+  const deleteQuote = async (id: string) => {
+    if (!currentTenant?.id) return;
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/quotes?quoteId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) { toast.error(result.error || 'Quote could not be deleted'); return; }
+    setQuotes(p => p.filter(q => q.id !== id));
+    setSelected(null);
+    toast.success('Quote deleted');
+  };
 
-            {/* Edit Quote Modal */}
-            <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Quote">
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input
-                            label="Quote Name *"
-                            value={editForm.name}
-                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            required
-                        />
-                        <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">Status</label>
-                            <select
-                                value={editForm.status}
-                                onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                            >
-                                <option value="draft">Draft</option>
-                                <option value="sent">Sent</option>
-                                <option value="accepted">Accepted</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">Link to Lead/Contact</label>
-                            <div className="relative" ref={contactDropdownRef}>
-                                <div className="flex gap-1">
-                                    <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                                        <input
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
-                                            placeholder="Search and select contact/lead *"
-                                            value={contactSearch || (availableContacts.find(c => c.id === editForm.contactId)?.name || availableContacts.find(c => c.id === editForm.contactId)?.businessName || '')}
-                                            onFocus={() => setShowContactDropdown(true)}
-                                            onChange={(e) => {
-                                                setContactSearch(e.target.value);
-                                                setShowContactDropdown(true);
-                                            }}
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="px-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-teal-400 transition-colors"
-                                        onClick={() => setShowContactDropdown(!showContactDropdown)}
-                                    >
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${showContactDropdown ? 'rotate-180' : ''}`} />
-                                    </button>
-                                </div>
+  const sendQuote = async (quote: QuoteRow) => {
+    if (!currentTenant?.id) return;
+    const email = quote.client_email || window.prompt('Recipient email address');
+    if (!email?.trim()) {
+      toast.error('Email is required to send quote');
+      return;
+    }
+    try {
+      toast.loading('Sending quote...', { id: 'send-quote' });
+      const res = await fetch('/api/quotes/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          quoteId: quote.id,
+          recipients: [email.trim()],
+        }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.success) {
+        throw new Error(payload.error || 'Send failed');
+      }
+      setQuotes(p => p.map(q => q.id === quote.id ? { ...q, status: 'sent' as QuoteStatus } : q));
+      if (selected?.id === quote.id) {
+        setSelected(prev => prev ? { ...prev, status: 'sent' } : null);
+      }
+      toast.success('Quote sent by email', { id: 'send-quote' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to send quote';
+      toast.error(message, { id: 'send-quote' });
+    }
+  };
 
-                                {showContactDropdown && (
-                                    <div className="absolute z-[110] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
-                                        <div className="p-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 bg-slate-950/50">
-                                            Contacts & Leads
-                                        </div>
-                                        {availableContacts
-                                            .filter(c => 
-                                                !contactSearch || 
-                                                (c.name && c.name.toLowerCase().includes(contactSearch.toLowerCase())) || 
-                                                (c.businessName && c.businessName.toLowerCase().includes(contactSearch.toLowerCase())) ||
-                                                (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
-                                            )
-                                            .map((contact) => (
-                                                <button
-                                                    key={contact.id}
-                                                    className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
-                                                    onClick={() => {
-                                                        setEditForm({ ...editForm, contactId: contact.id });
-                                                        setContactSearch(contact.businessName || contact.name);
-                                                        setShowContactDropdown(false);
-                                                    }}
-                                                    type="button"
-                                                >
-                                                    <div className="flex flex-col">
-                                                        <span className="font-medium text-slate-200 group-hover:text-teal-400">{contact.businessName || contact.name || 'Unnamed'}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-slate-500 uppercase font-bold px-1.5 py-0.5 bg-slate-800 rounded">{contact.type}</span>
-                                                            <span className="text-[10px] text-slate-500 truncate max-w-[150px]">{contact.email}</span>
-                                                        </div>
-                                                    </div>
-                                                    {editForm.contactId === contact.id && <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_8px_rgba(20,184,166,0.5)]" />}
-                                                </button>
-                                            ))}
-                                        {availableContacts.filter(c => 
-                                            !contactSearch || 
-                                            (c.name && c.name.toLowerCase().includes(contactSearch.toLowerCase())) || 
-                                            (c.businessName && c.businessName.toLowerCase().includes(contactSearch.toLowerCase())) ||
-                                            (c.email && c.email.toLowerCase().includes(contactSearch.toLowerCase()))
-                                        ).length === 0 && (
-                                            <div className="px-4 py-3 text-sm text-slate-500 italic">No contacts found...</div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">Link to Deal</label>
-                            <select
-                                value={editForm.dealId}
-                                onChange={(e) => setEditForm({ ...editForm, dealId: e.target.value })}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
-                            >
-                                <option value="">No Deal Linked</option>
-                                {availableDeals.map(deal => (
-                                    <option key={deal.id} value={deal.id}>{deal.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    {/* Line Items Editor */}
-                    <div className="space-y-3 pt-4 border-t border-white/5">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-teal-400 uppercase tracking-wider flex items-center gap-2">
-                                <Sparkles className="w-4 h-4" /> Services & Pricing
-                            </h4>
-                            <Button type="button" variant="outline" className="h-8 py-0 text-xs border-teal-500/30 text-teal-400" onClick={addLineItem}>
-                                <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
-                            </Button>
-                        </div>
+  const convertToInvoice = async (quote: QuoteRow) => {
+    if (!currentTenant?.id) return;
+    try {
+      toast.loading('Converting to invoice...', { id: 'conv' });
+      const response = await fetch('/api/quotes/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quoteId: quote.id, tenantId: currentTenant.id }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Conversion failed');
+      }
 
-                        {/* Quick Select Services */}
-                        <div className="flex flex-wrap gap-2 py-2">
-                            {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).slice(0, 5).map((service) => (
-                                <button
-                                    key={service.id}
-                                    type="button"
-                                    onClick={() => {
-                                        const emptyIndex = lineItems.findIndex(item => !item.productName);
-                                        const targetIndex = emptyIndex !== -1 ? emptyIndex : lineItems.length;
-                                        if (targetIndex === lineItems.length) {
-                                            const newItems = [...lineItems, { productName: service.name, unitPrice: service.defaultPrice, quantity: 1, description: service.description }];
-                                            setLineItems(newItems);
-                                        } else {
-                                            handleServiceSelect(targetIndex, service);
-                                        }
-                                    }}
-                                    className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs text-slate-300 hover:bg-teal-500/20 hover:border-teal-500/50 hover:text-teal-400 transition-all flex items-center gap-1.5"
-                                >
-                                    <Plus className="w-3 h-3" /> {service.name}
-                                </button>
-                            ))}
-                        </div>
+      setQuotes(p => p.map(q => q.id === quote.id ? { ...q, status: 'accepted' } : q));
+      setSelected(null);
+      toast.success('Quote converted to invoice', { id: 'conv' });
+      showActionNextSteps('quote_to_invoice', (path) => router.push(path));
+      if (payload.invoiceId) {
+        router.push(`/dashboard/business/billing/manage?invoiceId=${encodeURIComponent(payload.invoiceId)}`);
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to convert quote';
+      toast.error(message, { id: 'conv' });
+    }
+  };
 
-                        <div className="space-y-3 border border-white/5 rounded-xl p-4 bg-slate-950/30 max-h-[300px] overflow-y-auto">
-                            {lineItems.map((item: any, index: number) => (
-                                <div key={index} className="grid grid-cols-12 gap-3 items-start pb-3 border-b border-white/5 last:border-0 last:pb-0">
-                                    <div className="col-span-12 md:col-span-5 relative">
-                                        <div className="flex gap-1">
-                                            <input
-                                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-teal-500/50 outline-none transition-all"
-                                                placeholder="Service name *"
-                                                value={item.productName}
-                                                onChange={(e) => updateLineItem(index, 'productName', e.target.value)}
-                                            />
-                                            <button
-                                                className="px-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-teal-400 transition-colors"
-                                                onClick={() => setShowServiceDropdown({ index, open: !showServiceDropdown.open || showServiceDropdown.index !== index })}
-                                                type="button"
-                                            >
-                                                <ChevronDown className={`w-4 h-4 transition-transform ${showServiceDropdown.index === index && showServiceDropdown.open ? 'rotate-180' : ''}`} />
-                                            </button>
-                                        </div>
+  const quoteStats = useMemo<ModuleStat[]>(() => {
+    const fmt = (n: number) => n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${Math.round(n)}`;
+    const pipeline = quotes.reduce((s, q) => s + (q.amount || 0), 0);
+    const wonQuotes = quotes.filter(q => q.status === 'accepted' || q.status === 'converted');
+    const wonValue = wonQuotes.reduce((s, q) => s + (q.amount || 0), 0);
+    const outstanding = quotes.filter(q => q.status === 'sent').reduce((s, q) => s + (q.amount || 0), 0);
+    const decided = quotes.filter(q => ['accepted', 'converted', 'rejected'].includes(q.status)).length;
+    const winRate = decided > 0 ? Math.round((wonQuotes.length / decided) * 100) : 0;
+    return [
+      { label: 'Pipeline Value', value: fmt(pipeline), sub: `${quotes.length} quotes`, Icon: DollarSign, accent: 'teal' },
+      { label: 'Won', value: fmt(wonValue), sub: `${wonQuotes.length} accepted`, Icon: Trophy, accent: 'emerald' },
+      { label: 'Outstanding', value: fmt(outstanding), sub: 'Sent, awaiting reply', Icon: Clock, accent: 'amber' },
+      { label: 'Win Rate', value: `${winRate}%`, sub: `${decided} decided`, Icon: FileText, accent: 'purple' },
+    ];
+  }, [quotes]);
 
-                                        {showServiceDropdown.index === index && showServiceDropdown.open && (
-                                            <div className="absolute z-[100] left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto anime-in slide-in-from-top-2">
-                                                {UNIVERSAL_SERVICE_CATALOG.flatMap(cat => cat.services).map((service) => (
-                                                    <button
-                                                        key={service.id}
-                                                        className="w-full text-left px-4 py-2.5 hover:bg-teal-500/10 text-sm text-slate-300 hover:text-teal-400 border-b border-white/5 last:border-0 transition-colors flex items-center justify-between group"
-                                                        onClick={() => handleServiceSelect(index, service)}
-                                                        type="button"
-                                                    >
-                                                        <span>{service.name}</span>
-                                                        <span className="text-teal-500/50 text-xs group-hover:text-teal-500">${service.defaultPrice}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="col-span-4 md:col-span-2">
-                                        <input
-                                            type="number"
-                                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 outline-none focus:border-teal-500/50"
-                                            placeholder="Qty"
-                                            value={item.quantity}
-                                            onChange={(e) => updateLineItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                                        />
-                                    </div>
-                                    <div className="col-span-6 md:col-span-4">
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2 text-slate-500 text-sm">
-                                                {quoteForm.currency === 'EUR' ? '€' : quoteForm.currency === 'GBP' ? '£' : '$'}
-                                            </span>
-                                            <input
-                                                type="number"
-                                                className="w-full bg-slate-900/50 border border-slate-700 rounded-lg pl-6 pr-3 py-2 text-sm text-slate-200 outline-none focus:border-teal-500/50"
-                                                placeholder="Price"
-                                                value={item.unitPrice}
-                                                onChange={(e) => updateLineItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="col-span-2 md:col-span-1 flex justify-end">
-                                        <button
-                                            type="button"
-                                            onClick={() => removeLineItem(index)}
-                                            className="p-2 text-slate-600 hover:text-red-400 transition-colors"
-                                            disabled={lineItems.length === 1 && !lineItems[0].productName}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                    <div className="col-span-12">
-                                        <input
-                                            className="w-full bg-transparent border-none px-3 py-1 text-xs text-slate-500 placeholder-slate-700 outline-none"
-                                            placeholder="Optional description..."
-                                            value={item.description || ''}
-                                            onChange={(e) => updateLineItem(index, 'description', e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+  const filtered = quotes.filter(q => filter === 'all' || q.status === filter);
+  useInfiniteScroll(listRef, loadMoreQuotes, { enabled: filtered.length > visibleCount });
+  const visibleQuotes = filtered.slice(0, visibleCount);
+  const allVisibleSelected = visibleQuotes.length > 0 && visibleQuotes.every((quote) => selectedQuoteIds.has(quote.id));
 
-                        <div className="flex justify-end pt-2">
-                            <div className="text-right">
-                                <div className="text-[10px] uppercase font-black text-slate-500 tracking-widest">Estimated Subtotal</div>
-                                <div className="text-xl font-bold text-teal-400">{formatCurrency(calculateSubtotal(), quoteForm.currency)}</div>
-                            </div>
-                        </div>
-                    </div>
+  const toggleQuoteSelection = useCallback((quoteId: string) => {
+    setSelectedQuoteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(quoteId)) next.delete(quoteId);
+      else next.add(quoteId);
+      return next;
+    });
+  }, []);
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">Notes</label>
-                        <textarea
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all text-sm"
-                            rows={3}
-                            value={editForm.notes}
-                            onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-                        />
-                    </div>
-                    <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
-                        <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
-                        <Button onClick={handleUpdateQuote} disabled={isSubmitting} className="min-w-[140px]">
-                            {isSubmitting ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+  const handleBulkEmailQuotes = useCallback(() => {
+    if (selectedQuoteIds.size === 0) return;
+    const recipients = quotes
+      .filter((quote) => selectedQuoteIds.has(quote.id))
+      .map((quote) => quote.client_email?.trim() || '')
+      .filter((email, index, arr) => email.length > 0 && arr.indexOf(email) === index);
 
-            {/* View Quote Modal */}
-            {
-                showViewModal && selectedQuote && (
-                    <Modal isOpen={showViewModal} onClose={() => setShowViewModal(false)} title={`Quote: ${selectedQuote.quoteNumber}`}>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Quote Name</label>
-                                    <p className="text-white font-medium">{selectedQuote?.name}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Status</label>
-                                    <span className={`px-2 py-1 text-xs rounded-full font-bold uppercase ${getStatusColor(selectedQuote?.status || '')}`}>
-                                        {selectedQuote?.status}
-                                    </span>
-                                </div>
-                            </div>
+    if (recipients.length === 0) {
+      toast.error('Selected quotes do not have recipient email addresses.');
+      return;
+    }
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Total Amount</label>
-                                    <p className="text-2xl text-teal-400 font-bold">{formatCurrency(selectedQuote?.totalAmount || 0, selectedQuote?.currency || 'USD')}</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Valid Until</label>
-                                    <p className="text-white">{selectedQuote?.validUntil ? new Date(selectedQuote.validUntil).toLocaleDateString() : 'N/A'}</p>
-                                </div>
-                            </div>
+    const subject = recipients.length === 1 ? 'Quote follow-up' : 'Quotes follow-up';
+    router.push(buildMailComposeUrl(recipients, subject));
+  }, [quotes, router, selectedQuoteIds]);
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">View Count</label>
-                                    <p className="text-white">{selectedQuote?.viewCount || 0} times</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Currency</label>
-                                    <p className="text-white">{selectedQuote?.currency}</p>
-                                </div>
-                            </div>
-
-                            {/* Items Table */}
-                            <div className="border border-white/5 rounded-xl overflow-x-auto min-w-0">
-                                <table className="w-full min-w-[480px] text-sm text-left">
-                                    <thead className="bg-slate-900/80 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-white/5">
-                                        <tr>
-                                            <th className="px-4 py-3">Description</th>
-                                            <th className="px-4 py-3 text-center">Qty</th>
-                                            <th className="px-4 py-3 text-right">Price</th>
-                                            <th className="px-4 py-3 text-right">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/5">
-                                        {selectedQuoteItems.map((item: QuoteItem) => (
-                                            <tr key={item.id} className="text-slate-300">
-                                                <td className="px-4 py-3">
-                                                    <div className="font-medium text-white">{item.productName}</div>
-                                                    {item.description && <div className="text-xs text-slate-500">{item.description}</div>}
-                                                </td>
-                                                <td className="px-4 py-3 text-center">{item.quantity}</td>
-                                                <td className="px-4 py-3 text-right">{formatCurrency(item.unitPrice, selectedQuote?.currency || 'USD')}</td>
-                                                <td className="px-4 py-3 text-right font-bold text-teal-400">{formatCurrency(item.lineTotal, selectedQuote?.currency || 'USD')}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                    <tfoot className="bg-slate-900/40 border-t border-white/5 font-bold">
-                                        <tr>
-                                            <td colSpan={3} className="px-4 py-3 text-right text-slate-400">Subtotal</td>
-                                            <td className="px-4 py-3 text-right text-white">{formatCurrency(selectedQuote?.subtotal || 0, selectedQuote?.currency || 'USD')}</td>
-                                        </tr>
-                                        <tr className="border-t border-white/5 bg-teal-500/5">
-                                            <td colSpan={3} className="px-4 py-3 text-right text-teal-400 uppercase text-[10px] tracking-widest font-black">Total Due</td>
-                                            <td className="px-4 py-3 text-right text-teal-400 text-lg">{formatCurrency(selectedQuote?.totalAmount || 0, selectedQuote?.currency || 'USD')}</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-
-                            {selectedQuote.notes && (
-                                <div className="bg-slate-950/40 p-4 rounded-xl border border-white/5">
-                                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Notes & Terms</label>
-                                    <p className="text-slate-300 text-sm italic">"{selectedQuote.notes}"</p>
-                                </div>
-                            )}
-
-                            {selectedQuote?.sentAt && (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-400 mb-1">Sent At</label>
-                                    <p className="text-white">{selectedQuote?.sentAt ? new Date(selectedQuote.sentAt).toLocaleString() : 'N/A'}</p>
-                                </div>
-                            )}
-
-                            {selectedQuote?.acceptedAt && (
-                                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                                    <label className="block text-sm font-medium text-green-400 mb-1">Accepted</label>
-                                    <p className="text-white">{selectedQuote?.acceptedAt ? new Date(selectedQuote.acceptedAt).toLocaleString() : 'N/A'}</p>
-                                </div>
-                            )}
-
-                            {selectedQuote?.rejectedAt && (
-                                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                                    <label className="block text-sm font-medium text-red-400 mb-1">Rejected</label>
-                                    <p className="text-white">{selectedQuote?.rejectedAt ? new Date(selectedQuote.rejectedAt).toLocaleString() : 'N/A'}</p>
-                                    {selectedQuote?.rejectionReason && (
-                                        <p className="text-slate-400 text-sm mt-1">Reason: {selectedQuote.rejectionReason}</p>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Signature Section */}
-                            <div className="border border-white/5 rounded-xl p-4 bg-slate-950/40">
-                                <div className="flex items-center justify-between mb-3">
-                                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                        <PenLine className="w-4 h-4 text-teal-400" />
-                                        Signature
-                                    </label>
-                                    {signatureData && (
-                                        <button
-                                            onClick={() => setSignatureData(null)}
-                                            className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                                        >
-                                            Clear
-                                        </button>
-                                    )}
-                                </div>
-                                {signatureData ? (
-                                    <div className="bg-white rounded-lg p-2 relative h-24">
-                                        <Image
-                                            src={signatureData}
-                                            alt="Signature"
-                                            fill
-                                            className="object-contain"
-                                            unoptimized
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2">
-                                        <canvas
-                                            ref={canvasRef}
-                                            width={500}
-                                            height={120}
-                                            className="w-full bg-white rounded-lg cursor-crosshair border border-white/10"
-                                            style={{ touchAction: 'none' }}
-                                            onMouseDown={(e) => {
-                                                isDrawing.current = true;
-                                                const canvas = canvasRef.current!;
-                                                const ctx = canvas.getContext('2d')!;
-                                                const rect = canvas.getBoundingClientRect();
-                                                const scaleX = canvas.width / rect.width;
-                                                const scaleY = canvas.height / rect.height;
-                                                ctx.beginPath();
-                                                ctx.moveTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
-                                            }}
-                                            onMouseMove={(e) => {
-                                                if (!isDrawing.current) return;
-                                                const canvas = canvasRef.current!;
-                                                const ctx = canvas.getContext('2d')!;
-                                                const rect = canvas.getBoundingClientRect();
-                                                const scaleX = canvas.width / rect.width;
-                                                const scaleY = canvas.height / rect.height;
-                                                ctx.lineWidth = 2;
-                                                ctx.lineCap = 'round';
-                                                ctx.strokeStyle = '#0f172a';
-                                                ctx.lineTo((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
-                                                ctx.stroke();
-                                            }}
-                                            onMouseUp={() => {
-                                                isDrawing.current = false;
-                                                const canvas = canvasRef.current!;
-                                                setSignatureData(canvas.toDataURL('image/png'));
-                                            }}
-                                            onMouseLeave={() => { isDrawing.current = false; }}
-                                            onTouchStart={(e) => {
-                                                e.preventDefault();
-                                                isDrawing.current = true;
-                                                const canvas = canvasRef.current!;
-                                                const ctx = canvas.getContext('2d')!;
-                                                const rect = canvas.getBoundingClientRect();
-                                                const scaleX = canvas.width / rect.width;
-                                                const scaleY = canvas.height / rect.height;
-                                                const touch = e.touches[0];
-                                                ctx.beginPath();
-                                                ctx.moveTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
-                                            }}
-                                            onTouchMove={(e) => {
-                                                e.preventDefault();
-                                                if (!isDrawing.current) return;
-                                                const canvas = canvasRef.current!;
-                                                const ctx = canvas.getContext('2d')!;
-                                                const rect = canvas.getBoundingClientRect();
-                                                const scaleX = canvas.width / rect.width;
-                                                const scaleY = canvas.height / rect.height;
-                                                const touch = e.touches[0];
-                                                ctx.lineWidth = 2;
-                                                ctx.lineCap = 'round';
-                                                ctx.strokeStyle = '#0f172a';
-                                                ctx.lineTo((touch.clientX - rect.left) * scaleX, (touch.clientY - rect.top) * scaleY);
-                                                ctx.stroke();
-                                            }}
-                                            onTouchEnd={() => {
-                                                isDrawing.current = false;
-                                                const canvas = canvasRef.current!;
-                                                setSignatureData(canvas.toDataURL('image/png'));
-                                            }}
-                                        />
-                                        <p className="text-xs text-slate-500 text-center">Draw your signature above</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="pt-4 flex justify-end gap-3">
-                                <Button variant="outline" onClick={() => setShowViewModal(false)}>Close</Button>
-                                {signatureData && selectedQuote?.signatureUrl !== signatureData && (
-                                    <Button
-                                        onClick={handleSaveSignature}
-                                        disabled={isSubmitting}
-                                        className="bg-teal-500 hover:bg-teal-600 text-white"
-                                    >
-                                        {isSubmitting ? 'Saving...' : 'Accept & Save Signature'}
-                                    </Button>
-                                )}
-                                {selectedQuote?.status === 'accepted' && (
-                                    <Button
-                                        onClick={() => handleConvertToInvoice(selectedQuote)}
-                                        disabled={isSubmitting}
-                                        className="bg-teal-500 hover:bg-teal-600 text-white"
-                                    >
-                                        {isSubmitting ? 'Converting...' : 'Convert to Invoice'}
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </Modal>
-                )
+  const quoteColumns = useMemo<EnterpriseColumn<QuoteRow>[]>(() => [
+    {
+      id: 'select',
+      header: (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            if (allVisibleSelected) {
+              setSelectedQuoteIds(new Set());
+            } else {
+              setSelectedQuoteIds(new Set(visibleQuotes.map((quote) => quote.id)));
             }
+          }}
+          className="inline-flex items-center text-slate-400 hover:text-white"
+          aria-label={allVisibleSelected ? 'Deselect all visible quotes' : 'Select all visible quotes'}
+        >
+          {allVisibleSelected ? (
+            <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </button>
+      ),
+      accessor: (q) => (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            toggleQuoteSelection(q.id);
+          }}
+          className="inline-flex items-center text-slate-400 hover:text-white"
+          aria-label={selectedQuoteIds.has(q.id) ? 'Deselect quote' : 'Select quote'}
+        >
+          {selectedQuoteIds.has(q.id) ? (
+            <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </button>
+      ),
+    },
+    {
+      id: 'client',
+      header: 'Quote',
+      mobilePrimary: true,
+      sortable: true,
+      sortValue: (q) => q.client_name,
+      accessor: (q) => (
+        <div>
+          <span className="text-[13px] font-bold text-white block">{q.client_name?.trim() || 'Unnamed Client'}</span>
+          <span className="text-[11px] text-slate-500">#{q.number || q.id.slice(0, 6)}</span>
         </div>
-    );
-}
+      ),
+    },
+    {
+      id: 'amount',
+      header: 'Amount',
+      sortable: true,
+      sortValue: (q) => q.amount,
+      accessor: (q) => `$${q.amount.toLocaleString()}`,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessor: (q) => <StatusBadge variant={quoteStatusVariant(q.status)}>{q.status}</StatusBadge>,
+    },
+    {
+      id: 'valid',
+      header: 'Valid until',
+      sortable: true,
+      sortValue: (q) => q.valid_until || '',
+      accessor: (q) => q.valid_until ? new Date(q.valid_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—',
+    },
+  ], [allVisibleSelected, selectedQuoteIds, toggleQuoteSelection, visibleQuotes]);
+
+  return (
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="quotations">
+      <div className="px-4 pt-3 shrink-0">
+        <SubNavigation
+          moduleId="quotations"
+          items={getModuleSubnav('quotations')}
+          activeHref="/dashboard/business/quotes"
+        />
+      </div>
+      <ModulePageLayout
+        header={(
+          <div className="px-4 pt-2">
+            <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
+          </div>
+        )}
+        toolbar={(
+          <div className="flex flex-wrap gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-[var(--ws-border)] items-center">
+        {selectedQuoteIds.size > 0 && (
+          <div className="flex items-center gap-1.5 mr-1 rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-1">
+            <button
+              type="button"
+              onClick={() => setSelectedQuoteIds(new Set())}
+              className="h-7 px-3 rounded-[8px] text-[11px] font-semibold text-[var(--ws-text-muted)] border border-[var(--ws-border)] transition-colors hover:text-[var(--ws-text-secondary)]"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkEmailQuotes}
+              className="h-7 px-3 rounded-[8px] text-[11px] font-semibold text-[var(--brand-blue-500)] border border-[var(--ws-border)] transition-colors"
+            >
+              Follow-up ({selectedQuoteIds.size})
+            </button>
+          </div>
+        )}
+        {(['all', ...FILTERS] as (QuoteStatus | 'all')[]).map(f => (
+          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 min-h-[34px] px-3.5 rounded-[8px] text-[12px] font-semibold capitalize transition-all ${filter === f ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}>{f}</button>
+        ))}
+          </div>
+        )}
+        stats={!loading && quotes.length > 0 ? (
+          <div className="p-4 border-b border-[var(--ws-border)]">
+            <ModuleStatCards stats={quoteStats} hub="quotes" />
+          </div>
+        ) : null}
+      >
+      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 px-2">
+        {loading ? (
+          <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+        ) : quotes.length === 0 && filter === 'all' ? (
+          <div className="p-6">
+            <EmptyStateFromPreset moduleId="quotes" onAction={() => setShowCreate(true)} />
+          </div>
+        ) : (
+          <EnterpriseDataTable
+            columns={quoteColumns}
+            data={visibleQuotes}
+            getRowId={(q) => q.id}
+            onRowClick={setSelected}
+            emptyMessage="No quotes match this filter."
+          />
+        )}
+      </div>
+      </ModulePageLayout>
+      <button
+        type="button"
+        onClick={() => setShowCreate(true)}
+        className="fixed bottom-20 right-4 w-14 h-14 bg-[var(--brand-blue-500)] rounded-full flex items-center justify-center shadow-md z-30"
+      >
+        <FilePlus className="w-6 h-6 text-white" />
+      </button>
+      {currentTenant?.id && <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} tenantId={currentTenant.id} />}
+      {currentTenant?.id && <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} tenantId={currentTenant.id} userId={user.id} />}
+
+      <DetailDrawer
+        open={Boolean(selected)}
+        onOpenChange={(open) => { if (!open) setSelected(null); }}
+        title={selected ? `Quote #${selected.number || selected.id.slice(0, 8)}` : 'Quote'}
+        size="wide"
+      >
+        {selected && (
+          <QuoteDetail
+            quote={selected}
+            onBack={() => setSelected(null)}
+            onSend={sendQuote}
+            onConvert={convertToInvoice}
+            onEdit={(q) => setEditing(q)}
+            onDelete={deleteQuote}
+            onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
+            inDrawer
+          />
+        )}
+      </DetailDrawer>
+
+      {emailCompose && (
+        <CommunicationModal
+          user={user}
+          recipient={emailCompose.recipient}
+          prefilledSubject={emailCompose.subject}
+          onClose={() => setEmailCompose(null)}
+          onSent={() => setEmailCompose(null)}
+        />
+      )}
+    </div>
+  );
+};
 
 export default QuotesTab;

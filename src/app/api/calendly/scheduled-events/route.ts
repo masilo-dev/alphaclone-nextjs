@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export async function GET(req: Request) {
@@ -10,7 +11,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing tenant ID' }, { status: 400 });
         }
 
-        const supabase = createSupabaseAdminClient();
+        const { admin: supabase } = await requireTenantAccess(tenantId, req);
 
         // Fetch calendar events synced from Calendly
         const { data: events, error } = await supabase
@@ -28,8 +29,8 @@ export async function GET(req: Request) {
 
         return NextResponse.json({ events: events || [] });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('API /calendly/scheduled-events Error:', err);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return routeErrorResponse(err, undefined, req);
     }
 }

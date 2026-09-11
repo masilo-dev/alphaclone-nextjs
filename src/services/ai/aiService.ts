@@ -1,13 +1,11 @@
 import {
     routeAIRequest,
-    getAvailableProviders,
+    streamAIRequest,
     getRecommendedModel,
     estimateCost,
-    AIRequestOptions,
-    AIResponse as RouterResponse
 } from '../aiRouter';
 
-export type AIProvider = 'openai' | 'anthropic' | 'auto';
+export type AIProvider = 'openai' | 'anthropic' | 'xai' | 'auto';
 
 export type AIModel = string;
 
@@ -22,7 +20,7 @@ export interface AIRequest {
 
 export interface AIResponse {
     content: string;
-    provider: 'openai' | 'anthropic' | 'gemini' | 'openrouter';
+    provider: 'openai' | 'anthropic' | 'xai' | 'gemini' | 'openrouter';
     model: string;
     tokens: {
         prompt: number;
@@ -33,13 +31,23 @@ export interface AIResponse {
 }
 
 class AIService {
+    private resolveRequestedModel(request: AIRequest): string {
+        if (request.model) return request.model;
+        if (request.provider === 'anthropic') return 'claude-sonnet-4-6-20260217';
+        if (request.provider === 'xai') return 'grok-4.3';
+        if (request.provider === 'openai') return 'gpt-4o';
+        return 'deepseek-chat';
+    }
+
     async complete(request: AIRequest): Promise<AIResponse> {
         const response = await routeAIRequest({
             prompt: request.prompt,
             systemPrompt: request.systemPrompt,
             maxTokens: request.maxTokens,
-            temperature: request.temperature
+            temperature: request.temperature,
+            model: this.resolveRequestedModel(request)
         });
+
 
         return {
             content: response.content,
@@ -51,9 +59,27 @@ class AIService {
     }
 
     async *stream(request: AIRequest): AsyncGenerator<string> {
-        // Fallback to complete for now if stream is not implemented in router
-        const response = await this.complete(request);
-        yield response.content;
+        const response = await streamAIRequest({
+            prompt: request.prompt,
+            systemPrompt: request.systemPrompt,
+            maxTokens: request.maxTokens,
+            temperature: request.temperature,
+            model: this.resolveRequestedModel(request),
+        });
+        const reader = response.stream.getReader();
+        const decoder = new TextDecoder();
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                if (chunk) yield chunk;
+            }
+            const finalChunk = decoder.decode();
+            if (finalChunk) yield finalChunk;
+        } finally {
+            reader.releaseLock();
+        }
     }
 
     getRecommendedModel(taskType: string) {
@@ -92,8 +118,7 @@ Include all standard legal clauses and make it ready to sign.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a legal contract expert. Generate professional, legally sound contracts.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-4-6-20260217',
+            provider: 'auto',
             maxTokens: 4000,
         });
 
@@ -123,8 +148,7 @@ Return as JSON with keys: summary, keyPoints, entities, sentiment`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a document analysis expert. Extract structured information from documents.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-4-6-20260217',
+            provider: 'auto',
             temperature: 0.3,
         });
 
@@ -161,8 +185,7 @@ Return as JSON with keys: subject, body`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a professional email writer. Draft clear, concise, and effective emails.',
-            provider: 'openai',
-            model: 'gpt-4o',
+            provider: 'auto',
             temperature: 0.7,
         });
 
@@ -197,8 +220,7 @@ Make it clear, comprehensive, and action-oriented.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a project management expert. Write clear project descriptions.',
-            provider: 'openai',
-            model: 'gpt-4o',
+            provider: 'auto',
         });
 
         return response.content;
@@ -228,8 +250,7 @@ Return as JSON with keys: summary, decisions, actionItems, nextSteps`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a meeting facilitator. Extract structured information from meeting notes.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-4-6-20260217',
+            provider: 'auto',
             temperature: 0.3,
         });
 
@@ -261,8 +282,7 @@ Return as JSON with the requested fields.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a data extraction expert. Extract structured data accurately.',
-            provider: 'openai',
-            model: 'gpt-4o',
+            provider: 'auto',
             temperature: 0.2,
         });
 
@@ -284,8 +304,7 @@ ${text}`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a professional translator. Provide accurate translations.',
-            provider: 'openai',
-            model: 'gpt-4o',
+            provider: 'auto',
         });
 
         return response.content;
@@ -302,8 +321,7 @@ ${text}`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a helpful business assistant. Provide clear, actionable advice.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-4-6-20260217',
+            provider: 'auto',
         });
 
         return response.content;
