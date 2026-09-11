@@ -910,6 +910,7 @@ registerTool('social-publishing', {
   },
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
+    const hasExplicitPostAs = Boolean(args.post_as);
     const postAs = String(args.post_as || 'personal').toLowerCase();
     if (postAs === 'all_pages') {
       return toMcpContent(
@@ -924,12 +925,31 @@ registerTool('social-publishing', {
 
     let identityType = args.identity_type;
     let identityId = args.identity_id || args.linkedin_organization_id;
-    if (!identityType) {
-      if (postAs === 'company' || postAs === 'organization' || args.linkedin_organization_id) {
-        identityType = 'linkedin_organization';
-      } else {
-        identityType = 'linkedin_person';
-      }
+    const postAsIdentityType = hasExplicitPostAs
+      ? postAs === 'company' || postAs === 'organization'
+        ? 'linkedin_organization'
+        : 'linkedin_person'
+      : args.linkedin_organization_id
+        ? 'linkedin_organization'
+        : identityType || 'linkedin_person';
+    if (hasExplicitPostAs && identityType && identityType !== postAsIdentityType) {
+      return toMcpContent(
+        errorResult(
+          'create_linkedin_post',
+          'LINKEDIN_DESTINATION_MISMATCH',
+          `post_as=${postAs} conflicts with identity_type=${identityType}`
+        )
+      );
+    }
+    identityType = postAsIdentityType;
+    if (args.linkedin_organization_id && identityType !== 'linkedin_organization') {
+      return toMcpContent(
+        errorResult(
+          'create_linkedin_post',
+          'LINKEDIN_DESTINATION_MISMATCH',
+          'linkedin_organization_id cannot be used with post_as=personal'
+        )
+      );
     }
 
     const content = args.content || args.caption || args.text || '';

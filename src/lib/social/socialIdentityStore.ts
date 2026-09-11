@@ -263,6 +263,7 @@ export function formatIdentityCandidates(identities: StoredSocialIdentity[]) {
 }
 
 export type ResolvePublishIdentityParams = {
+  tenantId?: string | null;
   identityId?: string | null;
   identityType?: string | null;
   provider?: string | null;
@@ -280,9 +281,12 @@ export function resolvePublishIdentityFromList(
   const provider = String(params.provider || '').trim().toLowerCase() || null;
   const identityType = String(params.identityType || '').trim() || null;
 
-  const scoped = provider
-    ? identities.filter((i) => String(i.provider).toLowerCase() === provider)
+  const tenantScoped = params.tenantId
+    ? identities.filter((i) => i.tenant_id === params.tenantId)
     : identities;
+  const scoped = provider
+    ? tenantScoped.filter((i) => String(i.provider).toLowerCase() === provider)
+    : tenantScoped;
 
   const publishable = scoped.filter((i) => i.can_publish);
   const availableIdentities = formatIdentityCandidates(publishable);
@@ -339,9 +343,17 @@ export function resolvePublishIdentityFromList(
     }
 
     if (identityType && match.identity_type !== identityType) {
+      const linkedinMismatch =
+        provider === 'linkedin' ||
+        identityType.startsWith('linkedin_') ||
+        String(match.identity_type).startsWith('linkedin_');
       throw new TenantIsolationError(
         `Identity type mismatch: expected ${identityType}, got ${match.identity_type}`,
-        'PERMISSION_MISSING'
+        linkedinMismatch ? 'LINKEDIN_DESTINATION_MISMATCH' : 'PERMISSION_MISSING',
+        {
+          requested_identity_type: identityType,
+          resolved_identity_type: match.identity_type,
+        }
       );
     }
     if (!match.can_publish) {

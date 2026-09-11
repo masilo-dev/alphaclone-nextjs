@@ -22,6 +22,7 @@ const EMAIL_TOOLS = new Set([
 const SOCIAL_PUBLISH_TOOLS = new Set([
   'publish_social_post',
   'publish_post',
+  'create_linkedin_post',
   'create_social_post',
   'create_social_post_with_media',
   'publish_now',
@@ -133,7 +134,20 @@ export async function normalizeToolArguments(
 
   if (SOCIAL_PUBLISH_TOOLS.has(toolName)) {
     const platformHint = firstNonEmpty(args.platform, args.provider);
+    const target =
+      args.target && typeof args.target === 'object' && !Array.isArray(args.target)
+        ? (args.target as Record<string, unknown>)
+        : undefined;
+    const explicitDestination = firstNonEmpty(
+      args.post_as,
+      args.destination,
+      args.identity_type,
+      target?.destination,
+      target?.identity_type,
+      target?.identity_id
+    );
     if (
+      !explicitDestination &&
       !args.identity_id &&
       !args.facebook_page_id &&
       !args.linkedin_organization_id &&

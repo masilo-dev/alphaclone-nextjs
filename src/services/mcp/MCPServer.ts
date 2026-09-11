@@ -4198,6 +4198,12 @@ class AlphaCloneMCPServer {
 
           // linkedin_organization_id implies a company-page post (Bonnie often omits post_as=company).
           if (requestedOrganizationId && postAsMode === 'personal') {
+            if (post_as != null) {
+              throwLinkedInError(
+                'LINKEDIN_DESTINATION_MISMATCH',
+                'linkedin_organization_id cannot be used with post_as=personal.'
+              );
+            }
             postAsMode = 'company';
           }
 
@@ -4236,9 +4242,10 @@ class AlphaCloneMCPServer {
                 { available_organization_ids: availableIds }
               );
             }
-            if (!selectedCompany && allCompanyPageIds.length > 0 && !allCompanyPageIds.includes(requestedOrganizationId)) {
-              console.warn(
-                `[create_linkedin_post] linkedin_organization_id=${requestedOrganizationId} not in cached company pages; posting anyway`
+            if (!selectedCompany || !allCompanyPageIds.includes(requestedOrganizationId)) {
+              throwLinkedInError(
+                'LINKEDIN_ORGANIZATION_NOT_FOUND',
+                'The requested LinkedIn organization is not connected to this tenant.'
               );
             }
             postAsCompany = true;

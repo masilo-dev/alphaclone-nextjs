@@ -9,6 +9,10 @@ const {
   formatIdentityCandidates,
 } = await import('../../src/lib/social/socialIdentityStore.ts');
 const { TenantIsolationError } = await import('../../src/lib/social/tenantGuard.ts');
+const { normalizeToolArguments } = await import('../../src/lib/mcp/normalizeToolArguments.ts');
+const { getLinkedInDestinationMismatch } = await import(
+  '../../src/lib/social/SocialPublishingService.ts'
+);
 const { publishSocialPostJsonSchema } = await import(
   '../../src/lib/mcp/tools/socialPublishContract.ts'
 );
@@ -118,6 +122,105 @@ test('personal + organization → identity_type linkedin_organization resolves o
     identityType: 'linkedin_organization',
   });
   assert.equal(resolved.identity_id, linkedinOrg.identity_id);
+});
+
+test('Tenant B personal request cannot resolve Tenant A identity', () => {
+  const tenantB = '22222222-2222-4222-8222-222222222222';
+  const tenantBPersonal = { ...linkedinPersonal, tenant_id: tenantB, identity_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', provider_identity_id: 'member-b' };
+  const resolved = resolvePublishIdentityFromList([linkedinPersonal, linkedinOrg, tenantBPersonal], {
+    tenantId: tenantB,
+    provider: 'linkedin',
+    identityType: 'linkedin_person',
+  });
+  assert.equal(resolved.identity_id, tenantBPersonal.identity_id);
+});
+
+test('foreign tenant organization id is rejected', () => {
+  assert.throws(
+    () => resolvePublishIdentityFromList([linkedinOrg], {
+      tenantId: '22222222-2222-4222-8222-222222222222',
+      provider: 'linkedin',
+      identityId: linkedinOrg.identity_id,
+      identityType: 'linkedin_organization',
+    }),
+    (err) => err instanceof TenantIsolationError && err.code === 'IDENTITY_NOT_FOUND'
+  );
+});
+
+test('personal requested without a personal identity fails explicitly', () => {
+  assert.throws(
+    () => resolvePublishIdentityFromList([linkedinOrg], {
+      tenantId: TENANT, provider: 'linkedin', identityType: 'linkedin_person',
+    }),
+    (err) => err instanceof TenantIsolationError && err.code === 'MISSING_IDENTITY'
+  );
+});
+
+test('company requested without an organization identity fails explicitly', () => {
+  assert.throws(
+    () => resolvePublishIdentityFromList([linkedinPersonal], {
+      tenantId: TENANT, provider: 'linkedin', identityType: 'linkedin_organization',
+    }),
+    (err) => err instanceof TenantIsolationError && err.code === 'MISSING_IDENTITY'
+  );
+});
+
+test('explicit identity_id with the wrong LinkedIn type is rejected as a destination mismatch', () => {
+  assert.throws(
+    () => resolvePublishIdentityFromList([linkedinPersonal, linkedinOrg], {
+      tenantId: TENANT, provider: 'linkedin', identityId: linkedinOrg.identity_id,
+      identityType: 'linkedin_person',
+    }),
+    (err) => err instanceof TenantIsolationError && err.code === 'LINKEDIN_DESTINATION_MISMATCH'
+  );
+});
+
+test('explicit personal post_as bypasses injected organization defaults', async () => {
+  const normalized = await normalizeToolArguments('create_linkedin_post', {
+    post_as: 'personal',
+    caption: 'Personal post',
+  }, { tenantId: TENANT, userId: 'user-a' });
+  assert.equal(normalized.post_as, 'personal');
+  assert.equal(normalized.identity_id, undefined);
+  assert.equal(normalized.identity_type, undefined);
+  assert.equal(normalized.linkedin_organization_id, undefined);
+});
+
+test('provider guard blocks personal request resolved as organization', () => {
+  const mismatch = getLinkedInDestinationMismatch('linkedin_person', {
+    platform: 'linkedin', identity_type: 'linkedin_organization', identity_id: 'org-456',
+    identity_name: 'Org', organization_id: 'org-456', author_urn: 'urn:li:organization:456',
+    can_publish: true, missing_permissions: [],
+  });
+  assert.equal(mismatch?.error_code, 'LINKEDIN_DESTINATION_MISMATCH');
+});
+
+test('provider guard blocks company request resolved as personal', () => {
+  const mismatch = getLinkedInDestinationMismatch('linkedin_organization', {
+    platform: 'linkedin', identity_type: 'linkedin_person', identity_id: 'member-123',
+    identity_name: 'Person', author_urn: 'urn:li:person:abc', can_publish: true,
+    missing_permissions: [],
+  });
+  assert.equal(mismatch?.error_code, 'LINKEDIN_DESTINATION_MISMATCH');
+});
+
+test('multiple organizations use the configured default deterministically', () => {
+  const second = { ...linkedinOrg, identity_id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', provider_identity_id: 'org-789', is_default: true };
+  const resolved = resolvePublishIdentityFromList([linkedinOrg, second], {
+    tenantId: TENANT, provider: 'linkedin', identityType: 'linkedin_organization', allowDefault: true,
+  });
+  assert.equal(resolved.identity_id, second.identity_id);
+});
+
+test('scheduled, image, and document LinkedIn paths retain the canonical resolver and provider guard', async () => {
+  const fs = await import('node:fs');
+  const tools = fs.readFileSync(new URL('../../src/lib/mcp/tools/social-publishing.ts', import.meta.url), 'utf8');
+  const service = fs.readFileSync(new URL('../../src/lib/social/SocialPublishingService.ts', import.meta.url), 'utf8');
+  assert.match(tools, /registerCanonicalAssetPublisher\(\{[\s\S]*?name: 'publish_linkedin_image'/);
+  assert.match(tools, /registerCanonicalAssetPublisher\(\{[\s\S]*?name: 'publish_linkedin_document'/);
+  assert.match(tools, /resolveTenantIdentityForPublish/);
+  assert.match(service, /processDueScheduledPosts[\s\S]*resolveIdentity[\s\S]*publishToProvider/);
+  assert.match(service, /getLinkedInDestinationMismatch/);
 });
 
 test('multiple identities + no identity_id → TARGET_AMBIGUOUS', () => {

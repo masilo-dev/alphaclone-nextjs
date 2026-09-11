@@ -18,6 +18,7 @@ export class TenantIsolationError extends Error {
       | 'TARGET_AMBIGUOUS'
       | 'IDENTITY_NOT_FOUND'
       | 'IDENTITY_NOT_PUBLISHABLE'
+      | 'LINKEDIN_DESTINATION_MISMATCH'
       | 'OAUTH_EXPIRED'
       | 'PERMISSION_MISSING'
       | 'PROVIDER_REJECTED'

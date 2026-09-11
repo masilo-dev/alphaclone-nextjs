@@ -280,6 +280,31 @@ function buildFacebookFailureResult(
   };
 }
 
+export function getLinkedInDestinationMismatch(
+  requestedType: PublishSocialPostInput['identityType'],
+  identity: ResolvedIdentity
+): ProviderPublishResult | null {
+  if (
+    identity.platform !== 'linkedin' ||
+    (requestedType === identity.identity_type &&
+      !(requestedType === 'linkedin_person' && identity.organization_id) &&
+      !(requestedType === 'linkedin_organization' && !identity.organization_id))
+  ) {
+    return null;
+  }
+  return {
+    ok: false,
+    provider: 'linkedin',
+    provider_post_id: null,
+    live_url: null,
+    published_at: null,
+    verified: false,
+    verified_at: null,
+    error: `Requested ${requestedType} but resolved ${identity.identity_type}`,
+    error_code: 'LINKEDIN_DESTINATION_MISMATCH',
+  };
+}
+
 export class SocialPublishingService {
   async resolveIdentity(input: {
     tenantId: string;
@@ -794,9 +819,12 @@ export class SocialPublishingService {
 
   async publishToProvider(
     postId: string,
-    identity: ResolvedIdentity
+    identity: ResolvedIdentity,
+    requestedType: PublishSocialPostInput['identityType'] = identity.identity_type
   ): Promise<ProviderPublishResult> {
     if (identity.platform === 'facebook') return this.publishToFacebook(postId, identity);
+    const mismatch = getLinkedInDestinationMismatch(requestedType, identity);
+    if (mismatch) return mismatch;
     return this.publishToLinkedIn(postId, identity);
   }
 
@@ -1356,7 +1384,7 @@ export class SocialPublishingService {
       }
 
       // Immediate publish
-      const providerResult = await this.publishToProvider(record.id, identity);
+      const providerResult = await this.publishToProvider(record.id, identity, input.identityType);
 
       if (!providerResult.ok || !providerResult.provider_post_id || !providerResult.verified) {
         const failStatus: SocialPostStatus =
@@ -1604,7 +1632,7 @@ export class SocialPublishingService {
       });
       await this.validateCapabilities(identity);
       await this.updatePostRecord(post.id, { status: 'publishing' });
-      const providerResult = await this.publishToProvider(post.id, identity);
+      const providerResult = await this.publishToProvider(post.id, identity, identityType);
 
       if (!providerResult.ok || !providerResult.provider_post_id || !providerResult.verified) {
         const failStatus: SocialPostStatus =
@@ -1826,7 +1854,7 @@ export class SocialPublishingService {
           identityType,
           identityId: String(identityId),
         });
-        const result = await this.publishToProvider(post.id, identity);
+        const result = await this.publishToProvider(post.id, identity, identityType);
         if (result.ok && result.verified && result.provider_post_id) {
           await updatePost(post.id, {
             status: 'published',
