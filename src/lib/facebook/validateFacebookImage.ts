@@ -46,7 +46,13 @@ export async function validateFacebookImageBytes(buffer: Buffer, mimeType: strin
   if (!buffer.length || buffer.length > MAX_BYTES) throw new Error('Facebook image must contain between 1 byte and 10 MB');
   if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(mimeType)) throw new Error(`Unsupported Facebook image Content-Type: ${mimeType}`);
   const metadata = await sharp(buffer, { limitInputPixels: 40_000_000 }).metadata();
-  const expected = { jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp' }[metadata.format || ''];
+  const supportedFormats: Partial<Record<NonNullable<typeof metadata.format>, string>> = {
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    webp: 'image/webp',
+  };
+  const expected = metadata.format ? supportedFormats[metadata.format] : undefined;
   if (!expected || expected !== mimeType || !metadata.width || !metadata.height || metadata.width * metadata.height > 40_000_000) throw new Error('Invalid Facebook image format or dimensions');
   // Decode as well as inspect headers, rejecting truncated/corrupt bodies.
   await sharp(buffer, { limitInputPixels: 40_000_000 }).resize({ width: 1, height: 1 }).raw().toBuffer();

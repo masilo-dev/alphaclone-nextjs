@@ -1,6 +1,5 @@
 /**
- * Phase 1 Universal Chaser detector — observe-only canonical records.
- * Does not send messages; compares against existing fragmented scanners.
+ * Universal Chaser detector — observes canonical records and upserts duplicate-safe chase instances.
  */
 
 import 'server-only';
@@ -33,9 +32,7 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
     errors: [],
   };
 
-  if (!(await isChaserEnabledForTenant(tenantId))) {
-    return result;
-  }
+  if (!(await isChaserEnabledForTenant(tenantId))) return result;
 
   const bump = (policyKey: string, created: boolean) => {
     result.detected += 1;
@@ -45,16 +42,19 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
   };
 
   const today = new Date().toISOString().slice(0, 10);
+  const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString();
+  const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
 
   const { data: overdueTasks } = await admin
     .from('tasks')
-    .select('id, title, status, due_date, assigned_to, related_to_contact, related_to_project')
+    .select('id, title, status, due_date, assigned_to, related_to_contact, related_to_project, project_id')
     .eq('tenant_id', tenantId)
     .lt('due_date', today)
     .limit(50);
 
   for (const task of overdueTasks || []) {
     if (!isOpenTaskStatus(String(task.status || ''))) continue;
+    const projectId = task.project_id || task.related_to_project || null;
     const upsert = await upsertChaseInstance({
       tenantId,
       policyKey: 'task_chaser',
@@ -63,12 +63,77 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
       reasonCode: 'overdue',
       assigneeUserId: task.assigned_to,
       relatedContactId: task.related_to_contact,
-      relatedProjectId: task.related_to_project,
+      relatedProjectId: projectId,
+      relatedTaskId: task.id,
       lastObservedState: String(task.status),
       contextSnapshot: { title: task.title, due_date: task.due_date },
     });
     if (upsert.error) result.errors.push(upsert.error);
     else bump('task_chaser', upsert.created);
+  }
+
+  const { data: overdueMilestones, error: milestonesError } = await admin
+    .from('project_milestones')
+    .select('id, project_id, name, status, due_date, target_date, owner_user_id, progress_percent')
+    .eq('tenant_id', tenantId)
+    .not('status', 'in', '("completed","done","cancelled")')
+    .or(`due_date.lt.${today},target_date.lt.${today}`)
+    .limit(50);
+  if (milestonesError && !/schema cache|column/i.test(milestonesError.message || '')) result.errors.push(milestonesError.message);
+
+  for (const milestone of overdueMilestones || []) {
+    const upsert = await upsertChaseInstance({
+      tenantId,
+      policyKey: 'milestone_chaser',
+      entityType: 'milestone',
+      entityId: milestone.id,
+      reasonCode: 'overdue',
+      relatedProjectId: milestone.project_id,
+      ownerUserId: milestone.owner_user_id,
+      severity: 'high',
+      lastObservedState: String(milestone.status),
+      contextSnapshot: {
+        name: milestone.name,
+        due_date: milestone.due_date,
+        target_date: milestone.target_date,
+        progress_percent: milestone.progress_percent,
+      },
+    });
+    if (upsert.error) result.errors.push(upsert.error);
+    else bump('milestone_chaser', upsert.created);
+  }
+
+  const { data: pendingApprovals, error: approvalsError } = await admin
+    .from('project_client_approvals')
+    .select('id, project_id, title, status, approval_type, requested_at, expires_at, requested_from_email, task_id')
+    .eq('tenant_id', tenantId)
+    .in('status', ['pending', 'viewed'])
+    .lt('requested_at', twoDaysAgo)
+    .limit(50);
+  if (approvalsError && !/schema cache|does not exist/i.test(approvalsError.message || '')) result.errors.push(approvalsError.message);
+
+  for (const approval of pendingApprovals || []) {
+    const upsert = await upsertChaseInstance({
+      tenantId,
+      policyKey: 'approval_chaser',
+      entityType: 'approval',
+      entityId: approval.id,
+      reasonCode: approval.expires_at && approval.expires_at < new Date().toISOString() ? 'approval_overdue' : 'approval_waiting',
+      waitingOn: 'client',
+      relatedProjectId: approval.project_id,
+      relatedTaskId: approval.task_id,
+      severity: approval.expires_at && approval.expires_at < new Date().toISOString() ? 'critical' : 'high',
+      lastObservedState: String(approval.status),
+      contextSnapshot: {
+        title: approval.title,
+        approval_type: approval.approval_type,
+        requested_at: approval.requested_at,
+        expires_at: approval.expires_at,
+        requested_from_email: approval.requested_from_email,
+      },
+    });
+    if (upsert.error) result.errors.push(upsert.error);
+    else bump('approval_chaser', upsert.created);
   }
 
   const { data: openQuotes } = await admin
@@ -81,19 +146,11 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
   for (const quote of openQuotes || []) {
     if (quote.status === 'accepted' || quote.status === 'converted') continue;
     const upsert = await upsertChaseInstance({
-      tenantId,
-      policyKey: 'quote_proposal_chaser',
-      entityType: 'quote',
-      entityId: quote.id,
+      tenantId, policyKey: 'quote_proposal_chaser', entityType: 'quote', entityId: quote.id,
       reasonCode: quote.viewed_at ? 'viewed_no_decision' : 'sent_no_response',
       relatedContactId: quote.contact_id || quote.client_id,
       lastObservedState: String(quote.status),
-      contextSnapshot: {
-        quote_number: quote.quote_number,
-        valid_until: quote.valid_until,
-        sent_at: quote.sent_at,
-        viewed_at: quote.viewed_at,
-      },
+      contextSnapshot: { quote_number: quote.quote_number, valid_until: quote.valid_until, sent_at: quote.sent_at, viewed_at: quote.viewed_at },
     });
     if (upsert.error) result.errors.push(upsert.error);
     else bump('quote_proposal_chaser', upsert.created);
@@ -101,29 +158,33 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
 
   const { data: unpaidInvoices } = await admin
     .from('business_invoices')
-    .select('id, invoice_number, status, due_date, client_id, reminder_count, balance_due, total')
+    .select('id, invoice_number, status, lifecycle_status, due_date, client_id, project_id, reminder_count, balance_due, total')
     .eq('tenant_id', tenantId)
     .in('status', ['sent', 'viewed', 'overdue', 'partially_paid'])
     .limit(50);
 
   for (const invoice of unpaidInvoices || []) {
+    const projectPayment = Boolean(invoice.project_id);
+    const policyKey = projectPayment ? 'payment_chaser' : 'invoice_chaser';
     const upsert = await upsertChaseInstance({
       tenantId,
-      policyKey: 'invoice_chaser',
+      policyKey,
       entityType: 'invoice',
       entityId: invoice.id,
       reasonCode: invoice.due_date && invoice.due_date < today ? 'overdue' : 'awaiting_payment',
       relatedClientId: invoice.client_id,
-      lastObservedState: String(invoice.status),
+      relatedProjectId: invoice.project_id,
+      lastObservedState: String(invoice.lifecycle_status || invoice.status),
       contextSnapshot: {
         invoice_number: invoice.invoice_number,
         due_date: invoice.due_date,
         reminder_count: invoice.reminder_count,
         balance_due: invoice.balance_due ?? invoice.total,
+        project_payment: projectPayment,
       },
     });
     if (upsert.error) result.errors.push(upsert.error);
-    else bump('invoice_chaser', upsert.created);
+    else bump(policyKey, upsert.created);
   }
 
   const { data: unsignedContracts } = await admin
@@ -135,21 +196,14 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
 
   for (const contract of unsignedContracts || []) {
     const upsert = await upsertChaseInstance({
-      tenantId,
-      policyKey: 'contract_chaser',
-      entityType: 'contract',
-      entityId: contract.id,
-      reasonCode: 'unsigned',
-      relatedClientId: contract.client_id,
-      lastObservedState: String(contract.status),
-      contextSnapshot: { title: contract.title, client_name: contract.client_name, sent_at: contract.sent_at },
-      severity: 'high',
+      tenantId, policyKey: 'contract_chaser', entityType: 'contract', entityId: contract.id,
+      reasonCode: 'unsigned', relatedClientId: contract.client_id, lastObservedState: String(contract.status),
+      contextSnapshot: { title: contract.title, client_name: contract.client_name, sent_at: contract.sent_at }, severity: 'high',
     });
     if (upsert.error) result.errors.push(upsert.error);
     else bump('contract_chaser', upsert.created);
   }
 
-  const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
   const { data: staleLeads } = await admin
     .from('leads')
     .select('id, business_name, contact_name, stage, updated_at, email')
@@ -160,12 +214,8 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
 
   for (const lead of staleLeads || []) {
     const upsert = await upsertChaseInstance({
-      tenantId,
-      policyKey: 'lead_chaser',
-      entityType: 'lead',
-      entityId: lead.id,
-      reasonCode: 'no_touch',
-      lastObservedState: String(lead.stage),
+      tenantId, policyKey: 'lead_chaser', entityType: 'lead', entityId: lead.id,
+      reasonCode: 'no_touch', lastObservedState: String(lead.stage),
       contextSnapshot: { business_name: lead.business_name, contact_name: lead.contact_name, email: lead.email },
     });
     if (upsert.error) result.errors.push(upsert.error);
@@ -183,7 +233,7 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
   for (const sla of breachedSlas || []) {
     const upsert = await upsertChaseInstance({
       tenantId,
-      policyKey: 'client_chaser',
+      policyKey: 'client_response_chaser',
       entityType: 'client',
       entityId: sla.client_id || sla.id,
       reasonCode: 'no_reply',
@@ -193,19 +243,14 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
       contextSnapshot: { contact_email: sla.contact_email, subject: sla.subject, sla_id: sla.id },
     });
     if (upsert.error) result.errors.push(upsert.error);
-    else bump('client_chaser', upsert.created);
+    else bump('client_response_chaser', upsert.created);
   }
 
   const staleProjects = await listStaleProjects(tenantId, 3, 25);
   for (const project of staleProjects) {
     const upsert = await upsertChaseInstance({
-      tenantId,
-      policyKey: 'project_chaser',
-      entityType: 'project',
-      entityId: String(project.id),
-      reasonCode: 'no_progress',
-      relatedProjectId: String(project.id),
-      ownerUserId: (project.owner_id as string) || null,
+      tenantId, policyKey: 'project_chaser', entityType: 'project', entityId: String(project.id),
+      reasonCode: 'no_progress', relatedProjectId: String(project.id), ownerUserId: (project.owner_id as string) || null,
       lastObservedState: String(project.status),
       contextSnapshot: { name: project.name, source_table: project.source_table, updated_at: project.updated_at },
     });
@@ -213,7 +258,6 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
     else bump('project_chaser', upsert.created);
   }
 
-  const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString();
   const { data: activeConnections } = await admin
     .from('social_connections')
     .select('id, provider, provider_account_name, connection_status')
@@ -231,22 +275,13 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
       .contains('platforms', [conn.provider])
       .limit(1)
       .maybeSingle();
-
     if (recentPost?.id) continue;
 
     const upsert = await upsertChaseInstance({
-      tenantId,
-      policyKey: 'social_chaser',
-      entityType: 'social_account',
-      entityId: conn.id,
-      reasonCode: 'no_verified_publish',
-      waitingOn: 'social_provider',
-      severity: 'high',
+      tenantId, policyKey: 'social_chaser', entityType: 'social_account', entityId: conn.id,
+      reasonCode: 'no_verified_publish', waitingOn: 'social_provider', severity: 'high',
       lastObservedState: conn.connection_status,
-      contextSnapshot: {
-        provider: conn.provider,
-        account_name: conn.provider_account_name,
-      },
+      contextSnapshot: { provider: conn.provider, account_name: conn.provider_account_name },
     });
     if (upsert.error) result.errors.push(upsert.error);
     else bump('social_chaser', upsert.created);
@@ -262,12 +297,8 @@ export async function runChaseScanForTenant(tenantId: string): Promise<ChaseScan
 
   for (const campaign of staleCampaigns || []) {
     const upsert = await upsertChaseInstance({
-      tenantId,
-      policyKey: 'campaign_chaser',
-      entityType: 'campaign',
-      entityId: campaign.id,
-      reasonCode: 'no_progress',
-      lastObservedState: String(campaign.status),
+      tenantId, policyKey: 'campaign_chaser', entityType: 'campaign', entityId: campaign.id,
+      reasonCode: 'no_progress', lastObservedState: String(campaign.status),
       contextSnapshot: { name: campaign.name, updated_at: campaign.updated_at },
     });
     if (upsert.error) result.errors.push(upsert.error);
