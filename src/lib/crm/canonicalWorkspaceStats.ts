@@ -44,8 +44,30 @@ export type CanonicalWorkspaceCounts = {
   deals: number;
   contacts: number;
   clients: number;
+  invoices: number;
   unpaid_invoices: number;
 };
+
+async function countOperationalRows(
+  admin: SupabaseClient,
+  table: string,
+  tenantId: string,
+): Promise<number> {
+  const filtered = await admin
+    .from(table)
+    .select('id', { count: 'exact', head: true })
+    .eq('tenant_id', tenantId)
+    .or('is_test_data.is.null,is_test_data.eq.false');
+  if (!filtered.error) return filtered.count ?? 0;
+
+  // Compatibility for older tables that do not have is_test_data yet.
+  const fallback = await admin
+    .from(table)
+    .select('id', { count: 'exact', head: true })
+    .eq('tenant_id', tenantId);
+  if (fallback.error) warnCountFailure(`${table} operational rows`, fallback.error);
+  return fallback.error ? 0 : fallback.count ?? 0;
+}
 
 /** PostgREST `in` filter list built only from real `task_status` enum labels. */
 export function closedTaskFilter(): string {
@@ -60,6 +82,7 @@ export async function countOpenTasks(
     .from('tasks')
     .select('id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId)
+    .or('is_test_data.is.null,is_test_data.eq.false')
     .not('status', 'in', closedTaskFilter());
   if (error) {
     warnCountFailure('open tasks', error);
@@ -103,28 +126,32 @@ export async function getCanonicalWorkspaceCounts(
     dealsRes,
     contactsRes,
     clientsRes,
+    invoiceCount,
     invoicesRes,
   ] = await Promise.all([
     countOpenTasks(admin, tenantId),
     countActiveProjects(admin, tenantId),
-    admin.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-    admin.from('deals').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    countOperationalRows(admin, 'leads', tenantId),
+    countOperationalRows(admin, 'deals', tenantId),
     admin.from('contacts').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
     admin.from('business_clients').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    countOperationalRows(admin, 'business_invoices', tenantId),
     admin
       .from('business_invoices')
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
+      .or('is_test_data.is.null,is_test_data.eq.false')
       .in('status', ['sent', 'overdue', 'pending', 'draft']),
   ]);
 
   return {
     open_tasks,
     active_projects,
-    leads: leadsRes.count ?? 0,
-    deals: dealsRes.count ?? 0,
+    leads: leadsRes,
+    deals: dealsRes,
     contacts: contactsRes.count ?? 0,
     clients: clientsRes.count ?? 0,
+    invoices: invoiceCount,
     unpaid_invoices: invoicesRes.count ?? 0,
   };
 }

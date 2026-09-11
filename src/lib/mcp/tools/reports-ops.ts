@@ -2,6 +2,13 @@ import { z } from 'zod';
 import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { throwConnectorError } from '@/lib/mcp/connector/response';
+import { getCanonicalWorkspaceCounts } from '@/lib/crm/canonicalWorkspaceStats';
+import {
+  inspectContractLifecycle,
+  inspectInvoiceLifecycle,
+  inspectQuoteLifecycle,
+  isOperationalRecord,
+} from '@/lib/business/lifecycleConsistency';
 
 defineConnectorTool({
   module: 'reports-ops',
@@ -22,29 +29,39 @@ defineConnectorTool({
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const countOf = async (table: string) => {
-      const { count, error } = await supabase
-        .from(table)
-        .select('id', { count: 'exact', head: true })
-        .eq('tenant_id', args.tenant_id);
-      return error ? null : count ?? 0;
+      const { count } = await supabase.from(table).select('id', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id);
+      return count ?? 0;
     };
-
-    const [leads, contacts, deals, invoices, tasks, mcpSessions] = await Promise.all([
-      countOf('leads'),
-      countOf('contacts'),
-      countOf('deals'),
-      countOf('invoices'),
-      countOf('tasks'),
+    const [counts, mcpSessions, invoiceRows, contractRows, quoteRows] = await Promise.all([
+      getCanonicalWorkspaceCounts(supabase, args.tenant_id),
       countOf('mcp_sessions'),
+      supabase.from('business_invoices').select('id,status,paid_at,amount_paid,total,is_test_data').eq('tenant_id', args.tenant_id).limit(5000),
+      supabase.from('contracts').select('id,status,lifecycle_status,signed_at,client_signed_at,admin_signed_at').eq('tenant_id', args.tenant_id).limit(5000),
+      supabase.from('quotes').select('id,status,valid_until').eq('tenant_id', args.tenant_id).limit(5000),
     ]);
 
+    const lifecycleIssues = [
+      ...(invoiceRows.data || []).filter(isOperationalRecord).flatMap(inspectInvoiceLifecycle),
+      ...(contractRows.data || []).flatMap(inspectContractLifecycle),
+      ...(quoteRows.data || []).flatMap((row) => inspectQuoteLifecycle(row)),
+    ];
+
     return {
-      leads,
-      contacts,
-      deals,
-      invoices,
-      tasks,
+      leads: counts.leads,
+      contacts: counts.contacts,
+      deals: counts.deals,
+      invoices: counts.invoices,
+      tasks: counts.open_tasks,
+      open_tasks: counts.open_tasks,
+      active_projects: counts.active_projects,
+      unpaid_invoices: counts.unpaid_invoices,
       mcp_sessions: mcpSessions,
+      lifecycle_consistency: {
+        ok: lifecycleIssues.length === 0,
+        issue_count: lifecycleIssues.length,
+        issues: lifecycleIssues.slice(0, 100),
+      },
+      stats_source: 'canonical_workspace_stats',
       generated_at: new Date().toISOString(),
     };
   },
