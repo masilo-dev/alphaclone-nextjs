@@ -59,7 +59,36 @@ export const PWA_COMPANION_CAPABILITIES: Record<CompanionModuleId, CompanionCapa
   advanced_configuration: { level: 'DESKTOP', quickActions: [], desktopReason: 'Advanced configuration is available on desktop.' },
 };
 
+/**
+ * Most-specific rules MUST come first. This prevents an advanced child route
+ * from inheriting the more permissive capability of its parent module.
+ */
 const ROUTE_CAPABILITY_MAP: Array<{ prefixes: string[]; moduleId: CompanionModuleId }> = [
+  { moduleId: 'admin', prefixes: ['/admin', '/super-admin', '/dashboard/admin'] },
+  { moduleId: 'bulk_operations', prefixes: [
+    '/dashboard/leads/campaigns',
+    '/dashboard/leads/import',
+    '/dashboard/crm/import',
+    '/dashboard/crm/bulk',
+    '/dashboard/contacts/import',
+  ] },
+  { moduleId: 'workflow_builders', prefixes: [
+    '/dashboard/business/workflows/builder',
+    '/dashboard/automations/builder',
+    '/dashboard/workflows/builder',
+  ] },
+  { moduleId: 'advanced_configuration', prefixes: [
+    '/dashboard/projects/manage',
+    '/dashboard/business/projects/manage',
+    '/dashboard/projects/templates',
+    '/dashboard/business/projects/templates',
+    '/dashboard/accounting/settings',
+    '/dashboard/finance/settings',
+    '/dashboard/business/billing/settings',
+    '/dashboard/business/control/configuration',
+    '/dashboard/settings/admin',
+    '/dashboard/business/settings/admin',
+  ] },
   { moduleId: 'bonnie', prefixes: ['/dashboard/bonnie', '/dashboard/business/bonnie'] },
   { moduleId: 'notifications', prefixes: ['/dashboard/notifications'] },
   { moduleId: 'calendar', prefixes: ['/dashboard/calendar', '/dashboard/business/calendar', '/dashboard/business/meetings'] },
@@ -79,7 +108,6 @@ const ROUTE_CAPABILITY_MAP: Array<{ prefixes: string[]; moduleId: CompanionModul
   { moduleId: 'nexus', prefixes: ['/dashboard/automations', '/dashboard/marketplace', '/dashboard/business/workflows'] },
   { moduleId: 'control', prefixes: ['/dashboard/business/logs', '/dashboard/business/control', '/dashboard/system'] },
   { moduleId: 'settings', prefixes: ['/dashboard/settings', '/dashboard/business/settings'] },
-  { moduleId: 'admin', prefixes: ['/admin', '/super-admin', '/dashboard/admin'] },
   { moduleId: 'home', prefixes: ['/dashboard'] },
 ];
 
