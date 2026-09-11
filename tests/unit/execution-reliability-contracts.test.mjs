@@ -15,6 +15,16 @@ test('one-shot social publishing is not swallowed by the global durable switch',
   assert.ok(socialCheck >= 0 && globalCheck >= 0 && socialCheck < globalCheck);
 });
 
+test('normal MCP writes do not create agent runs implicitly', () => {
+  const source = read('src/lib/mcp/executionGateway.ts');
+  assert.match(source, /mirrorToDurableRuntime\?: boolean/);
+  assert.match(source, /params\.mirrorToDurableRuntime === true/);
+  assert.doesNotMatch(source, /import \{ processNormalizedTrigger \} from/);
+  const optIn = source.indexOf('params.mirrorToDurableRuntime === true');
+  const dynamicImport = source.indexOf("import('@/lib/bonnie/runtime/triggerGateway')");
+  assert.ok(optIn >= 0 && dynamicImport >= 0);
+});
+
 test('social publish contract exposes human destinations', () => {
   const contract = read('src/lib/mcp/tools/socialPublishContract.ts');
   const handler = read('src/lib/mcp/tools/socialPublishTool.ts');
