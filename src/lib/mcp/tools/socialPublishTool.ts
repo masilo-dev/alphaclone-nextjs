@@ -91,7 +91,22 @@ export async function handlePublishSocialPost(
   const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
 
   const platformHint = args.target?.integration || args.platform;
-  const destination = args.target?.destination || args.destination;
+  if (args.post_as === 'all_pages') {
+    return toMcpContent(
+      errorResult(
+        toolName,
+        'TARGET_AMBIGUOUS',
+        'post_as=all_pages requires one explicit publish call per tenant-owned identity_id'
+      )
+    );
+  }
+  const postAsDestination =
+    args.post_as === 'personal'
+      ? 'personal'
+      : args.post_as === 'company' || args.post_as === 'organization'
+        ? 'organization'
+        : undefined;
+  const destination = args.target?.destination || args.destination || postAsDestination;
   const requestedIdentityType = args.target?.identity_type || args.identity_type;
   const destinationIdentityType = destinationToIdentityType(platformHint, destination);
 
@@ -112,6 +127,16 @@ export async function handlePublishSocialPost(
   if (requestedIdentityType && destinationIdentityType && requestedIdentityType !== destinationIdentityType) {
     return toMcpContent(
       errorResult(toolName, 'TARGET_CONFLICT', `destination=${destination} conflicts with identity_type=${requestedIdentityType}`)
+    );
+  }
+
+  if (args.linkedin_organization_id && destinationIdentityType === 'linkedin_person') {
+    return toMcpContent(
+      errorResult(
+        toolName,
+        'LINKEDIN_DESTINATION_MISMATCH',
+        'linkedin_organization_id cannot be used when the requested destination is personal'
+      )
     );
   }
 

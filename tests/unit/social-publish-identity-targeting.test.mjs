@@ -69,7 +69,19 @@ test('publish jsonSchema exposes identity_id and identity_type for ChatGPT', () 
   assert.ok(props.identity_id, 'identity_id must be in MCP jsonSchema');
   assert.ok(props.identity_type, 'identity_type must be in MCP jsonSchema');
   assert.ok(props.platform, 'platform must be in MCP jsonSchema');
+  assert.ok(props.post_as, 'post_as must survive canonical create_linkedin_post aliasing');
   assert.match(String(props.identity_id.description), /connected_accounts|get_social_identities/i);
+});
+
+test('canonical publish handler maps post_as before resolving an identity', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL('../../src/lib/mcp/tools/socialPublishTool.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(src, /args\.post_as === 'personal'[\s\S]*'personal'/);
+  assert.match(src, /destinationIdentityType[\s\S]*resolveTenantIdentityForPublish/);
+  assert.match(src, /LINKEDIN_DESTINATION_MISMATCH/);
 });
 
 test('single LinkedIn personal → auto-select without identity_id', () => {

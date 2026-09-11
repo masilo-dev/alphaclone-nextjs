@@ -31,6 +31,7 @@ export const publishSocialPostInputSchema = z
     tenant_id: z.string().uuid().optional(),
     target: publishSocialTargetSchema,
     destination: z.enum(SOCIAL_DESTINATION_VALUES).optional(),
+    post_as: z.enum(['personal', 'company', 'organization', 'all_pages']).optional(),
     identity_id: z.string().min(1).optional(),
     platform: z.enum(['facebook', 'linkedin']).optional(),
     identity_type: z
@@ -114,6 +115,11 @@ export const publishSocialPostJsonSchema = {
       type: 'string',
       enum: [...SOCIAL_DESTINATION_VALUES],
       description: 'Set from the user intent. personal routes to LinkedIn personal; organization routes to LinkedIn organization; page routes to Facebook Page.',
+    },
+    post_as: {
+      type: 'string',
+      enum: ['personal', 'company', 'organization', 'all_pages'],
+      description: 'Legacy LinkedIn destination alias. personal routes only to linkedin_person; company/organization route only to linkedin_organization.',
     },
     identity_id: {
       type: 'string',
