@@ -7,8 +7,6 @@ import { Button } from '../ui/UIComponents';
 const NotFound: React.FC = () => {
    return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center px-4 relative overflow-hidden">
-         {/* Background Decor */}
-         <div className="absolute inset-0 bg-grid-pattern opacity-[0.05]" />
          <div className="absolute w-96 h-96 bg-red-500/10 rounded-full blur-[100px] pointer-events-none" />
 
          <div className="relative z-10">

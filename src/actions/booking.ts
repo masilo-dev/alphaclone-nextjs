@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase-server'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { Tenant } from '@/services/tenancy/types'
 
 // Define the BookingType interface here directly or import it if you move it to a shared file.
@@ -16,7 +16,7 @@ export interface BookingType {
 }
 
 export async function fetchBookingData(slug: string, serviceSlug: string): Promise<{ tenant: Tenant; service: BookingType }> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseServerClient();
 
     // 1. Fetch Tenant
     const { data: tenant, error: tenantError } = await supabase
@@ -47,7 +47,7 @@ export async function fetchBookingData(slug: string, serviceSlug: string): Promi
 }
 
 export async function fetchTenantBookingPage(slug: string): Promise<{ tenant: Tenant; services: BookingType[] }> {
-    const supabase = await createClient();
+    const supabase = await createSupabaseServerClient();
 
     // 1. Fetch Tenant
     const { data: tenant, error: tenantError } = await supabase

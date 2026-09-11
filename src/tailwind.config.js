@@ -1,3 +1,5 @@
+import typography from '@tailwindcss/typography';
+
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
@@ -11,6 +13,17 @@ export default {
     darkMode: 'class',
     theme: {
         extend: {
+            screens: {
+                'xs': '475px',
+                'sm': '640px',
+                'md': '768px',
+                'lg': '1024px',
+                'xl': '1280px',
+                '2xl': '1536px',
+                'small-laptop': '1440px',  // For 13-14" laptops
+                'tablet': '768px',
+                'mobile': '640px'
+            },
             colors: {
                 teal: {
                     50: '#f0fdfa',
@@ -33,21 +46,58 @@ export default {
                     850: '#1e293b',
                     900: '#0f172a',
                     950: '#020617',
-                }
+                },
+                dashboard: {
+                    green: '#639922',
+                    greenBg: '#EAF3DE',
+                    amber: '#EF9F27',
+                    amberBg: '#FAEEDA',
+                    red: '#E24B4A',
+                    redBg: '#FCEBEB',
+                    blue: '#378ADD',
+                    blueBg: '#E6F1FB',
+                },
+                surface: {
+                    1: 'var(--surface-1)',
+                },
             },
             fontFamily: {
-                sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                sans: [
+                    'Segoe UI',          // Microsoft modern
+                    'Inter',            // Current primary
+                    'Calibri',          // Microsoft documents
+                    'system-ui',
+                    '-apple-system',
+                    'BlinkMacSystemFont',
+                    'Roboto',
+                    'Helvetica Neue',
+                    'Arial',
+                    'sans-serif'
+                ],
+                serif: [
+                    'Cambria',          // Microsoft serif
+                    'Georgia',
+                    'serif'
+                ],
+                mono: [
+                    'Consolas',         // Microsoft monospace
+                    'SF Mono',
+                    'Monaco',
+                    'Inconsolata',
+                    'Roboto Mono',
+                    'monospace'
+                ]
             },
             // STRICT APP TYPOGRAPHY SCALE
             fontSize: {
-                xs: ['12px', '16px'],
-                sm: ['13px', '18px'], // App-like small
-                base: ['14px', '20px'], // Standard body
-                md: ['16px', '24px'],
-                lg: ['18px', '28px'],
-                xl: ['22px', '30px'], // Section headers
-                '2xl': ['24px', '32px'],
-                '3xl': ['32px', '40px'], // Hero headers
+                xs: ['0.75rem', '1rem'],       // 12px / 16px - For captions, tiny details
+                sm: ['0.781rem', '1.125rem'],  // ~12.5px / 18px - Small text
+                base: ['0.875rem', '1.3125rem'],// 14px / 21px - Your compact Gmail-like body standard
+                md: ['1rem', '1.5rem'],        // 16px / 24px - Standard input/form text (Prevents iOS zoom)
+                lg: ['1.125rem', '1.75rem'],   // 18px / 28px
+                xl: ['1.375rem', '1.875rem'],  // 22px / 30px - Section headers
+                '2xl': ['1.5rem', '2rem'],     // 24px / 32px
+                '3xl': ['2rem', '2.5rem'],     // 32px / 40px - Hero headers
             },
             animation: {
                 'fade-in': 'fadeIn 0.5s ease-out',
@@ -82,5 +132,30 @@ export default {
             }
         },
     },
-    plugins: [],
+    plugins: [
+        typography,
+        // Add responsive text plugin
+        function({ addUtilities }) {
+            addUtilities({
+                '.text-responsive-xs': {
+                    'font-size': '0.75rem',
+                    '@screen sm': { 'font-size': '0.875rem' }
+                },
+                '.text-responsive-sm': {
+                    'font-size': '0.875rem',
+                    '@screen sm': { 'font-size': '1rem' }
+                },
+                '.text-responsive-base': {
+                    'font-size': '0.875rem',
+                    '@screen sm': { 'font-size': '1rem' },
+                    '@screen lg': { 'font-size': '1.125rem' }
+                },
+                '.text-responsive-lg': {
+                    'font-size': '1.125rem',
+                    '@screen sm': { 'font-size': '1.25rem' },
+                    '@screen lg': { 'font-size': '1.5rem' }
+                }
+            });
+        }
+    ],
 }

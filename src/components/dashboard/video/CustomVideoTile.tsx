@@ -157,7 +157,7 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
                     <div className="bg-black/60 backdrop-blur-md rounded px-1.5 py-0.5 flex items-center gap-1 border border-white/10">
                         {isAudioOff && <MicOff className="w-2.5 h-2.5 text-red-400" />}
                         {isVideoOff && <VideoOff className="w-2.5 h-2.5 text-red-400" />}
-                        <span className="text-[10px] font-bold text-white uppercase truncate max-w-[50px]">{displayName}</span>
+                        <span className="text-xs font-bold text-white uppercase truncate max-w-[50px]">{displayName}</span>
                     </div>
                 </div>
             )}
@@ -173,3 +173,4 @@ const CustomVideoTile: React.FC<CustomVideoTileProps> = ({
 };
 
 export default CustomVideoTile;
+

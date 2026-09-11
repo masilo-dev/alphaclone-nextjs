@@ -17,10 +17,13 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ isOpen, onClose, userName }
                 </div>
 
                 <div>
-                    <h3 className="text-xl font-bold text-white mb-2">Secure Environment Initialized</h3>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-teal-400 mb-2">
+                        The platform for execution
+                    </p>
+                    <h3 className="text-xl font-bold text-white mb-2">Your workspace is ready</h3>
                     <p className="text-slate-400 text-sm max-w-md mx-auto">
-                        Welcome back, <span className="text-teal-400 font-medium">{userName}</span>.
-                        Your session is protected by enterprise-grade encryption.
+                        Welcome, <span className="text-teal-400 font-medium">{userName}</span>.
+                        Run clients, projects, billing, and operations from one secure command center.
                     </p>
                 </div>
 

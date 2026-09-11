@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Filter,
     Search,
@@ -11,6 +11,7 @@ import {
     X,
     Save
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Button, Input, Card, Modal } from '../../ui/UIComponents';
 import { Improvement } from '../../../types';
 import { improvementService, ImprovementFilters } from '../../../services/improvementService';
@@ -30,12 +31,7 @@ const ImprovementsPage: React.FC = () => {
     const [editNotes, setEditNotes] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    // Load improvements
-    useEffect(() => {
-        loadImprovements();
-    }, [filters]);
-
-    const loadImprovements = async () => {
+    const loadImprovements = useCallback(async () => {
         setLoading(true);
         const { improvements: data, error } = await improvementService.getImprovements(filters);
 
@@ -44,11 +40,16 @@ const ImprovementsPage: React.FC = () => {
         }
 
         setLoading(false);
-    };
+    }, [filters]);
 
-    const handleSearch = () => {
+    // Load improvements
+    useEffect(() => {
+        loadImprovements();
+    }, [loadImprovements]);
+
+    const handleSearch = useCallback(() => {
         setFilters({ ...filters, search: searchQuery });
-    };
+    }, [filters, searchQuery]);
 
     const handleFilterChange = (key: keyof ImprovementFilters, value: any) => {
         setFilters({ ...filters, [key]: value || undefined });
@@ -61,7 +62,7 @@ const ImprovementsPage: React.FC = () => {
         setDetailModalOpen(true);
     };
 
-    const handleSaveChanges = async () => {
+    const handleSaveChanges = useCallback(async () => {
         if (!selectedImprovement) return;
 
         setIsSaving(true);
@@ -87,11 +88,11 @@ const ImprovementsPage: React.FC = () => {
             setDetailModalOpen(false);
             setSelectedImprovement(null);
         } else {
-            alert('Failed to update improvement');
+            toast.error('Failed to update improvement');
         }
 
         setIsSaving(false);
-    };
+    }, [selectedImprovement, editStatus, editNotes]);
 
     const getSeverityColor = (severity: string) => {
         switch (severity) {
@@ -147,7 +148,7 @@ const ImprovementsPage: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <Card className="p-6">
+            <Card className="p-4 md:p-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Search */}
                     <div className="md:col-span-2">
@@ -263,11 +264,11 @@ const ImprovementsPage: React.FC = () => {
             {/* Detail Modal */}
             {selectedImprovement && (
                 <Modal isOpen={detailModalOpen} onClose={() => setDetailModalOpen(false)}>
-                    <div className="bg-slate-900 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-slate-900 rounded-3xl p-4 md:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         {/* Header */}
                         <div className="flex items-start justify-between mb-6">
                             <div>
-                                <h2 className="text-2xl font-bold text-white mb-2">Improvement Details</h2>
+                                <h2 className="text-xl md:text-2xl font-bold text-white mb-2">Improvement Details</h2>
                                 <div className="flex items-center gap-2">
                                     <span className={`px-2 py-1 rounded-md border text-xs font-medium ${getSeverityColor(selectedImprovement.severity)}`}>
                                         {selectedImprovement.severity.toUpperCase()}

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../../lib/supabase';
+import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import type {
     Tenant,
     TenantUser,
@@ -24,25 +25,34 @@ class TenantService {
         adminUserId: string;
         plan?: SubscriptionPlan;
     }): Promise<Tenant> {
-        const { data: tenantId, error } = await supabase.rpc('create_tenant', {
-            p_name: data.name,
-            p_slug: data.slug,
-            p_admin_user_id: data.adminUserId,
-            p_plan: data.plan || 'free'
-        });
+        const slugBase = data.slug
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 72) || `org-${data.adminUserId.slice(0, 8)}`;
 
-        if (error) throw error;
-
-        const tenant = await this.getTenant(tenantId);
-        if (!tenant) throw new Error('Failed to create tenant');
-
-        return tenant;
+        try {
+            const { tenant, error: bootstrapError } = await bootstrapTenantViaApi({
+                name: data.name,
+                slug: slugBase,
+                plan: data.plan || 'free',
+                mode: 'create',
+                idempotencyKey: crypto.randomUUID(),
+            });
+            if (tenant?.id) {
+                return tenant;
+            }
+            throw new Error(bootstrapError || 'Workspace creation failed');
+        } catch (apiErr) {
+            throw apiErr instanceof Error ? apiErr : new Error('Workspace creation failed');
+        }
     }
 
     /**
      * Get tenant by ID
      */
     async getTenant(tenantId: string): Promise<Tenant | null> {
+        // Try with deletion_pending_at filter first (post-migration)
         const { data, error } = await supabase
             .from('tenants')
             .select('*')
@@ -50,8 +60,19 @@ class TenantService {
             .is('deletion_pending_at', null)
             .single();
 
-        if (error) return null;
-        return data as Tenant;
+        if (!error) return data as Tenant;
+
+        // If the column doesn't exist yet (migration not applied), fall back
+        if (error.code === '42703' || error.message?.includes('deletion_pending_at')) {
+            const { data: fallback } = await supabase
+                .from('tenants')
+                .select('*')
+                .eq('id', tenantId)
+                .single();
+            return fallback as Tenant | null;
+        }
+
+        return null;
     }
 
     /**
@@ -65,8 +86,19 @@ class TenantService {
             .is('deletion_pending_at', null)
             .maybeSingle();
 
-        if (error) return null;
-        return data as Tenant;
+        if (!error) return data as Tenant;
+
+        // Column not yet migrated — fall back without the filter
+        if (error.code === '42703' || error.message?.includes('deletion_pending_at')) {
+            const { data: fallback } = await supabase
+                .from('tenants')
+                .select('*')
+                .eq('slug', slug)
+                .maybeSingle();
+            return fallback as Tenant | null;
+        }
+
+        return null;
     }
 
     /**
@@ -76,43 +108,94 @@ class TenantService {
         tenantId: string,
         updates: Partial<Tenant>
     ): Promise<Tenant> {
-        const { data, error } = await supabase
-            .from('tenants')
-            .update(updates)
-            .eq('id', tenantId)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return data as Tenant;
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updates),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Workspace update failed');
+        return payload.tenant as Tenant;
     }
 
     /**
      * Delete tenant
      */
     async deleteTenant(tenantId: string): Promise<void> {
-        // Implement 90-day retention policy (Soft Delete)
-        const { error } = await supabase
-            .from('tenants')
-            .update({
-                deletion_pending_at: new Date().toISOString(),
-                subscription_status: 'suspended'
-            })
-            .eq('id', tenantId);
-
-        if (error) throw error;
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}`, { method: 'DELETE' });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Workspace deletion could not be scheduled');
     }
 
     /**
      * Get user's tenants
      */
     async getUserTenants(userId: string): Promise<Array<Tenant & { role: TenantRole }>> {
-        const { data, error } = await supabase.rpc('get_user_tenants', {
-            p_user_id: userId
-        });
+        // Try RPC first
+        try {
+            const { data, error } = await supabase.rpc('get_user_tenants', {
+                p_user_id: userId
+            });
 
-        if (error) throw error;
-        return data || [];
+            if (!error && data && data.length > 0) {
+                const normalized = data
+                    .map((row: any) => {
+                        const id = row.id || row.tenant_id;
+                        const name = row.name || row.tenant_name;
+                        const slug = row.slug || row.tenant_slug;
+                        const role = row.role || row.user_role;
+                        if (!id || !name || !slug) return null;
+
+                        return {
+                            ...row,
+                            id,
+                            name,
+                            slug,
+                            role: role as TenantRole,
+                            joined_at: row.joined_at,
+                        };
+                    })
+                    .filter(Boolean) as Array<Tenant & { role: TenantRole }>;
+
+                if (normalized.length > 0) return normalized;
+            }
+
+            if (error) {
+                console.warn('[TenantService] get_user_tenants RPC failed, falling back to direct query:', error.message);
+            }
+        } catch (rpcErr: any) {
+            console.warn('[TenantService] get_user_tenants RPC threw, falling back:', rpcErr?.message);
+        }
+
+        // Fallback: query tenant_users + tenants directly
+        try {
+            const { data: tuData, error: tuError } = await supabase
+                .from('tenant_users')
+                .select(`
+                    role,
+                    joined_at,
+                    tenant:tenant_id (
+                        id, name, slug, domain, logo_url, settings,
+                        subscription_plan, subscription_status, trial_ends_at,
+                        created_at, updated_at
+                    )
+                `)
+                .eq('user_id', userId)
+                .order('joined_at', { ascending: false });
+
+            if (tuError) throw tuError;
+
+            return (tuData || [])
+                .filter((row: any) => row.tenant)
+                .map((row: any) => ({
+                    ...row.tenant,
+                    role: row.role as TenantRole,
+                    joined_at: row.joined_at
+                }));
+        } catch (fallbackErr: any) {
+            console.error('[TenantService] All tenant lookups failed:', fallbackErr?.message);
+            throw fallbackErr;
+        }
     }
 
     /**
@@ -131,16 +214,25 @@ class TenantService {
     }
 
     /**
-     * Remove user from tenant
+     * Remove user from tenant. Pass purge=true to permanently delete the account
+     * when they only belong to this workspace.
      */
-    async removeUserFromTenant(tenantId: string, userId: string): Promise<void> {
-        const { error } = await supabase
-            .from('tenant_users')
-            .delete()
-            .eq('tenant_id', tenantId)
-            .eq('user_id', userId);
-
-        if (error) throw error;
+    async removeUserFromTenant(
+        tenantId: string,
+        userId: string,
+        options?: { purge?: boolean }
+    ): Promise<{ purged: boolean; message?: string }> {
+        const purge = options?.purge ? '&purge=true' : '';
+        const response = await fetch(
+            `/api/tenant/${encodeURIComponent(tenantId)}/members?userId=${encodeURIComponent(userId)}${purge}`,
+            { method: 'DELETE' }
+        );
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Team member could not be removed');
+        return {
+            purged: Boolean(payload.purged),
+            message: typeof payload.message === 'string' ? payload.message : undefined,
+        };
     }
 
     /**
@@ -151,26 +243,23 @@ class TenantService {
         userId: string,
         role: TenantRole
     ): Promise<void> {
-        const { error } = await supabase
-            .from('tenant_users')
-            .update({ role })
-            .eq('tenant_id', tenantId)
-            .eq('user_id', userId);
-
-        if (error) throw error;
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/members`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, role }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Team role could not be updated');
     }
 
     /**
      * Get tenant users
      */
     async getTenantUsers(tenantId: string): Promise<TenantUser[]> {
-        const { data, error } = await supabase
-            .from('tenant_users')
-            .select('*, users(*)')
-            .eq('tenant_id', tenantId);
-
-        if (error) throw error;
-        return (data || []) as TenantUser[];
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/members`);
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Team members could not be loaded');
+        return (payload.members || []) as TenantUser[];
     }
 
     /**
@@ -192,51 +281,29 @@ class TenantService {
         tenantId: string,
         email: string,
         role: TenantRole,
-        invitedBy: string
+        _invitedBy: string
     ): Promise<TenantInvitation> {
-        const { data: invitationId, error } = await supabase.rpc('create_tenant_invitation', {
-            p_tenant_id: tenantId,
-            p_email: email,
-            p_role: role,
-            p_invited_by: invitedBy
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/invitations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, role }),
         });
-
-        if (error) throw error;
-
-        const { data: invitation } = await supabase
-            .from('tenant_invitations')
-            .select('*')
-            .eq('id', invitationId)
-            .single();
-
-        return invitation as TenantInvitation;
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Invitation could not be sent');
+        return payload.invitation as TenantInvitation;
     }
 
     /**
      * Accept tenant invitation
      */
-    async acceptInvitation(token: string, userId: string): Promise<void> {
-        // Get invitation
-        const { data: invitation } = await supabase
-            .from('tenant_invitations')
-            .select('*')
-            .eq('token', token)
-            .single();
-
-        if (!invitation) throw new Error('Invalid invitation');
-        if (invitation.accepted_at) throw new Error('Invitation already accepted');
-        if (new Date(invitation.expires_at) < new Date()) {
-            throw new Error('Invitation expired');
-        }
-
-        // Add user to tenant
-        await this.addUserToTenant(invitation.tenant_id, userId, invitation.role);
-
-        // Mark invitation as accepted
-        await supabase
-            .from('tenant_invitations')
-            .update({ accepted_at: new Date().toISOString() })
-            .eq('id', invitation.id);
+    async acceptInvitation(token: string, _userId: string): Promise<void> {
+        const response = await fetch('/api/tenant/invitations/accept', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Invitation could not be accepted');
     }
 
     /**
@@ -275,11 +342,165 @@ class TenantService {
     /**
      * Set current tenant context
      */
-    setCurrentTenant(tenantId: string): void {
-        this.currentTenantId = tenantId;
-        // Store in localStorage for persistence
+    setCurrentTenant(tenant: Tenant | string): void {
+        if (typeof tenant === 'string') {
+            this.currentTenantId = tenant;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('currentTenantId', tenant);
+            }
+        } else {
+            this.currentTenantId = tenant.id;
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('currentTenantId', tenant.id);
+                localStorage.setItem('currentTenant', JSON.stringify(tenant));
+            }
+        }
+    }
+
+    /**
+     * Get cached tenant object
+     */
+    getCachedCurrentTenant(): Tenant | null {
         if (typeof window !== 'undefined') {
-            localStorage.setItem('currentTenantId', tenantId);
+            const stored = localStorage.getItem('currentTenant');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (e) {
+                    console.error('Failed to parse cached tenant', e);
+                }
+            }
+        }
+        return null;
+    }
+
+    async getDashboardStats(tenantId: string, userId: string, forceRefresh = false): Promise<{ stats: any | null; error: string | null }> {
+        if (!tenantId || !userId) {
+            console.warn('getDashboardStats called with missing parameters', { tenantId, userId });
+            return { stats: null, error: 'Missing tenant or user ID' };
+        }
+
+        // Version key — bump this whenever the RPC schema changes to bust stale caches
+        const CACHE_VERSION = 'v4';
+        const CACHE_KEY = `dashboard_stats_${tenantId}_${CACHE_VERSION}`;
+        const CACHE_TTL = 60_000; // 60 seconds
+
+        // Purge old versioned cache entries
+        if (typeof window !== 'undefined') {
+            for (const key of Object.keys(localStorage)) {
+                if (key.startsWith(`dashboard_stats_${tenantId}`) && key !== CACHE_KEY) {
+                    localStorage.removeItem(key);
+                }
+            }
+        }
+
+        if (!forceRefresh) {
+            try {
+                if (typeof window !== 'undefined') {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        const { ts, stats } = JSON.parse(cached);
+                        const isAllZero = !stats || (
+                            stats.totalRevenue === 0 &&
+                            stats.totalLeads === 0 &&
+                            stats.clientCount === 0 &&
+                            stats.activeProjects === 0
+                        );
+                        if (Date.now() - ts < CACHE_TTL && !isAllZero) {
+                            console.log('[TenantService] Returning cached dashboard stats');
+                            // Refresh in background after returning
+                            setTimeout(() => this.fetchAndCacheStats(tenantId, userId, CACHE_KEY), 0);
+                            return { stats, error: null };
+                        }
+                    }
+                }
+            } catch (_) { /* ignore cache read errors */ }
+        }
+
+        return this.fetchAndCacheStats(tenantId, userId, CACHE_KEY);
+    }
+
+    private async fetchAndCacheStats(tenantId: string, userId: string, cacheKey: string): Promise<{ stats: any | null; error: string | null }> {
+        const EMPTY_STATS = {
+            totalRevenue: 0, clientCount: 0, activeProjects: 0,
+            pendingInvoices: 0, overdueInvoices: 0, totalMessages: 0, pendingRevenue: 0,
+            totalLeads: 0, totalDeals: 0, weightedPipeline: 0, salesForecast: 0,
+            recentActivity: [], monthlyRevenue: [], pipeline: {}
+        };
+
+        try {
+            // Prefer server-side API proxy to avoid browser-side CORS/edge issues on direct RPC.
+            try {
+                const res = await fetch(`/api/dashboard/stats?tenantId=${encodeURIComponent(tenantId)}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Accept': 'application/json' },
+                });
+                if (res.ok) {
+                    const payload = await res.json();
+                    const stats = {
+                        ...EMPTY_STATS,
+                        ...(payload?.stats || {}),
+                    };
+                    // Only cache if we got meaningful data (not all zeros)
+                    const hasData = stats.totalRevenue > 0 || stats.totalLeads > 0 ||
+                        stats.clientCount > 0 || stats.activeProjects > 0 ||
+                        stats.totalTasks > 0 || stats.unreadMessages > 0;
+                    if (hasData) {
+                        try {
+                            if (typeof window !== 'undefined') {
+                                localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+                            }
+                        } catch (_) { /* ignore cache write errors */ }
+                    }
+                    return { stats, error: null };
+                }
+                // Non-OK response (4xx/5xx) — do NOT write to cache, fall through to direct RPC
+                console.warn('[TenantService] API stats returned', res.status, '— falling back to direct RPC');
+            } catch (_) {
+                // Fall back to direct RPC below.
+            }
+
+            // Race the optimized RPC against a 20-second timeout
+            const timeout = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Stats query timeout')), 20000)
+            );
+
+            // Execute the CONSOLIDATED RPC call - fetches everything in one pass
+            const { data: rpcData, error: rpcError } = await Promise.race([
+                supabase.rpc('get_consolidated_dashboard_stats', { 
+                    p_tenant_id: tenantId,
+                    p_user_id: userId
+                }),
+                timeout
+            ]) as any;
+
+            if (rpcError) throw rpcError;
+
+            // Map and Enrich the stats from the RPC response
+            const stats = {
+                ...EMPTY_STATS,
+                ...rpcData,
+                totalMessages: rpcData?.totalMessages ?? 0,
+            };
+
+            // Cache only non-zero results
+            const hasData = stats.totalRevenue > 0 || stats.totalLeads > 0 ||
+                stats.clientCount > 0 || stats.activeProjects > 0 ||
+                stats.totalTasks > 0;
+            if (hasData) {
+                try {
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), stats }));
+                    }
+                } catch (_) { /* ignore cache write errors */ }
+            }
+
+            return { stats, error: null };
+        } catch (err: any) {
+            console.error('[TenantService] Error fetching dashboard stats:', err?.message);
+            // Return null stats on error — do NOT cache zeros
+            return { stats: EMPTY_STATS, error: err?.message || 'Failed to load stats' };
         }
     }
 
@@ -305,6 +526,7 @@ class TenantService {
         this.currentTenantId = null;
         if (typeof window !== 'undefined') {
             localStorage.removeItem('currentTenantId');
+            localStorage.removeItem('currentTenant');
         }
     }
 

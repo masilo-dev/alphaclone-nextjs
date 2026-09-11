@@ -1,16 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
 import { Card, Button, Input, Modal } from '../ui/UIComponents';
 import { User } from '../../types';
 import { aiGenerationService } from '../../services/aiGenerationService';
 import { rateLimitService } from '../../services/rateLimitService';
+import { CLAUDE_MODELS } from '../../config/aiModels';
 import { Sparkles, Image as ImageIcon, FileText, Loader2, Download, Trash2, Eye, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import {
+    fetchDashboardPreferences,
+    mergeDashboardPreferences,
+} from '@/services/userDashboardPreferencesService';
 
 interface AIStudioTabProps {
     user: User;
 }
 
 type GenerationType = 'logo' | 'image' | 'content';
+// CLAUDE_MODELS is now imported from ../../config/aiModels
 
 interface GeneratedAsset {
     id: string;
@@ -35,6 +43,7 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
     const [style, setStyle] = useState<'modern' | 'minimalist' | 'vintage' | 'abstract'>('modern');
     const [imageSize, setImageSize] = useState<'1024x1024' | '1792x1024' | '1024x1792'>('1024x1024');
     const [contentType, setContentType] = useState<'blog' | 'email' | 'social' | 'general'>('general');
+    const [selectedModel, setSelectedModel] = useState(CLAUDE_MODELS[0].id);
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedResult, setGeneratedResult] = useState<string | null>(null);
     const [remainingGenerations, setRemainingGenerations] = useState<Record<GenerationType, number>>({
@@ -48,10 +57,65 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
         isOpen: false
     });
 
+    const [conversationHistory, setConversationHistory] = useState<
+        Array<{ type: 'user' | 'ai'; content: string; timestamp: number }>
+    >([]);
+    const [aiConversationReady, setAiConversationReady] = useState(false);
+    const conversationHistoryRef = useRef(conversationHistory);
+    conversationHistoryRef.current = conversationHistory;
+
     useEffect(() => {
         loadRemainingGenerations();
         loadHistory();
     }, []);
+
+    useEffect(() => {
+        if (!user.id) {
+            setAiConversationReady(true);
+            return;
+        }
+        let cancelled = false;
+        setAiConversationReady(false);
+        (async () => {
+            const prefs = await fetchDashboardPreferences(user.id);
+            if (cancelled) return;
+            if (prefs.aiConversation?.length) {
+                setConversationHistory(prefs.aiConversation.slice(-50));
+            } else {
+                setConversationHistory([]);
+            }
+            setAiConversationReady(true);
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [user.id]);
+
+    useEffect(() => {
+        if (!user.id || !aiConversationReady) return;
+        const t = window.setTimeout(() => {
+            void mergeDashboardPreferences(user.id, {
+                aiConversation: conversationHistoryRef.current.slice(-50),
+            });
+        }, 500);
+        return () => window.clearTimeout(t);
+    }, [conversationHistory, user.id, aiConversationReady]);
+
+    const saveConversationHistory = (newEntry: { type: 'user' | 'ai'; content: string; timestamp: number }) => {
+        setConversationHistory((prev) => [...prev, newEntry].slice(-50));
+    };
+
+    const clearConversationHistory = async () => {
+        setConversationHistory([]);
+        if (user.id) {
+            const { ok, error } = await mergeDashboardPreferences(user.id, { aiConversation: [] });
+            if (!ok && error) {
+                toast.error('Could not clear synced history');
+                return;
+            }
+        }
+        toast.success('Conversation history cleared');
+    };
 
     const loadRemainingGenerations = async () => {
         const types: GenerationType[] = ['logo', 'image', 'content'];
@@ -91,6 +155,13 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
         setIsGenerating(true);
         setGeneratedResult(null);
 
+        // Save user prompt to conversation history
+        saveConversationHistory({
+            type: 'user',
+            content: prompt,
+            timestamp: Date.now()
+        });
+
         try {
             let result;
 
@@ -102,11 +173,12 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     result = await aiGenerationService.generateImage(user.id, user.role, prompt, imageSize);
                     break;
                 case 'content':
-                    result = await aiGenerationService.generateContent(user.id, user.role, prompt, contentType);
+                    result = await aiGenerationService.generateContent(user.id, user.role, prompt, contentType, selectedModel);
                     break;
             }
 
             if (result.success) {
+                const resultContent = result.url || result.content || '';
                 if (result.url) {
                     setGeneratedResult(result.url);
                     toast.success('Generated successfully!');
@@ -114,6 +186,13 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     setGeneratedResult(result.content);
                     toast.success('Content generated successfully!');
                 }
+
+                // Save AI response to conversation history
+                saveConversationHistory({
+                    type: 'ai',
+                    content: resultContent,
+                    timestamp: Date.now()
+                });
 
                 // Update remaining count
                 if (result.remaining !== undefined) {
@@ -217,6 +296,47 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                 ))}
             </div>
 
+            {/* Conversation Memory */}
+            {conversationHistory.length > 0 && (
+                <div className="bg-slate-900/60 backdrop-blur border border-slate-700 rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-purple-400" />
+                            <span className="text-sm font-semibold text-purple-400">Conversation Memory</span>
+                            <span className="text-xs text-slate-500">({conversationHistory.length} messages)</span>
+                        </div>
+                        <button
+                            onClick={clearConversationHistory}
+                            className="text-xs text-slate-500 hover:text-red-400 transition-colors"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar">
+                        {conversationHistory.slice(-10).map((msg, idx) => (
+                            <div
+                                key={idx}
+                                className={`p-2 rounded-lg text-sm ${
+                                    msg.type === 'user'
+                                        ? 'bg-teal-500/10 border border-teal-500/20 text-teal-300'
+                                        : 'bg-purple-500/10 border border-purple-500/20 text-purple-300'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs font-semibold uppercase">
+                                        {msg.type === 'user' ? 'You' : 'AI'}
+                                    </span>
+                                    <span className="text-xs text-slate-500">
+                                        {new Date(msg.timestamp).toLocaleTimeString()}
+                                    </span>
+                                </div>
+                                <p className="text-slate-300 line-clamp-2">{msg.content}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Generation Form */}
             <Card className="p-6">
                 <div className="space-y-6">
@@ -280,18 +400,37 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     )}
 
                     {activeTab === 'content' && (
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Content Type</label>
-                            <select
-                                value={contentType}
-                                onChange={(e) => setContentType(e.target.value as any)}
-                                className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
-                            >
-                                <option value="general">General</option>
-                                <option value="blog">Blog Post</option>
-                                <option value="email">Email</option>
-                                <option value="social">Social Media</option>
-                            </select>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Content Type</label>
+                                <select
+                                    value={contentType}
+                                    onChange={(e) => setContentType(e.target.value as any)}
+                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                >
+                                    <option value="general">General</option>
+                                    <option value="blog">Blog Post</option>
+                                    <option value="email">Email</option>
+                                    <option value="social">Social Media</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">AI Model</label>
+                                <select
+                                    value={selectedModel}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
+                                >
+                                    {CLAUDE_MODELS.map(model => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    {CLAUDE_MODELS.find(m => m.id === selectedModel)?.description}
+                                </p>
+                            </div>
                         </div>
                     )}
 
@@ -320,17 +459,24 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                             <div className="text-sm font-semibold text-teal-400 mb-4">Generated Result</div>
                             {activeTab === 'content' ? (
                                 <div className="prose prose-invert max-w-none">
+                                    <div className="mb-3">
+                                        <AIOutputDisclaimer type={contentType === 'email' ? 'email' : contentType === 'social' ? 'social' : 'generic'} />
+                                    </div>
                                     <pre className="whitespace-pre-wrap text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-4 rounded-lg">
                                         {generatedResult}
                                     </pre>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
-                                    <img
-                                        src={generatedResult}
-                                        alt="Generated"
-                                        className="w-full rounded-lg border border-slate-700"
-                                    />
+                                    <div className="aspect-square relative w-full overflow-hidden rounded-lg border border-slate-700">
+                                        <Image
+                                            src={generatedResult}
+                                            alt="Generated"
+                                            fill
+                                            className="object-cover"
+                                            unoptimized
+                                        />
+                                    </div>
                                     <Button
                                         onClick={() => window.open(generatedResult, '_blank')}
                                         variant="outline"
@@ -369,11 +515,15 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                                             <FileText className="w-12 h-12 text-slate-600" />
                                         </div>
                                     ) : (
-                                        <img
-                                            src={asset.url}
-                                            alt={asset.prompt}
-                                            className="w-full h-40 object-cover rounded-lg border border-slate-700"
-                                        />
+                                        <div className="relative w-full h-40 overflow-hidden rounded-lg border border-slate-700">
+                                            <Image
+                                                src={asset.url || ''}
+                                                alt={asset.prompt}
+                                                fill
+                                                className="object-cover"
+                                                unoptimized
+                                            />
+                                        </div>
                                     )}
                                     {/* Overlay Actions */}
                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
@@ -433,11 +583,15 @@ const AIStudioTab: React.FC<AIStudioTabProps> = ({ user }) => {
                     title="Preview"
                 >
                     {previewModal.url ? (
-                        <img
-                            src={previewModal.url}
-                            alt="Preview"
-                            className="w-full rounded-lg"
-                        />
+                        <div className="relative w-full aspect-square overflow-hidden rounded-lg">
+                            <Image
+                                src={previewModal.url}
+                                alt="Preview"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                        </div>
                     ) : (
                         <div className="prose prose-invert max-w-none">
                             <pre className="whitespace-pre-wrap text-slate-300 text-sm leading-relaxed bg-slate-900/50 p-4 rounded-lg max-h-[60vh] overflow-y-auto">

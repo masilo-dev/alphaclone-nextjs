@@ -1,175 +1,572 @@
-import React from 'react';
-import { Button, Badge } from '../ui/UIComponents';
-import { CreditCard, CheckCircle, Download, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { User, Invoice } from '../../types';
-import { paymentService } from '../../services/paymentService';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+'use client';
 
-interface FinanceTabProps {
-    user: User;
-    filteredInvoices: Invoice[];
-    handlePayClick: (invoice: Invoice) => void;
-    onCreateInvoice?: () => void;
-}
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  FilePlus, X, Send, Download, CheckCircle, Trash2,
+  ArrowLeft, Search, ChevronRight, Receipt, Camera, Plus,
+  TrendingDown, TrendingUp, Sparkles, Loader2
+} from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useTenant } from '../../contexts/TenantContext';
+import { businessInvoiceService } from '../../services/businessInvoiceService';
+import { User } from '../../types';
+import toast from 'react-hot-toast';
+import { offlineService } from '@/services/offlineService';
+import { DetailDrawer } from '../ui/DetailDrawer';
+import { StatusBadge, invoiceStatusVariant, expenseStatusVariant } from '../ui/StatusBadge';
+import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
+import { Input } from '../ui/UIComponents';
+import { EmptyStateFromPreset } from '../ui/EmptyState';
+import { WORKSPACE } from '@/constants/design';
+import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 
-const FinanceTab: React.FC<FinanceTabProps> = ({ user, filteredInvoices, handlePayClick, onCreateInvoice }) => {
-    const totalRevenue = filteredInvoices.filter(i => i.status === 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
-    const outstanding = filteredInvoices.filter(i => i.status !== 'Paid').reduce((acc, curr) => acc + curr.amount, 0);
-    const paidCount = filteredInvoices.filter(i => i.status === 'Paid').length;
+type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
+type ExpenseStatus = 'pending' | 'approved' | 'rejected';
 
-    // Mock Expenses for MVP Polish
-    const totalExpenses = 4500;
-    const netProfit = totalRevenue - totalExpenses;
+interface Invoice { id: string; number?: string; client_name: string; client_email?: string; amount: number; status: InvoiceStatus; due_date?: string; created_at: string; tenant_id: string; }
+interface Expense { id: string; description: string; amount: number; category: string; vendor?: string; date?: string; status: ExpenseStatus; tenant_id: string; created_at: string; }
 
-    // Prepare Chart Data
-    const chartData = React.useMemo(() => {
-        const last6Months = Array.from({ length: 6 }, (_, i) => {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
-            return d.toLocaleString('default', { month: 'short' });
-        }).reverse();
+interface FinanceTabProps { user: User; }
 
-        return last6Months.map(month => ({
-            name: month,
-            revenue: Math.floor(Math.random() * 5000) + 1000 + (totalRevenue / 12), // Mock distribution + actual baseline
-            expenses: Math.floor(Math.random() * 2000) + 500
-        }));
-    }, [totalRevenue]);
+const INV_FILTERS: InvoiceStatus[] = ['draft', 'sent', 'paid', 'overdue'];
+const EXP_CATS = ['All', 'Travel', 'Software', 'Office', 'Food', 'Other'];
 
-    return (
-        <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <CreditCard className="w-6 h-6 text-teal-400" /> Financial Center
-                </h2>
-                {(user.role === 'admin' || user.role === 'tenant_admin') && <Button onClick={onCreateInvoice}>Create Invoice</Button>}
+const InvoiceDetailContent: React.FC<{
+  invoice: Invoice;
+  onSend: (id: string) => void;
+  onMarkPaid: (id: string) => void;
+  onDownload: (id: string) => void;
+  onDelete: (id: string) => void;
+}> = ({ invoice, onSend, onMarkPaid, onDownload, onDelete }) => {
+  const clientName = invoice.client_name?.trim() || 'Unnamed Client';
+  const amountDisplay = invoice.amount && invoice.amount > 0 ? `$${invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00 (Draft)';
+
+  return (
+    <div className="space-y-4 pb-6">
+      <RecordHeader
+        moduleId="invoicing"
+        title={`Invoice #${invoice.number || invoice.id.slice(0, 8)}`}
+        subtitle={clientName}
+        status={<StatusBadge variant={invoiceStatusVariant(invoice.status)}>{invoice.status}</StatusBadge>}
+        meta={
+          <>
+            <span className="font-mono text-[var(--brand-blue-400)]">{amountDisplay}</span>
+            {invoice.due_date ? <span>Due {new Date(invoice.due_date).toLocaleDateString()}</span> : null}
+            {invoice.client_email ? <span>{invoice.client_email}</span> : null}
+          </>
+        }
+        actions={
+          <AskBonnieButton
+            compact
+            mode="summarise"
+            contexts={[
+              { type: 'Invoice', id: invoice.id, label: `Invoice #${invoice.number || invoice.id.slice(0, 8)}` },
+              { type: 'Client', label: clientName },
+            ]}
+          />
+        }
+      />
+      <div className={`space-y-2 p-5 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+        <div className="text-[13px] text-slate-500">Amount due</div>
+        <div className="text-[32px] font-bold text-[var(--brand-blue-400)]">{amountDisplay}</div>
+      </div>
+      <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+        <div className="flex justify-between py-1.5 border-b border-white/5">
+          <span className="text-[15px] text-slate-400">Subtotal</span>
+          <span className="text-[15px] text-white font-mono">{amountDisplay}</span>
+        </div>
+        <div className="flex justify-between pt-2">
+          <span className="text-[17px] font-bold text-white">Total</span>
+          <span className="text-[20px] font-bold text-[var(--brand-blue-400)] font-mono">{amountDisplay}</span>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={() => onSend(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
+          <Send className="w-4 h-4 text-sky-400" />
+          <span className="text-[11px] text-slate-400 font-bold">Send</span>
+        </button>
+        <button onClick={() => onMarkPaid(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
+          <CheckCircle className="w-4 h-4 text-emerald-400" />
+          <span className="text-[11px] text-slate-400 font-bold">Mark Paid</span>
+        </button>
+        <button onClick={() => onDownload(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
+          <Download className="w-4 h-4 text-slate-400" />
+          <span className="text-[11px] text-slate-400 font-bold">PDF</span>
+        </button>
+        <button onClick={() => onDelete(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-red-500/10 transition-colors">
+          <Trash2 className="w-4 h-4 text-red-400" />
+          <span className="text-[11px] text-red-400 font-bold">Delete</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ── Main FinanceTab ────────────────────────────────────────────────────────────
+type MainTab = 'invoices' | 'expenses';
+
+const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
+  const router = useRouter();
+  const { currentTenant } = useTenant();
+  const [mainTab, setMainTab] = useState<MainTab>('invoices');
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [invFilter, setInvFilter] = useState<InvoiceStatus | 'all'>('all');
+  const [expCat, setExpCat] = useState('All');
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [aiExpenseInsight, setAiExpenseInsight] = useState<string | null>(null);
+  const [aiExpenseLoading, setAiExpenseLoading] = useState(false);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [newExpense, setNewExpense] = useState({ description: '', amount: '', category: 'other', vendor: '' });
+  const [savingExpense, setSavingExpense] = useState(false);
+
+  const billingManagePath =
+    user.role === 'tenant_admin'
+      ? '/dashboard/business/billing/manage?create=true'
+      : '/dashboard/finance/manage?create=true';
+
+  const handleFabClick = () => {
+    if (mainTab === 'invoices') {
+      router.push(billingManagePath);
+      return;
+    }
+    setShowAddExpense(true);
+  };
+
+  const handleAddExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentTenant?.id || !newExpense.description.trim()) return;
+    setSavingExpense(true);
+    try {
+      const amount = Number(newExpense.amount) || 0;
+      const date = new Date().toISOString().split('T')[0];
+      const description = newExpense.description.trim();
+
+      if (!offlineService.isOnline()) {
+        await offlineService.init();
+        const record = await offlineService.enqueueMutation(
+          { tenantId: currentTenant.id, userId: user.id },
+          'expense.draft',
+          {
+            date,
+            amount,
+            description,
+            vendor_name: newExpense.vendor.trim() || undefined,
+            currency: 'USD',
+            payment_method: 'card',
+          },
+        );
+        setExpenses((prev) => [
+          {
+            id: `offline-${record.id}`,
+            description,
+            amount,
+            category: newExpense.category,
+            vendor: newExpense.vendor.trim() || undefined,
+            date,
+            status: 'pending',
+            tenant_id: currentTenant.id,
+            created_at: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+        toast.success('Expense saved offline — it will sync when you reconnect.');
+        setShowAddExpense(false);
+        setNewExpense({ description: '', amount: '', category: 'other', vendor: '' });
+        return;
+      }
+
+      const response = await fetch('/api/finance/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        action: 'create',
+        tenantId: currentTenant.id,
+        description,
+        amount,
+        vendor_name: newExpense.vendor.trim() || undefined,
+        date,
+      }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to add expense');
+      toast.success('Expense added');
+      setShowAddExpense(false);
+      setNewExpense({ description: '', amount: '', category: 'other', vendor: '' });
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add expense');
+    } finally {
+      setSavingExpense(false);
+    }
+  };
+
+  const handleAiExpenseReview = async () => {
+    if (!currentTenant?.id || expenses.length === 0) {
+      toast.error('Add expenses first to get AI insights');
+      return;
+    }
+    setAiExpenseLoading(true);
+    setAiExpenseInsight(null);
+    try {
+      const summary = expenses.slice(0, 20).map((e) =>
+        `${e.description} | $${e.amount} | ${e.category} | ${e.vendor || 'no vendor'}`
+      ).join('\n');
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          prompt: `Analyze these business expenses and return 3 bullet points: top spend category, one cost-saving tip, and one anomaly to review.\n\n${summary}`,
+          systemPrompt: 'You are a CFO assistant. Be concise and actionable.',
+          maxTokens: 300,
+          temperature: 0.4,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.text) throw new Error(data.error || 'AI request failed');
+      setAiExpenseInsight(String(data.text).trim());
+      toast.success('AI expense review ready');
+    } catch (err: any) {
+      toast.error(err.message || 'AI expense review failed');
+    } finally {
+      setAiExpenseLoading(false);
+    }
+  };
+
+  const load = useCallback(async () => {
+    if (!currentTenant?.id) return;
+    setLoading(true);
+    const [{ invoices: bizInvoices }, { data: expData }] = await Promise.all([
+      businessInvoiceService.getInvoices(currentTenant.id),
+      supabase.from('expenses').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
+    ]);
+    const mapped: Invoice[] = (bizInvoices || []).map((inv) => ({
+      id: inv.id,
+      number: inv.invoiceNumber,
+      client_name: inv.senderName || 'Client',
+      amount: inv.total,
+      status: (['draft', 'sent', 'paid', 'overdue'].includes(inv.status) ? inv.status : 'draft') as InvoiceStatus,
+      due_date: inv.dueDate,
+      created_at: inv.createdAt,
+      tenant_id: currentTenant.id,
+    }));
+    setInvoices(mapped);
+    setExpenses((expData as Expense[]) || []);
+    setLoading(false);
+  }, [currentTenant?.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const deleteInvoice = async (id: string) => {
+    const { error } = await businessInvoiceService.deleteInvoice(id);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    setInvoices(prev => prev.filter(i => i.id !== id));
+    toast.success('Invoice deleted');
+  };
+  const markPaid = async (id: string) => {
+    const { error } = await businessInvoiceService.markAsPaid(id);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    setInvoices(prev => prev.map(i => i.id === id ? { ...i, status: 'paid' as InvoiceStatus } : i));
+    toast.success('Payment recorded');
+  };
+  const deleteExpense = async (id: string) => {
+    if (!currentTenant?.id) return;
+    const response = await fetch(`/api/finance/expenses?tenantId=${encodeURIComponent(currentTenant.id)}&expenseId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) { toast.error(result.error || 'Expense could not be deleted'); return; }
+    setExpenses(prev => prev.filter(e => e.id !== id));
+    toast.success('Expense deleted');
+  };
+
+  const filteredInvoices = invoices.filter(i => invFilter === 'all' || i.status === invFilter);
+  const filteredExpenses = expenses.filter(e => expCat === 'All' || e.category.toLowerCase() === expCat.toLowerCase());
+
+  const invoiceColumns = useMemo<EnterpriseColumn<Invoice>[]>(() => [
+    {
+      id: 'number',
+      header: 'Invoice',
+      mobilePrimary: true,
+      sortable: true,
+      sortValue: (i) => i.number || i.id,
+      accessor: (i) => (
+        <div>
+          <span className="text-[13px] font-bold text-white block">{i.client_name?.trim() || 'Unnamed Client'}</span>
+          <span className="text-[11px] text-slate-500">#{i.number || i.id.slice(0, 6)}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'amount',
+      header: 'Amount',
+      sortable: true,
+      sortValue: (i) => i.amount,
+      accessor: (i) => `$${i.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessor: (i) => <StatusBadge variant={invoiceStatusVariant(i.status)}>{i.status}</StatusBadge>,
+    },
+    {
+      id: 'due',
+      header: 'Due',
+      sortable: true,
+      sortValue: (i) => i.due_date || '',
+      accessor: (i) => i.due_date ? new Date(i.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—',
+    },
+  ], []);
+
+  const expenseColumns = useMemo<EnterpriseColumn<Expense>[]>(() => [
+    {
+      id: 'description',
+      header: 'Description',
+      mobilePrimary: true,
+      sortable: true,
+      sortValue: (e) => e.description,
+      accessor: (e) => (
+        <div>
+          <span className="text-[13px] font-bold text-white block">{e.description}</span>
+          {e.vendor && <span className="text-[11px] text-slate-500">{e.vendor}</span>}
+        </div>
+      ),
+    },
+    {
+      id: 'amount',
+      header: 'Amount',
+      sortable: true,
+      sortValue: (e) => e.amount,
+      accessor: (e) => `$${e.amount.toLocaleString()}`,
+    },
+    {
+      id: 'category',
+      header: 'Category',
+      accessor: (e) => <span className="capitalize text-slate-300">{e.category}</span>,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessor: (e) => <StatusBadge variant={expenseStatusVariant(e.status)}>{e.status}</StatusBadge>,
+    },
+    {
+      id: 'date',
+      header: 'Date',
+      sortable: true,
+      sortValue: (e) => e.date || e.created_at,
+      accessor: (e) => e.date ? new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—',
+    },
+  ], []);
+
+  // Expense stats
+  const thisMonth = expenses.filter(e => e.date && new Date(e.date).getMonth() === new Date().getMonth());
+  const thisTotal = thisMonth.reduce((s, e) => s + e.amount, 0);
+
+  return (
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+      {/* Main tabs */}
+      <div className="flex border-b border-white/5 bg-slate-950">
+        {(['invoices', 'expenses'] as MainTab[]).map(t => (
+          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 text-[13px] font-bold capitalize ${mainTab === t ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}>{t}</button>
+        ))}
+      </div>
+
+      <div className="flex-1 ac-scroll-full pb-20 bg-slate-950">
+        {mainTab === 'invoices' && (
+          <>
+            {/* Filter pills */}
+            <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
+              {(['all', ...INV_FILTERS] as (InvoiceStatus | 'all')[]).map(f => (
+                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${invFilter === f ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
+              ))}
             </div>
+            {loading ? (
+              <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+            ) : invoices.length === 0 && invFilter === 'all' ? (
+              <div className="p-6">
+                <EmptyStateFromPreset moduleId="invoices" onAction={handleFabClick} />
+              </div>
+            ) : (
+              <div className="px-2">
+                <EnterpriseDataTable
+                  columns={invoiceColumns}
+                  data={filteredInvoices}
+                  getRowId={(i) => i.id}
+                  onRowClick={setSelectedInvoice}
+                  emptyMessage="No invoices match this filter. Clear the filter or create a new invoice."
+                />
+              </div>
+            )}
+          </>
+        )}
 
-
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Financial Summary Cards */}
-                <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Total Revenue</p>
-                        <p className="text-2xl font-bold text-white">${totalRevenue.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Outstanding</p>
-                        <p className="text-2xl font-bold text-orange-400">${outstanding.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Expenses (Est)</p>
-                        <p className="text-2xl font-bold text-red-400 flex items-center gap-2">
-                            ${totalExpenses.toLocaleString()}
-                            <span className="text-xs text-slate-500 font-normal bg-slate-800 px-1.5 py-0.5 rounded">Placeholder</span>
-                        </p>
-                    </div>
-                    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <DollarSign className="w-12 h-12 text-teal-400" />
-                        </div>
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">Net Profit</p>
-                        <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-teal-400' : 'text-red-400'}`}>
-                            ${netProfit.toLocaleString()}
-                        </p>
-                    </div>
+        {mainTab === 'expenses' && (
+          <>
+            {/* Monthly total card */}
+            <div className={`mx-4 mt-4 mb-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[13px] text-slate-400 mb-1">This Month</div>
+                  <div className="text-2xl sm:text-[32px] font-bold text-white">${thisTotal.toLocaleString()}</div>
+                  <div className="text-[13px] text-slate-500 opacity-55 flex items-center gap-1 mt-0.5">
+                    <TrendingDown className="w-3 h-3" />
+                    <span>{thisMonth.length} transactions</span>
+                  </div>
                 </div>
-
-                {/* Chart Section */}
-                <div className="lg:col-span-3 bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-teal-400" /> Revenue vs Expenses
-                    </h3>
-                    <div className="h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                            <AreaChart data={chartData}>
-                                <defs>
-                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px' }}
-                                    itemStyle={{ color: '#e2e8f0' }}
-                                />
-                                <Area type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" name="Revenue" />
-                                <Area type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExpenses)" name="Expenses" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
+              <button
+                onClick={handleAiExpenseReview}
+                disabled={aiExpenseLoading}
+                className="flex items-center gap-1.5 rounded-lg border border-purple-500/30 bg-purple-500/15 px-3 py-2 text-xs font-bold text-purple-300 hover:bg-purple-500/25 disabled:opacity-50"
+              >
+                  {aiExpenseLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  AI Review
+                </button>
+              </div>
+              {aiExpenseInsight && (
+                <div className="mt-3 border-t border-[var(--ws-border)] pt-3 text-xs leading-relaxed whitespace-pre-wrap text-slate-300">
+                  {aiExpenseInsight}
                 </div>
+              )}
             </div>
+            {/* Category filter */}
+            <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
+              {EXP_CATS.map(c => (
+                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold transition-all ${expCat === c ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{c}</button>
+              ))}
+            </div>
+            <div className="px-2">
+              {loading ? (
+                <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+              ) : (
+                <EnterpriseDataTable
+                  columns={expenseColumns}
+                  data={filteredExpenses}
+                  getRowId={(e) => e.id}
+                  onRowClick={setSelectedExpense}
+                  emptyMessage="No expenses found."
+                />
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden overflow-x-auto">
-                <table className="w-full text-left text-sm text-slate-400">
-                    <thead className="bg-slate-950 text-xs uppercase font-semibold text-slate-500">
-                        <tr>
-                            <th className="px-6 py-4">Invoice ID</th>
-                            <th className="px-6 py-4">Project / Description</th>
-                            <th className="px-6 py-4">Amount</th>
-                            <th className="px-6 py-4">Due Date</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                        {filteredInvoices.map((inv) => (
-                            <tr key={inv.id} className="hover:bg-slate-800/50 transition-colors">
-                                <td className="px-6 py-4 font-mono text-xs text-white">#{inv.id.toUpperCase()}</td>
-                                <td className="px-6 py-4">
-                                    <div className="text-white font-medium">{inv.projectName}</div>
-                                    <div className="text-xs text-slate-500">{inv.description}</div>
-                                </td>
-                                <td className="px-6 py-4 text-white font-bold">${inv.amount.toLocaleString()}</td>
-                                <td className="px-6 py-4">{inv.dueDate}</td>
-                                <td className="px-6 py-4">
-                                    <Badge variant={inv.status === 'Paid' ? 'success' : inv.status === 'Overdue' ? 'error' : 'warning'}>
-                                        {inv.status}
-                                    </Badge>
-                                </td>
-                                <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => paymentService.downloadInvoicePDF(inv.id)}
-                                        title="Download PDF"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                    </Button>
-                                    {inv.status !== 'Paid' && user.role === 'client' && (
-                                        <Button size="sm" onClick={() => handlePayClick(inv)}>
-                                            Pay Now
-                                        </Button>
-                                    )}
-                                    {inv.status === 'Paid' && (
-                                        <span className="text-green-500 text-xs font-bold flex items-center gap-1">
-                                            <CheckCircle className="w-3 h-3" /> Paid
-                                        </span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                        {filteredInvoices.length === 0 && (
-                            <tr>
-                                <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
-                                    No invoices found.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+      {/* FAB */}
+      <button
+        type="button"
+        onClick={handleFabClick}
+        aria-label={mainTab === 'invoices' ? 'Create invoice' : 'Add expense'}
+        className={`fixed bottom-20 right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 ${mainTab === 'invoices' ? 'bg-green-600 shadow-green-600/30' : 'bg-rose-600 shadow-rose-600/30'}`}
+      >
+        {mainTab === 'invoices' ? <FilePlus className="w-6 h-6 text-white" /> : <Receipt className="w-6 h-6 text-white" />}
+      </button>
+
+      <DetailDrawer open={showAddExpense} onOpenChange={setShowAddExpense} title="Add expense">
+          <form onSubmit={handleAddExpense} className="space-y-4 pb-6">
+            <Input
+              label="Description"
+              value={newExpense.description}
+              onChange={(e) => setNewExpense((f) => ({ ...f, description: e.target.value }))}
+              placeholder="What was this expense for?"
+              validate={(v) => !v.trim() ? 'Description is required' : undefined}
+            />
+            <Input
+              label="Amount"
+              type="number"
+              step="0.01"
+              value={newExpense.amount}
+              onChange={(e) => setNewExpense((f) => ({ ...f, amount: e.target.value }))}
+              placeholder="0.00"
+              validate={(v) => !v.trim() || Number(v) <= 0 ? 'Enter a valid amount' : undefined}
+            />
+            <Input
+              label="Vendor (optional)"
+              value={newExpense.vendor}
+              onChange={(e) => setNewExpense((f) => ({ ...f, vendor: e.target.value }))}
+              placeholder="Vendor name"
+            />
+            <button
+              type="submit"
+              disabled={savingExpense}
+            className="w-full min-h-11 rounded-lg bg-rose-600 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {savingExpense ? 'Saving…' : 'Save expense'}
+            </button>
+          </form>
+      </DetailDrawer>
+
+      <DetailDrawer
+        open={Boolean(selectedInvoice)}
+        onOpenChange={(open) => { if (!open) setSelectedInvoice(null); }}
+        title={selectedInvoice ? `Invoice #${selectedInvoice.number || selectedInvoice.id.slice(0, 8)}` : 'Invoice'}
+      >
+        {selectedInvoice && (
+          <InvoiceDetailContent
+            invoice={selectedInvoice}
+            onSend={async (id) => {
+              const { error } = await businessInvoiceService.updateInvoice(id, { status: 'sent' });
+              if (error) {
+                toast.error(error);
+                return;
+              }
+              setInvoices(prev => prev.map(i => i.id === id ? { ...i, status: 'sent' } : i));
+              setSelectedInvoice(prev => prev ? { ...prev, status: 'sent' } : null);
+              toast.success('Invoice marked as sent');
+            }}
+            onMarkPaid={async (id) => {
+              await markPaid(id);
+              setSelectedInvoice(prev => prev ? { ...prev, status: 'paid' } : null);
+            }}
+            onDownload={(id) => {
+              window.open(`/api/pdf/invoice/${id}`, '_blank');
+              toast.success('Downloading invoice PDF');
+            }}
+            onDelete={async (id) => {
+              await deleteInvoice(id);
+              setSelectedInvoice(null);
+            }}
+          />
+        )}
+      </DetailDrawer>
+
+      <DetailDrawer
+        open={Boolean(selectedExpense)}
+        onOpenChange={(open) => { if (!open) setSelectedExpense(null); }}
+        title={selectedExpense?.description || 'Expense'}
+      >
+        {selectedExpense && (
+          <div className="space-y-4 pb-6">
+            <div className={`space-y-2 p-5 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+              <div className="text-[32px] font-bold text-rose-400">${selectedExpense.amount.toLocaleString()}</div>
+              <StatusBadge variant={expenseStatusVariant(selectedExpense.status)}>{selectedExpense.status}</StatusBadge>
             </div>
-        </div >
-    );
+            <div className={`space-y-2 p-4 text-sm ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+              <div className="flex justify-between"><span className="text-slate-400">Category</span><span className="text-white capitalize">{selectedExpense.category}</span></div>
+              {selectedExpense.vendor && <div className="flex justify-between"><span className="text-slate-400">Vendor</span><span className="text-white">{selectedExpense.vendor}</span></div>}
+              {selectedExpense.date && <div className="flex justify-between"><span className="text-slate-400">Date</span><span className="text-white">{new Date(selectedExpense.date).toLocaleDateString()}</span></div>}
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                await deleteExpense(selectedExpense.id);
+                setSelectedExpense(null);
+              }}
+              className="w-full min-h-11 rounded-lg border border-red-500/30 text-sm font-semibold text-red-400 hover:bg-red-500/10"
+            >
+              Delete expense
+            </button>
+          </div>
+        )}
+      </DetailDrawer>
+    </div>
+  );
 };
 
 export default FinanceTab;

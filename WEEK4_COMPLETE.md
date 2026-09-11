@@ -651,14 +651,14 @@ for await (const chunk of aiService.stream({prompt})) {
 ### Step 1: Backup Database
 Automated backups already configured. Verify at:
 ```
-https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/database/backups
+https://supabase.com/dashboard/project/<your-project-ref>/database/backups
 ```
 
 ### Step 2: Apply Week 4 Migration
 
 **Open Supabase SQL Editor:**
 ```
-https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql/new
+https://supabase.com/dashboard/project/<your-project-ref>/sql/new
 ```
 
 **Copy & Run:**

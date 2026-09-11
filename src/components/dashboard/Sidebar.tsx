@@ -1,137 +1,462 @@
-import React from 'react';
+'use client';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, ChevronDown, Menu } from 'lucide-react';
+import {
+    LogOut, ChevronDown, ChevronRight, ShieldAlert, Activity, Loader2,
+    Sun, Moon, X, Zap, Sparkles
+} from 'lucide-react';
+import Image from 'next/image';
 import { LOGO_URL } from '../../constants';
 import { User } from '../../types';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useBackgroundTasks, BackgroundTask } from '@/contexts/BackgroundTaskContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { AcThemeMode } from '@/lib/applyAcTheme';
+import { isPlatformAdminRole } from '@/lib/platformAdmin';
+import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/applyAcTheme';
+import { preferencesService } from '@/services/dashboardService';
+import { WORKSPACE } from '@/constants/design';
 
+// ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
     sidebarOpen: boolean;
     setSidebarOpen: (open: boolean) => void;
-    isInCall: boolean;
-    showSidebarDuringCall: boolean;
     user: User;
     navItems: any[];
     activeTab: string;
     setActiveTab: (tab: string) => void;
     unreadMessageCount: number;
     onLogout: () => void;
+    forceHidden?: boolean;
+    onNavigate?: () => void;
+    activeBgTasksCount?: number;
+    onStartTour?: () => void;
+    isVoiceActive?: boolean;
+    onToggleVoice?: () => void;
 }
 
+// ── Component ──────────────────────────────────────────────────────────────
 const Sidebar = React.memo<SidebarProps>(({
     sidebarOpen,
     setSidebarOpen,
-    isInCall,
-    showSidebarDuringCall,
     user,
     navItems,
     activeTab,
     setActiveTab,
     unreadMessageCount,
-    onLogout
+    onLogout,
+    forceHidden = false,
+    onNavigate,
+    activeBgTasksCount = 0,
+    onStartTour,
 }) => {
     const router = useRouter();
+    const { t } = useLanguage();
+    const { tasks, dismissTask } = useBackgroundTasks();
 
-    // Hidden during video calls unless manually toggled
-    if (isInCall && !showSidebarDuringCall) return null;
+    // ── ALL hooks must be declared before any conditional return ─────────
+    const [theme, setTheme] = useState<AcThemeMode>('dark');
+    // Track which parent nav items are expanded  
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-    const handleNavigation = (href: string) => {
-        if (href !== '#') {
-            router.push(href);
-            // Auto-close sidebar on mobile after navigation
-            if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                setSidebarOpen(false);
-            }
+    // Load + apply saved theme on mount / user change
+    useEffect(() => {
+        try {
+            const stored = readStoredAcTheme(user.id);
+            setTheme(stored);
+            applyAcThemeClass(stored);
+        } catch {
+            applyAcThemeClass('dark');
         }
-    };
+    }, [user.id]);
 
-    const handleSubNavigation = (href: string) => {
-        setActiveTab(href);
-        // Auto-close sidebar on mobile after navigation
+    useEffect(() => {
+        const onRemote = () => setTheme(readStoredAcTheme(user.id));
+        window.addEventListener('ac-theme-changed', onRemote);
+        return () => window.removeEventListener('ac-theme-changed', onRemote);
+    }, [user.id]);
+
+    // Auto-expand parent if a child's href matches activeTab
+    useEffect(() => {
+        const autoExpand: Record<string, boolean> = {};
+        navItems?.forEach((item: any) => {
+            if (item.subItems?.some((sub: any) => activeTab.startsWith(sub.href.split('?')[0]))) {
+                autoExpand[item.label] = true;
+            }
+        });
+        setExpanded((prev) => {
+            let changed = false;
+            const next = { ...prev };
+            for (const [label, value] of Object.entries(autoExpand)) {
+                if (value && !prev[label]) {
+                    next[label] = true;
+                    changed = true;
+                }
+            }
+            return changed ? next : prev;
+        });
+    }, [activeTab, navItems]);
+
+    const handleTheme = useCallback((next: AcThemeMode) => {
+        setTheme(next);
+        persistAcTheme(next, user.id);
+        applyAcThemeClass(next);
+        void preferencesService.updateTheme(user.id, next);
+    }, [user.id]);
+
+    const navigate = useCallback((href: string) => {
+        if (!href || href === '#') return;
+        void router.prefetch(href);
+        router.push(href);
+        if (onNavigate) onNavigate();
         if (typeof window !== 'undefined' && window.innerWidth < 768) {
             setSidebarOpen(false);
         }
+    }, [router, onNavigate, setSidebarOpen]);
+
+    useEffect(() => {
+        if (!navItems?.length) return;
+        for (const item of navItems) {
+            if (item.href && item.href !== '#') void router.prefetch(item.href);
+            for (const sub of item.subItems || []) {
+                if (sub.href) void router.prefetch(sub.href);
+            }
+        }
+    }, [navItems, router]);
+
+    const settingsPath =
+        user.role === 'tenant_admin' ? '/dashboard/business/settings' : '/dashboard/settings';
+
+    const toggleExpanded = useCallback((label: string) => {
+        setExpanded(prev => {
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+            if (isMobile) {
+                // On mobile, close others when opening one
+                return prev[label] ? {} : { [label]: true };
+            }
+            return { ...prev, [label]: !prev[label] };
+        });
+    }, []);
+
+    const jumpNavOptions = useMemo(() => {
+        const out: { label: string; href: string }[] = [];
+        for (const item of navItems || []) {
+            if (item.href && item.href !== '#') {
+                out.push({ label: t(item.label), href: item.href });
+            }
+            if (item.subItems?.length) {
+                for (const sub of item.subItems) {
+                    if (sub.href) {
+                        out.push({ label: `${t(item.label)}: ${t(sub.label)}`, href: sub.href });
+                    }
+                }
+            }
+        }
+        if (isPlatformAdminRole(user.role)) {
+            out.push({ label: t('Operations console'), href: '/dashboard/admin/operations' });
+        }
+        return out;
+    }, [navItems, t, user.role]);
+
+    // ── Safe to early-return after all hooks ──────────────────────────────
+    if (forceHidden) return null;
+
+    const initials = (user?.name || user?.email || 'U')
+        .split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+
+    const isItemActive = (item: any): boolean => {
+        if (item.href !== '#' && activeTab === item.href) return true;
+        if (item.subItems?.some((s: any) => activeTab.startsWith(s.href.split('?')[0]))) return true;
+        return false;
     };
 
     return (
         <>
-            {/* Mobile Overlay */}
+            {/* Mobile overlay */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+                    className="ac-mobile-sidebar-overlay fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
-            <aside className={`
-                fixed md:relative z-50 h-full bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
-                ${sidebarOpen ? 'translate-x-0 w-72 pb-24 md:pb-0' : '-translate-x-full w-0 md:translate-x-0 md:w-16'}
-                ${isInCall ? 'z-[110]' : 'z-50'}
+            <aside data-open={sidebarOpen ? 'true' : 'false'} className={`ac-responsive-sidebar
+                fixed md:relative z-[60] h-full ac-workspace-sidebar border-r
+                flex flex-col transition-all duration-200 overflow-hidden will-change-transform
+                ${sidebarOpen ? 'translate-x-0 w-[240px] pb-safe md:pb-0' : '-translate-x-full md:translate-x-0 w-0 md:w-12'}
             `}>
-                <div className="h-20 flex items-center px-6 border-b border-slate-800 bg-slate-900">
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <img
-                            src={LOGO_URL}
-                            alt="AlphaClone Logo"
-                            className="w-9 h-9 rounded-xl object-contain flex-shrink-0"
-                        />
-                        <span className={`font-bold text-white text-lg tracking-tight transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
-                            AlphaClone
+
+                {/* ── Logo ── */}
+                <div className={`${WORKSPACE.sidebar.logoHeight} flex items-center px-3 border-b border-[var(--ws-border)] shrink-0`}>
+                    <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
+                        <Image src={LOGO_URL} alt="Alphaclone Systems" width={28} height={28}
+                            className="rounded-md object-contain flex-shrink-0" />
+                        <span className={`font-semibold text-white text-[13px] tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+                            {t('Alphaclone Systems')}
                         </span>
                     </div>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 custom-scrollbar transform-gpu">
-                    {navItems.map((item, idx) => (
-                        <div key={idx}>
-                            <button
-                                onClick={() => handleNavigation(item.href)}
-                                title={!sidebarOpen ? item.label : undefined}
-                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative overflow-hidden active:scale-95 touch-manipulation
-                   ${activeTab === item.href
-                                        ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
-                                        : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                    }`}
-                            >
-                                {activeTab === item.href && <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />}
-                                {item.icon && <item.icon className={`w-5 h-5 flex-shrink-0 ${activeTab === item.href ? 'text-white' : 'group-hover:text-teal-400 transition-colors'}`} />}
-                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden md:block'} flex-1 text-left whitespace-nowrap`}>{item.label}</span>
-                                {/* Message counter badge */}
-                                {item.href === '/dashboard/messages' && unreadMessageCount > 0 && (
-                                    <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
-                                        {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
-                                    </span>
-                                )}
-                                {('subItems' in item) && item.subItems && sidebarOpen && <ChevronDown className="w-4 h-4 text-slate-600 group-hover:text-slate-400" />}
-                            </button>
+                {sidebarOpen && (
+                    <div className="ac-pwa-touch-only md:hidden px-3 pb-3 border-b border-slate-800 shrink-0">
+                        <label htmlFor="ac-sidebar-jump" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                            {t('Jump to page')}
+                        </label>
+                        <select
+                            id="ac-sidebar-jump"
+                            className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-tertiary,#1C283B)] border border-[var(--ws-border)] text-md text-[var(--ws-text-primary,#F4F7FC)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500,#356AF4)]"
+                            defaultValue=""
+                            onChange={(e) => {
+                                const href = e.target.value;
+                                if (href) {
+                                    navigate(href);
+                                    (e.target as HTMLSelectElement).value = '';
+                                }
+                            }}
+                        >
+                            <option value="" disabled>
+                                {t('Select destination')}
+                            </option>
+                            {jumpNavOptions.map((opt) => (
+                                <option key={`${opt.href}-${opt.label}`} value={opt.href}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
-                            {/* Sub Items */}
-                            {('subItems' in item) && item.subItems && sidebarOpen && (
-                                <div className="ml-8 mt-1 space-y-1">
-                                    {item.subItems.map((sub: { label: string; href: string }, sIdx: number) => (
-                                        <button
-                                            key={sIdx}
-                                            onClick={() => handleSubNavigation(sub.href)}
-                                            className={`block w-full text-left text-sm py-2 px-3 rounded-lg hover:bg-slate-800 transition-colors touch-manipulation
-                           ${activeTab === sub.href ? 'text-teal-400 font-medium bg-slate-800/50' : 'text-slate-500 hover:text-white'}
-                         `}
-                                        >
-                                            {sub.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                {/* ── Nav ── */}
+
+                <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 custom-scrollbar transform-gpu">
+                    {/* Admin badge */}
+                    {isPlatformAdminRole(user.role) && (
+                        <div className="mb-2 px-0.5 space-y-0.5">
+                            <button
+                                onClick={() => navigate('/dashboard/admin/tenants')}
+                                className={`${WORKSPACE.nav.item} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} border border-[var(--ws-border)] text-[var(--brand-blue-400)]`}
+                            >
+                                <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Admin Panel')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => navigate('/dashboard/admin/operations')}
+                                className={`${WORKSPACE.nav.item} ${sidebarOpen ? 'gap-2.5' : 'justify-center'}`}
+                            >
+                                <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Operations')}</span>
+                            </button>
                         </div>
-                    ))}
+                    )}
+
+                    {navItems?.map((item: any, idx: number) => {
+                        const active = isItemActive(item);
+                        const hasChildren = item.subItems && item.subItems.length > 0;
+                        const isExpanded = expanded[item.label] ?? false;
+                        const Icon = item.icon;
+
+                        return (
+                            <div key={idx} {...(item.label === 'Money' || item.label === 'Money Hub' ? { 'data-tour': 'money-hub-nav' } : {})}>
+                                <button
+                                    onClick={() => {
+                                        if (item.comingSoon) return;
+                                        if (hasChildren) {
+                                            toggleExpanded(item.label);
+                                            // Also navigate to the parent page
+                                            if (item.href !== '#') navigate(item.href);
+                                        } else {
+                                            navigate(item.href);
+                                        }
+                                    }}
+                                    title={!sidebarOpen ? t(item.label) : undefined}
+                                    className={`${WORKSPACE.nav.item} ${active ? WORKSPACE.nav.itemActive : ''} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} group relative touch-manipulation`}
+                                >
+                                    {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white' : 'text-[var(--ws-text-tertiary)] group-hover:text-white'}`} />}
+
+                                    <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
+                                        {t(item.label)}
+                                        {item.comingSoon && sidebarOpen && (
+                                            <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-tighter bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded-md">
+                                                {t('Soon')}
+                                            </span>
+                                        )}
+                                    </span>
+
+                                    {/* Unread badge */}
+                                    {(item.href === '/dashboard/messages' || item.href === '/dashboard/business/messages') && unreadMessageCount > 0 && (
+                                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
+                                            {unreadMessageCount > 99 ? '99+' : unreadMessageCount}
+                                        </span>
+                                    )}
+
+                                    {/* Expand chevron */}
+                                    {hasChildren && sidebarOpen && (
+                                        <span className="ml-auto flex-shrink-0 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
+                                            <ChevronDown className="w-4 h-4 text-slate-500 group-hover:text-slate-300" />
+                                        </span>
+                                    )}
+                                    {hasChildren && !sidebarOpen && (
+                                        <ChevronRight className="w-3 h-3 text-slate-600 absolute right-0.5 bottom-0.5" />
+                                    )}
+                                </button>
+
+                                {/* Sub-items: only show when expanded AND sidebar open */}
+                                {hasChildren && sidebarOpen && isExpanded && (
+                                    <div className="ml-3 mt-0.5 pl-2 border-l border-[var(--ws-border)] space-y-0.5">
+                                        {item.subItems.map((sub: any, sIdx: number) => {
+                                            const SubIcon = sub.icon;
+                                            const subHref = sub.href.split('?')[0];
+                                            const subActive = activeTab === subHref;
+                                            return (
+                                                <button
+                                                    key={sIdx}
+                                                    onClick={() => {
+                                                        if (sub.comingSoon) return;
+                                                        navigate(sub.href);
+                                                    }}
+                                                    className={`${WORKSPACE.nav.subItem} ${subActive ? WORKSPACE.nav.subItemActive : ''} gap-2`}
+                                                >
+                                                    {SubIcon && <SubIcon className="w-3.5 h-3.5 flex-shrink-0" />}
+                                                    <span className="whitespace-nowrap">
+                                                        {t(sub.label)}
+                                                        {sub.comingSoon && (
+                                                            <span className="ml-1.5 px-1 py-0.5 text-xs font-semibold uppercase bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded">{t('Soon')}</span>
+                                                        )}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto">
-                    <button
-                        onClick={onLogout}
-                        className="flex items-center gap-3 text-slate-400 hover:text-red-400 w-full px-4 py-3 rounded-xl hover:bg-red-500/10 transition-colors group active:scale-95 touch-manipulation"
-                    >
-                        <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                        <span className={`${sidebarOpen ? 'block' : 'hidden'}`}>Log Out</span>
-                    </button>
+                {/* ── Bottom bar ── */}
+                <div className="p-2 border-t border-[var(--ws-border)] mt-auto shrink-0">
+
+                    {/* Operations HUD (Integrated) */}
+                    {tasks.length > 0 && sidebarOpen && (
+                        <div className="mb-4 border border-[var(--ws-border)] bg-[var(--ws-active)] rounded-[14px] overflow-hidden">
+                            <div className="px-3 py-2 bg-[var(--ws-hover)] border-b border-[var(--ws-border)] flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Activity className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
+                                    <span className="text-xs font-semibold uppercase tracking-widest text-[var(--brand-blue-400)]">{t('Operations')}</span>
+                                </div>
+                                <span className="px-1.5 py-0.5 rounded-md bg-[var(--ws-active)] text-xs font-bold text-[var(--brand-blue-300,#91B5FF)]">
+                                    {tasks.filter((task) => task.status === 'running').length} {t('Active')}
+                                </span>
+                            </div>
+                            <div className="max-h-40 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
+                                {tasks.map((task) => (
+                                    <div key={task.id} className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 flex flex-col gap-1.5">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                {task.status === 'running' ? (
+                                                    <Loader2 className="w-3 h-3 text-[var(--brand-blue-400)] animate-spin" />
+                                                ) : task.status === 'completed' ? (
+                                                    <Activity className="w-3 h-3 text-[var(--success-text,#6FE0AD)]" />
+                                                ) : (
+                                                    <Activity className="w-3 h-3 text-[var(--error-text,#FF9097)]" />
+                                                )}
+                                                <span className="text-xs font-bold text-[var(--ws-text-secondary)] truncate">{task.name}</span>
+                                            </div>
+                                            {(task.status === 'completed' || task.status === 'error') && (
+                                                <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-slate-800 rounded">
+                                                    <X className="w-2.5 h-2.5 text-slate-500" />
+                                                </button>
+                                            )}
+                                        </div>
+                                        {task.status === 'running' && (
+                                            <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                                <motion.div 
+                                                    className="h-full bg-[var(--brand-blue-500)]"
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${task.progress || 50}%` }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Collapsed simple indicator */}
+                    {tasks.length > 0 && !sidebarOpen && (
+                        <div className="mb-4 flex flex-col items-center gap-2">
+                            <div className="relative">
+                                <Activity className="w-5 h-5 text-[var(--brand-blue-400)] animate-pulse" />
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-[var(--brand-blue-500)] rounded-full" />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Theme quick-toggle (collapsed only shows icon cycle; expanded shows nothing — use Settings) */}
+                    {!sidebarOpen && (
+                        <button
+                            onClick={() => handleTheme(theme === 'dark' ? 'light' : 'dark')}
+                            title={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
+                            className="w-full flex items-center justify-center py-2 mb-2 text-slate-500 hover:text-amber-300 transition-colors rounded-lg hover:bg-slate-800"
+                        >
+                            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                        </button>
+                    )}
+
+                    {onStartTour && sidebarOpen ? (
+                        <button
+                            type="button"
+                            onClick={onStartTour}
+                            className="mb-2 flex w-full items-center gap-2 rounded-lg border border-teal-500/20 bg-teal-500/5 px-3 py-2 text-xs font-semibold text-teal-300 transition hover:border-teal-500/40 hover:bg-teal-500/10"
+                        >
+                            <Sparkles className="h-3.5 w-3.5" />
+                            {t('Platform tour')}
+                        </button>
+                    ) : null}
+
+                    {onStartTour && !sidebarOpen ? (
+                        <button
+                            type="button"
+                            onClick={onStartTour}
+                            title={t('Platform tour')}
+                            className="mb-2 flex w-full items-center justify-center rounded-lg py-2 text-teal-400 transition hover:bg-slate-800"
+                        >
+                            <Sparkles className="h-4 w-4" />
+                        </button>
+                    ) : null}
+
+                    {/* User row — identity only; account actions live in header menu */}
+                    <div className={`flex ${sidebarOpen ? 'items-center gap-3' : 'flex-col items-center gap-2'}`}>
+                        <button
+                            onClick={() => navigate(settingsPath)}
+                            title={t('Settings')}
+                            className={`flex items-center min-w-0 rounded-lg hover:bg-slate-800/60 transition-colors active:scale-[0.98] ${
+                                sidebarOpen ? 'flex-1 gap-2.5 px-1 py-1' : 'justify-center p-1'
+                            }`}
+                        >
+                            <span className="w-9 h-9 rounded-full bg-[var(--brand-blue-500)] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+                                {initials}
+                            </span>
+                            {sidebarOpen && (
+                                <span className="flex-1 min-w-0 text-left">
+                                    <span className="block text-sm font-semibold text-white truncate leading-tight">
+                                        {user.name || user.email?.split('@')[0] || t('User')}
+                                    </span>
+                                    <span className="block text-xs text-slate-500 truncate capitalize">{user.role || t('member')}</span>
+                                </span>
+                            )}
+                        </button>
+
+                        <button
+                            onClick={onLogout}
+                            title={t('Log Out')}
+                            aria-label={t('Log Out')}
+                            className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95 touch-manipulation shrink-0"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
             </aside>
         </>

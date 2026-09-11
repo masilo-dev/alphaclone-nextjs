@@ -10,11 +10,19 @@ interface CacheEntry<T> {
     staleTime: number;
 }
 
+function resolveCacheMaxSize(): number {
+    const raw = Number(process.env.IN_MEMORY_CACHE_MAX_ENTRIES);
+    if (Number.isFinite(raw) && raw >= 100) return Math.floor(raw);
+    return 1000;
+}
+
 export class CacheService {
     private memoryCache: Map<string, CacheEntry<any>> = new Map();
-    private maxSize: number = 1000;
+    private maxSize: number = resolveCacheMaxSize();
     private defaultTTL: number = 5 * 60 * 1000; // 5 minutes
     private defaultStaleTime: number = 10 * 60 * 1000; // 10 minutes
+    private hits: number = 0;
+    private misses: number = 0;
 
     /**
      * Get cached data with stale-while-revalidate pattern
@@ -31,11 +39,13 @@ export class CacheService {
 
         // Cache hit and fresh
         if (entry && (now - entry.timestamp) < ttl) {
+            this.hits++;
             return entry.data;
         }
 
         // Cache hit but stale - return stale data and revalidate in background
         if (entry && (now - entry.timestamp) < staleTime) {
+            this.hits++;
             // Revalidate in background
             fetcher().then((freshData) => {
                 this.set(key, freshData, { ttl, staleTime });
@@ -47,6 +57,7 @@ export class CacheService {
         }
 
         // Cache miss or expired - fetch fresh data
+        this.misses++;
         const data = await fetcher();
         this.set(key, data, { ttl, staleTime });
         return data;
@@ -106,10 +117,11 @@ export class CacheService {
         hitRate: number;
         keys: string[];
     } {
+        const total = this.hits + this.misses;
         return {
             size: this.memoryCache.size,
             maxSize: this.maxSize,
-            hitRate: 0, // Would need to track hits/misses
+            hitRate: total > 0 ? this.hits / total : 0,
             keys: Array.from(this.memoryCache.keys()),
         };
     }
@@ -157,7 +169,7 @@ export class CacheService {
         // Fetch and cache
         const data = await fetcher();
         this.set(`${indexKey}:${itemKey}`, data, options);
-        
+
         // Update index
         if (!index) {
             const opts: any = {};

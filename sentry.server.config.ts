@@ -2,7 +2,11 @@ import * as Sentry from '@sentry/nextjs';
 
 const SENTRY_DSN = process.env.SENTRY_DSN;
 const ENVIRONMENT = process.env.NODE_ENV || 'development';
-const RELEASE = process.env.VERCEL_GIT_COMMIT_SHA || 'development';
+const RELEASE =
+  process.env.RAILWAY_GIT_COMMIT_SHA ||
+  process.env.NEXT_PUBLIC_RAILWAY_GIT_COMMIT_SHA ||
+  process.env.GIT_COMMIT ||
+  'development';
 
 Sentry.init({
     dsn: SENTRY_DSN,
@@ -13,13 +17,11 @@ Sentry.init({
     tracesSampleRate: ENVIRONMENT === 'production' ? 0.1 : 1.0,
 
     // Integrations
-    integrations: [
-        // Automatically instrument Node.js libraries
-        ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
-    ],
+    // Integrations - using defaults for maximum compatibility
+    // Custom integrations can be added when needed
 
     // Before sending to Sentry, scrub sensitive data
-    beforeSend(event, hint) {
+    beforeSend(event: any, hint: any) {
         // Remove PII (Personally Identifiable Information)
         if (event.request) {
             // Remove cookies
@@ -33,22 +35,22 @@ Sentry.init({
             }
 
             // Redact sensitive query parameters
-            if (event.request.query_string) {
+            if (event.request?.query_string && typeof event.request.query_string === 'string') {
                 const sensitiveParams = ['token', 'api_key', 'password', 'secret'];
+                let queryString = event.request.query_string;
                 sensitiveParams.forEach(param => {
-                    if (event.request?.query_string) {
-                        event.request.query_string = event.request.query_string.replace(
-                            new RegExp(`${param}=[^&]*`, 'gi'),
-                            `${param}=[REDACTED]`
-                        );
-                    }
+                    queryString = queryString.replace(
+                        new RegExp(`${param}=[^&]*`, 'gi'),
+                        `${param}=[REDACTED]`
+                    );
                 });
+                event.request.query_string = queryString as any;
             }
         }
 
         // Scrub sensitive data from error messages
         if (event.exception?.values) {
-            event.exception.values.forEach(exception => {
+            event.exception.values.forEach((exception: any) => {
                 if (exception.value) {
                     // Redact potential tokens/keys in error messages
                     exception.value = exception.value.replace(
@@ -84,7 +86,7 @@ Sentry.init({
     initialScope: {
         tags: {
             environment: ENVIRONMENT,
-            runtime: 'node',
+            runtime: 'nodejs',
         },
     },
 });

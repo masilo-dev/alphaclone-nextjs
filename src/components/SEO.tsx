@@ -13,11 +13,11 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-    title = 'AlphaClone Systems | Enterprise Software & AI Solutions',
-    description = 'Premier custom software development firm specializing in AI integration, enterprise CRM architectures, and high-performance web applications.',
-    keywords = ['custom software development', 'AI integration', 'enterprise CRM', 'React development', 'web development'],
-    image = 'https://alphaclone.tech/logo.svg',
-    url = 'https://alphaclone.tech',
+    title = 'AlphaClone Systems | AI-Powered Enterprise OS & Custom Software',
+    description = 'AlphaClone Systems: The next-generation AI-powered Business Operating System. Unify your workflows, team management, and enterprise operations in a single, resilient real-time platform.',
+    keywords = ['AI automation', 'enterprise CRM', 'custom software development', 'business operating system', 'Next.js development', 'scalable architecture', 'AlphaClone', 'SaaS platform'],
+    image = 'https://alphaclonesystems.com/logo.svg',
+    url = 'https://alphaclonesystems.com',
     type = 'website',
     publishedTime,
     author = 'AlphaClone Systems'

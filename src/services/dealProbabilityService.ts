@@ -30,6 +30,14 @@ export interface ForecastData {
     byStage: Record<string, { count: number; value: number; probability: number }>;
 }
 
+export interface DealIntelligenceProfile {
+    intelligenceScore: number;
+    intelligenceConfidence: number;
+    intelligenceState: Record<string, number>;
+    intelligenceRecommendations: string[];
+    psychologyProfile: string[];
+}
+
 const STAGE_PROBABILITIES: Record<string, number> = {
     lead: 10,
     qualified: 25,
@@ -40,47 +48,155 @@ const STAGE_PROBABILITIES: Record<string, number> = {
 };
 
 class DealProbabilityService {
-    /**
-     * Calculate deal probability based on multiple factors
-     */
-    calculateProbability(deal: Deal, factors: Partial<ProbabilityFactors> = {}): number {
-        // Base probability from stage
-        let probability = STAGE_PROBABILITIES[deal.stage] || 0;
+    private buildDealIntelligence(
+        probability: number,
+        factors: Partial<ProbabilityFactors>
+    ): DealIntelligenceProfile {
+        const normalized = Math.max(0, Math.min(100, probability));
+        const probability01 = normalized / 100;
+        const confidence = Math.max(
+            0.25,
+            Math.min(
+                0.95,
+                0.45 +
+                    (factors.engagementScore !== undefined ? factors.engagementScore / 250 : 0) +
+                    (factors.decisionMakerEngaged ? 0.15 : 0) -
+                    (factors.competitorPresent ? 0.1 : 0)
+            )
+        );
 
-        // Adjust based on engagement score (0-100)
-        if (factors.engagementScore !== undefined) {
-            const engagementAdjustment = (factors.engagementScore - 50) * 0.2;
-            probability += engagementAdjustment;
+        const recommendations: string[] = [];
+        if (factors.decisionMakerEngaged) {
+            recommendations.push('Prioritize decision-maker follow-up in the next business day.');
+        } else {
+            recommendations.push('Increase decision-maker coverage before advancing stage.');
+        }
+        if (factors.competitorPresent) {
+            recommendations.push('Send competitive proof and differentiation evidence this week.');
+        }
+        if ((factors.timeInStage || 0) > 14) {
+            recommendations.push('Deal has slowed in stage; run a stall-recovery conversation.');
         }
 
-        // Adjust based on time in stage (days)
-        if (factors.timeInStage !== undefined) {
-            // Deals that linger too long have lower probability
-            if (factors.timeInStage > 30) {
-                probability -= 10;
-            } else if (factors.timeInStage > 60) {
-                probability -= 20;
+        const psychologyProfile: string[] = [];
+        if (factors.budgetConfirmed) psychologyProfile.push('budget_aligned_buyer');
+        if (factors.decisionMakerEngaged) psychologyProfile.push('executive_engagement_confirmed');
+        if (factors.competitorPresent) psychologyProfile.push('status_quo_bias_risk');
+        if (!psychologyProfile.length) psychologyProfile.push('limited_behavioral_signals');
+
+        return {
+            intelligenceScore: Number(normalized.toFixed(2)),
+            intelligenceConfidence: Number(confidence.toFixed(2)),
+            intelligenceState: {
+                close: Number(probability01.toFixed(2)),
+                delay: Number((Math.max(0, 0.7 - probability01)).toFixed(2)),
+                lost: Number((Math.max(0, 1 - probability01 - 0.15)).toFixed(2))
+            },
+            intelligenceRecommendations: recommendations,
+            psychologyProfile
+        };
+    }
+
+    /**
+     * Calculate deal probability based on multiple factors using Bayesian Posterior Probability Updates.
+     *
+     * P(Win | Signals) = P(Signals | Win) * P(Win) / P(Signals)
+     * We start with a prior probability derived from the historical win-rate of the current stage,
+     * then sequentially update the probability (prior -> posterior) for each observed signal E.
+     *
+     * Sequential update formula for independent signals:
+     * Posterior Odds = Prior Odds * Bayes Factor
+     * where Odds = P / (1 - P), and Bayes Factor = P(Signal | Win) / P(Signal | ~Win)
+     */
+    calculateProbability(deal: Deal, factors: Partial<ProbabilityFactors> = {}): number {
+        // 1. Determine prior probability based on stage
+        let prior = (STAGE_PROBABILITIES[deal.stage] || 0) / 100;
+
+        // Perfect certainties (closed)
+        if (deal.stage === 'closed_won') return 100;
+        if (deal.stage === 'closed_lost') return 0;
+
+        // Keep bounds away from absolute 0/1 to avoid mathematically collapsing the Bayesian system
+        prior = Math.max(0.02, Math.min(0.98, prior));
+
+        // 2. Define likelihood parameters P(E | Win) vs P(E | ~Win)
+        interface Likelihood {
+            pGivenWin: number;
+            pGivenLose: number;
+        }
+
+        const updates: Likelihood[] = [];
+
+        // Signal: Budget Confirmed
+        if (factors.budgetConfirmed !== undefined) {
+            if (factors.budgetConfirmed) {
+                updates.push({ pGivenWin: 0.85, pGivenLose: 0.35 });
+            } else {
+                updates.push({ pGivenWin: 0.15, pGivenLose: 0.65 });
             }
         }
 
-        // Boost if budget is confirmed
-        if (factors.budgetConfirmed) {
-            probability += 10;
+        // Signal: Decision Maker Engaged
+        if (factors.decisionMakerEngaged !== undefined) {
+            if (factors.decisionMakerEngaged) {
+                updates.push({ pGivenWin: 0.90, pGivenLose: 0.40 });
+            } else {
+                updates.push({ pGivenWin: 0.10, pGivenLose: 0.60 });
+            }
         }
 
-        // Boost if decision maker is engaged
-        if (factors.decisionMakerEngaged) {
-            probability += 15;
+        // Signal: Competitor Present
+        if (factors.competitorPresent !== undefined) {
+            if (factors.competitorPresent) {
+                // Competitor presence lowers closing probability
+                updates.push({ pGivenWin: 0.25, pGivenLose: 0.60 });
+            } else {
+                updates.push({ pGivenWin: 0.75, pGivenLose: 0.40 });
+            }
         }
 
-        // Reduce if competitor is present
-        if (factors.competitorPresent) {
-            probability -= 15;
+        // Signal: Engagement Score
+        if (factors.engagementScore !== undefined) {
+            const score = factors.engagementScore;
+            if (score >= 75) {
+                // High engagement
+                updates.push({ pGivenWin: 0.80, pGivenLose: 0.30 });
+            } else if (score < 30) {
+                // Low engagement
+                updates.push({ pGivenWin: 0.15, pGivenLose: 0.55 });
+            } else {
+                // Neutral engagement
+                updates.push({ pGivenWin: 0.50, pGivenLose: 0.50 });
+            }
         }
 
-        // Clamp between 0 and 100
-        return Math.max(0, Math.min(100, probability));
+        // Signal: Time In Stage (Stalling)
+        if (factors.timeInStage !== undefined) {
+            const days = factors.timeInStage;
+            if (days > 60) {
+                // Major stall
+                updates.push({ pGivenWin: 0.10, pGivenLose: 0.65 });
+            } else if (days > 30) {
+                // Moderate stall
+                updates.push({ pGivenWin: 0.25, pGivenLose: 0.50 });
+            }
+        }
+
+        // 3. Sequentially calculate posterior odds and map back to probability
+        let odds = prior / (1 - prior);
+
+        for (const signal of updates) {
+            const bayesFactor = signal.pGivenWin / signal.pGivenLose;
+            odds = odds * bayesFactor;
+        }
+
+        // Convert odds back to probability: P = Odds / (1 + Odds)
+        let posterior = odds / (1 + odds);
+
+        // Map back to 0-100 percentage scale and clamp
+        return Math.max(1, Math.min(99, Math.round(posterior * 100)));
     }
+
 
     /**
      * Update deal probability
@@ -101,11 +217,17 @@ class DealProbabilityService {
             }
 
             const newProbability = this.calculateProbability(deal, factors);
+            const intelligence = this.buildDealIntelligence(newProbability, factors);
 
             const { error } = await supabase
                 .from('deals')
                 .update({
                     probability: newProbability,
+                    intelligence_score: intelligence.intelligenceScore,
+                    intelligence_confidence: intelligence.intelligenceConfidence,
+                    intelligence_state: intelligence.intelligenceState,
+                    intelligence_recommendations: intelligence.intelligenceRecommendations,
+                    psychology_profile: intelligence.psychologyProfile,
                     updated_at: new Date().toISOString(),
                 })
                 .eq('id', dealId);

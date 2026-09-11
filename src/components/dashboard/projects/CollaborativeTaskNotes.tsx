@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collaborationService, CollaborationDocument, CursorPosition } from '@/services/collaborationService';
 import { Loader2, Users, Save, X, Maximize2, Minimize2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { WORKSPACE } from '@/constants/design';
 
 interface CollaborativeTaskNotesProps {
     taskId: string;
@@ -147,19 +148,19 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
     }
 
     return (
-        <div className={`flex flex-col h-full bg-slate-950 border border-white/5 rounded-3xl overflow-hidden transition-all duration-500 ${isFullscreen ? 'fixed inset-4 z-50' : 'relative'}`}>
+        <div className={`flex h-full flex-col overflow-hidden transition-all duration-500 ${WORKSPACE.panel.base} rounded-lg ${isFullscreen ? 'fixed inset-4 z-50' : 'relative'}`}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between px-6 py-4 bg-slate-900/40 border-b border-white/5 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-slate-900/40 px-6 py-4 backdrop-blur-xl">
                 <div className="flex items-center gap-4">
                     <div className="p-2 bg-teal-500/10 rounded-xl">
                         <Users className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-widest">Collaborative Intel</h3>
+                        <h3 className="text-sm font-semibold text-white">Shared Notes</h3>
                         <div className="flex items-center gap-2">
                             <span className="flex h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">
-                                {cursors.length > 0 ? `${cursors.length + 1} Strategists Online` : 'Solo Operation'}
+                            <span className="text-xs text-slate-500">
+                                {cursors.length > 0 ? `${cursors.length + 1} people viewing` : 'Only you'}
                             </span>
                         </div>
                     </div>
@@ -191,7 +192,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     defaultValue={document?.content}
                     onChange={handleContentChange}
                     className="w-full h-full p-8 bg-transparent text-slate-300 font-mono text-sm leading-relaxed focus:outline-none resize-none placeholder:text-slate-800"
-                    placeholder="Enter strategic notes here... Real-time sync enabled."
+                    placeholder="Start typing your notes..."
                 />
 
                 {/* Users Online List */}
@@ -199,14 +200,14 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
                     {cursors.map((cursor, i) => (
                         <div
                             key={i}
-                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center text-[10px] font-black text-white shadow-xl"
+                            className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center text-xs font-black text-white shadow-xl"
                             title={cursor.userName}
                             style={{ borderColor: cursor.color }}
                         >
                             {cursor.userName.charAt(0)}
                         </div>
                     ))}
-                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center text-[10px] font-black text-white shadow-xl z-10" title="You">
+                    <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-teal-500 flex items-center justify-center text-xs font-black text-white shadow-xl z-10" title="You">
                         {userName.charAt(0)}
                     </div>
                 </div>
@@ -216,12 +217,12 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
             </div>
 
             {/* Status Footer */}
-            <div className="px-6 py-2 bg-slate-900/20 border-t border-white/5 text-[9px] font-black text-slate-600 uppercase tracking-[0.2em] flex justify-between items-center">
-                <span>AlphaClone Collaboration Protocol v2.0</span>
-                <span>Latency: 24ms</span>
+            <div className="flex items-center gap-1.5 border-t border-[var(--ws-border)] bg-slate-900/20 px-6 py-2 text-xs text-slate-600">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                <span>Auto-saving</span>
             </div>
         </div>
     );
 };
+export { CollaborativeTaskNotes };
 
-export default CollaborativeTaskNotes;

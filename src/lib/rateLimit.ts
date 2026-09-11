@@ -1,18 +1,9 @@
-import { Ratelimit } from '@upstash/ratelimit';
+import { Ratelimit, Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from './supabase';
-
-// Initialize Redis client from environment variables
-// Add these to your .env:
-// UPSTASH_REDIS_REST_URL=your_url
-// UPSTASH_REDIS_REST_TOKEN=your_token
-const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-          url: process.env.UPSTASH_REDIS_REST_URL!,
-          token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-      })
-    : null;
+import { createServerClient } from '@supabase/ssr';
+import { securityLogService } from '../services/securityLogService';
+import { getActiveRedisBackend, getRedisAsync, isRedisConfigured } from '@/lib/redis/client';
 
 // Fallback to in-memory rate limiting if Redis is not configured
 // WARNING: This will not work across multiple server instances
@@ -21,42 +12,55 @@ const inMemoryStore = new Map<string, { count: number; resetAt: number }>();
 /**
  * Rate Limiting Configuration
  */
-export const rateLimitConfigs = {
-    // Authentication endpoints - strict limits
+export const rateLimitConfigs: {
     auth: {
-        login: { limit: 5, window: '15 m' }, // 5 attempts per 15 minutes
-        signup: { limit: 3, window: '1 h' }, // 3 signups per hour
-        passwordReset: { limit: 3, window: '1 h' }, // 3 resets per hour
-        verifyEmail: { limit: 10, window: '1 h' }, // 10 verifications per hour
+        login: { limit: number; window: Duration };
+        signup: { limit: number; window: Duration };
+        passwordReset: { limit: number; window: Duration };
+        verifyEmail: { limit: number; window: Duration };
+    };
+    api: {
+        standard: { limit: number; window: Duration };
+        heavy: { limit: number; window: Duration };
+        /** MCP JSON-RPC + OAuth — Anthropic/OpenAI share egress IPs */
+        mcp: { limit: number; window: Duration };
+    };
+    public: {
+        contact: { limit: number; window: Duration };
+        general: { limit: number; window: Duration };
+    };
+    supabase: {
+        standard: { limit: number; window: Duration };
+    };
+} = {
+    // Authentication endpoints - tightened for Phase 1 hardening
+    auth: {
+        login: { limit: 5, window: '15m' }, // 5 login attempts per 15 minutes
+        signup: { limit: 3, window: '1h' }, // 3 signups per hour per IP
+        passwordReset: { limit: 3, window: '1h' }, // 3 resets per hour
+        verifyEmail: { limit: 10, window: '1h' },
     },
 
     // API endpoints - moderate limits
     api: {
-        standard: { limit: 100, window: '1 m' }, // 100 requests per minute
-        heavy: { limit: 20, window: '1 m' }, // 20 requests per minute (AI, exports)
+        standard: { limit: 100, window: '1m' }, // 100 requests per minute
+        heavy: { limit: 20, window: '1m' }, // 20 requests per minute (AI, exports)
+        // Claude/ChatGPT connectors share egress IPs; 20/min caused McpAuthorizationError
+        // ("integration rejected the credentials it just issued") on post-token initialize.
+        mcp: { limit: 300, window: '1m' },
     },
 
     // Public endpoints - lenient limits
     public: {
-        contact: { limit: 5, window: '1 h' }, // 5 contact form submissions per hour
-        general: { limit: 300, window: '1 m' }, // 300 requests per minute
+        contact: { limit: 5, window: '1h' }, // 5 contact form submissions per hour
+        general: { limit: 300, window: '1m' }, // 300 requests per minute
+    },
+
+    // Supabase endpoint rate limits
+    supabase: {
+        standard: { limit: 120, window: '1m' },
     },
 };
-
-/**
- * Create a rate limiter with specific configuration
- */
-function createRateLimiter(limit: number, window: string) {
-    if (redis) {
-        return new Ratelimit({
-            redis,
-            limiter: Ratelimit.slidingWindow(limit, window),
-            analytics: true,
-            prefix: 'alphaclone',
-        });
-    }
-    return null;
-}
 
 /**
  * In-memory fallback rate limiter
@@ -121,8 +125,8 @@ function parseWindow(window: string): number {
  * Apply rate limiting to a request
  */
 export async function rateLimit(
-    request: NextRequest,
-    config: { limit: number; window: string },
+    request: NextRequest | null,
+    config: { limit: number; window: Duration },
     identifier?: string
 ): Promise<{
     success: boolean;
@@ -130,27 +134,56 @@ export async function rateLimit(
     reset: number;
     limit: number;
 }> {
-    // Get identifier (IP address or custom identifier)
-    const ip =
-        request.headers.get('x-forwarded-for')?.split(',')[0] ||
-        request.headers.get('x-real-ip') ||
-        'unknown';
+    // 1. Determine identifier (IP address or provided custom identifier)
+    const id = identifier || (request as any)?.ip || request?.headers.get('x-forwarded-for') || '127.0.0.1';
 
-    const key = identifier || `ip:${ip}`;
-
-    try {
-        if (redis) {
-            // Use Upstash rate limiting
-            const limiter = createRateLimiter(config.limit, config.window);
-            if (!limiter) {
-                throw new Error('Failed to create rate limiter');
+    // 2. Railway / standard Redis uses a shared fixed-window counter.
+    const backend = getActiveRedisBackend();
+    if (backend === 'railway' || backend === 'upstash') {
+        try {
+            const sharedRedis = await getRedisAsync();
+            if (!sharedRedis) throw new Error('Redis unavailable');
+            const windowMs = parseWindow(config.window);
+            const key = `alphaclone:rl:${id}`;
+            const count = await sharedRedis.incr(key);
+            if (count === 1) await sharedRedis.pexpire(key, windowMs);
+            const ttl = await sharedRedis.pttl(key);
+            const result = {
+                success: count <= config.limit,
+                remaining: Math.max(config.limit - count, 0),
+                reset: Date.now() + (ttl > 0 ? ttl : windowMs),
+                limit: config.limit,
+            };
+            if (!result.success && request) {
+                await logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname);
             }
+            return result;
+        } catch (error) {
+            console.error('Railway Redis rate limit error, falling back:', error);
+        }
+    }
 
-            const result = await limiter.limit(key);
+    // 3. Try Upstash sliding-window rate limiter when REST credentials are set
+    const upstashUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+    const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+    if (upstashUrl && upstashToken && backend !== 'railway') {
+        try {
+            const upstashRedis = new Redis({ url: upstashUrl, token: upstashToken });
+            const ratelimit = new Ratelimit({
+                redis: upstashRedis,
+                limiter: Ratelimit.slidingWindow(config.limit, config.window),
+                analytics: true,
+                prefix: 'alphaclone',
+            });
 
-            // Log rate limit violation to Supabase
-            if (!result.success) {
-                await logRateLimitViolation(key, ip, request.nextUrl.pathname);
+            // Add a 1s timeout to prevent Redis issues from hanging the middleware
+            const result = await Promise.race([
+                ratelimit.limit(id),
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Rate limit timeout')), 1000))
+            ]);
+
+            if (!result.success && request) {
+                await logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname);
             }
 
             return {
@@ -159,67 +192,78 @@ export async function rateLimit(
                 reset: result.reset,
                 limit: config.limit,
             };
-        } else {
-            // Use in-memory fallback
-            console.warn('Redis not configured, using in-memory rate limiting (not recommended for production)');
-            const windowMs = parseWindow(config.window);
-            const result = checkInMemoryRateLimit(key, config.limit, windowMs);
-
-            // Log rate limit violation to Supabase
-            if (!result.success) {
-                await logRateLimitViolation(key, ip, request.nextUrl.pathname);
-            }
-
-            return {
-                ...result,
-                limit: config.limit,
-            };
+        } catch (error) {
+            console.error('Redis Rate Limit Error, falling back to in-memory:', error);
         }
-    } catch (error) {
-        console.error('Rate limit error:', error);
-        // On error, allow the request through (fail open)
-        return {
-            success: true,
-            remaining: config.limit,
-            reset: Date.now() + parseWindow(config.window),
-            limit: config.limit,
-        };
     }
+
+    // 4. Fallback to In-Memory rate limiting
+    // Note: window is a string (e.g. '15m'), we need to parse it to ms
+    const windowMs = parseWindow(config.window);
+    const result = checkInMemoryRateLimit(id, config.limit, windowMs);
+
+    if (!result.success && request) {
+        // Log violation for in-memory as well (non-blocking)
+        logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname).catch(console.error);
+    }
+
+    return {
+        ...result,
+        limit: config.limit,
+    };
 }
 
 /**
  * Log rate limit violation to Supabase audit logs
+ * Uses an isolated client to be safe in Edge/Middleware
  */
 async function logRateLimitViolation(identifier: string, ipAddress: string, path: string) {
     try {
-        await supabase.from('audit_logs').insert({
-            user_id: null,
-            action: 'rate_limit_exceeded',
-            resource_type: 'api',
-            resource_id: path,
-            metadata: {
-                identifier,
-                ip_address: ipAddress,
-                path,
-                timestamp: new Date().toISOString(),
-            },
-            ip_address: ipAddress,
-            created_at: new Date().toISOString(),
+        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) return;
+
+        // Use createServerClient which is safe for Edge Runtime
+        const client = createServerClient(supabaseUrl, supabaseKey, {
+            cookies: {
+                get(name: string) { return undefined },
+                set(name: string, value: string, options: any) { },
+                remove(name: string, options: any) { },
+            }
         });
 
-        // Also log as security threat for monitoring
-        await supabase.from('security_threats').insert({
-            type: 'rate_limit_exceeded',
-            severity: 'medium',
-            ip_address: ipAddress,
-            user_agent: '', // Would need to pass from request
-            description: `Rate limit exceeded for ${path}`,
-            metadata: { identifier, path },
-            status: 'detected',
-            created_at: new Date().toISOString(),
-        });
+        // Add a 2s timeout for audit logging to prevent it from blocking the request
+        await Promise.race([
+            Promise.all([
+                client.from('audit_logs').insert({
+                    user_id: null,
+                    action: 'rate_limit_exceeded',
+                    resource_type: 'api',
+                    resource_id: path,
+                    metadata: {
+                        identifier,
+                        ip_address: ipAddress,
+                        path,
+                        timestamp: new Date().toISOString(),
+                    },
+                    ip_address: ipAddress,
+                    created_at: new Date().toISOString(),
+                }),
+                client.from('security_threats').insert({
+                    type: 'rate_limit_exceeded',
+                    severity: 'medium',
+                    ip_address: ipAddress,
+                    user_agent: 'Edge Runtime',
+                    description: `Rate limit exceeded for ${path}`,
+                    metadata: { identifier, path },
+                    status: 'detected',
+                    created_at: new Date().toISOString(),
+                })
+            ]),
+            new Promise((resolve) => setTimeout(resolve, 2000))
+        ]);
     } catch (error) {
-        // Silent fail - don't block request if logging fails
         console.error('Failed to log rate limit violation:', error);
     }
 }
@@ -228,13 +272,33 @@ async function logRateLimitViolation(identifier: string, ipAddress: string, path
  * Middleware helper to apply rate limiting and return response
  */
 export async function rateLimitMiddleware(
-    request: NextRequest,
-    config: { limit: number; window: string },
+    request: NextRequest | null,
+    config: { limit: number; window: Duration },
     identifier?: string
 ): Promise<NextResponse | null> {
     const result = await rateLimit(request, config, identifier);
 
     if (!result.success) {
+        // SECURITY SHIELD: Log the rate limit violation as a security event
+        const ip = request ? (request.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1') : '127.0.0.1';
+        const pathname = request && 'nextUrl' in request && (request as any).nextUrl?.pathname
+            ? (request as any).nextUrl.pathname
+            : '/unknown';
+        
+        // Fire and forget (don't block the 429 response)
+        securityLogService.logEvent({
+            eventType: 'SECURITY_VIOLATION: RATE_LIMIT_EXCEEDED',
+            ipAddress: ip,
+            severity: pathname.includes('/auth') ? 'critical' : 'warning',
+            eventDetails: {
+                pathname,
+                limit: config.limit,
+                window: config.window,
+                remaining: result.remaining
+            },
+            useAdminClient: true
+        }).catch(err => console.error('[RateLimit Log Error]', err));
+
         // Return 429 Too Many Requests
         return new NextResponse(
             JSON.stringify({
@@ -248,56 +312,12 @@ export async function rateLimitMiddleware(
                     'Content-Type': 'application/json',
                     'X-RateLimit-Limit': result.limit.toString(),
                     'X-RateLimit-Remaining': result.remaining.toString(),
-                    'X-RateLimit-Reset': result.reset.toString(),
-                    'Retry-After': Math.ceil((result.reset - Date.now()) / 1000).toString(),
+                    'X-RateLimit-Reset': Math.ceil(result.reset / 1000).toString(),
                 },
             }
         );
     }
 
-    // Add rate limit headers to successful response
-    return NextResponse.next({
-        headers: {
-            'X-RateLimit-Limit': result.limit.toString(),
-            'X-RateLimit-Remaining': result.remaining.toString(),
-            'X-RateLimit-Reset': result.reset.toString(),
-        },
-    });
-}
-
-/**
- * Get rate limit status for a key (useful for dashboards)
- */
-export async function getRateLimitStatus(identifier: string): Promise<{
-    remaining: number;
-    reset: number;
-    limit: number;
-} | null> {
-    if (!redis) return null;
-
-    try {
-        // This would require additional implementation with Upstash
-        // For now, return null (would need custom Redis commands)
-        return null;
-    } catch (error) {
-        return null;
-    }
-}
-
-/**
- * Reset rate limit for a specific identifier (admin function)
- */
-export async function resetRateLimit(identifier: string): Promise<boolean> {
-    if (!redis) {
-        inMemoryStore.delete(identifier);
-        return true;
-    }
-
-    try {
-        await redis.del(`alphaclone:${identifier}`);
-        return true;
-    } catch (error) {
-        console.error('Failed to reset rate limit:', error);
-        return false;
-    }
+    // Return null to indicate "pass through"
+    return null;
 }

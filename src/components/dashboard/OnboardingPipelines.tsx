@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, MoreVertical, Mail, Phone, Calendar, DollarSign, Edit, Trash2, X, Loader2 } from 'lucide-react';
+import { useTenant } from '@/contexts/TenantContext';
+import { Plus, MoreVertical, Mail, Phone, Calendar, DollarSign, Edit, Trash2, X, Loader2, Sparkles } from 'lucide-react';
 import { Button, Card, Modal, Input } from '../ui/UIComponents';
 import { User } from '../../types';
 import { leadService, Lead } from '../../services/leadService';
+import LeadDetailModal from './leads/LeadDetailModal';
 import toast from 'react-hot-toast';
 
 interface OnboardingPipelinesProps {
@@ -17,12 +19,15 @@ interface OnboardingPipelinesProps {
  * - Proper error handling
  */
 const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
+    const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLead, setEditingLead] = useState<Lead | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [draggedLead, setDraggedLead] = useState<Lead | null>(null);
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+    const [showDetailView, setShowDetailView] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -42,11 +47,17 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
     const loadLeads = async () => {
         setLoading(true);
         try {
-            const { leads: data } = await leadService.getLeads();
-            setLeads(data || []);
-        } catch (err) {
+            const { leads: data, error } = await leadService.getLeads();
+            if (error) {
+                console.error('Lead Service Error:', error);
+                toast.error(error);
+                setLeads([]);
+            } else {
+                setLeads(data || []);
+            }
+        } catch (err: any) {
             console.error('Failed to load leads:', err);
-            toast.error('Failed to load leads');
+            toast.error(err.message || 'Failed to load leads');
         } finally {
             setLoading(false);
         }
@@ -162,6 +173,13 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
         const oldStage = draggedLead.stage;
         const newStage = stageId as Lead['stage'];
 
+        const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+        if (stageOrder.indexOf(newStage) < stageOrder.indexOf(oldStage)) {
+            toast.error('Cannot move lead back to a previous stage');
+            setDraggedLead(null);
+            return;
+        }
+
         // Optimistic update
         setLeads(prev => prev.map(l =>
             l.id === draggedLead.id ? { ...l, stage: newStage } : l
@@ -215,10 +233,28 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                     <h2 className="text-2xl font-bold text-white">Onboarding Pipelines</h2>
                     <p className="text-slate-400 mt-1">Manage leads and track conversion progress</p>
                 </div>
-                <Button onClick={handleAddLead} className="bg-teal-600 hover:bg-teal-500">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Lead
-                </Button>
+                <div className="flex gap-2">
+                    <Button 
+                        onClick={async () => {
+                            toast.loading('Nexus: Optimizing onboarding flow...', { id: 'nexus-onboarding' });
+                            const res = await fetch('/api/social/command-center', { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ tenantId: currentTenant?.id, mode: 'nexus_system_action', systemKey: 'onboarding_flow' })
+                            });
+                            const data = await res.json();
+                            toast.success(data.result.message, { id: 'nexus-onboarding' });
+                        }}
+                        className="bg-slate-900 hover:bg-slate-800 text-violet-400 border-white/5"
+                    >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Nexus Flow
+                    </Button>
+                    <Button onClick={handleAddLead} className="bg-teal-600 hover:bg-teal-500">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Lead
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -268,11 +304,15 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                             {leads
                                 .filter((lead) => lead.stage === stage.id)
                                 .map((lead) => (
-                                    <Card
+                                    <div 
                                         key={lead.id}
                                         draggable
                                         onDragStart={() => handleDragStart(lead)}
-                                        className="p-4 hover:border-teal-500/50 transition-all cursor-move group"
+                                        onClick={() => {
+                                            setSelectedLead(lead);
+                                            setShowDetailView(true);
+                                        }}
+                                        className="p-4 hover:border-teal-500/50 transition-all cursor-pointer group bg-slate-800/50 rounded-lg border border-slate-700"
                                     >
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex-1">
@@ -332,7 +372,7 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                                 <p className="text-xs text-slate-400 line-clamp-2">{lead.notes}</p>
                                             </div>
                                         )}
-                                    </Card>
+                                    </div>
                                 ))}
 
                             {/* Empty State */}
@@ -405,12 +445,22 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                                     onChange={(e) => setFormData({ ...formData, stage: e.target.value as Lead['stage'] })}
                                     className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-teal-500"
                                 >
-                                    <option value="lead">Lead</option>
-                                    <option value="qualified">Qualified</option>
-                                    <option value="proposal">Proposal</option>
-                                    <option value="negotiation">Negotiation</option>
-                                    <option value="won">Won</option>
-                                    <option value="lost">Lost</option>
+                                    {[
+                                        { value: 'lead', label: 'Lead' },
+                                        { value: 'qualified', label: 'Qualified' },
+                                        { value: 'proposal', label: 'Proposal' },
+                                        { value: 'negotiation', label: 'Negotiation' },
+                                        { value: 'won', label: 'Won' },
+                                        { value: 'lost', label: 'Lost' }
+                                    ].map((stage) => {
+                                        const stageOrder = ['lead', 'qualified', 'proposal', 'negotiation', 'won', 'lost'];
+                                        const isDisabled = editingLead ? stageOrder.indexOf(stage.value) < stageOrder.indexOf(editingLead.stage) : false;
+                                        return (
+                                            <option key={stage.value} value={stage.value} disabled={isDisabled}>
+                                                {stage.label}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                             </div>
                         </div>
@@ -454,6 +504,25 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
                     </div>
                 </Modal>
             )}
+
+            {/* Lead Detail View */}
+            <LeadDetailModal
+                lead={selectedLead!}
+                isOpen={showDetailView}
+                onClose={() => {
+                    setShowDetailView(false);
+                    setSelectedLead(null);
+                }}
+                onLeadUpdate={(updatedLead) => {
+                    setLeads(leads.map(l => l.id === updatedLead.id ? updatedLead : l));
+                }}
+                onLeadDelete={(leadId) => {
+                    setLeads(leads.filter(l => l.id !== leadId));
+                    setShowDetailView(false);
+                    setSelectedLead(null);
+                    toast.success('Lead deleted');
+                }}
+            />
         </div>
     );
 };

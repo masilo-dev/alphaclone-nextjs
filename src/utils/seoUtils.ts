@@ -17,7 +17,7 @@ export async function generateSitemap(): Promise<string> {
         return '';
     }
 
-    const baseUrl = 'https://alphaclone.tech'; // Your actual domain
+    const baseUrl = 'https://alphaclonesystems.com'; // Your actual domain
 
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -49,7 +49,7 @@ export function generateRobotsTxt(): string {
 Allow: /
 Allow: /blog/
 
-Sitemap: https://alphaclone.tech/sitemap.xml
+Sitemap: https://alphaclonesystems.com/sitemap.xml
 
 # Disallow admin areas
 Disallow: /dashboard/

@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { ExternalLink, Globe, Calendar, Tag, Search, Plus, Edit, Trash2, Upload, Image as ImageIcon, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Project } from '../../types';
 import { Button, Modal, Input } from '../ui/UIComponents';
 import { projectService } from '../../services/projectService';
+import { notificationService } from '../../services/dashboardService';
+import { tenantService } from '../../services/tenancy/TenantService';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -37,7 +40,8 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     // Filter projects
-    const portfolioProjects = isAdmin ? projects : projects.filter(
+    const safeProjects = projects || [];
+    const portfolioProjects = isAdmin ? safeProjects : safeProjects.filter(
         (p) => p.status === 'Completed' || p.status === 'Active'
     );
 
@@ -73,7 +77,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             contractText: '',
             externalUrl: '',
             status: 'Completed',
-            currentStage: 'Deployment',
+            currentStage: 'Closure',
             progress: 100
         });
         setPreviewImage(null);
@@ -130,37 +134,30 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             setUploadProgress(40);
 
             // Generate unique filename
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
             setUploadProgress(60);
 
-            // Upload with timeout (30 seconds)
-            const uploadPromise = supabase.storage
-                .from('project-images')
-                .upload(fileName, compressedBlob, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+            // Import fileUploadService
+            const { fileUploadService } = await import('../../services/fileUploadService');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error('Authentication required');
 
-            const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Upload timeout - network too slow')), 30000)
+            const uploadRes = await fileUploadService.uploadFile(
+                compressedBlob as any, 
+                'project-images', 
+                editingProject?.id || 'new',
+                user.id,
+                tenantService.getCurrentTenantId() || '',
+                { category: 'Portfolio', tags: ['Project'] }
             );
 
-            const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
-
-            if (error) {
-                console.error('Upload error:', error);
-                toast.error('Failed to upload image. Please try again.');
-                return null;
+            if (!uploadRes.success || !uploadRes.proxiedUrl) {
+                throw new Error(uploadRes.error || 'Upload failed');
             }
 
             setUploadProgress(80);
 
-            // Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('project-images')
-                .getPublicUrl(fileName);
+            // Get public URL from the service result
+            const publicUrl = uploadRes.proxiedUrl;
 
             setUploadProgress(100);
 
@@ -193,7 +190,7 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = (e) => {
-                const img = new Image();
+                const img = new window.Image();
                 img.src = e.target?.result as string;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
@@ -261,7 +258,18 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                     new Promise(async (resolve, reject) => {
                         const { error } = await projectService.updateProject(editingProject.id, projectData);
                         if (error) reject(error);
-                        else resolve(true);
+                        else {
+                            notificationService.createNotification({
+                                user_id: userId || 'unknown',
+                                tenant_id: tenantService.getCurrentTenantId() || '',
+                                type: 'project',
+                                title: 'Project Updated',
+                                message: `Project "${formData.name}" has been updated.`,
+                                read: false,
+                                link: '/dashboard/projects'
+                            }).catch(console.error);
+                            resolve(true);
+                        }
                     }),
                     {
                         loading: 'Updating project...',
@@ -287,7 +295,18 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         } as any);
 
                         if (error) reject(error);
-                        else resolve(project);
+                        else {
+                            notificationService.createNotification({
+                                user_id: finalOwnerId,
+                                tenant_id: tenantService.getCurrentTenantId() || '',
+                                type: 'project',
+                                title: 'Project Created',
+                                message: `Project "${formData.name}" has been added to the portfolio.`,
+                                read: false,
+                                link: '/dashboard/projects'
+                            }).catch(console.error);
+                            resolve(project);
+                        }
                     }),
                     {
                         loading: 'Creating project...',
@@ -381,10 +400,12 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                         {/* Project Image */}
                         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-teal-900/20 to-purple-900/20">
                             {project.image ? (
-                                <img
+                                <Image
                                     src={project.image}
                                     alt={project.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                    className="object-cover group-hover:scale-110 transition-transform duration-300"
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
@@ -465,10 +486,11 @@ const PortfolioShowcase: React.FC<PortfolioShowcaseProps> = ({ projects, isAdmin
                                 {/* Preview */}
                                 {previewImage && (
                                     <div className="relative w-full h-48 rounded-lg overflow-hidden border border-slate-700">
-                                        <img
+                                        <Image
                                             src={previewImage}
                                             alt="Preview"
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            className="object-cover"
                                         />
                                     </div>
                                 )}

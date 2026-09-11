@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, CheckCircle, Clock, Calendar, Save, X } from 'lucide-react';
 import { milestoneService, Milestone } from '../../../services/milestoneService';
 import { toast } from 'react-hot-toast';
@@ -14,11 +14,7 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
     const [isAdding, setIsAdding] = useState(false);
     const [newMilestone, setNewMilestone] = useState({ name: '', description: '', dueDate: '' });
 
-    useEffect(() => {
-        loadMilestones();
-    }, [projectId]);
-
-    const loadMilestones = async () => {
+    const loadMilestones = useCallback(async () => {
         setIsLoading(true);
         const { milestones, error } = await milestoneService.getMilestones(projectId);
         if (error) {
@@ -27,9 +23,13 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
             setMilestones(milestones);
         }
         setIsLoading(false);
-    };
+    }, [projectId]);
 
-    const handleCreate = async () => {
+    useEffect(() => {
+        loadMilestones();
+    }, [projectId, loadMilestones]);
+
+    const handleCreate = useCallback(async () => {
         if (!newMilestone.name.trim()) return;
 
         const { milestone, error } = await milestoneService.createMilestone(projectId, {
@@ -42,36 +42,36 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
         if (error) {
             toast.error('Failed to create milestone');
         } else if (milestone) {
-            setMilestones([...milestones, milestone]);
+            setMilestones(prev => [...prev, milestone]);
             setNewMilestone({ name: '', description: '', dueDate: '' });
             setIsAdding(false);
             toast.success('Milestone added');
         }
-    };
+    }, [newMilestone, projectId]);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = useCallback(async (id: string) => {
         if (!confirm('Are you sure you want to delete this milestone?')) return;
 
         const { error } = await milestoneService.deleteMilestone(id);
         if (error) {
             toast.error('Failed to delete milestone');
         } else {
-            setMilestones(milestones.filter(m => m.id !== id));
+            setMilestones(prev => prev.filter(m => m.id !== id));
             toast.success('Milestone deleted');
         }
-    };
+    }, []);
 
-    const toggleStatus = async (milestone: Milestone) => {
+    const toggleStatus = useCallback(async (milestone: Milestone) => {
         const newStatus = milestone.status === 'completed' ? 'pending' : 'completed';
         const { error } = await milestoneService.updateMilestone(milestone.id, { status: newStatus });
 
         if (error) {
             toast.error('Failed to update status');
         } else {
-            setMilestones(milestones.map(m => m.id === milestone.id ? { ...m, status: newStatus } : m));
+            setMilestones(prev => prev.map(m => m.id === milestone.id ? { ...m, status: newStatus } : m));
             toast.success(`Milestone marked as ${newStatus}`);
         }
-    };
+    }, []);
 
     return (
         <div className="space-y-6">
@@ -150,16 +150,16 @@ export default function MilestoneManager({ projectId, onClose }: MilestoneManage
                         <div
                             key={milestone.id}
                             className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${milestone.status === 'completed'
-                                    ? 'bg-slate-900/50 border-slate-800 opacity-75'
-                                    : 'bg-slate-900 border-slate-700'
+                                ? 'bg-slate-900/50 border-slate-800 opacity-75'
+                                : 'bg-slate-900 border-slate-700'
                                 }`}
                         >
                             <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => toggleStatus(milestone)}
                                     className={`w-5 h-5 rounded-full flex items-center justify-center transition-colors ${milestone.status === 'completed'
-                                            ? 'bg-teal-500 text-white'
-                                            : 'bg-slate-800 border border-slate-600 hover:border-teal-500'
+                                        ? 'bg-teal-500 text-white'
+                                        : 'bg-slate-800 border border-slate-600 hover:border-teal-500'
                                         }`}
                                 >
                                     {milestone.status === 'completed' && <CheckCircle className="w-3 h-3" />}

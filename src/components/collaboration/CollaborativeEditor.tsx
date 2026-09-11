@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Card, Button } from '../ui/UIComponents';
 import { Users, Save, History, MessageSquare, X } from 'lucide-react';
 import { collaborationService, CollaborationDocument, CursorPosition } from '../../services/collaborationService';
@@ -20,30 +20,7 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
     const subscriptionRef = useRef<{ unsubscribe: () => void; sendCursor: (cursor: CursorPosition) => void } | null>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    useEffect(() => {
-        loadDocument();
-        subscribeToDocument();
-
-        return () => {
-            if (subscriptionRef.current) {
-                subscriptionRef.current.unsubscribe();
-            }
-            if (saveTimeoutRef.current) {
-                clearTimeout(saveTimeoutRef.current);
-            }
-        };
-    }, [documentId]);
-
-    const loadDocument = async () => {
-        const { document: doc, error } = await collaborationService.getDocument(documentId);
-        if (doc && !error) {
-            setDocument(doc);
-            setContent(doc.content);
-            setParticipants(doc.participants);
-        }
-    };
-
-    const subscribeToDocument = () => {
+    const subscribeToDocument = useCallback(() => {
         const subscription = collaborationService.subscribeToDocument(
             documentId,
             (updatedDoc) => {
@@ -57,7 +34,40 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
         );
 
         subscriptionRef.current = subscription;
-    };
+    }, [documentId]);
+
+    const loadDocument = useCallback(async () => {
+        const { document: doc, error } = await collaborationService.getDocument(documentId);
+        if (doc && !error) {
+            setDocument(doc);
+            setContent(doc.content);
+            setParticipants(doc.participants);
+        }
+    }, [documentId]);
+
+    const saveDocument = useCallback(async (docContent?: string) => {
+        setIsSaving(true);
+        const contentToSave = docContent || content;
+        const { success, error } = await collaborationService.updateDocument(documentId, contentToSave, user.id);
+        if (!success) {
+            console.error('Failed to save:', error);
+        }
+        setIsSaving(false);
+    }, [documentId, content, user.id]);
+
+    useEffect(() => {
+        loadDocument();
+        subscribeToDocument();
+
+        return () => {
+            if (subscriptionRef.current) {
+                subscriptionRef.current.unsubscribe();
+            }
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+            }
+        };
+    }, [loadDocument, subscribeToDocument]);
 
     const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newContent = e.target.value;
@@ -82,16 +92,6 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
         saveTimeoutRef.current = setTimeout(() => {
             saveDocument(newContent);
         }, 1000);
-    };
-
-    const saveDocument = async (docContent?: string) => {
-        setIsSaving(true);
-        const contentToSave = docContent || content;
-        const { success, error } = await collaborationService.updateDocument(documentId, contentToSave, user.id);
-        if (!success) {
-            console.error('Failed to save:', error);
-        }
-        setIsSaving(false);
     };
 
     const getParticipantColors = (userId: string): string => {
@@ -217,4 +217,3 @@ const CollaborativeEditor: React.FC<CollaborativeEditorProps> = ({ documentId, u
 };
 
 export default CollaborativeEditor;
-

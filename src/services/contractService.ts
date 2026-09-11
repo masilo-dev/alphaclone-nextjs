@@ -1,3 +1,4 @@
+import { stripHtml } from '@/lib/html/stripHtml';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
 import { generateText } from './unifiedAIService';
@@ -12,6 +13,7 @@ export interface Contract {
     type: string; // 'NDA', 'Service', etc.
     status: 'draft' | 'sent' | 'client_signed' | 'fully_signed' | 'rejected';
     content: string; // HTML/Text
+    document_url?: string; // Uploaded PDF URL
     client_signature?: string;
     client_signed_at?: string;
     admin_signature?: string;
@@ -19,15 +21,111 @@ export interface Contract {
     payment_due_date?: string; // ISO Date
     payment_amount?: number;
     payment_status?: 'pending' | 'paid' | 'overdue';
+    signing_token?: string;
+    governing_law?: string | null;
+    jurisdiction?: string | null;
     metadata?: {
         signer_ip?: string;
         content_hash?: string;
         version?: string;
+        document_theme?: string;
+        client_name?: string;
+        client_email?: string;
+        [key: string]: unknown;
     };
     created_at: string;
 }
 
 export const contractService = {
+    decodeBase64ToBytes(base64: string): Uint8Array {
+        const normalized = String(base64 || '').trim();
+        const binary = window.atob(normalized);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    },
+
+    triggerBrowserDownload(blob: Blob, filename: string): void {
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.URL.revokeObjectURL(url);
+    },
+    hasNonLatinText(text: string): boolean {
+        if (!text) return false;
+        return /[^\u0000-\u00FF]/.test(text);
+    },
+
+    buildUnicodeSafeContractHtml(contract: any, tenant?: any): string {
+        const title = String(contract?.title || 'Contract');
+        const rawContent = typeof contract?.content === 'string' ? contract.content : '';
+        const normalized = this.normalizeContractTextForPdf(this.cleanMarkdown(rawContent));
+        const contentHtml = normalized
+            .split('\n')
+            .map((line) => {
+                const safe = line
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                if (!safe.trim()) return '<p>&nbsp;</p>';
+                if (safe.trim().startsWith('#')) {
+                    const cleanHeader = safe.replace(/^#+\s*/, '');
+                    return `<h2>${cleanHeader}</h2>`;
+                }
+                return `<p>${safe}</p>`;
+            })
+            .join('');
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+SC:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 28px;
+            color: #0f172a;
+            background: #ffffff;
+            font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif;
+            line-height: 1.6;
+            font-size: 12px;
+        }
+        h1, h2, h3, h4 {
+            color: #0f172a;
+            font-weight: 700;
+            margin: 20px 0 10px 0;
+        }
+        p {
+            margin: 0 0 10px 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>${title}</h1>
+    ${contentHtml}
+    <hr />
+    <p>${tenant?.name || 'AlphaClone Systems'}</p>
+</body>
+</html>`;
+    },
     /**
      * Get tenant ID (required for all operations)
      */
@@ -42,50 +140,69 @@ export const contractService = {
      */
     async createContract(contract: Partial<Contract>) {
         const tenantId = this.getTenantId();
-        const { data: userData } = await supabase.auth.getUser();
+        const response = await fetch('/api/contracts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ...contract }) });
+        const payload = await response.json().catch(() => ({}));
+        return { contract: response.ok ? payload.data : null, error: response.ok ? null : { message: payload.error || 'Contract could not be created' } };
+    },
 
-        const { data, error } = await supabase
-            .from('contracts')
-            .insert({
-                tenant_id: tenantId,
-                title: contract.title,
-                content: contract.content,
-                project_id: contract.project_id,
-                client_id: contract.client_id, // Link to Client profile
-                owner_id: userData.user?.id,   // Link to Admin user
-                status: 'draft',
-                payment_due_date: contract.payment_due_date,
-                payment_amount: contract.payment_amount,
-                payment_status: contract.payment_status || 'pending'
-            })
-            .select()
-            .single();
-
-        return { contract: data, error };
+    /** Update an existing contract in place (content, owner signature, legal fields, metadata). */
+    async updateContract(
+        contractId: string,
+        updates: Partial<Pick<Contract, 'title' | 'content' | 'status' | 'metadata' | 'admin_signature' | 'admin_signed_at' | 'governing_law' | 'jurisdiction' | 'payment_amount'>>,
+    ) {
+        const tenantId = this.getTenantId();
+        const body = Object.fromEntries(Object.entries({ tenantId, ...updates }).filter(([, value]) => value !== undefined));
+        const response = await fetch(`/api/contracts/${contractId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const payload = await response.json().catch(() => ({}));
+        return { contract: response.ok ? payload.data : null, error: response.ok ? null : { message: payload.error || 'Contract could not be updated' } };
     },
 
     /**
-     * Update contract content/status
+     * Clean markdown formatting from AI-generated text
+     * Removes **, ~~, ####, -, *, and other markdown symbols
      */
-    async updateContract(id: string, updates: Partial<Contract>) {
-        const tenantId = this.getTenantId();
+    /**
+     * Clean Markdown for Professional Display (Simplified, keeps markers for PDF engine)
+     */
+    cleanMarkdown(text: string): string {
+        if (!text) return '';
 
-        const { data, error } = await supabase
-            .from('contracts')
-            .update(updates)
-            .eq('id', id)
-            .eq('tenant_id', tenantId) // ← VERIFY OWNERSHIP
-            .select()
-            .single();
-        return { contract: data, error };
+        return text
+            // Normalize line endings
+            .replace(/\r\n/g, '\n')
+            // Remove code blocks
+            .replace(/```[\s\S]*?```/g, '')
+            // Keep # headers and ** bold, but clean others
+            .replace(/~~(.*?)~~/g, '$1')
+            .replace(/__(.*?)__/g, '$1')
+            .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+            .replace(/[ \t]{2,}/g, ' ')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim();
+    },
+
+    normalizeContractTextForPdf(text: string): string {
+        if (!text) return '';
+        return text
+            .replace(/\u00a0/g, ' ')
+            .replace(/[ \t]{2,}/g, ' ')
+            .replace(/\n{3,}/g, '\n\n')
+            // Collapse artificial spaced letter runs (e.g. "U M O W A")
+            .replace(/((?:\b[A-Za-z]\s){3,}[A-Za-z]\b)/g, (match) => match.replace(/\s+/g, ''))
+            .trim();
+    },
+
+    prepareContractContentForPdf(rawContent: string): string {
+        const asText = rawContent.includes('<') ? stripHtml(rawContent) : rawContent;
+        return this.normalizeContractTextForPdf(this.cleanMarkdown(asText));
     },
 
     /**
      * Generate Draft with AI
      */
     async generateDraft(type: string, clientName: string, projectDetails: string) {
-        const prompt = `Act as an elite corporate legal counsel. Write a comprehensive, high-stakes professional ${type} for "${clientName}".
-        
+        const prompt = `Act as an expert corporate legal counsel. Write a comprehensive, high-stakes professional ${type} for "${clientName}".
+
         Project Scope: ${projectDetails}
 
         STRUCTURE TO FOLLOW:
@@ -98,14 +215,26 @@ export const contractService = {
         7. TERMINATION & DISPUTE RESOLUTION.
 
         CRITICAL STYLING:
-        - DO NOT use placeholders like "__________" or "[INSERT HERE]". Populate with realistic, high-end defaults if specific data is missing.
+        - Output PLAIN TEXT ONLY - NO markdown formatting (no **, ~~, ####, ---, etc.)
+        - If a material term is not provided (governing law, jurisdiction, effective date, term, auto-renewal, notice period, payment schedule, liability cap, IP ownership, termination, legal names, currency, amount), write a clearly marked UNRESOLVED: field for operator review. Do not invent commercial or legal facts.
         - Use sophisticated legal terminology (e.g., "Force Majeure", "Governing Law").
         - Ensure the tone is authoritative yet partnership-oriented.
         - Format with clear numbered sections (Section 1.0, 1.1, etc.).
-        - Explicitly state current date as the execution date.`;
+        - Use proper spacing and line breaks only.
+        - Explicitly state current date as the execution date.
+        - Write as if this is a final printed legal document.`;
 
         // Use unified AI service (supports Claude, Gemini, OpenAI)
-        return await generateText(prompt, 3000);
+        const { text, error } = await generateText(prompt, 3000);
+
+        if (error || !text) {
+            return { text: null, error };
+        }
+
+        // Clean any markdown formatting that AI might have added
+        const cleanedText = this.cleanMarkdown(text);
+
+        return { text: cleanedText, error: null };
     },
 
     /**
@@ -130,53 +259,90 @@ export const contractService = {
     },
 
     /**
-     * Sign a contract
+     * Delete a contract
      */
-    async signContract(contractId: string, role: 'client' | 'admin', signatureDataUrl: string) {
-        const updates: any = {};
-        const now = new Date().toISOString();
+    async deleteContract(id: string) {
+        const tenantId = this.getTenantId();
+        const response = await fetch(`/api/contracts/${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId }) });
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? null : { message: payload.error || 'Contract could not be deleted' } };
+    },
 
-        // Fetch current signatures and content for status check
-        const { data: contract } = await supabase.from('contracts').select('content, client_signature, admin_signature').eq('id', contractId).single();
-        const contentHash = contract?.content ? await this.generateHash(contract.content) : undefined;
-
-        // Try to get IP address (client-side)
-        let ipAddress = 'unknown';
+    async bulkDeleteContracts(ids: string[]): Promise<{ error: string | null; count: number; skipped: number }> {
+        if (!ids.length) return { error: null, count: 0, skipped: 0 };
+        const tenantId = this.getTenantId();
+        const uniqueIds = [...new Set(ids)];
         try {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
-            ipAddress = data.ip;
-        } catch (e) {
-            console.warn('Could not fetch IP for audit log');
+            const { data, error: fetchError } = await supabase
+                .from('contracts')
+                .select('id, status')
+                .in('id', uniqueIds)
+                .eq('tenant_id', tenantId);
+            if (fetchError) throw fetchError;
+
+            const draftIds = (data || [])
+                .filter((row: { id: string; status: string }) => row.status === 'draft')
+                .map((row: { id: string }) => row.id);
+            const skipped = uniqueIds.length - draftIds.length;
+
+            for (const id of draftIds) {
+                const { error } = await this.deleteContract(id);
+                if (error) throw error;
+            }
+
+            return { error: null, count: draftIds.length, skipped };
+        } catch (err) {
+            return {
+                error: err instanceof Error ? err.message : 'Unknown error',
+                count: 0,
+                skipped: 0,
+            };
         }
+    },
 
-        if (role === 'client') {
-            updates.client_signature = signatureDataUrl;
-            updates.client_signed_at = now;
-            // If admin has already signed, it becomes fully_signed
-            updates.status = contract?.admin_signature ? 'fully_signed' : 'client_signed';
-        } else {
-            updates.admin_signature = signatureDataUrl;
-            updates.admin_signed_at = now;
-            // If client has already signed, it becomes fully_signed
-            updates.status = contract?.client_signature ? 'fully_signed' : 'sent';
+    /**
+     * Sign a contract
+     * ESIGN COMPLIANT: Records full audit trail, consent, and tamper seals
+     */
+    async signContract(
+        contractIdOrToken: string,
+        role: 'client' | 'admin',
+        signatureDataUrl: string,
+        signerInfo?: {
+            id: string;
+            name: string;
+            email: string;
+            consentGiven?: boolean;
+            userAgent?: string;
         }
+    ) {
+        try {
+            const isPublicTokenFlow = signerInfo?.id === 'public';
+            const response = await fetch('/api/contracts/sign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contractId: isPublicTokenFlow ? undefined : contractIdOrToken,
+                    role: isPublicTokenFlow ? undefined : role,
+                    signingToken: isPublicTokenFlow ? contractIdOrToken : undefined,
+                    signatureDataUrl,
+                    signerName: signerInfo?.name || (role === 'admin' ? 'Administrator' : 'Client'),
+                    signerEmail: signerInfo?.email || '',
+                    consentGiven: signerInfo?.consentGiven || false,
+                }),
+            });
 
-        updates.metadata = {
-            signer_ip: ipAddress,
-            content_hash: contentHash,
-            signed_by_role: role,
-            timestamp: now
-        };
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to sign contract');
+            }
 
-        const { data, error } = await supabase
-            .from('contracts')
-            .update(updates)
-            .eq('id', contractId)
-            .select()
-            .single();
-
-        return { contract: data, error };
+            const { contract } = await response.json();
+            return { contract, error: null };
+        } catch (error: any) {
+            console.error('Sign contract error:', error);
+            return { contract: null, error: { message: error.message || 'Failed to sign contract' } as any };
+        }
     },
 
     /**
@@ -198,6 +364,11 @@ export const contractService = {
     generateProfessionalPDF(contract: any, tenant?: any) {
         const doc = new jsPDF();
         const primaryColor = '#14b8a6'; // Teal-500
+        if (!contract) {
+            console.error('generateProfessionalPDF: No contract provided');
+            return doc;
+        }
+
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
 
@@ -231,7 +402,7 @@ export const contractService = {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(148, 163, 184); // slate-400
-        doc.text(`Reference ID: ${contract.id}`, 20, 33);
+        doc.text(`Reference ID: ${contract.id || 'NEW'}`, 20, 33);
 
         // Body Content
         let y = 60;
@@ -239,25 +410,56 @@ export const contractService = {
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
 
-        const content = typeof contract.content === 'string' ? contract.content : 'No content provided';
-        const splitText = doc.splitTextToSize(content, 170);
+        const rawContent = typeof contract.content === 'string' ? contract.content : 'No content provided';
+        const content = this.prepareContractContentForPdf(rawContent);
+        const lines = content.split('\n');
 
-        // Check if content fits on one page (estimating)
-        let linesOnCurrentPage = 0;
-        const maxLinesPerPage = 220;
-
-        splitText.forEach((line: string) => {
-            if (y > 270) {
+        lines.forEach((line) => {
+            if (y > pageHeight - 30) {
                 doc.addPage();
                 y = 20;
+
+                // Pagination footer on subsequent pages
+                doc.setFontSize(8);
+                doc.setTextColor(148, 163, 184);
+                doc.text(`Page ${doc.getNumberOfPages()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                doc.setTextColor(15, 23, 42);
+                doc.setFontSize(11);
             }
-            doc.text(line, 20, y);
-            y += 6;
+
+            if (line.trim().startsWith('#')) {
+                const headerLevel = Math.min(line.match(/^#+/)?.[0].length || 1, 3);
+                const headerText = line.replace(/^#+\s*/, '');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(16 - headerLevel);
+                doc.setTextColor(20, 184, 166); // Teal-500
+                const split = doc.splitTextToSize(headerText, 170);
+                doc.text(split, 20, y);
+                y += (split.length * 7) + 2;
+                // Reset
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(11);
+                doc.setTextColor(15, 23, 42);
+            } else if (line.trim().startsWith('**') && line.trim().endsWith('**')) {
+                const boldText = line.trim().replace(/\*\*/g, '');
+                doc.setFont('helvetica', 'bold');
+                const split = doc.splitTextToSize(boldText, 170);
+                doc.text(split, 20, y);
+                y += (split.length * 6) + 1;
+                doc.setFont('helvetica', 'normal');
+            } else if (line.trim() === '') {
+                y += 5;
+            } else {
+                const cleanLine = line.replace(/\*\*/g, '');
+                const split = doc.splitTextToSize(cleanLine, 170);
+                doc.text(split, 20, y);
+                y += (split.length * 5.5) + 1;
+            }
         });
 
         // Signatures Section
         y += 20;
-        if (y > 220) {
+        if (y > 200) {
             doc.addPage();
             y = 30;
         }
@@ -272,44 +474,269 @@ export const contractService = {
 
         // Client Side
         if (contract.client_signature) {
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text('CLIENT SIGNATURE', 20, y);
-            doc.addImage(contract.client_signature, 'PNG', 20, y + 5, sigWidth, sigHeight);
+            try {
+                const clientSigData = contract.client_signature.includes(',')
+                    ? contract.client_signature.split(',')[1]
+                    : contract.client_signature;
+                doc.addImage(clientSigData, 'PNG', 20, y + 5, sigWidth, sigHeight);
+            } catch (sigErr) {
+                console.error('Failed to add client signature image:', sigErr);
+                doc.text('[Signature Image Error]', 20, y + 15);
+            }
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
-            doc.text(`Signed at: ${new Date(contract.client_signed_at).toLocaleString()}`, 20, y + 42);
+            const clientSignDate = contract.client_signed_at ? new Date(contract.client_signed_at).toLocaleString() : 'Date Pending';
+            doc.text(`${contract.signer_name || 'Client'}`, 20, y + 38);
+            doc.text(`Signed at: ${clientSignDate}`, 20, y + 42);
         } else {
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(148, 163, 184);
             doc.text('CLIENT SIGNATURE PENDING', 20, y);
         }
 
-        // Admin Side
+        // Admin Side (Provider)
+        doc.setTextColor(15, 23, 42);
         if (contract.admin_signature) {
-            doc.setTextColor(15, 23, 42);
+            doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
-            doc.text('EXECUTIVE SIGNATURE', 120, y);
-            doc.addImage(contract.admin_signature, 'PNG', 120, y + 5, sigWidth, sigHeight);
+            doc.text('PROVIDER SIGNATURE', 120, y);
+            try {
+                const adminSigData = contract.admin_signature.includes(',')
+                    ? contract.admin_signature.split(',')[1]
+                    : contract.admin_signature;
+                doc.addImage(adminSigData, 'PNG', 120, y + 5, sigWidth, sigHeight);
+            } catch (sigErr) {
+                console.error('Failed to add admin signature image:', sigErr);
+                doc.text('[Signature Image Error]', 120, y + 15);
+            }
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
-            doc.text(`Signed at: ${new Date(contract.admin_signed_at).toLocaleString()}`, 120, y + 42);
+            const adminSignDate = contract.admin_signed_at ? new Date(contract.admin_signed_at).toLocaleString() : 'Date Pending';
+            doc.text(`${contract.admin_signer_name || tenant?.name || 'Authorized Representative'}`, 120, y + 38);
+            doc.text(`Signed at: ${adminSignDate}`, 120, y + 42);
         } else {
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(148, 163, 184);
-            doc.text('EXECUTIVE SIGNATURE PENDING', 120, y);
+            doc.text('PROVIDER SIGNATURE PENDING', 120, y);
         }
 
         // Footer
-        doc.setFontSize(8);
-        doc.setTextColor(148, 163, 184);
-        doc.text(`This is a legally binding document generated by ${tenant?.name || 'AlphaClone Systems'}.`, pageWidth / 2, pageHeight - 15, { align: 'center' });
-        doc.text(`Document ID: ${contract.id} | Page ${doc.getNumberOfPages()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        const footerText = `This is a legally binding document generated by ${tenant?.name || 'AlphaClone Systems'}${contract.provider_company_name ? ` (for ${contract.provider_company_name})` : ''}.`;
+        const pageCount = doc.getNumberOfPages();
+        for (let pageNumber = 1; pageNumber <= pageCount; pageNumber++) {
+            doc.setPage(pageNumber);
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184);
+            doc.text(footerText, pageWidth / 2, pageHeight - 15, { align: 'center' });
+            doc.text(`Document ID: ${contract.id || 'NEW'} | Page ${pageNumber} of ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
 
         return doc;
     },
 
-    downloadPDF(contract: any, tenant?: any) {
+    async downloadPDF(contract: any, tenant?: any) {
+        const tenantId = tenant?.id || tenantService.getCurrentTenantId();
+        if (tenantId && contract?.id) {
+            try {
+                const response = await fetch('/api/contracts/management', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenantId,
+                        action: 'download_contract',
+                        config: {
+                            contractId: contract.id,
+                            format: 'pdf',
+                            optimize: true,
+                        },
+                    }),
+                });
+
+                const payload = await response.json().catch(() => ({}));
+                if (response.ok && payload?.success && payload?.data?.bufferBase64) {
+                    const bytes = this.decodeBase64ToBytes(payload.data.bufferBase64);
+                    const mimeType = String(payload.data.mimeType || 'application/pdf');
+                    const filename = String(payload.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.pdf`);
+                    const blobBytes = new Uint8Array(bytes.byteLength);
+                    blobBytes.set(bytes);
+                    const blob = new Blob([blobBytes], { type: mimeType });
+                    this.triggerBrowserDownload(blob, filename);
+                    return;
+                }
+            } catch (error) {
+                console.error('Server contract PDF download failed, using local fallback:', error);
+            }
+        }
+
+        const rawContent = typeof contract?.content === 'string' ? contract.content : '';
+        if (typeof window !== 'undefined' && rawContent.trim().startsWith('<')) {
+            const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+            if (printWindow) {
+                const title = String(contract.title || 'Contract').replace(/</g, '&lt;');
+                printWindow.document.open();
+                printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"/><title>${title}</title>
+<style>body{font-family:Georgia,"Times New Roman",serif;color:#0f172a;line-height:1.6;padding:40px;max-width:800px;margin:0 auto;} h1,h2,h3{color:#0f766e;}</style>
+</head><body>${rawContent}</body></html>`);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.focus();
+                    printWindow.print();
+                }, 300);
+                return;
+            }
+        }
+        if (typeof window !== 'undefined' && this.hasNonLatinText(rawContent)) {
+            const html = this.buildUnicodeSafeContractHtml(contract, tenant);
+            const printWindow = window.open('', '_blank', 'noopener,noreferrer');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(html);
+                printWindow.document.close();
+                setTimeout(() => {
+                    printWindow.focus();
+                    printWindow.print();
+                }, 300);
+                return;
+            }
+        }
         const doc = this.generateProfessionalPDF(contract, tenant);
         doc.save(`${contract.title.replace(/\s+/g, '_')}.pdf`);
+    },
+
+    /**
+     * 900% AUTOMATION: Data-driven industry-agnostic drafting
+     */
+    async generateDeepContextDraft(params: {
+        projectId?: string,
+        clientId?: string,
+        type: 'NDA' | 'MSA' | 'SOW' | 'Contract-One-Page' | 'Full MSA',
+        tone?: 'Corporate' | 'Concise' | 'Consultative',
+        language?: string
+    }) {
+        const tenantId = this.getTenantId();
+        const { aiCore } = await import('@/services/core/AICore');
+
+        // Aggregating context (Projects, Clients, etc.)
+        const [
+            { data: project },
+            { data: client },
+            businessContext
+        ] = await Promise.all([
+            params.projectId ? supabase.from('projects').select('*').eq('id', params.projectId).single() : Promise.resolve({ data: null }),
+            params.clientId ? supabase.from('business_clients').select('*').eq('id', params.clientId).single() : Promise.resolve({ data: null }),
+            aiCore.getBusinessContext(tenantId)
+        ]);
+
+        const prompt = `
+        Draft a high-stakes, 100% professional ${params.type} in ${params.language || 'English'}.
+        Tone: ${params.tone || 'Corporate'}
+        
+        PARTIES:
+        Provider: ${businessContext}
+        Client: ${client?.name || 'Valued Client'} (ID: ${params.clientId || 'Unknown'})
+        
+        PROJECT CONTEXT:
+        Title: ${project?.name || 'Standard Engagement'}
+        Description: ${project?.description || 'Professional Services'}
+        Status: ${project?.status || 'Initiated'}
+        
+        LEGAL RULES:
+        - No placeholders like [INSERT NAME]
+        - No "As an AI..."
+        - No AI markers.
+        - High-stakes legal terminology appropriate for the identified industry.
+        - Industry-agnostic but context-aware clauses.
+        - Ensure a 100% human appearance.
+        `;
+
+        try {
+            const { text, error } = await generateText(prompt);
+            if (error || !text) {
+                throw error || new Error('Failed to generate contract draft');
+            }
+
+            const cleanDraft = aiCore.cleanProOutput(text);
+
+            // Log the achievement
+            const { activityService } = await import('@/services/activityService');
+            await activityService.logSystemAction(
+                'system_ai',
+                'GENERATE',
+                `Auto-drafted ${params.type} for ${project?.name || 'Project'}`,
+                { projectId: params.projectId, type: params.type },
+                tenantId
+            );
+
+            return cleanDraft;
+        } catch (error) {
+            console.error('Deep Context Drafting failed:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * PROACTIVE TRIGGER: Auto-draft contract on project creation (900% automation)
+     */
+    async autoDraftForProject(projectId: string) {
+        try {
+            const tenantId = this.getTenantId();
+            const { data: project } = await supabase.from('projects').select('tenant_id, client_id, name').eq('id', projectId).eq('tenant_id', tenantId).single();
+            if (!project) return;
+
+            const draft = await this.generateDeepContextDraft({
+                projectId,
+                clientId: project.client_id,
+                type: 'MSA',
+                tone: 'Corporate'
+            });
+
+            // Save the auto-draft to DB
+            await this.createContract({
+                project_id: projectId,
+                client_id: project.client_id,
+                title: `Auto-Draft: ${project.name} MSA`,
+                content: draft,
+                status: 'draft'
+            });
+
+            console.log(`[900% Automation] Auto-drafted contract for project ${projectId}`);
+        } catch (err) {
+            console.error('Auto-draft trigger failed:', err);
+        }
+    },
+
+    /**
+     * Send contract to client with public signing link
+     */
+    async sendContract(id: string, recipientEmail?: string) {
+        const tenantId = this.getTenantId();
+        
+        try {
+            const response = await fetch('/api/contracts/management', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    action: 'send_contract',
+                    config: {
+                        contractId: id,
+                        recipients: recipientEmail,
+                    },
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to send contract');
+            }
+
+            return await response.json();
+        } catch (error: any) {
+            console.error('Send contract error:', error);
+            throw new Error(error.message || 'Failed to send contract');
+        }
     }
 };

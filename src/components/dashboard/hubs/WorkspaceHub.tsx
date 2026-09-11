@@ -1,0 +1,32 @@
+'use client';
+
+import React from 'react';
+import { Globe, Zap, BookOpen, Settings, Bot, Clock } from 'lucide-react';
+import HubShell from './HubShell';
+
+const WORKSPACE_TABS = [
+  { label: 'Marketplace', href: '/dashboard/marketplace', icon: Globe },
+  { label: 'Workflows', href: '/dashboard/business/workflows', icon: Zap },
+  { label: 'Jobs & Queue', href: '/dashboard/jobs', icon: Clock },
+  { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
+  { label: 'Settings', href: '/dashboard/business/settings', icon: Settings },
+  { label: 'Zoho CRM', href: '/dashboard/zoho/crm', icon: Bot },
+];
+
+interface WorkspaceHubProps {
+  children: React.ReactNode;
+}
+
+export default function WorkspaceHub({ children }: WorkspaceHubProps) {
+  return (
+    <HubShell
+      title="Settings & Nexus"
+      description="Integrations, automations, and system settings"
+      tabs={WORKSPACE_TABS}
+      moduleId="nexus"
+      accent="violet"
+    >
+      {children}
+    </HubShell>
+  );
+}

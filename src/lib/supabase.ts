@@ -1,30 +1,39 @@
-import { ENV } from '@/config/env'
-import { createBrowserClient } from '@supabase/ssr'
+import { ENV } from '@/config/env';
+import { createBrowserClient } from '@supabase/ssr';
+import { createUnavailableSupabaseClient, isSupabaseConfigured } from './supabase-shared';
 
-// Check if we have valid credentials or if we're in a build/placeholder environment
-const isPlaceholder = (val?: string) => !val || val === 'undefined' || val.includes('placeholder');
+export { isSupabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE } from './supabase-shared';
 
 export const createClient = () => {
-    // If we have placeholders, return a proxy or handle it gracefully to avoid @supabase/ssr errors
-    // during build-time prerendering
-    if (isPlaceholder(ENV.VITE_SUPABASE_URL) || isPlaceholder(ENV.VITE_SUPABASE_ANON_KEY)) {
-        // We log a warning but return a client initialized with placeholders anyway 
-        // IF we're in build mode, but we use a try-catch for extra safety
-        try {
-            return createBrowserClient(
-                ENV.VITE_SUPABASE_URL || 'https://ehekzoioqvtweugemktn.supabase.co',
-                ENV.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVoZWt6b2lvcXZ0d2V1Z2Vta3RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxMDcxNjIsImV4cCI6MjA4MDY4MzE2Mn0.vBx4tSM4L8Rh_VTzYCdvz9bMMyjcfkkvv9y_2vT02ek'
-            );
-        } catch (e) {
-            console.warn('Supabase client initialization skipped during build due to missing env vars');
-            return null as any;
-        }
+    if (!isSupabaseConfigured()) {
+        return createUnavailableSupabaseClient('Supabase');
     }
 
-    return createBrowserClient(
-        ENV.VITE_SUPABASE_URL,
-        ENV.VITE_SUPABASE_ANON_KEY
-    );
+    const supabaseUrl =
+        ENV.VITE_SUPABASE_URL ||
+        process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.SUPABASE_URL!;
+    const supabaseAnonKey =
+        ENV.VITE_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+
+    return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+        },
+        global: {
+            fetch: (...args) => fetch(...args),
+        },
+        realtime: {
+            params: {
+                eventsPerSecond: 10,
+            },
+            timeout: 30000,
+        },
+    });
 };
 
 // Legacy compatibility

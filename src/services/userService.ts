@@ -10,24 +10,28 @@ export const userService = {
         try {
             const tenantId = tenantService.getCurrentTenantId();
 
-            let query = supabase.from('profiles').select('*');
-
-            if (tenantId) {
-                // Get users linked to this tenant
-                const { data: tenantUsers, error: tenantError } = await supabase
-                    .from('tenant_users')
-                    .select('user_id')
-                    .eq('tenant_id', tenantId);
-
-                if (tenantError) return { users: [], error: tenantError.message };
-
-                const userIds = tenantUsers.map((tu: any) => tu.user_id);
-                if (userIds.length === 0) return { users: [], error: null };
-
-                query = query.in('id', userIds);
+            // If no tenant, return empty (avoid querying all profiles)
+            if (!tenantId) {
+                return { users: [], error: null };
             }
 
-            const { data, error } = await query.order('created_at', { ascending: false });
+            // Get users linked to this tenant FIRST (avoid RLS 403)
+            const { data: tenantUsers, error: tenantError } = await supabase
+                .from('tenant_users')
+                .select('user_id')
+                .eq('tenant_id', tenantId);
+
+            if (tenantError) return { users: [], error: tenantError.message };
+
+            const userIds = tenantUsers.map((tu: any) => tu.user_id);
+            if (userIds.length === 0) return { users: [], error: null };
+
+            // Now query profiles with filtered IDs (RLS-safe)
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .in('id', userIds)
+                .order('created_at', { ascending: false });
 
             if (error) {
                 return { users: [], error: error.message };
@@ -56,10 +60,14 @@ export const userService = {
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
 
             if (error) {
                 return { user: null, error: error.message };
+            }
+
+            if (!data) {
+                return { user: null, error: null };
             }
 
             const user: User = {
@@ -175,7 +183,7 @@ export const userService = {
                 .select('id')
                 .eq('role', 'admin')
                 .limit(1)
-                .single();
+                .maybeSingle();
 
             if (error) return { adminId: null, error: error.message };
             return { adminId: data.id, error: null };
@@ -233,5 +241,251 @@ export const userService = {
         } catch (err) {
             return { client: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
+    },
+
+    /**
+     * Sync user profile from auth data (Background Task)
+     * Ensures profile exists in public.profiles and metadata is up to date
+     */
+    async syncUserProfile(authUser: any): Promise<void> {
+        try {
+            if (!authUser?.id) return;
+
+            // 1. Try to fetch existing profile (RLS safe)
+            const { data: existingProfile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', authUser.id)
+                .maybeSingle();
+
+            if (existingProfile) {
+                // Profile exists, ensure metadata matches
+                const currentMeta = authUser.user_metadata || {};
+
+                // Only update metadata if it's missing the role or name
+                if (!currentMeta.role || !currentMeta.name) {
+                    await supabase.auth.updateUser({
+                        data: {
+                            name: existingProfile.name,
+                            role: existingProfile.role,
+                            avatar: existingProfile.avatar
+                        }
+                    });
+                }
+                return;
+            }
+
+            // 2. Profile missing? Create it! (Self-healing)
+            // Default to 'tenant_admin' if this is a new OAuth user
+            // We use the same name/avatar logic as the transient user
+            const newRole: UserRole = 'tenant_admin';
+            const newName = authUser.user_metadata.full_name || authUser.email?.split('@')[0] || 'User';
+            const newAvatar = authUser.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authUser.email}`;
+
+            // Create profile with correct role
+            const { error: insertError } = await supabase
+                .from('profiles')
+                .insert({
+                    id: authUser.id,
+                    email: authUser.email,
+                    name: newName,
+                    role: newRole,
+                    avatar: newAvatar,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (insertError) {
+                console.warn('Background Profile Sync: Failed to create profile', insertError);
+            }
+
+            // 3. Update Auth Metadata to match
+            // This ensures the next login will have the correct role in metadata (Fast Path)
+            await supabase.auth.updateUser({
+                data: {
+                    name: newName,
+                    role: newRole,
+                    avatar: newAvatar
+                }
+            });
+
+            console.log('Background Profile Sync: Successfully synced profile for', authUser.email);
+        } catch (err) {
+            console.error('Background Profile Sync Error:', err);
+        }
+    },
+
+    /**
+     * Suspend a user account (Super Admin only — server-side)
+     */
+    async suspendUser(userId: string): Promise<{ error: string | null }> {
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, action: 'suspend' }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to suspend user' };
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to suspend user' };
+        }
+    },
+
+    /**
+     * Restore a suspended user account (Super Admin only — server-side)
+     */
+    async restoreUser(userId: string): Promise<{ error: string | null }> {
+        try {
+            const res = await fetch('/api/admin/users', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, action: 'restore' }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to restore user' };
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to restore user' };
+        }
+    },
+
+    /**
+     * Delete a user account (Super Admin only — server-side soft or hard delete)
+     */
+    async deleteUser(userId: string): Promise<{ error: string | null }> {
+        return this.deleteUserAccount(userId, false);
+    },
+
+    /**
+     * Delete user account with options (soft or permanent delete with workspace ownership protection)
+     */
+    async deleteUserAccount(userId: string, permanent: boolean = false, reason?: string): Promise<{ error: string | null; requiresOwnershipTransfer?: boolean; tenantId?: string }> {
+        try {
+            const res = await fetch('/api/admin/users/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, permanent, reason }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return {
+                    error: data.error || 'Failed to delete user account',
+                    requiresOwnershipTransfer: !!data.requiresOwnershipTransfer,
+                    tenantId: data.tenantId || undefined,
+                };
+            }
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to delete user account' };
+        }
+    },
+
+    /**
+     * Change user role (Super Admin only — server-side RBAC & lockout protection)
+     */
+    async changeUserRole(userId: string, newRole: string, confirmationGiven: boolean = false, reason?: string): Promise<{ error: string | null; requiresConfirmation?: boolean }> {
+        try {
+            const res = await fetch('/api/admin/users/role', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, newRole, confirmationGiven, reason }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return {
+                    error: data.error || 'Failed to update user role',
+                    requiresConfirmation: !!data.requiresConfirmation,
+                };
+            }
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to update user role' };
+        }
+    },
+
+    /**
+     * Transfer workspace ownership to another active user
+     */
+    async transferWorkspaceOwnership(tenantId: string, currentOwnerUserId: string, newOwnerUserId: string, reason?: string): Promise<{ error: string | null }> {
+        try {
+            const res = await fetch('/api/admin/users/transfer-ownership', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, currentOwnerUserId, newOwnerUserId, reason }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to transfer workspace ownership' };
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to transfer workspace ownership' };
+        }
+    },
+
+    /**
+     * Get platform audit logs (Super Admin only)
+     */
+    async getAuditLogs(params?: { action?: string; search?: string; page?: number; limit?: number }): Promise<{ logs: any[]; total: number; error: string | null }> {
+        try {
+            const query = new URLSearchParams();
+            if (params?.action) query.set('action', params.action);
+            if (params?.search) query.set('search', params.search);
+            if (params?.page) query.set('page', String(params.page));
+            if (params?.limit) query.set('limit', String(params.limit));
+
+            const res = await fetch(`/api/admin/audit?${query.toString()}`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { logs: [], total: 0, error: data.error || 'Failed to fetch audit logs' };
+            return { logs: data.logs || [], total: data.total || 0, error: null };
+        } catch (err) {
+            return { logs: [], total: 0, error: err instanceof Error ? err.message : 'Failed to fetch audit logs' };
+        }
+    },
+
+    /**
+     * Get Super Admin dashboard metric summary
+     */
+    async getAdminDashboardStats(): Promise<{ metrics: any | null; error: string | null }> {
+        try {
+            const res = await fetch('/api/admin/dashboard');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { metrics: null, error: data.error || 'Failed to fetch dashboard metrics' };
+            return { metrics: data.metrics || null, error: null };
+        } catch (err) {
+            return { metrics: null, error: err instanceof Error ? err.message : 'Failed to fetch dashboard metrics' };
+        }
+    },
+
+    /**
+     * Submit forced password reset when password_change_required is true
+     */
+    async submitPasswordChangeRequired(newPassword: string): Promise<{ error: string | null }> {
+        try {
+            const res = await fetch('/api/auth/change-password-required', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newPassword }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to update password' };
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to update password' };
+        }
+    },
+
+    /**
+     * Get all users across the entire platform (Super Admin only — server-side)
+     */
+    async getAllPlatformUsers(): Promise<{ users: User[]; error: string | null }> {
+        try {
+            const res = await fetch('/api/admin/users');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { users: [], error: data.error || 'Failed to fetch platform users' };
+            return { users: data.users || [], error: null };
+        } catch (err) {
+            return { users: [], error: err instanceof Error ? err.message : 'Failed to fetch platform users' };
+        }
     }
 };
+

@@ -1,0 +1,347 @@
+import { z } from 'zod';
+import { registerTool } from '../tool-registry';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { queueInvoiceSend } from '@/lib/invoices/durableInvoiceRouter';
+import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
+
+// 1. get_invoices
+registerTool('invoicing', {
+  name: 'get_invoices',
+  description: 'Retrieve invoices for a tenant, optionally filtered by status. Tenant is resolved from session.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(), // injected from session
+    status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void']).optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'] },
+    },
+    required: [],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    let query = supabase
+      .from('business_invoices')
+      .select('*')
+      .eq('tenant_id', args.tenant_id);
+
+    if (args.status) {
+      query = query.eq('status', args.status);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+});
+
+// 2. create_invoice
+registerTool('invoicing', {
+  name: 'create_invoice',
+  description: 'Create a new invoice. Generates a Stripe payment link when Connect is active. Tenant is resolved from session.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(), // injected from session
+    client_id: z.string().uuid(),
+    amount: z.number().positive(),
+    status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void']).optional().default('draft'),
+    due_date: z.string().optional(),
+    bank_name: z.string().optional(),
+    account_number: z.string().optional(),
+    branch_code: z.string().optional(),
+    swift_code: z.string().optional(),
+    payment_reference: z.string().optional(),
+    bank_details: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      client_id: { type: 'string', format: 'uuid' },
+      amount: { type: 'number', description: 'Total invoice amount' },
+      status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'], default: 'draft' },
+      due_date: { type: 'string', format: 'date-time' },
+      bank_name: { type: 'string' },
+      account_number: { type: 'string' },
+      branch_code: { type: 'string' },
+      swift_code: { type: 'string' },
+      payment_reference: { type: 'string' },
+      bank_details: { type: 'string' },
+    },
+    required: ['client_id', 'amount'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { insertBusinessInvoiceSchemaCompat } = await import('@/lib/mcp/schemaWriteCompat');
+
+    const { data, error } = await insertBusinessInvoiceSchemaCompat(supabase, {
+      tenant_id: args.tenant_id!,
+      client_id: args.client_id,
+      amount: args.amount,
+      status: args.status,
+      due_date: args.due_date,
+      bank_name: args.bank_name,
+      account_number: args.account_number,
+      branch_code: args.branch_code,
+      swift_code: args.swift_code,
+      payment_reference: args.payment_reference,
+      bank_details: args.bank_details,
+    });
+
+    if (error) throw error;
+
+    const payment = await ensureInvoicePaymentLink({
+      tenantId: args.tenant_id!, // guaranteed by session injection via forceSessionArgs
+      invoiceId: data.id,
+    });
+
+    return {
+      ...data,
+      payment_link: payment.payment_link,
+      stripe_connected: payment.stripe_connected,
+    };
+  },
+});
+
+// 3. update_invoice_status
+registerTool('invoicing', {
+  name: 'update_invoice_status',
+  description: 'Update the status of an existing invoice. Tenant is resolved from session.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(), // injected from session
+    invoice_id: z.string().uuid(),
+    status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void']),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      invoice_id: { type: 'string', format: 'uuid' },
+      status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'] },
+    },
+    required: ['invoice_id', 'status'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('business_invoices')
+      .update({
+        status: args.status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', args.invoice_id)
+      .eq('tenant_id', args.tenant_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+});
+
+const bankFieldsSchema = z.object({
+  bank_name: z.string().optional(),
+  account_number: z.string().optional(),
+  branch_code: z.string().optional(),
+  swift_code: z.string().optional(),
+  payment_reference: z.string().optional(),
+  bank_details: z.string().optional(),
+});
+
+// 4. update_invoice
+registerTool('invoicing', {
+  name: 'update_invoice',
+  description: 'Update invoice fields including bank payment details. Tenant is resolved from session.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(), // injected from session
+    invoice_id: z.string().uuid(),
+    ...bankFieldsSchema.shape,
+    amount: z.number().positive().optional(),
+    due_date: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      invoice_id: { type: 'string', format: 'uuid' },
+      bank_name: { type: 'string' },
+      account_number: { type: 'string' },
+      branch_code: { type: 'string' },
+      swift_code: { type: 'string' },
+      payment_reference: { type: 'string' },
+      bank_details: { type: 'string' },
+      amount: { type: 'number' },
+      due_date: { type: 'string', format: 'date-time' },
+    },
+    required: ['invoice_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (args.amount !== undefined) patch.total_amount = args.amount;
+    if (args.due_date !== undefined) patch.due_date = args.due_date;
+    if (args.bank_name !== undefined) patch.bank_name = args.bank_name;
+    if (args.account_number !== undefined) patch.account_number = args.account_number;
+    if (args.branch_code !== undefined) patch.branch_code = args.branch_code;
+    if (args.swift_code !== undefined) patch.swift_code = args.swift_code;
+    if (args.payment_reference !== undefined) patch.payment_reference = args.payment_reference;
+    if (args.bank_details !== undefined) patch.bank_details = args.bank_details;
+
+    const { data, error } = await supabase
+      .from('business_invoices')
+      .update(patch)
+      .eq('id', args.invoice_id)
+      .eq('tenant_id', args.tenant_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+});
+
+// 5. send_invoice
+registerTool('invoicing', {
+  name: 'send_invoice',
+  description: 'Send an invoice email to the client with tracking pixel and optional payment link. Tenant is resolved from session.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(), // injected from session
+    invoice_id: z.string().uuid(),
+    recipient_email: z.string().email().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      invoice_id: { type: 'string', format: 'uuid' },
+      recipient_email: { type: 'string', format: 'email' },
+    },
+    required: ['invoice_id'],
+  },
+  handler: async (args, ctx) => {
+    const supabase = createSupabaseAdminClient();
+    const { data: invoice, error } = await supabase
+      .from('business_invoices')
+      .select('*, client:business_clients(email, name)')
+      .eq('id', args.invoice_id)
+      .eq('tenant_id', args.tenant_id)
+      .single();
+
+    if (error || !invoice) throw new Error('Invoice not found');
+
+    const toEmail =
+      args.recipient_email ||
+      (invoice as any).client?.email ||
+      (invoice as any).client_email;
+    if (!toEmail) throw new Error('Recipient email is required');
+
+    const queued = await queueInvoiceSend({
+      tenantId: args.tenant_id!,
+      userId: ctx.userId,
+      invoiceId: args.invoice_id,
+      recipients: [toEmail],
+    });
+
+    return {
+      sent: queued.status === 'queued',
+      queued: true,
+      durable: queued.durable,
+      sent_to: toEmail,
+      sent_at: new Date().toISOString(),
+      run_id: queued.run_id,
+      task_id: queued.task_id,
+      poll_tool: queued.poll_tool,
+      opened: Boolean(invoice.viewed_at),
+      opened_at: invoice.viewed_at || null,
+      payment_link: invoice.payment_link || null,
+    };
+  },
+});
+
+// 6. get_inventory_items
+registerTool('invoicing', {
+  name: 'get_inventory_items',
+  description: 'Retrieve inventory items for stock management. Tenant is resolved from session.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(), // injected from session
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .select('*')
+      .eq('tenant_id', args.tenant_id);
+
+    if (error) throw error;
+    return data;
+  },
+});
+
+// 5. update_inventory_stock
+registerTool('invoicing', {
+  name: 'update_inventory_stock',
+  description: 'Update the stock level of an inventory item. Tenant is resolved from session.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(), // injected from session
+    item_id: z.string().uuid(),
+    quantity: z.number().int(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      item_id: { type: 'string', format: 'uuid' },
+      quantity: { type: 'number', description: 'New absolute stock quantity' },
+    },
+    required: ['item_id', 'quantity'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('inventory_items')
+      .update({
+        stock: args.quantity,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', args.item_id)
+      .eq('tenant_id', args.tenant_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+});
+
+registerTool('invoicing', {
+  name: 'convert_quote_to_invoice',
+  description:
+    'Convert an accepted quote into a business invoice. Optionally auto-send the invoice email to the client.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    quote_id: z.string().uuid(),
+    auto_send: z.boolean().optional().default(false),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      quote_id: { type: 'string', format: 'uuid' },
+      auto_send: { type: 'boolean', description: 'Send invoice email after conversion' },
+    },
+    required: ['quote_id'],
+  },
+  handler: async (args) => {
+    const { convertQuoteToInvoice } = await import(
+      '@/lib/quotes/convertQuoteToInvoice'
+    );
+    const result = await convertQuoteToInvoice(args.quote_id, args.tenant_id!, {
+      autoSend: args.auto_send,
+    });
+    if (result.error) throw new Error(result.error);
+    return {
+      invoice_id: result.invoiceId,
+      public_token: result.publicToken,
+      converted: true,
+    };
+  },
+});
