@@ -29,11 +29,11 @@ export function DesktopRequired({
 
   return (
     <section
-      className={cn('ac-os3-content rounded-[18px] border border-[var(--border-default)] p-4', className)}
+      className={cn('ac-v3-content rounded-[18px] border border-[var(--border-default)] p-4', className)}
       aria-labelledby="desktop-required-title"
     >
       <div className="flex items-start gap-3">
-        <span className="ac-os3-intelligence inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px]">
+        <span className="ac-v3-intelligence inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px]">
           <MonitorUp className="h-5 w-5 text-[var(--ac-bonnie)]" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
