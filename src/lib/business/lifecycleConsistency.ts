@@ -11,7 +11,7 @@ export type LifecycleIssue = {
   entity_id: string;
 };
 
-const SIGNED_CONTRACT_STATES = new Set(['signed', 'fully_signed', 'client_signed']);
+const FULLY_SIGNED_CONTRACT_STATES = new Set(['signed', 'fully_signed', 'active', 'completed']);
 
 export function inspectInvoiceLifecycle(row: {
   id: string;
@@ -43,13 +43,15 @@ export function inspectContractLifecycle(row: {
   admin_signed_at?: string | null;
 }): LifecycleIssue[] {
   const state = String(row.lifecycle_status || row.status || '').toLowerCase();
-  const claimsSigned = SIGNED_CONTRACT_STATES.has(state);
-  const hasSignatureEvidence = Boolean(row.signed_at || row.client_signed_at || row.admin_signed_at);
+  const claimsSigned = FULLY_SIGNED_CONTRACT_STATES.has(state);
+  const hasCompleteSignatureEvidence = Boolean(
+    row.signed_at || (row.client_signed_at && row.admin_signed_at),
+  );
 
-  if (claimsSigned && !hasSignatureEvidence) {
+  if (claimsSigned && !hasCompleteSignatureEvidence) {
     return [{ code: 'CONTRACT_SIGNED_WITHOUT_SIGNATURE_EVIDENCE', entity: 'contract', entity_id: row.id }];
   }
-  if (!claimsSigned && hasSignatureEvidence) {
+  if (!claimsSigned && hasCompleteSignatureEvidence) {
     return [{ code: 'CONTRACT_SIGNATURE_STATE_MISMATCH', entity: 'contract', entity_id: row.id }];
   }
   return [];

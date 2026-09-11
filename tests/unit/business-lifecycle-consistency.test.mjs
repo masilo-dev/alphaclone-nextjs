@@ -17,6 +17,16 @@ describe('business lifecycle consistency', () => {
     assert.match(source, /getCanonicalWorkspaceCounts/);
     assert.match(source, /stats_source: 'canonical_workspace_stats'/);
     assert.doesNotMatch(source, /countOf\('invoices'\)/);
+    assert.match(source, /getLifecycleConsistencyReport/);
+  });
+
+  it('surfaces the same lifecycle report in operational health', () => {
+    const source = fs.readFileSync(
+      new URL('../../src/services/operationsService.ts', import.meta.url),
+      'utf8',
+    );
+    assert.match(source, /getLifecycleConsistencyReport\(admin, tenantId\)/);
+    assert.match(source, /lifecycleConsistency/);
   });
 
   it('requires payment evidence before an invoice can claim paid', () => {
@@ -26,10 +36,23 @@ describe('business lifecycle consistency', () => {
   });
 
   it('detects contract signature state mismatches in either direction', () => {
-    assert.equal(inspectContractLifecycle({ id: 'c1', status: 'sent', client_signed_at: '2026-09-11T00:00:00Z' }).at(0)?.code,
+    assert.equal(inspectContractLifecycle({
+      id: 'c1',
+      status: 'sent',
+      client_signed_at: '2026-09-11T00:00:00Z',
+      admin_signed_at: '2026-09-11T00:01:00Z',
+    }).at(0)?.code,
       'CONTRACT_SIGNATURE_STATE_MISMATCH');
     assert.equal(inspectContractLifecycle({ id: 'c2', lifecycle_status: 'signed' }).at(0)?.code,
       'CONTRACT_SIGNED_WITHOUT_SIGNATURE_EVIDENCE');
+  });
+
+  it('allows a partially signed contract to remain sent', () => {
+    assert.deepEqual(inspectContractLifecycle({
+      id: 'c1',
+      status: 'sent',
+      client_signed_at: '2026-09-11T00:00:00Z',
+    }), []);
   });
 
   it('treats elapsed unresolved quotes as lifecycle mismatches', () => {

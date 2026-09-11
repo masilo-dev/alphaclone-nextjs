@@ -3,12 +3,7 @@ import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { throwConnectorError } from '@/lib/mcp/connector/response';
 import { getCanonicalWorkspaceCounts } from '@/lib/crm/canonicalWorkspaceStats';
-import {
-  inspectContractLifecycle,
-  inspectInvoiceLifecycle,
-  inspectQuoteLifecycle,
-  isOperationalRecord,
-} from '@/lib/business/lifecycleConsistency';
+import { getLifecycleConsistencyReport } from '@/lib/business/lifecycleConsistencyServer';
 
 defineConnectorTool({
   module: 'reports-ops',
@@ -32,19 +27,11 @@ defineConnectorTool({
       const { count } = await supabase.from(table).select('id', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id);
       return count ?? 0;
     };
-    const [counts, mcpSessions, invoiceRows, contractRows, quoteRows] = await Promise.all([
+    const [counts, mcpSessions, lifecycleConsistency] = await Promise.all([
       getCanonicalWorkspaceCounts(supabase, args.tenant_id),
       countOf('mcp_sessions'),
-      supabase.from('business_invoices').select('id,status,paid_at,amount_paid,total,is_test_data').eq('tenant_id', args.tenant_id).limit(5000),
-      supabase.from('contracts').select('id,status,lifecycle_status,signed_at,client_signed_at,admin_signed_at').eq('tenant_id', args.tenant_id).limit(5000),
-      supabase.from('quotes').select('id,status,valid_until').eq('tenant_id', args.tenant_id).limit(5000),
+      getLifecycleConsistencyReport(supabase, args.tenant_id),
     ]);
-
-    const lifecycleIssues = [
-      ...(invoiceRows.data || []).filter(isOperationalRecord).flatMap(inspectInvoiceLifecycle),
-      ...(contractRows.data || []).flatMap(inspectContractLifecycle),
-      ...(quoteRows.data || []).flatMap((row) => inspectQuoteLifecycle(row)),
-    ];
 
     return {
       leads: counts.leads,
@@ -56,11 +43,7 @@ defineConnectorTool({
       active_projects: counts.active_projects,
       unpaid_invoices: counts.unpaid_invoices,
       mcp_sessions: mcpSessions,
-      lifecycle_consistency: {
-        ok: lifecycleIssues.length === 0,
-        issue_count: lifecycleIssues.length,
-        issues: lifecycleIssues.slice(0, 100),
-      },
+      lifecycle_consistency: lifecycleConsistency,
       stats_source: 'canonical_workspace_stats',
       generated_at: new Date().toISOString(),
     };

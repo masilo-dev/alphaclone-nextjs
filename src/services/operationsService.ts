@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getLifecycleConsistencyReport } from '@/lib/business/lifecycleConsistencyServer';
 
 export interface OperationsWorkRecord {
   id?: string;
@@ -215,6 +216,7 @@ export class OperationsService {
       blockersRes,
       projectsRes,
       overdueTasksRes,
+      lifecycleConsistency,
     ] = await Promise.all([
       countOpenTasks(admin, tenantId),
       countActiveProjects(admin, tenantId),
@@ -231,6 +233,7 @@ export class OperationsService {
         .eq('tenant_id', tenantId)
         .lt('due_date', new Date().toISOString())
         .not('status', 'in', '("completed","cancelled")'),
+      getLifecycleConsistencyReport(admin, tenantId),
     ]);
 
     const projects = projectsRes.data || [];
@@ -278,6 +281,7 @@ export class OperationsService {
       pendingDecisionsCount: decisionsRes.count || 0,
       slaCompliancePct,
       outstandingRevenue,
+      lifecycleConsistency,
       primaryBottleneck,
       stats_source: 'canonical_workspace_stats',
       recentFailures: [],
