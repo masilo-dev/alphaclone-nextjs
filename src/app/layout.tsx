@@ -5,6 +5,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import "@/styles/marketing-system.css";
 import "@/styles/accessibility.css";
+import "@/styles/apple-fluid-system.css";
 import { Providers } from "@/components/Providers";
 
 // Self-hosted via next/font — no external network request on the critical path
