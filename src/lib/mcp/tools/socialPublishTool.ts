@@ -9,11 +9,13 @@ import { SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } from '@/lib/social/types';
 import { logSocialPublishEvent } from '@/lib/social/socialPublishLog';
 import {
   type PublishSocialPostArgs,
+  destinationToIdentityType,
   resolvePublishNow,
 } from '@/lib/mcp/tools/socialPublishContract';
 
 export {
   PUBLISH_EXECUTION_STATUS_VALUES,
+  SOCIAL_DESTINATION_VALUES,
   publishSocialPostInputSchema,
   publishSocialPostJsonSchema,
   publishSocialTargetSchema,
@@ -27,9 +29,7 @@ async function ingestInlineMedia(
   userId: string
 ): Promise<{ assetIds: string[]; urls: string[] }> {
   const normalized = normalizePublishMediaArgs(args as Record<string, unknown>);
-  if (normalized.rejected.length) {
-    throw new Error(normalized.rejected[0]);
-  }
+  if (normalized.rejected.length) throw new Error(normalized.rejected[0]);
 
   const contentBase64 = args.content_base64 || args.file_base64 || args.file;
   const sourceUrl = args.source_url || args.url;
@@ -47,11 +47,7 @@ async function ingestInlineMedia(
 
     let mediaInput: Parameters<typeof ingestMediaInput>[0]['media'] | null = null;
     if (args.data_url || (contentBase64 && String(contentBase64).startsWith('data:'))) {
-      mediaInput = {
-        type: 'data_url' as const,
-        dataUrl: args.data_url || String(contentBase64),
-        filename,
-      };
+      mediaInput = { type: 'data_url' as const, dataUrl: args.data_url || String(contentBase64), filename };
     } else if (sourceUrl) {
       mediaInput = { type: 'url' as const, url: sourceUrl, filename };
     } else if (contentBase64) {
@@ -64,15 +60,8 @@ async function ingestInlineMedia(
     }
 
     if (mediaInput) {
-      const asset = await ingestMediaInput({
-        tenantId,
-        userId,
-        purpose: 'social_post',
-        media: mediaInput,
-      });
-      if (asset?.id && !mediaAssetIds.includes(asset.id)) {
-        mediaAssetIds.push(asset.id);
-      }
+      const asset = await ingestMediaInput({ tenantId, userId, purpose: 'social_post', media: mediaInput });
+      if (asset?.id && !mediaAssetIds.includes(asset.id)) mediaAssetIds.push(asset.id);
     }
   }
 
@@ -95,22 +84,40 @@ export async function handlePublishSocialPost(
   const tenantId = ctx.tenantId || args.tenant_id;
   const userId = ctx.userId;
   if (!tenantId || !userId) {
-    return toMcpContent(
-      errorResult(toolName, 'AUTH_REQUIRED', 'Authenticated workspace session required')
-    );
+    return toMcpContent(errorResult(toolName, 'AUTH_REQUIRED', 'Authenticated workspace session required'));
   }
 
   const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
   const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
 
-  const identityId =
-    args.target?.identity_id ||
-    args.identity_id ||
-    args.page_id ||
-    args.linkedin_organization_id ||
-    undefined;
-  const identityType = args.target?.identity_type || args.identity_type;
   const platformHint = args.target?.integration || args.platform;
+  const destination = args.target?.destination || args.destination;
+  const requestedIdentityType = args.target?.identity_type || args.identity_type;
+  const destinationIdentityType = destinationToIdentityType(platformHint, destination);
+
+  if (destination && !destinationIdentityType) {
+    return toMcpContent(
+      errorResult(
+        toolName,
+        'INVALID_DESTINATION',
+        destination === 'personal'
+          ? 'Personal publishing is currently a LinkedIn destination. Set platform=linkedin.'
+          : destination === 'organization'
+            ? 'Organization publishing is currently a LinkedIn destination. Set platform=linkedin.'
+            : 'Page publishing is currently a Facebook destination. Set platform=facebook.'
+      )
+    );
+  }
+
+  if (requestedIdentityType && destinationIdentityType && requestedIdentityType !== destinationIdentityType) {
+    return toMcpContent(
+      errorResult(toolName, 'TARGET_CONFLICT', `destination=${destination} conflicts with identity_type=${requestedIdentityType}`)
+    );
+  }
+
+  const identityId =
+    args.target?.identity_id || args.identity_id || args.page_id || args.linkedin_organization_id || undefined;
+  const identityType = requestedIdentityType || destinationIdentityType;
   const correlationId = args.idempotency_key || crypto.randomUUID();
 
   logSocialPublishEvent({
@@ -130,6 +137,9 @@ export async function handlePublishSocialPost(
       identityId,
       identityType,
       provider: platformHint,
+      // A human-friendly destination is as explicit as identity_type. If the
+      // selected type has exactly one identity, resolve it directly. Only use a
+      // default when the user did not specify any destination at all.
       allowDefault: !identityId && !identityType,
     });
   } catch (err) {
@@ -145,28 +155,22 @@ export async function handlePublishSocialPost(
         error_code: err.code,
         duration_ms: Date.now() - startedAt,
       });
-      return toMcpContent(errorResult(toolName, err.code, err.message, err.details));
+      return toMcpContent(errorResult(toolName, err.code, err.message, {
+        ...(err.details || {}),
+        selection_required: err.code === 'TARGET_AMBIGUOUS',
+        requested_destination: destination || null,
+      }));
     }
     throw err;
   }
 
-  const platform = (stored.provider === 'linkedin' ? 'linkedin' : 'facebook') as
-    | 'facebook'
-    | 'linkedin';
-  const resolvedIdentityType = stored.identity_type as
-    | 'facebook_page'
-    | 'linkedin_person'
-    | 'linkedin_organization';
+  const platform = (stored.provider === 'linkedin' ? 'linkedin' : 'facebook') as 'facebook' | 'linkedin';
+  const resolvedIdentityType = stored.identity_type as 'facebook_page' | 'linkedin_person' | 'linkedin_organization';
 
   logSocialPublishEvent({
-    event: 'publish_identity_resolved',
-    tool: toolName,
-    tenant_id: tenantId,
-    platform,
-    identity_id: stored.identity_id,
-    identity_type: resolvedIdentityType,
-    identity_name: stored.display_name,
-    correlation_id: correlationId,
+    event: 'publish_identity_resolved', tool: toolName, tenant_id: tenantId, platform,
+    identity_id: stored.identity_id, identity_type: resolvedIdentityType,
+    identity_name: stored.display_name, correlation_id: correlationId,
   });
 
   const ingested = await ingestInlineMedia(args, tenantId, userId);
@@ -176,27 +180,15 @@ export async function handlePublishSocialPost(
   if (args.dry_run) {
     const service = getSocialPublishingService();
     const preflight = await service.preflightPublish({
-      tenantId,
-      userId,
-      platform,
-      identityType: resolvedIdentityType,
-      identityId: stored.provider_identity_id,
-      caption,
-      mediaAssetIds: ingested.assetIds,
-      mediaUrls: ingested.urls,
-      linkUrl: args.link_url,
-      publishNow,
-      scheduledAt: args.scheduled_at,
+      tenantId, userId, platform, identityType: resolvedIdentityType,
+      identityId: stored.provider_identity_id, caption,
+      mediaAssetIds: ingested.assetIds, mediaUrls: ingested.urls,
+      linkUrl: args.link_url, publishNow, scheduledAt: args.scheduled_at,
     });
-    return toMcpContent(
-      okResult(toolName, preflight, {
-        meta: { dry_run: true, tool_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION },
-      })
-    );
+    return toMcpContent(okResult(toolName, preflight, { meta: { dry_run: true, tool_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } }));
   }
 
   const { executeMcpWrite } = await import('@/lib/mcp/executionGateway');
-
   const gatewayResult = await executeMcpWrite({
     tenantId,
     userId,
@@ -212,16 +204,9 @@ export async function handlePublishSocialPost(
       resource_type: 'social_post',
     },
     payload: {
-      platform,
-      identityType: resolvedIdentityType,
-      identityId: stored.provider_identity_id,
-      caption,
-      mediaAssetIds: ingested.assetIds,
-      mediaUrls: ingested.urls,
-      linkUrl: args.link_url,
-      publishNow,
-      scheduledAt: args.scheduled_at,
-      aiClient: 'mcp',
+      platform, identityType: resolvedIdentityType, identityId: stored.provider_identity_id,
+      caption, mediaAssetIds: ingested.assetIds, mediaUrls: ingested.urls,
+      linkUrl: args.link_url, publishNow, scheduledAt: args.scheduled_at, aiClient: 'mcp',
     },
     execute: async ({ actionId }) => {
       const service = getSocialPublishingService();
@@ -230,101 +215,49 @@ export async function handlePublishSocialPost(
 
       if (publishNow && isDurableRuntimeEnabled() && !shouldUseMcpDirectExecution(toolName)) {
         const draft = await service.publish({
-          tenantId,
-          userId,
-          platform,
-          identityType: resolvedIdentityType,
-          identityId: stored.provider_identity_id,
-          caption,
-          mediaAssetIds: ingested.assetIds,
-          mediaUrls: ingested.urls,
-          linkUrl: args.link_url,
-          publishNow: false,
-          scheduledAt: args.scheduled_at,
-          idempotencyKey: args.idempotency_key,
-          aiClient: 'mcp',
-          correlationId: actionId,
+          tenantId, userId, platform, identityType: resolvedIdentityType,
+          identityId: stored.provider_identity_id, caption,
+          mediaAssetIds: ingested.assetIds, mediaUrls: ingested.urls,
+          linkUrl: args.link_url, publishNow: false, scheduledAt: args.scheduled_at,
+          idempotencyKey: args.idempotency_key, aiClient: 'mcp', correlationId: actionId,
         });
-        if (!draft.ok || !draft.data?.social_post_id) {
-          return draft;
-        }
-
+        if (!draft.ok || !draft.data?.social_post_id) return draft;
         try {
           const { enqueueSocialPublishTask } = await import('@/lib/social/socialPublishDurableTask');
           const enqueued = await enqueueSocialPublishTask({
-            tenantId,
-            userId,
-            postId: draft.data.social_post_id,
-            actionId,
-            idempotencyKey: args.idempotency_key,
+            tenantId, userId, postId: draft.data.social_post_id,
+            actionId, idempotencyKey: args.idempotency_key,
           });
-
           return {
             ok: true,
-            data: {
-              ...draft.data,
-              status: 'queued',
-              run_id: enqueued.runId,
-              task_id: enqueued.taskId,
-              durable: true,
-              poll_tool: 'verify_social_post_published',
-            },
-            receipt: service.createActionReceipt({
-              provider: platform,
-              providerReference: null,
-              verified: false,
-              verifiedAt: null,
-              correlationId: actionId,
-            }),
+            data: { ...draft.data, status: 'queued', run_id: enqueued.runId, task_id: enqueued.taskId, durable: true, poll_tool: 'verify_social_post_published' },
+            receipt: service.createActionReceipt({ provider: platform, providerReference: null, verified: false, verifiedAt: null, correlationId: actionId }),
             error: null,
           };
         } catch (durableErr) {
           console.warn('[socialPublishTool] Durable enqueue failed; falling back to direct publish:', durableErr);
           return service.publish({
-            tenantId,
-            userId,
-            platform,
-            identityType: resolvedIdentityType,
-            identityId: stored.provider_identity_id,
-            caption,
-            mediaAssetIds: ingested.assetIds,
-            mediaUrls: ingested.urls,
-            linkUrl: args.link_url,
-            publishNow: true,
-            scheduledAt: args.scheduled_at,
-            idempotencyKey: args.idempotency_key,
-            aiClient: 'mcp',
-            correlationId: actionId,
+            tenantId, userId, platform, identityType: resolvedIdentityType,
+            identityId: stored.provider_identity_id, caption,
+            mediaAssetIds: ingested.assetIds, mediaUrls: ingested.urls,
+            linkUrl: args.link_url, publishNow: true, scheduledAt: args.scheduled_at,
+            idempotencyKey: args.idempotency_key, aiClient: 'mcp', correlationId: actionId,
           });
         }
       }
 
       return service.publish({
-        tenantId,
-        userId,
-        platform,
-        identityType: resolvedIdentityType,
-        identityId: stored.provider_identity_id,
-        caption,
-        mediaAssetIds: ingested.assetIds,
-        mediaUrls: ingested.urls,
-        linkUrl: args.link_url,
-        publishNow,
-        scheduledAt: args.scheduled_at,
-        idempotencyKey: args.idempotency_key,
-        aiClient: 'mcp',
-        correlationId: actionId,
+        tenantId, userId, platform, identityType: resolvedIdentityType,
+        identityId: stored.provider_identity_id, caption,
+        mediaAssetIds: ingested.assetIds, mediaUrls: ingested.urls,
+        linkUrl: args.link_url, publishNow, scheduledAt: args.scheduled_at,
+        idempotencyKey: args.idempotency_key, aiClient: 'mcp', correlationId: actionId,
       });
     },
     isSuccess: (result) => Boolean(result.ok),
-    mapError: (result) =>
-      result.error
-        ? {
-            code: result.error.code || 'PUBLISH_FAILED',
-            message: result.error.message || 'Publish failed',
-            retryable: result.error.retryable,
-          }
-        : { code: 'PUBLISH_FAILED', message: 'Publish failed' },
+    mapError: (result) => result.error
+      ? { code: result.error.code || 'PUBLISH_FAILED', message: result.error.message || 'Publish failed', retryable: result.error.retryable }
+      : { code: 'PUBLISH_FAILED', message: 'Publish failed' },
     buildReceipt: (result) => {
       if (!result.receipt) return null;
       return {
@@ -340,11 +273,7 @@ export async function handlePublishSocialPost(
           verified: result.receipt.verified,
           verified_at: result.receipt.verified_at,
           correlation_id: result.receipt.correlation_id,
-          target: {
-            integration: platform,
-            identity_type: resolvedIdentityType,
-            identity_id: stored.identity_id,
-          },
+          target: { integration: platform, identity_type: resolvedIdentityType, identity_id: stored.identity_id },
         },
       };
     },
@@ -352,74 +281,50 @@ export async function handlePublishSocialPost(
 
   if (!gatewayResult.ok) {
     logSocialPublishEvent({
-      event: 'publish_failed',
-      tool: toolName,
-      tenant_id: tenantId,
-      platform,
-      identity_id: stored.identity_id,
-      identity_type: resolvedIdentityType,
-      correlation_id: correlationId,
-      error_code: gatewayResult.error?.code,
+      event: 'publish_failed', tool: toolName, tenant_id: tenantId, platform,
+      identity_id: stored.identity_id, identity_type: resolvedIdentityType,
+      correlation_id: correlationId, error_code: gatewayResult.error?.code,
       duration_ms: Date.now() - startedAt,
     });
-    return toMcpContent(
-      errorResult(
-        toolName,
-        gatewayResult.error?.code || 'PUBLISH_FAILED',
-        gatewayResult.error?.message || 'Publish failed',
-        gatewayResult.error?.details,
-        {
-          retryable: gatewayResult.error?.retryable,
-          meta: gatewayResult.error?.remediation
-            ? { remediation: gatewayResult.error.remediation }
-            : undefined,
-        }
-      )
-    );
+    return toMcpContent(errorResult(
+      toolName,
+      gatewayResult.error?.code || 'PUBLISH_FAILED',
+      gatewayResult.error?.message || 'Publish failed',
+      gatewayResult.error?.details,
+      { retryable: gatewayResult.error?.retryable, meta: gatewayResult.error?.remediation ? { remediation: gatewayResult.error.remediation } : undefined }
+    ));
   }
 
   const result = gatewayResult.result;
   const receiptPayload = gatewayResult.receipt;
-
   logSocialPublishEvent({
-    event: 'publish_succeeded',
-    tool: toolName,
-    tenant_id: tenantId,
-    platform,
-    identity_id: stored.identity_id,
-    identity_type: resolvedIdentityType,
-    identity_name: stored.display_name,
-    social_post_id: result?.data?.social_post_id,
-    correlation_id: correlationId,
-    provider_status: result?.data?.status,
+    event: 'publish_succeeded', tool: toolName, tenant_id: tenantId, platform,
+    identity_id: stored.identity_id, identity_type: resolvedIdentityType,
+    identity_name: stored.display_name, social_post_id: result?.data?.social_post_id,
+    correlation_id: correlationId, provider_status: result?.data?.status,
     duration_ms: Date.now() - startedAt,
   });
 
-  return toMcpContent(
-    okResult(
-      toolName,
-      {
-        ...result?.data,
-        platform,
-        identity_id: stored.identity_id,
-        identity_type: resolvedIdentityType,
-        identity_name: stored.display_name,
-        provider_post_id: result?.data?.provider_post_id ?? receiptPayload?.provider_reference,
-        live_url: result?.data?.live_url ?? receiptPayload?.live_url,
-        published_at: result?.data?.published_at ?? receiptPayload?.timestamp,
-        verification: receiptPayload?.verification ?? {
-          verified: Boolean(receiptPayload?.verification?.verified),
-          verified_at: receiptPayload?.verification?.verified_at ?? null,
-          correlation_id: correlationId,
-        },
-        media_asset_ids: ingested.assetIds,
-        action_id: gatewayResult.actionId,
-        audit_log_id: gatewayResult.auditLogId,
-      },
-      {
-        receipt: receiptPayload,
-        meta: { tool_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION },
-      }
-    )
-  );
+  return toMcpContent(okResult(toolName, {
+    ...result?.data,
+    platform,
+    destination: destination || (resolvedIdentityType === 'linkedin_person' ? 'personal' : resolvedIdentityType === 'linkedin_organization' ? 'organization' : 'page'),
+    identity_id: stored.identity_id,
+    identity_type: resolvedIdentityType,
+    identity_name: stored.display_name,
+    provider_post_id: result?.data?.provider_post_id ?? receiptPayload?.provider_reference,
+    live_url: result?.data?.live_url ?? receiptPayload?.live_url,
+    published_at: result?.data?.published_at ?? receiptPayload?.timestamp,
+    verification: receiptPayload?.verification ?? {
+      verified: Boolean(receiptPayload?.verification?.verified),
+      verified_at: receiptPayload?.verification?.verified_at ?? null,
+      correlation_id: correlationId,
+    },
+    media_asset_ids: ingested.assetIds,
+    action_id: gatewayResult.actionId,
+    audit_log_id: gatewayResult.auditLogId,
+  }, {
+    receipt: receiptPayload,
+    meta: { tool_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION },
+  }));
 }
