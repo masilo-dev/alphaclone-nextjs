@@ -75,7 +75,7 @@ export function deriveProjectNextActions(input: {
       priority: 'high',
       label: `Obtain approval: ${approval.title || approval.name || approval.id}`,
       entityId: approval.id,
-      dueDate: approval.due_date || null,
+      dueDate: approval.expires_at || approval.due_date || null,
     });
   }
   for (const invoice of input.unpaidInvoices.slice(0, 3)) {
@@ -131,7 +131,7 @@ export async function loadProjectIntelligence(
   if (projectError) throw projectError;
   if (!project) throw new Error('project_not_found');
 
-  const [tasksResult, dependenciesResult, milestonesResult, invoicesResult, deliverablesResult] = await Promise.all([
+  const [tasksResult, dependenciesResult, milestonesResult, invoicesResult, deliverablesResult, approvalsResult] = await Promise.all([
     supabase
       .from('tasks')
       .select('id,title,status,priority,due_date,requires_approval,progress_percent,milestone_id,parent_task_id')
@@ -159,9 +159,15 @@ export async function loadProjectIntelligence(
       .eq('tenant_id', tenantId)
       .eq('project_id', projectId)
       .is('deleted_at', null),
+    supabase
+      .from('project_client_approvals')
+      .select('id,title,status,approval_type,task_id,milestone_id,deliverable_id,document_id,expires_at,requested_at,requested_from_name,requested_from_email,version_label')
+      .eq('tenant_id', tenantId)
+      .eq('project_id', projectId)
+      .in('status', ['pending', 'viewed']),
   ]);
 
-  for (const result of [tasksResult, dependenciesResult, milestonesResult, invoicesResult, deliverablesResult]) {
+  for (const result of [tasksResult, dependenciesResult, milestonesResult, invoicesResult, deliverablesResult, approvalsResult]) {
     if (result.error) throw result.error;
   }
 
@@ -171,6 +177,10 @@ export async function loadProjectIntelligence(
   const milestones = milestonesResult.data || [];
   const invoices = invoicesResult.data || [];
   const deliverables = deliverablesResult.data || [];
+  const persistedApprovals = (approvalsResult.data || []).map((approval: any) => ({
+    ...approval,
+    approval_source: 'client_approval',
+  }));
 
   const overdueTasks = tasks.filter(
     (task: any) => !isCompletedStatus(task.status) && dateIsPast(task.due_date, now.getTime()),
@@ -186,13 +196,15 @@ export async function loadProjectIntelligence(
   }
   const blockedTasks = tasks.filter((task: any) => blockedTaskIds.has(task.id));
 
+  const persistedTaskIds = new Set(persistedApprovals.map((approval: any) => approval.task_id).filter(Boolean));
+  const persistedDeliverableIds = new Set(persistedApprovals.map((approval: any) => approval.deliverable_id).filter(Boolean));
   const taskApprovals = tasks
-    .filter((task: any) => task.requires_approval && !isCompletedStatus(task.status))
-    .map((task: any) => ({ ...task, approval_source: 'task' }));
+    .filter((task: any) => task.requires_approval && !isCompletedStatus(task.status) && !persistedTaskIds.has(task.id))
+    .map((task: any) => ({ ...task, approval_source: 'task_requirement' }));
   const deliverableApprovals = deliverables
-    .filter((item: any) => item.approver_user_id && !item.accepted_at && !isCompletedStatus(item.status))
-    .map((item: any) => ({ ...item, approval_source: 'deliverable' }));
-  const missingApprovals = [...taskApprovals, ...deliverableApprovals];
+    .filter((item: any) => item.approver_user_id && !item.accepted_at && !isCompletedStatus(item.status) && !persistedDeliverableIds.has(item.id))
+    .map((item: any) => ({ ...item, approval_source: 'deliverable_requirement' }));
+  const missingApprovals = [...persistedApprovals, ...taskApprovals, ...deliverableApprovals];
 
   const unpaidInvoices = invoices.filter((invoice: any) => {
     const balance = Number(invoice.balance_due ?? Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
