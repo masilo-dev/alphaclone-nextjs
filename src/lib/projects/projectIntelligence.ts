@@ -120,7 +120,6 @@ export async function loadProjectIntelligence(
   projectId: string,
 ): Promise<ProjectIntelligence> {
   const now = new Date();
-  const nowIso = now.toISOString();
 
   const { data: project, error: projectError } = await supabase
     .from('projects')
@@ -267,7 +266,7 @@ export async function loadWorkspaceProjectBrief(
     })[0] || null;
 
   return {
-    generatedAt: nowIso,
+    generatedAt: new Date().toISOString(),
     activeProjects: activeProjects.length,
     projectsNeedingAttention: needsAttention.length,
     overdueTasks: intelligence.reduce((sum, item) => sum + item.counts.overdueTasks, 0),
