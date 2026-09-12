@@ -98,3 +98,20 @@ test('canonical base64 decoder rejects malformed data URLs and impossible length
   assert.throws(() => decodeBase64Media('A'), /MEDIA_BASE64_INVALID/);
   assert.throws(() => decodeBase64Media('YWJj$'), /MEDIA_BASE64_INVALID/);
 });
+
+test('signed provider route can verify processing assets without weakening normal reads', async () => {
+  const fs = await import('node:fs');
+  const loader = fs.readFileSync(
+    new URL('../../src/lib/media/fetchMediaAssetBytes.ts', import.meta.url),
+    'utf8'
+  );
+  const route = fs.readFileSync(
+    new URL('../../src/app/api/social-media/public/[token]/route.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(loader, /options\.allowProcessing === true/);
+  assert.match(loader, /Boolean\(options\.tenantId\)/);
+  assert.match(loader, /asset\.tenant_id !== options\.tenantId/);
+  assert.match(route, /tenantId: claims\.tenant_id/);
+  assert.match(route, /allowProcessing: true/);
+});
