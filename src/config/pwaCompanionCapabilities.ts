@@ -56,7 +56,11 @@ export const PWA_COMPANION_CAPABILITIES: Record<CompanionModuleId, CompanionCapa
   admin: { level: 'DESKTOP', quickActions: [], desktopReason: 'Admin and Super Admin controls are available on desktop.' },
   bulk_operations: { level: 'DESKTOP', quickActions: [], desktopReason: 'Large bulk operations are available on desktop.' },
   workflow_builders: { level: 'DESKTOP', quickActions: [], desktopReason: 'Workflow builders are available on desktop.' },
-  advanced_configuration: { level: 'DESKTOP', quickActions: [], desktopReason: 'Advanced configuration is available on desktop.' },
+  advanced_configuration: {
+    level: 'COMPANION',
+    quickActions: ['view', 'edit_basic', 'save', 'ask_bonnie'],
+    desktopReason: 'Some advanced configuration tools are easier to use on desktop.',
+  },
 };
 
 /**
@@ -119,7 +123,10 @@ export function resolveCompanionModule(pathname: string): CompanionModuleId {
   const match = ROUTE_CAPABILITY_MAP.find(({ prefixes }) =>
     prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)),
   );
-  return match?.moduleId ?? 'advanced_configuration';
+
+  // A new or not-yet-catalogued mobile route must remain usable. Never fail
+  // closed into the desktop-only handoff just because the route map is stale.
+  return match?.moduleId ?? 'home';
 }
 
 export function getCompanionCapabilityForPath(pathname: string): CompanionCapability {
