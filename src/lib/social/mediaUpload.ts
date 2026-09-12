@@ -57,19 +57,35 @@ export function rejectOrExtractDataUri(value: string): {
 
 export function decodeBase64Media(contentBase64: string): Buffer {
   if (contentBase64 == null || String(contentBase64).trim() === '') {
-    throw new Error('content_base64 is required');
+    throw new Error('MEDIA_INPUT_MISSING: base64 media content is required');
   }
-  const marker = contentBase64.indexOf('base64,');
-  const normalized = marker >= 0 ? contentBase64.slice(marker + 7) : contentBase64;
-  const cleaned = normalized.replace(/[\r\n\s]/g, '');
-  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned) || cleaned.length % 4 !== 0) {
-    throw new Error('MEDIA_BASE64_DECODE_FAILED: content_base64 is malformed');
+
+  const raw = String(contentBase64).trim();
+  const dataUrl = raw.match(/^data:([^;,]+);base64,([\s\S]*)$/i);
+  if (/^data:/i.test(raw) && !dataUrl) {
+    throw new Error('MEDIA_BASE64_INVALID: malformed or non-base64 data URL');
   }
-  const binary = Buffer.from(cleaned, 'base64');
-  if (!binary.length) throw new Error('content_base64 is invalid or empty');
-  const canonicalInput = cleaned.replace(/=+$/, '');
-  const canonicalDecoded = binary.toString('base64').replace(/=+$/, '');
-  if (canonicalDecoded !== canonicalInput) {
+
+  const cleaned = (dataUrl ? dataUrl[2] : raw).replace(/\s+/g, '');
+  if (!cleaned) throw new Error('MEDIA_INPUT_MISSING: base64 media content is empty');
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned) || /=/.test(cleaned.slice(0, -2))) {
+    throw new Error('MEDIA_BASE64_INVALID: content contains invalid base64 characters');
+  }
+
+  const unpadded = cleaned.replace(/=+$/, '');
+  if (unpadded.length % 4 === 1) {
+    throw new Error('MEDIA_BASE64_INVALID: content has an impossible base64 length');
+  }
+  const padded = unpadded + '='.repeat((4 - (unpadded.length % 4)) % 4);
+
+  let binary: Buffer;
+  try {
+    binary = Buffer.from(padded, 'base64');
+  } catch {
+    throw new Error('MEDIA_BASE64_DECODE_FAILED: content could not be decoded');
+  }
+  if (!binary.length) throw new Error('MEDIA_BASE64_DECODE_FAILED: decoded media is empty');
+  if (binary.toString('base64').replace(/=+$/, '') !== unpadded) {
     throw new Error('MEDIA_BASE64_DECODE_FAILED: decoded bytes do not round-trip');
   }
   return binary;
@@ -349,12 +365,12 @@ async function validateAndPrepareBinary(
       ? MAX_DOCUMENT_BYTES
       : MAX_IMAGE_BYTES;
   if (binary.length > maxBytes) {
-    throw new Error(`File exceeds maximum size of ${maxBytes} bytes`);
+    throw new Error(`MEDIA_TOO_LARGE: file exceeds maximum size of ${maxBytes} bytes`);
   }
 
   const detected = detectMimeFromSignature(binary);
   if (!detected) {
-    throw new Error('File signature does not match a supported image/video format');
+    throw new Error('MEDIA_UNSUPPORTED_TYPE: file signature is not supported');
   }
   const detectedNorm = normalizeMime(detected);
   if (detectedNorm === 'image/svg+xml') assertSafeSvg(binary);
@@ -380,7 +396,7 @@ async function validateAndPrepareBinary(
         .raw()
         .toBuffer();
     } catch {
-      throw new Error('MEDIA_IMAGE_CORRUPT: image bytes cannot be fully decoded');
+      throw new Error('MEDIA_DECODE_FAILED: image bytes cannot be fully decoded');
     }
   }
 
@@ -505,7 +521,7 @@ export function rejectLocalAiPaths(value: unknown, field: string = 'media_url'):
       /^[A-Za-z]:\\/.test(v)
     ) {
       throw new Error(
-        `${field} looks like a local AI sandbox path (${v}). ` +
+        `LOCAL_PATH_NOT_ACCESSIBLE: ${field} is a local sandbox path (${v}). ` +
           'Read the image bytes in the session, pass them as content_base64 (or data_url) to upload_media first, ' +
           'then use the returned media_url or media_id with publish_post / publish_social_post.'
       );
