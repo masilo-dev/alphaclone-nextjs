@@ -1,6 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { UnifiedEmailProvider } from '@/lib/email/unifiedEmailDomain';
-import { logCrmActivityAdmin } from '@/lib/crm/crmActivityServer';
 
 type PersistCanonicalOutboundParams = {
   supabase: SupabaseClient;
@@ -69,6 +68,75 @@ async function resolveCrmRecipient(
     leadId: lead?.id ? String(lead.id) : null,
     companyId: contact?.company_id ? String(contact.company_id) : null,
   };
+}
+
+/**
+ * Keep the canonical outbound email module free of `server-only` imports.
+ * This module sits in the shared email dependency graph and is reachable from
+ * dashboard code through taskService, so importing crmActivityServer here
+ * causes Next.js to reject the client bundle. The Supabase client supplied to
+ * this function is already the server-side client used by the send pipeline.
+ */
+async function persistOutboundCrmActivity(
+  supabase: SupabaseClient,
+  params: {
+    tenantId: string;
+    userId?: string | null;
+    contactId?: string | null;
+    companyId?: string | null;
+    leadId?: string | null;
+    subject: string;
+    provider: UnifiedEmailProvider;
+    providerMessageId: string;
+    canonicalMessageId: string;
+    recipient: string;
+  },
+) {
+  const now = new Date().toISOString();
+  const { error } = await supabase.from('activities').insert({
+    tenant_id: params.tenantId,
+    type: 'email',
+    subject: params.subject,
+    description: `Outbound email accepted by ${params.provider}`,
+    contact_id: params.contactId || null,
+    company_id: params.companyId || null,
+    created_by: params.userId || null,
+    status: 'completed',
+    priority: 'normal',
+    is_automated: true,
+    source: 'email:provider_accepted',
+    metadata: {
+      direction: 'outbound',
+      provider: params.provider,
+      provider_message_id: params.providerMessageId,
+      canonical_message_id: params.canonicalMessageId,
+      status: 'provider_accepted',
+      recipient: params.recipient,
+      lead_id: params.leadId || null,
+    },
+    completed_at: now,
+  });
+
+  if (error) {
+    console.warn('[persistCanonicalEmail] CRM activity insert failed:', error.message);
+    return;
+  }
+
+  if (params.contactId) {
+    await supabase
+      .from('contacts')
+      .update({ last_contacted_at: now, last_activity_at: now, updated_at: now })
+      .eq('tenant_id', params.tenantId)
+      .eq('id', params.contactId);
+  }
+
+  if (params.companyId) {
+    await supabase
+      .from('companies')
+      .update({ last_activity_at: now, updated_at: now })
+      .eq('tenant_id', params.tenantId)
+      .eq('id', params.companyId);
+  }
 }
 
 /**
@@ -230,25 +298,17 @@ export async function persistCanonicalOutboundEmail(
   for (const email of params.recipients) {
     const crm = crmByRecipient.get(email.trim().toLowerCase());
     if (!crm?.contactId && !crm?.companyId) continue;
-    await logCrmActivityAdmin(supabase, {
+    await persistOutboundCrmActivity(supabase, {
       tenantId: params.tenantId,
-      type: 'email',
+      userId: params.userId,
+      contactId: crm.contactId,
+      companyId: crm.companyId,
+      leadId: crm.leadId,
       subject: params.subject,
-      description: `Outbound email accepted by ${params.provider}`,
-      contactId: crm.contactId || undefined,
-      companyId: crm.companyId || undefined,
-      createdBy: params.userId || undefined,
-      source: 'email:provider_accepted',
-      isAutomated: true,
-      metadata: {
-        direction: 'outbound',
-        provider: params.provider,
-        provider_message_id: params.providerMessageId,
-        canonical_message_id: message.id,
-        status: 'provider_accepted',
-        recipient: email.trim().toLowerCase(),
-        lead_id: crm.leadId,
-      },
+      provider: params.provider,
+      providerMessageId: params.providerMessageId,
+      canonicalMessageId: String(message.id),
+      recipient: email.trim().toLowerCase(),
     });
   }
 
