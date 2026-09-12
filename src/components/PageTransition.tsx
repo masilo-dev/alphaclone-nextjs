@@ -15,13 +15,13 @@ const pageVariants: Variants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.46, ease: [0.16, 1, 0.3, 1] },
+    transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] },
   },
   exit: {
     opacity: 0,
     y: -10,
     scale: 0.995,
-    transition: { duration: 0.2, ease: [0.7, 0, 0.84, 0] },
+    transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] },
   },
 };
 

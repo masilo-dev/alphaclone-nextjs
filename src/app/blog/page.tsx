@@ -41,7 +41,7 @@ export default async function BlogPage() {
                             Knowledge Hub
                         </h1>
                         <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
-                            Insights and practical guidance on running a unified business operating platform at scale.
+                            Practical guidance for connecting AI to real business workflows with control, context, and traceability.
                         </p>
                     </div>
                 </div>

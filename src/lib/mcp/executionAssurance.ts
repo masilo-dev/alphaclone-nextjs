@@ -15,6 +15,7 @@ export type ReceiptAssuranceRow = {
   id: string;
   tool: string;
   success: boolean | null;
+  final_status?: string | null;
   provider_reference: string | null;
   live_url: string | null;
   error_code: string | null;
@@ -59,10 +60,12 @@ function classifyReceipt(row: {
   provider_reference?: string | null;
   live_url?: string | null;
   entity_id?: string | null;
+  final_status?: string | null;
 }): ReceiptIssue {
   const tool = row.tool || '';
   if (!WRITE_TOOLS.has(tool)) return 'ok';
   if (!row.success) return 'ok';
+  if (['draft', 'scheduled', 'queued', 'outcome_unknown'].includes(String(row.final_status || ''))) return 'ok';
   if (!row.provider_reference) return 'missing_provider_ref';
   if (tool.includes('publish') && !row.live_url) return 'missing_live_url';
   return 'ok';
@@ -77,7 +80,7 @@ async function enrichSocialReceiptFromPost(
   const admin = createSupabaseAdminClient();
   const { data: post } = await admin
     .from('social_posts')
-    .select('id, linkedin_post_urn, facebook_post_id, instagram_post_id, status')
+    .select('id, linkedin_post_urn, facebook_post_id, instagram_post_id, status, live_url')
     .eq('tenant_id', tenantId)
     .eq('id', entityId)
     .maybeSingle();
@@ -94,6 +97,9 @@ async function enrichSocialReceiptFromPost(
     .from('mcp_action_receipts')
     .update({
       provider_reference: providerRef,
+      live_url: post.live_url || (post.linkedin_post_urn
+        ? `https://www.linkedin.com/feed/update/${encodeURIComponent(post.linkedin_post_urn)}`
+        : null),
       final_status: 'published',
       error_code: null,
       verification: { repaired_from_social_post: true, verified: true },
@@ -114,7 +120,7 @@ export async function scanIncompleteReceipts(params: {
   const since = new Date(Date.now() - (params.sinceDays || 7) * 86400_000).toISOString();
   const { data } = await admin
     .from('mcp_action_receipts')
-    .select('id, tool, success, provider_reference, live_url, error_code, entity_id, created_at')
+    .select('id, tool, success, final_status, provider_reference, live_url, error_code, entity_id, created_at')
     .eq('tenant_id', params.tenantId)
     .gte('created_at', since)
     .eq('success', true)
@@ -126,6 +132,7 @@ export async function scanIncompleteReceipts(params: {
       id: row.id,
       tool: row.tool || 'unknown',
       success: row.success,
+      final_status: row.final_status,
       provider_reference: row.provider_reference,
       live_url: row.live_url,
       error_code: row.error_code,
@@ -216,7 +223,7 @@ export async function buildExecutionAssuranceReport(params: {
   const [receiptRes, actionRes, runRes, ambiguousRes] = await Promise.all([
     admin
       .from('mcp_action_receipts')
-      .select('id, tool, success, provider_reference, live_url, error_code, entity_id')
+      .select('id, tool, success, final_status, provider_reference, live_url, error_code, entity_id')
       .eq('tenant_id', params.tenantId)
       .gte('created_at', since)
       .limit(5000),
@@ -244,9 +251,7 @@ export async function buildExecutionAssuranceReport(params: {
 
   const receipts = receiptRes.data || [];
   const writeReceipts = receipts.filter((r) => WRITE_TOOLS.has(r.tool || ''));
-  const complete = writeReceipts.filter(
-    (r) => r.success && r.provider_reference && (!String(r.tool).includes('publish') || r.live_url)
-  ).length;
+  const complete = writeReceipts.filter((r) => classifyReceipt(r) === 'ok').length;
   const incompleteRows = writeReceipts
     .filter((r) => classifyReceipt(r) !== 'ok')
     .slice(0, 20)
@@ -254,6 +259,7 @@ export async function buildExecutionAssuranceReport(params: {
       id: row.id,
       tool: row.tool || 'unknown',
       success: row.success,
+      final_status: row.final_status,
       provider_reference: row.provider_reference,
       live_url: row.live_url,
       error_code: row.error_code,

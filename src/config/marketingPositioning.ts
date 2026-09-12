@@ -1,23 +1,23 @@
 /**
- * Business Execution Layer — category positioning (public marketing SSOT).
+ * AI Business Execution Layer — category positioning (public marketing SSOT).
  * Use these strings instead of hard-coding hero/CTA copy across pages.
  */
 
 export const EXECUTION_LAYER = {
-  category: 'Business Execution Layer',
-  primaryLine: 'You direct. AlphaClone executes.',
-  categoryLine: 'Your business has tools. Now give it an execution layer.',
+  category: 'AI Business Execution Layer',
+  primaryLine: 'You give the instruction. AlphaClone handles the execution.',
+  categoryLine: 'Your AI can think. Now let it execute.',
   problemLine: 'The software works. But you’re still doing the work.',
   explanatoryLine:
-    'AlphaClone turns your instructions into coordinated action across connected business systems while you retain control over important decisions.',
+    'AlphaClone connects ChatGPT, Claude, and other compatible AI interfaces to the systems that run your business—so AI can send, post, update, create, follow up, and execute real work.',
   differentiationLine:
-    'Chatbots produce answers. AlphaClone helps coordinate what happens after the answer.',
+    'AI provides the intelligence and conversation. AlphaClone provides business context, permissions, workflows, execution, and verification.',
   mechanism: ['Decide', 'Approve', 'Execute', 'Verify'] as const,
-  heroHeadline: 'Your business has tools. Now give it an execution layer.',
+  heroHeadline: 'Your AI can think. Now let it execute.',
   heroSubhead:
-    'AlphaClone turns your instructions into coordinated action across connected business systems while you retain control over important decisions.',
-  primaryCta: 'Execute your first workflow',
-  secondaryCta: 'Book an execution session',
+    'AlphaClone connects ChatGPT, Claude, and other AI assistants to the applications that run your business—so AI can send, post, update, create, follow up, and execute real work.',
+  primaryCta: 'Start with AlphaClone',
+  secondaryCta: 'Watch AlphaClone Execute',
   executionSessionPath: '/execution-session',
   howItWorksPath: '/how-it-works',
   reliabilityPath: '/reliability',

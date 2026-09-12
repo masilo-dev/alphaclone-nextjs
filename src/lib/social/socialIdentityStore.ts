@@ -106,6 +106,37 @@ async function listLegacyIdentities(
   const admin = createSupabaseAdminClient();
   const out: StoredSocialIdentity[] = [];
 
+  if (!provider || provider === 'instagram') {
+    let q = admin
+      .from('instagram_integrations')
+      .select('id, tenant_id, instagram_account_id, username, account_name, facebook_page_id, is_active, expires_at')
+      .eq('tenant_id', tenantId);
+    if (activeOnly) q = q.eq('is_active', true);
+    const { data } = await q;
+    const now = Date.now();
+    for (const row of data || []) {
+      if (!row.instagram_account_id) continue;
+      const tokenActive = !row.expires_at || new Date(row.expires_at).getTime() > now;
+      const canPublish = row.is_active !== false && tokenActive;
+      out.push({
+        identity_id: row.id,
+        connection_id: row.id,
+        tenant_id: tenantId,
+        provider: 'instagram',
+        identity_type: 'instagram_business',
+        provider_identity_id: String(row.instagram_account_id),
+        provider_identity_urn: null,
+        display_name: String(row.username || row.account_name || row.instagram_account_id),
+        can_publish: canPublish,
+        can_upload_media: canPublish,
+        can_read_insights: canPublish,
+        is_default: false,
+        is_active: row.is_active !== false,
+        metadata: { facebook_page_id: row.facebook_page_id },
+      });
+    }
+  }
+
   if (!provider || provider === 'facebook') {
     let q = admin
       .from('facebook_integrations')
@@ -416,6 +447,40 @@ export async function resolveTenantIdentityForPublish(params: {
   return match;
 }
 
+/** Canonical discovery/execution resolver. Provider-specific errors are stable MCP codes. */
+export async function resolveSocialIdentity(params: {
+  tenantId: string;
+  provider: string;
+  identityId?: string | null;
+  requiredCapability?: 'publish' | 'upload_media';
+}): Promise<StoredSocialIdentity> {
+  try {
+    const identity = await resolveTenantIdentityForPublish({
+      tenantId: params.tenantId,
+      provider: params.provider,
+      identityId: params.identityId,
+      allowDefault: false,
+    });
+    if (identity.provider !== params.provider) {
+      throw new TenantIsolationError('Resolved provider does not match requested provider', 'SOCIAL_DESTINATION_MISMATCH');
+    }
+    if (params.requiredCapability === 'upload_media' && !identity.can_upload_media) {
+      throw new TenantIsolationError('Identity cannot upload media', 'IDENTITY_NOT_PUBLISHABLE');
+    }
+    return identity;
+  } catch (error) {
+    if (params.provider === 'instagram' && error instanceof TenantIsolationError) {
+      if (error.code === 'TARGET_AMBIGUOUS') {
+        throw new TenantIsolationError(error.message, 'INSTAGRAM_IDENTITY_REQUIRED', error.details);
+      }
+      if (error.code === 'MISSING_IDENTITY' || error.code === 'IDENTITY_NOT_FOUND') {
+        throw new TenantIsolationError(error.message, 'INSTAGRAM_IDENTITY_NOT_FOUND', error.details);
+      }
+    }
+    throw error;
+  }
+}
+
 /** Load tenant default identity for a provider (if configured). */
 export async function getTenantDefaultIdentity(
   tenantId: string,
@@ -456,6 +521,44 @@ export async function syncTenantSocialIdentitiesFromLegacy(
   const admin = createSupabaseAdminClient();
   let connections = 0;
   let identities = 0;
+
+  const { data: instagramRows } = await admin
+    .from('instagram_integrations')
+    .select('id, tenant_id, user_id, instagram_account_id, username, account_name, facebook_page_id, is_active, expires_at')
+    .eq('tenant_id', tenantId);
+
+  for (const row of instagramRows || []) {
+    if (!row.instagram_account_id) continue;
+    const active = row.is_active !== false && (!row.expires_at || new Date(row.expires_at).getTime() > Date.now());
+    const { data: conn } = await admin.from('social_connections').upsert({
+      tenant_id: tenantId,
+      connected_by_user_id: row.user_id,
+      provider: 'instagram',
+      provider_account_id: String(row.instagram_account_id),
+      provider_account_name: row.username || row.account_name,
+      connection_status: active ? 'active' : 'expired',
+      token_expires_at: row.expires_at,
+      metadata: { legacy_integration_id: row.id, facebook_page_id: row.facebook_page_id },
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'tenant_id,provider,provider_account_id' }).select('id').maybeSingle();
+    if (conn?.id) connections += 1;
+    await admin.from('social_identities').upsert({
+      tenant_id: tenantId,
+      connection_id: conn?.id || null,
+      provider: 'instagram',
+      identity_type: 'instagram_business',
+      provider_identity_id: String(row.instagram_account_id),
+      display_name: row.username || row.account_name || row.instagram_account_id,
+      can_publish: active,
+      can_upload_media: active,
+      can_read_insights: active,
+      is_active: active,
+      metadata: { legacy_integration_id: row.id, facebook_page_id: row.facebook_page_id },
+      last_verified_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'tenant_id,provider,identity_type,provider_identity_id' });
+    identities += 1;
+  }
 
   const { data: fbRows } = await admin
     .from('facebook_integrations')

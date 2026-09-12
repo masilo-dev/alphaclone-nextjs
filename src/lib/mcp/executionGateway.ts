@@ -79,7 +79,13 @@ const ERROR_REMEDIATION: Record<string, string> = {
   VALIDATION_FAILED: 'Fix input fields reported in details and retry.',
   RETRYABLE_NETWORK_ERROR: 'Retry with the same idempotency_key after a short delay.',
   PUBLISH_IN_PROGRESS: 'Poll verify_social_post_published or retry after the in-flight publish completes.',
+  OUTCOME_UNKNOWN: 'Reconcile the original provider write. Do not retry until absence is positively established.',
 };
+
+async function updateExternalAction(actionId: string, patch: Record<string, unknown>): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  await admin.from('external_actions').update(patch).eq('action_id', actionId);
+}
 
 function enrichError(error: McpExecutionError): McpExecutionError {
   return {
@@ -238,6 +244,11 @@ export async function executeMcpWrite<TResult>(
           details: result,
         }
       );
+      const outcomeUnknown = error.code === 'OUTCOME_UNKNOWN';
+      await updateExternalAction(actionId, {
+        status: outcomeUnknown ? 'outcome_unknown' : 'failed',
+        failure_reason: error.message,
+      }).catch(() => undefined);
       await persistActionReceipt({
         tenantId: params.tenantId,
         userId: params.userId,
@@ -245,7 +256,7 @@ export async function executeMcpWrite<TResult>(
         idempotencyKey,
         receipt: {
           action_id: actionId,
-          status: 'failed',
+          status: outcomeUnknown ? 'outcome_unknown' : 'failed',
           timestamp: new Date().toISOString(),
           entity_type: params.target.resource_type || undefined,
         },
@@ -278,6 +289,13 @@ export async function executeMcpWrite<TResult>(
         sanitizedInput: { target: params.target, mode: params.mode },
         sanitizedOutput: result,
       }).catch(() => undefined);
+      await updateExternalAction(actionId, {
+        status: receipt.status === 'published' ? 'completed' : receipt.status,
+        provider: receipt.provider || null,
+        provider_reference: receipt.provider_reference || null,
+        live_url: receipt.live_url || null,
+        completed_at: new Date().toISOString(),
+      }).catch(() => undefined);
     }
 
     return {
@@ -295,17 +313,21 @@ export async function executeMcpWrite<TResult>(
         ? String((err as Error & { code: string }).code)
         : 'EXECUTION_FAILED';
     const error = enrichError({ code, message, retryable: /network|timeout|ECONN/i.test(message) });
+    const outcomeUnknown = /network|timeout|abort|socket|ECONN/i.test(message);
+    await updateExternalAction(actionId, {
+      status: outcomeUnknown ? 'outcome_unknown' : 'failed', failure_reason: message,
+    }).catch(() => undefined);
     await persistActionReceipt({
       tenantId: params.tenantId,
       userId: params.userId,
       tool: params.tool,
       idempotencyKey,
-      receipt: { action_id: actionId, status: 'failed', timestamp: new Date().toISOString() },
+      receipt: { action_id: actionId, status: outcomeUnknown ? 'outcome_unknown' : 'failed', timestamp: new Date().toISOString() },
       success: false,
       errorCode: error.code,
       errorMessage: error.message,
     }).catch(() => undefined);
-    return { ok: false, actionId, auditLogId, idempotencyKey, error };
+    return { ok: false, actionId, auditLogId, idempotencyKey, error: outcomeUnknown ? enrichError({ code: 'OUTCOME_UNKNOWN', message, retryable: false }) : error };
   }
 }
 

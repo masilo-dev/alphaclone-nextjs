@@ -120,7 +120,7 @@ export default function PlanAndUsageView({
             <p className="mt-1 text-sm text-slate-400">
               {unlimited
                 ? 'Unlimited plan — usage is tracked for analytics only, never capped by AlphaClone.'
-                : 'Daily limits reset at 00:00 UTC · Free = 50/day · Pro = 300/day per category'}
+                : 'Daily limits reset at 00:00 UTC · Free = 50/day · Starter and Pro = 300/day per category'}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -221,11 +221,12 @@ export default function PlanAndUsageView({
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
         <h3 className="text-xl font-bold text-white mb-6">Available Plans</h3>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {PUBLIC_PRICING_PLANS.map((plan) => {
             const isCurrent =
               (plan.id === 'premium' && unlimited) ||
-              (plan.id === 'pro' && !unlimited && ['pro', 'starter'].includes(currentPlan.toLowerCase())) ||
+              (plan.id === 'starter' && currentPlan.toLowerCase() === 'starter') ||
+              (plan.id === 'pro' && currentPlan.toLowerCase() === 'pro') ||
               (plan.id === 'free' && currentPlan.toLowerCase() === 'free');
 
             return (

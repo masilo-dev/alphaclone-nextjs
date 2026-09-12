@@ -6,8 +6,8 @@ export const OUTCOME_PROMISE = {
   badge: 'Every lead-to-invoice workflow in one place',
   /** Shorter badge for narrow screens — clearer ICP, less wrap under the nav */
   badgeMobile: 'For service businesses & agencies',
-  headline: 'Your business has tools.',
-  headlineAccent: 'Now give it an execution layer.',
+  headline: 'Your AI can think.',
+  headlineAccent: 'Now let it execute.',
   subhead:
     'AlphaClone turns your instructions into coordinated action across CRM, billing, projects, and outreach — while you retain control over important decisions.',
   icp: 'For solo founders and small service teams who coordinate work across disconnected tools.',

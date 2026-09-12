@@ -6,6 +6,7 @@
 import { createHash } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { buildPublicMediaUrl, extractMediaAssetIdFromUrl } from '@/lib/media/mediaPublicUrl';
+import { createProviderFetchUrl } from '@/lib/media/providerFetchUrl';
 import { logMediaPipelineStep } from '@/lib/social/mediaPipelineLog';
 import type { MediaAssetResult } from './types';
 
@@ -48,7 +49,7 @@ export function rejectOrExtractDataUri(value: string): {
   base64?: string;
 } {
   const trimmed = String(value || '').trim();
-  const match = trimmed.match(/^data:([^;]+);base64,(.+)$/i);
+  const match = trimmed.match(/^data:([^;]+);base64,([\s\S]+)$/i);
   if (!match) return { isDataUri: false };
   return { isDataUri: true, mimeType: match[1], base64: match[2] };
 }
@@ -57,11 +58,19 @@ export function decodeBase64Media(contentBase64: string): Buffer {
   if (contentBase64 == null || String(contentBase64).trim() === '') {
     throw new Error('content_base64 is required');
   }
-  const normalized = contentBase64.includes('base64,')
-    ? contentBase64.split('base64,').pop() || ''
-    : contentBase64;
-  const binary = Buffer.from(normalized.replace(/\s/g, ''), 'base64');
+  const marker = contentBase64.indexOf('base64,');
+  const normalized = marker >= 0 ? contentBase64.slice(marker + 7) : contentBase64;
+  const cleaned = normalized.replace(/[\r\n\s]/g, '');
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned) || cleaned.length % 4 !== 0) {
+    throw new Error('MEDIA_BASE64_DECODE_FAILED: content_base64 is malformed');
+  }
+  const binary = Buffer.from(cleaned, 'base64');
   if (!binary.length) throw new Error('content_base64 is invalid or empty');
+  const canonicalInput = cleaned.replace(/=+$/, '');
+  const canonicalDecoded = binary.toString('base64').replace(/=+$/, '');
+  if (canonicalDecoded !== canonicalInput) {
+    throw new Error('MEDIA_BASE64_DECODE_FAILED: decoded bytes do not round-trip');
+  }
   return binary;
 }
 
@@ -197,10 +206,44 @@ async function persistSocialMediaAsset(params: {
   });
   if (uploadError) throw new Error(uploadError.message);
 
+  const { data: storedBlob, error: verifyError } = await supabase.storage.from('public-assets').download(storagePath);
+  if (verifyError || !storedBlob) {
+    await supabase.storage.from('public-assets').remove([storagePath]);
+    throw new Error('MEDIA_STORAGE_INTEGRITY_FAILED: stored object could not be read back');
+  }
+  const stored = Buffer.from(await storedBlob.arrayBuffer());
+  const storedChecksum = createHash('sha256').update(stored).digest('hex');
+  if (stored.length !== params.binary.length || storedChecksum !== params.checksum) {
+    await supabase.storage.from('public-assets').remove([storagePath]);
+    throw new Error('MEDIA_STORAGE_INTEGRITY_FAILED: stored media differs from decoded source');
+  }
+
   const { data: urlData } = supabase.storage.from('public-assets').getPublicUrl(storagePath);
   const publicUrl = urlData.publicUrl;
   if (!publicUrl || isDataUri(publicUrl)) {
     throw new Error('Upload succeeded but no provider-fetchable URL was returned');
+  }
+
+  async function verifyPublicFetch(assetId: string): Promise<void> {
+    const providerUrl = createProviderFetchUrl({ tenantId: params.tenantId, assetId });
+    try {
+      const response = await fetch(providerUrl, { redirect: 'follow' });
+      const fetched = Buffer.from(await response.arrayBuffer());
+      const fetchedMime = String(response.headers.get('content-type') || '').split(';')[0].toLowerCase();
+      const fetchedChecksum = createHash('sha256').update(fetched).digest('hex');
+      if (!response.ok || fetchedMime !== params.effectiveMime || fetched.length !== params.binary.length || fetchedChecksum !== params.checksum) {
+        throw new Error(`HTTP ${response.status}, MIME ${fetchedMime || 'missing'}, bytes ${fetched.length}`);
+      }
+      const { error } = await supabase.from('media_assets').update({ status: 'ready', failure_code: null, failure_message: null })
+        .eq('tenant_id', params.tenantId).eq('id', assetId);
+      if (error) throw error;
+    } catch (error) {
+      await supabase.from('media_assets').update({
+        status: 'failed', failure_code: 'MEDIA_PUBLIC_INTEGRITY_FAILED',
+        failure_message: error instanceof Error ? error.message : 'Public media verification failed',
+      }).eq('tenant_id', params.tenantId).eq('id', assetId);
+      throw new Error('MEDIA_PUBLIC_INTEGRITY_FAILED: public provider URL did not preserve the uploaded bytes');
+    }
   }
 
   const { data: asset, error: assetErr } = await supabase
@@ -219,6 +262,13 @@ async function persistSocialMediaAsset(params: {
       width: params.dims.width,
       height: params.dims.height,
       tags: ['social-publishing'],
+      status: 'processing',
+      metadata: {
+        source_bytes: params.binary.length,
+        stored_bytes: stored.length,
+        integrity_verified: true,
+        public_fetch_verified: true,
+      },
     })
     .select('id, public_url, file_name, file_type, file_size_bytes, width, height, alt_text, checksum_sha256')
     .single();
@@ -241,6 +291,7 @@ async function persistSocialMediaAsset(params: {
       .select('id, public_url, file_name, file_type, file_size_bytes, alt_text')
       .single();
     if (fallback.error) throw new Error(fallback.error.message);
+    await verifyPublicFetch(fallback.data.id);
     return {
       media_asset_id: fallback.data.id,
       public_url: fallback.data.public_url,
@@ -251,10 +302,16 @@ async function persistSocialMediaAsset(params: {
       height: params.dims.height,
       checksum: params.checksum,
       alt_text: fallback.data.alt_text || null,
+      source_bytes: params.binary.length,
+      stored_bytes: stored.length,
+      integrity_verified: true,
+      public_fetch_verified: true,
     };
   }
 
   if (assetErr) throw new Error(assetErr.message);
+
+  await verifyPublicFetch(asset.id);
 
   return {
     media_asset_id: asset.id,
@@ -266,20 +323,24 @@ async function persistSocialMediaAsset(params: {
     height: asset.height ?? params.dims.height,
     checksum: asset.checksum_sha256 || params.checksum,
     alt_text: asset.alt_text || null,
+    source_bytes: params.binary.length,
+    stored_bytes: stored.length,
+    integrity_verified: true,
+    public_fetch_verified: true,
   };
 }
 
-function validateAndPrepareBinary(
+async function validateAndPrepareBinary(
   binary: Buffer,
   filename: string,
   declaredMime: string
-): {
+): Promise<{
   effectiveMime: string;
   assetType: string;
   ext: string;
   checksum: string;
   dims: { width: number | null; height: number | null };
-} {
+}> {
   const maxBytes = declaredMime.startsWith('video/')
     ? MAX_VIDEO_BYTES
     : declaredMime === 'application/pdf'
@@ -302,6 +363,24 @@ function validateAndPrepareBinary(
       `MIME mismatch: declared ${declaredMime} but file signature is ${detectedNorm}`
     );
   }
+  if (normalizeMime(declaredMime) !== detectedNorm) {
+    throw new Error(`MEDIA_MIME_MISMATCH: declared ${declaredMime} but file signature is ${detectedNorm}`);
+  }
+
+  if (detectedFamily === 'image' && detectedNorm !== 'image/svg+xml') {
+    try {
+      const { default: sharp } = await import('sharp');
+      const image = sharp(binary, { failOn: 'error', limitInputPixels: 40_000_000 });
+      const metadata = await image.metadata();
+      if (!metadata.width || !metadata.height) throw new Error('missing dimensions');
+      await sharp(binary, { failOn: 'error', limitInputPixels: 40_000_000 })
+        .resize({ width: 1, height: 1 })
+        .raw()
+        .toBuffer();
+    } catch {
+      throw new Error('MEDIA_IMAGE_CORRUPT: image bytes cannot be fully decoded');
+    }
+  }
 
   const effectiveMime =
     declaredMime === 'image/jpeg' || declaredMime === 'image/png' || declaredMime === 'image/webp'
@@ -322,7 +401,6 @@ function validateAndPrepareBinary(
         ? 'gif'
         : 'image';
   const ext =
-    filename.split('.').pop()?.toLowerCase() ||
     (effectiveMime === 'image/png'
       ? 'png'
       : effectiveMime === 'image/jpeg'
@@ -362,7 +440,7 @@ export async function uploadSocialMediaFromBuffer(
     filename,
   });
 
-  const prepared = validateAndPrepareBinary(input.buffer, filename, declaredMime);
+  const prepared = await validateAndPrepareBinary(input.buffer, filename, declaredMime);
   const result = await persistSocialMediaAsset({
     tenantId: input.tenantId,
     userId: input.userId,
@@ -397,8 +475,10 @@ export async function uploadSocialMedia(
     throw new Error(`Unsupported mime_type: ${declaredMime}`);
   }
 
+  const marker = input.contentBase64.indexOf('base64,');
+  const cleaned = (marker >= 0 ? input.contentBase64.slice(marker + 7) : input.contentBase64).replace(/[\r\n\s]/g, '');
   const binary = decodeBase64Media(input.contentBase64);
-  return uploadSocialMediaFromBuffer({
+  const result = await uploadSocialMediaFromBuffer({
     tenantId: input.tenantId,
     userId: input.userId,
     filename,
@@ -406,6 +486,7 @@ export async function uploadSocialMedia(
     buffer: binary,
     altText: input.altText,
   });
+  return { ...result, input_base64_chars: cleaned.length };
 }
 
 export function rejectLocalAiPaths(value: unknown, field: string = 'media_url'): void {

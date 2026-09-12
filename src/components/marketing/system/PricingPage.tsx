@@ -132,7 +132,7 @@ export default function PricingPage() {
               One system. Choose your execution power.
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg text-[var(--marketing-text-secondary)] leading-relaxed">
-              Free = {FREE_DAILY_LIMIT}/day · Pro = {PRO_DAILY_LIMIT}/day · Premium = truly unlimited per action category.
+              Free = {FREE_DAILY_LIMIT}/day · Starter and Pro = {PRO_DAILY_LIMIT}/day · Premium = truly unlimited per action category.
             </p>
             <div className="mt-8 flex justify-center">
               <MarketingPricingToggle value={billingPeriod} onChange={setBillingPeriod} />
@@ -144,7 +144,7 @@ export default function PricingPage() {
 
       <MarketingSection tone="muted" className="pt-2">
         <MarketingContainer>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
             {PUBLIC_PRICING_PLANS.map((plan) => {
               const displayPrice = billingPeriod === 'monthly' ? plan.price : plan.yearly;
               const priceSuffix = plan.price === 0 ? '' : billingPeriod === 'monthly' ? '/mo' : '/yr';

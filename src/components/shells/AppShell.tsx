@@ -8,12 +8,30 @@ import Splash from '@/components/pwa/Splash';
 import CompanionNetworkStatus from '@/components/pwa/CompanionNetworkStatus';
 import CompanionCapabilityBoundary from '@/components/pwa/CompanionCapabilityBoundary';
 
+const AUTH_BOOT_TIMEOUT_MS = 8_000;
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading, needsMfa } = useAuth();
   const { appSurface } = usePWA();
   const router = useRouter();
   const pathname = usePathname();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [authBootTimedOut, setAuthBootTimedOut] = useState(false);
+  const isAuthRoute = pathname?.startsWith('/auth/') ?? false;
+
+  useEffect(() => {
+    if (!authLoading || isAuthRoute) {
+      setAuthBootTimedOut(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setAuthBootTimedOut(true);
+      router.replace('/auth/login?reason=session_timeout');
+    }, AUTH_BOOT_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [authLoading, isAuthRoute, router]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -52,13 +70,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     void handleRedirection();
   }, [user, authLoading, needsMfa, pathname, router]);
 
-  if (authLoading || isRedirecting) return <Splash />;
+  // Auth pages must remain usable while session discovery completes. For a
+  // protected route, show the branded motion briefly but fail open to login
+  // instead of trapping the installed app behind an infinite overlay.
+  if (!isAuthRoute && (isRedirecting || (authLoading && !authBootTimedOut))) {
+    return <Splash />;
+  }
 
   const isCompanion = appSurface === 'pwa-mobile' || appSurface === 'pwa-tablet';
 
   return (
     <div
-      className={`fixed inset-0 flex h-[100dvh] w-screen flex-col overflow-hidden overscroll-none bg-[var(--background-app)] text-[var(--text-primary)] ${isCompanion ? 'ac-companion-shell' : 'ac-installed-desktop-shell'}`}
+      className={`ac-business-root fixed inset-0 flex h-[100dvh] w-screen flex-col overflow-hidden overscroll-none bg-[var(--background-app)] text-[var(--text-primary)] ${isCompanion ? 'ac-companion-shell' : 'ac-installed-desktop-shell'}`}
       data-companion={isCompanion ? 'true' : 'false'}
     >
       {isCompanion ? <CompanionNetworkStatus /> : null}

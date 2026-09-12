@@ -20,6 +20,7 @@ export type LinkedInPublishResult = {
   platform: 'linkedin';
   reason?: string;
   postUrn?: string | null;
+  outcome: 'confirmed' | 'ambiguous' | 'rejected';
 };
 
 type SocialPostRow = {
@@ -32,6 +33,8 @@ type SocialPostRow = {
   linkedin_member_id: string | null;
   linkedin_organization_id: string | null;
   metadata?: Record<string, unknown> | null;
+  correlation_id?: string | null;
+  idempotency_key?: string | null;
 };
 
 function isMissingColumn(error: unknown, columnName: string) {
@@ -139,7 +142,7 @@ async function registerAndUploadLinkedInMedia(
 async function loadSocialPost(admin: SupabaseClient, postId: string): Promise<SocialPostRow | null> {
   const postRes = await admin
     .from('social_posts')
-    .select('id, tenant_id, user_id, caption, link_url, media_urls, linkedin_member_id, linkedin_organization_id, metadata')
+    .select('id, tenant_id, user_id, caption, link_url, media_urls, linkedin_member_id, linkedin_organization_id, metadata, correlation_id, idempotency_key')
     .eq('id', postId)
     .single();
 
@@ -166,7 +169,7 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
 
   try {
     const post = await loadSocialPost(admin, postId);
-    if (!post) return { ok: false, platform: 'linkedin', reason: 'post_not_found' };
+    if (!post) return { ok: false, platform: 'linkedin', reason: 'post_not_found', outcome: 'rejected' };
 
     const integration = await getLinkedInIntegrationWithToken(admin, {
       tenantId: post.tenant_id,
@@ -175,7 +178,7 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
     });
 
     if (!integration?.accessToken || !integration.linkedin_person_urn) {
-      return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected' };
+      return { ok: false, platform: 'linkedin', reason: 'LinkedIn account is not connected', outcome: 'rejected' };
     }
 
     const scopes = normalizeLinkedInScopes(integration.scopes);
@@ -192,7 +195,7 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
 
     if (requestedOrganizationId) {
       if (!scopes.includes('w_organization_social')) {
-        return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_organization_social scope' };
+        return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_organization_social scope', outcome: 'rejected' };
       }
       // Only publish to orgs resolved for this tenant — never arbitrary numeric IDs.
       if (!selectedCompany) {
@@ -200,6 +203,7 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
           ok: false,
           platform: 'linkedin',
           reason: `LinkedIn organization ${requestedOrganizationId} is not available for this tenant`,
+          outcome: 'rejected',
         };
       }
     } else {
@@ -211,10 +215,11 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
           platform: 'linkedin',
           reason:
             'linkedin_organization was requested but linkedin_organization_id is missing — refusing personal fallback',
+          outcome: 'rejected',
         };
       }
       if (!scopes.includes('w_member_social')) {
-        return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
+        return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope', outcome: 'rejected' };
       }
     }
 
@@ -224,6 +229,7 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
         ok: false,
         platform: 'linkedin',
         reason: 'Cannot publish as organization without w_organization_social',
+        outcome: 'rejected',
       };
     }
     const authorUrn = canPostAsCompany
@@ -285,7 +291,7 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
 
     const dup = await findRecentDuplicateLinkedInCaption(admin, post.tenant_id, post.user_id, post.caption, 7);
     if (dup) {
-      return { ok: false, platform: 'linkedin', reason: 'Duplicate post detected in the last 7 days.' };
+      return { ok: false, platform: 'linkedin', reason: 'Duplicate post detected in the last 7 days.', outcome: 'rejected' };
     }
 
     const payload = {
@@ -310,6 +316,15 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
 
     const rawBody = await res.text();
     const postUrn = parseLinkedInUgcPostUrn(res, rawBody);
+    if (!postUrn) {
+      return {
+        ok: false,
+        platform: 'linkedin',
+        postUrn: null,
+        reason: 'LinkedIn accepted the request but returned no usable post reference',
+        outcome: 'ambiguous',
+      };
+    }
     const patch: Record<string, unknown> = {
       linkedin_post_urn: postUrn,
       linkedin_member_id: canPostAsCompany ? null : integration.linkedin_member_id || post.linkedin_member_id || null,
@@ -331,7 +346,27 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
       }
     }
 
-    return { ok: true, platform: 'linkedin', postUrn };
+    // Persist provider acceptance into the execution ledger before any later
+    // verification, analytics, or response serialization can fail.
+    if (post.correlation_id) {
+      await admin.from('external_actions').update({
+        status: 'provider_accepted',
+        provider: 'linkedin',
+        provider_reference: postUrn,
+      }).eq('tenant_id', post.tenant_id).eq('action_id', post.correlation_id);
+    }
+    if (post.idempotency_key) {
+      await admin.from('mcp_action_receipts').update({
+        success: true,
+        final_status: 'published',
+        provider: 'linkedin',
+        provider_reference: postUrn,
+        entity_id: post.id,
+        entity_type: 'social_post',
+      }).eq('tenant_id', post.tenant_id).eq('idempotency_key', post.idempotency_key);
+    }
+
+    return { ok: true, platform: 'linkedin', postUrn, outcome: 'confirmed' };
   } catch (err) {
     if (err instanceof LinkedInApiError && err.code === 'TOKEN_EXPIRED') {
       const post = await loadSocialPost(admin, postId);
@@ -345,13 +380,17 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
           await markLinkedInIntegrationInactive(admin, integration.id, 'token_expired_on_publish');
         }
       }
-      return { ok: false, platform: 'linkedin', reason: 'LinkedIn token expired. Reconnect your account.' };
+      return { ok: false, platform: 'linkedin', reason: 'LinkedIn token expired. Reconnect your account.', outcome: 'rejected' };
     }
     console.error('[publishLinkedInPost] error:', err);
     return {
       ok: false,
       platform: 'linkedin',
       reason: err instanceof Error ? err.message : 'LinkedIn publish failed',
+      outcome:
+        err instanceof LinkedInApiError && err.status >= 400 && err.status < 500
+          ? 'rejected'
+          : 'ambiguous',
     };
   }
 }

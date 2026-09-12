@@ -13,7 +13,7 @@ const premiumPlan = PUBLIC_PRICING_PLANS.find((p) => p.id === 'premium');
 
 export const PREMIUM_UNLIMITED = {
   planName: premiumPlan?.name ?? 'Premium',
-  priceMonthly: premiumPlan?.price ?? 80,
+  priceMonthly: premiumPlan?.price ?? 89,
   /** Accurate product claim — matches planEntitlements / pricing page FAQ */
   headline: 'Premium: unlimited execution on AlphaClone',
   shortLine:

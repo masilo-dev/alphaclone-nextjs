@@ -53,16 +53,16 @@ export default function MarketingHomePage() {
             {EXECUTION_LAYER.category}
           </p>
           <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.12] tracking-normal sm:text-5xl md:text-6xl">
-            <span className="text-[var(--brand-primary-hover)]">Your business has tools.</span>{' '}
-            <span className="text-white">Now give it an</span>{' '}
-            <span className="text-[var(--brand-violet)]">execution layer.</span>
+            <span className="text-[var(--brand-primary-hover)]">Your AI can think.</span>{' '}
+            <span className="text-white">Now let it</span>{' '}
+            <span className="text-[var(--brand-violet)]">execute.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 sm:text-base md:text-lg">
             <span className="font-semibold text-[var(--brand-primary-hover)]">AlphaClone</span>
-            <span className="text-slate-300"> turns your instructions into </span>
-            <span className="font-semibold text-[var(--brand-primary-hover)]">coordinated action</span>
-            <span className="text-slate-300"> across connected business systems while you retain </span>
-            <span className="font-semibold text-[var(--brand-violet)]">control over important decisions</span>
+            <span className="text-slate-300"> connects ChatGPT, Claude, and other AI assistants to </span>
+            <span className="font-semibold text-[var(--brand-primary-hover)]">the applications that run your business</span>
+            <span className="text-slate-300">—so AI can send, post, update, create, follow up, and </span>
+            <span className="font-semibold text-[var(--brand-violet)]">execute real work</span>
             <span className="text-slate-300">.</span>
           </p>
           <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
@@ -73,6 +73,9 @@ export default function MarketingHomePage() {
               {EXECUTION_LAYER.secondaryCta}
             </SecondaryCTA>
           </div>
+          <p className="mx-auto mt-4 max-w-2xl text-xs font-semibold tracking-wide text-slate-400">
+            CRM · Email · LinkedIn · Facebook · Projects · Contracts · Invoicing · Accounting
+          </p>
         </div>
         <div className="mkt-hero-screenshot mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]">
           <div className="mkt-hero-screenshot__glow" aria-hidden="true" />

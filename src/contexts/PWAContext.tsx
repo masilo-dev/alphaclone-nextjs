@@ -23,9 +23,12 @@ function getAppSurface(pwaMode: boolean): AppSurface {
 }
 
 export const PWAProvider = ({ children }: { children: React.ReactNode }) => {
-    const initialPwa = typeof window !== 'undefined' ? isPWA() : false;
-    const [isPwaMode, setIsPwaMode] = useState(initialPwa);
-    const [appSurface, setAppSurface] = useState<AppSurface>(getAppSurface(initialPwa));
+    // Keep the server render and the first client render identical. Reading
+    // display-mode during state initialization made installed windows render an
+    // AppShell while the server rendered a MarketingShell, causing hydration
+    // error #418 and leaving the full-screen splash mounted during recovery.
+    const [isPwaMode, setIsPwaMode] = useState(false);
+    const [appSurface, setAppSurface] = useState<AppSurface>('browser');
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {

@@ -31,7 +31,7 @@ export const BOOKING_CONFIGS: Record<MeetingType, BookingConfig> = {
   consultation: {
     type: 'consultation',
     title: 'Book a Consultation',
-    subtitle: 'Get expert guidance on structuring your AI business operating system.',
+    subtitle: 'Get expert guidance on connecting AI to your authorized business systems and execution workflows.',
     bookingUrl: DEFAULT_BOOKING_URL,
   },
   partnership: {

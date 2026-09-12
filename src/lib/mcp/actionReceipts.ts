@@ -136,11 +136,26 @@ export async function persistActionReceipt(params: {
       if (params.idempotencyKey && /duplicate|unique/i.test(error.message)) {
         const { data: existing } = await supabase
           .from('mcp_action_receipts')
-          .select('id, action_id')
+          .select('id, action_id, provider, provider_reference, live_url, entity_id, entity_type, verification')
           .eq('tenant_id', params.tenantId)
           .eq('tool', params.tool)
           .eq('idempotency_key', params.idempotencyKey)
           .maybeSingle();
+        if (existing?.id) {
+          await supabase.from('mcp_action_receipts').update({
+            success: params.success,
+            final_status: params.receipt.status,
+            provider: params.receipt.provider || existing.provider || null,
+            provider_reference: params.receipt.provider_reference || existing.provider_reference || null,
+            live_url: params.receipt.live_url || existing.live_url || null,
+            entity_id: params.receipt.entity_id || existing.entity_id || null,
+            entity_type: params.receipt.entity_type || existing.entity_type || null,
+            verification: { ...(existing.verification || {}), ...(params.receipt.verification || {}) },
+            error_code: params.errorCode || null,
+            error_message: params.errorMessage || null,
+            sanitized_output: sanitizeForAudit(params.sanitizedOutput || {}),
+          }).eq('id', existing.id).eq('tenant_id', params.tenantId);
+        }
         return existing?.id || null;
       }
       // Schema fallback for compatibility stub tables missing MCP columns

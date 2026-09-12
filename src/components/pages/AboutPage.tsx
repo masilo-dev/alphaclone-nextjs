@@ -282,10 +282,10 @@ const AboutPage: React.FC = () => {
                                 <span className="hero-metallic-text">Business Operations?</span>
                             </h2>
                             <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                                Start a 14-day trial and build your Unified Business OS before you pay.
+                                Start a 14-day trial and connect your AI to the business systems where work gets done.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-6">
-                                <PrimaryCTA className="w-full sm:w-auto">Start Your OS</PrimaryCTA>
+                                <PrimaryCTA className="w-full sm:w-auto">Start with AlphaClone</PrimaryCTA>
                                 <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                             <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-[0.2em]">

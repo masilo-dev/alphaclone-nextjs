@@ -218,8 +218,8 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         }
     },
     starter: {
-        monthly: 15,
-        yearly: 144,
+        monthly: 20,
+        yearly: 192,
         description: 'For solo founders actively running their business through AlphaClone.',
         isDiscountable: true,
         stripePriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
@@ -277,8 +277,8 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         }
     },
     enterprise: {
-        monthly: 80,
-        yearly: 768,
+        monthly: 89,
+        yearly: 854,
         description: 'For businesses that need maximum AlphaClone execution capacity.',
         stripePriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
         featureList: [
@@ -307,8 +307,8 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         }
     },
     custom: {
-        monthly: 80,
-        yearly: 768,
+        monthly: 89,
+        yearly: 854,
         featureList: [
             'Unrestricted Scale',
             'Custom Storage Tiers',

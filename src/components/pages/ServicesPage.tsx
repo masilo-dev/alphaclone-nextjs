@@ -14,7 +14,7 @@ import { MARKETING_PRICING } from '@/config/pricingPlans';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const ServicesPage: React.FC = () => {
-    const blufSummary = `AlphaClone Systems is a unified AI-powered Business Operating Platform for service companies. It centralizes CRM, finance, contracts, meetings, messaging, scheduling, and execution workflows in one operational system designed for daily use by founders and teams.`;
+    const blufSummary = `AlphaClone Systems is an AI Business Execution Layer for service companies. It connects compatible AI assistants such as ChatGPT and Claude to CRM, finance, contracts, meetings, messaging, scheduling, and execution workflows in one operational workspace for founders and teams.`;
 
     const services = [
         {
@@ -76,7 +76,7 @@ const ServicesPage: React.FC = () => {
             title: 'Contract Engine & E-Signatures',
             subtitle: 'Draft, review, send, and track agreements',
             color: 'from-violet-500 to-purple-500',
-            badge: 'Replaces DocuSign',
+            badge: 'Connected E-Signatures',
             description: `Every service business sends contracts, but scattered templates and signature tools make it hard to track what was sent, changed, and signed. AlphaClone combines AI-assisted drafting with electronic signature collection and CRM-linked storage.`,
             extendedDescription: `When you need a service agreement, NDA, freelance contract, or onboarding agreement, describe the scope of work and key terms, then review and customize the generated draft before sending it for e-signature. Signed contracts are stored in your Document Hub and linked to the client record. Contract drafts should still be reviewed for your jurisdiction and business context before use.`,
             features: [
@@ -196,9 +196,9 @@ const ServicesPage: React.FC = () => {
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
                             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight text-white">
-                                Business Operating{' '}
+                                AI Business Execution{' '}
                                 <span className="hero-metallic-text">
-                                    Platform.
+                                    Layer.
                                 </span>
                             </h1>
                         </AnimateIn>
@@ -207,8 +207,8 @@ const ServicesPage: React.FC = () => {
                                 {blufSummary}
                             </p>
                             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                                <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
-                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
+                                <PrimaryCTA className="w-full sm:w-auto">Start with AlphaClone</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Watch AlphaClone Execute</SecondaryCTA>
                             </div>
                         </AnimateIn>
                     </div>

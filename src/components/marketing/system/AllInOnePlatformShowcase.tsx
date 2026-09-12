@@ -64,19 +64,19 @@ const CUSTOMER_SCENARIOS = [
     id: "agency",
     role: "Digital Agency & Freelancers",
     challenge:
-      "Tired of paying $400/mo for HubSpot, DocuSign, Harvest & Buffer separately.",
+      "Client work is split across separate CRM, contract, time-tracking, and publishing tools.",
     solution:
-      `AlphaClone replaces fragmented tools in one workspace (${MARKETING_PRICING.startingPriceLine}) with an AI assistant that handles admin work.`,
-    metric: "Save $4,600+/yr",
+      `AlphaClone connects fragmented workflows in one workspace (${MARKETING_PRICING.startingPriceLine}) with an AI assistant that helps execute administrative work.`,
+    metric: "Illustrative workflow",
   },
   {
     id: "consultant",
     role: "B2B Consultants & Services",
     challenge:
-      "Losing 10+ hours a week copying lead data, drafting proposals, and chasing overdue invoices.",
+      "Repeatedly copying lead data, drafting proposals, and chasing overdue invoices.",
     solution:
-      "Execute complete Lead → Contract → Payment workflows in under 60 seconds.",
-    metric: "10+ hrs saved weekly",
+      "Connect Lead → Contract → Payment workflows with review and execution tracking.",
+    metric: "Illustrative workflow",
   },
   {
     id: "solopreneur",
@@ -85,7 +85,7 @@ const CUSTOMER_SCENARIOS = [
       "Need enterprise-grade operating capabilities without hiring expensive operations staff.",
     solution:
       "Connect your favorite AI (ChatGPT/Claude/Manus) via MCP to operate your business in plain English.",
-    metric: "100% Autopilot ready",
+    metric: "Illustrative workflow",
   },
 ];
 
@@ -102,7 +102,7 @@ export default function AllInOnePlatformShowcase() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
           </span>
-          All-In-One Intelligent Business OS
+          AI Business Execution Layer
         </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-3 font-marketing-heading">
           Everything Your Business Needs.{" "}
@@ -259,11 +259,11 @@ export default function AllInOnePlatformShowcase() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-16">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <h3 className="text-xl sm:text-3xl font-bold text-white font-marketing-heading">
-            Built For How Real Businesses Actually Work
+            Representative Ways Service Businesses Work
           </h3>
           <p className="text-sm text-slate-400 mt-2">
-            No bloated corporate jargon. Just practical automation tailored for
-            small teams and solo operators.
+            Illustrative workflows for small teams and solo operators—not verified
+            customer results or performance guarantees.
           </p>
         </div>
 

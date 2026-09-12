@@ -508,6 +508,11 @@ defineConnectorTool({
             media_ready: true,
             mime_type: asset.mime_type,
             size_bytes: asset.size_bytes,
+            input_base64_chars: asset.input_base64_chars,
+            decoded_bytes: asset.source_bytes,
+            stored_bytes: asset.stored_bytes,
+            integrity_verified: asset.integrity_verified,
+            public_fetch_verified: asset.public_fetch_verified,
           },
         },
       });
@@ -753,7 +758,7 @@ registerTool('social-publishing', {
     const supabase = createSupabaseAdminClient();
     let query = supabase
       .from('media_assets')
-      .select('id, file_name, file_type, asset_type, file_size_bytes, public_url, thumbnail_url, width, height, checksum_sha256, storage_provider, status, created_at')
+      .select('id, file_name, file_type, asset_type, file_size_bytes, public_url, width, height, checksum_sha256, storage_provider, status, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(args.limit || 25);
@@ -1700,7 +1705,7 @@ const assetPublishSchema = z.object({
 const assetPublishJsonSchema = {
   type: 'object' as const,
   properties: {
-    identity_id: { type: 'string' },
+    identity_id: { type: 'string', description: 'Internal identity UUID from get_social_identities; never a raw provider account ID.' },
     identity_type: {
       type: 'string',
       enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],

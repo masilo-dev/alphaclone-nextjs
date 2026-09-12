@@ -3,8 +3,8 @@ import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import DocsPageContent from './DocsPageContent';
 
 export const metadata: Metadata = {
-    title: 'Documentation | AlphaClone Business OS — Complete Feature Reference',
-    description: 'Full documentation for the AlphaClone Business Operating System. Covers registration, CRM, AI Growth Agent, Gmail integration, financial management, contracts, video meetings, Calendly, and security. Detailed guides for every platform feature.',
+    title: 'Documentation | AlphaClone AI Business Execution Layer',
+    description: 'Documentation for connecting AI interfaces to authorized AlphaClone business workflows, including CRM, email, finance, contracts, meetings, integrations, permissions, and execution tracking.',
     keywords: [
         'AlphaClone documentation', 'business OS docs', 'CRM guide', 'AI growth agent documentation',
         'how to use AlphaClone', 'AlphaClone features', 'business software documentation',
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/docs' },
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-        title: 'Documentation | AlphaClone Business OS',
+        title: 'Documentation | AlphaClone AI Business Execution Layer',
         description: 'Complete reference documentation for every AlphaClone feature — CRM, AI Growth Agent, invoicing, contracts, video meetings, and security.',
         url: 'https://alphaclonesystems.com/docs',
         type: 'article',

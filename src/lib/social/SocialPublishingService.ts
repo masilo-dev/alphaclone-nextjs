@@ -8,6 +8,7 @@ import { fetchFacebookImage, validateFacebookImageBytes } from '@/lib/facebook/v
  */
 
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createHash } from 'node:crypto';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 import { publishLinkedInPost } from '@/lib/linkedin/publishPost';
 import { confirmLinkedInPublish } from '@/lib/social/linkedinPublishHelpers';
@@ -38,6 +39,7 @@ import {
 } from '@/lib/facebook/facebookMediaUpload';
 import { extractMediaAssetIdFromUrl, isBrandedMediaUrl } from '@/lib/media/mediaPublicUrl';
 import { fetchMediaAssetBytes } from '@/lib/media/fetchMediaAssetBytes';
+import { canAutomaticallyRetryPublish } from '@/lib/social/publishOutcome';
 import type {
   ProviderPublishResult,
   PublishSocialPostInput,
@@ -65,6 +67,7 @@ function mapStatusForLegacyConstraint(status: string): string {
     uploading_media: 'queued',
     queued: 'scheduled',
     publishing: 'scheduled',
+    outcome_unknown: 'failed',
     verification_failed: 'failed',
     retrying: 'scheduled',
     orphaned: 'failed',
@@ -418,17 +421,33 @@ export class SocialPublishingService {
     const admin = createSupabaseAdminClient();
     const now = new Date().toISOString();
     const platform = params.identity.platform;
+    const contentHash = createHash('sha256').update(JSON.stringify({
+      platform,
+      identity_type: params.identity.identity_type,
+      identity_id: params.identity.identity_id,
+      caption: params.caption,
+      media_urls: params.mediaUrls,
+      link_url: params.linkUrl || null,
+    })).digest('hex');
 
     // Idempotency: return existing row if key already used (caller must not re-publish
     // when status is publishing/published).
     if (params.idempotencyKey) {
       const { data: existing } = await admin
         .from('social_posts')
-        .select('id, status, facebook_post_id, linkedin_post_urn')
+        .select('id, status, facebook_post_id, linkedin_post_urn, metadata')
         .eq('tenant_id', params.tenantId)
         .eq('idempotency_key', params.idempotencyKey)
         .maybeSingle();
       if (existing?.id) {
+        const metadata = (existing.metadata || {}) as Record<string, unknown>;
+        if (
+          (metadata.content_hash && metadata.content_hash !== contentHash) ||
+          (metadata.identity_id && metadata.identity_id !== params.identity.identity_id) ||
+          (metadata.identity_type && metadata.identity_type !== params.identity.identity_type)
+        ) {
+          throw new Error('IDEMPOTENCY_CONFLICT: idempotency_key was already used for different content or identity');
+        }
         return {
           id: existing.id,
           reused: true,
@@ -465,6 +484,7 @@ export class SocialPublishingService {
         media_asset_ids: params.mediaAssetIds,
         ai_client: params.aiClient || null,
         correlation_id: params.correlationId,
+        content_hash: contentHash,
         linkedin_organization_id: params.identity.organization_id || null,
       },
       created_at: now,
@@ -748,6 +768,29 @@ export class SocialPublishingService {
 
     const result = await publishLinkedInPost(postId);
     if (!result.ok || !result.postUrn) {
+      if (result.outcome === 'ambiguous') {
+        const admin = createSupabaseAdminClient();
+        const { data: reconciled } = await admin.from('social_posts')
+          .select('linkedin_post_urn, published_at, live_url')
+          .eq('id', postId).maybeSingle();
+        if (reconciled?.linkedin_post_urn) {
+          const publishedAt = reconciled.published_at || new Date().toISOString();
+          return {
+            ok: true, provider: 'linkedin', provider_post_id: reconciled.linkedin_post_urn,
+            live_url: reconciled.live_url || buildLinkedInPermalink(reconciled.linkedin_post_urn),
+            published_at: publishedAt, verified: true, verified_at: publishedAt,
+            author_urn: identity.author_urn || null, organization_id: identity.organization_id || null,
+            organization_name: identity.identity_name,
+            provider_response: { reconciled: true, reconciliation_source: 'social_posts' },
+          };
+        }
+        return {
+          ok: false, provider: 'linkedin', provider_post_id: null, live_url: null,
+          published_at: null, verified: false, verified_at: null,
+          error: result.reason || 'LinkedIn publish outcome is unknown; reconciliation required before retry',
+          error_code: 'OUTCOME_UNKNOWN',
+        };
+      }
       return {
         ok: false,
         provider: 'linkedin',
@@ -757,7 +800,7 @@ export class SocialPublishingService {
         verified: false,
         verified_at: null,
         error: result.reason || 'LinkedIn publish failed',
-        error_code: 'PROVIDER_ERROR',
+        error_code: result.outcome === 'rejected' ? 'PROVIDER_REJECTED' : 'OUTCOME_UNKNOWN',
       };
     }
 
@@ -809,11 +852,14 @@ export class SocialPublishingService {
       provider_post_id: result.postUrn,
       live_url: liveUrl,
       published_at: publishedAt,
-      verified: confirmation.verified,
-      verified_at: confirmation.verifiedAt,
+      // A returned post URN is LinkedIn's create acknowledgement. Secondary GET
+      // verification may lag or time out and must not convert acceptance to failure.
+      verified: true,
+      verified_at: confirmation.verifiedAt || publishedAt,
       author_urn: updated?.linkedin_author_urn || identity.author_urn || null,
       organization_id: identity.organization_id || null,
       organization_name: identity.identity_name,
+      provider_response: { provider_confirmed: true, secondary_verification: confirmation.verified },
     };
   }
 
@@ -1280,15 +1326,17 @@ export class SocialPublishingService {
 
       // Idempotent replay / in-flight guard
       if (record.reused) {
-        if (record.status === 'publishing') {
+        if (record.status === 'publishing' || record.status === 'outcome_unknown') {
           return {
             ok: false,
             data: null,
             receipt: null,
             error: {
-              code: 'PUBLISH_IN_PROGRESS',
-              message: 'A publish with this idempotency_key is already in progress',
-              retryable: true,
+              code: record.status === 'outcome_unknown' ? 'OUTCOME_UNKNOWN' : 'PUBLISH_IN_PROGRESS',
+              message: record.status === 'outcome_unknown'
+                ? 'The original provider write has an unknown outcome; reconcile it before any retry'
+                : 'A publish with this idempotency_key is already in progress',
+              retryable: false,
             },
           };
         }
@@ -1388,7 +1436,9 @@ export class SocialPublishingService {
 
       if (!providerResult.ok || !providerResult.provider_post_id || !providerResult.verified) {
         const failStatus: SocialPostStatus =
-          providerResult.error_code === 'VERIFICATION_FAILED'
+          providerResult.error_code === 'OUTCOME_UNKNOWN'
+            ? 'outcome_unknown'
+            : providerResult.error_code === 'VERIFICATION_FAILED'
             ? 'verification_failed'
             : 'failed';
         await this.updatePostRecord(record.id, {
@@ -1431,7 +1481,7 @@ export class SocialPublishingService {
           error: {
             code: providerResult.error_code || 'PROVIDER_ERROR',
             message: providerResult.error || 'Provider publish failed',
-            retryable: providerResult.error_code !== 'IDENTITY_FALLBACK_BLOCKED',
+            retryable: !['IDENTITY_FALLBACK_BLOCKED', 'OUTCOME_UNKNOWN'].includes(String(providerResult.error_code)),
           },
         };
       }
@@ -1589,6 +1639,25 @@ export class SocialPublishingService {
       };
     }
 
+    if (!canAutomaticallyRetryPublish({
+      status: post.status,
+      providerReference: post.facebook_post_id || post.linkedin_post_urn,
+    }) && post.status === 'outcome_unknown') {
+      const reconciled = await this.verifyProviderPost({ tenantId: params.tenantId, postId: post.id });
+      if (reconciled.ok && reconciled.provider_post_id) {
+        await this.updatePostRecord(post.id, { status: 'published', error_message: null });
+        return this.retryFailedPost(params);
+      }
+      return {
+        ok: false, data: null, receipt: null,
+        error: {
+          code: 'OUTCOME_UNKNOWN',
+          message: 'Automatic retry blocked until reconciliation proves the original LinkedIn write did not publish',
+          retryable: false,
+        },
+      };
+    }
+
     const platform = (Array.isArray(post.platforms) ? post.platforms[0] : post.platform) as
       | 'facebook'
       | 'linkedin';
@@ -1636,7 +1705,9 @@ export class SocialPublishingService {
 
       if (!providerResult.ok || !providerResult.provider_post_id || !providerResult.verified) {
         const failStatus: SocialPostStatus =
-          providerResult.error_code === 'VERIFICATION_FAILED'
+          providerResult.error_code === 'OUTCOME_UNKNOWN'
+            ? 'outcome_unknown'
+            : providerResult.error_code === 'VERIFICATION_FAILED'
             ? 'verification_failed'
             : 'failed';
         await this.updatePostRecord(post.id, {
@@ -1664,7 +1735,7 @@ export class SocialPublishingService {
           error: {
             code: providerResult.error_code || 'PROVIDER_ERROR',
             message: providerResult.error || 'Retry publish failed',
-            retryable: true,
+            retryable: providerResult.error_code !== 'OUTCOME_UNKNOWN',
           },
         };
       }
@@ -1708,12 +1779,13 @@ export class SocialPublishingService {
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Retry failed';
-      await this.updatePostRecord(post.id, { status: 'failed', error_message: message });
+      const ambiguous = /timeout|network|abort|socket|ECONN/i.test(message);
+      await this.updatePostRecord(post.id, { status: ambiguous ? 'outcome_unknown' : 'failed', error_message: message });
       return {
         ok: false,
         data: null,
         receipt: null,
-        error: { code: 'RETRY_FAILED', message, retryable: true },
+        error: { code: ambiguous ? 'OUTCOME_UNKNOWN' : 'RETRY_FAILED', message, retryable: !ambiguous },
       };
     }
   }

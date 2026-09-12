@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: "AlphaClone Systems", template: "%s · AlphaClone" },
   description: EXECUTION_LAYER.explanatoryLine,
-  keywords: ["AI business operating system", "AlphaClone", "AlphaClone Systems", "AI CRM for founders", "small business CRM automated", "lead finding software AI", "small business AI automation", "ai crm claude", "manus and automation", "do your business while in claude", "AI agents for business operations", "autonomous business management", "AI business assistant", "HubSpot alternative small business", "QuickBooks alternative freelancers", "Salesforce alternative for startups", "all in one business platform", "replace business software stack", "AI invoicing and billing software", "automated contract generation AI", "AI social media scheduler", "integrated video meetings for business", "business management software", "founder business software", "solopreneur operating system", "SaaS for service businesses", "agency management software AI"],
+  keywords: ["AI business execution layer", "AlphaClone", "AlphaClone Systems", "AI business operating system", "AI CRM for founders", "business workflow execution", "permission-aware AI", "AI integrations", "AI social publishing", "AI invoicing and billing", "AI contract workflows", "AI project management", "MCP business tools", "SaaS for service businesses"],
   authors: [{ name: "AlphaClone Systems", url: SITE_URL }],
   creator: "AlphaClone Systems",
   publisher: "AlphaClone Systems",
@@ -69,7 +69,7 @@ const organizationSchema = {
   "@type": "SoftwareApplication",
   name: "AlphaClone Systems",
   alternateName: "AlphaClone AI Business OS",
-  disambiguatingDescription: "AlphaClone Systems LLC is an independent software development company registered in Wyoming, USA (Filing ID: 2026-002002581). It provides an AI-powered business operating system for solo founders, consultants, and service agencies. AlphaClone Systems is not affiliated with, and should not be confused with, any financial fund, ETF, or investment index that uses the word AlphaClone.",
+  disambiguatingDescription: "AlphaClone Systems LLC is an independent software development company registered in Wyoming, USA (Filing ID: 2026-002002581). It provides an AI Business Execution Layer and supporting business operating system for solo founders, consultants, and service agencies. AlphaClone Systems is not affiliated with, and should not be confused with, any financial fund, ETF, or investment index that uses the word AlphaClone.",
   operatingSystem: "All",
   applicationCategory: "BusinessApplication",
   applicationSubCategory: "CRM, Invoicing, Project Management, AI Automation",
@@ -77,7 +77,7 @@ const organizationSchema = {
   logo: `${SITE_URL}/logo.png`,
   description: "AlphaClone Systems consolidates CRM, client management, automated billing, project tracking, contract lifecycle, and social media distribution into one AI-assisted workspace. Free plan available; paid plans from $45/month.",
   featureList: ["Unified Client Journey Records", "AI-Driven Lead Tracking and CRM Workflows", "Automated Multi-Tenant Billing and Invoicing", "Contract Drafting, Versioning, and E-Signature", "Native Social Media Scheduling and Publishing", "Regional Tax Compliance Formatting (SARS, ZIMRA, ZRA)", "Built-in HD Video Conferencing", "Project and Task Management with Milestone Tracking", "Bonnie AI Operational Assistant", "MCP-Compatible AI Agent Tool Integration"],
-  offers: { "@type": "AggregateOffer", lowPrice: "0.00", highPrice: "80.00", priceCurrency: "USD", offerCount: PUBLIC_PRICING_PLANS.length, offers: buildPublicPlanOffers(SITE_URL) },
+  offers: { "@type": "AggregateOffer", lowPrice: "0.00", highPrice: "89.00", priceCurrency: "USD", offerCount: PUBLIC_PRICING_PLANS.length, offers: buildPublicPlanOffers(SITE_URL) },
   publisher: { "@type": "Organization", name: "AlphaClone Systems", legalName: "AlphaClone Systems, LLC", url: SITE_URL, logo: `${SITE_URL}/logo.png`, sameAs: ["https://www.linkedin.com/company/alphaclone-systems", "https://www.facebook.com/100089899181752", "https://twitter.com/AlphaCloneSys"] },
 };
 
@@ -86,7 +86,7 @@ const websiteSchema = {
   "@type": "WebSite",
   name: "AlphaClone Systems",
   url: SITE_URL,
-  description: "Unified business operating platform for service businesses.",
+  description: "AI Business Execution Layer connecting AI interfaces to authorized business systems.",
   potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/search?q={search_term_string}`, "query-input": "required name=search_term_string" },
 };
 

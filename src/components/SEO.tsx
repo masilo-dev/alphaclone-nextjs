@@ -13,8 +13,8 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-    title = 'AlphaClone Systems | AI-Powered Enterprise OS & Custom Software',
-    description = 'AlphaClone Systems: The next-generation AI-powered Business Operating System. Unify your workflows, team management, and enterprise operations in a single, resilient real-time platform.',
+    title = 'AlphaClone Systems | AI Business Execution Layer',
+    description = 'Connect ChatGPT, Claude, and compatible AI interfaces to authorized business systems so AI can execute tracked work across CRM, communication, projects, documents, and finance.',
     keywords = ['AI automation', 'enterprise CRM', 'custom software development', 'business operating system', 'Next.js development', 'scalable architecture', 'AlphaClone', 'SaaS platform'],
     image = 'https://alphaclonesystems.com/logo.svg',
     url = 'https://alphaclonesystems.com',

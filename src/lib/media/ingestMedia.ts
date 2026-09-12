@@ -13,6 +13,9 @@ import {
 } from '@/lib/social/mediaUpload';
 import { buildPublicMediaUrl } from '@/lib/media/mediaPublicUrl';
 import type { IngestedMediaAsset, MediaInput } from './types';
+import { fetchMediaAssetBytes } from '@/lib/media/fetchMediaAssetBytes';
+import { createHash } from 'node:crypto';
+import sharp from 'sharp';
 
 function toIngested(row: {
   media_asset_id: string;
@@ -44,15 +47,32 @@ async function loadAssetForTenant(
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from('media_assets')
-    .select('id, public_url, file_name, file_type, file_size_bytes, width, height, checksum_sha256, tenant_id')
+    .select('id, public_url, file_name, file_type, file_size_bytes, width, height, checksum_sha256, tenant_id, status')
     .eq('tenant_id', tenantId)
     .eq('id', assetId)
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error(`media_asset_id not found for tenant: ${assetId}`);
   if (data.tenant_id !== tenantId) throw new Error('Cross-tenant media access denied');
+  if (data.status && data.status !== 'ready') throw new Error(`MEDIA_NOT_READY: media asset status is ${data.status}`);
   if (!data.public_url || isDataUri(data.public_url)) {
     throw new Error(`media_asset ${assetId} has no provider-fetchable URL`);
+  }
+  const stored = await fetchMediaAssetBytes(data.id);
+  if (!stored || stored.tenantId !== tenantId) throw new Error('MEDIA_PUBLIC_FETCH_FAILED: stored object is unavailable');
+  if (data.file_size_bytes && stored.buffer.length !== data.file_size_bytes) {
+    throw new Error('MEDIA_STORAGE_INTEGRITY_FAILED: stored byte count differs from media record');
+  }
+  if (data.checksum_sha256 && createHash('sha256').update(stored.buffer).digest('hex') !== data.checksum_sha256) {
+    throw new Error('MEDIA_STORAGE_INTEGRITY_FAILED: stored checksum differs from media record');
+  }
+  if (String(data.file_type || '').startsWith('image/') && data.file_type !== 'image/svg+xml') {
+    try {
+      await sharp(stored.buffer, { failOn: 'error', limitInputPixels: 40_000_000 })
+        .resize({ width: 1, height: 1 }).raw().toBuffer();
+    } catch {
+      throw new Error('MEDIA_CORRUPT: stored image cannot be decoded');
+    }
   }
   return {
     id: data.id,

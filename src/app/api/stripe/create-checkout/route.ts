@@ -42,6 +42,29 @@ export async function POST(req: NextRequest) {
         };
         const planName = planNames[plan] || plan;
 
+        if (planConfig.stripePriceId) {
+            const configuredPrice = await stripe.prices.retrieve(planConfig.stripePriceId);
+            const expectedAmount = planConfig.monthly * 100;
+            if (
+                configuredPrice.currency !== 'usd' ||
+                configuredPrice.unit_amount !== expectedAmount ||
+                configuredPrice.recurring?.interval !== 'month'
+            ) {
+                console.error('Stripe price configuration mismatch', {
+                    plan,
+                    priceId: planConfig.stripePriceId,
+                    expectedAmount,
+                    actualAmount: configuredPrice.unit_amount,
+                    currency: configuredPrice.currency,
+                    interval: configuredPrice.recurring?.interval,
+                });
+                return NextResponse.json(
+                    { error: `Checkout for ${plan} is temporarily unavailable while its Stripe price is updated.` },
+                    { status: 503 },
+                );
+            }
+        }
+
         // Use Stripe Price ID from PLAN_PRICING if available, otherwise use price_data
         const lineItem = planConfig.stripePriceId
             ? { price: planConfig.stripePriceId, quantity: 1 }

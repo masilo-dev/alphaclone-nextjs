@@ -31,6 +31,12 @@
   font-optical-sizing: auto;
 }
 
+/* Every routed surface enters with the same quiet spatial continuity. */
+.ac-page-transition {
+  min-height: 100%;
+  transform-origin: 50% 12%;
+}
+
 /* Large headings tighten as they grow; small interface copy keeps clarity. */
 .ac-business-root h1,
 .ac-business-root h2,
@@ -92,8 +98,24 @@ html.dark .ac-workspace-panel[data-interactive="true"]:hover {
 .ac-workspace-nav-subitem,
 .ac-workspace-tab,
 .ac-business-root button,
-.ac-business-root [role="button"] {
+.ac-business-root [role="button"],
+.ac-business-root a {
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  transition-duration: var(--ac-fluid-control-duration);
   transition-timing-function: var(--ac-fluid-ease);
+}
+
+.ac-business-root a:not([aria-disabled="true"]):active {
+  transform: scale(0.985);
+  transition-duration: 90ms;
+}
+
+.ac-business-root button:focus-visible,
+.ac-business-root a:focus-visible,
+.ac-business-root [role="button"]:focus-visible,
+.ac-business-root [role="tab"]:focus-visible {
+  outline: 2px solid var(--focus-ring, #2dd4bf);
+  outline-offset: 2px;
 }
 
 /* Structural chrome gets material treatment; content cards do not. */
@@ -189,8 +211,11 @@ html.dark .ac-workspace-panel[data-interactive="true"]:hover {
 }
 
 .ac-business-root [role="dialog"][data-state="open"],
+.ac-business-root [role="dialog"]:not([data-state]),
 .ac-business-root [data-sheet][data-state="open"],
-.ac-business-root [data-popover-content][data-state="open"] {
+.ac-business-root [data-popover-content][data-state="open"],
+.ac-business-root [role="menu"]:not([data-state="closed"]),
+.ac-business-root [role="listbox"]:not([data-state="closed"]) {
   animation: ac-fluid-materialize var(--ac-fluid-page-duration) var(--ac-fluid-ease) both;
 }
 
@@ -230,6 +255,29 @@ html.dark .ac-workspace-panel[data-interactive="true"]:hover {
   text-wrap: pretty;
 }
 
+.marketing-theme a,
+.marketing-theme button,
+.marketing-theme [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  transition-duration: var(--ac-fluid-control-duration);
+  transition-timing-function: var(--ac-fluid-ease);
+}
+
+.marketing-theme a:focus-visible,
+.marketing-theme button:focus-visible,
+.marketing-theme [role="button"]:focus-visible {
+  outline: 2px solid var(--focus-ring, #2dd4bf);
+  outline-offset: 3px;
+}
+
+.marketing-theme button:not(:disabled):active,
+.marketing-theme [role="button"]:not([aria-disabled="true"]):active,
+.marketing-theme a[class*="btn"]:active {
+  transform: scale(var(--ac-fluid-press-scale));
+  transition-duration: 90ms;
+}
+
 /* Preserve AlphaClone colors; refine the material hierarchy. */
 .marketing-theme .mkt-surface {
   background: color-mix(in srgb, var(--background-card) 88%, transparent);
@@ -249,8 +297,15 @@ html.dark .ac-workspace-panel[data-interactive="true"]:hover {
 }
 
 .marketing-theme .mkt-surface:hover,
-.marketing-theme .mkt-surface-elevated:hover {
+.marketing-theme .mkt-surface-elevated:hover,
+.marketing-theme .glass-card:hover {
   border-color: color-mix(in srgb, var(--brand-cyan-soft) 32%, var(--border-default));
+}
+
+.marketing-theme a.glass-card:hover,
+.marketing-theme button.glass-card:hover,
+.marketing-theme [role="button"].glass-card:hover {
+  transform: translateY(var(--ac-fluid-hover-lift));
 }
 
 /* CTAs should react immediately, not float around by default. */
@@ -300,19 +355,33 @@ html.dark .ac-workspace-panel[data-interactive="true"]:hover {
   }
 
   .ac-business-root *,
-  .marketing-theme * {
+  .ac-business-root *::before,
+  .ac-business-root *::after,
+  .marketing-theme *,
+  .marketing-theme *::before,
+  .marketing-theme *::after {
     scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 
   .ac-business-root [role="dialog"][data-state="open"],
+  .ac-business-root [role="dialog"]:not([data-state]),
   .ac-business-root [data-sheet][data-state="open"],
   .ac-business-root [data-popover-content][data-state="open"],
-  .ac-business-root [data-side="right"][data-state="open"] {
+  .ac-business-root [data-side="right"][data-state="open"],
+  .ac-business-root [role="menu"],
+  .ac-business-root [role="listbox"] {
     animation: none !important;
   }
 
   .ac-business-root button,
+  .ac-business-root a,
   .ac-business-root [role="button"],
+  .marketing-theme a,
+  .marketing-theme button,
+  .marketing-theme [role="button"],
   .marketing-theme .mkt-btn,
   .marketing-theme .mkt-surface,
   .marketing-theme .mkt-surface-elevated {

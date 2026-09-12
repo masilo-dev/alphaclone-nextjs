@@ -113,7 +113,7 @@ export default function MarketingFooter() {
               <span className="mkt-brand-word">AlphaClone</span>
             </Link>
             <p className="mkt-footer-blurb">
-              {EXECUTION_LAYER.primaryLine} Business execution layer for service teams.
+              {EXECUTION_LAYER.primaryLine} The AI Business Execution Layer for service teams.
             </p>
             <div className="mkt-footer-social">
               {SOCIAL_LINKS.map(({ label, href, Icon }) => (

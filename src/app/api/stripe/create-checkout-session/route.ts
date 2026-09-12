@@ -36,6 +36,27 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: `Price ID for plan ${planId} is not configured` }, { status: 503 });
         }
 
+        const configuredPrice = await stripe.prices.retrieve(priceId);
+        const expectedAmount = PLAN_PRICING[planId as SubscriptionPlan].monthly * 100;
+        if (
+            configuredPrice.currency !== 'usd' ||
+            configuredPrice.unit_amount !== expectedAmount ||
+            configuredPrice.recurring?.interval !== 'month'
+        ) {
+            console.error('Stripe price configuration mismatch', {
+                planId,
+                priceId,
+                expectedAmount,
+                actualAmount: configuredPrice.unit_amount,
+                currency: configuredPrice.currency,
+                interval: configuredPrice.recurring?.interval,
+            });
+            return NextResponse.json(
+                { error: `Checkout for ${planId} is temporarily unavailable while its Stripe price is updated.` },
+                { status: 503 },
+            );
+        }
+
         // Fetch existing tenant record to check for Stripe customer ID
         const admin = createSupabaseAdminClient();
         const { data: tenant } = await admin

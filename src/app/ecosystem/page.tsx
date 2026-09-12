@@ -3,11 +3,11 @@ import EcosystemPage from '@/components/pages/EcosystemPage';
 import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
-    title: 'The AlphaClone Ecosystem | One Unified Business OS Architecture',
-    description: 'Explore the AlphaClone Business OS ecosystem, including CRM, finance, Bonnie AI, Hermes, Cal.com, LinkedIn, Facebook, DeepSeek, Claude, OpenAI, OpenRouter, Microsoft 365, WhatsApp, and Instagram integration status.',
+    title: 'AlphaClone Integrations | AI Business Execution Layer',
+    description: 'Explore the systems and providers available to the AlphaClone AI Business Execution Layer, with clear availability status for CRM, finance, scheduling, social, email, and AI connections.',
     keywords: [
         'AlphaClone ecosystem',
-        'unified business OS architecture',
+        'AI business execution architecture',
         'AI business platform modules',
         'SaaS consolidation platform',
         'AI Growth Agent',
@@ -26,14 +26,14 @@ export const metadata: Metadata = {
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/ecosystem' },
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-        title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
+        title: 'AlphaClone Integrations | AI Business Execution Layer',
         description: 'Integrated modules plus provider status for Cal.com, LinkedIn, Facebook, AI APIs, Microsoft 365, WhatsApp, and Instagram.',
         url: 'https://alphaclonesystems.com/ecosystem',
         type: 'website',
     },
     twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
-        title: 'The AlphaClone Ecosystem | Unified Business OS',
+        title: 'AlphaClone Integrations | AI Business Execution Layer',
         description: 'One unified platform with public integration status for core apps and AI providers.',
     },
     robots: { index: true, follow: true },

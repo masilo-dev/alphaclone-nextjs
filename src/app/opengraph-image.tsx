@@ -26,7 +26,7 @@ export default function OpenGraphImage() {
       >
         <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: -1 }}>AlphaClone</div>
         <div style={{ marginTop: 18, fontSize: 34, fontWeight: 600, opacity: 0.92 }}>
-          Unified Business OS for CRM, billing, contracts, scheduling, and operations
+          AI Business Execution Layer for CRM, communication, projects, documents, and finance
         </div>
       </div>
     ),

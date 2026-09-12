@@ -166,6 +166,7 @@ export function formatUsageDisplay(current: number, rawPlan: string, resourceLab
 }
 
 export function getPublicPlanDisplayName(rawPlan: string): string {
+  if (String(rawPlan).trim().toLowerCase() === 'starter') return 'Starter';
   const normalized = normalizePlanId(rawPlan);
   if (normalized === 'premium') return 'Premium';
   if (normalized === 'pro') return 'Pro';

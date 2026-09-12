@@ -7,7 +7,7 @@
 
 import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from '@/lib/entitlements/planEntitlements';
 
-export type PublicPlanId = 'free' | 'pro' | 'premium';
+export type PublicPlanId = 'free' | 'starter' | 'pro' | 'premium';
 
 /** Legacy Stripe plan ids still accepted at checkout */
 export type LegacyPlanId = 'starter' | 'enterprise';
@@ -74,6 +74,37 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
     },
   },
   {
+    id: 'starter',
+    name: 'Starter',
+    price: 20,
+    yearly: 192,
+    tagline: 'Essential execution capacity for solo founders getting their core workflows connected.',
+    features: [
+      `${PRO_DAILY_LIMIT} emails sent / day`,
+      `${PRO_DAILY_LIMIT} leads added / day`,
+      `${PRO_DAILY_LIMIT} CRM actions / day`,
+      `${PRO_DAILY_LIMIT} outreach actions / day`,
+      `${PRO_DAILY_LIMIT} social publishing actions / day`,
+      `${PRO_DAILY_LIMIT} documents, contracts, proposals & invoices / day`,
+      `${PRO_DAILY_LIMIT} automation & MCP executions / day`,
+      `${PRO_DAILY_LIMIT} bulk lead import max / day`,
+      'Read-only actions unlimited across all modules',
+    ],
+    cta: 'Choose Starter',
+    ctaLink: '/auth/login?register=true&type=business&plan=starter',
+    limits: {
+      emailsPerDay: PRO_LIMIT,
+      leadsPerDay: PRO_LIMIT,
+      crmActionsPerDay: PRO_LIMIT,
+      outreachPerDay: PRO_LIMIT,
+      socialPerDay: PRO_LIMIT,
+      documentsPerDay: PRO_LIMIT,
+      automationsPerDay: PRO_LIMIT,
+      mcpExecutionsPerDay: PRO_LIMIT,
+      bulkLeadsPerDay: PRO_LIMIT,
+    },
+  },
+  {
     id: 'pro',
     name: 'Pro',
     price: 45,
@@ -110,8 +141,8 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
     id: 'premium',
     name: 'Premium',
-    price: 80,
-    yearly: 768,
+    price: 89,
+    yearly: 854,
     tagline: 'Truly unlimited AlphaClone execution — only external provider and safety limits apply.',
     features: [
       'Unlimited emails sent*',
@@ -142,8 +173,8 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   },
 ];
 
-export const PRICING_FROM = 45;
-export const PRICING_TO = 80;
+export const PRICING_FROM = 20;
+export const PRICING_TO = 89;
 
 /** Reusable marketing copy — import instead of hard-coding prices in pages. */
 export const MARKETING_PRICING = {
@@ -155,12 +186,12 @@ export const MARKETING_PRICING = {
   /** Primary CTA label for signup buttons */
   primaryCtaLabel: 'Start free',
   /** Short price line for hero sections and comparisons */
-  startingPriceLine: 'Free plan available · Paid plans from $45/month',
+  startingPriceLine: 'Free plan available · Paid plans from $20/month',
   /** One-line competitor comparison anchor */
-  paidFromPhrase: '$45/month for paid plans',
+  paidFromPhrase: '$20/month for paid plans',
   /** Schema.org / meta description snippet */
   metaPriceSnippet:
-    'Free plan with full module access. Pro from $45/month. Premium from $80/month — unlimited AlphaClone daily execution.*',
+    'Free plan available. Starter from $20/month, Pro from $45/month, and Premium from $89/month with unlimited AlphaClone daily execution.*',
   premiumUnlimitedLine:
     'Premium: unlimited daily execution on AlphaClone (provider and safety limits still apply).',
 } as const;
@@ -188,9 +219,8 @@ export function buildPublicPlanOffers(siteUrl: string) {
 }
 
 /** Map legacy checkout plan ids to canonical public ids */
-export function normalizeCheckoutPlanId(planId: string): PublicPlanId | 'starter' | 'enterprise' {
+export function normalizeCheckoutPlanId(planId: string): PublicPlanId | 'enterprise' {
   const p = planId.toLowerCase();
-  if (p === 'starter') return 'pro';
   if (p === 'enterprise') return 'premium';
   return p as PublicPlanId;
 }

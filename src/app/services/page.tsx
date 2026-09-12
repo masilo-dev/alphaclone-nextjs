@@ -6,8 +6,8 @@ import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import { absoluteUrl } from '@/lib/siteUrl';
 
 export const metadata: Metadata = buildMarketingMetadata({
-    title: 'Operating System | Unified AI Business OS for Service Teams',
-    description: `AlphaClone is the business operating system for service teams: CRM, invoicing, contracts, meetings, accounting, and AI workflows in one backbone. ${MARKETING_PRICING.metaPriceSnippet}`,
+    title: 'AI Business Execution Layer | AlphaClone Platform',
+    description: `AlphaClone connects AI interfaces to CRM, invoicing, contracts, meetings, accounting, and authorized workflows through one execution layer. Its Business OS is the supporting operational workspace. ${MARKETING_PRICING.metaPriceSnippet}`,
     pathname: '/services',
     keywords: [
         'AI business operating system',

@@ -12,6 +12,7 @@ export const SOCIAL_POST_STATUSES = [
   'queued',
   'scheduled',
   'publishing',
+  'outcome_unknown',
   'published',
   'verification_failed',
   'retrying',
@@ -79,6 +80,11 @@ export type MediaAssetResult = {
   height: number | null;
   checksum: string;
   alt_text: string | null;
+  input_base64_chars?: number;
+  source_bytes: number;
+  stored_bytes: number;
+  integrity_verified: boolean;
+  public_fetch_verified: boolean;
 };
 
 export type ProviderPublishResult = {

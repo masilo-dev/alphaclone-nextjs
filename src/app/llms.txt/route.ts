@@ -3,7 +3,7 @@ import { MARKETING_PRICING } from '@/config/pricingPlans';
 
 const LLMS_CONTENT = `# AlphaClone Systems
 
-> AlphaClone Systems is an AI-powered business operating system for founders, agencies, consultants, and service firms. It connects CRM, invoicing, contracts, project management, communication, social publishing, and permission-aware AI execution in one workspace. ${MARKETING_PRICING.metaPriceSnippet}
+> AlphaClone Systems is the AI Business Execution Layer for founders, agencies, consultants, and service firms. It connects ChatGPT, Claude, and compatible AI interfaces to authorized CRM, invoicing, contracts, project management, communication, and social publishing workflows. Its Business OS provides the supporting operational workspace. ${MARKETING_PRICING.metaPriceSnippet}
 
 Live platform: https://alphaclonesystems.com
 MCP server: https://alphaclonesystems.com/api/mcp

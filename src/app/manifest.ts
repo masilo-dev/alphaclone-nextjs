@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'AlphaClone — AI Business Operating System',
+    name: 'AlphaClone — AI Business Execution Layer',
     short_name: 'AlphaClone',
-    description: 'Run CRM, work, money, communications, documents, and AI-assisted operations in one secure workspace.',
+    description: 'Connect AI to authorized CRM, communication, project, document, social, and finance workflows in one secure workspace.',
     id: '/dashboard?source=pwa',
     start_url: '/dashboard?source=pwa',
     scope: '/',
