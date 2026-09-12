@@ -6,6 +6,17 @@
 import { redactSecrets } from '@/lib/social/mediaUpload';
 
 export type MediaPipelineStep =
+  | 'media.input_received'
+  | 'media.normalized'
+  | 'media.base64_decoded'
+  | 'media.mime_detected'
+  | 'media.image_decoded'
+  | 'media.storage_written'
+  | 'media.storage_verified'
+  | 'media.ready'
+  | 'social.instagram_publish_started'
+  | 'social.instagram_publish_verified'
+  // Legacy names retained while remaining callers migrate.
   | 'media_received'
   | 'media_uploaded'
   | 'provider_upload_started'
