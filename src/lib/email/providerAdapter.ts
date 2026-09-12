@@ -18,6 +18,17 @@ export type ProviderSendInput = {
   idempotencyKey: string;
 };
 
+export type ProviderSendReceipt = {
+  accepted: boolean;
+  provider: UnifiedEmailProvider;
+  providerAccountId: string;
+  providerMessageId?: string;
+  providerThreadId?: string;
+  acceptedAt?: string;
+  error?: { code: string; message: string; retryable: boolean };
+  rawMetadata?: Record<string, unknown>;
+};
+
 export interface EmailProviderAdapter {
   readonly provider: UnifiedEmailProvider;
   getCapabilities(): EmailProviderCapabilities;
@@ -34,4 +45,38 @@ export interface EmailProviderAdapter {
   deleteMessage(input: ProviderMessageActionInput): Promise<void>;
   verifyWebhook(input: { headers: Headers; rawBody: string }): Promise<boolean>;
   parseWebhook(input: { headers: Headers; rawBody: string }): Promise<unknown[]>;
+}
+
+/** One registry for campaign, MCP, Bonnie and workflow execution. */
+export class EmailProviderRegistry {
+  private readonly adapters = new Map<UnifiedEmailProvider, EmailProviderAdapter>();
+
+  register(adapter: EmailProviderAdapter): void { this.adapters.set(adapter.provider, adapter); }
+  has(provider: UnifiedEmailProvider): boolean { return this.adapters.has(provider); }
+  get(provider: UnifiedEmailProvider): EmailProviderAdapter {
+    const adapter = this.adapters.get(provider);
+    if (!adapter) throw new Error(`EMAIL_PROVIDER_ADAPTER_NOT_REGISTERED:${provider}`);
+    return adapter;
+  }
+}
+
+export function normalizeProviderReceipt(input: {
+  provider: UnifiedEmailProvider;
+  providerAccountId: string;
+  providerMessageId?: string;
+  providerThreadId?: string;
+  acceptedAt?: string;
+  error?: { code: string; message: string; retryable: boolean };
+  rawMetadata?: Record<string, unknown>;
+}): ProviderSendReceipt {
+  return {
+    accepted: !input.error && Boolean(input.providerMessageId),
+    provider: input.provider,
+    providerAccountId: input.providerAccountId,
+    providerMessageId: input.providerMessageId,
+    providerThreadId: input.providerThreadId,
+    acceptedAt: input.acceptedAt,
+    error: input.error,
+    rawMetadata: input.rawMetadata,
+  };
 }
