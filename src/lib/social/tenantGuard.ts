@@ -18,7 +18,10 @@ export class TenantIsolationError extends Error {
       | 'TARGET_AMBIGUOUS'
       | 'IDENTITY_NOT_FOUND'
       | 'IDENTITY_NOT_PUBLISHABLE'
+      | 'SOCIAL_DESTINATION_MISMATCH'
       | 'LINKEDIN_DESTINATION_MISMATCH'
+      | 'INSTAGRAM_IDENTITY_REQUIRED'
+      | 'INSTAGRAM_IDENTITY_NOT_FOUND'
       | 'OAUTH_EXPIRED'
       | 'PERMISSION_MISSING'
       | 'PROVIDER_REJECTED'
@@ -78,6 +81,7 @@ export async function assertUserBelongsToTenant(
     }
     return;
   }
+
   if (!data) {
     throw new TenantIsolationError(
       'User is not a member of this tenant',
@@ -86,60 +90,15 @@ export async function assertUserBelongsToTenant(
   }
 }
 
-/** Throw if a row's tenant_id does not match the active tenant. */
 export function assertSameTenant(
-  rowTenantId: string | null | undefined,
-  activeTenantId: string,
-  resource = 'resource'
+  resourceTenantId: string | null | undefined,
+  tenantId: string,
+  resourceName = 'resource'
 ): void {
-  if (!rowTenantId || rowTenantId !== activeTenantId) {
+  if (!resourceTenantId || resourceTenantId !== tenantId) {
     throw new TenantIsolationError(
-      `${resource} not found for this tenant`,
-      'NOT_FOUND'
+      `${resourceName} does not belong to this tenant`,
+      'CROSS_TENANT'
     );
   }
-}
-
-/**
- * Load a row by id with mandatory tenant filter.
- * Returns null (or throws) instead of leaking cross-tenant existence.
- */
-export async function loadTenantScopedRow<T extends Record<string, unknown>>(params: {
-  table: string;
-  id: string;
-  tenantId: string;
-  columns?: string;
-  throwIfMissing?: boolean;
-}): Promise<T | null> {
-  const admin = createSupabaseAdminClient();
-  const { data, error } = await admin
-    .from(params.table)
-    .select(params.columns || '*')
-    .eq('id', params.id)
-    .eq('tenant_id', params.tenantId)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data && params.throwIfMissing !== false) {
-    throw new TenantIsolationError(
-      `${params.table} not found for this tenant`,
-      'NOT_FOUND'
-    );
-  }
-  return (data as unknown as T) || null;
-}
-
-/** Strip secrets from objects before MCP / logs. */
-export function stripSecretsForTenantBoundary<T>(value: T): T {
-  if (value == null || typeof value !== 'object') return value;
-  if (Array.isArray(value)) {
-    return value.map((v) => stripSecretsForTenantBoundary(v)) as T;
-  }
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-    if (/token|secret|password|authorization|refresh/i.test(k)) {
-      continue; // omit entirely from MCP responses
-    }
-    out[k] = stripSecretsForTenantBoundary(v);
-  }
-  return out as T;
 }
