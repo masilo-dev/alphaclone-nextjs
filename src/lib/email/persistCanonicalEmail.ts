@@ -6,7 +6,7 @@ type PersistCanonicalOutboundParams = {
   tenantId: string;
   userId?: string | null;
   provider: UnifiedEmailProvider;
-  providerAccountId: string;
+  providerAccountId?: string;
   providerMessageId: string;
   fromEmail: string;
   recipients: string[];
@@ -68,8 +68,6 @@ async function resolveCrmRecipient(
     tenantEntityExists(supabase, tenantId, 'business_clients', explicitClientId),
   ]);
 
-  // Foreign IDs never become links. We intentionally do not reveal whether a
-  // supplied identifier exists in another workspace.
   const safeExplicit = {
     contactId: contactOk ? explicitContactId : null,
     leadId: leadOk ? explicitLeadId : null,
@@ -147,26 +145,55 @@ async function persistOutboundCrmActivity(
 
 export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutboundParams): Promise<string> {
   const { supabase, metadata = {} } = params;
-  if (!params.tenantId || !params.providerAccountId || !params.providerMessageId) {
+  if (!params.tenantId || !params.providerMessageId) {
     throw new Error('EMAIL_CANONICAL_EVIDENCE_REQUIRED');
   }
 
   const provider = params.provider;
-  const { data: account, error: accountError } = await supabase
+  let accountQuery = supabase
     .from('email_provider_accounts')
     .select('id, tenant_id, provider, email_address, owner_user_id, account_type')
     .eq('tenant_id', params.tenantId)
-    .eq('id', params.providerAccountId)
     .eq('provider', provider)
     .eq('connection_status', 'connected')
     .is('deleted_at', null)
-    .maybeSingle();
+    .order('updated_at', { ascending: false })
+    .limit(params.providerAccountId ? 1 : 2);
+
+  if (params.providerAccountId) {
+    accountQuery = accountQuery.eq('id', params.providerAccountId);
+  } else if (params.userId) {
+    accountQuery = accountQuery.eq('owner_user_id', params.userId);
+  }
+
+  const { data: accountRows, error: accountError } = await accountQuery;
   if (accountError) throw new Error(`Canonical email account lookup failed: ${accountError.message}`);
+
+  let account = (accountRows || [])[0] || null;
+  if (!params.providerAccountId && params.userId && !account) {
+    const { data: sharedRows, error: sharedError } = await supabase
+      .from('email_provider_accounts')
+      .select('id, tenant_id, provider, email_address, owner_user_id, account_type')
+      .eq('tenant_id', params.tenantId)
+      .eq('provider', provider)
+      .eq('connection_status', 'connected')
+      .is('deleted_at', null)
+      .in('account_type', ['shared_mailbox', 'transactional', 'marketing'])
+      .order('updated_at', { ascending: false })
+      .limit(2);
+    if (sharedError) throw new Error(`Canonical shared email account lookup failed: ${sharedError.message}`);
+    if ((sharedRows || []).length > 1) throw new Error('EMAIL_PROVIDER_ACCOUNT_ID_REQUIRED');
+    account = (sharedRows || [])[0] || null;
+  } else if (!params.providerAccountId && (accountRows || []).length > 1) {
+    throw new Error('EMAIL_PROVIDER_ACCOUNT_ID_REQUIRED');
+  }
+
   if (!account) throw new Error('EMAIL_PROVIDER_ACCOUNT_TENANT_MISMATCH');
+  const providerAccountId = String(account.id);
 
   const existing = await supabase.from('email_messages').select('id')
     .eq('tenant_id', params.tenantId)
-    .eq('provider_account_id', params.providerAccountId)
+    .eq('provider_account_id', providerAccountId)
     .eq('provider_message_id', params.providerMessageId)
     .maybeSingle();
   if (existing.error) throw new Error(`Canonical email deduplication failed: ${existing.error.message}`);
@@ -198,7 +225,7 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
   const { data: message, error: messageError } = await supabase.from('email_messages').insert({
     tenant_id: params.tenantId,
     thread_id: thread.id,
-    provider_account_id: params.providerAccountId,
+    provider_account_id: providerAccountId,
     provider_message_id: params.providerMessageId,
     provider_thread_id: stringValue(metadata.providerThreadId) || stringValue(metadata.provider_thread_id),
     direction: 'outbound',
@@ -226,7 +253,7 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
     metadata: {
       ...metadata,
       provider: params.provider,
-      provider_account_id: params.providerAccountId,
+      provider_account_id: providerAccountId,
       provider_accepted_at: now,
       provider_message_id: params.providerMessageId,
       sender: params.fromEmail,
@@ -261,7 +288,7 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
   const { error: deliveryError } = await supabase.from('email_delivery_events').insert({
     tenant_id: params.tenantId,
     message_id: message.id,
-    provider_account_id: params.providerAccountId,
+    provider_account_id: providerAccountId,
     provider: params.provider,
     provider_message_id: params.providerMessageId,
     provider_event_id: `accepted:${params.provider}:${params.providerMessageId}`,
@@ -293,7 +320,7 @@ export async function persistCanonicalOutboundEmail(params: PersistCanonicalOutb
       canonicalMessageId: message.id,
       threadId: thread.id,
       provider: params.provider,
-      providerAccountId: params.providerAccountId,
+      providerAccountId,
       providerMessageId: params.providerMessageId,
       recipients: params.recipients,
       executionSource,
