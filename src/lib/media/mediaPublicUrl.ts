@@ -68,6 +68,8 @@ export function sanitizeMediaForClient(asset: {
   width?: number | null;
   height?: number | null;
   storage_provider?: string | null;
+  /** Accepted for canonical DB-row compatibility only; never returned to clients. */
+  public_url?: string | null;
   checksum?: string | null;
 }): SafeMediaClientPayload {
   const mediaType = asset.mime_type.startsWith('video/')
