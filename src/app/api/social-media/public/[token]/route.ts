@@ -10,7 +10,11 @@ async function serve({ params }: { params: Promise<{ token: string }> }, head = 
   if (!claims) return new NextResponse('Not found', { status: 404 });
   const media = await fetchMediaAssetBytes(claims.asset_id);
   if (!media || media.tenantId !== claims.tenant_id) return new NextResponse('Not found', { status: 404 });
-  return new NextResponse(head ? null : media.buffer, {
+  // NextResponse uses the web BodyInit contract. Copy the Node Buffer into an
+  // ArrayBuffer-backed Uint8Array so newer TypeScript DOM types accept it and
+  // the response cannot expose unused bytes from a pooled Buffer allocation.
+  const body = head ? null : Uint8Array.from(media.buffer);
+  return new NextResponse(body, {
     status: 200,
     headers: {
       'Content-Type': media.mimeType,
