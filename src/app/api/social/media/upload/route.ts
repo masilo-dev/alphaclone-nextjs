@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { routeErrorResponse, requireTenantAccess } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { assertCanonicalMediaAssetsSchema } from '@/lib/media/mediaSchema';
 import { z } from 'zod';
 
 /**
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest) {
         if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
         const { user } = await requireTenantAccess(tenantId, req);
+        await assertCanonicalMediaAssetsSchema();
 
         const allowedTypes = new Map([
             ['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp'], ['image/gif', 'gif'],

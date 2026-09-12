@@ -433,7 +433,7 @@ export class AlphaNexus {
     private async handleDesignAudit(_params: Record<string, unknown>) {
         const { data: assets } = await this.admin
             .from('media_assets')
-            .select('id, name, mime_type, file_size, alt_text, created_at')
+            .select('id, file_name, file_type, file_size_bytes, alt_text, created_at')
             .eq('tenant_id', this.tenantId)
             .order('created_at', { ascending: false })
             .limit(50);

@@ -268,6 +268,9 @@ export function normalizeIdentityType(type: string): SocialIdentityType {
   if (['page', 'facebook_page', 'fb_page', 'facebook_page_identity'].includes(norm)) {
     return 'facebook_page';
   }
+  if (['instagram_business', 'instagram_creator'].includes(norm)) {
+    return norm as SocialIdentityType;
+  }
   return type as SocialIdentityType;
 }
 
@@ -368,6 +371,27 @@ export async function resolveIdentity(params: {
     }
 
     throw new Error(`Unsupported LinkedIn identity_type: ${identityType}`);
+  }
+
+  if (platform === 'instagram') {
+    if (!['instagram_business', 'instagram_creator'].includes(identityType)) {
+      throw new Error('Instagram publishing requires an Instagram business or creator identity');
+    }
+    const { resolveSocialIdentity } = await import('./socialIdentityStore');
+    const identity = await resolveSocialIdentity({
+      tenantId,
+      provider: 'instagram',
+      identityId: id,
+      requiredCapability: 'publish',
+    });
+    return {
+      platform: 'instagram',
+      identity_type: identity.identity_type as SocialIdentityType,
+      identity_id: identity.provider_identity_id,
+      identity_name: identity.display_name,
+      can_publish: identity.can_publish,
+      missing_permissions: identity.can_publish ? [] : ['publish capability'],
+    };
   }
 
   throw new Error(`Unsupported platform: ${platform}`);

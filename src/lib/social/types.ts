@@ -24,12 +24,14 @@ export const SOCIAL_POST_STATUSES = [
 
 export type SocialPostStatus = (typeof SOCIAL_POST_STATUSES)[number];
 
-export type SocialPlatform = 'facebook' | 'linkedin';
+export type SocialPlatform = 'facebook' | 'linkedin' | 'instagram';
 
 export type SocialIdentityType =
   | 'facebook_page'
   | 'linkedin_person'
-  | 'linkedin_organization';
+  | 'linkedin_organization'
+  | 'instagram_business'
+  | 'instagram_creator';
 
 export type ResolvedIdentity = {
   platform: SocialPlatform;

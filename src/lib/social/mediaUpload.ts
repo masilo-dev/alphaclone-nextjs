@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { buildPublicMediaUrl, extractMediaAssetIdFromUrl } from '@/lib/media/mediaPublicUrl';
 import { createProviderFetchUrl } from '@/lib/media/providerFetchUrl';
+import { assertCanonicalMediaAssetsSchema } from '@/lib/media/mediaSchema';
 import { logMediaPipelineStep } from '@/lib/social/mediaPipelineLog';
 import type { MediaAssetResult } from './types';
 
@@ -197,6 +198,7 @@ async function persistSocialMediaAsset(params: {
   checksum: string;
   dims: { width: number | null; height: number | null };
 }): Promise<MediaAssetResult> {
+  await assertCanonicalMediaAssetsSchema();
   const storagePath = `media/${params.tenantId}/${Date.now()}-${params.checksum.slice(0, 12)}.${params.ext}`;
   const supabase = createSupabaseAdminClient();
 

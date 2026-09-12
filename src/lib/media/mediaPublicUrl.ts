@@ -56,6 +56,8 @@ export type SafeMediaClientPayload = {
   size_bytes?: number;
   width?: number | null;
   height?: number | null;
+  storage_provider?: string;
+  checksum?: string | null;
 };
 
 export function sanitizeMediaForClient(asset: {
@@ -65,6 +67,8 @@ export function sanitizeMediaForClient(asset: {
   status?: string;
   width?: number | null;
   height?: number | null;
+  storage_provider?: string | null;
+  checksum?: string | null;
 }): SafeMediaClientPayload {
   const mediaType = asset.mime_type.startsWith('video/')
     ? 'video'
@@ -80,6 +84,8 @@ export function sanitizeMediaForClient(asset: {
     size_bytes: asset.size_bytes,
     width: asset.width,
     height: asset.height,
+    storage_provider: asset.storage_provider || undefined,
+    checksum: asset.checksum || undefined,
   };
 }
 

@@ -17,6 +17,7 @@ import {
 } from '@/lib/social/identityResolution';
 import { uploadSocialMedia } from '@/lib/social/mediaUpload';
 import { buildPublicMediaUrl, sanitizeMediaForClient } from '@/lib/media/mediaPublicUrl';
+import { assertCanonicalMediaAssetsSchema } from '@/lib/media/mediaSchema';
 import { normalizePublishMediaArgs } from '@/lib/media/normalizePublishMedia';
 import { CANONICAL_SOCIAL_MCP_TOOLS, SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } from '@/lib/social/types';
 import { resolveMcpActionReadiness } from '@/lib/mcp/actionReadiness';
@@ -755,6 +756,7 @@ registerTool('social-publishing', {
   },
   handler: async (args, ctx) => {
     const { tenantId } = await requireSocialAuth(args, ctx, 'social:read');
+    await assertCanonicalMediaAssetsSchema();
     const supabase = createSupabaseAdminClient();
     let query = supabase
       .from('media_assets')
@@ -776,6 +778,9 @@ registerTool('social-publishing', {
           status: row.status || 'ready',
           width: row.width,
           height: row.height,
+          storage_provider: row.storage_provider,
+          public_url: row.public_url,
+          checksum: row.checksum_sha256,
         })
       ),
     };

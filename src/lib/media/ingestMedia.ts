@@ -4,6 +4,7 @@
  */
 
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { assertCanonicalMediaAssetsSchema } from './mediaSchema';
 import {
   isDataUri,
   rejectOrExtractDataUri,
@@ -52,6 +53,7 @@ async function loadAssetForTenant(
   tenantId: string,
   assetId: string
 ): Promise<IngestedMediaAsset> {
+  await assertCanonicalMediaAssetsSchema();
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase
     .from('media_assets')
