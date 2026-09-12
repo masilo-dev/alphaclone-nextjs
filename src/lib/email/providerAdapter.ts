@@ -16,6 +16,8 @@ export type ProviderSendInput = {
   html?: string;
   text?: string;
   idempotencyKey: string;
+  attachments?: Array<{ filename: string; content: string | Buffer; contentType?: string }>;
+  listUnsubscribeUrl?: string;
 };
 
 export type ProviderSendReceipt = {
@@ -36,7 +38,7 @@ export interface EmailProviderAdapter {
   listSenderIdentities(accountId: string): Promise<Array<{ providerId: string; emailAddress: string }>>;
   listFolders(accountId: string): Promise<Array<{ providerId: string; name: string }>>;
   syncMessages(input: { accountId: string; cursor?: string }): Promise<{ messages: unknown[]; nextCursor?: string }>;
-  sendMessage(input: ProviderSendInput): Promise<{ providerMessageId: string; acceptedAt: string }>;
+  sendMessage(input: ProviderSendInput): Promise<ProviderSendReceipt>;
   replyToMessage(input: ProviderSendInput & { providerMessageId: string }): Promise<{ providerMessageId: string }>;
   forwardMessage(input: ProviderSendInput & { providerMessageId: string }): Promise<{ providerMessageId: string }>;
   markRead(input: ProviderMessageActionInput): Promise<void>;
