@@ -30,8 +30,8 @@ test('canonical base64 decoder preserves exact bytes across data URL, whitespace
 });
 
 test('canonical base64 decoder rejects malformed and empty content', () => {
-  assert.throws(() => decodeBase64Media(''), /required/);
-  assert.throws(() => decodeBase64Media('not+valid==='), /MEDIA_BASE64_DECODE_FAILED/);
+  assert.throws(() => decodeBase64Media(''), /MEDIA_INPUT_MISSING/);
+  assert.throws(() => decodeBase64Media('not+valid==='), /MEDIA_BASE64_INVALID/);
 });
 
 test('Instagram identity resolution is provider and tenant scoped', () => {
@@ -84,4 +84,17 @@ test('list_media_assets does not reference thumbnail_url', async () => {
   const source = fs.readFileSync(new URL('../../src/lib/mcp/tools/social-publishing.ts', import.meta.url), 'utf8');
   const listBlock = source.slice(source.indexOf("name: 'list_media_assets'"), source.indexOf("name: 'delete_media'"));
   assert.doesNotMatch(listBlock, /thumbnail_url/);
+});
+
+test('canonical base64 decoder accepts missing padding and wrapped PNG payloads', () => {
+  const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const unpadded = pngHeader.toString('base64').replace(/=+$/, '');
+  assert.deepEqual(decodeBase64Media(unpadded), pngHeader);
+  assert.deepEqual(decodeBase64Media(`data:image/png;base64,${unpadded.slice(0, 5)}\n${unpadded.slice(5)}`), pngHeader);
+});
+
+test('canonical base64 decoder rejects malformed data URLs and impossible lengths', () => {
+  assert.throws(() => decodeBase64Media('data:image/png,not-base64'), /MEDIA_BASE64_INVALID/);
+  assert.throws(() => decodeBase64Media('A'), /MEDIA_BASE64_INVALID/);
+  assert.throws(() => decodeBase64Media('YWJj$'), /MEDIA_BASE64_INVALID/);
 });
