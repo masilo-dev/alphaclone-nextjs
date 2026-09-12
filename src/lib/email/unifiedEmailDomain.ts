@@ -104,7 +104,7 @@ export interface SenderIdentity {
 export interface EmailDefaultRule { purpose: EmailPurpose; providerAccountId: string; senderIdentityId: string; priority: number; }
 
 export class UnifiedEmailDomainError extends Error {
-  constructor(public readonly code: 'ACCOUNT_NOT_CONNECTED' | 'PURPOSE_NOT_ALLOWED' | 'PROVIDER_CANNOT_SEND' | 'PROVIDER_CANNOT_FANOUT' | 'SENDER_NOT_AUTHORISED' | 'SENDER_NOT_VERIFIED' | 'RECIPIENT_SUPPRESSED' | 'NO_SEND_ROUTE' | 'EMAIL_PROVIDER_MISMATCH', message: string) {
+  constructor(public readonly code: 'ACCOUNT_NOT_CONNECTED' | 'PURPOSE_NOT_ALLOWED' | 'PROVIDER_CANNOT_SEND' | 'PROVIDER_CANNOT_FANOUT' | 'SENDER_NOT_AUTHORISED' | 'SENDER_NOT_VERIFIED' | 'SENDER_PROVIDER_MISMATCH' | 'RECIPIENT_SUPPRESSED' | 'NO_SEND_ROUTE' | 'EMAIL_PROVIDER_MISMATCH' | 'EMAIL_PROVIDER_UNAVAILABLE', message: string) {
     super(message); this.name = 'UnifiedEmailDomainError';
   }
 }
@@ -134,7 +134,8 @@ export function resolveSendRoute(input: { purpose: EmailPurpose; accounts: Conne
   if (input.requireCampaignFanOut && !canExecuteAlphaCloneCampaign(account)) throw new UnifiedEmailDomainError('PROVIDER_CANNOT_FANOUT', 'The selected provider cannot execute an AlphaClone campaign');
 
   const identity = identityId ? identities.find((candidate) => candidate.id === identityId) : identities.find((candidate) => candidate.providerAccountId === account.id && candidate.allowedPurposes.includes(purpose) && candidate.verificationStatus === 'verified' && candidate.canSendAs);
-  if (!identity || identity.providerAccountId !== account.id || !identity.canSendAs) throw new UnifiedEmailDomainError('SENDER_NOT_AUTHORISED', 'The From address is not authorised for this account');
+  if (!identity || !identity.canSendAs) throw new UnifiedEmailDomainError('SENDER_NOT_AUTHORISED', 'The From address is not authorised for this account');
+  if (identity.providerAccountId !== account.id) throw new UnifiedEmailDomainError('SENDER_PROVIDER_MISMATCH', 'The selected sender identity is not available through the resolved provider account');
   if (identity.verificationStatus !== 'verified') throw new UnifiedEmailDomainError('SENDER_NOT_VERIFIED', 'The selected sender identity is not verified');
   if (!identity.allowedPurposes.includes(purpose)) throw new UnifiedEmailDomainError('PURPOSE_NOT_ALLOWED', `The selected sender cannot send ${purpose} email`);
   return { account, identity };

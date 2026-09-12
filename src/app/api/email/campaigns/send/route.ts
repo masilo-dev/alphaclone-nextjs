@@ -4,6 +4,7 @@ import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignS
 import { campaignSendSchema } from '@/schemas/validation';
 import { isExecutionFeatureEnabled } from '@/lib/projects/executionFeatureFlags';
 import { sendCampaignViaListmonk } from '@/lib/marketing/sendCampaignViaListmonk';
+import { preflightCampaignDelivery } from '@/lib/email/campaignPreflight';
 
 export async function POST(request: NextRequest) {
     try {
@@ -16,6 +17,14 @@ export async function POST(request: NextRequest) {
         const campaignId = parsed.data.campaignId;
 
         const { admin } = await requireTenantAccess(tenantId, request);
+        const preflight = await preflightCampaignDelivery({ tenantId, campaignId });
+        if (!preflight.ok) {
+            return NextResponse.json({
+                error: preflight.recommendation || 'Campaign preflight failed',
+                code: preflight.code || 'CAMPAIGN_PREFLIGHT_FAILED',
+                recipientCounts: preflight.recipientCounts,
+            }, { status: 409 });
+        }
         const listmonkEnabled = await isExecutionFeatureEnabled(admin, 'LISTMONK_ENABLED', tenantId);
 
         if (listmonkEnabled) {

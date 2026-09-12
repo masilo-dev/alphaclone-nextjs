@@ -160,16 +160,29 @@ export async function sendEmail(
       normalizedText = insertBeforeEmailFooter(normalizedText, attachmentLines);
     }
 
-    const configs = await resolveAllConnectedEmailProviders({
+    const resolvedConfigs = await resolveAllConnectedEmailProviders({
       tenantId,
       preferredUserId: payload.userId || null,
       preferredProvider: normalizePreferredProvider(preferredProvider),
       fallbackToEnv: true,
       forcePlatform: Boolean(payload.isPlatformNotification),
     });
+    // A named provider is an explicit user/workflow instruction. Do not let a
+    // later fallback silently deliver through a different transport.
+    const explicitlyRequestedProvider = normalizePreferredProvider(preferredProvider);
+    const configs = explicitlyRequestedProvider
+      ? resolvedConfigs.filter((config) => config.provider === explicitlyRequestedProvider)
+      : resolvedConfigs;
 
     if (!configs.length) {
-      return { success: false, tried, error: 'No connected email provider is configured for this tenant', code: 'CONFIG_MISSING' };
+      return {
+        success: false,
+        tried,
+        error: explicitlyRequestedProvider
+          ? `Requested provider ${explicitlyRequestedProvider} is unavailable for this tenant`
+          : 'No connected email provider is configured for this tenant',
+        code: explicitlyRequestedProvider ? 'EMAIL_PROVIDER_UNAVAILABLE' : 'CONFIG_MISSING',
+      };
     }
 
     for (const config of configs) {

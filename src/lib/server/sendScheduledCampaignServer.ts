@@ -17,6 +17,7 @@ import {
   BONNIE_KNOWN_ERRORS,
 } from "@/lib/bonnie/bonnieError";
 import { createHash } from "node:crypto";
+import { preflightCampaignDelivery } from '@/lib/email/campaignPreflight';
 
 type CampaignProvider = "sendgrid" | "resend" | "brevo" | "zoho";
 type ProviderConfig = {
@@ -238,6 +239,10 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
     }
 
     const tenantId = String(campaign.tenant_id || "");
+    const preflight = await preflightCampaignDelivery({ tenantId, campaignId });
+    if (!preflight.ok) {
+      return { success: false, error: `${preflight.code || 'CAMPAIGN_PREFLIGHT_FAILED'}: ${preflight.recommendation || 'Campaign delivery is blocked.'}` };
+    }
     const { data: sequence } = await admin
       .from("outreach_sequences")
       .select("id, timezone, quiet_hours, frequency_cap, status")

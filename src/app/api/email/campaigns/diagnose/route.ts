@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { preflightCampaignDelivery } from '@/lib/email/campaignPreflight';
 
 /**
  * GET /api/email/campaigns/diagnose?tenantId=xxx&campaignId=yyy
@@ -17,6 +18,18 @@ export async function GET(req: NextRequest) {
         }
 
         const { admin } = await requireTenantAccess(tenantId);
+
+        const preflight = await preflightCampaignDelivery({ tenantId, campaignId });
+        if (!preflight.ok) {
+            return NextResponse.json({
+                healthy: false,
+                issues: [preflight.recommendation || preflight.code || 'Campaign cannot be delivered.'],
+                warnings: [],
+                info: [`Diagnostic code: ${preflight.code || 'UNKNOWN'}`, `Recipient state: ${JSON.stringify(preflight.recipientCounts)}`],
+                code: preflight.code,
+                recipientCounts: preflight.recipientCounts,
+            });
+        }
 
         const issues: string[] = [];
         const warnings: string[] = [];
@@ -59,17 +72,13 @@ export async function GET(req: NextRequest) {
         const selectedProviders = Array.isArray(deliverySettings.selectedProviders)
             ? deliverySettings.selectedProviders.map((value) => String(value || '').trim().toLowerCase()).filter(Boolean)
             : [];
-        const supportedCampaignProviders = ['sendgrid', 'resend', 'brevo', 'zoho'];
-        const selectedSupportedProviders = selectedProviders.filter((p) => supportedCampaignProviders.includes(p));
         if (selectedProviders.length > 0) {
             info.push(`Requested delivery providers: ${selectedProviders.join(', ')}`);
         } else {
             info.push('No provider was explicitly selected, so workspace defaults and connected providers decide delivery.');
         }
         info.push('This builder delivers through AlphaClone direct provider sending, not the separate native Zoho Campaigns hub.');
-        if (selectedProviders.length > 0 && selectedSupportedProviders.length === 0) {
-            issues.push('Selected delivery provider(s) are not supported for direct campaigns. Use Zoho Mail, Brevo, SendGrid, or Resend.');
-        }
+        info.push(`Resolved provider: ${preflight.route?.provider || 'unavailable'} (${preflight.route?.routingReason || 'no route'})`);
 
         if (campaign.status === 'scheduled' && campaign.scheduled_at) {
             const scheduledAt = new Date(campaign.scheduled_at);
@@ -126,9 +135,9 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        if (selectedSupportedProviders.length > 0) {
+        if (selectedProviders.length > 0) {
             const connectedTypes = new Set(integrations.map((row: any) => String(row.type || '').trim().toLowerCase()));
-            const missingRequestedProviders = selectedSupportedProviders.filter((provider) => !connectedTypes.has(provider));
+            const missingRequestedProviders = selectedProviders.filter((provider) => !connectedTypes.has(provider));
             if (missingRequestedProviders.length > 0) {
                 issues.push(`Selected provider(s) not connected: ${missingRequestedProviders.join(', ')}.`);
             }
