@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { UnifiedEmailProvider } from '@/lib/email/unifiedEmailDomain';
+import { logCrmActivityAdmin } from '@/lib/crm/crmActivityServer';
 
 type PersistCanonicalOutboundParams = {
   supabase: SupabaseClient;
@@ -31,10 +32,49 @@ const EMAIL_PURPOSES = new Set([
   'contract', 'project', 'calendar', 'automation',
 ]);
 
+async function resolveCrmRecipient(
+  supabase: SupabaseClient,
+  tenantId: string,
+  email: string,
+  metadata: Record<string, unknown>,
+): Promise<{ contactId: string | null; leadId: string | null; companyId: string | null }> {
+  const explicitContactId = stringValue(metadata.contactId) || stringValue(metadata.contact_id);
+  const explicitLeadId = stringValue(metadata.leadId) || stringValue(metadata.lead_id);
+  const explicitCompanyId = stringValue(metadata.companyId) || stringValue(metadata.company_id);
+  if (explicitContactId || explicitLeadId || explicitCompanyId) {
+    return { contactId: explicitContactId, leadId: explicitLeadId, companyId: explicitCompanyId };
+  }
+
+  const normalized = email.trim().toLowerCase();
+  const [{ data: contact }, { data: lead }] = await Promise.all([
+    supabase
+      .from('contacts')
+      .select('id, company_id')
+      .eq('tenant_id', tenantId)
+      .ilike('email', normalized)
+      .is('deleted_at', null)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('leads')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .ilike('email', normalized)
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  return {
+    contactId: contact?.id ? String(contact.id) : null,
+    leadId: lead?.id ? String(lead.id) : null,
+    companyId: contact?.company_id ? String(contact.company_id) : null,
+  };
+}
+
 /**
- * Persist the provider-independent record that powers Sent, CRM history and
- * cross-provider threading. This deliberately throws: provider acceptance is
- * not reported as a complete AlphaClone send when local history was not saved.
+ * Persist provider acceptance as durable AlphaClone evidence. A provider API
+ * success is not the end of the workflow: the provider reference, recipient
+ * linkage and CRM activity must remain traceable afterward.
  */
 export async function persistCanonicalOutboundEmail(
   params: PersistCanonicalOutboundParams,
@@ -106,6 +146,11 @@ export async function persistCanonicalOutboundEmail(
   const executionSource = stringValue(metadata.executionSource)
     || stringValue(metadata.execution_source)
     || 'AlphaClone UI';
+  const crmByRecipient = new Map<string, Awaited<ReturnType<typeof resolveCrmRecipient>>>();
+  for (const email of params.recipients) {
+    crmByRecipient.set(email.trim().toLowerCase(), await resolveCrmRecipient(supabase, params.tenantId, email, metadata));
+  }
+
   const { data: message, error: messageError } = await supabase
     .from('email_messages')
     .insert({
@@ -119,13 +164,16 @@ export async function persistCanonicalOutboundEmail(
       subject: params.subject,
       body_preview: (params.text || params.html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500),
       sent_at: now,
-      application_status: 'sent',
+      application_status: 'provider_accepted',
       delivery_status: 'accepted',
       has_attachments: params.hasAttachments,
       created_by: params.userId || null,
+      headers_safe: {},
       metadata: {
         ...metadata,
         provider: params.provider,
+        provider_accepted_at: now,
+        provider_message_id: params.providerMessageId,
         sender: params.fromEmail,
         execution_source: executionSource,
         body_html: params.html || null,
@@ -137,15 +185,18 @@ export async function persistCanonicalOutboundEmail(
   if (messageError || !message) throw new Error(`Canonical email message creation failed: ${messageError?.message || 'no row returned'}`);
 
   const recipientRows = [
-    ...params.recipients.map((email) => ({
-      tenant_id: params.tenantId,
-      message_id: message.id,
-      recipient_type: 'to',
-      email_address: email.trim().toLowerCase(),
-      contact_id: stringValue(metadata.contactId) || stringValue(metadata.contact_id),
-      company_id: stringValue(metadata.companyId) || stringValue(metadata.company_id),
-      delivery_status: 'accepted',
-    })),
+    ...params.recipients.map((email) => {
+      const crm = crmByRecipient.get(email.trim().toLowerCase());
+      return {
+        tenant_id: params.tenantId,
+        message_id: message.id,
+        recipient_type: 'to',
+        email_address: email.trim().toLowerCase(),
+        contact_id: crm?.contactId || null,
+        company_id: crm?.companyId || null,
+        delivery_status: 'accepted',
+      };
+    }),
     ...(params.replyTo ? [{
       tenant_id: params.tenantId,
       message_id: message.id,
@@ -158,6 +209,48 @@ export async function persistCanonicalOutboundEmail(
   ];
   const { error: recipientError } = await supabase.from('email_message_recipients').insert(recipientRows);
   if (recipientError) throw new Error(`Canonical email recipients creation failed: ${recipientError.message}`);
+
+  await supabase.from('email_delivery_events').insert({
+    tenant_id: params.tenantId,
+    message_id: message.id,
+    provider_account_id: account.id,
+    provider_event_id: `accepted:${params.provider}:${params.providerMessageId}`,
+    event_type: 'provider_accepted',
+    recipient_email: params.recipients.length === 1 ? params.recipients[0].trim().toLowerCase() : null,
+    occurred_at: now,
+    payload_safe: {
+      provider: params.provider,
+      provider_message_id: params.providerMessageId,
+      source: 'provider_send_response',
+    },
+    signature_verified: true,
+    processed_at: now,
+  });
+
+  for (const email of params.recipients) {
+    const crm = crmByRecipient.get(email.trim().toLowerCase());
+    if (!crm?.contactId && !crm?.companyId) continue;
+    await logCrmActivityAdmin(supabase, {
+      tenantId: params.tenantId,
+      type: 'email',
+      subject: params.subject,
+      description: `Outbound email accepted by ${params.provider}`,
+      contactId: crm.contactId || undefined,
+      companyId: crm.companyId || undefined,
+      createdBy: params.userId || undefined,
+      source: 'email:provider_accepted',
+      isAutomated: true,
+      metadata: {
+        direction: 'outbound',
+        provider: params.provider,
+        provider_message_id: params.providerMessageId,
+        canonical_message_id: message.id,
+        status: 'provider_accepted',
+        recipient: email.trim().toLowerCase(),
+        lead_id: crm.leadId,
+      },
+    });
+  }
 
   await supabase.from('business_automation_events').insert({
     tenant_id: params.tenantId,
