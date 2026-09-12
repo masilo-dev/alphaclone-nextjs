@@ -141,7 +141,7 @@ export function rejectLocalAiPaths(value: string | null | undefined, fieldName: 
     if (pattern.test(value)) {
       throw new Error(
         `${fieldName} contains a local AI sandbox path ("${value}") that cannot be fetched server-side. ` +
-          `Upload the file first via upload_media and pass the returned media_url or media_id instead.`
+          `LOCAL_PATH_NOT_ACCESSIBLE: local paths cannot be fetched server-side. Upload bytes/base64 first and pass the returned asset_id.`
       );
     }
   }
@@ -307,11 +307,13 @@ export async function ingestPublishMedia(params: {
         type === 'base64' ||
         typeof raw.data === 'string' ||
         typeof raw.base64 === 'string' ||
-        typeof raw.content_base64 === 'string'
+        typeof raw.content_base64 === 'string' ||
+        typeof raw.file_base64 === 'string' ||
+        typeof raw.file === 'string'
       ) {
         inputs.push({
           type: 'base64',
-          data: String(raw.data || raw.base64 || raw.content_base64),
+          data: String(raw.data || raw.base64 || raw.content_base64 || raw.file_base64 || raw.file),
           mimeType: String(raw.mimeType || raw.mime_type || 'image/png'),
           filename: String(raw.filename || 'upload.png'),
         });
@@ -321,10 +323,15 @@ export async function ingestPublishMedia(params: {
           dataUrl: String(raw.dataUrl || raw.data_url),
           filename: typeof raw.filename === 'string' ? raw.filename : undefined,
         });
-      } else if (type === 'url' || typeof raw.url === 'string' || typeof raw.source_url === 'string') {
+      } else if (
+        type === 'url' ||
+        typeof raw.url === 'string' ||
+        typeof raw.source_url === 'string' ||
+        typeof raw.image_url === 'string'
+      ) {
         inputs.push({
           type: 'url',
-          url: String(raw.url || raw.source_url),
+          url: String(raw.url || raw.source_url || raw.image_url),
           filename: typeof raw.filename === 'string' ? raw.filename : undefined,
         });
       } else if (type === 'document_id' || typeof raw.document_id === 'string' || typeof raw.documentId === 'string') {
