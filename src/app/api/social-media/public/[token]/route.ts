@@ -8,7 +8,10 @@ async function serve({ params }: { params: Promise<{ token: string }> }, head = 
   const { token } = await params;
   const claims = verifyProviderFetchToken(decodeURIComponent(token));
   if (!claims) return new NextResponse('Not found', { status: 404 });
-  const media = await fetchMediaAssetBytes(claims.asset_id);
+  const media = await fetchMediaAssetBytes(claims.asset_id, {
+    tenantId: claims.tenant_id,
+    allowProcessing: true,
+  });
   if (!media || media.tenantId !== claims.tenant_id) return new NextResponse('Not found', { status: 404 });
   // NextResponse uses the web BodyInit contract. Copy the Node Buffer into an
   // ArrayBuffer-backed Uint8Array so newer TypeScript DOM types accept it and
