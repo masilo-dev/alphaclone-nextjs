@@ -19,7 +19,7 @@ export async function assertCanonicalMediaAssetsSchema(): Promise<void> {
   }
   const missing = (data || [])
     .map((row: { missing_column?: string }) => row.missing_column)
-    .filter((column): column is string => Boolean(column));
+    .filter((column: string | undefined): column is string => Boolean(column));
   if (missing.length) {
     throw new Error(`MEDIA_SCHEMA_MISMATCH: missing media_assets columns: ${missing.join(', ')}`);
   }
