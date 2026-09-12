@@ -134,7 +134,10 @@ async function verifyStoredMediaIntegrity(asset: MediaAssetRow, buffer: Buffer):
 }
 
 /** Load raw media bytes for provider publish (Facebook multipart upload). */
-export async function fetchMediaAssetBytes(assetId: string): Promise<{
+export async function fetchMediaAssetBytes(
+  assetId: string,
+  options: { tenantId?: string; allowProcessing?: boolean } = {}
+): Promise<{
   buffer: Buffer;
   mimeType: string;
   filename: string;
@@ -142,7 +145,16 @@ export async function fetchMediaAssetBytes(assetId: string): Promise<{
 } | null> {
   const asset = await loadMediaAssetRecord(assetId);
   if (!asset) return null;
-  if (asset.status && asset.status !== 'ready') return null;
+  // A signed provider-fetch token may verify a newly written asset while it is
+  // still processing. Require the token's tenant before allowing that state.
+  if (options.tenantId && asset.tenant_id !== options.tenantId) return null;
+  const allowedStatus =
+    !asset.status ||
+    asset.status === 'ready' ||
+    (options.allowProcessing === true &&
+      Boolean(options.tenantId) &&
+      asset.status === 'processing');
+  if (!allowedStatus) return null;
 
   const storagePath =
     asset.storage_path ||
