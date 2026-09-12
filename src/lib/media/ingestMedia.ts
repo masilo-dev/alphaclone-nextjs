@@ -26,6 +26,10 @@ function toIngested(row: {
   width?: number | null;
   height?: number | null;
   checksum?: string | null;
+  source_bytes?: number;
+  stored_bytes?: number;
+  integrity_verified?: boolean;
+  public_fetch_verified?: boolean;
 }): IngestedMediaAsset {
   return {
     id: row.media_asset_id,
@@ -37,6 +41,10 @@ function toIngested(row: {
     width: row.width ?? null,
     height: row.height ?? null,
     checksum: row.checksum ?? null,
+    source_bytes: row.source_bytes,
+    stored_bytes: row.stored_bytes,
+    integrity_verified: row.integrity_verified,
+    public_fetch_verified: row.public_fetch_verified,
   };
 }
 
@@ -165,7 +173,7 @@ export async function ingestMediaInput(params: {
         mimeType: payload.mimeType || 'image/png',
         contentBase64: rawData,
       });
-      return toIngested(uploaded);
+      return { ...toIngested(uploaded), input_base64_chars: rawData.length };
     }
 
     case 'data_url': {
@@ -184,7 +192,7 @@ export async function ingestMediaInput(params: {
         mimeType: mime,
         contentBase64: extracted.base64,
       });
-      return toIngested(uploaded);
+      return { ...toIngested(uploaded), input_base64_chars: extracted.base64.length };
     }
 
     case 'url': {

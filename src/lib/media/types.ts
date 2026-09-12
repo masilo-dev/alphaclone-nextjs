@@ -21,4 +21,9 @@ export type IngestedMediaAsset = {
   width?: number | null;
   height?: number | null;
   checksum?: string | null;
+  input_base64_chars?: number;
+  source_bytes?: number;
+  stored_bytes?: number;
+  integrity_verified?: boolean;
+  public_fetch_verified?: boolean;
 };
