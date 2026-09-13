@@ -115,3 +115,17 @@ test('signed provider route can verify processing assets without weakening norma
   assert.match(route, /tenantId: claims\.tenant_id/);
   assert.match(route, /allowProcessing: true/);
 });
+
+test('large MCP media uses tenant-scoped resumable transport with final integrity checks', async () => {
+  const fs = await import('node:fs');
+  const service = fs.readFileSync(new URL('../../src/lib/media/resumableUpload.ts', import.meta.url), 'utf8');
+  const tools = fs.readFileSync(new URL('../../src/lib/mcp/tools/social-publishing.ts', import.meta.url), 'utf8');
+  assert.match(service, /expected_byte_size/);
+  assert.match(service, /expected_checksum_sha256/);
+  assert.match(service, /MEDIA_TRANSPORT_TRUNCATED/);
+  assert.match(service, /eq\('tenant_id', input\.tenantId\)/);
+  assert.match(service, /uploadSocialMediaFromBuffer/);
+  assert.match(tools, /create_media_upload_session/);
+  assert.match(tools, /upload_media_chunk/);
+  assert.match(tools, /finalize_media_upload/);
+});

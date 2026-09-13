@@ -1900,6 +1900,103 @@ for (const providerTool of ['publish_x_image', 'publish_x_video'] as const) {
   });
 }
 
+
+for (const resumableTool of [
+  {
+    name: 'create_media_upload_session',
+    description: 'Create a tenant-scoped resumable upload for large MCP media. Calculate the original byte size and SHA-256 before calling.',
+    schema: z.object({
+      tenant_id: tenantIdField.optional(),
+      filename: z.string().min(1),
+      mime_type: z.string().min(1),
+      expected_byte_size: z.number().int().positive(),
+      expected_checksum_sha256: z.string().regex(/^[a-fA-F0-9]{64}$/),
+      chunk_count: z.number().int().min(1).max(10000),
+    }),
+    json: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', format: 'uuid' },
+        filename: { type: 'string' },
+        mime_type: { type: 'string' },
+        expected_byte_size: { type: 'integer', minimum: 1 },
+        expected_checksum_sha256: { type: 'string', pattern: '^[a-fA-F0-9]{64}$' },
+        chunk_count: { type: 'integer', minimum: 1, maximum: 10000 },
+      },
+      required: ['filename', 'mime_type', 'expected_byte_size', 'expected_checksum_sha256', 'chunk_count'],
+    },
+  },
+  {
+    name: 'upload_media_chunk',
+    description: 'Upload one base64 chunk (maximum 512 KiB decoded). Chunks are idempotent by session_id and chunk_index.',
+    schema: z.object({
+      tenant_id: tenantIdField.optional(),
+      session_id: z.string().uuid(),
+      chunk_index: z.number().int().nonnegative(),
+      content_base64: z.string().min(1),
+      expected_chunk_checksum_sha256: z.string().regex(/^[a-fA-F0-9]{64}$/).optional(),
+    }),
+    json: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', format: 'uuid' },
+        session_id: { type: 'string', format: 'uuid' },
+        chunk_index: { type: 'integer', minimum: 0 },
+        content_base64: { type: 'string' },
+        expected_chunk_checksum_sha256: { type: 'string', pattern: '^[a-fA-F0-9]{64}$' },
+      },
+      required: ['session_id', 'chunk_index', 'content_base64'],
+    },
+  },
+  {
+    name: 'finalize_media_upload',
+    description: 'Assemble and verify all chunks, ingest the media, and return a ready tenant-owned asset_id.',
+    schema: z.object({
+      tenant_id: tenantIdField.optional(),
+      session_id: z.string().uuid(),
+    }),
+    json: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', format: 'uuid' },
+        session_id: { type: 'string', format: 'uuid' },
+      },
+      required: ['session_id'],
+    },
+  },
+] as const) {
+  defineConnectorTool({
+    module: 'social-publishing',
+    name: resumableTool.name,
+    description: resumableTool.description,
+    permission: 'social:write',
+    rateLimitClass: 'heavy',
+    auditAction: `mcp_${resumableTool.name}`,
+    inputSchema: resumableTool.schema,
+    jsonSchema: resumableTool.json,
+    handler: async (args: any, ctx: any) => {
+      const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
+      const service = await import('@/lib/media/resumableUpload');
+      if (resumableTool.name === 'create_media_upload_session') {
+        return service.createMediaUploadSession({
+          tenantId, userId, filename: args.filename, mimeType: args.mime_type,
+          expectedByteSize: args.expected_byte_size,
+          expectedChecksumSha256: args.expected_checksum_sha256,
+          chunkCount: args.chunk_count,
+        });
+      }
+      if (resumableTool.name === 'upload_media_chunk') {
+        return service.uploadMediaChunk({
+          tenantId, userId, sessionId: args.session_id, chunkIndex: args.chunk_index,
+          contentBase64: args.content_base64,
+          expectedChunkChecksumSha256: args.expected_chunk_checksum_sha256,
+        });
+      }
+      return service.finalizeMediaUploadSession({ tenantId, userId, sessionId: args.session_id });
+    },
+  } as any);
+}
+
 export { CANONICAL_SOCIAL_MCP_TOOLS, SOCIAL_PUBLISH_TOOL_CATALOG_VERSION };
 
 // Bust discovery cache after this module registers canonical tools

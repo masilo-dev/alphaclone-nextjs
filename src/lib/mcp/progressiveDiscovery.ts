@@ -18,7 +18,7 @@ export const CORE_TOOL_NAMES = new Set([
   'qualify_crm_leads', 'find_and_qualify_leads', 'parse_lead_criteria', 'get_scraper_leads',
   'search_facebook_leads',
   // Social Media publishing & media ingestion
-  'upload_social_media', 'create_social_post_with_media', 'publish_social_post',
+  'upload_social_media', 'create_media_upload_session', 'upload_media_chunk', 'finalize_media_upload', 'create_social_post_with_media', 'publish_social_post',
   'publish_post', 'get_social_identities', 'get_facebook_identities',
   'get_linkedin_identities', 'check_mcp_execution_readiness', 'verify_social_post',
   // Invoicing & Financial Lifecycle
