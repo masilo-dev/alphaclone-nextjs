@@ -1920,16 +1920,7 @@ for (const resumableTool of [
         filename: { type: 'string' },
         mime_type: { type: 'string' },
         expected_byte_size: { type: 'integer', minimum: 1 },
-        expected_checksum_sha256: { type: 'string', pattern: '^[a-fA-F0-9]{64}
-
-// Bust discovery cache after this module registers canonical tools
-try {
-  const { invalidateUnifiedMcpToolCache } = require('../listAllTools');
-  invalidateUnifiedMcpToolCache();
-} catch {
-  // ignore during early bootstrap
-}
- },
+        expected_checksum_sha256: { type: 'string', pattern: '^[a-fA-F0-9]{64}$' },
         chunk_count: { type: 'integer', minimum: 1, maximum: 10000 },
       },
       required: ['filename', 'mime_type', 'expected_byte_size', 'expected_checksum_sha256', 'chunk_count'],
@@ -1952,16 +1943,7 @@ try {
         session_id: { type: 'string', format: 'uuid' },
         chunk_index: { type: 'integer', minimum: 0 },
         content_base64: { type: 'string' },
-        expected_chunk_checksum_sha256: { type: 'string', pattern: '^[a-fA-F0-9]{64}
-
-// Bust discovery cache after this module registers canonical tools
-try {
-  const { invalidateUnifiedMcpToolCache } = require('../listAllTools');
-  invalidateUnifiedMcpToolCache();
-} catch {
-  // ignore during early bootstrap
-}
- },
+        expected_chunk_checksum_sha256: { type: 'string', pattern: '^[a-fA-F0-9]{64}$' },
       },
       required: ['session_id', 'chunk_index', 'content_base64'],
     },
