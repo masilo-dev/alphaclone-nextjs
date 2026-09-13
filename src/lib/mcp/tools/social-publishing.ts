@@ -1992,7 +1992,7 @@ try {
     auditAction: `mcp_${resumableTool.name}`,
     inputSchema: resumableTool.schema,
     jsonSchema: resumableTool.json,
-    handler: async (args, ctx) => {
+    handler: async (args: any, ctx: any) => {
       const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
       const service = await import('@/lib/media/resumableUpload');
       if (resumableTool.name === 'create_media_upload_session') {
