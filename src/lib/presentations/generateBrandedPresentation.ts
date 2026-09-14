@@ -23,7 +23,7 @@ export async function generateBrandedPresentation(input: { title: string; subtit
     slide.addText(input.tenantName, { x: 0.65, y: 0.42, w: 5, h: 0.25, fontSize: 9, color: teal, bold: true, charSpacing: 1 });
     slide.addText(item.title, { x: 0.65, y: 1.0, w: 11.4, h: 0.65, fontSize: 27, color: white, bold: true });
     const lines = item.bullets?.length ? item.bullets.map((text) => ({ text, options: { bullet: { indent: 14 }, hanging: 4 } })) : [{ text: item.body || '', options: {} }];
-    slide.addText(lines as any, { x: 0.85, y: 2.0, w: 10.7, h: 3.8, fontSize: 16, color: 'D9E3EE', breakLine: false, paraSpaceAfterPt: 14, valign: 'mid' });
+    slide.addText(lines as any, { x: 0.85, y: 2.0, w: 10.7, h: 3.8, fontSize: 16, color: 'D9E3EE', breakLine: false, paraSpaceAfterPt: 14 });
     slide.addText('AlphaClone Systems', { x: 0.65, y: 6.85, w: 3, h: 0.2, fontSize: 8, color: muted });
   }
   return pptx.write({ outputType: 'nodebuffer' }) as Promise<Buffer>;
