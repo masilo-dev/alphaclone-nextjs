@@ -1,0 +1,79 @@
+/* AlphaClone product crispness layer.
+ *
+ * The product previously stacked several glass/material systems with 12–28px
+ * backdrop blur and 145–150% saturation. That made authenticated screens feel
+ * hazy, especially in screen recordings. Keep the brand lighting, but make the
+ * working surface substantially more opaque and sharply rendered.
+ */
+
+.ac-business-root {
+  --ac-v3-glass-blur: 6px;
+  --ac-v3-glass-saturate: 1.02;
+  --ac-fluid-blur-sm: 4px;
+  --ac-fluid-blur-md: 6px;
+  --ac-fluid-blur-lg: 10px;
+}
+
+/* Normal workspace content should read as a solid application surface, not glass. */
+.ac-business-root .ac-workspace-panel,
+.ac-business-root .ac-v3-content,
+.ac-business-root .ac-v3-elevated {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Floating product chrome can retain a small amount of depth without fogging text. */
+.ac-business-root .ac-v3-floating,
+.ac-business-root .ac-v3-glass,
+.ac-business-root .ac-v3-command-surface,
+.ac-business-root .ac-v3-sheet,
+.ac-business-root .ac-v3-popover,
+.ac-business-root .glass-panel {
+  -webkit-backdrop-filter: blur(6px) saturate(102%) !important;
+  backdrop-filter: blur(6px) saturate(102%) !important;
+}
+
+/* Headers and sticky toolbars were previously blurred at 20px + 150% saturation. */
+.ac-business-root header,
+.ac-business-root [data-workspace-toolbar],
+.ac-business-root [data-sticky-toolbar],
+.ac-business-root .ac-workspace-toolbar {
+  -webkit-backdrop-filter: blur(6px) saturate(108%) !important;
+  backdrop-filter: blur(6px) saturate(108%) !important;
+}
+
+/* Dialogs/sheets still need separation from the page, but 28px was excessive. */
+.ac-business-root aside[data-drawer],
+.ac-business-root [role="dialog"],
+.ac-business-root [data-sheet],
+.ac-business-root [data-popover-content] {
+  -webkit-backdrop-filter: blur(10px) saturate(108%) !important;
+  backdrop-filter: blur(10px) saturate(108%) !important;
+}
+
+/* Protect text clarity from accidental inherited filter/opacity effects. */
+.ac-business-root #main-content,
+.ac-business-root .ac-business-main,
+.ac-business-root .ac-business-scroll {
+  filter: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ac-business-root .ac-v3-floating,
+  .ac-business-root .ac-v3-glass,
+  .ac-business-root .ac-v3-command-surface,
+  .ac-business-root .ac-v3-sheet,
+  .ac-business-root .ac-v3-popover,
+  .ac-business-root .glass-panel,
+  .ac-business-root header,
+  .ac-business-root [data-workspace-toolbar],
+  .ac-business-root [data-sticky-toolbar],
+  .ac-business-root .ac-workspace-toolbar,
+  .ac-business-root aside[data-drawer],
+  .ac-business-root [role="dialog"],
+  .ac-business-root [data-sheet],
+  .ac-business-root [data-popover-content] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
