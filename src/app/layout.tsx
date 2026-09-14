@@ -8,6 +8,7 @@ import "@/styles/alphaclone-os-v3-pwa.css";
 import "@/styles/marketing-system.css";
 import "@/styles/accessibility.css";
 import "@/styles/apple-fluid-system.css";
+import "@/styles/crisp-product-ui.css";
 import { Providers } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter-next" });
