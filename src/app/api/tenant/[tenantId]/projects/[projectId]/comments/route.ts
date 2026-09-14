@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { notifyProjectClientNote } from '@/lib/projects/projectClientNotification';
 
 const schema = z.object({ content: z.string().trim().min(1).max(10000) });
 
@@ -21,6 +22,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     const { data, error } = await admin.from('project_comments').insert({ tenant_id: tenantId, project_id: projectId, author_name: authorName, author_email: user.email || null, content: parsed.data.content, is_client: false }).select('id, author_name, author_email, content, is_client, created_at').single();
     if (error) throw error;
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'project_comment_created', payload: { projectId, commentId: data.id, actorUserId: user.id } });
+    // The portal gets the live update; email makes sure the client sees it
+    // even when they are not currently signed in.
+    await notifyProjectClientNote({ admin, projectId, tenantId, noteContent: parsed.data.content, authorName, origin: req.nextUrl.origin })
+      .catch((notificationError) => console.error('[project comment client email]', notificationError));
     return NextResponse.json({ comment: data }, { status: 201 });
   } catch (error) { return routeErrorResponse(error, 'Project comment could not be saved', req); }
 }

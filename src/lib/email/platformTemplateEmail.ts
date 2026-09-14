@@ -32,7 +32,13 @@ function applyVariables(
     template: string,
     variables: Record<string, string | number>
 ): string {
-    let out = template;
+    // The template store historically contained Handlebars-style conditionals,
+    // while this renderer deliberately supports only explicit scalar variables.
+    // Resolve those blocks before interpolation so raw {{#if …}} text never
+    // reaches a recipient.
+    let out = template.replace(/{{#if\s+([\w]+)}}([\s\S]*?){{\/if}}/g, (_match, key, content) =>
+      variables[key] == null || variables[key] === '' ? '' : content
+    );
     Object.entries(variables).forEach(([key, value]) => {
         const regex = new RegExp(`{{${key}}}`, 'g');
         out = out.replace(regex, String(value));
@@ -189,6 +195,8 @@ export async function sendPlatformTemplateEmail(
         templateAllowlist: Set<string>;
         skipIfWelcomeAlreadySent?: boolean;
         authUserId?: string | null;
+        /** Prefer a tenant-owned template and brand; global is a safe fallback. */
+        tenantId?: string | null;
     }
 ): Promise<PlatformTemplateEmailResult> {
     const {
@@ -199,6 +207,7 @@ export async function sendPlatformTemplateEmail(
         templateAllowlist,
         skipIfWelcomeAlreadySent,
         authUserId,
+        tenantId,
     } = options;
 
     if (!templateAllowlist.has(templateName)) {
@@ -213,12 +222,27 @@ export async function sendPlatformTemplateEmail(
         }
     }
 
-    const { data: row, error: tErr } = await supabase
+    // Signup callbacks do not always know the tenant yet. Resolve the caller's
+    // first membership so tenant branding is still used whenever it exists.
+    let effectiveTenantId = tenantId ?? null;
+    if (!effectiveTenantId && authUserId) {
+      const { data: membership } = await supabase
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', authUserId)
+        .limit(1)
+        .maybeSingle();
+      effectiveTenantId = membership?.tenant_id || null;
+    }
+    let templateQuery = supabase
         .from('email_templates')
         .select('subject, body_html, body_text')
-        .eq('name', templateName)
-        .is('tenant_id', null)
-        .maybeSingle();
+        .eq('name', templateName);
+    if (effectiveTenantId) templateQuery = templateQuery.eq('tenant_id', effectiveTenantId);
+    let { data: row, error: tErr } = await templateQuery.maybeSingle();
+    if ((!row || tErr) && effectiveTenantId) {
+      ({ data: row, error: tErr } = await supabase.from('email_templates').select('subject, body_html, body_text').eq('name', templateName).is('tenant_id', null).maybeSingle());
+    }
 
     if (tErr || !row) {
         return { success: false, error: `Template not found: ${templateName}` };

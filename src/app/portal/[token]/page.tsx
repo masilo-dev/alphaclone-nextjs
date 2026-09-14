@@ -1,221 +1,53 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { FileText, DollarSign, ExternalLink, Loader2, Receipt } from 'lucide-react';
+import { FileText, FolderOpen, Landmark, Loader2, MessageSquare, Receipt, Send, ShieldCheck } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import type { ClientFinancePortalData } from '@/services/finance/clientFinancePortalService';
 
-export default function ClientFinancePortalPage() {
-  const params = useParams();
-  const token = params?.token as string;
+type Tab = 'overview' | 'projects' | 'finance' | 'contracts' | 'documents' | 'messages';
+type PortalMessage = { id: string; project_id: string; projectName: string; author_name: string; content: string; is_client: boolean; created_at: string };
+const money = (amount: number) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(amount);
+
+export default function ClientPortalPage() {
+  const token = useParams()?.token as string;
   const [portal, setPortal] = useState<ClientFinancePortalData | null>(null);
+  const [messages, setMessages] = useState<PortalMessage[]>([]);
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'finance' | 'documents' | 'projects'>('finance');
+  const [message, setMessage] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [sending, setSending] = useState(false);
+  const [documentPreview, setDocumentPreview] = useState<{ name: string; url: string } | null>(null);
+  const loadMessages = useCallback(async () => { if (!token) return; const r = await fetch(`/api/client-finance/messages?token=${encodeURIComponent(token)}`, { cache: 'no-store' }); const d = await r.json().catch(() => ({})); if (r.ok) setMessages(d.messages || []); }, [token]);
 
-  useEffect(() => {
-    if (!token) return;
-    (async () => {
-      try {
-        const res = await fetch(`/api/client-finance/portal?token=${encodeURIComponent(token)}`, {
-          cache: 'no-store',
-        });
-        const data = await res.json();
-        if (!res.ok || !data.portal) {
-          throw new Error(data.error || 'Portal not found');
-        }
-        setPortal(data.portal);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load portal');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [token]);
+  useEffect(() => { if (!token) return; (async () => { try { const r = await fetch(`/api/client-finance/portal?token=${encodeURIComponent(token)}`, { cache: 'no-store' }); const d = await r.json().catch(() => ({})); if (!r.ok || !d.portal) throw new Error(d.error || 'Portal not found'); setPortal(d.portal); setProjectId(d.portal.projects?.[0]?.id || ''); await loadMessages(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Failed to load portal'); } finally { setLoading(false); } })(); }, [token, loadMessages]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-500 mr-3" />
-        Loading your finance portal...
-      </div>
-    );
-  }
+  const projectIds = useMemo(() => new Set(portal?.projects.map((project) => project.id) || []), [portal]);
+  useEffect(() => { if (!portal || !projectIds.size) return; const channel = supabase.channel(`client_portal_messages_${token}`).on('postgres_changes' as any, { event: 'INSERT', schema: 'public', table: 'project_comments' }, (event: any) => { if (projectIds.has(event.new.project_id)) loadMessages(); }).subscribe(); return () => { channel.unsubscribe(); }; }, [portal, projectIds, token, loadMessages]);
 
-  if (error || !portal) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
-        <div className="max-w-md w-full text-center bg-slate-900 border border-slate-800 rounded-2xl p-8">
-          <h1 className="text-xl font-bold text-red-400 mb-2">Portal unavailable</h1>
-          <p className="text-slate-400 text-sm">{error || 'This link is invalid or has expired.'}</p>
-        </div>
-      </div>
-    );
-  }
+  async function sendMessage(event: React.FormEvent) { event.preventDefault(); if (!message.trim() || !projectId) return; setSending(true); try { const r = await fetch('/api/client-finance/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, projectId, content: message }) }); if (!r.ok) throw new Error('Message could not be sent'); setMessage(''); await loadMessages(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Message could not be sent'); } finally { setSending(false); } }
+  async function decideApproval(approvalId: string, decision: 'approved' | 'changes_requested') { try { const r = await fetch('/api/client-finance/approvals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, approvalId, decision }) }); if (!r.ok) throw new Error('Decision could not be saved'); window.location.reload(); } catch (cause) { setError(cause instanceof Error ? cause.message : 'Decision could not be saved'); } }
 
-  const { branding, client, invoices, quotes, projects, summary } = portal;
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-white p-4 md:p-10">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <header className="flex flex-wrap items-center gap-4">
-          {branding.logoUrl ? (
-            <img src={branding.logoUrl} alt="" className="h-14 w-auto rounded-xl" />
-          ) : (
-            <div className="w-14 h-14 rounded-2xl bg-teal-500/20 flex items-center justify-center text-2xl font-black text-teal-400">
-              {branding.name.charAt(0)}
-            </div>
-          )}
-          <div>
-            <h1 className="text-2xl font-bold">{branding.name}</h1>
-            <p className="text-slate-500 text-sm">Client portal · {client.name}</p>
-          </div>
-        </header>
-
-        <div className="flex gap-2 border-b border-white/10 pb-2">
-          {(['finance', 'documents', 'projects'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
-                activeTab === tab ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {activeTab === 'documents' ? (
-          <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center">
-            <FileText className="w-10 h-10 text-teal-400 mx-auto mb-3" aria-hidden="true" />
-            <p className="text-slate-300 font-medium">Documents & contracts</p>
-            <p className="text-slate-500 text-sm mt-1">Documents are shared through a dedicated project portal or data room link. This finance link does not expose files that have not been explicitly shared with you.</p>
-          </section>
-        ) : activeTab === 'projects' ? (
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-sm font-black uppercase tracking-widest text-slate-500">Project updates</h2>
-              <p className="mt-1 text-sm text-slate-400">Open a project portal to view its shared milestones, deliverables, and updates.</p>
-            </div>
-            {projects.length === 0 ? (
-              <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center">
-                <p className="text-slate-300 font-medium">No public project portal is available.</p>
-                <p className="text-slate-500 text-sm mt-1">Your project team can share a dedicated project link when client updates are ready.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {projects.map((project) => (
-                  <div key={project.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
-                    <div>
-                      <p className="font-bold">{project.name}</p>
-                      <p className="text-xs text-slate-500">{project.stage || project.status} · {project.progress}% complete</p>
-                    </div>
-                    <a href={project.viewUrl} className="inline-flex items-center gap-1 px-4 py-2 rounded-xl border border-white/20 text-white text-xs font-bold uppercase">
-                      Open project <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        ) : (
-        <>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">
-            <p className="text-xs uppercase text-slate-500 font-bold">Open invoices</p>
-            <p className="text-2xl font-black text-teal-400 mt-1">{summary.openInvoices}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">
-            <p className="text-xs uppercase text-slate-500 font-bold">Balance due</p>
-            <p className="text-2xl font-black text-white mt-1">${summary.openBalance.toFixed(2)}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">
-            <p className="text-xs uppercase text-slate-500 font-bold">Pending quotes</p>
-            <p className="text-2xl font-black text-slate-300 mt-1">{summary.pendingQuotes}</p>
-          </div>
-        </div>
-
-        <section>
-          <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
-            <DollarSign className="w-4 h-4" /> Invoices
-          </h2>
-          {invoices.length === 0 ? (
-            <p className="text-slate-500 text-sm">No open invoices.</p>
-          ) : (
-            <div className="space-y-3">
-              {invoices.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4"
-                >
-                  <div>
-                    <p className="font-bold">{inv.invoiceNumber}</p>
-                    <p className="text-xs text-slate-500">
-                      Due {new Date(inv.dueDate).toLocaleDateString()} · {inv.status}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-teal-400">${inv.total.toFixed(2)}</span>
-                    {inv.status !== 'paid' && inv.payUrl && (
-                      <a
-                        href={inv.payUrl}
-                        className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold uppercase"
-                      >
-                        Pay <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section>
-          <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
-            <FileText className="w-4 h-4" /> Quotes
-          </h2>
-          {quotes.length === 0 ? (
-            <p className="text-slate-500 text-sm">No quotes on file.</p>
-          ) : (
-            <div className="space-y-3">
-              {quotes.map((q) => (
-                <div
-                  key={q.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4"
-                >
-                  <div>
-                    <p className="font-bold">{q.name || q.quoteNumber}</p>
-                    <p className="text-xs text-slate-500">
-                      {q.quoteNumber} · {q.status}
-                      {q.validUntil && ` · Valid until ${new Date(q.validUntil).toLocaleDateString()}`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold">${q.totalAmount.toFixed(2)}</span>
-                    {q.viewUrl && ['sent', 'viewed', 'draft'].includes(q.status) && (
-                      <a
-                        href={q.viewUrl}
-                        className="inline-flex items-center gap-1 px-4 py-2 rounded-xl border border-white/20 text-white text-xs font-bold uppercase"
-                      >
-                        Review <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-        </>
-        )}
-
-        <footer className="text-center text-xs text-slate-600 pt-8 flex items-center justify-center gap-1">
-          <Receipt className="w-3 h-3" /> Powered by AlphaClone native billing
-        </footer>
-      </div>
-    </div>
-  );
+  if (loading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-300"><Loader2 className="mr-3 animate-spin text-teal-400" /> Loading your workspace…</div>;
+  if (error && !portal) return <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6"><div className="max-w-md rounded-2xl border border-red-500/30 bg-slate-900 p-8 text-center"><h1 className="text-xl font-bold text-white">Portal unavailable</h1><p className="mt-2 text-sm text-slate-400">{error}</p></div></div>;
+  if (!portal) return null;
+  const tabs: Array<[Tab, string]> = [['overview', 'Overview'], ['projects', 'Projects'], ['finance', 'Invoices'], ['contracts', 'Contracts'], ['documents', 'Documents'], ['messages', 'Messages']];
+  const Section = ({ children }: { children: React.ReactNode }) => <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">{children}</section>;
+  return <main className="min-h-screen bg-slate-950 text-white p-4 md:p-10"><div className="mx-auto max-w-5xl space-y-6">
+    <header className="flex flex-wrap items-center justify-between gap-4"><div className="flex items-center gap-3">{portal.branding.logoUrl ? <img src={portal.branding.logoUrl} alt="" className="h-12 w-12 rounded-xl object-contain" /> : <div className="grid h-12 w-12 place-items-center rounded-xl bg-teal-500/20 text-xl font-black text-teal-300">{portal.branding.name.charAt(0)}</div>}<div><p className="text-lg font-bold">{portal.branding.name}</p><p className="text-sm text-slate-400">Client workspace · {portal.client.name}</p></div></div><div className="flex items-center gap-2 text-xs text-teal-200"><ShieldCheck className="h-4 w-4" /> Private client access</div></header>
+    <nav className="flex gap-1 overflow-x-auto border-b border-white/10 pb-2" aria-label="Client workspace">{tabs.map(([id, label]) => <button key={id} onClick={() => setActiveTab(id)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm ${activeTab === id ? 'bg-teal-500/20 font-semibold text-teal-200' : 'text-slate-400 hover:text-white'}`}>{label}</button>)}</nav>{error && <p role="alert" className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-100">{error}</p>}
+    {activeTab === 'overview' && <div className="space-y-5"><div className="grid gap-4 sm:grid-cols-3"><Section><p className="text-xs font-bold uppercase text-slate-500">Open invoices</p><p className="mt-1 text-3xl font-black text-teal-300">{portal.summary.openInvoices}</p></Section><Section><p className="text-xs font-bold uppercase text-slate-500">Balance due</p><p className="mt-1 text-3xl font-black">{money(portal.summary.openBalance)}</p></Section><Section><p className="text-xs font-bold uppercase text-slate-500">Needs your review</p><p className="mt-1 text-3xl font-black text-amber-300">{portal.approvals.length}</p></Section></div><Section><h2 className="font-bold">What needs your attention</h2>{portal.approvals.length ? <div className="mt-3 space-y-3">{portal.approvals.map((a) => <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-950/70 p-3"><div><p className="font-semibold">{a.title}</p><p className="text-xs text-slate-400">{a.projectName} · {a.approvalType}</p>{a.description && <p className="mt-1 text-sm text-slate-300">{a.description}</p>}</div><div className="flex gap-2"><button onClick={() => decideApproval(a.id, 'changes_requested')} className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold">Request changes</button><button onClick={() => decideApproval(a.id, 'approved')} className="rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold">Approve</button></div></div>)}</div> : <p className="mt-2 text-sm text-slate-400">You are all caught up. We’ll highlight payments, signatures, and approvals here.</p>}</Section><Section><h2 className="font-bold">Recent activity</h2>{portal.activity.length ? <div className="mt-3 space-y-3">{portal.activity.slice(0, 6).map((event) => <div key={event.id} className="flex items-start justify-between gap-3 border-b border-white/5 pb-3 text-sm last:border-0"><div><p className="capitalize">{event.title}</p><p className="text-xs text-slate-500">{event.projectName || 'Workspace'}</p></div><time className="whitespace-nowrap text-xs text-slate-500">{new Date(event.createdAt).toLocaleDateString()}</time></div>)}</div> : <p className="mt-2 text-sm text-slate-400">Your project, payment, document, and approval activity will appear here.</p>}</Section></div>}
+    {activeTab === 'projects' && <Rows rows={portal.projects} empty="No projects have been shared yet." icon={<FolderOpen />} render={(p) => <><div><p className="font-bold">{p.name}</p><p className="text-sm text-slate-400">{p.stage || p.status} · {p.progress}% complete</p></div><a href={p.viewUrl} className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold">Project detail</a></>} />}
+    {activeTab === 'finance' && <Rows rows={portal.invoices} empty="No open invoices are available." icon={<Landmark />} render={(i) => <><div><p className="font-bold">{i.invoiceNumber}</p><p className="text-sm text-slate-400">{i.status} · Due {new Date(i.dueDate).toLocaleDateString()}</p></div><div className="flex items-center gap-3"><strong>{money(i.total)}</strong>{i.status !== 'paid' && <a href={i.payUrl} className="rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold">Pay invoice</a>}</div></>} />}
+    {activeTab === 'contracts' && <Rows rows={portal.contracts} empty="No contracts have been shared with this client." icon={<FileText />} render={(c) => <><div><p className="font-bold">{c.title}</p><p className="text-sm text-slate-400">{c.contractNumber ? `${c.contractNumber} · ` : ''}{c.status}</p></div>{c.actionUrl ? <a href={c.actionUrl} className="rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold">Review & sign</a> : <span className="text-sm text-slate-400">No action required</span>}</>} />}
+    {activeTab === 'documents' && <Rows rows={portal.documents} empty="No documents have been explicitly shared with this client." icon={<FileText />} render={(d) => <><div><p className="font-bold">{d.name}</p><p className="text-sm text-slate-400">{d.documentType} · {d.status}</p></div><button onClick={() => setDocumentPreview({ name: d.name, url: d.viewUrl })} className="rounded-lg border border-white/20 px-3 py-2 text-sm font-semibold">Preview document</button></>} />}
+    {activeTab === 'messages' && <Section><h2 className="flex items-center gap-2 font-bold"><MessageSquare className="h-5 w-5 text-teal-300" /> Messages</h2><div className="my-4 max-h-96 space-y-3 overflow-y-auto">{messages.length ? messages.map((item) => <div key={item.id} className={`rounded-xl p-3 text-sm ${item.is_client ? 'ml-6 bg-teal-500/10' : 'mr-6 bg-slate-800'}`}><div className="mb-1 flex justify-between gap-3 text-xs text-slate-400"><span>{item.author_name} · {item.projectName}</span><time>{new Date(item.created_at).toLocaleString()}</time></div><p>{item.content}</p></div>) : <p className="py-6 text-center text-sm text-slate-500">No messages yet.</p>}</div><form onSubmit={sendMessage} className="space-y-3 border-t border-white/10 pt-4"><select value={projectId} onChange={(event) => setProjectId(event.target.value)} className="w-full rounded-lg border border-white/15 bg-slate-950 p-2 text-sm" disabled={!portal.projects.length}>{portal.projects.length ? portal.projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>) : <option>No project available</option>}</select><textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Write a message to your team…" className="w-full rounded-lg border border-white/15 bg-slate-950 p-3 text-sm" rows={3} disabled={!projectId} /><button disabled={!message.trim() || !projectId || sending} className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold disabled:opacity-50">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send message</button></form></Section>}
+    <footer className="flex justify-center gap-1 py-5 text-xs text-slate-600"><Receipt className="h-3 w-3" /> Secure AlphaClone client workspace</footer>
+    {documentPreview && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4"><div className="flex h-[85vh] w-full max-w-5xl flex-col rounded-2xl border border-white/15 bg-slate-900"><div className="flex items-center justify-between border-b border-white/10 p-4"><p className="font-semibold">{documentPreview.name}</p><div className="flex gap-3"><a href={documentPreview.url} target="_blank" rel="noreferrer" className="text-sm text-teal-300">Open separately</a><button onClick={() => setDocumentPreview(null)} className="rounded-lg border border-white/20 px-3 py-1 text-sm">Close</button></div></div><iframe title={documentPreview.name} src={documentPreview.url} className="min-h-0 flex-1 rounded-b-2xl bg-white" /></div></div>}
+  </div></main>;
 }
+
+function Rows<T extends { id: string }>({ rows, empty, icon, render }: { rows: T[]; empty: string; icon: React.ReactNode; render: (row: T) => React.ReactNode }) { return rows.length ? <div className="space-y-3">{rows.map((row) => <section key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/50 p-5">{render(row)}</section>)}</div> : <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-10 text-center text-sm text-slate-400"><span className="mx-auto mb-3 block w-fit text-teal-300">{icon}</span>{empty}</div>; }

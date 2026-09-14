@@ -1705,6 +1705,12 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
+/* Opening a desktop menu should not restyle the whole header: that visual
+   jump made the Product trigger look like it blinked. */
+@media (min-width: 1024px) {
+  .mkt-header:not(.is-scrolled) { transition: none; }
+}
+
 .mkt-header-bar {
   display: flex;
   align-items: center;

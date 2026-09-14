@@ -166,7 +166,7 @@ export default function MarketingHeader() {
       <a href="#main-content" className="mkt-skip-link">
         Skip to main content
       </a>
-      <header className={`mkt-header${isScrolled || activeDropdown ? ' is-scrolled' : ''}${mobileOpen ? ' is-open' : ''}`}>
+      <header className={`mkt-header${isScrolled ? ' is-scrolled' : ''}${mobileOpen ? ' is-open' : ''}`}>
         <div className="mkt-container">
           <div className="mkt-header-bar">
             <Logo />
