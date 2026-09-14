@@ -31,7 +31,19 @@ async function ingestInlineMedia(
   const normalized = normalizePublishMediaArgs(args as Record<string, unknown>);
   if (normalized.rejected.length) throw new Error(normalized.rejected[0]);
 
-  const contentBase64 = args.content_base64 || args.file_base64 || args.file;
+  const legacyFile = args.file;
+  const legacyLooksLikePath = typeof legacyFile === 'string' && (
+    legacyFile.startsWith('/') || legacyFile.startsWith('file:') ||
+    legacyFile.startsWith('sandbox:') || /^[A-Za-z]:\\\\/.test(legacyFile)
+  );
+  const legacyLooksLikeOpenAiFile = typeof legacyFile === 'string' && /^file_[A-Za-z0-9]+$/.test(legacyFile);
+  if (args.openai_file_id || args.local_file_path || legacyLooksLikePath || legacyLooksLikeOpenAiFile) {
+    throw new Error(
+      'CHATGPT_ATTACHMENT_UNRESOLVABLE: The MCP host supplied an attachment reference but did not expose authenticated bytes. ' +
+      'The host must resolve openai_file_id/local_file_path and resend the actual bytes in content_base64; the reference will never be parsed as Base64.'
+    );
+  }
+  const contentBase64 = args.content_base64 || args.file_base64 || legacyFile;
   const sourceUrl = args.source_url || args.url;
   const filename = args.filename || args.file_name;
   const mimeType = args.mime_type || args.content_type;
@@ -189,8 +201,17 @@ export async function handlePublishSocialPost(
     throw err;
   }
 
-  const platform = (stored.provider === 'linkedin' ? 'linkedin' : 'facebook') as 'facebook' | 'linkedin';
-  const resolvedIdentityType = stored.identity_type as 'facebook_page' | 'linkedin_person' | 'linkedin_organization';
+  const platform = (
+    stored.provider === 'linkedin' ? 'linkedin' :
+    stored.provider === 'instagram' ? 'instagram' :
+    'facebook'
+  ) as 'facebook' | 'linkedin' | 'instagram';
+  const resolvedIdentityType = stored.identity_type as
+    | 'facebook_page'
+    | 'linkedin_person'
+    | 'linkedin_organization'
+    | 'instagram_business'
+    | 'instagram_creator';
 
   logSocialPublishEvent({
     event: 'publish_identity_resolved', tool: toolName, tenant_id: tenantId, platform,
