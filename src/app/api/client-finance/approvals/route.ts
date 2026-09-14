@@ -6,7 +6,7 @@ import { resolveClientByPortalToken } from '@/services/finance/clientFinancePort
 const schema = z.object({ token: z.string().uuid(), approvalId: z.string().uuid(), decision: z.enum(['approved', 'changes_requested']), comment: z.string().trim().max(5000).optional() });
 
 export async function POST(req: NextRequest) {
-  const parsed = schema.safeParse(await req.json().catch(() => ({}));
+  const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Invalid approval response' }, { status: 400 });
   try {
     const admin = await resolveSupabaseAdminClient(); const client = await resolveClientByPortalToken(admin, parsed.data.token);
