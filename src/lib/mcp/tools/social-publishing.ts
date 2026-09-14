@@ -246,6 +246,29 @@ function mediaToolResult(asset: MediaToolAsset) {
   });
 }
 
+function rejectUnresolvedAttachmentRefs(args: {
+  openai_file_id?: string;
+  local_file_path?: string;
+  file?: string;
+}) {
+  const legacy = String(args.file || '').trim();
+  const isPath = Boolean(legacy) && (
+    legacy.startsWith('/') || legacy.startsWith('file:') ||
+    legacy.startsWith('sandbox:') || /^[A-Za-z]:\\/.test(legacy)
+  );
+  const isOpenAiFile = /^file_[A-Za-z0-9]+$/.test(legacy);
+  if (args.openai_file_id || args.local_file_path || isPath || isOpenAiFile) {
+    throwConnectorError(
+      'CHATGPT_ATTACHMENT_UNRESOLVABLE',
+      'ChatGPT/Codex supplied an attachment reference without authenticated file bytes. The MCP host must resolve openai_file_id/local_file_path and send bytes through content_base64. This value was not interpreted as Base64.',
+      {
+        remediation: 'Retry from an MCP host that exposes attachment bytes, or send content_base64/data_url/source_url explicitly.',
+        received_type: args.openai_file_id || isOpenAiFile ? 'openai_file_id' : 'local_file_path',
+      }
+    );
+  }
+}
+
 function rejectLocalAiPaths(value: string | undefined, field: string) {
   const v = String(value || '').trim();
   if (!v) return;
@@ -385,6 +408,8 @@ defineConnectorTool({
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
     file: z.string().optional(),
+    openai_file_id: z.string().regex(/^file_[A-Za-z0-9]+$/).optional(),
+    local_file_path: z.string().optional(),
     base64: z.string().optional(),
     content_base64: z.string().optional(),
     file_base64: z.string().optional(),
@@ -406,8 +431,10 @@ defineConnectorTool({
       tenant_id: { type: 'string', format: 'uuid' },
       file: {
         type: 'string',
-        description: 'Base64 file content, data URL, or file bytes string.',
+        description: 'Deprecated legacy alias for raw Base64 only. Paths, URLs and file IDs are rejected.',
       },
+      openai_file_id: { type: 'string', description: 'OpenAI/ChatGPT attachment ID (file_...). Requires authenticated MCP-host byte resolution.' },
+      local_file_path: { type: 'string', description: 'Permitted MCP-host workspace upload path. Requires MCP-host byte resolution; never parsed as Base64.' },
       base64: {
         type: 'string',
         description: 'Raw base64 bytes or data:image/png;base64,... fallback.',
@@ -438,6 +465,7 @@ defineConnectorTool({
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
     const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
 
+    rejectUnresolvedAttachmentRefs(args);
     const filename = args.filename || args.file_name;
     const mimeType = args.mime_type || args.content_type;
     const contentBase64 = args.content_base64 || args.file_base64 || args.file || args.base64;
@@ -544,6 +572,8 @@ defineConnectorTool({
     content_base64: z.string().optional(),
     file_base64: z.string().optional(),
     file: z.string().optional(),
+    openai_file_id: z.string().regex(/^file_[A-Za-z0-9]+$/).optional(),
+    local_file_path: z.string().optional(),
     data_url: z.string().optional(),
     source_url: z.string().optional(),
     url: z.string().optional(),
@@ -560,7 +590,9 @@ defineConnectorTool({
       content_type: { type: 'string', description: 'Alias for mime_type' },
       content_base64: { type: 'string', description: 'Base64 file content string' },
       file_base64: { type: 'string', description: 'Alias for content_base64' },
-      file: { type: 'string', description: 'Alias for content_base64' },
+      file: { type: 'string', description: 'Deprecated alias for raw Base64 only; paths and file IDs are rejected' },
+      openai_file_id: { type: 'string', description: 'OpenAI/ChatGPT attachment ID; MCP host must resolve authenticated bytes' },
+      local_file_path: { type: 'string', description: 'MCP-host workspace upload path; never parsed as Base64' },
       data_url: { type: 'string', description: 'data:image/...;base64,... string' },
       source_url: { type: 'string', description: 'HTTPS source URL of media to fetch/ingest' },
       url: { type: 'string', description: 'Alias for source_url' },
@@ -573,6 +605,7 @@ defineConnectorTool({
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
     const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
 
+    rejectUnresolvedAttachmentRefs(args);
     const filename = args.filename || args.file_name;
     const mimeType = args.mime_type || args.content_type;
     const contentBase64 = args.content_base64 || args.file_base64 || args.file;
@@ -1005,10 +1038,10 @@ registerTool('social-publishing', {
     'Create a social post (draft/scheduled) or publish immediately via publish_now. Prefer publish_social_post for explicit identity selection.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(),
-    platform: z.enum(['facebook', 'linkedin']).optional(),
+    platform: z.enum(['facebook', 'linkedin', 'instagram']).optional(),
     platforms: z.array(z.string()).optional(),
     identity_type: z
-      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
+      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization', 'instagram_business', 'instagram_creator'])
       .optional(),
     identity_id: z.string().optional(),
     page_id: z.string().optional(),
@@ -1025,11 +1058,11 @@ registerTool('social-publishing', {
   jsonSchema: {
     type: 'object',
     properties: {
-      platform: { type: 'string', enum: ['facebook', 'linkedin'] },
+      platform: { type: 'string', enum: ['facebook', 'linkedin', 'instagram'] },
       platforms: { type: 'array', items: { type: 'string' } },
       identity_type: {
         type: 'string',
-        enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+        enum: ['facebook_page', 'linkedin_person', 'linkedin_organization', 'instagram_business', 'instagram_creator'],
       },
       identity_id: { type: 'string' },
       page_id: { type: 'string' },
@@ -1156,6 +1189,8 @@ defineConnectorTool({
     content_base64: z.string().optional(),
     file_base64: z.string().optional(),
     file: z.string().optional(),
+    openai_file_id: z.string().regex(/^file_[A-Za-z0-9]+$/).optional(),
+    local_file_path: z.string().optional(),
     data_url: z.string().optional(),
     source_url: z.string().optional(),
     url: z.string().optional(),
@@ -1190,7 +1225,9 @@ defineConnectorTool({
       content_type: { type: 'string', description: 'Alias for mime_type' },
       content_base64: { type: 'string', description: 'Base64 image/video/document string' },
       file_base64: { type: 'string', description: 'Alias for content_base64' },
-      file: { type: 'string', description: 'Alias for content_base64' },
+      file: { type: 'string', description: 'Deprecated alias for raw Base64 only; paths and file IDs are rejected' },
+      openai_file_id: { type: 'string', description: 'OpenAI/ChatGPT attachment ID; MCP host must resolve authenticated bytes' },
+      local_file_path: { type: 'string', description: 'MCP-host workspace upload path; never parsed as Base64' },
       data_url: { type: 'string', description: 'data:image/...;base64,... data URL' },
       source_url: { type: 'string', description: 'Public HTTPS media URL' },
       url: { type: 'string', description: 'Alias for source_url' },
@@ -1222,7 +1259,7 @@ defineConnectorTool({
     }
 
     const platformRaw = (args.platform || (Array.isArray(args.platforms) ? args.platforms[0] : 'facebook')).toLowerCase();
-    const platform: 'facebook' | 'linkedin' = platformRaw === 'linkedin' ? 'linkedin' : 'facebook';
+    const platform: 'facebook' | 'linkedin' | 'instagram' = platformRaw === 'linkedin' ? 'linkedin' : platformRaw === 'instagram' ? 'instagram' : 'facebook';
 
     let identityId = args.identity_id || args.page_id || args.linkedin_organization_id || undefined;
     let identityType = args.identity_type;
@@ -1230,6 +1267,8 @@ defineConnectorTool({
     if (!identityType) {
       if (platform === 'facebook') {
         identityType = 'facebook_page';
+      } else if (platform === 'instagram') {
+        identityType = 'instagram_business';
       } else if (args.linkedin_organization_id) {
         identityType = 'linkedin_organization';
       } else {
@@ -1244,6 +1283,7 @@ defineConnectorTool({
 
     const contentBase64 = args.content_base64 || args.file_base64 || args.file;
     const sourceUrl = args.source_url || args.url || args.media_url;
+    rejectUnresolvedAttachmentRefs(args);
     const filename = args.filename || args.file_name;
     const mimeType = args.mime_type || args.content_type;
 
