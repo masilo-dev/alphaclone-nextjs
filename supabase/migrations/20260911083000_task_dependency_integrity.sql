@@ -12,7 +12,7 @@ DECLARE
   dependency_tenant uuid;
   cycle_exists boolean := false;
 BEGIN
-  IF NEW.task_id = NEW.depends_on_task_id THEN
+  IF NEW.task_id = NEW.depends_on_id THEN
     RAISE EXCEPTION 'Task dependency cannot reference itself'
       USING ERRCODE = '23514';
   END IF;
@@ -23,7 +23,7 @@ BEGIN
 
   SELECT tenant_id INTO dependency_tenant
   FROM public.tasks
-  WHERE id = NEW.depends_on_task_id;
+  WHERE id = NEW.depends_on_id;
 
   IF source_tenant IS NULL OR dependency_tenant IS NULL THEN
     RAISE EXCEPTION 'Task dependency references a task that does not exist'
@@ -36,9 +36,9 @@ BEGIN
   END IF;
 
   WITH RECURSIVE dependency_chain(task_id) AS (
-    SELECT NEW.depends_on_task_id
+    SELECT NEW.depends_on_id
     UNION
-    SELECT td.depends_on_task_id
+    SELECT td.depends_on_id
     FROM public.task_dependencies td
     JOIN dependency_chain dc ON td.task_id = dc.task_id
     WHERE td.tenant_id = NEW.tenant_id
@@ -63,7 +63,7 @@ DROP TRIGGER IF EXISTS task_dependencies_integrity_guard
 ON public.task_dependencies;
 
 CREATE TRIGGER task_dependencies_integrity_guard
-BEFORE INSERT OR UPDATE OF tenant_id, task_id, depends_on_task_id
+BEFORE INSERT OR UPDATE OF tenant_id, task_id, depends_on_id
 ON public.task_dependencies
 FOR EACH ROW
 EXECUTE FUNCTION public.enforce_task_dependency_integrity();

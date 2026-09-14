@@ -65,7 +65,7 @@ SELECT gen_random_uuid(), 'Campaign Failed', 'Campaign failed: {{campaign_name}}
 WHERE NOT EXISTS (SELECT 1 FROM public.email_templates e WHERE e.name = 'Campaign Failed' AND e.tenant_id IS NULL);
 
 INSERT INTO public.email_templates (id, name, subject, body_html, body_text, category, variables, is_system, tenant_id, created_at, updated_at)
-SELECT gen_random_uuid(), 'Social Post Failed', 'Publishing failed on {{platform}}', '<p>{{message}}</p>', '{{message}}', 'social', '["name","platform","message","action_url"]'::jsonb, true, NULL, NULL, now(), now()
+SELECT gen_random_uuid(), 'Social Post Failed', 'Publishing failed on {{platform}}', '<p>{{message}}</p>', '{{message}}', 'social', '["name","platform","message","action_url"]'::jsonb, true, NULL, now(), now()
 WHERE NOT EXISTS (SELECT 1 FROM public.email_templates e WHERE e.name = 'Social Post Failed' AND e.tenant_id IS NULL);
 
 INSERT INTO public.email_templates (id, name, subject, body_html, body_text, category, variables, is_system, tenant_id, created_at, updated_at)

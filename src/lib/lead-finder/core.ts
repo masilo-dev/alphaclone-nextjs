@@ -71,6 +71,34 @@ export function normalizeCompany(value: string) {
     .replace(/\b(incorporated|inc|limited|ltd|llc|gmbh|plc|pty)\.?$/i, '').trim().toLowerCase();
 }
 
+const NON_BUSINESS_PATTERNS = [
+  /\b(top|best)\s+\d+\b/i,
+  /\bbusiness\s+directory\b/i,
+  /\bsearch\s+results?\b/i,
+  /\b(category|categories)\b/i,
+  /\bnear\s+me\b/i,
+  /\blinkedin\s+search\b/i,
+  /\bfacebook\s+search\b/i,
+];
+
+export type EntityResolution = {
+  isRealBusiness: boolean;
+  canonicalName: string | null;
+  canonicalDomain: string | null;
+  reason: 'ok' | 'missing_name' | 'directory_or_search_result';
+};
+
+/** Reject list/article/search-page labels before they can become CRM entities. */
+export function resolveBusinessEntity(input: { businessName?: string | null; website?: string | null; sourceUrl?: string | null }): EntityResolution {
+  const rawName = String(input.businessName || '').trim();
+  if (!rawName) return { isRealBusiness: false, canonicalName: null, canonicalDomain: normalizeDomain(input.website), reason: 'missing_name' };
+  const source = `${rawName} ${String(input.sourceUrl || '')}`;
+  if (NON_BUSINESS_PATTERNS.some((pattern) => pattern.test(source))) {
+    return { isRealBusiness: false, canonicalName: null, canonicalDomain: normalizeDomain(input.website), reason: 'directory_or_search_result' };
+  }
+  return { isRealBusiness: true, canonicalName: normalizeCompany(rawName), canonicalDomain: normalizeDomain(input.website), reason: 'ok' };
+}
+
 export function buildCanonicalBusinessKey(input: {
   email?: string | null; website?: string | null; phone?: string | null;
   sourceExternalId?: string | null; businessName: string; city?: string | null; country?: string | null;
@@ -167,11 +195,11 @@ export function candidateMeetsRequirements(
 ): boolean {
   const email = normalizeEmail(candidate.public_email);
   const phone = normalizePhone(candidate.public_phone);
-  // Lead Finder never saves an unreachable business. Checked contact fields make
-  // that contact method mandatory; with neither checked, either method is enough.
+  // Contact requirements are qualification gates, not discovery gates. A business
+  // without a contact method remains a candidate for later enrichment; it must
+  // never be promoted to qualified CRM status until the configured gate passes.
   if (requirements.email && !email) return false;
   if (requirements.phone && !phone) return false;
-  if (!requirements.email && !requirements.phone && !email && !phone) return false;
   if (requirements.website && !normalizeDomain(candidate.website)) return false;
   if (
     requirements.social &&

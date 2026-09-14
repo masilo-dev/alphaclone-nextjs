@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate, buildLeadCandidateDedupeKey, buildCanonicalBusinessKey, calculateCompositeLeadScore, candidateMeetsRequirements, type LeadContactRequirements } from '@/lib/lead-finder/core';
+import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate, buildLeadCandidateDedupeKey, buildCanonicalBusinessKey, calculateCompositeLeadScore, candidateMeetsRequirements, resolveBusinessEntity, type LeadContactRequirements } from '@/lib/lead-finder/core';
 import { crawlPublicWebsite } from '@/lib/lead-finder/websiteCrawler';
 import { loadLeadProviderPolicy } from '@/lib/lead-finder/providerPolicy';
 import { runLeadStep, type LeadResult, type LeadStep } from '@/lib/scraper/freeLeadSearch';
@@ -203,7 +203,9 @@ async function execute(job: Job) {
     }));
     enriched.push(...batch);
   }
-  const rows = enriched.map(({ lead, crawl }) => {
+  const rows = enriched
+    .filter(({ lead }) => resolveBusinessEntity({ businessName: lead.business_name, website: lead.website, sourceUrl: lead.source_url }).isRealBusiness)
+    .map(({ lead, crawl }) => {
     const publicEmail = normalizeEmail(lead.email) || crawl?.emails[0]?.email || null;
     const candidate = {
       website: lead.website || null, public_email: publicEmail, public_phone: normalizePhone(lead.phone, search.country),

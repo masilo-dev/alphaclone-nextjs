@@ -49,6 +49,8 @@ test('qualification brain remains one evidence-backed canonical service', async 
   assert.match(engine, /inference/);
   assert.match(engine, /relationshipModifier/);
   assert.match(engine, /requalifyLeadCandidate/);
+  assert.match(engine, /hardGateResults/);
+  assert.match(engine, /LEAD_EMAIL_REQUIRED/);
   assert.match(engine, /recommended_role: 'Owner \/ Managing Director'/);
   assert.doesNotMatch(engine, /openai|anthropic|generateText/i);
   assert.match(migration, /lead_signals/);
@@ -56,4 +58,12 @@ test('qualification brain remains one evidence-backed canonical service', async 
   assert.match(migration, /get_top_lead_opportunities/);
   assert.match(migration, /business_maturity/);
   assert.match(migration, /decision_maker_confidence/);
+});
+
+test('lead validation migration preserves candidates and stores immutable provenance', async () => {
+  const migration = await fs.readFile('supabase/migrations/20260914120000_lead_validation_and_evidence_hardening.sql', 'utf8');
+  assert.match(migration, /lifecycle_status/);
+  assert.match(migration, /lead_evidence/);
+  assert.match(migration, /Lead evidence is immutable/);
+  assert.match(migration, /lead_reverification_report/);
 });

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   canTransitionContract,
   explainContractRisk,
@@ -32,4 +33,12 @@ test('active unsigned contract is a critical deterministic risk', () => {
   const result = explainContractRisk({ status: 'active', signatureStatus: 'sent' });
   assert.equal(result.level, 'critical');
   assert.equal(result.reasons[0].code, 'active_without_signature');
+});
+
+test('public signer cannot manufacture a certified document in the browser', async () => {
+  const page = await readFile('src/app/contract/[id]/page.tsx', 'utf8');
+  assert.doesNotMatch(page, /jsPDF|CERTIFIED CONTRACT|AUTHENTIC DOCUMENT|generateAndDownloadPDF/);
+  assert.doesNotMatch(page, /AIOutputDisclaimer/);
+  assert.match(page, /fetch\('\/api\/contracts\/sign'/);
+  assert.match(page, /authoritative agreement and completion receipt/i);
 });

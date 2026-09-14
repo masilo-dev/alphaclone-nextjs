@@ -9,8 +9,11 @@ BEGIN
     RETURN;
   END IF;
 
-  INSERT INTO public.feature_flags (key, enabled, value, tenant_id)
-  SELECT flag_key, false, 'false'::jsonb, NULL
+  -- The production compatibility table stores generic records rather than the
+  -- older key/enabled/value layout. Keep flags disabled in its canonical
+  -- name/status/config fields instead of assuming a deprecated schema.
+  INSERT INTO public.feature_flags (name, status, payload, config, metadata, tenant_id)
+  SELECT flag_key, 'disabled', '{}'::jsonb, jsonb_build_object('enabled', false), '{}'::jsonb, NULL
   FROM unnest(ARRAY[
     'PROJECTS_V2',
     'LISTMONK_ENABLED',
@@ -21,7 +24,7 @@ BEGIN
   WHERE NOT EXISTS (
     SELECT 1
     FROM public.feature_flags existing
-    WHERE existing.key = flag_key
+    WHERE existing.name = flag_key
       AND existing.tenant_id IS NULL
   );
 END $$;

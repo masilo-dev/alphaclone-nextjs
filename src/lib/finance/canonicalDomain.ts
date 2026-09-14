@@ -41,6 +41,18 @@ export type InvoicePaymentStatus =
   | 'disputed'
   | 'written_off';
 
+/**
+ * Collection is deliberately independent from lifecycle, delivery and payment.
+ * It answers the operational question: what attention does an otherwise valid
+ * receivable need today?
+ */
+export type InvoiceCollectionStatus =
+  | 'normal'
+  | 'due_soon'
+  | 'overdue'
+  | 'collection_active'
+  | 'disputed';
+
 export interface CanonicalInvoiceLineInput {
   description: string;
   quantity: string;
@@ -150,6 +162,29 @@ export function deriveInvoicePaymentStatus(evidence: InvoiceBalanceEvidence): {
   if (balance > ZERO) return { status: 'partially_paid', balanceDue: scaledToDecimal(balance) };
   if (balance === ZERO) return { status: 'paid', balanceDue: '0.0000' };
   return { status: 'overpaid', balanceDue: '0.0000' };
+}
+
+export function deriveInvoiceCollectionStatus(input: {
+  paymentStatus: InvoicePaymentStatus;
+  balanceDue: string;
+  dueDate?: Date | string | null;
+  now?: Date;
+  collectionActive?: boolean;
+}): InvoiceCollectionStatus {
+  if (input.paymentStatus === 'disputed') return 'disputed';
+  if (decimalToScaled(input.balanceDue) <= ZERO) return 'normal';
+  if (input.collectionActive) return 'collection_active';
+  if (!input.dueDate) return 'normal';
+
+  const due = new Date(input.dueDate);
+  if (Number.isNaN(due.getTime())) throw new Error('Invalid due date');
+  const now = input.now || new Date();
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const dueDay = Date.UTC(due.getUTCFullYear(), due.getUTCMonth(), due.getUTCDate());
+  const daysUntilDue = Math.floor((dueDay - today) / 86_400_000);
+  if (daysUntilDue < 0) return 'overdue';
+  if (daysUntilDue <= 7) return 'due_soon';
+  return 'normal';
 }
 
 export function assertBalancedJournal(lines: Array<{ debit: string; credit: string }>): void {

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { normalizeEmail, normalizePhone, resolveBusinessEntity } from './core';
 
 export type QualificationSignal = {
   signal_type: string; signal_category: string; signal_value: string; source_type: string;
@@ -21,9 +22,16 @@ function relationshipModifier(state: string) {
 export function buildLeadQualification(candidate: Candidate, relationship: Relationship = { state: 'new', lastContactAt: null, contactAttempts: 0 }) {
   const observedAt = nowIso();
   const sourceUrl = typeof candidate.source_url === 'string' ? candidate.source_url : typeof candidate.website === 'string' ? candidate.website : null;
-  const hasEmail = Boolean(candidate.public_email);
-  const hasPhone = Boolean(candidate.public_phone);
+  const normalizedEmail = normalizeEmail(typeof candidate.public_email === 'string' ? candidate.public_email : null);
+  const normalizedPhone = normalizePhone(typeof candidate.public_phone === 'string' ? candidate.public_phone : null, typeof candidate.country === 'string' ? candidate.country : null);
+  const hasEmail = Boolean(normalizedEmail);
+  const hasPhone = Boolean(normalizedPhone);
   const hasWebsite = Boolean(candidate.website);
+  const entity = resolveBusinessEntity({
+    businessName: typeof candidate.business_name === 'string' ? candidate.business_name : null,
+    website: typeof candidate.website === 'string' ? candidate.website : null,
+    sourceUrl: typeof candidate.source_url === 'string' ? candidate.source_url : null,
+  });
   const quality = Number(candidate.quality_score || 0);
   const fit = clamp(Number(candidate.fit_score || 0));
   const confidence = clamp(Number(candidate.confidence_score || 0));
@@ -34,8 +42,8 @@ export function buildLeadQualification(candidate: Candidate, relationship: Relat
   const add = (signal: Omit<QualificationSignal, 'observed_at'>) => signals.push({ ...signal, observed_at: observedAt });
 
   add({ signal_type: 'business_identity', signal_category: 'identity', signal_value: String(candidate.business_name || 'Business'), source_type: String(candidate.source_type || 'discovery'), source_url: sourceUrl, confidence: 85, weight: 0, raw_evidence: { industry: candidate.industry, city: candidate.city, country: candidate.country } });
-  if (hasEmail) add({ signal_type: 'public_email', signal_category: 'reachability', signal_value: String(candidate.public_email), source_type: 'public_website', source_url: sourceUrl, confidence: 90, weight: 15, expires_at: inDays(90) });
-  if (hasPhone) add({ signal_type: 'public_phone', signal_category: 'reachability', signal_value: String(candidate.public_phone), source_type: String(candidate.source_type || 'discovery'), source_url: sourceUrl, confidence: 82, weight: 12, expires_at: inDays(90) });
+  if (hasEmail) add({ signal_type: 'public_email', signal_category: 'reachability', signal_value: normalizedEmail!, source_type: 'public_website', source_url: sourceUrl, confidence: 90, weight: 15, expires_at: inDays(90) });
+  if (hasPhone) add({ signal_type: 'public_phone', signal_category: 'reachability', signal_value: normalizedPhone!, source_type: String(candidate.source_type || 'discovery'), source_url: sourceUrl, confidence: 82, weight: 12, expires_at: inDays(90) });
   if (hasWebsite) add({ signal_type: 'website_present', signal_category: 'digital', signal_value: 'Public website reachable at discovery', source_type: 'public_website', source_url: sourceUrl, confidence: 70, weight: 5, expires_at: inDays(30) });
 
   const opportunities: Array<Record<string, unknown>> = [];
@@ -64,7 +72,14 @@ export function buildLeadQualification(candidate: Candidate, relationship: Relat
     fit * .20 + need * .15 + whyNow * .15 + intent * .10 + reachability * .10 +
     alphaOpportunity * .15 + freshness * .05 + confidence * .10 + relationshipModifier(relationshipState)
   );
-  const grade = relationshipModifier(relationshipState) < 0 || master < 40 ? 'Reject' : master >= 85 ? 'A' : master >= 70 ? 'B' : master >= 55 ? 'C' : 'D';
+  const hasSourceEvidence = Boolean(sourceUrl || candidate.source_type);
+  const hardGateResults = [
+    { gate: 'real_business_entity', passed: entity.isRealBusiness, reason: entity.reason },
+    { gate: 'public_contact_method', passed: hasEmail || hasPhone, reason: hasEmail || hasPhone ? 'public contact validated' : 'LEAD_EMAIL_REQUIRED' },
+    { gate: 'source_evidence', passed: hasSourceEvidence, reason: hasSourceEvidence ? 'traceable source present' : 'LEAD_EVIDENCE_INSUFFICIENT' },
+  ];
+  const qualified = hardGateResults.every((gate) => gate.passed) && relationshipModifier(relationshipState) === 0;
+  const grade = !qualified || master < 40 ? 'Reject' : master >= 85 ? 'A' : master >= 70 ? 'B' : master >= 55 ? 'C' : 'D';
   const priority = relationshipModifier(relationshipState) < 0 ? 'ignore' : master >= 90 ? 'immediate' : master >= 75 ? 'high' : master >= 55 ? 'medium' : master >= 30 ? 'low' : 'ignore';
   const why = `Matches the selected business profile${candidate.industry ? ` in ${String(candidate.industry)}` : ''}${candidate.city ? ` around ${String(candidate.city)}` : ''}, with ${opportunities.length ? 'observable digital gaps' : 'public business evidence'} available for review.`;
   const whyNowText = opportunities.length
@@ -79,12 +94,15 @@ export function buildLeadQualification(candidate: Candidate, relationship: Relat
   const summary = `Score: ${master}/100 — ${priority} priority. WHY: ${why} WHY NOW: ${whyNowText} CONTACTABILITY: ${hasEmail && hasPhone ? 'public email and phone found' : hasEmail || hasPhone ? 'one public contact method found' : 'no public contact method found'}. HISTORY: ${relationshipState}. NEXT ACTION: ${action.replaceAll('_', ' ')}.`;
 
   return {
+    qualified,
+    hard_gate_results: hardGateResults,
+    disqualification_reasons: hardGateResults.filter((gate) => !gate.passed).map((gate) => gate.reason),
     signals, fit_score: fit, need_score: need, intent_score: intent, why_now_score: whyNow,
     reachability_score: reachability, freshness_score: freshness, confidence_score: confidence,
     alphaclone_opportunity_score: alphaOpportunity, digital_maturity_score: digitalMaturity,
     business_maturity: businessMaturity, business_maturity_confidence: 0,
     master_score: master, grade, priority_band: priority, relationship_state: relationshipState,
-    buying_stage: prohibited ? 'do_not_contact' : master >= 70 && reachability >= 50 ? 'contactable' : master >= 55 ? 'potential_fit' : 'unqualified',
+    buying_stage: prohibited ? 'do_not_contact' : qualified && master >= 70 && reachability >= 50 ? 'contactable' : master >= 55 ? 'potential_fit' : 'unqualified',
     qualification_reason: why, why_now: whyNowText, qualification_summary: summary,
     recommended_offer: offer, recommended_action: action, next_best_action_reason: prohibited ? 'Relationship history prohibits cold outreach.' : `Based on ${opportunities.length ? 'observable opportunities' : 'available evidence'} and reachability.`,
     outreach_angle: prohibited || !opportunities.length ? null : `Discuss ${String(opportunities[0].inference).replace(/\.$/, '')}, rather than selling AI.`,
@@ -120,6 +138,19 @@ export async function qualifyCandidate(db: SupabaseClient, workspaceId: string, 
     const { error } = await db.from('lead_signals').insert(snapshot.signals.map((signal) => ({ workspace_id: workspaceId, candidate_id: String(candidate.id), ...signal })));
     if (error) throw error;
   }
+  const entity = resolveBusinessEntity({
+    businessName: typeof candidate.business_name === 'string' ? candidate.business_name : null,
+    website: typeof candidate.website === 'string' ? candidate.website : null,
+    sourceUrl: typeof candidate.source_url === 'string' ? candidate.source_url : null,
+  });
+  const { error: candidateUpdateError } = await db.from('lead_candidates').update({
+    lifecycle_status: snapshot.qualified ? 'qualified' : 'candidate',
+    entity_resolution_status: entity.isRealBusiness ? 'resolved' : 'quarantined',
+    qualification_status: snapshot.qualified ? 'qualified' : 'disqualified',
+    qualification_reasons: snapshot.disqualification_reasons,
+    updated_at: nowIso(),
+  }).eq('workspace_id', workspaceId).eq('id', String(candidate.id));
+  if (candidateUpdateError) throw candidateUpdateError;
   return snapshot;
 }
 

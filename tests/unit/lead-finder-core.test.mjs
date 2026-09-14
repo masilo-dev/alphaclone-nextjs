@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   candidateMeetsRequirements,
-  escapeCsvFormula, normalizeCompany, normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate,
+  escapeCsvFormula, normalizeCompany, normalizeDomain, normalizeEmail, normalizePhone, resolveBusinessEntity, scoreCandidate,
 } from '../../src/lib/lead-finder/core.ts';
 
 test('lead finder normalizes public contact values', () => {
@@ -26,9 +26,9 @@ test('lead finder keeps quality and fit scoring explainable and separate', () =>
   assert.ok(score.explanation.some(item => item.type === 'fit'));
 });
 
-test('lead finder persists only candidates that satisfy contact requirements', () => {
+test('lead finder retains contactless candidates but never satisfies configured contact gates', () => {
   const unreachable = { business_name: 'No Contact Ltd', website: 'https://example.com' };
-  assert.equal(candidateMeetsRequirements(unreachable), false);
+  assert.equal(candidateMeetsRequirements(unreachable), true);
   assert.equal(candidateMeetsRequirements({ ...unreachable, public_email: 'hello@example.com' }), true);
   assert.equal(
     candidateMeetsRequirements(
@@ -44,6 +44,13 @@ test('lead finder persists only candidates that satisfy contact requirements', (
     ),
     true
   );
+});
+
+test('entity resolution rejects directory and search-result labels', () => {
+  assert.deepEqual(resolveBusinessEntity({ businessName: 'Top 20 Accountants in Zurich', website: 'https://directory.example/top-accountants' }), {
+    isRealBusiness: false, canonicalName: null, canonicalDomain: 'directory.example', reason: 'directory_or_search_result',
+  });
+  assert.equal(resolveBusinessEntity({ businessName: 'Meyer Plumbing GmbH', website: 'https://meyer.example' }).isRealBusiness, true);
 });
 
 test('lead discovery worker can run from production cron without starting an infinite loop', () => {

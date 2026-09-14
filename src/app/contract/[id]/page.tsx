@@ -2,22 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { jsPDF } from 'jspdf';
-import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2, CheckCircle2, XCircle } from 'lucide-react';
-import { googleDriveService } from '../../../services/googleDriveService';
-import { useAuth } from '../../../contexts/AuthContext';
+import { FileText, CheckCircle, Loader2, ShieldCheck, CheckCircle2, XCircle } from 'lucide-react';
 import { SignaturePad } from '../../../components/contracts/SignaturePad';
-import { contractService } from '../../../services/contractService';
 import { esignatureComplianceService } from '../../../services/esignatureComplianceService';
 import toast, { Toaster } from 'react-hot-toast';
-import AIOutputDisclaimer from '../../../components/ai/AIOutputDisclaimer';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
 import { buildContractDocumentInput } from '@/lib/documents/documentBuilders';
 
 export default function PublicContractPage() {
     const params = useParams();
     const signingToken = params?.id as string;
-    const { user } = useAuth();
 
     const [contract, setContract] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -110,21 +104,22 @@ export default function PublicContractPage() {
 
         setSigning(true);
         try {
-            const { contract: updated, error } = await contractService.signContract(signingToken, 'client', signatureData, {
-                id: 'public',
-                name: legalName.trim(),
-                email: signerEmail.trim().toLowerCase(),
-                consentGiven: true,
+            const response = await fetch('/api/contracts/sign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    signingToken,
+                    signatureDataUrl: signatureData,
+                    signerName: legalName.trim(),
+                    signerEmail: signerEmail.trim().toLowerCase(),
+                    consentGiven: true,
+                }),
             });
-
-            if (error) throw error;
-
-            setContract(updated);
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.success) throw new Error(payload.error || 'Unable to record your signature');
+            setContract(payload.contract || contract);
             setSigned(true);
-            toast.success('Contract signed successfully!');
-
-            // Auto-download PDF
-            setTimeout(() => generateAndDownloadPDF(updated, signatureData), 1000);
+            toast.success('Your signature has been recorded. A completion receipt will be available after all required signers finish.');
 
         } catch (error) {
             console.error('Signing error:', error);
@@ -134,122 +129,6 @@ export default function PublicContractPage() {
         }
     };
 
-    const generateAndDownloadPDF = (contractData: any, signature: string) => {
-        const doc = new jsPDF();
-        const pageHeight = doc.internal.pageSize.height;
-
-        // Use a better header
-        doc.setFillColor(15, 23, 42); // slate-900
-        doc.rect(0, 0, 210, 40, 'F');
-
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(255, 255, 255);
-        doc.text('CERTIFIED CONTRACT', 20, 25);
-
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(148, 163, 184); // slate-400
-        doc.text(`Reference: ${contractData.id}`, 20, 33);
-
-        // Content
-        let y = 60;
-        doc.setTextColor(15, 23, 42);
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-
-        const content = contractService.prepareContractContentForPdf(contractData.content || '');
-        const lines = content.split('\n');
-
-        lines.forEach((line) => {
-            if (y > pageHeight - 30) {
-                doc.addPage();
-                y = 20;
-            }
-
-            if (line.trim().startsWith('#')) {
-                const headerText = line.replace(/^#+\s*/, '');
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(14);
-                const split = doc.splitTextToSize(headerText, 170);
-                doc.text(split, 20, y);
-                y += split.length * 7 + 2;
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(11);
-            } else if (line.trim() === '') {
-                y += 5;
-            } else {
-                const cleanLine = line.replace(/\*\*/g, '');
-                const split = doc.splitTextToSize(cleanLine, 170);
-                split.forEach((textLine: string) => {
-                    if (y > pageHeight - 30) {
-                        doc.addPage();
-                        y = 20;
-                    }
-                    doc.text(textLine, 20, y);
-                    y += 6;
-                });
-            }
-        });
-
-        // Signatures
-        y += 20;
-        if (y > 240) {
-            doc.addPage();
-            y = 30;
-        }
-
-        doc.setDrawColor(226, 232, 240);
-        doc.line(20, y, 190, y);
-        y += 15;
-
-        doc.setFont('helvetica', 'bold');
-        doc.text('CLIENT SIGNATURE', 20, y);
-        const isJpeg = signature.startsWith('data:image/jpeg');
-        const imgFormat = isJpeg ? 'JPEG' : 'PNG';
-        const base64Data = signature.includes(',') ? signature.split(',')[1] : signature;
-        doc.addImage(base64Data, imgFormat, 20, y + 5, 60, 25);
-
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.text(`Electronically signed on ${new Date().toLocaleString()}`, 20, y + 35);
-
-        // Security Seal
-        doc.setDrawColor(20, 184, 166); // teal-500
-        doc.setLineWidth(0.5);
-        doc.rect(140, y + 5, 40, 25);
-        doc.setFontSize(10);
-        doc.setTextColor(20, 184, 166);
-        doc.text('VERIFIED', 160, y + 15, { align: 'center' });
-        doc.setFontSize(7);
-        doc.text('AUTHENTIC DOCUMENT', 160, y + 22, { align: 'center' });
-
-        doc.save(`${contractData.title.replace(/\s+/g, '_')}_Signed.pdf`);
-    };
-
-    const handlePrint = () => {
-        window.print();
-    };
-
-    const handleSaveToDrive = async () => {
-        if (!contract || !user) {
-            toast.error('You must be logged in to save to Google Drive');
-            return;
-        }
-
-        const toastId = toast.loading('Saving to Google Drive...');
-        try {
-            const doc = new jsPDF();
-            // Reuse the PDF generation logic briefly or just use the content
-            // To be more robust, we would generate the full PDF blob
-            const pdfBlob = doc.output('blob');
-            await googleDriveService.uploadFile(user.id, pdfBlob, `${contract.title.replace(/\s+/g, '_')}_Signed.pdf`);
-            toast.success('Successfully saved to Google Drive!', { id: toastId });
-        } catch (error: any) {
-            console.error('Drive upload error:', error);
-            toast.error(error.message || 'Failed to save to Google Drive', { id: toastId });
-        }
-    };
 
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white"><Loader2 className="w-8 h-8 animate-spin text-teal-500" /></div>;
@@ -297,10 +176,6 @@ export default function PublicContractPage() {
                     )}
                 </div>
 
-                {/* Content */}
-                <div className="p-6 bg-slate-950/40 border-y border-slate-800">
-                    <AIOutputDisclaimer type="contract" />
-                </div>
                 <div className="p-4 sm:p-6 bg-slate-950/20 border-y border-slate-800 print-content">
                     <DocumentPreview
                         className="!mb-0"
@@ -437,27 +312,9 @@ export default function PublicContractPage() {
                     </div>
                 ) : (
                     <div className="p-8 bg-slate-950/30 border-t border-slate-800 text-center">
-                        <p className="text-slate-400 mb-6">This contract has been signed on {new Date(contract.client_signed_at).toLocaleDateString()}.</p>
-                        <div className="flex flex-wrap items-center justify-center gap-3">
-                            <button
-                                onClick={() => generateAndDownloadPDF(contract, contract.client_signature)}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-white transition-colors no-print"
-                            >
-                                <Download className="w-5 h-5" /> Download PDF
-                            </button>
-                            <button
-                                onClick={handlePrint}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl font-bold text-white transition-colors no-print"
-                            >
-                                <Printer className="w-5 h-5" /> Print
-                            </button>
-                            <button
-                                onClick={handleSaveToDrive}
-                                className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold text-white transition-colors no-print"
-                            >
-                                <Share2 className="w-5 h-5" /> Save to Drive
-                            </button>
-                        </div>
+                        <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-400" />
+                        <h2 className="text-lg font-semibold text-white">Your signature is recorded</h2>
+                        <p className="mx-auto mt-2 max-w-lg text-sm text-slate-400">The sender will receive your signed agreement. When all required signers have completed it, the authoritative agreement and completion receipt will be made available by the sender.</p>
                     </div>
                 )}
             </div>

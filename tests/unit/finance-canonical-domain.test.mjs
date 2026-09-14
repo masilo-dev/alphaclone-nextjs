@@ -4,6 +4,7 @@ import {
   assertBalancedJournal,
   calculateInvoiceLine,
   decimalToScaled,
+  deriveInvoiceCollectionStatus,
   deriveInvoicePaymentStatus,
   scaledToDecimal,
 } from '../../src/lib/finance/canonicalDomain.ts';
@@ -52,6 +53,15 @@ test('payment status is derived from allocations and adjustments', () => {
   );
 });
 
+test('collection state is independently derived from evidence and due date', () => {
+  const now = new Date('2026-09-14T10:00:00.000Z');
+  assert.equal(deriveInvoiceCollectionStatus({ paymentStatus: 'paid', balanceDue: '0', dueDate: '2026-09-01', now }), 'normal');
+  assert.equal(deriveInvoiceCollectionStatus({ paymentStatus: 'unpaid', balanceDue: '10', dueDate: '2026-09-13', now }), 'overdue');
+  assert.equal(deriveInvoiceCollectionStatus({ paymentStatus: 'unpaid', balanceDue: '10', dueDate: '2026-09-20', now }), 'due_soon');
+  assert.equal(deriveInvoiceCollectionStatus({ paymentStatus: 'unpaid', balanceDue: '10', dueDate: '2026-09-20', now, collectionActive: true }), 'collection_active');
+  assert.equal(deriveInvoiceCollectionStatus({ paymentStatus: 'disputed', balanceDue: '10', dueDate: '2026-09-01', now }), 'disputed');
+});
+
 test('journals must balance and each line has one side', () => {
   assert.doesNotThrow(() => assertBalancedJournal([
     { debit: '125.25', credit: '0' },
@@ -71,4 +81,14 @@ test('the migration serializes allocation checks and makes evidence immutable', 
   assert.match(migration, /FROM public\.finance_payments p[\s\S]*FOR UPDATE/);
   assert.match(migration, /FROM public\.business_invoices i[\s\S]*FOR UPDATE/);
   assert.match(migration, /Payment allocations are immutable/);
+});
+
+test('dual-write migration projects every legacy payment and never treats payment as delivery', async () => {
+  const migration = await import('node:fs/promises').then(({ readFile }) =>
+    readFile('supabase/migrations/20260914110000_canonical_payment_projection_and_collection_state.sql', 'utf8'),
+  );
+  assert.match(migration, /AFTER INSERT ON public\.business_invoice_payments/);
+  assert.match(migration, /payment_allocations/);
+  assert.match(migration, /canonical_invoice_financial_status/);
+  assert.match(migration, /prevent_payment_from_forging_delivery_state/);
 });
