@@ -10,7 +10,7 @@ export async function generateBrandedPresentation(input: { title: string; subtit
   pptx.subject = input.title;
   pptx.title = input.title;
   pptx.company = input.tenantName;
-  pptx.theme = { headFontFace: 'Aptos Display', bodyFontFace: 'Aptos', lang: 'en-US' };
+  pptx.theme = { headFontFace: 'Aptos Display', bodyFontFace: 'Aptos' };
   const background = '071421'; const teal = '14B8A6'; const white = 'F8FAFC'; const muted = '94A3B8';
   const cover = pptx.addSlide(); cover.background = { color: background };
   cover.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 0.22, h: 7.5, fill: { color: teal }, line: { color: teal } });
