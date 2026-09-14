@@ -15,10 +15,10 @@ export const SOCIAL_DESTINATION_VALUES = ['personal', 'organization', 'page'] as
 
 export const publishSocialTargetSchema = z
   .object({
-    integration: z.enum(['facebook', 'linkedin']).optional(),
+    integration: z.enum(['facebook', 'linkedin', 'instagram']).optional(),
     destination: z.enum(SOCIAL_DESTINATION_VALUES).optional(),
     identity_type: z
-      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
+      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization', 'instagram_business', 'instagram_creator'])
       .optional(),
     identity_id: z.string().min(1).optional(),
     resource_type: z.string().optional(),
@@ -33,9 +33,9 @@ export const publishSocialPostInputSchema = z
     destination: z.enum(SOCIAL_DESTINATION_VALUES).optional(),
     post_as: z.enum(['personal', 'company', 'organization', 'all_pages']).optional(),
     identity_id: z.string().min(1).optional(),
-    platform: z.enum(['facebook', 'linkedin']).optional(),
+    platform: z.enum(['facebook', 'linkedin', 'instagram']).optional(),
     identity_type: z
-      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
+      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization', 'instagram_business', 'instagram_creator'])
       .optional(),
     caption: z.string().optional(),
     content: z.string().optional(),
@@ -61,6 +61,8 @@ export const publishSocialPostInputSchema = z
     content_base64: z.string().optional(),
     file_base64: z.string().optional(),
     file: z.string().optional(),
+    openai_file_id: z.string().regex(/^file_[A-Za-z0-9]+$/).optional(),
+    local_file_path: z.string().optional(),
     data_url: z.string().optional(),
     source_url: z.string().optional(),
     url: z.string().optional(),
@@ -74,9 +76,9 @@ export const publishSocialPostInputSchema = z
 export type PublishSocialPostArgs = z.infer<typeof publishSocialPostInputSchema>;
 
 export function destinationToIdentityType(
-  platform: 'facebook' | 'linkedin' | undefined,
+  platform: 'facebook' | 'linkedin' | 'instagram' | undefined,
   destination: (typeof SOCIAL_DESTINATION_VALUES)[number] | undefined
-): 'facebook_page' | 'linkedin_person' | 'linkedin_organization' | undefined {
+): 'facebook_page' | 'linkedin_person' | 'linkedin_organization' | 'instagram_business' | 'instagram_creator' | undefined {
   if (!destination) return undefined;
   if (destination === 'personal') return platform === 'linkedin' ? 'linkedin_person' : undefined;
   if (destination === 'organization') return platform === 'linkedin' ? 'linkedin_organization' : undefined;
@@ -92,7 +94,7 @@ export const publishSocialPostJsonSchema = {
       description:
         'Optional destination envelope. If the user says personal, organization/company, or Facebook page, set destination accordingly. If the user already named a destination, do not ask again.',
       properties: {
-        integration: { type: 'string', enum: ['facebook', 'linkedin'] },
+        integration: { type: 'string', enum: ['facebook', 'linkedin', 'instagram'] },
         destination: {
           type: 'string',
           enum: [...SOCIAL_DESTINATION_VALUES],
@@ -100,7 +102,7 @@ export const publishSocialPostJsonSchema = {
         },
         identity_type: {
           type: 'string',
-          enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+          enum: ['facebook_page', 'linkedin_person', 'linkedin_organization', 'instagram_business', 'instagram_creator'],
           description: 'Low-level identity type; destination is preferred when the user speaks naturally.',
         },
         identity_id: {
@@ -127,12 +129,12 @@ export const publishSocialPostJsonSchema = {
     },
     platform: {
       type: 'string',
-      enum: ['facebook', 'linkedin'],
+      enum: ['facebook', 'linkedin', 'instagram'],
       description: 'Target social platform.',
     },
     identity_type: {
       type: 'string',
-      enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+      enum: ['facebook_page', 'linkedin_person', 'linkedin_organization', 'instagram_business', 'instagram_creator'],
       description: 'Low-level target type. Prefer destination for personal/organization/page language.',
     },
     caption: { type: 'string' },
@@ -152,7 +154,9 @@ export const publishSocialPostJsonSchema = {
     idempotency_key: { type: 'string' },
     page_id: { type: 'string' },
     linkedin_organization_id: { type: 'string' },
-    content_base64: { type: 'string' },
+    content_base64: { type: 'string', description: 'Raw Base64 bytes only. Never pass a path, URL, or file ID.' },
+    openai_file_id: { type: 'string', description: 'OpenAI/ChatGPT attachment file ID (file_...). The MCP host must make its authenticated bytes available.' },
+    local_file_path: { type: 'string', description: 'Local MCP-host workspace upload path. Never interpreted as Base64.' },
     data_url: { type: 'string' },
     source_url: { type: 'string' },
     dry_run: { type: 'boolean' },
