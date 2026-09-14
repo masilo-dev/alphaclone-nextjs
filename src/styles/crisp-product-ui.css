@@ -1,10 +1,14 @@
-/* AlphaClone product crispness layer.
+/* AlphaClone crispness layer.
  *
- * The product previously stacked several glass/material systems with 12–28px
- * backdrop blur and 145–150% saturation. That made authenticated screens feel
- * hazy, especially in screen recordings. Keep the brand lighting, but make the
- * working surface substantially more opaque and sharply rendered.
+ * The product and marketing site previously stacked several glass/material systems
+ * with 12–28px backdrop blur and 145–155% saturation. That made screens feel hazy,
+ * especially in screen recordings. Keep the brand lighting and atmospheric depth,
+ * but make working and marketing surfaces substantially more opaque and crisp.
  */
+
+/* --------------------------------------------------------------------------
+   PRODUCT / AUTHENTICATED EXPERIENCE
+   -------------------------------------------------------------------------- */
 
 .ac-business-root {
   --ac-v3-glass-blur: 6px;
@@ -58,6 +62,72 @@
   filter: none;
 }
 
+/* --------------------------------------------------------------------------
+   PUBLIC MARKETING / LANDING EXPERIENCE
+   -------------------------------------------------------------------------- */
+
+.marketing-theme {
+  --ac-fluid-blur-sm: 3px;
+  --ac-fluid-blur-md: 5px;
+  --ac-fluid-blur-lg: 8px;
+}
+
+/* Main marketing cards should be crisp surfaces. Keep transparency subtle, not foggy. */
+.marketing-theme .mkt-surface,
+.marketing-theme .mkt-surface-elevated,
+.marketing-theme .glass-card,
+.marketing-theme [data-product-preview],
+.marketing-theme .mkt-product-preview {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Raise surface opacity so text and screenshots stay sharp over decorative glows. */
+.marketing-theme .mkt-surface {
+  background: color-mix(in srgb, var(--background-card) 96%, transparent) !important;
+}
+
+.marketing-theme .mkt-surface-elevated {
+  background: color-mix(in srgb, var(--background-elevated) 97%, transparent) !important;
+}
+
+/* Navigation can keep a very small amount of material depth without creating haze. */
+.marketing-theme nav,
+.marketing-theme header[class*="sticky"],
+.marketing-theme header[class*="fixed"] {
+  -webkit-backdrop-filter: blur(5px) saturate(106%) !important;
+  backdrop-filter: blur(5px) saturate(106%) !important;
+}
+
+/* Tailwind glass utilities appear on individual landing-page sections/cards. Limit them. */
+.marketing-theme .backdrop-blur-sm,
+.marketing-theme .backdrop-blur,
+.marketing-theme .backdrop-blur-md,
+.marketing-theme .backdrop-blur-lg,
+.marketing-theme .backdrop-blur-xl,
+.marketing-theme .backdrop-blur-2xl,
+.marketing-theme .backdrop-blur-3xl {
+  -webkit-backdrop-filter: blur(4px) saturate(104%) !important;
+  backdrop-filter: blur(4px) saturate(104%) !important;
+}
+
+/* Ordinary content blocks should not blur the page behind them at all. */
+.marketing-theme section .glass-panel,
+.marketing-theme main .glass-panel,
+.marketing-theme section [class*="backdrop-blur"]:not(nav):not(header),
+.marketing-theme main [class*="backdrop-blur"]:not(nav):not(header) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Keep decorative glows themselves intact, but never let a filter leak onto content. */
+.marketing-theme main,
+.marketing-theme section,
+.marketing-theme [data-product-preview],
+.marketing-theme .mkt-product-preview {
+  filter: none;
+}
+
 @media (prefers-reduced-transparency: reduce) {
   .ac-business-root .ac-v3-floating,
   .ac-business-root .ac-v3-glass,
@@ -72,7 +142,14 @@
   .ac-business-root aside[data-drawer],
   .ac-business-root [role="dialog"],
   .ac-business-root [data-sheet],
-  .ac-business-root [data-popover-content] {
+  .ac-business-root [data-popover-content],
+  .marketing-theme nav,
+  .marketing-theme header[class*="sticky"],
+  .marketing-theme header[class*="fixed"],
+  .marketing-theme .mkt-surface,
+  .marketing-theme .mkt-surface-elevated,
+  .marketing-theme .glass-card,
+  .marketing-theme [class*="backdrop-blur"] {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
