@@ -128,7 +128,7 @@
     "@upstash/qstash": "^2.10.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.2",
-    "@xyflow/react": "^12.10.2",
+    "@xyflow/react": "^12.11.6",
     "@zernio/node": "^0.2.201",
     "ai": "^6.0.0",
     "animated-charts": "^0.1.3",
