@@ -10,6 +10,9 @@ import { createProviderFetchUrl } from '@/lib/media/providerFetchUrl';
 import { assertCanonicalMediaAssetsSchema } from '@/lib/media/mediaSchema';
 import { logMediaPipelineStep } from '@/lib/social/mediaPipelineLog';
 import type { MediaAssetResult } from './types';
+import { probeMediaBytes, type MediaTechnicalMetadata } from '@/lib/media/mediaProbe';
+import { decodeBase64Media, detectMimeFromSignature } from '@/lib/media/mediaSignature';
+export { decodeBase64Media, detectMimeFromSignature } from '@/lib/media/mediaSignature';
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15 MB
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200 MB
@@ -28,18 +31,6 @@ const ALLOWED_MIME = new Set([
   'application/pdf',
 ]);
 
-type MagicSig = { mime: string; bytes: number[]; offset?: number };
-
-const SIGNATURES: MagicSig[] = [
-  { mime: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47] },
-  { mime: 'image/jpeg', bytes: [0xff, 0xd8, 0xff] },
-  { mime: 'image/gif', bytes: [0x47, 0x49, 0x46, 0x38] },
-  { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF....WEBP
-  { mime: 'video/mp4', bytes: [0x66, 0x74, 0x79, 0x70], offset: 4 }, // ....ftyp
-  { mime: 'video/webm', bytes: [0x1a, 0x45, 0xdf, 0xa3] },
-  { mime: 'application/pdf', bytes: [0x25, 0x50, 0x44, 0x46] },
-];
-
 export function isDataUri(value: string): boolean {
   return /^data:[^;]+;base64,/i.test(String(value || '').trim());
 }
@@ -53,75 +44,6 @@ export function rejectOrExtractDataUri(value: string): {
   const match = trimmed.match(/^data:([^;]+);base64,([\s\S]+)$/i);
   if (!match) return { isDataUri: false };
   return { isDataUri: true, mimeType: match[1], base64: match[2] };
-}
-
-export function decodeBase64Media(contentBase64: string): Buffer {
-  if (contentBase64 == null || String(contentBase64).trim() === '') {
-    throw new Error('MEDIA_INPUT_MISSING: base64 media content is required');
-  }
-
-  const raw = String(contentBase64).trim();
-  const dataUrl = raw.match(/^data:([^;,]+);base64,([\s\S]*)$/i);
-  if (/^data:/i.test(raw) && !dataUrl) {
-    throw new Error('MEDIA_BASE64_INVALID: malformed or non-base64 data URL');
-  }
-
-  const cleaned = (dataUrl ? dataUrl[2] : raw).replace(/\s+/g, '');
-  if (!cleaned) throw new Error('MEDIA_INPUT_MISSING: base64 media content is empty');
-  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned) || /=/.test(cleaned.slice(0, -2))) {
-    throw new Error('MEDIA_BASE64_INVALID: content contains invalid base64 characters');
-  }
-
-  const unpadded = cleaned.replace(/=+$/, '');
-  if (unpadded.length % 4 === 1) {
-    throw new Error('MEDIA_BASE64_INVALID: content has an impossible base64 length');
-  }
-  const padded = unpadded + '='.repeat((4 - (unpadded.length % 4)) % 4);
-
-  let binary: Buffer;
-  try {
-    binary = Buffer.from(padded, 'base64');
-  } catch {
-    throw new Error('MEDIA_BASE64_DECODE_FAILED: content could not be decoded');
-  }
-  if (!binary.length) throw new Error('MEDIA_BASE64_DECODE_FAILED: decoded media is empty');
-  if (binary.toString('base64').replace(/=+$/, '') !== unpadded) {
-    throw new Error('MEDIA_BASE64_DECODE_FAILED: decoded bytes do not round-trip');
-  }
-  return binary;
-}
-
-export function detectMimeFromSignature(buffer: Buffer): string | null {
-  for (const sig of SIGNATURES) {
-    const offset = sig.offset || 0;
-    if (buffer.length < offset + sig.bytes.length) continue;
-    let match = true;
-    for (let i = 0; i < sig.bytes.length; i++) {
-      if (buffer[offset + i] !== sig.bytes[i]) {
-        match = false;
-        break;
-      }
-    }
-    if (!match) continue;
-    if (sig.mime === 'image/webp') {
-      // Confirm WEBP marker at bytes 8-11
-      if (buffer.length >= 12 && buffer.toString('ascii', 8, 12) === 'WEBP') {
-        return 'image/webp';
-      }
-      continue;
-    }
-    if (sig.mime === 'video/mp4') return 'video/mp4';
-    return sig.mime;
-  }
-  // QuickTime / MOV often has ftyp with different brands
-  if (buffer.length >= 12 && buffer.toString('ascii', 4, 8) === 'ftyp') {
-    return 'video/quicktime';
-  }
-  const head = buffer.subarray(0, Math.min(buffer.length, 1024)).toString('utf8').trimStart();
-  if (/^<\?xml[\s\S]*?<svg\b/i.test(head) || /^<svg\b/i.test(head)) {
-    return 'image/svg+xml';
-  }
-  return null;
 }
 
 function assertSafeSvg(buffer: Buffer): void {
@@ -213,6 +135,7 @@ async function persistSocialMediaAsset(params: {
   ext: string;
   checksum: string;
   dims: { width: number | null; height: number | null };
+  technicalMetadata: MediaTechnicalMetadata;
 }): Promise<MediaAssetResult> {
   await assertCanonicalMediaAssetsSchema();
   const storagePath = `media/${params.tenantId}/${Date.now()}-${params.checksum.slice(0, 12)}.${params.ext}`;
@@ -287,6 +210,9 @@ async function persistSocialMediaAsset(params: {
         integrity_verified: true,
         public_fetch_verified: true,
       },
+      original_metadata: params.technicalMetadata,
+      final_metadata: params.technicalMetadata,
+      probe_verified_at: new Date().toISOString(),
     })
     .select('id, public_url, file_name, file_type, file_size_bytes, width, height, alt_text, checksum_sha256')
     .single();
@@ -324,6 +250,8 @@ async function persistSocialMediaAsset(params: {
       stored_bytes: stored.length,
       integrity_verified: true,
       public_fetch_verified: true,
+      original_metadata: params.technicalMetadata,
+      final_metadata: params.technicalMetadata,
     };
   }
 
@@ -345,6 +273,8 @@ async function persistSocialMediaAsset(params: {
     stored_bytes: stored.length,
     integrity_verified: true,
     public_fetch_verified: true,
+    original_metadata: params.technicalMetadata,
+    final_metadata: params.technicalMetadata,
   };
 }
 
@@ -358,6 +288,7 @@ async function validateAndPrepareBinary(
   ext: string;
   checksum: string;
   dims: { width: number | null; height: number | null };
+  technicalMetadata: MediaTechnicalMetadata;
 }> {
   const maxBytes = declaredMime.startsWith('video/')
     ? MAX_VIDEO_BYTES
@@ -407,8 +338,9 @@ async function validateAndPrepareBinary(
         ? declaredMime
         : detectedNorm;
 
-  const checksum = createHash('sha256').update(binary).digest('hex');
-  const dims = extractImageDimensions(binary, effectiveMime.startsWith('image/') ? effectiveMime : '');
+  const technicalMetadata = await probeMediaBytes(binary, effectiveMime);
+  const checksum = technicalMetadata.checksum_sha256;
+  const dims = { width: technicalMetadata.width, height: technicalMetadata.height };
   const isVideo = effectiveMime.startsWith('video/');
   const isDocument = effectiveMime === 'application/pdf';
   const assetType = isVideo
@@ -433,7 +365,7 @@ async function validateAndPrepareBinary(
                 ? 'mp4'
                 : 'bin');
 
-  return { effectiveMime, assetType, ext, checksum, dims };
+  return { effectiveMime, assetType, ext, checksum, dims, technicalMetadata };
 }
 
 /** Upload from an in-memory buffer — avoids base64 encode/decode memory duplication. */

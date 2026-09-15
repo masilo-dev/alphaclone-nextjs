@@ -180,10 +180,11 @@ export default function MarketingHeader() {
                     className="mkt-nav-item"
                     open={activeDropdown === dropdown.key}
                     onToggle={(event) => {
-                      event.preventDefault();
-                      setActiveDropdown((current) =>
-                        current === dropdown.key ? null : dropdown.key,
-                      );
+                      const isOpen = event.currentTarget.open;
+                      setActiveDropdown((current) => {
+                        if (isOpen) return dropdown.key;
+                        return current === dropdown.key ? null : current;
+                      });
                     }}
                   >
                     <summary

@@ -63,11 +63,6 @@ const COLUMNS = [
       { label: 'Contact us', path: '/contact' },
       { label: 'Legal hub', path: '/legal' },
       { label: 'Compliance', path: '/compliance' },
-      { label: 'Privacy Policy', path: '/privacy-policy' },
-      { label: 'Terms of Service', path: '/terms-of-service' },
-      { label: 'Security Policy', path: '/security-policy' },
-      { label: 'Privacy Choices', path: '/privacy-choices' },
-      { label: 'Data Deletion', path: '/data-deletion' },
       { label: 'Reliability', path: '/reliability' },
       { label: 'Platform status', path: '/platform-status' },
     ],
@@ -83,7 +78,7 @@ const SOCIAL_LINKS = [
 export default function MarketingFooter() {
   return (
     <footer className="mkt-footer">
-      <MarketingContainer className="py-6 sm:py-8 border-t border-white/10">
+      <MarketingContainer className="py-5 sm:py-6 border-t border-white/10">
         <div className="mkt-footer-slim">
           <div>
             <Link href="/" className="mkt-brand" aria-label="AlphaClone home">

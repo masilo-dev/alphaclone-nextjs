@@ -87,6 +87,8 @@ export type MediaAssetResult = {
   stored_bytes: number;
   integrity_verified: boolean;
   public_fetch_verified: boolean;
+  original_metadata?: Record<string, unknown>;
+  final_metadata?: Record<string, unknown>;
 };
 
 export type ProviderPublishResult = {

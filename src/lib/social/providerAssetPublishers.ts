@@ -7,6 +7,7 @@ import {
   parseFacebookGraphError,
   sanitizeFacebookPayload,
 } from '@/lib/facebook/parseFacebookGraphError';
+import { createPublishOperation, operationReceipt } from '@/lib/social/publishOperationService';
 
 export type DirectPublishReceipt = {
   published: boolean;
@@ -18,6 +19,12 @@ export type DirectPublishReceipt = {
   asset_ids: string[];
   identity_id?: string;
   social_post_id?: string;
+  operation_id?: string;
+  correlation_id?: string;
+  state?: string;
+  retry_safe?: boolean;
+  retry_after?: string | null;
+  provider_container_id?: string | null;
 };
 
 async function assetsForTenant(tenantId: string, userId: string, assetIds: string[]) {
@@ -81,6 +88,14 @@ export async function publishInstagramAssets(input: {
   instagramAccountId?: string;
 }): Promise<DirectPublishReceipt> {
   const admin = createSupabaseAdminClient();
+  const requestedType = 'instagram_business' as const;
+  const claimed = await createPublishOperation({
+    tenantId: input.tenantId, userId: input.userId, platform: 'instagram',
+    identityType: requestedType, identityId: input.instagramAccountId,
+    assetIds: input.assetIds, caption: input.caption,
+  });
+  if (claimed.reused) return operationReceipt(claimed.operation) as DirectPublishReceipt;
+
   const identity = await resolveSocialIdentity({
     tenantId: input.tenantId,
     provider: 'instagram',
@@ -143,19 +158,6 @@ export async function publishInstagramAssets(input: {
     creationId = String(container.id);
   }
 
-  await waitForInstagramContainerReady(creationId, token);
-
-  const published = await graphJson(
-    `https://graph.facebook.com/v21.0/${accountId}/media_publish`,
-    { creation_id: creationId, access_token: token }
-  );
-  const providerId = String(published.id || '');
-  if (!providerId) throw new Error('Instagram returned no published media ID');
-
-  const verified = await graphJson(
-    `https://graph.facebook.com/v21.0/${providerId}?fields=id,permalink,timestamp&access_token=${encodeURIComponent(token)}`
-  );
-  const verifiedAt = new Date().toISOString();
   const { data: post, error: postError } = await admin.from('social_posts').insert({
     tenant_id: input.tenantId,
     user_id: input.userId,
@@ -167,22 +169,93 @@ export async function publishInstagramAssets(input: {
     provider_identity_id: identity.provider_identity_id,
     media_urls: providerUrls,
     media_types: assets.map((asset) => asset.mime_type),
-    status: 'published',
-    instagram_post_id: providerId,
-    published_at: verifiedAt,
+    status: 'queued',
+    idempotency_key: claimed.operation.idempotency_key,
+    correlation_id: claimed.operation.correlation_id,
+    provider_container_id: creationId,
   }).select('id').single();
-  if (postError) throw new Error(`INSTAGRAM_PUBLISH_FAILED: published media ID could not be persisted: ${postError.message}`);
-  return {
-    published: true,
-    provider: 'instagram',
-    provider_post_id: providerId,
-    live_url: verified.permalink || null,
-    verified: String(verified.id || '') === providerId,
-    verification_timestamp: verifiedAt,
-    asset_ids: input.assetIds,
-    identity_id: identity.identity_id,
-    social_post_id: post.id,
-  };
+  if (postError) throw new Error(`INSTAGRAM_PUBLISH_FAILED: operation record could not be persisted: ${postError.message}`);
+  const retryAfter = new Date(Date.now() + 15_000).toISOString();
+  const { data: operation, error: operationError } = await admin.from('social_publish_operations').update({
+    social_post_id: post.id, provider_container_id: creationId,
+    state: 'provider_processing', retry_after: retryAfter, attempt_count: 1,
+    updated_at: new Date().toISOString(),
+  }).eq('id', claimed.operation.id).eq('tenant_id', input.tenantId).select('*').single();
+  if (operationError) throw new Error(operationError.message);
+  return operationReceipt(operation) as DirectPublishReceipt;
+}
+
+export async function reconcileInstagramPublishOperation(operationId: string) {
+  const admin = createSupabaseAdminClient();
+  const workerId = `instagram-reconcile:${process.pid}`;
+  const now = new Date();
+  const { data: operation, error } = await admin.from('social_publish_operations').update({
+    locked_by: workerId, locked_until: new Date(now.getTime() + 60_000).toISOString(),
+    reconciliation_timestamp: now.toISOString(), state: 'verifying',
+  }).eq('id', operationId).in('state', ['provider_processing','reconciliation_required','failed_retryable'])
+    .or(`locked_until.is.null,locked_until.lt.${now.toISOString()}`).select('*').maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!operation) return null;
+
+  const integration = await (await import('@/services/instagram/instagramIntegrationService'))
+    .getInstagramIntegrationWithToken(admin, {
+      tenantId: operation.tenant_id, instagramAccountId: operation.provider_identity_id,
+    });
+  if (!integration) throw new Error('INSTAGRAM_IDENTITY_NOT_FOUND');
+  const token = integration.pageAccessToken;
+  const container = await graphJson(`https://graph.facebook.com/v21.0/${operation.provider_container_id}?fields=status_code,status&access_token=${encodeURIComponent(token)}`);
+  if (!['FINISHED','ERROR','EXPIRED'].includes(String(container.status_code))) {
+    const attempts = Number(operation.attempt_count || 0) + 1;
+    const terminal = attempts >= 12;
+    const next = new Date(Date.now() + Math.min(300, 5 * (2 ** Math.min(attempts, 6))) * 1000).toISOString();
+    const { data } = await admin.from('social_publish_operations').update({
+      state: terminal ? 'reconciliation_required' : 'provider_processing', attempt_count: attempts,
+      retry_after: next, locked_by: null, locked_until: null, retry_safe: false,
+      last_provider_response: container, updated_at: new Date().toISOString(),
+    }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
+    return operationReceipt(data);
+  }
+  if (container.status_code !== 'FINISHED') {
+    const { data } = await admin.from('social_publish_operations').update({
+      state: 'failed_terminal', retry_safe: true, failure_code: 'INSTAGRAM_CONTAINER_FAILED',
+      failure_message: String(container.status || container.status_code), last_provider_response: container,
+      locked_by: null, locked_until: null, updated_at: new Date().toISOString(),
+    }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
+    return operationReceipt(data);
+  }
+  const published = await graphJson(`https://graph.facebook.com/v21.0/${integration.instagram_account_id}/media_publish`, {
+    creation_id: operation.provider_container_id, access_token: token,
+  });
+  const providerId = String(published.id || '');
+  if (!providerId) throw new Error('INSTAGRAM_MISSING_MEDIA_ID');
+  const verified = await graphJson(`https://graph.facebook.com/v21.0/${providerId}?fields=id,permalink,timestamp,username&access_token=${encodeURIComponent(token)}`);
+  if (String(verified.id || '') !== providerId) throw new Error('INSTAGRAM_VERIFICATION_FAILED');
+  const verifiedAt = new Date().toISOString();
+  await admin.from('social_posts').update({
+    status: 'published', instagram_post_id: providerId, provider_permalink: verified.permalink || null,
+    live_url: verified.permalink || null, published_at: verified.timestamp || verifiedAt,
+    verification_timestamp: verifiedAt, retry_safe: false,
+  }).eq('tenant_id', operation.tenant_id).eq('id', operation.social_post_id);
+  const { data: completed, error: completeError } = await admin.from('social_publish_operations').update({
+    state: 'published', provider_post_id: providerId, provider_permalink: verified.permalink || null,
+    provider_identity_verified: true, verification_timestamp: verifiedAt,
+    published_at: verified.timestamp || verifiedAt, retry_safe: false,
+    last_provider_response: { id: verified.id, permalink: verified.permalink, timestamp: verified.timestamp },
+    locked_by: null, locked_until: null, retry_after: null, updated_at: verifiedAt,
+  }).eq('id', operation.id).eq('tenant_id', operation.tenant_id).select('*').single();
+  if (completeError) throw new Error(completeError.message);
+  return operationReceipt(completed);
+}
+
+export async function reconcileDueInstagramOperations(limit = 25) {
+  const admin = createSupabaseAdminClient();
+  const { data, error } = await admin.from('social_publish_operations').select('id')
+    .eq('platform', 'instagram').in('state', ['provider_processing','failed_retryable'])
+    .or(`retry_after.is.null,retry_after.lte.${new Date().toISOString()}`).limit(limit);
+  if (error) throw new Error(error.message);
+  const results = [];
+  for (const row of data || []) results.push(await reconcileInstagramPublishOperation(row.id));
+  return results;
 }
 
 export async function publishXAssets(input: {

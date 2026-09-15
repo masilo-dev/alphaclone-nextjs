@@ -465,7 +465,6 @@ defineConnectorTool({
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
     const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
 
-    rejectUnresolvedAttachmentRefs(args);
     const filename = args.filename || args.file_name;
     const mimeType = args.mime_type || args.content_type;
     const contentBase64 = args.content_base64 || args.file_base64 || args.file || args.base64;
@@ -478,6 +477,30 @@ defineConnectorTool({
     rejectLocalAiPaths(filename, 'filename');
 
     let mediaInput: any = null;
+
+    if (args.openai_file_id || args.local_file_path) {
+      try {
+        const { resolveAttachmentReference, readAttachmentStream } = await import('@/lib/media/attachmentResolver');
+        const { uploadSocialMediaFromBuffer, detectMimeFromSignature } = await import('@/lib/social/mediaUpload');
+        const attachment = await resolveAttachmentReference({
+          openaiFileId: args.openai_file_id,
+          localFilePath: args.local_file_path,
+        });
+        const maxBytes = Number(process.env.SOCIAL_MEDIA_MAX_UPLOAD_BYTES || 200 * 1024 * 1024);
+        const bytes = await readAttachmentStream(attachment, maxBytes);
+        const detectedMime = detectMimeFromSignature(bytes);
+        if (!detectedMime) throw new Error('MEDIA_UNSUPPORTED_TYPE: file signature is not supported');
+        const asset = await uploadSocialMediaFromBuffer({
+          tenantId, userId, buffer: bytes,
+          filename: filename || attachment.filename,
+          mimeType: detectedMime,
+          altText: args.alt_text,
+        });
+        return asset;
+      } catch (err: any) {
+        throwConnectorError('MEDIA_INGESTION_FAILED', err?.message || 'Attachment resolution failed', err);
+      }
+    }
 
     if (dataUrl || (contentBase64 && String(contentBase64).startsWith('data:'))) {
       mediaInput = {
@@ -1199,10 +1222,10 @@ defineConnectorTool({
     asset_ids: z.array(z.string()).optional(),
     media_asset_ids: z.array(z.string()).optional(),
     media_urls: z.array(z.string()).optional(),
-    platform: z.enum(['facebook', 'linkedin']).optional(),
+    platform: z.enum(['facebook', 'linkedin', 'instagram']).optional(),
     platforms: z.array(z.string()).optional(),
     identity_type: z
-      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
+      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization', 'instagram_business', 'instagram_creator'])
       .optional(),
     identity_id: z.string().optional(),
     page_id: z.string().optional(),
@@ -1236,11 +1259,11 @@ defineConnectorTool({
       asset_ids: { type: 'array', items: { type: 'string' } },
       media_asset_ids: { type: 'array', items: { type: 'string' } },
       media_urls: { type: 'array', items: { type: 'string' } },
-      platform: { type: 'string', enum: ['facebook', 'linkedin'] },
+      platform: { type: 'string', enum: ['facebook', 'linkedin', 'instagram'] },
       platforms: { type: 'array', items: { type: 'string' } },
       identity_type: {
         type: 'string',
-        enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+        enum: ['facebook_page', 'linkedin_person', 'linkedin_organization', 'instagram_business', 'instagram_creator'],
       },
       identity_id: { type: 'string' },
       page_id: { type: 'string' },
@@ -1258,7 +1281,8 @@ defineConnectorTool({
       throwConnectorError('INVALID_INPUT', 'caption is required');
     }
 
-    const platformRaw = (args.platform || (Array.isArray(args.platforms) ? args.platforms[0] : 'facebook')).toLowerCase();
+    const impliedLinkedIn = Boolean(args.linkedin_organization_id || args.identity_type === 'linkedin_person' || args.identity_type === 'linkedin_organization');
+    const platformRaw = (args.platform || (Array.isArray(args.platforms) ? args.platforms[0] : impliedLinkedIn ? 'linkedin' : 'facebook')).toLowerCase();
     const platform: 'facebook' | 'linkedin' | 'instagram' = platformRaw === 'linkedin' ? 'linkedin' : platformRaw === 'instagram' ? 'instagram' : 'facebook';
 
     let identityId = args.identity_id || args.page_id || args.linkedin_organization_id || undefined;
@@ -1283,12 +1307,28 @@ defineConnectorTool({
 
     const contentBase64 = args.content_base64 || args.file_base64 || args.file;
     const sourceUrl = args.source_url || args.url || args.media_url;
-    rejectUnresolvedAttachmentRefs(args);
     const filename = args.filename || args.file_name;
     const mimeType = args.mime_type || args.content_type;
 
     const finalMediaAssetIds: string[] = [...normalized.mediaAssetIds];
     const finalMediaUrls: string[] = [...normalized.mediaUrls];
+
+    if (args.openai_file_id || args.local_file_path) {
+      try {
+        const { resolveAttachmentReference, readAttachmentStream } = await import('@/lib/media/attachmentResolver');
+        const { uploadSocialMediaFromBuffer, detectMimeFromSignature } = await import('@/lib/social/mediaUpload');
+        const attachment = await resolveAttachmentReference({ openaiFileId: args.openai_file_id, localFilePath: args.local_file_path });
+        const bytes = await readAttachmentStream(attachment, Number(process.env.SOCIAL_MEDIA_MAX_UPLOAD_BYTES || 200 * 1024 * 1024));
+        const detectedMime = detectMimeFromSignature(bytes);
+        if (!detectedMime) throw new Error('MEDIA_UNSUPPORTED_TYPE: file signature is not supported');
+        const asset = await uploadSocialMediaFromBuffer({
+          tenantId, userId, buffer: bytes, filename: filename || attachment.filename, mimeType: detectedMime,
+        });
+        finalMediaAssetIds.push(asset.media_asset_id);
+      } catch (err: any) {
+        throwConnectorError('MEDIA_INGESTION_FAILED', err?.message || 'Attachment resolution failed', err);
+      }
+    }
 
     // normalizePublishMediaArgs already resolves URL inputs; do not ingest them a second time.
     const hasRawMediaInput = Boolean(contentBase64 || args.data_url || (args.url && !args.source_url && !args.media_url));
@@ -1418,6 +1458,29 @@ registerTool('social-publishing', {
   },
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
+    const admin = createSupabaseAdminClient();
+    const { data: operation } = await admin.from('social_publish_operations').select('*')
+      .eq('tenant_id', tenantId).eq('social_post_id', args.social_post_id)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (operation?.platform === 'instagram') {
+      if (['provider_processing', 'failed_retryable'].includes(operation.state)
+          && (!operation.retry_after || new Date(operation.retry_after).getTime() <= Date.now())) {
+        const { reconcileInstagramPublishOperation } = await import('@/lib/social/providerAssetPublishers');
+        const reconciled = await reconcileInstagramPublishOperation(operation.id);
+        if (reconciled) return reconciled;
+      }
+      const { operationReceipt } = await import('@/lib/social/publishOperationService');
+      const receipt = operationReceipt(operation);
+      if (operation.state !== 'published') {
+        return toMcpContent(errorResult(
+          'verify_social_post_published',
+          operation.state === 'reconciliation_required' ? 'PUBLISH_STATUS_UNKNOWN' : 'PUBLISH_IN_PROGRESS',
+          'The provider operation is still being reconciled. Do not retry it yet.',
+          receipt,
+        ));
+      }
+      return receipt;
+    }
     const service = getSocialPublishingService();
     const result = await service.verifyProviderPost({
       tenantId,
@@ -1570,7 +1633,7 @@ registerTool('social-publishing', {
     const supabase = createSupabaseAdminClient();
     const { data: post, error } = await supabase
       .from('social_posts')
-      .select('id, status, facebook_post_id, facebook_page_id, linkedin_post_urn')
+      .select('id, status, platform, platforms, facebook_post_id, facebook_page_id, instagram_post_id, linkedin_post_urn')
       .eq('tenant_id', tenantId)
       .eq('id', args.social_post_id)
       .maybeSingle();
@@ -1579,6 +1642,20 @@ registerTool('social-publishing', {
 
     void userId;
     const evidence: Record<string, unknown> = {};
+    const platforms = Array.isArray(post.platforms) ? post.platforms : [post.platform].filter(Boolean);
+    if (args.delete_from_provider !== false && (post.instagram_post_id || platforms.includes('instagram'))) {
+      return {
+        deleted: false,
+        internal_deleted: false,
+        provider_deletion_supported: false,
+        social_post_id: post.id,
+        provider_post_id: post.instagram_post_id || null,
+        error: {
+          code: 'INSTAGRAM_PROVIDER_DELETE_UNAVAILABLE',
+          message: 'The connected Instagram Content Publishing API cannot delete this published item. AlphaClone kept the ledger record unchanged.',
+        },
+      };
+    }
     if (args.delete_from_provider !== false && post.facebook_post_id) {
       const { getFacebookIntegrationWithToken } = await import(
         '@/services/facebook/facebookIntegrationService'
@@ -1600,6 +1677,12 @@ registerTool('social-publishing', {
           provider_body: body?.error ? { error: body.error } : { success: true },
         };
       }
+    }
+
+    const providerDeleteFailed = args.delete_from_provider !== false && post.facebook_post_id
+      && (evidence.facebook_delete as any)?.ok !== true;
+    if (providerDeleteFailed) {
+      return { deleted: false, internal_deleted: false, social_post_id: post.id, provider_evidence: evidence };
     }
 
     await supabase

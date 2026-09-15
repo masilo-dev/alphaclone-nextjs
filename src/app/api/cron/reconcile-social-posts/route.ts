@@ -88,8 +88,12 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const { reconcileDueInstagramOperations } = await import('@/lib/social/providerAssetPublishers');
+  const instagramOperations = await reconcileDueInstagramOperations(25);
+
   return NextResponse.json({
     processed: results.length,
     results,
+    instagram_operations: instagramOperations,
   });
 }
