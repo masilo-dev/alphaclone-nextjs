@@ -34,8 +34,7 @@ export async function GET() {
     process.env.READINESS_ALWAYS_200 === 'true' || process.env.READINESS_ALWAYS_200 === '1';
   const lightDb =
     process.env.READINESS_LIGHT_DB === 'true' ||
-    process.env.READINESS_LIGHT_DB === '1' ||
-    process.env.NODE_ENV === 'production';
+    process.env.READINESS_LIGHT_DB === '1';
   const configured = configurationReady();
   let dbStatus: 'unchecked' | 'ready' | 'degraded' = 'unchecked';
 
@@ -52,10 +51,12 @@ export async function GET() {
       dbStatus = 'degraded';
     }
   } else if (configured && lightDb) {
-    dbStatus = 'ready';
+    dbStatus = 'unchecked';
   }
 
   const opsReady = optionalOpsReady();
+  // The dedicated liveness endpoint is cheap. Readiness must never claim the
+  // database is ready when it was intentionally not checked.
   const healthy = configured && dbStatus === 'ready';
   const body = {
     status: healthy ? 'ok' : 'degraded',

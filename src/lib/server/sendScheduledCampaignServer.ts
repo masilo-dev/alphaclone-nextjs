@@ -657,6 +657,19 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
     let failedCount = 0;
 
     for (const recipient of emailRecipients) {
+      // Atomic recipient claim: concurrent workers may read the same pending
+      // batch, but only one is allowed to cross the provider side-effect gate.
+      const { data: claimedRecipient, error: claimError } = await admin
+        .from("campaign_recipients")
+        .update({ status: "sending", updated_at: new Date().toISOString() })
+        .eq("id", recipient.id)
+        .eq("tenant_id", tenantId)
+        .eq("campaign_id", campaignId)
+        .eq("status", "pending")
+        .select("id")
+        .maybeSingle();
+      if (claimError || !claimedRecipient) continue;
+
       if (await isEmailSuppressed(String(c.tenant_id || ""), recipient.email)) {
         await admin
           .from("campaign_recipients")
@@ -669,7 +682,6 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         continue;
       }
 
-      const tenantId = String(c.tenant_id || "");
       const consentOk = await hasRecipientMarketingConsent(admin, tenantId, {
         email: recipient.email,
         contactId: recipient.contact_id,
@@ -827,6 +839,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         campaignId: String(c.id || ''),
         initiationSource: 'campaign.scheduled',
         preferredProvider,
+        idempotencyKey: `campaign:${tenantId}:${campaignId}:recipient:${recipient.id}`,
       });
 
       if (sendResult.success) {

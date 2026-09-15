@@ -13,7 +13,7 @@
     "start:worker": "tsx src/worker/index.ts",
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint",
     "typecheck": "rm -rf .next/types .next/dev/types && cross-env NODE_OPTIONS=--max-old-space-size=7168 tsc --noEmit",
-    "test": "node --import tsx --test tests/unit/*.test.mjs",
+    "test": "node --require ./tests/server-only-register.cjs --import tsx --test tests/unit/*.test.mjs",
     "guard:design-system": "node --import tsx scripts/design-system-guard.mjs",
     "validate:prod-guards": "npm run guard:design-system && node --import tsx --test tests/unit/metrics-and-canonical-routes.test.mjs",
     "test:finance-integrity": "node tests/finance-integrity.integration.mjs",

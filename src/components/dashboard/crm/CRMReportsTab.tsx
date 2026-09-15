@@ -54,9 +54,16 @@ export default function CRMReportsTab() {
       });
       const stale = leads.filter((l: any) => {
         const age = l.created_at ? (Date.now() - new Date(l.created_at).getTime()) / (1000 * 60 * 60 * 24) : 0;
-        return age > 30 && !converted;
+        return age > 30 && !isLeadConverted(l.status, l.client_id);
       }).length;
-      const contacted = Math.round(leads.length * 0.62);
+      const contacted = leads.filter((lead) => {
+        const stage = String(lead.stage || lead.status || '').trim().toLowerCase();
+        return Boolean(
+          lead.client_id ||
+          lead.outreachStatus ||
+          ['contacted', 'replied', 'qualified', 'proposal', 'negotiation', 'won', 'converted'].includes(stage)
+        );
+      }).length;
       setLeadStats({
         total: leads.length,
         qualified,
@@ -73,13 +80,13 @@ export default function CRMReportsTab() {
     leadStats.conversion == null ? 'Not tracked' : `${leadStats.conversion}%`;
 
   const leadFunnel = useMemo(() => {
-    const stages: { key: string; label: string; count: number; benchmarkConversion?: number }[] = [];
-    stages.push({ key: 'captured', label: 'Leads captured', count: Math.max(leadStats.total, 1), benchmarkConversion: 60 });
-    stages.push({ key: 'contacted', label: 'Contacted', count: Math.max(leadStats.contacted, Math.round(leadStats.total * 0.55)), benchmarkConversion: 45 });
-    stages.push({ key: 'qualified', label: 'Qualified', count: Math.max(leadStats.qualified, Math.round(leadStats.total * 0.2)), benchmarkConversion: 35 });
-    stages.push({ key: 'opportunity', label: 'Opportunity', count: Math.max(pipeline.reduce((s, p) => s + p.count, 0), 1), benchmarkConversion: 40 });
+    const stages: { key: string; label: string; count: number }[] = [];
+    stages.push({ key: 'captured', label: 'Leads captured', count: leadStats.total });
+    stages.push({ key: 'contacted', label: 'Contacted', count: leadStats.contacted });
+    stages.push({ key: 'qualified', label: 'Qualified', count: leadStats.qualified });
+    stages.push({ key: 'opportunity', label: 'Opportunity', count: pipeline.reduce((s, p) => s + p.count, 0) });
     const won = pipeline.find((p) => p.stage.toLowerCase().includes('won'));
-    stages.push({ key: 'won', label: 'Won / customer', count: Math.max(won?.count ?? Math.round(pipeline.reduce((s, p) => s + p.count, 0) * 0.18), 1) });
+    stages.push({ key: 'won', label: 'Won / customer', count: won?.count ?? 0 });
     return stages;
   }, [leadStats, pipeline]);
 
@@ -97,17 +104,17 @@ export default function CRMReportsTab() {
 
     if (leadStats.stale > 0 && leadStats.total > 0) {
       const stalePct = Math.round((leadStats.stale / leadStats.total) * 100);
-      whyItMatters.push(`${stalePct}% of leads are untouched for 30+ days — response-time decay is the single biggest avoidable conversion loss.`);
+      whyItMatters.push(`${stalePct}% of leads are older than 30 days and have not converted; they need an explicit next action or lifecycle exit.`);
     }
     if (leadStats.conversion != null && leadStats.conversion < 3) {
-      whyItMatters.push(`Conversion under 3% indicates a lead-quality or qualification problem, not a follow-up volume problem.`);
+      whyItMatters.push('Conversion is under 3%; review source quality, qualification, and follow-up history before changing acquisition spend.');
     }
     if (whyItMatters.length === 0) {
       whyItMatters.push('CRM indicators are balanced — protect lead velocity above raw count.');
     }
 
-    if (leadStats.stale > 0) whatToDo.push(`Work the ${leadStats.stale} stale-lead queue today — even 1 re-contact dramatically recovers dormant value.`);
-    whatToDo.push('Re-qualify once before blaming lead source: 62% of underperforming pipelines have a qualification bottleneck, not a top-of-funnel problem.');
+    if (leadStats.stale > 0) whatToDo.push(`Review the ${leadStats.stale} stale lead${leadStats.stale === 1 ? '' : 's'} and record a next action, lifecycle exit, or suppression reason.`);
+    whatToDo.push('Compare qualification and follow-up history by lead source before changing acquisition spend.');
     whatToDo.push('Flag customer accounts >45 days without activity for explicit re-engagement or lifecycle exit.');
 
     return { whatChanged, whyItMatters, whatToDo };
@@ -138,7 +145,8 @@ export default function CRMReportsTab() {
         <IntelligentKpiCard
           label="Total leads"
           current={leadStats.total}
-          previous={Math.max(1, Math.round(leadStats.total * 0.95))}
+          previous={leadStats.total}
+          referencePeriod="Current CRM snapshot"
           href="/dashboard/leads"
           icon={Users}
           iconColor="#14b8a6"
@@ -148,7 +156,8 @@ export default function CRMReportsTab() {
         <IntelligentKpiCard
           label="Qualified"
           current={leadStats.qualified}
-          previous={Math.max(1, Math.round(leadStats.qualified * 1.08))}
+          previous={leadStats.qualified}
+          referencePeriod="Current CRM snapshot"
           href="/dashboard/leads?status=qualified"
           icon={TrendingUp}
           iconColor="#10b981"
@@ -158,7 +167,8 @@ export default function CRMReportsTab() {
         <IntelligentKpiCard
           label="Conversion %"
           current={leadStats.conversion ?? 0}
-          previous={(leadStats.conversion ?? 0) * 0.9}
+          previous={leadStats.conversion ?? 0}
+          referencePeriod={leadStats.conversionUnavailable || 'Current CRM snapshot'}
           href="/dashboard/leads"
           icon={BarChart3}
           iconColor="#06b6d4"
@@ -193,8 +203,8 @@ export default function CRMReportsTab() {
               </p>
               <p className="mt-1 text-[12px] text-[var(--ws-text-secondary)]">
                 {leadStats.stale > 0
-                  ? 'Stale leads convert at 0.4× the velocity of freshly-responded opportunities — recover before they exit your funnel silently.'
-                  : 'Fix qualification before increasing acquisition spend — quality beats quantity when downstream rates collapse.'}
+                  ? 'These records need a documented follow-up, lifecycle exit, or suppression decision so they do not disappear from the process.'
+                  : 'Inspect source, qualification, and activity evidence before increasing acquisition spend.'}
               </p>
             </div>
           </div>
@@ -210,7 +220,7 @@ export default function CRMReportsTab() {
             Lead → customer funnel
           </h3>
         </div>
-        <FunnelVisualization stages={leadFunnel} showBenchmarks />
+        <FunnelVisualization stages={leadFunnel} showBenchmarks={false} />
       </section>
 
       <section className={cn(WORKSPACE.panel.base, 'p-4 md:p-5')}>

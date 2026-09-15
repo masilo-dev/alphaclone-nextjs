@@ -5,7 +5,7 @@ const FEATURED_PARTNER_IDS = [
   'facebook',
   'linkedin',
   'linkedin-organization',
-  'cal.com',
+  'calendly',
   'zoho',
   'brevo',
   'resend',

@@ -5,6 +5,11 @@ import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { runNotificationDigests } from '@/lib/email/notificationDigestEngine';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
+import {
+    runChaseMorningBriefEmails,
+    runCriticalChaseAlerts,
+    runChaseEndOfDayEmails,
+} from '@/lib/email/runChaseOwnerEmails';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +39,14 @@ export async function GET(req: NextRequest) {
             console.error('Daily digest emails:', digestErr);
         }
         console.log(`[Cron] Emails took ${Date.now() - emailStart}ms`);
+
+        // 4. Owner chase notifications. Each channel is independently bounded
+        // so one provider failure cannot suppress the remaining daily work.
+        const chase = {
+            morning: await runChaseMorningBriefEmails().catch((error) => ({ error: String(error) })),
+            critical: await runCriticalChaseAlerts().catch((error) => ({ error: String(error) })),
+            endOfDay: await runChaseEndOfDayEmails().catch((error) => ({ error: String(error) })),
+        };
 
         const intelligenceStart = Date.now();
         let intelligence: { tenantId: string; score: number } | null = null;
@@ -72,6 +85,7 @@ export async function GET(req: NextRequest) {
             contracts: contractResults,
             billing: billingResults,
             digest,
+            chase,
             intelligence,
             accountDeletions,
             dataDeletionRequests,

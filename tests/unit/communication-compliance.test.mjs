@@ -86,7 +86,7 @@ test('email shell is table based, accessible, localised, and plain-text complete
   });
   assert.match(rendered.html, /role="presentation"/);
   assert.match(rendered.html, /lang="en"/);
-  assert.match(rendered.html, /Privacy policy/);
+  assert.match(rendered.html, /Privacy Policy/);
   assert.doesNotMatch(rendered.html, /Unsubscribe/);
   assert.match(rendered.text, /active service agreement/);
 });

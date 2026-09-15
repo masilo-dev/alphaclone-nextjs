@@ -47,17 +47,6 @@ function compactProperty(raw: unknown): Record<string, unknown> {
   const normalizedType = normalizePropertyType(prop.type);
   compact.type = normalizedType;
 
-  // Invalid manifests sometimes put human text in `type` — preserve it as description.
-  if (
-    typeof prop.type === 'string' &&
-    !VALID_JSON_SCHEMA_TYPES.has(prop.type) &&
-    !compact.description
-  ) {
-    compact.description = prop.type;
-  } else if (typeof prop.description === 'string' && prop.description.trim()) {
-    compact.description = prop.description;
-  }
-
   if (Array.isArray(prop.enum) && prop.enum.length > 0 && prop.enum.length <= MAX_ENUM_VALUES) {
     compact.enum = prop.enum;
   }

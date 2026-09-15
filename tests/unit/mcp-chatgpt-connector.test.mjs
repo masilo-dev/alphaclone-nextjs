@@ -107,6 +107,7 @@ const CONNECTOR_FILES = [
   "integrations-health.ts",
   "autonomous-ops.ts",
   "email-ops.ts",
+  "social-publishing.ts",
 ];
 
 describe("mcp connector helpers", () => {

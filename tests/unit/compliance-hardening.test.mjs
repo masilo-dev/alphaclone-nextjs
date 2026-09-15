@@ -12,8 +12,9 @@ test("ToolPolicyGate queues high-risk and is not always-allow", async () => {
     "utf8",
   );
   assert.match(src, /queue_approval/);
-  // Playbooks still queue high-risk; MCP/Bonnie auto-execute authenticated calls (no DPA gate).
-  assert.match(src, /source === 'mcp' \|\| source === 'bonnie'/);
+  // Explicit MCP calls execute directly; in-app Bonnie and playbooks retain oversight.
+  assert.match(src, /source === 'mcp'/);
+  assert.doesNotMatch(src, /source === 'mcp' \|\| source === 'bonnie'/);
   assert.equal(/INTENTIONALLY DISABLED/.test(src), false);
   assert.match(src, /requiresApproval/);
 });

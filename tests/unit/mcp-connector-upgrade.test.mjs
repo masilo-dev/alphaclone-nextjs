@@ -34,8 +34,10 @@ test('email-ops and social-publishing source contracts', () => {
   assert.match(emailOps, /sendEmailServer/);
 
   const social = fs.readFileSync(path.join(root, 'src/lib/mcp/tools/social-publishing.ts'), 'utf8');
-  assert.match(social, /media:\s*z\.array/);
-  assert.match(social, /ingestPublishMedia/);
+  const socialContract = fs.readFileSync(path.join(root, 'src/lib/mcp/tools/socialPublishContract.ts'), 'utf8');
+  const socialHandler = fs.readFileSync(path.join(root, 'src/lib/mcp/tools/socialPublishTool.ts'), 'utf8');
+  assert.match(socialContract, /media:\s*z\.array/);
+  assert.match(socialHandler, /ingestPublishMedia/);
   assert.match(social, /data_url/);
 
   const registry = fs.readFileSync(path.join(root, 'src/lib/mcp/tool-registry.ts'), 'utf8');

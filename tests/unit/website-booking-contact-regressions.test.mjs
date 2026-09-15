@@ -9,7 +9,7 @@ import ts from "typescript";
 const require = createRequire(import.meta.url);
 const root = resolve(dirname(new URL(import.meta.url).pathname), "../..");
 function load(file, mocks = {}) {
-  const module = { exports: {} };
+  const runtimeModule = { exports: {} };
   const source = readFileSync(resolve(root, file), "utf8");
   const code = ts.transpileModule(source, {
     compilerOptions: {
@@ -29,10 +29,10 @@ function load(file, mocks = {}) {
       if (id.startsWith("@/")) return load(`src/${id.slice(2)}.ts`, mocks);
       return require(id);
     },
-    module,
-    module.exports,
+    runtimeModule,
+    runtimeModule.exports,
   );
-  return module.exports;
+  return runtimeModule.exports;
 }
 const response = {
   json: (body, init) => ({ body, status: init?.status ?? 200 }),

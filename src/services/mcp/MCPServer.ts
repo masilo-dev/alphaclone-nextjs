@@ -8324,12 +8324,10 @@ Return ONLY a JSON array of 60 objects:
           const tenant_id = this.requireTenant(a);
           const systemKey = name.replace('nexus_', '');
           const nexus = new AlphaNexus(tenant_id);
-          // Pass through any extra params (e.g. auto_send_outreach, outreach_context, user_id)
-          const nexusParams: Record<string, unknown> = {};
-          if (a.auto_send_outreach !== undefined) nexusParams.auto_send_outreach = a.auto_send_outreach;
-          if (a.outreach_context !== undefined) nexusParams.outreach_context = a.outreach_context;
-          if (a.user_id !== undefined) nexusParams.user_id = a.user_id;
-          else if (this.ctx?.userId) nexusParams.user_id = this.ctx.userId;
+          // The manifest is the public Nexus contract. Pass its explicit controls
+          // through to the canonical service while keeping tenancy server-owned.
+          const { tenant_id: _ignoredTenant, ...nexusParams } = a;
+          nexusParams.user_id = a.user_id ?? this.ctx?.userId;
           const response = await nexus.executeSystemAction(systemKey, nexusParams);
           result = { content: [{ type: 'text', text: JSON.stringify(response, null, 2) }] };
           break;

@@ -95,17 +95,17 @@ function classifyRisk(toolName: string): ToolCapabilityMeta['risk_level'] {
 }
 
 function permissionForTool(toolName: string): string {
-  const module = moduleForTool(toolName);
+  const toolModule = moduleForTool(toolName);
   if (!WRITE_PATTERN.test(toolName) && /^(get|list|search|fetch|inspect|read|status|health)/.test(toolName)) {
-    if (module === 'email') return 'email:read';
-    if (module === 'social') return 'social:read';
-    if (module === 'documents') return 'documents:read';
-    if (module === 'calendar') return 'calendar:read';
-    if (module === 'finance') return 'accounting:read';
-    if (/crm|lead|contact|compan/.test(module)) return 'crm:read';
+    if (toolModule === 'email') return 'email:read';
+    if (toolModule === 'social') return 'social:read';
+    if (toolModule === 'documents') return 'documents:read';
+    if (toolModule === 'calendar') return 'calendar:read';
+    if (toolModule === 'finance') return 'accounting:read';
+    if (/crm|lead|contact|compan/.test(toolModule)) return 'crm:read';
     return 'platform:read';
   }
-  return PERMISSION_BY_MODULE[module] || 'platform:read';
+  return PERMISSION_BY_MODULE[toolModule] || 'platform:read';
 }
 
 export function buildToolCapabilityMeta(

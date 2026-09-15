@@ -50,12 +50,12 @@ describe('production contract: email attachments', () => {
 describe('production contract: notification types', () => {
   it('maps MCP failure events to valid notification_type values', () => {
     const mapped = mapEventTypeToNotificationType('mcp.action_failed');
-    assert.ok((NOTIFICATION_TYPES as readonly string[]).includes(mapped));
+    assert.ok(NOTIFICATION_TYPES.includes(mapped));
   });
 
   it('maps social publish events to valid notification_type values', () => {
     const mapped = mapEventTypeToNotificationType('social.post_published');
-    assert.ok((NOTIFICATION_TYPES as readonly string[]).includes(mapped));
+    assert.ok(NOTIFICATION_TYPES.includes(mapped));
   });
 
   it('preserves canonical enum members', () => {
@@ -95,7 +95,7 @@ describe('production contract: quota entitlements', () => {
   });
 
   it('PREMIUM/ENTERPRISE/CUSTOM = unlimited', () => {
-    for (const tier of ['premium', 'enterprise', 'custom'] as const) {
+    for (const tier of ['premium', 'enterprise', 'custom']) {
       assert.equal(normalizePlanTier(tier), 'premium');
       assert.equal(getDailyLimitForResource(tier, 'mcp_executions'), null);
     }

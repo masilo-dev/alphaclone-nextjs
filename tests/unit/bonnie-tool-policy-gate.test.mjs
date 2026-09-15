@@ -1,40 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evaluateToolPolicy } from '../../src/lib/ai/ToolPolicyGate.ts';
+import fs from 'node:fs';
+import { classifyToolRisk, evaluateToolPolicy } from '../../src/lib/ai/ToolPolicyGate.ts';
 
-test('Bonnie source auto-allows social publish without DPA or approval queue', async () => {
-  const decision = await evaluateToolPolicy({
-    tenantId: 'tenant-test',
-    userId: 'user-test',
-    toolName: 'publish_social_post',
-    source: 'bonnie',
-    args: { caption: 'Hello from Bonnie', platforms: ['facebook'] },
-  });
-  assert.equal(decision.outcome, 'allow');
-  assert.equal(decision.riskClass, 'send');
-  assert.match(decision.reason, /Bonnie auto-executes/i);
+test('Bonnie social publishing stays behind the policy and approval path', () => {
+  const source = fs.readFileSync(new URL('../../src/lib/ai/ToolPolicyGate.ts', import.meta.url), 'utf8');
+  assert.equal(classifyToolRisk('publish_social_post'), 'send');
+  assert.doesNotMatch(source, /source === 'mcp' \|\| source === 'bonnie'/);
+  assert.match(source, /requiresApproval/);
 });
 
-test('Bonnie source auto-allows invoice chasing', async () => {
-  const decision = await evaluateToolPolicy({
-    tenantId: 'tenant-test',
-    userId: 'user-test',
-    toolName: 'nexus_invoice_chasing',
-    source: 'bonnie',
-  });
-  assert.equal(decision.outcome, 'allow');
-  assert.equal(decision.riskClass, 'financial');
+test('Bonnie invoice chasing is classified as financial', () => {
+  assert.equal(classifyToolRisk('nexus_invoice_chasing'), 'financial');
 });
 
-test('Bonnie source auto-allows outreach send', async () => {
-  const decision = await evaluateToolPolicy({
-    tenantId: 'tenant-test',
-    userId: 'user-test',
-    toolName: 'send_batch_outreach',
-    source: 'bonnie',
-  });
-  assert.equal(decision.outcome, 'allow');
-  assert.equal(decision.riskClass, 'send');
+test('Bonnie outreach is classified as a send action', () => {
+  assert.equal(classifyToolRisk('send_batch_outreach'), 'send');
 });
 
 test('MCP source still auto-allows publish tools', async () => {
@@ -48,13 +29,6 @@ test('MCP source still auto-allows publish tools', async () => {
   assert.equal(decision.riskClass, 'send');
 });
 
-test('publish_ prefix classifies as send for Bonnie allow path', async () => {
-  const decision = await evaluateToolPolicy({
-    tenantId: 'tenant-test',
-    userId: 'user-test',
-    toolName: 'publish_now',
-    source: 'bonnie',
-  });
-  assert.equal(decision.outcome, 'allow');
-  assert.equal(decision.riskClass, 'send');
+test('publish_ prefix classifies as send', () => {
+  assert.equal(classifyToolRisk('publish_now'), 'send');
 });

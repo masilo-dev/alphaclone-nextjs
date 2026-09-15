@@ -78,14 +78,24 @@ export async function countOpenTasks(
   admin: SupabaseClient,
   tenantId: string,
 ): Promise<number> {
-  const { count, error } = await admin
+  const baseQuery = admin
     .from('tasks')
     .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', tenantId)
-    .or('is_test_data.is.null,is_test_data.eq.false')
-    .not('status', 'in', closedTaskFilter());
+    .eq('tenant_id', tenantId);
+  const operationalQuery = typeof (baseQuery as any).or === 'function'
+    ? (baseQuery as any).or('is_test_data.is.null,is_test_data.eq.false')
+    : baseQuery;
+  const { count, error } = await operationalQuery.not('status', 'in', closedTaskFilter());
   if (error) {
-    warnCountFailure('open tasks', error);
+    // Older schemas may not yet expose is_test_data. Retry the same enum-safe
+    // count without that optional column before reporting zero.
+    const fallback = await admin
+      .from('tasks')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .not('status', 'in', closedTaskFilter());
+    if (!fallback.error) return fallback.count ?? 0;
+    warnCountFailure('open tasks', fallback.error);
     return 0;
   }
   return count ?? 0;

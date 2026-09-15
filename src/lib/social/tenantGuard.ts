@@ -98,7 +98,24 @@ export function assertSameTenant(
   if (!resourceTenantId || resourceTenantId !== tenantId) {
     throw new TenantIsolationError(
       `${resourceName} does not belong to this tenant`,
-      'CROSS_TENANT'
+      'NOT_FOUND'
     );
   }
+}
+
+const SECRET_FIELD_PATTERN = /(?:^|_)(?:access_?token|refresh_?token|page_?access_?token|client_?secret|api_?key|password|authorization|cookie|secret)(?:$|_)/i;
+
+/** Remove provider credentials before data crosses a tenant or MCP boundary. */
+export function stripSecretsForTenantBoundary<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripSecretsForTenantBoundary(item)) as T;
+  }
+  if (!value || typeof value !== 'object') return value;
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+    if (SECRET_FIELD_PATTERN.test(key)) continue;
+    sanitized[key] = stripSecretsForTenantBoundary(nested);
+  }
+  return sanitized as T;
 }

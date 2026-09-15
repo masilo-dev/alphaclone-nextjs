@@ -120,7 +120,7 @@ describe('sendEmailServer routes through gateway', () => {
     const source = await import('node:fs/promises').then((fs) =>
       fs.readFile('src/lib/email/sendEmailServer.ts', 'utf8'),
     );
-    assert.match(source, /sendViaEmailGateway/);
+    assert.match(source, /EmailExecutionService\.execute/);
     assert.doesNotMatch(source, /sendEmail\(/);
   });
 });

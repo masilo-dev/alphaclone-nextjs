@@ -150,6 +150,102 @@ defineConnectorTool({
 
 defineConnectorTool({
   module: 'reports-ops',
+  name: 'crm_pipeline_report',
+  description: 'Evidence-based CRM funnel, source conversion, deal value, win/loss, and stale-record report. Missing data is reported as unavailable rather than estimated.',
+  permission: 'reports:read',
+  rateLimitClass: 'heavy',
+  inputSchema: z.object({
+    tenant_id: tenantIdField,
+    days: z.number().int().min(1).max(365).optional().default(90),
+    stale_after_days: z.number().int().min(1).max(365).optional().default(30),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      days: { type: 'number', minimum: 1, maximum: 365, default: 90 },
+      stale_after_days: { type: 'number', minimum: 1, maximum: 365, default: 30 },
+    },
+    required: ['tenant_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const since = new Date(Date.now() - args.days * 86400000).toISOString();
+    const staleBefore = new Date(Date.now() - args.stale_after_days * 86400000).toISOString();
+    const [leadResult, dealResult] = await Promise.all([
+      supabase
+        .from('leads')
+        .select('id, status, stage, source, client_id, created_at, updated_at')
+        .eq('tenant_id', args.tenant_id)
+        .gte('created_at', since)
+        .limit(5000),
+      supabase
+        .from('deals')
+        .select('id, stage, value, source, created_at, updated_at')
+        .eq('tenant_id', args.tenant_id)
+        .gte('created_at', since)
+        .limit(5000),
+    ]);
+    if (leadResult.error) throwConnectorError('QUERY_FAILED', leadResult.error.message);
+    if (dealResult.error) throwConnectorError('QUERY_FAILED', dealResult.error.message);
+
+    const leads = leadResult.data || [];
+    const deals = dealResult.data || [];
+    const byLeadStage: Record<string, number> = {};
+    const byDealStage: Record<string, { count: number; value: number }> = {};
+    const bySource: Record<string, { leads: number; converted: number }> = {};
+    const terminalWon = new Set(['won', 'closed_won', 'converted', 'customer']);
+    const terminalLost = new Set(['lost', 'closed_lost', 'disqualified']);
+
+    for (const lead of leads as any[]) {
+      const stage = String(lead.stage || lead.status || 'unknown').toLowerCase();
+      const source = String(lead.source || 'unknown');
+      byLeadStage[stage] = (byLeadStage[stage] || 0) + 1;
+      bySource[source] ||= { leads: 0, converted: 0 };
+      bySource[source].leads += 1;
+      if (lead.client_id || terminalWon.has(stage)) bySource[source].converted += 1;
+    }
+    for (const deal of deals as any[]) {
+      const stage = String(deal.stage || 'unknown').toLowerCase();
+      byDealStage[stage] ||= { count: 0, value: 0 };
+      byDealStage[stage].count += 1;
+      byDealStage[stage].value += Number(deal.value || 0);
+    }
+
+    const won = deals.filter((deal: any) => terminalWon.has(String(deal.stage || '').toLowerCase())).length;
+    const lost = deals.filter((deal: any) => terminalLost.has(String(deal.stage || '').toLowerCase())).length;
+    const closed = won + lost;
+    const staleLeads = leads.filter((lead: any) => {
+      const stage = String(lead.stage || lead.status || '').toLowerCase();
+      return !lead.client_id && !terminalWon.has(stage) && !terminalLost.has(stage) && String(lead.updated_at || lead.created_at) < staleBefore;
+    }).length;
+
+    return {
+      window_days: args.days,
+      stale_after_days: args.stale_after_days,
+      leads: { total: leads.length, stale: staleLeads, by_stage: byLeadStage },
+      deals: {
+        total: deals.length,
+        total_value: deals.reduce((sum: number, deal: any) => sum + Number(deal.value || 0), 0),
+        by_stage: byDealStage,
+        won,
+        lost,
+        win_rate: closed > 0 ? Math.round((won / closed) * 1000) / 10 : null,
+        win_rate_unavailable_reason: closed > 0 ? null : 'No closed won/lost deals in the selected period.',
+      },
+      source_conversion: Object.entries(bySource).map(([source, values]) => ({
+        source,
+        ...values,
+        conversion_rate: values.leads > 0 ? Math.round((values.converted / values.leads) * 1000) / 10 : null,
+      })),
+      methodology: 'Counts use tenant-scoped CRM rows in the selected creation window. No benchmark, prior-period, or funnel values are inferred.',
+      generated_at: new Date().toISOString(),
+    };
+  },
+});
+
+defineConnectorTool({
+  module: 'reports-ops',
   name: 'customer_report',
   description: 'Customer report: active clients, stages, and recent activity.',
   permission: 'reports:read',

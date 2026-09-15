@@ -63,7 +63,7 @@ async function executeEnterpriseAction(
         subject: interpolate(String(config.subject || 'CRM update'), context),
         html: interpolate(String(config.body || config.html || config.message || ''), context),
         tenantId,
-        isPlatformNotification: true,
+        isPlatformNotification: false,
       });
       if (!result.success) throw new Error(result.error || 'send_email failed');
       return;
@@ -115,7 +115,7 @@ export async function runEnterpriseWorkflowsForTrigger(
 ): Promise<{ ran: number; failed: number }> {
   const { data: workflows, error } = await admin
     .from('workflows')
-    .select('id, name, trigger_conditions, execution_count')
+    .select('id, name, trigger_conditions')
     .eq('tenant_id', tenantId)
     .eq('trigger_type', triggerType)
     .eq('is_active', true);
@@ -135,14 +135,13 @@ export async function runEnterpriseWorkflowsForTrigger(
 
     const resolvedEntityId = entityId || String(context.dealId || context.leadId || context.id || 'system');
     const { data: execution, error: execError } = await admin
-      .from('workflow_executions')
+      .from('automation_workflow_executions')
       .insert({
         workflow_id: workflow.id,
-        triggered_by_entity_type: entityType,
-        triggered_by_entity_id: resolvedEntityId,
+        tenant_id: tenantId,
         status: 'running',
-        started_at: new Date().toISOString(),
-        metadata: { trigger: triggerType, context },
+        executed_at: new Date().toISOString(),
+        context: { trigger: triggerType, entity_type: entityType, entity_id: resolvedEntityId, ...context },
       })
       .select('id')
       .single();
@@ -156,6 +155,7 @@ export async function runEnterpriseWorkflowsForTrigger(
     const { data: actions } = await admin
       .from('workflow_actions')
       .select('action_type, action_config, action_order, is_active')
+      .eq('tenant_id', tenantId)
       .eq('workflow_id', workflow.id)
       .eq('is_active', true)
       .order('action_order', { ascending: true });
@@ -175,13 +175,14 @@ export async function runEnterpriseWorkflowsForTrigger(
     }
 
     await admin
-      .from('workflow_executions')
+      .from('automation_workflow_executions')
       .update({
         status: actionError ? 'failed' : 'completed',
-        completed_at: new Date().toISOString(),
         error_message: actionError,
-        execution_log: log,
+        context: { trigger: triggerType, entity_type: entityType, entity_id: resolvedEntityId, ...context, execution_log: log },
+        updated_at: new Date().toISOString(),
       })
+      .eq('tenant_id', tenantId)
       .eq('id', execution.id);
 
     if (actionError) {
@@ -190,10 +191,8 @@ export async function runEnterpriseWorkflowsForTrigger(
       ran++;
       await admin
         .from('workflows')
-        .update({
-          execution_count: (workflow.execution_count || 0) + 1,
-          last_executed_at: new Date().toISOString(),
-        })
+        .update({ updated_at: new Date().toISOString() })
+        .eq('tenant_id', tenantId)
         .eq('id', workflow.id);
     }
   }

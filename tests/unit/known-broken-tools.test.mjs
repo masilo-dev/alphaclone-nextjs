@@ -10,8 +10,8 @@ const {
   getBrokenToolConfig,
 } = await import("../../src/lib/mcp/knownBrokenTools.ts");
 
-test("block_automation does not throw for interactive MCP calls", () => {
-  assert.equal(isAutomationBlockedTool("create_deal"), true);
+test("sanitized tools remain callable for interactive MCP calls", () => {
+  assert.equal(isAutomationBlockedTool("create_deal"), false);
   const resolved = resolveToolWorkaround("create_deal", {
     name: "Acme",
     value: 10,

@@ -57,7 +57,8 @@ test("ToolPolicyGate enforces human oversight for high-risk tools (source)", asy
     "utf8",
   );
   assert.match(src, /queue_approval/);
-  assert.match(src, /source === 'mcp' \|\| source === 'bonnie'/);
+  assert.match(src, /source === 'mcp'/);
+  assert.doesNotMatch(src, /source === 'mcp' \|\| source === 'bonnie'/);
   assert.equal(/INTENTIONALLY DISABLED/.test(src), false);
   assert.match(src, /requiresApproval/);
 });

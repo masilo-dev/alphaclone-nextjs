@@ -91,7 +91,7 @@ test("invoice lifecycle has non-MCP dashboard API (source)", async () => {
     ),
     "utf8",
   );
-  assert.match(api, /invoiceLifecycleWorkflow/);
+  assert.match(api, /queueInvoiceSend/);
   assert.match(modal, /startInvoiceLifecycleFromDashboard/);
   assert.equal(modal.includes("callMcpTool('start_invoice_lifecycle'"), false);
 });
@@ -103,5 +103,5 @@ test("production Redis is opt-in via REDIS_REQUIRED (source)", async () => {
     "utf8",
   );
   assert.match(src, /REDIS_REQUIRED === "true"/);
-  assert.match(src, /Opt-in only/);
+  assert.match(src, /if \(redisRequired\)/);
 });

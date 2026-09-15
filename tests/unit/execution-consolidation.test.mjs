@@ -116,7 +116,12 @@ describe('LinkedIn verification', () => {
       source.indexOf('async publishToProvider')
     );
     assert.match(publish, /verifyLinkedInUrn/);
-    assert.equal(publish.includes('verified: true'), false);
+    assert.match(publish, /if \(!confirmation\.verified \|\| !confirmation\.verifiedAt\)/);
+    assert.match(publish, /error_code: 'PUBLISH_STATUS_UNKNOWN'/);
+    assert.ok(
+      publish.indexOf('if (!confirmation.verified') < publish.lastIndexOf('verified: true'),
+      'verified success must occur only after the provider confirmation guard',
+    );
     const helpers = read('../../src/lib/social/linkedinPublishHelpers.ts');
     assert.match(helpers, /export async function confirmLinkedInPublish/);
     assert.match(helpers, /ugcPosts/);

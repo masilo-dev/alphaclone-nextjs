@@ -19,7 +19,7 @@ test('canonical outbound persistence resolves CRM recipient and logs activity', 
   assert.match(source, /resolveCrmRecipient/);
   assert.match(source, /\.from\('contacts'\)/);
   assert.match(source, /\.eq\('tenant_id', tenantId\)/);
-  assert.match(source, /logCrmActivityAdmin/);
+  assert.match(source, /persistOutboundCrmActivity/);
   assert.match(source, /direction:\s*'outbound'/);
   assert.match(source, /status:\s*'provider_accepted'/);
 });

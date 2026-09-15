@@ -310,9 +310,16 @@ async function execute(job: Job) {
     const { insertOutboxEvent } = await import('@/lib/bonnie/runtime/outboxService');
     await insertOutboxEvent({
       tenantId: job.workspace_id,
-      eventType: 'lead.qualified',
+      eventType: 'lead_discovery.search.completed',
       payload: { searchId: search.id, jobId: job.id, discoveredCount: rows.length, crmSyncedCount },
     });
+    if (crmSyncedCount > 0) {
+      await insertOutboxEvent({
+        tenantId: job.workspace_id,
+        eventType: 'lead.qualified',
+        payload: { searchId: search.id, jobId: job.id, count: crmSyncedCount },
+      });
+    }
   } catch {}
 }
 

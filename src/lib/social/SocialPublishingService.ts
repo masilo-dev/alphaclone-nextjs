@@ -774,14 +774,15 @@ export class SocialPublishingService {
           .select('linkedin_post_urn, published_at, live_url')
           .eq('id', postId).maybeSingle();
         if (reconciled?.linkedin_post_urn) {
-          const publishedAt = reconciled.published_at || new Date().toISOString();
           return {
-            ok: true, provider: 'linkedin', provider_post_id: reconciled.linkedin_post_urn,
+            ok: false, provider: 'linkedin', provider_post_id: reconciled.linkedin_post_urn,
             live_url: reconciled.live_url || buildLinkedInPermalink(reconciled.linkedin_post_urn),
-            published_at: publishedAt, verified: true, verified_at: publishedAt,
+            published_at: null, verified: false, verified_at: null,
             author_urn: identity.author_urn || null, organization_id: identity.organization_id || null,
             organization_name: identity.identity_name,
-            provider_response: { reconciled: true, reconciliation_source: 'social_posts' },
+            error: 'LinkedIn accepted the post, but provider verification is still pending',
+            error_code: 'PUBLISH_STATUS_UNKNOWN',
+            provider_response: { reconciled: false, reconciliation_source: 'social_posts' },
           };
         }
         return {
@@ -830,12 +831,7 @@ export class SocialPublishingService {
       }
     }
 
-    const publishedAt = new Date().toISOString();
     const liveUrl = buildLinkedInPermalink(result.postUrn);
-    await updatePost(postId, {
-      live_url: liveUrl,
-      published_at: publishedAt,
-    });
 
     const confirmation = updated?.tenant_id && updated?.user_id
       ? await verifyLinkedInUrn({
@@ -846,16 +842,36 @@ export class SocialPublishingService {
         })
       : { verified: false, verifiedAt: null };
 
+    if (!confirmation.verified || !confirmation.verifiedAt) {
+      await updatePost(postId, { live_url: liveUrl });
+      return {
+        ok: false,
+        provider: 'linkedin',
+        provider_post_id: result.postUrn,
+        live_url: liveUrl,
+        published_at: null,
+        verified: false,
+        verified_at: null,
+        author_urn: updated?.linkedin_author_urn || identity.author_urn || null,
+        organization_id: identity.organization_id || null,
+        organization_name: identity.identity_name,
+        error: 'LinkedIn accepted the post, but provider verification is still pending',
+        error_code: 'PUBLISH_STATUS_UNKNOWN',
+        provider_response: { provider_confirmed: true, secondary_verification: false },
+      };
+    }
+
+    const publishedAt = confirmation.verifiedAt;
+    await updatePost(postId, { live_url: liveUrl, published_at: publishedAt });
+
     return {
       ok: true,
       provider: 'linkedin',
       provider_post_id: result.postUrn,
       live_url: liveUrl,
       published_at: publishedAt,
-      // A returned post URN is LinkedIn's create acknowledgement. Secondary GET
-      // verification may lag or time out and must not convert acceptance to failure.
       verified: true,
-      verified_at: confirmation.verifiedAt || publishedAt,
+      verified_at: confirmation.verifiedAt,
       author_urn: updated?.linkedin_author_urn || identity.author_urn || null,
       organization_id: identity.organization_id || null,
       organization_name: identity.identity_name,

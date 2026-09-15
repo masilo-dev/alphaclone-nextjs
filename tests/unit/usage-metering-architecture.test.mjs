@@ -19,7 +19,7 @@ import {
 } from '../../src/lib/mcp/toolQuotaPolicy.ts';
 
 describe('entitlement context', () => {
-  it('legacy pre-rollout accounts are unrestricted until deadline', () => {
+  it('expired legacy access falls back to the current plan', () => {
     const ctx = resolveEntitlementContext({
       tenantId: 't1',
       rawPlan: 'free',
@@ -30,10 +30,9 @@ describe('entitlement context', () => {
       legacyAccessUntil: new Date(LEGACY_ACCESS_DEADLINE_ISO),
       stripeSubscriptionId: null,
     });
-    assert.equal(ctx.accessMode, 'legacy_unrestricted');
-    assert.equal(ctx.quotaEnforced, false);
-    assert.equal(shouldEnforceDailyQuota(ctx), false);
-    assert.match(ctx.bannerMessage || '', /Legacy access active/);
+    assert.equal(ctx.accessMode, 'free');
+    assert.equal(ctx.quotaEnforced, true);
+    assert.equal(shouldEnforceDailyQuota(ctx), true);
   });
 
   it('14-day trial grants full premium access without free limits', () => {

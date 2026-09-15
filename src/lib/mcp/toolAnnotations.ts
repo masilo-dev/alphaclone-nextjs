@@ -130,6 +130,8 @@ export const CHATGPT_CONNECTOR_TOOL_NAMES = [
   'get_facebook_identities',
   'get_facebook_page_capabilities',
   'get_linkedin_identities',
+  'check_mcp_execution_readiness',
+  'preflight_social_publish',
   'upload_media',
   'upload_social_media',
   'get_media',

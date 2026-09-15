@@ -2,6 +2,16 @@
  * Static tool manifest for the AlphaClone MCP Server.
  * Consolidated for use in both the standard JSON-RPC flow and stateless discovery endpoints.
  */
+const NEXUS_COMMON_PROPERTIES = {
+  tenant_id: { type: 'string', description: 'AlphaClone Workspace ID. Resolved and authorized from the active session.' },
+  mode: { type: 'string', enum: ['inspect', 'execute'], default: 'inspect', description: 'inspect is read-only. execute permits the documented mutations and must be requested explicitly.' },
+  limit: { type: 'number', minimum: 1, maximum: 200, default: 50, description: 'Maximum tenant-scoped records to inspect.' },
+  date_from: { type: 'string', description: 'Optional inclusive ISO date/time lower bound.' },
+  date_to: { type: 'string', description: 'Optional inclusive ISO date/time upper bound.' },
+  record_ids: { type: 'array', items: { type: 'string' }, maxItems: 200, description: 'Optional tenant-scoped record IDs to inspect or execute against.' },
+  include_details: { type: 'boolean', default: true, description: 'Include the matching record summaries and evidence behind aggregate results.' },
+} as const;
+
 export const MCP_TOOLS = [
   // ── CRM & Clients ──────────────────────────────────────────────────
   {
@@ -3104,7 +3114,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        status: { type: 'string', description: 'Optional expense or payroll-task status filter.' },
       },
       required: [],
     },
@@ -3115,7 +3126,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        minimum_days_overdue: { type: 'number', minimum: 0, maximum: 3650, default: 1 },
       },
       required: [],
     },
@@ -3126,7 +3138,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        period: { type: 'string', description: 'Accounting period in YYYY-MM format. Defaults to the current month.' },
       },
       required: [],
     },
@@ -3137,7 +3150,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        missing_fields: { type: 'array', items: { type: 'string', enum: ['email', 'phone', 'industry', 'location', 'website'] } },
       },
       required: [],
     },
@@ -3148,7 +3162,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
         auto_send_outreach: { type: 'boolean', description: 'Set to true to automatically send outreach emails to the top campaign targets. Requires an email provider configured in Settings.' },
         outreach_context: { type: 'string', description: 'Optional context or message to personalise the outreach email (e.g. "We can help you with payroll automation").' },
         user_id: { type: 'string', description: 'Optional: user profile ID to use for email provider resolution' },
@@ -3162,7 +3176,7 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
         contract_type: { type: 'string', description: 'Type of contract to draft, e.g. "Service Agreement", "NDA", "MSA", "SOW"' },
         client_name: { type: 'string', description: 'Full name of the client the contract is for' },
         key_terms: { type: 'string', description: 'Optional key terms, scope, or special clauses to include in the contract' },
@@ -3176,7 +3190,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        platforms: { type: 'array', items: { type: 'string' }, description: 'Optional social platforms to include.' },
       },
       required: [],
     },
@@ -3187,7 +3202,9 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        industries: { type: 'array', items: { type: 'string' }, description: 'Optional industries to analyze.' },
+        locations: { type: 'array', items: { type: 'string' }, description: 'Optional locations to analyze.' },
       },
       required: [],
     },
@@ -3198,7 +3215,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        asset_ids: { type: 'array', items: { type: 'string' }, maxItems: 200, description: 'Optional tenant-scoped media or design asset IDs.' },
       },
       required: [],
     },
@@ -3209,7 +3227,9 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        project_id: { type: 'string', description: 'Optional tenant-scoped project ID.' },
+        include_dependencies: { type: 'boolean', default: true },
       },
       required: [],
     },
@@ -3220,7 +3240,11 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        start_time: { type: 'string', description: 'ISO start time for an explicit booking request.' },
+        end_time: { type: 'string', description: 'ISO end time for an explicit booking request.' },
+        client_name: { type: 'string' },
+        client_email: { type: 'string' },
       },
       required: [],
     },
@@ -3231,7 +3255,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        priority: { type: 'string', enum: ['all', 'urgent', 'high', 'normal', 'low'], default: 'all' },
       },
       required: [],
     },
@@ -3242,7 +3267,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        priority: { type: 'string', enum: ['all', 'urgent', 'high', 'normal', 'low'], default: 'all' },
       },
       required: [],
     },
@@ -3253,7 +3279,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        client_ids: { type: 'array', items: { type: 'string' }, maxItems: 200, description: 'Optional tenant-scoped client IDs.' },
       },
       required: [],
     },
@@ -3264,7 +3291,8 @@ export const MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        ...NEXUS_COMMON_PROPERTIES,
+        meeting_ids: { type: 'array', items: { type: 'string' }, maxItems: 200, description: 'Optional tenant-scoped booking or meeting IDs.' },
       },
       required: [],
     },

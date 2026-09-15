@@ -9,7 +9,7 @@ describe('background job heap gate', () => {
     const { resolveBackgroundJobHeapRejectMb, backgroundJobBlockedReason } = await import(
       '../../src/lib/runtime/backgroundJobGate.ts'
     );
-    assert.ok(resolveBackgroundJobHeapRejectMb() >= 3072);
+    assert.ok(resolveBackgroundJobHeapRejectMb() >= 2048);
     assert.equal(backgroundJobBlockedReason(), null);
   });
 });

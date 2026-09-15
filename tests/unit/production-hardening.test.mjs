@@ -75,8 +75,7 @@ test('integration circuit breaker opens after repeated failures', async () => {
 
 test('MCP refresh flow looks up redirect URIs for client binding', () => {
   const source = fs.readFileSync('src/app/api/mcp/token/route.ts', 'utf8');
-  assert.match(source, /lookupOAuthClientRedirectUris/);
-  assert.match(source, /tokenRedirectUris/);
+  assert.match(source, /assertRefreshClientBindingAsync/);
   assert.match(source, /legacy/);
 });
 

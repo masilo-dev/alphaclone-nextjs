@@ -23,6 +23,10 @@ export interface Notification {
     created_at: string;
 }
 
+export interface NotificationSubscription {
+    unsubscribe: () => Promise<void>;
+}
+
 export const notificationService = {
     async sendNotification(params: {
         userId: string;
@@ -112,33 +116,65 @@ export const notificationService = {
     },
 
     // Subscribe to realtime notifications
-    subscribe(userId: string, callback: (notification: Notification) => void) {
-        const channel = supabase
-            .channel(`notifications:${userId}`)
+    subscribe(userId: string, callback: (notification: Notification) => void): NotificationSubscription {
+        const tenantId = tenantService.getCurrentTenantId();
+        let channel: ReturnType<typeof supabase.channel> | null = null;
+        let retryTimer: ReturnType<typeof setTimeout> | null = null;
+        let stopped = false;
+        let attempt = 0;
+
+        const cleanupChannel = async () => {
+            if (!channel) return;
+            const stale = channel;
+            channel = null;
+            await supabase.removeChannel(stale);
+        };
+
+        const connect = async () => {
+            if (stopped || !tenantId) return;
+            await cleanupChannel();
+            channel = supabase
+            .channel(`notifications:${tenantId}:${userId}`)
             .on(
                 'postgres_changes',
                 {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'notifications',
-                    filter: `user_id=eq.${userId.trim()}`
+                    filter: `tenant_id=eq.${tenantId}`
                 },
                 (payload: any) => {
-                    callback(payload.new as Notification);
+                    const notification = payload.new as Notification & { tenant_id?: string; user_id?: string };
+                    if (notification.tenant_id === tenantId && notification.user_id === userId.trim()) {
+                        callback(notification);
+                    }
                 }
             )
             .subscribe((status: string, err?: Error) => {
                 if (status === 'SUBSCRIBED') {
-                    console.log('✅ Subscribed to real-time notifications');
-                } else if (status === 'CHANNEL_ERROR') {
-                    console.error('❌ Notification subscription error:', err?.message || 'Unknown error');
-                } else if (status === 'TIMED_OUT') {
-                    console.error('❌ Notification subscription timed out - retrying in 5s...');
-                    setTimeout(() => notificationService.subscribe(userId, callback), 5000);
+                    attempt = 0;
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                    if (stopped || retryTimer) return;
+                    const delay = Math.min(30_000, 1_000 * 2 ** Math.min(attempt++, 5));
+                    console.warn(`Notification subscription ${status.toLowerCase()}; retrying in ${delay}ms`, err?.message || '');
+                    retryTimer = setTimeout(() => {
+                        retryTimer = null;
+                        void connect();
+                    }, delay);
                 }
             });
+        };
 
-        return channel;
+        void connect();
+
+        return {
+            unsubscribe: async () => {
+                stopped = true;
+                if (retryTimer) clearTimeout(retryTimer);
+                retryTimer = null;
+                await cleanupChannel();
+            },
+        };
     },
 
     /**
@@ -189,8 +225,12 @@ export const notificationService = {
         }
     },
 
-    async unsubscribe(channel: any) {
-        supabase.removeChannel(channel);
+    async unsubscribe(subscription: NotificationSubscription | ReturnType<typeof supabase.channel>) {
+        if ('unsubscribe' in subscription && typeof subscription.unsubscribe === 'function') {
+            await subscription.unsubscribe();
+            return;
+        }
+        await supabase.removeChannel(subscription);
     },
 
     /**

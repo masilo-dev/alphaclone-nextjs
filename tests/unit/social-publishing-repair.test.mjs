@@ -316,12 +316,12 @@ test("status migration extends enum not CHECK-only (source)", async () => {
   assert.equal(/ADD CONSTRAINT social_posts_status_check/.test(src), false);
 });
 
-test("scheduled claim uses status=scheduled predicate (source)", async () => {
+test("scheduled claim accepts only queued publishable states (source)", async () => {
   const fs = await import("node:fs");
   const src = fs.readFileSync(
     new URL("../../src/lib/social/SocialPublishingService.ts", import.meta.url),
     "utf8",
   );
-  assert.match(src, /\.eq\('status',\s*'scheduled'\)/);
+  assert.match(src, /\.in\('status',\s*\['scheduled',\s*'queued'\]\)/);
   assert.match(src, /fbBody\.caption|caption: post\.caption/);
 });

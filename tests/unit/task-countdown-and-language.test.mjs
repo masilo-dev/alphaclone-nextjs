@@ -188,7 +188,7 @@ describe('language switching', () => {
 
     const all = [...new Set([...hubStrings, ...stepStrings, ...statusLabels, ...settingsStrings, ...tourStrings,
       'Execution guide', 'Follow the steps in order. Colors mean the same thing across the workspace.'])];
-    const sameInTarget = /^(CRM|SMS|WhatsApp|Teams|Marketplace|Zoho CRM|Bonnie AI|Tickets|Leads|Mail|Marketing|Onboarding|Pipeline|Console|Analytics|Forecast)$/;
+    const sameInTarget = /^(CRM|SMS|WhatsApp|Teams|Marketplace|Zoho CRM|Bonnie AI|Tickets|Leads|Mail|Marketing|Onboarding|Pipeline|Console|Analytics|Forecast|Facebook|LinkedIn|Instagram|X)$/;
     for (const lang of ['es', 'pl']) {
       const untranslated = all.filter((s) => uiTranslate(lang, s) === s && !sameInTarget.test(s));
       assert.deepEqual(untranslated, [], `${lang} is missing: ${untranslated.join(' | ')}`);

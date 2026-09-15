@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
             responseTime: Date.now() - startTime,
         },
         services: {
-            database: 'healthy',
-            api_gateway: 'healthy',
+            database: 'not_checked',
+            api_gateway: 'not_checked',
         },
     };
 

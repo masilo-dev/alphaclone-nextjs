@@ -453,7 +453,7 @@ export function rejectLocalAiPaths(value: unknown, field: string = 'media_url'):
       /^[A-Za-z]:\\/.test(v)
     ) {
       throw new Error(
-        `LOCAL_PATH_NOT_ACCESSIBLE: ${field} is a local sandbox path (${v}). ` +
+        `LOCAL_PATH_NOT_ACCESSIBLE: ${field} looks like a local AI sandbox path (${v}). ` +
           'Read the image bytes in the session, pass them as content_base64 (or data_url) to upload_media first, ' +
           'then use the returned media_url or media_id with publish_post / publish_social_post.'
       );

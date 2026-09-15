@@ -53,8 +53,10 @@ test('legacy LinkedIn lead webhook delegates to the signed canonical handler', (
 });
 
 test('cron invoice reminder writes remain tenant scoped', () => {
-  const src = read('src/app/api/cron/process-invoice-overdue-reminders/route.ts');
-  assert.match(src, /\.eq\('id', invoice\.id\)[\s\S]{0,80}\.eq\('tenant_id', invoice\.tenant_id\)/);
+  const route = read('src/app/api/cron/process-invoice-overdue-reminders/route.ts');
+  const maintenance = read('src/lib/chaser/chaseInvoiceMaintenance.ts');
+  assert.match(route, /runChaseCronJob\('invoice_overdue_reminders'\)/);
+  assert.match(maintenance, /\.eq\('tenant_id', tenantId\)/);
 });
 
 test('social cron status writes use id and tenant predicates', () => {

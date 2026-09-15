@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-02T09:56:56.628Z",
-  "total_tools": 526,
-  "passed": 470,
+  "generated_at": "2026-09-15T09:11:41.276Z",
+  "total_tools": 553,
+  "passed": 497,
   "failed": 0,
   "skipped": 56,
   "before_failure_count": 8,
@@ -117,6 +117,15 @@
     },
     {
       "tool": "appointments",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "approve_chase_action",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -494,6 +503,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "convert_quote_to_invoice",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "create_bank_account",
       "classification": "create",
       "registered": true,
@@ -737,6 +755,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "create_media_upload_session",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "create_meeting",
       "classification": "create",
       "registered": true,
@@ -865,6 +892,15 @@
     {
       "tool": "create_vendor_bill",
       "classification": "financial",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "crm_pipeline_report",
+      "classification": "read-only",
       "registered": true,
       "has_schema": true,
       "status": "passed",
@@ -1178,7 +1214,25 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "finalize_media_upload",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "find_and_qualify_leads",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "find_duplicate_clients",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -1385,6 +1439,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "get_bulk_job_status",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "get_business_ai_state",
       "classification": "read-only",
       "registered": true,
@@ -1440,6 +1503,33 @@
     },
     {
       "tool": "get_cash_flow_statement",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_chase_brief",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_chase_health",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_chase_item",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -1575,6 +1665,15 @@
     },
     {
       "tool": "get_current_user",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_daily_project_brief",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -1764,6 +1863,15 @@
     },
     {
       "tool": "get_gamification_leaderboard",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_inventory_items",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -1962,6 +2070,15 @@
     },
     {
       "tool": "get_project_details",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "get_project_intelligence",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -2537,6 +2654,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "list_chase_items",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "list_companies",
       "classification": "read-only",
       "registered": true,
@@ -2636,6 +2762,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "list_overdue_or_blocked_projects",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "list_pending_approvals",
       "classification": "read-only",
       "registered": true,
@@ -2646,6 +2781,24 @@
     },
     {
       "tool": "list_playbooks",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_projects_waiting_on_approval",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "list_projects_waiting_on_payment",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -2736,6 +2889,15 @@
     },
     {
       "tool": "mark_message_read",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "merge_client_identities",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -3410,6 +3572,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "reassign_chase",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "recommend_next_steps",
       "classification": "read-only",
       "registered": true,
@@ -3672,6 +3843,15 @@
     },
     {
       "tool": "run_autonomous_scan",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "run_chase_scan",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -4103,6 +4283,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "snooze_chase",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "solo_owner_operator_brief",
       "classification": "read-only",
       "registered": true,
@@ -4122,6 +4311,15 @@
     },
     {
       "tool": "solo_owner_value_map",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "start_chase",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -4167,6 +4365,15 @@
     },
     {
       "tool": "start_lead_nurture",
+      "classification": "read-only",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "stop_chase",
       "classification": "read-only",
       "registered": true,
       "has_schema": true,
@@ -4427,6 +4634,15 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "update_chase_policy",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "update_chatbot_persona",
       "classification": "update",
       "registered": true,
@@ -4508,7 +4724,25 @@
       "envelope_sample_valid": true
     },
     {
+      "tool": "update_inventory_stock",
+      "classification": "update",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
       "tool": "update_invoice",
+      "classification": "financial",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "update_invoice_status",
       "classification": "financial",
       "registered": true,
       "has_schema": true,
@@ -4617,6 +4851,15 @@
     },
     {
       "tool": "upload_media_asset",
+      "classification": "create",
+      "registered": true,
+      "has_schema": true,
+      "status": "passed",
+      "reason": null,
+      "envelope_sample_valid": true
+    },
+    {
+      "tool": "upload_media_chunk",
       "classification": "create",
       "registered": true,
       "has_schema": true,

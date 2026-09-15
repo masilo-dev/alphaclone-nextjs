@@ -53,6 +53,9 @@ export function normalizePlanId(rawPlan: string | null | undefined): NormalizedP
   return 'free';
 }
 
+/** Compatibility name used by older API contracts. */
+export const normalizePlanTier = normalizePlanId;
+
 export function isUnlimitedPlan(rawPlan: string | null | undefined): boolean {
   return normalizePlanId(rawPlan) === 'premium';
 }
@@ -61,6 +64,18 @@ export function isUnlimitedPlan(rawPlan: string | null | undefined): boolean {
 export function getDailyLimitForPlan(rawPlan: string | null | undefined): number | null {
   if (isUnlimitedPlan(rawPlan)) return null;
   return normalizePlanId(rawPlan) === 'pro' ? PRO_DAILY_LIMIT : FREE_DAILY_LIMIT;
+}
+
+/**
+ * Resource-aware compatibility API. All currently metered resources share the
+ * same tier limit, but retaining the resource argument prevents callers from
+ * duplicating that policy and leaves room for future per-resource limits.
+ */
+export function getDailyLimitForResource(
+  rawPlan: string | null | undefined,
+  _resource: QuotaResourceType,
+): number | null {
+  return getDailyLimitForPlan(rawPlan);
 }
 
 /** Backend/RPC convention: -1 means unlimited. */

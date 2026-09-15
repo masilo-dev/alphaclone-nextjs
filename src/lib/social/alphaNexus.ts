@@ -35,6 +35,15 @@ function resultNeedsAction(value: unknown): boolean {
     );
 }
 
+function nexusLimit(params: Record<string, unknown>, fallback = 50): number {
+    const requested = Number(params.limit);
+    return Number.isFinite(requested) ? Math.min(200, Math.max(1, Math.trunc(requested))) : fallback;
+}
+
+function nexusExecuteRequested(params: Record<string, unknown>): boolean {
+    return params.mode === 'execute';
+}
+
 async function autoTaskAlreadyExists(admin: any, tenantId: string, sourceKey: string): Promise<boolean> {
     try {
         const { data } = await admin
@@ -94,19 +103,20 @@ export class AlphaNexus {
     // ── Data-driven System Handlers ─────────────────────────────────────────
 
     private async handlePayroll(_params: Record<string, unknown>) {
+        const limit = nexusLimit(_params);
         const { data: expenses } = await this.admin
             .from('expenses')
             .select('id, description, amount, status, category, date')
             .eq('tenant_id', this.tenantId)
             .eq('status', 'pending')
-            .limit(50);
+            .limit(limit);
 
         const { data: tasks } = await this.admin
             .from('tasks')
             .select('id, title, status, due_date')
             .eq('tenant_id', this.tenantId)
             .ilike('title', '%payroll%')
-            .limit(20);
+            .limit(Math.min(limit, 20));
 
         const pending = (expenses || []).reduce((s: number, e: any) => s + Number(e.amount || 0), 0);
         return {
@@ -122,7 +132,10 @@ export class AlphaNexus {
 
     private async handleInvoiceChasing(_params: Record<string, unknown>) {
         const { runInvoiceChasingBranches } = await import('@/lib/automation/workflowBranching');
-        const branchResult = await runInvoiceChasingBranches(this.tenantId);
+        const execute = nexusExecuteRequested(_params);
+        const branchResult = execute
+            ? await runInvoiceChasingBranches(this.tenantId)
+            : { actions: [] };
 
         const now = new Date().toISOString().split('T')[0];
         const { data: overdue } = await this.admin
@@ -132,7 +145,7 @@ export class AlphaNexus {
             .in('status', ['sent', 'overdue'])
             .lt('due_date', now)
             .order('due_date', { ascending: true })
-            .limit(50);
+            .limit(nexusLimit(_params));
 
         const total = (overdue || []).reduce((s: number, inv: any) => s + Number(inv.total || 0), 0);
         return {
@@ -148,6 +161,7 @@ export class AlphaNexus {
                 days_overdue: Math.floor((Date.now() - new Date(inv.due_date).getTime()) / 86400000),
             })),
             branches_executed: branchResult.actions,
+            execution_mode: execute ? 'execute' : 'inspect',
             message: `${overdue?.length ?? 0} overdue invoice(s) totalling $${total.toFixed(2)}. Branched actions: ${branchResult.actions.length}.`,
             action_required: (overdue?.length ?? 0) > 0,
         };
@@ -212,7 +226,7 @@ export class AlphaNexus {
         }));
 
         // ── Auto-send outreach emails if requested ────────────────────────────
-        const autoSend      = params.auto_send_outreach === true;
+        const autoSend      = params.auto_send_outreach === true && nexusExecuteRequested(params);
         const outreachCtx   = typeof params.outreach_context === 'string' ? params.outreach_context : '';
         const userId        = typeof params.user_id === 'string' ? params.user_id : null;
         let emailsSent      = 0;
@@ -304,7 +318,7 @@ export class AlphaNexus {
             .from('leads')
             .select('id, business_name, email, phone, industry, location')
             .eq('tenant_id', this.tenantId)
-            .limit(200);
+            .limit(nexusLimit(_params, 200));
 
         const missing_email = (leads || []).filter((l: any) => !l.email).length;
         const missing_phone = (leads || []).filter((l: any) => !l.phone).length;
@@ -335,7 +349,7 @@ export class AlphaNexus {
             .select('id, client_name, client_email, start_time, end_time, status, notes')
             .eq('tenant_id', this.tenantId)
             .order('start_time', { ascending: false })
-            .limit(20);
+            .limit(nexusLimit(_params, 20));
 
         const upcoming = (bookings || []).filter((b: any) => new Date(b.start_time) > new Date());
         const past_no_notes = (bookings || []).filter((b: any) => new Date(b.start_time) <= new Date() && !b.notes);
@@ -373,32 +387,27 @@ export class AlphaNexus {
     }
 
     private async handleProjectPlanning(_params: Record<string, unknown>) {
-        const { data: projects } = await this.admin
-            .from('projects')
-            .select('id, name, status, due_date')
-            .eq('tenant_id', this.tenantId)
-            .limit(50);
+        const limit = nexusLimit(_params);
+        const { loadProjectIntelligence, loadWorkspaceProjectBrief } = await import('@/lib/projects/projectIntelligence');
+        const projectId = typeof _params.project_id === 'string' ? _params.project_id.trim() : '';
+        if (projectId) {
+            const project = await loadProjectIntelligence(this.admin, this.tenantId, projectId);
+            return {
+                system: 'nexus_project_architect',
+                status: 'complete',
+                scope: 'project',
+                project,
+                message: `${Object.values(project.counts).reduce((sum, count) => sum + count, 0)} project risk signal(s); ${project.nextActions.length} evidence-based next action(s) identified.`,
+            };
+        }
 
-        const { data: tasks } = await this.admin
-            .from('tasks')
-            .select('id, title, status, due_date, priority')
-            .eq('tenant_id', this.tenantId)
-            .in('status', ['todo', 'in_progress'])
-            .limit(100);
-
-        const overdue_tasks = (tasks || []).filter(
-            (t: any) => t.due_date && new Date(t.due_date) < new Date()
-        ).length;
-
+        const brief = await loadWorkspaceProjectBrief(this.admin, this.tenantId, limit);
         return {
             system: 'nexus_project_architect',
             status: 'complete',
-            active_projects: (projects || []).filter((p: any) => p.status === 'active').length,
-            open_tasks: tasks?.length ?? 0,
-            overdue_tasks,
-            urgent_tasks: (tasks || []).filter((t: any) => t.priority === 'urgent').length,
-            projects: (projects || []).slice(0, 10),
-            message: `${projects?.length ?? 0} projects. ${overdue_tasks} overdue task(s). ${(tasks || []).filter((t: any) => t.priority === 'urgent').length} urgent.`,
+            scope: 'portfolio',
+            ...brief,
+            message: `${brief.activeProjects} active project(s); ${brief.blockedProjects} blocked and ${brief.overdueTasks} overdue task(s).`,
         };
     }
 
@@ -451,6 +460,7 @@ export class AlphaNexus {
     }
 
     private async handleOnboarding(_params: Record<string, unknown>) {
+        const execute = nexusExecuteRequested(_params);
         const { data: clients } = await this.admin
             .from('business_clients')
             .select('id, name, email, sales_stage, created_at, metadata')
@@ -464,6 +474,7 @@ export class AlphaNexus {
 
         // Tier 2: Auto-trigger welcome email & portal invite with retry loop
         for (const client of clients || []) {
+            if (!execute) continue;
             const sourceKey = `onboard_welcome:${client.id}`;
             const exists = await autoTaskAlreadyExists(this.admin, this.tenantId, sourceKey);
             if (exists) continue;
@@ -532,6 +543,7 @@ export class AlphaNexus {
                                 last_onboarding_error: err.message,
                             }
                         })
+                        .eq('tenant_id', this.tenantId)
                         .eq('id', client.id);
                     onboardingFailures.push(`${client.name} (retry queued)`);
                 }
@@ -541,6 +553,8 @@ export class AlphaNexus {
         return {
             system: 'nexus_onboarding_flow',
             status: onboardingFailures.length > 0 ? 'partial_success' : 'complete',
+            execution_mode: execute ? 'execute' : 'inspect',
+            onboarding_candidates: clients?.length ?? 0,
             customers_onboarded: invitesDispatched,
             failures: onboardingFailures.length > 0 ? onboardingFailures : undefined,
             message: `Onboarding flow processed. Dispatched welcome portals to ${invitesDispatched} customers. Failures/Retries: ${onboardingFailures.length}.`,
@@ -572,6 +586,7 @@ export class AlphaNexus {
     }
 
     private async handleSupportTriage(_params: Record<string, unknown>) {
+        const execute = nexusExecuteRequested(_params);
         const { data: tasks } = await this.admin
             .from('tasks')
             .select('id, title, description, status, priority, created_at, due_date, metadata')
@@ -597,6 +612,8 @@ export class AlphaNexus {
             const descLower = String(task.description || '').toLowerCase();
             const metadata = (task.metadata || {}) as Record<string, any>;
 
+            if (!execute) continue;
+
             // Loop prevention: if customer already replied, do not auto-handle
             if (metadata.is_customer_reply === true) {
                 console.log(`[AlphaNexus] Customer reply loop detected for task ${task.id}. Escolating to human.`);
@@ -615,6 +632,7 @@ export class AlphaNexus {
                         completed_at: new Date().toISOString(),
                         description: `${task.description || ''}\n\n[Auto Resolved by AI support at ${new Date().toISOString()}]: Resolved via standard FAQ answer.`,
                     })
+                    .eq('tenant_id', this.tenantId)
                     .eq('id', task.id);
 
                 autoResolvedCount++;
@@ -626,6 +644,7 @@ export class AlphaNexus {
                         assigned_to: owner.user_id,
                         description: `${task.description || ''}\n\n[Escalated by AI support at ${new Date().toISOString()}]: Urgent ticket programmatically routed to owner queue.`,
                     })
+                    .eq('tenant_id', this.tenantId)
                     .eq('id', task.id);
 
                 escalatedCount++;
@@ -638,6 +657,7 @@ export class AlphaNexus {
         return {
             system: 'nexus_support_triage',
             status: 'complete',
+            execution_mode: execute ? 'execute' : 'inspect',
             open_tickets: tasks?.length ?? 0,
             auto_resolved: autoResolvedCount,
             escalated: escalatedCount,
@@ -646,6 +666,7 @@ export class AlphaNexus {
     }
 
     private async handleCalendarOpt(_params: Record<string, unknown>) {
+        const execute = nexusExecuteRequested(_params);
         const { data: bookings } = await this.admin
             .from('bookings')
             .select('id, client_name, start_time, end_time, status')
@@ -663,7 +684,7 @@ export class AlphaNexus {
         const reqEnd = typeof _params.end_time === 'string' ? _params.end_time : '';
         const clientName = typeof _params.client_name === 'string' ? _params.client_name : '';
 
-        if (reqStart && reqEnd && clientName) {
+        if (execute && reqStart && reqEnd && clientName) {
             // Check overlapping booked slot
             const { data: overlapping } = await this.admin
                 .from('bookings')
@@ -702,6 +723,7 @@ export class AlphaNexus {
         return {
             system: 'nexus_calendar_nexus',
             status: 'complete',
+            execution_mode: execute ? 'execute' : 'inspect',
             upcoming_bookings: bookings?.length ?? 0,
             bookings_created: bookingsProcessed,
             conflicts_prevented: bookingConflicts,

@@ -66,7 +66,7 @@ test('jobQueue forwards legacy jobs to agent_tasks durable runtime', async () =>
 });
 
 test('durable social publisher defines side effect verification & outbox events', async () => {
-  const src = fs.readFileSync(path.join(root, 'src/lib/social/durableSocialPublisher.ts'), 'utf8');
+  const src = fs.readFileSync(path.join(root, 'src/lib/social/socialPublishDurableTask.ts'), 'utf8');
   assert.match(src, /beginIdempotentAction/);
   assert.match(src, /completeIdempotentAction/);
   assert.match(src, /insertOutboxEvent/);
@@ -74,9 +74,10 @@ test('durable social publisher defines side effect verification & outbox events'
 });
 
 test('durable campaign fan-out enforces recipient-level idempotency & state protection', async () => {
-  const src = fs.readFileSync(path.join(root, 'src/lib/server/durableCampaignFanOut.ts'), 'utf8');
-  assert.match(src, /beginIdempotentAction/);
-  assert.match(src, /campaign\.email\.send/);
-  assert.match(src, /insertOutboxEvent/);
-  assert.match(src, /cancelled/);
+  const src = fs.readFileSync(path.join(root, 'src/lib/server/sendScheduledCampaignServer.ts'), 'utf8');
+  const orchestrator = fs.readFileSync(path.join(root, 'src/lib/server/durableCampaignFanOut.ts'), 'utf8');
+  assert.match(src, /\.eq\("status", "pending"\)/);
+  assert.match(src, /status: "sending"/);
+  assert.match(src, /idempotencyKey: `campaign:/);
+  assert.match(orchestrator, /cancelled/);
 });

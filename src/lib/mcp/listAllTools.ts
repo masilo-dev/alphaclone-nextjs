@@ -262,6 +262,9 @@ function selectCatalogTools(
       : (options.loadedModules || []).map((m) => m.toLowerCase())
   );
   const coreNames = new Set(coreTools(full, 80).map((tool) => tool.name));
+  // Large-media ingest must remain directly discoverable even when its
+  // alphabetical position falls outside the bounded stable core.
+  coreNames.add('upload_media');
   for (const tool of DISCOVERY_CONTROL_TOOLS) coreNames.add(tool.name);
   for (const tool of DISCOVERY_ALIAS_TOOLS) coreNames.add(tool.name);
 

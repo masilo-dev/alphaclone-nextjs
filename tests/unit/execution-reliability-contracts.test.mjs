@@ -38,7 +38,8 @@ test('lead finder has a canonical outreach-ready gate', () => {
   const core = read('src/lib/lead-finder/core.ts');
   const contactability = read('src/lib/lead-finder/contactability.ts');
   const crawler = read('src/lib/lead-finder/websiteCrawler.ts');
-  assert.match(core, /if \(!requirements\.email && !requirements\.phone && !email && !phone\) return false/);
+  assert.match(core, /requirements\.email && !email/);
+  assert.match(core, /requirements\.phone && !phone/);
   assert.match(contactability, /outreach_ready/);
   assert.match(contactability, /needs_enrichment/);
   assert.match(crawler, /extractPublicPhones/);

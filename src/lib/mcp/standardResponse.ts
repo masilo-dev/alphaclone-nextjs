@@ -127,6 +127,7 @@ export function standardError(
       message: safeMessage,
       retryable: options?.retryable ?? false,
       ...(options?.approval_id ? { approval_id: options.approval_id } : {}),
+      ...(options?.details !== undefined ? { details: options.details } : {}),
     },
     meta: {
       correlation_id: options?.meta?.correlation_id || newCorrelationId(),

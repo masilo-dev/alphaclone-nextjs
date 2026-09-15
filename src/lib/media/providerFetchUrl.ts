@@ -41,6 +41,10 @@ export function createProviderFetchUrl(params: {
 export function verifyProviderFetchToken(token: string): ProviderFetchClaims | null {
   try {
     const packed = Buffer.from(token, 'base64url');
+    // Node's base64url decoder accepts non-canonical encodings where altered
+    // trailing bits decode to identical bytes. Reject those aliases so a token
+    // has exactly one valid representation and any textual tampering fails.
+    if (packed.toString('base64url') !== token) return null;
     if (packed.length < 29) return null;
     const decipher = createDecipheriv('aes-256-gcm', key(), packed.subarray(0, 12));
     decipher.setAuthTag(packed.subarray(12, 28));
