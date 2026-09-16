@@ -818,7 +818,7 @@ export default function ClientPortalPage() {
                                             {i.status.replace('_', ' ')}
                                         </p>
                                     </div>
-                                    <div sm:text-right>
+                                    <div className="sm:text-right">
                                         <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount due</p>
                                         <p className="mt-0.5 text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{money(i.total)}</p>
                                     </div>
@@ -864,7 +864,7 @@ export default function ClientPortalPage() {
                                             {q.status}
                                         </p>
                                     </div>
-                                    <div sm:text-right>
+                                    <div className="sm:text-right">
                                         <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--ws-text-tertiary)]">Amount</p>
                                         <p className="mt-0.5 text-xl md:text-2xl font-bold tracking-tight text-[color:var(--ws-text-primary)]">{money(q.totalAmount)}</p>
                                     </div>
