@@ -7,6 +7,7 @@ import { decodeBase64Media, detectMimeFromSignature } from '../../src/lib/media/
 const migration = fs.readFileSync('supabase/migrations/20260915042254_social_publish_operation_pipeline.sql', 'utf8');
 const instagram = fs.readFileSync('src/lib/social/providerAssetPublishers.ts', 'utf8');
 const wrappers = fs.readFileSync('src/lib/mcp/tools/social-publishing.ts', 'utf8');
+const crons = fs.readFileSync('railway.crons.json', 'utf8');
 
 test('deterministic idempotency includes tenant, identity, platform, checksum, caption and time', () => {
   const base = { tenantId: 't1', identityId: 'i1', platform: 'instagram', mediaChecksum: 'abc', caption: ' hello   world ', requestedPublishTime: null };
@@ -17,9 +18,7 @@ test('deterministic idempotency includes tenant, identity, platform, checksum, c
 });
 
 test('paths, URLs and OpenAI IDs are never accepted as literal base64', () => {
-  for (const invalid of ['/workspace/scratch/upload/video.mp4', 'https://example.com/video.mp4', 'file_abc123']) {
-    assert.throws(() => decodeBase64Media(invalid), /MEDIA_BASE64_INVALID/);
-  }
+  for (const invalid of ['/workspace/scratch/upload/video.mp4', 'https://example.com/video.mp4', 'file_abc123']) assert.throws(() => decodeBase64Media(invalid), /MEDIA_BASE64_INVALID/);
 });
 
 test('signature detection rejects declared-name tricks and recognizes MP4', () => {
@@ -41,6 +40,13 @@ test('Instagram wrapper persists the container before returning pending', () => 
   assert.ok(update > 0 && returnReceipt > update);
   assert.match(instagram, /reconcileDueInstagramOperations/);
   assert.match(instagram, /fields=id,permalink,timestamp,username/);
+});
+
+test('Instagram reconciliation cannot strand verifying or reconciliation_required operations', () => {
+  assert.match(instagram, /INSTAGRAM_RECONCILABLE_STATES[\s\S]*'reconciliation_required'[\s\S]*'verifying'/);
+  assert.match(instagram, /state: 'failed_retryable'[\s\S]*INSTAGRAM_RECONCILIATION_FAILED/);
+  assert.match(instagram, /locked_by: null, locked_until: null/);
+  assert.match(crons, /reconcile-social-posts\", \"schedule\": \"\*\/1 \* \* \* \*\"/);
 });
 
 test('LinkedIn organization implies LinkedIn and mismatch is a hard error', () => {
