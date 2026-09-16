@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Copy, Link2, Lock, Calendar, Loader2 } from 'lucide-react';
+import { X, Copy, Link2, Lock, Calendar, Loader2, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface ProjectPortalShareDialogProps {
@@ -10,6 +10,7 @@ interface ProjectPortalShareDialogProps {
   projectId: string;
   tenantId: string;
   projectName: string;
+  clientId?: string;
 }
 
 const EXPIRY_OPTIONS = [
@@ -25,13 +26,33 @@ export function ProjectPortalShareDialog({
   projectId,
   tenantId,
   projectName,
+  clientId,
 }: ProjectPortalShareDialogProps) {
   const [password, setPassword] = useState('');
   const [expiryDays, setExpiryDays] = useState<number | null>(30);
   const [shareUrl, setShareUrl] = useState('');
+  const [clientWorkspaceUrl, setClientWorkspaceUrl] = useState('');
   const [saving, setSaving] = useState(false);
+  const [clientUrlLoading, setClientUrlLoading] = useState(false);
 
   if (!isOpen) return null;
+
+  const fetchClientWorkspaceUrl = async () => {
+    if (!clientId) return;
+    setClientUrlLoading(true);
+    try {
+      const res = await fetch(
+        `/api/client-finance/portal-link/${clientId}?tenantId=${encodeURIComponent(tenantId)}`
+      );
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setClientWorkspaceUrl(data.url);
+      }
+    } catch {
+    } finally {
+      setClientUrlLoading(false);
+    }
+  };
 
   const handleCreateLink = async () => {
     setSaving(true);
@@ -53,9 +74,13 @@ export function ProjectPortalShareDialog({
       setShareUrl(data.url);
       try {
         await navigator.clipboard.writeText(data.url);
-        toast.success('Secure client link copied');
+        toast.success('Secure project link copied');
       } catch {
-        toast.success('Client link ready — copy it below');
+        toast.success('Project link ready — copy it below');
+      }
+
+      if (clientId) {
+        void fetchClientWorkspaceUrl();
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not create link');
@@ -114,18 +139,56 @@ export function ProjectPortalShareDialog({
           </div>
 
           {shareUrl ? (
-            <div className="rounded-xl bg-slate-900 border border-white/10 p-3">
-              <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1 flex items-center gap-1">
-                <Link2 className="w-3 h-3" /> Client URL
-              </p>
-              <p className="text-xs text-teal-300 break-all font-mono">{shareUrl}</p>
-              <button
-                type="button"
-                onClick={() => navigator.clipboard.writeText(shareUrl).then(() => toast.success('Copied'))}
-                className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-violet-300 hover:text-violet-200"
-              >
-                <Copy className="w-3.5 h-3.5" /> Copy again
-              </button>
+            <div className="space-y-3">
+              <div className="rounded-xl bg-slate-900 border border-white/10 p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-1">
+                    <Lock className="w-3 h-3" /> Project only
+                  </p>
+                  <span className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300">
+                    Project only
+                  </span>
+                </div>
+                <p className="text-xs text-teal-300 break-all font-mono">{shareUrl}</p>
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(shareUrl).then(() => toast.success('Project link copied'))}
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-violet-300 hover:text-violet-200"
+                >
+                  <Copy className="w-3.5 h-3.5" /> Copy project link
+                </button>
+              </div>
+
+              {clientId && (
+                <div className="rounded-xl bg-slate-900 border border-white/10 p-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-1">
+                      <User className="w-3 h-3" /> Client workspace
+                    </p>
+                    <span className="inline-flex items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-violet-300">
+                      Full workspace
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mb-1">Projects + Invoices + Quotes + Messages</p>
+                  {clientWorkspaceUrl ? (
+                    <>
+                      <p className="text-xs text-teal-300 break-all font-mono">{clientWorkspaceUrl}</p>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(clientWorkspaceUrl).then(() => toast.success('Workspace link copied'))}
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-violet-300 hover:text-violet-200"
+                      >
+                        <Copy className="w-3.5 h-3.5" /> Copy workspace link
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      {clientUrlLoading ? 'Loading workspace link…' : 'Preparing workspace link…'}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : null}
         </div>

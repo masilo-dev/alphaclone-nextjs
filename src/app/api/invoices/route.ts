@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { validateDailyResourceQuota, recordDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 import { fileInvoiceDocument } from '@/lib/documents/fileDocument';
+import { appendWorkspaceActivity } from '@/services/finance/workspaceActivityService';
 
 const lineItemSchema = z.object({
   description: z.string().trim().min(1).max(2000),
@@ -123,6 +124,23 @@ export async function POST(req: NextRequest) {
       if (error) { await admin.from('business_invoices').delete().eq('id', invoice.id).eq('tenant_id', value.tenantId); throw error; }
     }
     await logInvoiceEvent({ invoiceId: invoice.id, tenantId: value.tenantId, eventType: 'created', eventData: { status: invoice.status, total: invoice.total }, performedBy: user.id }).catch((error) => console.error('[invoices] create audit failed', error));
+
+    void appendWorkspaceActivity(admin, {
+      tenant_id: value.tenantId,
+      project_id: invoice.project_id || null,
+      client_id: invoice.client_id || null,
+      invoice_id: invoice.id,
+      contract_id: invoice.contract_id || null,
+      actor_type: 'team_user',
+      actor_id: user.id,
+      actor_display_name: user.email || null,
+      event_type: value.status === 'sent' ? 'invoice.sent' : 'invoice.created',
+      summary: value.status === 'sent'
+        ? `Created and sent invoice ${invoice.invoice_number}`
+        : `Created invoice ${invoice.invoice_number}`,
+      metadata: { invoiceNumber: invoice.invoice_number, status: invoice.status, total: invoice.total },
+    }).catch((e) => console.error('[invoices/route] workspace activity failed', e));
+
     if (value.status !== 'draft') {
       await recordDailyResourceQuota(value.tenantId, user.id, 'invoices', 1, `invoice:${invoice.id}`);
     }

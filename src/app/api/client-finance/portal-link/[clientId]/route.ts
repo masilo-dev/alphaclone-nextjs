@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { getOrCreateClientPortalUrl } from '@/services/finance/clientFinancePortalService';
+import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
+import {
+  getOrCreateClientPortalUrl,
+  resolveClientByPortalToken,
+} from '@/services/finance/clientFinancePortalService';
 
 export async function GET(
   req: NextRequest,
@@ -14,6 +18,25 @@ export async function GET(
     }
 
     const { admin } = await requireTenantAccess(tenantId, req);
+
+    const token = req.nextUrl.searchParams.get('portalToken')?.trim();
+    if (token) {
+      const guarded = await requireClientPortalAccessDoubleGuarded(
+        admin,
+        token,
+        resolveClientByPortalToken
+      );
+      if (guarded.ok && guarded.resolvedClient.id === clientId) {
+        const url = await getOrCreateClientPortalUrl(
+          admin,
+          tenantId,
+          clientId,
+          req.nextUrl.origin
+        );
+        return NextResponse.json({ success: true, url });
+      }
+    }
+
     const url = await getOrCreateClientPortalUrl(admin, tenantId, clientId, req.nextUrl.origin);
 
     return NextResponse.json({ success: true, url });

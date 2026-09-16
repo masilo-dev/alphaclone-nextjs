@@ -48,7 +48,7 @@ export async function loadPublicPortalContext(
 }
 
 export async function loadPublicPortalPayload(admin: SupabaseClient, project: PortalProjectRow) {
-  const [{ data: milestones }, { data: invoices }] = await Promise.all([
+  const [{ data: milestones }, { data: invoices }, { data: clientRow }] = await Promise.all([
     admin
       .from('project_milestones')
       .select('id, name, status, due_date, description, order_index')
@@ -61,7 +61,20 @@ export async function loadPublicPortalPayload(admin: SupabaseClient, project: Po
       .eq('tenant_id', project.tenant_id)
       .eq('project_id', project.id)
       .order('created_at', { ascending: false }),
+    project.client_id
+      ? admin
+          .from('business_clients')
+          .select('id, finance_portal_token')
+          .eq('id', project.client_id)
+          .eq('tenant_id', project.tenant_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+
+  let clientFinancePortalUrl: string | null = null;
+  if (clientRow?.finance_portal_token) {
+    clientFinancePortalUrl = '/portal/' + encodeURIComponent(clientRow.finance_portal_token);
+  }
 
   return {
     projectId: project.id,
@@ -79,5 +92,6 @@ export async function loadPublicPortalPayload(admin: SupabaseClient, project: Po
       paidAt: invoice.paid_at,
       isPaid: String(invoice.status || '').toLowerCase() === 'paid' || Number(invoice.balance_due || 0) <= 0,
     })),
+    clientFinancePortalUrl,
   };
 }

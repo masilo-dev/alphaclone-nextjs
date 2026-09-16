@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
     AlertTriangle,
     ArrowUpRight,
@@ -25,6 +25,7 @@ import {
     Bell,
     CalendarClock,
     CreditCard,
+    Activity,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { ClientFinancePortalData } from '@/services/finance/clientFinancePortalService';
@@ -393,7 +394,18 @@ function DataCardList<T extends RowAny>({
 }
 
 export default function ClientPortalPage() {
+    const router = useRouter();
     const token = useParams()?.token as string;
+
+    const handle401 = useCallback(() => {
+        if (!token) {
+            router.replace('/portal-login');
+            return;
+        }
+        const nextPath = `/portal/${encodeURIComponent(token)}`;
+        router.replace(`/portal-login?next=${encodeURIComponent(nextPath)}`);
+    }, [router, token]);
+
     const [portal, setPortal] = useState<ClientFinancePortalData | null>(null);
     const [messages, setMessages] = useState<PortalMessage[]>([]);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
@@ -405,6 +417,7 @@ export default function ClientPortalPage() {
     const [sending, setSending] = useState(false);
     const [documentPreview, setDocumentPreview] = useState<{ name: string; url: string } | null>(null);
     const [deciding, setDeciding] = useState<string | null>(null);
+    const [workspaceActivity, setWorkspaceActivity] = useState<Array<{ id: string; event_type: string; summary: string; actor_display_name: string | null; created_at: string; metadata: Record<string, unknown> }>>([]);
 
     useEffect(() => {
         if (!toast) return;
@@ -416,12 +429,31 @@ export default function ClientPortalPage() {
         if (!token) return;
         try {
             const r = await fetch(`/api/client-finance/messages?token=${encodeURIComponent(token)}`, { cache: 'no-store' });
+            if (r.status === 401) {
+                handle401();
+                return;
+            }
             const d = await r.json().catch(() => ({}));
             if (r.ok) setMessages(d.messages || []);
         } catch {
             /* swallow network flakes; next poll or reload will recover */
         }
-    }, [token]);
+    }, [token, handle401]);
+
+    const loadWorkspaceActivity = useCallback(async () => {
+        if (!token) return;
+        try {
+            const r = await fetch(`/api/client-finance/activity?token=${encodeURIComponent(token)}&limit=10`, { cache: 'no-store' });
+            if (r.status === 401) {
+                handle401();
+                return;
+            }
+            const d = await r.json().catch(() => ({}));
+            if (r.ok) setWorkspaceActivity(d.activity || []);
+        } catch {
+            /* swallow network flakes; next poll or reload will recover */
+        }
+    }, [token, handle401]);
 
     useEffect(() => {
         if (!token) return;
@@ -429,12 +461,17 @@ export default function ClientPortalPage() {
         (async () => {
             try {
                 const r = await fetch(`/api/client-finance/portal?token=${encodeURIComponent(token)}`, { cache: 'no-store' });
+                if (r.status === 401) {
+                    if (!cancelled) handle401();
+                    return;
+                }
                 const d = await r.json().catch(() => ({}));
                 if (cancelled) return;
                 if (!r.ok || !d.portal) throw new Error(d.error || 'This workspace link is no longer available.');
                 setPortal(d.portal);
                 setProjectId(d.portal.projects?.[0]?.id || '');
                 await loadMessages();
+                await loadWorkspaceActivity();
             } catch (cause) {
                 if (cancelled) return;
                 setError(cause instanceof Error ? cause.message : 'Failed to load workspace');
@@ -443,7 +480,7 @@ export default function ClientPortalPage() {
             }
         })();
         return () => { cancelled = true; };
-    }, [token, loadMessages]);
+    }, [token, loadMessages, loadWorkspaceActivity, handle401]);
 
     const projectIds = useMemo(() => new Set(portal?.projects.map((p) => p.id) || []), [portal]);
     useEffect(() => {
@@ -467,6 +504,10 @@ export default function ClientPortalPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, projectId, content: message }),
             });
+            if (r.status === 401) {
+                handle401();
+                return;
+            }
             if (!r.ok) throw new Error('Message could not be sent');
             setMessage('');
             setToast({ type: 'success', text: 'Message sent' });
@@ -487,6 +528,10 @@ export default function ClientPortalPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token, approvalId, decision }),
             });
+            if (r.status === 401) {
+                handle401();
+                return;
+            }
             if (!r.ok) throw new Error('Decision could not be saved');
             setToast({ type: 'success', text: decision === 'approved' ? 'Approval recorded' : 'Change request sent' });
             window.location.reload();
@@ -753,6 +798,63 @@ export default function ClientPortalPage() {
                                 </div>
                             </section>
                         </div>
+
+                        {/* Workspace activity timeline */}
+                        <section aria-labelledby="workspace-activity-heading" className="rounded-2xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] shadow-[color:var(--ws-card-shadow)]">
+                            <header className="flex items-center justify-between gap-3 px-5 py-4 md:px-6 md:py-5 border-b border-[color:var(--ws-border)]">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--brand-teal)_16%,var(--ws-panel))] text-[color:var(--brand-teal)]">
+                                        <Clock className="h-4 w-4" />
+                                    </div>
+                                    <h2 id="workspace-activity-heading" className="text-base md:text-lg font-semibold text-[color:var(--ws-text-primary)]">
+                                        Workspace activity
+                                    </h2>
+                                </div>
+                                <span className="text-xs text-[color:var(--ws-text-tertiary)]">
+                                    {workspaceActivity.length} recent item{workspaceActivity.length === 1 ? '' : 's'}
+                                </span>
+                            </header>
+                            <div className="p-4 md:p-5">
+                                {workspaceActivity.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {workspaceActivity.slice(0, 10).map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className="rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-surface-secondary)] p-4 md:p-5 hover:border-[color:var(--ws-border-strong)] transition-colors"
+                                            >
+                                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-medium text-[color:var(--ws-text-primary)] line-clamp-3">
+                                                            {item.summary}
+                                                        </p>
+                                                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                            {item.actor_display_name ? (
+                                                                <span className="inline-flex items-center text-[11px] text-[color:var(--ws-text-tertiary)]">
+                                                                    {item.actor_display_name}
+                                                                </span>
+                                                            ) : null}
+                                                            <time className="inline-block text-[11px] text-[color:var(--ws-text-tertiary)] tabular-nums">
+                                                                {formatDateTime(item.created_at)}
+                                                            </time>
+                                                        </div>
+                                                    </div>
+                                                    <span className={`inline-flex shrink-0 items-center self-start gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass(item.event_type)}`}>
+                                                        <Activity className="h-3 w-3" />
+                                                        {item.event_type.split('.').pop() || item.event_type}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <EmptyState
+                                        icon={Clock}
+                                        title="No workspace activity yet"
+                                        description="As things happen — invoices sent, projects updated, approvals decided — they'll appear here with a clean timeline."
+                                    />
+                                )}
+                            </div>
+                        </section>
                     </div>
                 )}
 

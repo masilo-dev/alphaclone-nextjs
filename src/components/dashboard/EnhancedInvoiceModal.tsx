@@ -20,12 +20,14 @@ import {
   Upload,
   Package,
   Plus,
-  Users
+  Users,
+  Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { businessInvoiceService } from '@/services/businessInvoiceService';
+import { projectService } from '@/services/projectService';
 import { useServicesCatalog, ServiceItem } from '@/hooks/useServicesCatalog';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -219,11 +221,13 @@ export default function EnhancedInvoiceModal({
 
   const [clients, setClients] = useState<any[]>([]);
   const [contracts, setContracts] = useState<Array<{ id: string; title: string; status: string; client_id?: string | null }>>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [projectMap, setProjectMap] = useState<Record<string, { name: string }>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [showContactDropdown, setShowContactDropdown] = useState(false);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  // Load clients
+  // Load clients, contracts, projects
   useEffect(() => {
     const loadClients = async () => {
       try {
@@ -251,11 +255,26 @@ export default function EnhancedInvoiceModal({
         console.error('Failed to load contracts:', error);
       }
     };
+    const loadProjects = async () => {
+      if (!user?.id) return;
+      try {
+        const { projects: fetched } = await projectService.getProjects(user.id, user.role || 'admin');
+        setProjects(fetched || []);
+        const pMap: Record<string, { name: string }> = {};
+        (fetched || []).forEach((p: any) => {
+          pMap[p.id] = { name: p.name };
+        });
+        setProjectMap(pMap);
+      } catch (error) {
+        console.error('Failed to load projects:', error);
+      }
+    };
     if (isOpen && currentTenant?.id) {
       void loadClients();
       void loadContracts();
+      void loadProjects();
     }
-  }, [isOpen, currentTenant?.id]);
+  }, [isOpen, currentTenant?.id, user?.id, user?.role]);
 
   // Click outside to close dropdown
   useEffect(() => {
@@ -589,6 +608,30 @@ export default function EnhancedInvoiceModal({
         </div>
       </div>
 
+      {(() => {
+        const linkedProjectId = invoice?.projectId || invoice?.project_id;
+        if (!linkedProjectId) return null;
+        const projectName = projectMap[linkedProjectId]?.name || 'Linked project';
+        return (
+          <button
+            type="button"
+            onClick={() => router.push(`/dashboard/business/projects/manage?projectId=${encodeURIComponent(linkedProjectId)}`)}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 transition-all group"
+          >
+            <div className="p-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 shrink-0">
+              <Briefcase className="w-4 h-4 text-indigo-300" />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-indigo-400/80">Linked project</p>
+              <p className="text-sm font-bold text-indigo-200 truncate">{projectName}</p>
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400/70 group-hover:text-indigo-300 transition-colors">
+              Open →
+            </span>
+          </button>
+        );
+      })()}
+
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">Linked contract (optional)</label>
         <select
@@ -890,7 +933,7 @@ export default function EnhancedInvoiceModal({
         isOpen={isOpen}
         onClose={onClose}
         onInvoiceCreated={() => onSuccess?.(undefined)}
-        projects={[]}
+        projects={projects}
       />
     );
   }
@@ -902,13 +945,31 @@ export default function EnhancedInvoiceModal({
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
       <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b border-slate-800">
-          <div>
-            <h2 className="text-xl font-semibold text-white">
-              {mode === 'edit' ? 'Edit Invoice' : 'Finalize Invoice'}
-            </h2>
-            <p className="text-sm text-slate-400">
-              {mode === 'send' ? 'Review and finalize invoice' : 'Update invoice details for your client'}
-            </p>
+          <div className="space-y-2">
+            <div>
+              <h2 className="text-xl font-semibold text-white">
+                {mode === 'edit' ? 'Edit Invoice' : 'Finalize Invoice'}
+              </h2>
+              <p className="text-sm text-slate-400">
+                {mode === 'send' ? 'Review and finalize invoice' : 'Update invoice details for your client'}
+              </p>
+            </div>
+            {(() => {
+              const linkedProjectId = invoice?.projectId || invoice?.project_id;
+              if (!linkedProjectId) return null;
+              const projectName = projectMap[linkedProjectId]?.name || 'Linked project';
+              return (
+                <button
+                  type="button"
+                  onClick={() => router.push(`/dashboard/business/projects/manage?projectId=${encodeURIComponent(linkedProjectId)}`)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-indigo-200 transition-all"
+                >
+                  <Briefcase className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Project:</span>
+                  <span className="text-xs font-bold max-w-[180px] truncate">{projectName}</span>
+                </button>
+              );
+            })()}
           </div>
           <button
             onClick={onClose}

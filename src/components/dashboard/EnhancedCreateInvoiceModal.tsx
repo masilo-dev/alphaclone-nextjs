@@ -29,9 +29,11 @@ interface CreateInvoiceModalProps {
     onClose: () => void;
     onInvoiceCreated: () => void;
     projects: Project[];
+    preselectProjectId?: string;
+    preselectClientId?: string;
 }
 
-const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onInvoiceCreated, projects }) => {
+const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose, onInvoiceCreated, projects, preselectProjectId, preselectClientId }) => {
     const router = useRouter();
     const { currentTenant } = useTenant();
     const [step, setStep] = useState<'edit' | 'preview' | 'success'>('edit');
@@ -244,6 +246,30 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             setClientEmail(selectedClient.email);
         }
     }, [selectedClientId, clients]);
+
+    // Pre-select project and client when modal opens
+    React.useEffect(() => {
+        if (!isOpen) return;
+        if (preselectProjectId) {
+            setSelectedProjectId(preselectProjectId);
+            const project = projects.find(p => p.id === preselectProjectId);
+            if (project?.clientId) {
+                setSelectedClientId(project.clientId);
+            }
+        }
+        if (preselectClientId && !preselectProjectId) {
+            setSelectedClientId(preselectClientId);
+        }
+    }, [isOpen, preselectProjectId, preselectClientId, projects]);
+
+    // Auto-fill client when project is selected
+    React.useEffect(() => {
+        if (!selectedProjectId) return;
+        const project = projects.find(p => p.id === selectedProjectId);
+        if (project?.clientId && !selectedClientId) {
+            setSelectedClientId(project.clientId);
+        }
+    }, [selectedProjectId, projects, selectedClientId]);
 
     // Update available services when industry changes
     React.useEffect(() => {

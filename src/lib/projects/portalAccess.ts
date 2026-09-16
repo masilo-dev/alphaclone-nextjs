@@ -7,6 +7,7 @@ import { portalTokenLookupValues } from '@/lib/projects/portalLinks';
 export interface PortalProjectRow {
   id: string;
   tenant_id: string;
+  client_id: string | null;
   name: string;
   category: string | null;
   status: string | null;
@@ -38,7 +39,7 @@ export async function resolvePortalProject(
   let query = admin
     .from('projects')
     .select(
-      'id, tenant_id, name, category, status, current_stage, progress, due_date, owner_name, image, description, portal_token, portal_password_hash, portal_expires_at, is_public, portal_enabled'
+      'id, tenant_id, client_id, name, category, status, current_stage, progress, due_date, owner_name, image, description, portal_token, portal_password_hash, portal_expires_at, is_public, portal_enabled'
     )
     .eq('is_public', true)
     .eq('portal_enabled', true);

@@ -13,6 +13,7 @@ import {
   Receipt,
   Target,
   Trophy,
+  Activity,
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +29,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { formatCurrency } from '@/lib/format/currency';
 import { DashboardHomeLayoutToggle } from '@/components/dashboard/DashboardHomeLayoutToggle';
 import { WORKSPACE } from '@/constants/design';
+
+interface WorkspaceActivityItem {
+  id: string;
+  event_type: string;
+  summary: string;
+  actor_display_name: string | null;
+  created_at: string;
+}
 
 interface AttentionItem {
   id: string;
@@ -60,6 +69,7 @@ export function AttentionFirstDashboard() {
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [bonnieActions, setBonnieActions] = useState<BonnieAction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [workspaceActivity, setWorkspaceActivity] = useState<WorkspaceActivityItem[]>([]);
 
   useEffect(() => {
     if (!currentTenant?.id || !user?.id) return;
@@ -104,6 +114,17 @@ export function AttentionFirstDashboard() {
             })
             .filter((o) => !isTechnicalJargonText(o.label))
         );
+      })
+      .catch(() => {});
+  }, [currentTenant?.id]);
+
+  useEffect(() => {
+    if (!currentTenant?.id) return;
+    void fetch(`/api/dashboard/workspace-activity?tenantId=${currentTenant.id}&limit=20`)
+      .then((r) => r.json())
+      .then((data) => {
+        const items = (data?.activity || []) as WorkspaceActivityItem[];
+        setWorkspaceActivity(items);
       })
       .catch(() => {});
   }, [currentTenant?.id]);
@@ -326,10 +347,38 @@ export function AttentionFirstDashboard() {
             id="home-activity-heading"
             className={cn(WORKSPACE.typography.panelTitle, 'mb-3 flex items-center gap-2')}
           >
-            <Trophy className="w-4 h-4 text-amber-400" aria-hidden />
+            <Activity className="w-4 h-4 text-teal-400" aria-hidden />
             {t('Recent activity')}
           </h3>
-          {recentActivity.length > 0 ? (
+          {workspaceActivity.length > 0 ? (
+            <ol className="relative border-l border-[var(--ws-border)] ml-2 space-y-3 max-h-[320px] overflow-y-auto pr-1">
+              {workspaceActivity.slice(0, 10).map((item) => (
+                <li key={item.id} className="ml-4 last:pb-0">
+                  <span className="absolute -left-[5px] mt-1.5 h-2.5 w-2.5 rounded-full bg-teal-400 ring-4 ring-[var(--ws-panel)]" />
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium text-[var(--ws-text-primary,#fff)] line-clamp-2">
+                      {item.summary}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      {item.actor_display_name ? (
+                        <span className="inline-flex items-center text-[11px] text-[var(--ws-text-tertiary)]">
+                          {item.actor_display_name}
+                        </span>
+                      ) : null}
+                      <time className="inline-block text-[11px] text-[var(--ws-text-tertiary)] tabular-nums">
+                        {new Date(item.created_at).toLocaleString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </time>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          ) : recentActivity.length > 0 ? (
             <ul className="space-y-2.5">
               {recentActivity.map((item, i) => (
                 <li

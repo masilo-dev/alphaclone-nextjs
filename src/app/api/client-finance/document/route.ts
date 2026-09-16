@@ -1,13 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireClientPortalAccessDoubleGuarded } from '@/lib/auth/clientPortalAuth';
 import { resolveClientByPortalToken } from '@/services/finance/clientFinancePortalService';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Exchanges a client-portal token for a short-lived URL to one explicitly
- * shared document. Never expose a raw storage path to the browser.
- */
+function mapAuthError(code: string): { status: number; message: string } {
+  switch (code) {
+    case 'NO_SESSION':
+    case 'BAD_TOKEN':
+    case 'SALT_ROTATED':
+    case 'SESSION_REVOKED':
+      return { status: 401, message: 'Session expired or invalid. Please log in again.' };
+    case 'CLIENT_INACTIVE':
+      return { status: 403, message: 'This portal account is not active.' };
+    case 'TOKEN_MISMATCH':
+      return { status: 403, message: 'Session does not match this portal.' };
+    case 'BAD_PORTAL_TOKEN':
+      return { status: 404, message: 'Portal not found.' };
+    case 'INTERNAL_ERROR':
+      return { status: 500, message: 'Server error.' };
+    default:
+      return { status: 403, message: 'Access denied.' };
+  }
+}
+
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token')?.trim();
   const documentId = req.nextUrl.searchParams.get('documentId')?.trim();
@@ -15,8 +32,12 @@ export async function GET(req: NextRequest) {
 
   try {
     const admin = await resolveSupabaseAdminClient();
-    const client = await resolveClientByPortalToken(admin, token);
-    if (!client) return NextResponse.json({ error: 'Portal not found' }, { status: 404 });
+    const guarded = await requireClientPortalAccessDoubleGuarded(admin, token, resolveClientByPortalToken);
+    if (!guarded.ok) {
+      const { status, message } = mapAuthError(guarded.error.code);
+      return NextResponse.json({ error: message, code: guarded.error.code }, { status });
+    }
+    const client = guarded.resolvedClient;
 
     const { data: link, error } = await admin
       .from('document_relationships')

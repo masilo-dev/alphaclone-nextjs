@@ -594,6 +594,7 @@ export function ProjectWorkspaceDrawer({
         projectId={project.id}
         tenantId={tenantId}
         projectName={project.name}
+        clientId={project.clientId}
       />
     </>
   );

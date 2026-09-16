@@ -44,6 +44,7 @@ import { PROJECT_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionStep
 import { ProjectWorkspaceDrawer } from '@/components/dashboard/projects/ProjectWorkspaceDrawer';
 import { PlatformExecutionWelcome } from '@/components/dashboard/PlatformExecutionWelcome';
 import { isFinishedProject } from '@/lib/projects/projectEnums';
+import CreateInvoiceModal from '../CreateInvoiceModal';
 
 interface ProjectsPageProps {
     user: User;
@@ -139,6 +140,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     const [editingProject, setEditingProject] = useState<BusinessProject | null>(null);
     const [sharingProject, setSharingProject] = useState<BusinessProject | null>(null);
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [invoicePreselectProjectId, setInvoicePreselectProjectId] = useState<string | undefined>(undefined);
+    const [invoicePreselectClientId, setInvoicePreselectClientId] = useState<string | undefined>(undefined);
+    const [lastCreatedProject, setLastCreatedProject] = useState<BusinessProject | null>(null);
 
     const handleSaveProject = useCallback(async (projectData: Partial<BusinessProject>) => {
         if (!currentTenant) {
@@ -190,6 +195,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 } else if (project) {
                     setProjects(prev => [project, ...prev]);
                     setShowAddModal(false);
+                    setLastCreatedProject(project);
                     toast.success('Project created');
                     celebrateWinRitual({
                         reason: 'New project created',
@@ -246,6 +252,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         }
     }, []);
 
+    const openCreateInvoiceForProject = useCallback((project: BusinessProject) => {
+        setInvoicePreselectProjectId(project.id);
+        setInvoicePreselectClientId(project.clientId || undefined);
+        setShowInvoiceModal(true);
+    }, []);
+
     const filteredProjects = useMemo(() => {
         if (!searchQuery.trim()) return projects;
         const query = searchQuery.toLowerCase();
@@ -272,6 +284,56 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 steps={PROJECT_MANAGER_EXECUTION_STEPS}
                 onNavigate={(href) => router.push(href)}
             />
+
+            {/* Project created success CTA */}
+            <AnimatePresence>
+                {lastCreatedProject && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="relative overflow-hidden rounded-2xl border-2 border-teal-500/40 bg-gradient-to-br from-teal-500/15 via-teal-500/10 to-emerald-500/10 p-5 shadow-lg shadow-teal-900/20"
+                    >
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                                <div className="p-2.5 rounded-xl bg-teal-500/20 border border-teal-500/30 shrink-0">
+                                    <CheckCircle2 className="w-6 h-6 text-teal-400" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-base font-black text-white tracking-tight mb-1">
+                                        Project created! Want to create an invoice for this project?
+                                    </h3>
+                                    <p className="text-sm text-slate-400 font-medium">
+                                        <span className="text-teal-300 font-bold">{lastCreatedProject.name}</span>
+                                        {lastCreatedProject.clientId && clients.find(c => c.id === lastCreatedProject.clientId)?.name && (
+                                            <> · Client: <span className="text-slate-200 font-semibold">{clients.find(c => c.id === lastCreatedProject.clientId)?.name}</span></>
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                                <button
+                                    onClick={() => setLastCreatedProject(null)}
+                                    className="px-4 py-2.5 text-sm font-bold text-slate-400 hover:text-white transition-colors"
+                                >
+                                    Not now
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        openCreateInvoiceForProject(lastCreatedProject);
+                                        setLastCreatedProject(null);
+                                    }}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 hover:from-teal-500 hover:to-emerald-400 text-white text-sm font-black shadow-lg shadow-teal-900/30 active:scale-95 transition-all"
+                                >
+                                    <DollarSign className="w-4 h-4" />
+                                    Create Invoice
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-5 min-w-0">
                 <div className="min-w-0">
@@ -368,6 +430,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                         onDelete={handleDeleteProject}
                                         onStageChange={handleStageUpdate}
                                         onViewDetails={setViewingProject}
+                                        onCreateInvoice={openCreateInvoiceForProject}
                                     />
                                 ))
                             )}
@@ -402,6 +465,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     projectId={sharingProject.id}
                     tenantId={currentTenant.id}
                     projectName={sharingProject.name}
+                    clientId={sharingProject.clientId}
                 />
             ) : null}
 
@@ -421,6 +485,18 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     />
                 )}
             </AnimatePresence>
+
+            <CreateInvoiceModal
+                isOpen={showInvoiceModal}
+                onClose={() => setShowInvoiceModal(false)}
+                onInvoiceCreated={() => {
+                    setShowInvoiceModal(false);
+                    loadData();
+                }}
+                projects={projects}
+                preselectProjectId={invoicePreselectProjectId}
+                preselectClientId={invoicePreselectClientId}
+            />
         </div>
     );
 };
@@ -431,14 +507,16 @@ const ProjectListRow = ({
     onShare,
     onDelete,
     onStageChange,
-    onViewDetails
+    onViewDetails,
+    onCreateInvoice
 }: {
     project: BusinessProject,
     onEdit: any,
     onShare: (project: BusinessProject) => void,
     onDelete: any,
     onStageChange: (id: string, stage: ProjectStage) => void,
-    onViewDetails: (project: BusinessProject) => void
+    onViewDetails: (project: BusinessProject) => void,
+    onCreateInvoice: (project: BusinessProject) => void
 }) => {
     const finished = isFinishedProject(project);
     const statusLabel = finished ? 'Finished' : project.status.replace('_', ' ');
@@ -550,6 +628,15 @@ const ProjectListRow = ({
                     )}
                 </div>
                 <div className="flex items-end justify-end gap-1">
+                    {project.clientId && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onCreateInvoice(project); }}
+                            className="h-8 w-8 p-0.5 hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 rounded-full transition-all"
+                            title="Create invoice for this project"
+                        >
+                            <DollarSign className="w-3.5 h-3.5" />
+                        </button>
+                    )}
                     <button
                         onClick={(e) => { e.stopPropagation(); onShare(project); }}
                         className="h-8 w-8 p-0.5 hover:bg-violet-500/10 text-slate-500 hover:text-violet-300 rounded-full transition-all"
@@ -610,6 +697,15 @@ const ProjectListRow = ({
 
             {/* Ops */}
             <div className="hidden lg:flex col-span-1 lg:col-span-1 justify-end gap-1">
+                {project.clientId && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onCreateInvoice(project); }}
+                        className="p-2 hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 rounded-lg transition-all"
+                        title="Create invoice for this project"
+                    >
+                        <DollarSign className="w-4 h-4" />
+                    </button>
+                )}
                 <button
                     onClick={(e) => { e.stopPropagation(); onShare(project); }}
                     className="p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-300 rounded-lg transition-all"
@@ -868,6 +964,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData, tenantId }: {
                     projectId={initialData.id}
                     tenantId={tenantId}
                     projectName={initialData.name}
+                    clientId={initialData.clientId}
                 />
             ) : null}
         </div>

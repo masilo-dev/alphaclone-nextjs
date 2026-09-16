@@ -18,6 +18,7 @@ import {
 } from "@/lib/projects/projectClientNotification";
 import { sendEmailServer } from "@/lib/email/sendEmailServer";
 import { buildCanonicalProjectPortalUrl } from "@/lib/projects/portalLinks";
+import { appendWorkspaceActivity } from "@/services/finance/workspaceActivityService";
 
 const fields = z
   .object({
@@ -232,6 +233,34 @@ export async function PATCH(
         "[projects] project_updated event could not be recorded",
         eventError,
       );
+
+    const statusChanged = before.status !== project.status;
+    const stageChanged = before.current_stage !== project.current_stage;
+    if (statusChanged || stageChanged) {
+      void appendWorkspaceActivity(admin, {
+        tenant_id: tenantId,
+        project_id: project.id,
+        client_id: project.client_id || null,
+        invoice_id: null,
+        contract_id: null,
+        actor_type: 'team_user',
+        actor_id: auth.user.id,
+        actor_display_name: auth.user.email || null,
+        event_type: statusChanged ? 'project.status_changed' : 'project.stage_changed',
+        summary: statusChanged
+          ? `Changed project ${project.name} status from ${before.status} to ${project.status}`
+          : `Changed project ${project.name} stage from ${before.current_stage} to ${project.current_stage}`,
+        metadata: {
+          projectId: project.id,
+          projectName: project.name,
+          previousStatus: before.status,
+          newStatus: project.status,
+          previousStage: before.current_stage,
+          newStage: project.current_stage,
+        },
+      }).catch((e) => console.error('[projects/[projectId]/route] workspace activity failed', e));
+    }
+
     const origin = req.nextUrl.origin;
     const notificationResults: Record<string, unknown> = {};
     const justFinished = willBeComplete && !wasComplete;

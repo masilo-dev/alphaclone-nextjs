@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { Milestone } from '@/services/milestoneService';
 import { Project } from '@/types';
 import { Card } from '@/components/ui/UIComponents';
-import { CheckCircle2, Calendar, MessageSquare, Send, Loader2, Lock, ReceiptText, Timer } from 'lucide-react';
+import { CheckCircle2, Calendar, MessageSquare, Send, Loader2, Lock, ReceiptText, Timer, ExternalLink } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -52,6 +52,7 @@ export default function PublicProjectPage() {
   const [newComment, setNewComment] = useState('');
   const [posting, setPosting] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [clientFinancePortalUrl, setClientFinancePortalUrl] = useState<string | null>(null);
 
   const portalHeaders = useCallback((): Record<string, string> => {
     if (!accessPassword) return {};
@@ -96,6 +97,7 @@ export default function PublicProjectPage() {
       setExpired(false);
       setProject(data.project);
       setInternalProjectId(data.projectId);
+      setClientFinancePortalUrl(data.clientFinancePortalUrl || null);
       setMilestones(
         (data.milestones || []).map((m: Record<string, unknown>) => ({
           id: String(m.id),
@@ -256,7 +258,18 @@ export default function PublicProjectPage() {
           <div className="inline-block px-4 py-1.5 rounded-full bg-teal-500/10 text-teal-400 text-sm font-medium border border-teal-500/20">
             AlphaClone Systems — Project Portal
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold">{project.name}</h1>
+          <div className="flex flex-col items-center gap-3">
+            <h1 className="text-4xl md:text-5xl font-bold">{project.name}</h1>
+            {clientFinancePortalUrl && (
+              <a
+                href={clientFinancePortalUrl}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 hover:text-violet-200 text-xs font-bold uppercase tracking-wider transition-all"
+              >
+                Go to client workspace
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+          </div>
           {project.ownerName && <p className="text-slate-400">Client: {project.ownerName}</p>}
         </div>
 

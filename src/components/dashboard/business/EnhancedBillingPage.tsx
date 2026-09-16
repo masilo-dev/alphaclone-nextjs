@@ -6,12 +6,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
     AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
-    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square, TrendingUp
+    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square, TrendingUp, Copy, Lock, Briefcase
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessInvoiceService, BusinessInvoice } from '../../../services/businessInvoiceService';
 import { businessClientService } from '../../../services/businessClientService';
+import { projectService } from '../../../services/projectService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
@@ -78,6 +79,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         overduePrev: 0,
     });
     const [clientMap, setClientMap] = useState<Record<string, { name: string; email?: string }>>({});
+    const [projectMap, setProjectMap] = useState<Record<string, { name: string }>>({});
+    const [projects, setProjects] = useState<any[]>([]);
     const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string; body?: string } | null>(null);
     const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
     const [bulkDeletingInvoices, setBulkDeletingInvoices] = useState(false);
@@ -193,8 +196,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         if (currentTenant?.id) {
             loadInvoices();
             loadClients();
+            void loadProjects();
         }
-    }, [currentTenant?.id]);
+    }, [currentTenant?.id, user?.id, user?.role]);
 
     useEffect(() => {
         if (!searchParams) return;
@@ -228,6 +232,23 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 map[c.id] = { name: c.name, email: c.email || undefined };
             });
             setClientMap(map);
+        }
+    };
+
+    const loadProjects = async () => {
+        if (!user?.id || !user?.role) return;
+        try {
+            const { projects: fetchedProjects } = await projectService.getProjects(user.id, user.role);
+            if (fetchedProjects) {
+                setProjects(fetchedProjects);
+                const pMap: Record<string, { name: string }> = {};
+                fetchedProjects.forEach((p: any) => {
+                    pMap[p.id] = { name: p.name };
+                });
+                setProjectMap(pMap);
+            }
+        } catch (e) {
+            console.error('Failed to load projects in billing page', e);
         }
     };
 
@@ -699,9 +720,27 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             : <Square size={14} />}
                                     </button>
                                     <div className={`p-2 rounded-full bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={14} /></div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-[12px] font-black text-white">{inv.invoiceNumber}</p>
                                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.22em]">{inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}</p>
+                                        {inv.projectId ? (
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    router.push(`/dashboard/business/projects/manage?projectId=${encodeURIComponent(inv.projectId!)}`);
+                                                }}
+                                                className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:text-indigo-200 transition-all group"
+                                                title="Open linked project"
+                                            >
+                                                <Briefcase className="w-3 h-3" />
+                                                <span className="text-[9px] font-black uppercase tracking-widest truncate max-w-[160px]">
+                                                    {projectMap[inv.projectId]?.name || 'Linked project'}
+                                                </span>
+                                            </button>
+                                        ) : (
+                                            <p className="mt-1 text-[9px] text-gray-600 font-bold uppercase tracking-widest">—</p>
+                                        )}
                                     </div>
                                 </div>
                                 <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
@@ -894,28 +933,66 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     )}
 
                                     {selectedInvoiceForOptions.clientId && currentTenant?.id && (
-                                        <button
-                                            onClick={async () => {
-                                                try {
-                                                    const res = await fetch(
-                                                        `/api/client-finance/portal-link/${selectedInvoiceForOptions.clientId}?tenantId=${encodeURIComponent(currentTenant.id)}`
-                                                    );
-                                                    const data = await res.json();
-                                                    if (!res.ok || !data.url) throw new Error(data.error || 'Failed');
-                                                    await navigator.clipboard.writeText(data.url);
-                                                    toast.success('Client finance portal link copied');
-                                                } catch (err) {
-                                                    toast.error(err instanceof Error ? err.message : 'Failed to copy portal link');
-                                                }
-                                            }}
-                                            className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
-                                        >
-                                            <span className="flex items-center gap-2.5">
-                                                <User className="w-4 h-4 text-purple-400" />
-                                                <span>Copy Client Finance Portal Link</span>
-                                            </span>
-                                            <span className="text-[10px] text-slate-500 font-mono">INVOICES + QUOTES</span>
-                                        </button>
+                                        <div className="space-y-3">
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        const res = await fetch(
+                                                            `/api/client-finance/portal-link/${selectedInvoiceForOptions.clientId}?tenantId=${encodeURIComponent(currentTenant.id)}`
+                                                        );
+                                                        const data = await res.json();
+                                                        if (!res.ok || !data.url) throw new Error(data.error || 'Failed');
+                                                        await navigator.clipboard.writeText(data.url);
+                                                        toast.success('Client workspace link copied');
+                                                    } catch (err) {
+                                                        toast.error(err instanceof Error ? err.message : 'Failed to copy workspace link');
+                                                    }
+                                                }}
+                                                className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                            >
+                                                <span className="flex items-center gap-2.5">
+                                                    <User className="w-4 h-4 text-purple-400" />
+                                                    <span>Copy client workspace link</span>
+                                                </span>
+                                                <span className="flex items-center gap-1 text-[10px] text-slate-500 font-mono">
+                                                    <Copy className="w-3 h-3" /> WORKSPACE
+                                                </span>
+                                            </button>
+
+                                            {selectedInvoiceForOptions.projectId && (
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            const res = await fetch(`/api/projects/${selectedInvoiceForOptions.projectId}/portal-share`, {
+                                                                method: 'POST',
+                                                                credentials: 'include',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({
+                                                                    tenantId: currentTenant.id,
+                                                                    expiresInDays: 30,
+                                                                    neverExpires: false,
+                                                                }),
+                                                            });
+                                                            const data = await res.json();
+                                                            if (!res.ok || !data.url) throw new Error(data.error || 'Failed');
+                                                            await navigator.clipboard.writeText(data.url);
+                                                            toast.success('Project portal link copied');
+                                                        } catch (err) {
+                                                            toast.error(err instanceof Error ? err.message : 'Failed to copy project link');
+                                                        }
+                                                    }}
+                                                    className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                                >
+                                                    <span className="flex items-center gap-2.5">
+                                                        <Lock className="w-4 h-4 text-amber-400" />
+                                                        <span>Copy project portal link</span>
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-[10px] text-slate-500 font-mono">
+                                                        <Copy className="w-3 h-3" /> PROJECT
+                                                    </span>
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
 
                                     <button
