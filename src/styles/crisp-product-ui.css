@@ -4,72 +4,127 @@
  * with 12–28px backdrop blur and 145–155% saturation. That made screens feel hazy,
  * especially in screen recordings. Keep the brand lighting and atmospheric depth,
  * but make working and marketing surfaces substantially more opaque and crisp.
+ *
+ * Coverage:
+ *   .ac-business-root  — authenticated workspace shell
+ *   .ac-dashboard-root — dashboard shell variant
+ *   :root / * (global fallbacks) — pages that never wrap (client portal, share links)
  */
 
 /* --------------------------------------------------------------------------
    PRODUCT / AUTHENTICATED EXPERIENCE
    -------------------------------------------------------------------------- */
 
-.ac-business-root {
-  --ac-v3-glass-blur: 6px;
-  --ac-v3-glass-saturate: 1.02;
-  --ac-fluid-blur-sm: 4px;
-  --ac-fluid-blur-md: 6px;
-  --ac-fluid-blur-lg: 10px;
+.ac-business-root,
+.ac-dashboard-root,
+:root {
+  --ac-v3-glass-blur: 4px;
+  --ac-v3-glass-saturate: 1.01;
+  --ac-fluid-blur-sm: 3px;
+  --ac-fluid-blur-md: 4px;
+  --ac-fluid-blur-lg: 6px;
 }
 
-/* Normal workspace content should read as a solid application surface, not glass. */
+/* Normal workspace content must be a solid reading surface — never glass.
+   Selectors cover both shell variants AND standalone pages. */
+.ac-workspace-panel,
+.ac-v3-content,
+.ac-v3-elevated,
 .ac-business-root .ac-workspace-panel,
 .ac-business-root .ac-v3-content,
-.ac-business-root .ac-v3-elevated {
+.ac-business-root .ac-v3-elevated,
+.ac-dashboard-root .ac-workspace-panel,
+.ac-dashboard-root .ac-v3-content,
+.ac-dashboard-root .ac-v3-elevated {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 
-/* Floating product chrome can retain a small amount of depth without fogging text. */
+/* Floating product chrome can retain a TINY amount of material depth without fogging text. */
+.ac-v3-floating,
+.ac-v3-glass,
+.ac-v3-command-surface,
+.ac-v3-sheet,
+.ac-v3-popover,
+.glass-panel,
 .ac-business-root .ac-v3-floating,
 .ac-business-root .ac-v3-glass,
 .ac-business-root .ac-v3-command-surface,
 .ac-business-root .ac-v3-sheet,
 .ac-business-root .ac-v3-popover,
-.ac-business-root .glass-panel {
-  -webkit-backdrop-filter: blur(6px) saturate(102%) !important;
-  backdrop-filter: blur(6px) saturate(102%) !important;
+.ac-business-root .glass-panel,
+.ac-dashboard-root .ac-v3-floating,
+.ac-dashboard-root .ac-v3-glass,
+.ac-dashboard-root .ac-v3-command-surface,
+.ac-dashboard-root .ac-v3-sheet,
+.ac-dashboard-root .ac-v3-popover,
+.ac-dashboard-root .glass-panel {
+  -webkit-backdrop-filter: blur(4px) saturate(101%) !important;
+  backdrop-filter: blur(4px) saturate(101%) !important;
 }
 
-/* Headers and sticky toolbars were previously blurred at 20px + 150% saturation. */
+/* Headers and sticky toolbars: previously blurred at 20px + 150% saturation.
+   Content within headers (title text, buttons, search) must be legible and sharp,
+   so blur is reduced to the absolute minimum that still conveys "sticky material". */
+header,
+[data-workspace-toolbar],
+[data-sticky-toolbar],
+.ac-workspace-toolbar,
 .ac-business-root header,
 .ac-business-root [data-workspace-toolbar],
 .ac-business-root [data-sticky-toolbar],
-.ac-business-root .ac-workspace-toolbar {
-  -webkit-backdrop-filter: blur(6px) saturate(108%) !important;
-  backdrop-filter: blur(6px) saturate(108%) !important;
+.ac-business-root .ac-workspace-toolbar,
+.ac-dashboard-root header,
+.ac-dashboard-root [data-workspace-toolbar],
+.ac-dashboard-root [data-sticky-toolbar],
+.ac-dashboard-root .ac-workspace-toolbar {
+  -webkit-backdrop-filter: blur(4px) saturate(104%) !important;
+  backdrop-filter: blur(4px) saturate(104%) !important;
 }
 
-/* Dialogs/sheets still need separation from the page, but 28px was excessive. */
+/* Dialogs/sheets still need separation from the page, but 28px was excessive.
+   Keep blur mild so content INSIDE the dialog (forms, labels, tables) stays crisp. */
+aside[data-drawer],
+[role="dialog"],
+[data-sheet],
+[data-popover-content],
 .ac-business-root aside[data-drawer],
 .ac-business-root [role="dialog"],
 .ac-business-root [data-sheet],
-.ac-business-root [data-popover-content] {
-  -webkit-backdrop-filter: blur(10px) saturate(108%) !important;
-  backdrop-filter: blur(10px) saturate(108%) !important;
+.ac-business-root [data-popover-content],
+.ac-dashboard-root aside[data-drawer],
+.ac-dashboard-root [role="dialog"],
+.ac-dashboard-root [data-sheet],
+.ac-dashboard-root [data-popover-content] {
+  -webkit-backdrop-filter: blur(6px) saturate(104%) !important;
+  backdrop-filter: blur(6px) saturate(104%) !important;
 }
 
 /* Protect text clarity from accidental inherited filter/opacity effects. */
+#main-content,
+.ac-business-main,
+.ac-business-scroll,
 .ac-business-root #main-content,
 .ac-business-root .ac-business-main,
-.ac-business-root .ac-business-scroll {
-  filter: none;
+.ac-business-root .ac-business-scroll,
+.ac-dashboard-root #main-content,
+.ac-dashboard-root .ac-business-main,
+.ac-dashboard-root .ac-business-scroll {
+  filter: none !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* --------------------------------------------------------------------------
-   PUBLIC MARKETING / LANDING EXPERIENCE
+   PUBLIC MARKETING / LANDING EXPERIENCE + CLIENT PORTAL + SHARE LINKS
    -------------------------------------------------------------------------- */
 
-.marketing-theme {
-  --ac-fluid-blur-sm: 3px;
-  --ac-fluid-blur-md: 5px;
-  --ac-fluid-blur-lg: 8px;
+.marketing-theme,
+body:not(.ac-business-root):not(.ac-dashboard-root) {
+  --ac-fluid-blur-sm: 2px;
+  --ac-fluid-blur-md: 3px;
+  --ac-fluid-blur-lg: 5px;
 }
 
 /* Main marketing cards should be crisp surfaces. Keep transparency subtle, not foggy. */
@@ -153,4 +208,71 @@
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
+}
+
+/* -----------------------------------------------------------------------------
+ * Marketing surface fog-leak catch-up.
+ * apple-fluid-system.css declares saturate(145-155%) + blur(3-4px) on
+ * `.marketing-theme .mkt-surface / .mkt-surface-elevated`, and
+ * marketing-system.css itself declares blur(12-18px) + saturate(>130%) on
+ * text-carrying cards: .mkt-feature-card, .mkt-trust-notes li, .mkt-surface,
+ * .mkt-results-quote.
+ * Bring these inline with the crisp 3-6px / 1.01-1.06 ceiling used on
+ * the authenticated shell. Content containers never exceed this ceiling;
+ * higher blurs stay on sticky nav chrome only (see rule above L150-L155).
+ * -------------------------------------------------------------------------- */
+
+.marketing-theme .mkt-surface {
+  -webkit-backdrop-filter: blur(3px) saturate(103%) !important;
+  backdrop-filter: blur(3px) saturate(103%) !important;
+}
+
+.marketing-theme .mkt-surface-elevated {
+  -webkit-backdrop-filter: blur(4px) saturate(105%) !important;
+  backdrop-filter: blur(4px) saturate(105%) !important;
+}
+
+.marketing-theme .mkt-feature-card,
+.marketing-theme section .mkt-feature-card,
+.marketing-theme main .mkt-feature-card {
+  -webkit-backdrop-filter: blur(3px) saturate(103%) !important;
+  backdrop-filter: blur(3px) saturate(103%) !important;
+  background: color-mix(in srgb, var(--background-card) 96%, transparent) !important;
+}
+
+.marketing-theme .mkt-trust-notes,
+.marketing-theme .mkt-trust-notes li {
+  -webkit-backdrop-filter: blur(3px) saturate(102%) !important;
+  backdrop-filter: blur(3px) saturate(102%) !important;
+}
+
+/* High-contrast CTA bands, client testimonials & quotes carry headline /
+ * body copy. They should render with zero backdrop blur so type stays
+ * optically sharp even on layered marketing sections. */
+.marketing-theme [class*="mkt-quote"],
+.marketing-theme [class*="mkt-cta-band"],
+.marketing-theme [class*="mkt-testimonial"],
+.marketing-theme [class*="mkt-results-quote"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Apple-fluid-system L331-335 adds saturate(155%) on every sticky/fixed
+ * marketing header AND nav. We already have a 5px/106% ceiling on header
+ * selectors (L150-155 above). Re-apply the same ceiling here for standalone
+ * navs (footer / secondary / tablet drawer / mobile sub-nav) so the cascade
+ * can't leak 155% saturation onto them. */
+.marketing-theme nav {
+  -webkit-backdrop-filter: blur(5px) saturate(106%) !important;
+  backdrop-filter: blur(5px) saturate(106%) !important;
+}
+
+/* Final catch-all. Anything inside a marketing <section> or <main> that:
+ *   - has a `mkt-` class
+ *   - is NOT nav/header/dialog/sheet chrome
+ * gets any latent filter forcibly cleared so inherited compositing filters
+ * can't soften paragraph text inside feature cards, logos, or CTAs. */
+.marketing-theme section [class*="mkt-"]:not(nav):not(header):not([role="dialog"]):not([data-sheet]),
+.marketing-theme main    [class*="mkt-"]:not(nav):not(header):not([role="dialog"]):not([data-sheet]) {
+  filter: none !important;
 }

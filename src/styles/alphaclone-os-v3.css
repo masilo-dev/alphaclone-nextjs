@@ -82,7 +82,9 @@ html.dark {
 
 :is(a, button).ac-workspace-panel,
 .ac-workspace-panel[data-interactive="true"] {
-  will-change: transform;
+  /* No will-change — permanent GPU layer promotion causes persistent sub-pixel blurring
+     of text inside content panels. Let the compositor create layers only during the
+     actual transform. */
   transition:
     transform var(--ac-v3-motion-standard) var(--ac-v3-ease-responsive),
     border-color var(--ac-v3-motion-standard) var(--ac-v3-ease-standard),

@@ -3268,3 +3268,145 @@ html.light .cal-embed-loading {
 html.light .cal-embed-shell .text-white { color: #0f172a; }
 html.light .cal-embed-shell .text-slate-400 { color: #475569; }
 html.light .cal-embed-shell button.text-teal-300 { color: #0f766e; }
+
+/* -----------------------------------------------------------------------------
+ * Marketing navigation — mobile + breakpoint fixes (PR: marketing nav audit)
+ * -------------------------------------------------------------------------- */
+
+/* 1. Scroll anchor correction so #hashes land below the fixed 56px header. */
+:root {
+  scroll-padding-top: 4rem;
+  scroll-behavior: smooth;
+}
+
+html {
+  scroll-padding-top: 4rem;
+  scroll-behavior: smooth;
+}
+
+/* 2. Dynamic-island / notch safe area for the fixed header. */
+.mkt-header {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* 3. When the sheet is open, drop the header's backdrop blur so the sheet
+ *    overlay's own blur is the only one applied (no double-blur fog). */
+.mkt-header.is-open {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background-color: rgba(6, 13, 24, 0.9);
+}
+
+/* 4. Keyboard focus-visible for mobile `<details>` section summary buttons.
+ *    Default UA ring is invisible on dark surfaces; use the branded focus
+ *    ring already used on `.marketing-theme button:focus-visible`. */
+.mkt-header details.group > summary:focus-visible,
+.mkt-header .mkt-mobile-section-label:focus-visible,
+.mkt-header .mkt-mobile-top-link:focus-visible,
+.mkt-header .mkt-mobile-trial:focus-visible {
+  outline: 2px solid var(--focus-ring, #2dd4bf);
+  outline-offset: 2px;
+}
+
+.mkt-header details.group > summary {
+  outline: none;
+}
+
+/* 5. Top-level links in the mobile sheet (How It Works, Pricing). Use the
+ *    same minimum 40px touch target, pill treatment, and bordered card
+ *    background already established by the section summary tiles. */
+.mkt-mobile-top-link {
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-card, 12px);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text-primary);
+  font-weight: 650;
+  text-decoration: none;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.mkt-mobile-top-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-default);
+}
+
+.mkt-mobile-top-link.is-active {
+  border-color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary, #356af4) 10%, rgba(255, 255, 255, 0.02));
+  color: #ffffff;
+}
+
+/* 6. "Start free" secondary trial action at the bottom of the CTA stack —
+ *    subtle, so it doesn't visually compete with the Book Demo primary. */
+.mkt-mobile-trial {
+  border-radius: 0.85rem;
+  border: 1px dashed var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  min-height: 2.75rem;
+  font-weight: 650;
+}
+
+.mkt-mobile-trial:hover {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+/* 7. Mobile CTA stack spacing: primary Book Demo first, then 2-col Login /
+ *    Start now below. Keeps hierarchy: 1 primary -> 2 secondaries. */
+.mkt-mobile-cta-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-block: 0.5rem 1.25rem;
+}
+
+/* 8. Narrow-laptop (1024–1119px) cleanup: the 3-button header action row
+ *    would overflow the navbar next to the 5-item nav dropdowns. Hide the
+ *    "Start free" trial pill on these widths; it remains available inside
+ *    the mobile sheet and in the footer CTA rows. */
+@media (min-width: 1024px) and (max-width: 1119px) {
+  .mkt-header-cta--trial {
+    display: none;
+  }
+}
+
+/* 9. Smallest phone widths (320px — iPhone SE / Pixel A Compact): collapse
+ *    the 2-col Login/Trial row to a single column so buttons never clip. */
+@media (max-width: 360px) {
+  .mkt-mobile-cta-stack > div {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* 10. Section summary `<summary>` row font: match the section-group bordered
+ *     cards; the uppercase label was originally meant for flat dividers, not
+ *     interactive expandable rows on mobile. Down-tone to match surrounding
+ *     surface typography instead of shouting. */
+.mkt-mobile-section-label {
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+/* 11. Mobile sheet: explicitly `overscroll-contain` so iOS swipe-back /
+ *     touch-scrolling the sheet doesn't also move the marketing page. */
+.mkt-mobile-sheet {
+  overscroll-behavior: contain;
+}
+
+/* 12. `backdrop-filter: blur(16px)` on header is already strong; replace the
+ *     old `shadow-[0_0_80px_-20px_rgba(6,182,212,0.25)]` cyan glow on the
+ *     sheet (changed in sheet.tsx) with this soft neutral fallback in case
+ *     tailwind JIT misses the arbitrary shadow string. */
+.mkt-mobile-sheet {
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.72) !important;
+}

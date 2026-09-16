@@ -108,7 +108,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="apple-touch-startup-image" href="/logo.png" />
         <link rel="mask-icon" href="/favicon-192x192.png" color="#212446" />
       </head>
-      <body className="antialiased text-base subpixel-antialiased font-sans touch-action-manipulation overscroll-behavior-none" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none', touchAction: 'manipulation' }}>
+      <body className="antialiased text-base font-sans touch-action-manipulation overscroll-behavior-none" style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'none', touchAction: 'manipulation', WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility' }}>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteSchema) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(navigationSchema) }} />
