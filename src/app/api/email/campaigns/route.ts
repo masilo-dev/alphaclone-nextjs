@@ -3,6 +3,15 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { emailCampaignCreateSchema, emailCampaignDeleteSchema, emailCampaignUpdateSchema } from '@/schemas/validation';
 
+function campaignLog(stage: string, fields: Record<string, unknown> = {}) {
+    console.info('[email-campaigns]', { stage, ...fields });
+}
+
+function campaignError(stage: string, error: unknown, fields: Record<string, unknown> = {}) {
+    const e = error && typeof error === 'object' ? error as { code?: string; message?: string; details?: string; hint?: string } : {};
+    console.error('[email-campaigns]', { stage, code: e.code || null, message: e.message || String(error || 'unknown error'), details: e.details || null, hint: e.hint || null, ...fields });
+}
+
 function isMissingRelationOrCache(error: unknown, relation: string): boolean {
     if (!error || typeof error !== 'object') return false;
     const maybeError = error as { code?: string; message?: string };
@@ -142,6 +151,7 @@ export async function POST(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const mode = String(parsed.data.mode || 'create').trim();
+        campaignLog('post_start', { tenantId, mode });
 
         const auth = await requireTenantAccess(tenantId, request);
         const { admin } = auth;
@@ -378,7 +388,11 @@ export async function POST(request: NextRequest) {
 
             if (rowsToInsert.length > 0) {
                 const { error: insertError } = await admin.from('campaign_recipients').insert(rowsToInsert);
-                if (insertError) return NextResponse.json({ error: insertError.message, code: 'RECIPIENTS_INSERT_FAILED' }, { status: 500 });
+                if (insertError) {
+                    campaignError('recipients_insert_failed', insertError, { tenantId, campaignId, recipientCount: rowsToInsert.length });
+                    return NextResponse.json({ error: insertError.message, code: 'RECIPIENTS_INSERT_FAILED' }, { status: 500 });
+                }
+                campaignLog('recipients_inserted', { tenantId, campaignId, recipientCount: rowsToInsert.length });
             }
 
             const totalRecipients = (existingCampaignRows?.length || 0) + rowsToInsert.length;
@@ -415,9 +429,14 @@ export async function POST(request: NextRequest) {
         }
 
         const { data, error } = await admin.from('email_campaigns').insert(payload).select('*').single();
-        if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_CREATE_FAILED' }, { status: 500 });
+        if (error) {
+            campaignError('campaign_create_failed', error, { tenantId });
+            return NextResponse.json({ error: error.message, code: 'CAMPAIGN_CREATE_FAILED' }, { status: 500 });
+        }
+        campaignLog('campaign_created', { tenantId, campaignId: data.id });
         return NextResponse.json({ success: true, campaign: data });
     } catch (error) {
+        campaignError('post_unhandled', error);
         return routeErrorResponse(error, 'Failed to create campaign', request);
     }
 }
