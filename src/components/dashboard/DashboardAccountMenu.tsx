@@ -126,7 +126,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
           >
             {LANGUAGES.map((lang) => (
               <option key={lang.code} value={lang.code}>
-                {lang.label}
+                {lang.nativeName} · {lang.label} ({lang.code.toUpperCase()})
               </option>
             ))}
           </select>

@@ -174,6 +174,7 @@ import { DeletionOverlay } from "./dashboard/DeletionOverlay";
 import { DashboardScrollRegion, dispatchPullRefresh } from "./common/DashboardScrollRegion";
 import { OfflineQueueIndicator } from "./common/OfflineQueueIndicator";
 import SkipToMainContent from "./accessibility/SkipToMainContent";
+import LanguageSwitcher from "./common/LanguageSwitcher";
 
 const ConferenceTab = React.lazy(() => import("./dashboard/ConferenceTab"));
 const AnalyticsTab = React.lazy(() => import("./dashboard/AnalyticsTab"));
@@ -2661,6 +2662,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <EnhancedGlobalSearch user={user} onNavigate={router.push} />
                 </div>
                 <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
+                <div data-tour="dashboard-language" className="shrink-0">
+                  <LanguageSwitcher />
+                </div>
                 <ThemeToggle userId={user.id} />
                 <MissedCallsNotification
                   userId={user.id}
