@@ -23,6 +23,7 @@ import {
 } from '@/lib/marketing/siteNavigation';
 import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { AlphaIcon, type AlphaIconName } from '@/components/marketing/icons';
+import { LANGUAGES, useLanguage } from '@/contexts/LanguageContext';
 
 type DropdownKey = 'product' | 'solutions' | 'resources' | 'company';
 
@@ -96,11 +97,29 @@ function lucideIconMatch(name: string): boolean {
   return Object.prototype.hasOwnProperty.call(LUCIDE_TO_ALPHA, name);
 }
 
+function LanguageSwitcher({ mobile = false }: { mobile?: boolean }) {
+  const { language, setLanguage, t } = useLanguage();
+  return (
+    <label className={mobile ? 'flex min-h-11 items-center justify-between rounded-xl border border-[var(--border-subtle)] px-3 text-sm text-[var(--text-secondary)]' : 'mkt-language-switcher'}>
+      <span className={mobile ? 'font-medium' : 'sr-only'}>{t('Your language')}</span>
+      <select
+        value={language}
+        aria-label={t('Your language')}
+        onChange={(event) => setLanguage(event.target.value as typeof language)}
+        className={mobile ? 'bg-transparent text-sm font-semibold text-[var(--text-primary)] outline-none' : 'mkt-language-select'}
+      >
+        {LANGUAGES.map((item) => <option key={item.code} value={item.code}>{item.nativeName}</option>)}
+      </select>
+    </label>
+  );
+}
+
 export default function MarketingHeader() {
   const pathname = usePathname();
   const [activeDropdown, setActiveDropdown] = useState<DropdownKey | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { t } = useLanguage();
   const desktopNavRef = useRef<HTMLDivElement>(null);
   const mobileSheetRef = useRef<HTMLDivElement | null>(null);
 
@@ -220,7 +239,7 @@ export default function MarketingHeader() {
                 href={HOW_IT_WORKS_LINK.path}
                 className={`mkt-nav-trigger${activeSections.howItWorks ? ' is-active' : ''}`}
               >
-                {HOW_IT_WORKS_LINK.label}
+                {t(HOW_IT_WORKS_LINK.label)}
               </Link>
               {DROPDOWNS.map((dropdown) => {
                 const isActive = activeSections[dropdown.key];
@@ -241,7 +260,7 @@ export default function MarketingHeader() {
                       className={`mkt-nav-trigger${isActive || activeDropdown === dropdown.key ? ' is-active' : ''}`}
                       aria-controls={`marketing-nav-${dropdown.key}`}
                     >
-                      {dropdown.label}
+                      {t(dropdown.label)}
                       <ChevronDown
                         className={`h-3.5 w-3.5 transition-transform ${activeDropdown === dropdown.key ? 'rotate-180' : ''}`}
                         aria-hidden="true"
@@ -262,7 +281,7 @@ export default function MarketingHeader() {
                             return <AlphaIcon name={name} variant="nav" size="sm" className="mkt-nav-icon" />;
                           })()}
                           <span className="mkt-simple-menu-copy">
-                            <span className="mkt-simple-menu-label">{item.label}</span>
+                            <span className="mkt-simple-menu-label">{t(item.label)}</span>
                             {item.description ? (
                               <span className="mkt-simple-menu-desc">{item.description}</span>
                             ) : null}
@@ -277,22 +296,23 @@ export default function MarketingHeader() {
                 href="/pricing"
                 className={`mkt-nav-trigger${activeSections.pricing ? ' is-active' : ''}`}
               >
-                Pricing
+                {t('Pricing')}
               </Link>
             </nav>
 
             <div className="mkt-header-actions">
+              <LanguageSwitcher />
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-nav-login">
-                {CTA_LABELS.tertiaryLogin}
+                {t(CTA_LABELS.tertiaryLogin)}
               </Link>
               <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-header-cta">
-                {CTA_LABELS.headerSecondary}
+                {t(CTA_LABELS.headerSecondary)}
               </SecondaryCTA>
               <Link
                 href="/auth/login?register=true&type=business&plan=free"
                 className="mkt-btn mkt-btn-primary mkt-btn-compact mkt-header-cta mkt-header-cta--primary mkt-header-cta--trial"
               >
-                {CTA_LABELS.headerPrimary}
+                {t(CTA_LABELS.headerPrimary)}
               </Link>
             </div>
 
@@ -302,7 +322,7 @@ export default function MarketingHeader() {
                   <button
                     type="button"
                     className="mkt-mobile-toggle"
-                    aria-label="Open navigation menu"
+                    aria-label={t('Open navigation menu')}
                     aria-expanded={mobileOpen}
                     aria-controls="mkt-mobile-sheet"
                   >
@@ -314,14 +334,14 @@ export default function MarketingHeader() {
                   id="mkt-mobile-sheet"
                   role="dialog"
                   aria-modal="true"
-                  aria-label="AlphaClone site navigation"
+                  aria-label={t('AlphaClone site navigation')}
                   side="right"
                   showCloseButton={false}
                   className="mkt-mobile-sheet h-[100dvh] w-[min(100vw,22rem)] overscroll-contain overflow-y-auto border-[var(--border-subtle)] bg-[var(--background-root)] pb-[max(1rem,env(safe-area-inset-bottom))]"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <Logo />
-                    <SheetClose className="mkt-mobile-toggle" aria-label="Close navigation menu">
+                    <SheetClose className="mkt-mobile-toggle" aria-label={t('Close navigation menu')}>
                       <X className="h-5 w-5" aria-hidden="true" />
                       <span className="sr-only">Close navigation menu</span>
                     </SheetClose>
@@ -333,7 +353,7 @@ export default function MarketingHeader() {
                       onClick={() => setMobileOpen(false)}
                       className="w-full justify-center"
                     >
-                      {CTA_LABELS.headerSecondary} a demo
+                      {t(CTA_LABELS.headerSecondary)}
                     </SecondaryCTA>
                     <div className="grid grid-cols-2 gap-2">
                       <Link
@@ -342,37 +362,37 @@ export default function MarketingHeader() {
                         data-login-trigger
                         className="mkt-btn mkt-btn-secondary w-full justify-center text-center"
                       >
-                        {CTA_LABELS.tertiaryLogin}
+                        {t(CTA_LABELS.tertiaryLogin)}
                       </Link>
                       <Link
                         href="/auth/login?register=true&type=business&plan=free"
                         onClick={() => setMobileOpen(false)}
                         className="mkt-btn mkt-btn-ghost mkt-mobile-trial w-full justify-center text-center"
                       >
-                        {CTA_LABELS.headerPrimary}
+                        {t(CTA_LABELS.headerPrimary)}
                       </Link>
                     </div>
                   </div>
 
-                  <nav className="grid gap-2" aria-label="Mobile navigation">
+                  <nav className="grid gap-2" aria-label={t('Mobile navigation')}>
                     <Link
                       href={HOW_IT_WORKS_LINK.path}
                       onClick={() => setMobileOpen(false)}
                       className={`mkt-mobile-top-link${activeSections.howItWorks ? ' is-active' : ''}`}
                     >
-                      {HOW_IT_WORKS_LINK.label}
+                      {t(HOW_IT_WORKS_LINK.label)}
                     </Link>
                     <Link
                       href="/pricing"
                       onClick={() => setMobileOpen(false)}
                       className={`mkt-mobile-top-link${activeSections.pricing ? ' is-active' : ''}`}
                     >
-                      Pricing
+                      {t('Pricing')}
                     </Link>
                     {DROPDOWNS.map((section) => (
                       <details key={section.key} className="group rounded-xl border border-[var(--border-subtle)] bg-white/[0.02]">
                         <summary className="mkt-mobile-section-label flex min-h-12 cursor-pointer list-none items-center justify-between px-3">
-                          {section.label}
+                          {t(section.label)}
                           <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
                         </summary>
                         <div className="grid gap-1 border-t border-[var(--border-subtle)] p-2">
@@ -389,7 +409,7 @@ export default function MarketingHeader() {
                                 return <AlphaIcon name={name} variant="nav" size="sm" className="mkt-nav-icon" />;
                               })()}
                               <span className="mkt-simple-menu-copy">
-                                <span className="mkt-simple-menu-label">{item.label}</span>
+                                <span className="mkt-simple-menu-label">{t(item.label)}</span>
                                 {item.description ? (
                                   <span className="mkt-simple-menu-desc">{item.description}</span>
                                 ) : null}
@@ -400,6 +420,9 @@ export default function MarketingHeader() {
                       </details>
                     ))}
                   </nav>
+                  <div className="mt-5 border-t border-[var(--border-subtle)] pt-4">
+                    <LanguageSwitcher mobile />
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>

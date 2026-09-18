@@ -63,7 +63,7 @@ export default function PwaInstallPrompt() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [isLoading, isPWA]);
+  }, [isLoading, isPWA, pathname]);
 
   if (!visible) return null;
 

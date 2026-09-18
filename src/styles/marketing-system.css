@@ -1813,6 +1813,32 @@
   flex-wrap: nowrap;
 }
 
+.mkt-language-switcher {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 0.55rem;
+  padding: 0 0.35rem;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.mkt-language-select {
+  min-height: 1.85rem;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.72rem;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+}
+
+.mkt-language-select option {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
 .mkt-header-actions .mkt-btn,
 .mkt-header-actions .mkt-nav-login {
   min-height: 2rem;

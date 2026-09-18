@@ -24,6 +24,9 @@ const campaignSender = read('../../src/lib/server/sendScheduledCampaignServer.ts
 const campaignService = read('../../src/services/emailCampaignService.ts');
 const bottomNav = read('../../src/components/dashboard/BottomNav.tsx');
 const translations = read('../../src/i18n/uiTranslate.ts');
+const marketingHeader = read('../../src/components/marketing/system/MarketingHeader.tsx');
+const marketingFooter = read('../../src/components/marketing/system/MarketingFooter.tsx');
+const pwaInstallPrompt = read('../../src/components/common/PwaInstallPrompt.tsx');
 
 test('first-use onboarding starts with a business outcome, not a persona', () => {
   assert.match(onboarding, /What do you want AlphaClone to do for your business\?/);
@@ -122,4 +125,13 @@ test('plain-language navigation remains translated for Spanish and Polish', () =
     const occurrences = translations.match(new RegExp(`'${translatedLabel}':`, 'g')) ?? [];
     assert.equal(occurrences.length, 2, `${translatedLabel} needs Spanish and Polish translations`);
   }
+});
+
+test('marketing chrome exposes shared language switching and PWA install timing is route-aware', () => {
+  assert.match(marketingHeader, /LanguageSwitcher/);
+  assert.match(marketingHeader, /LANGUAGES\.map/);
+  assert.match(marketingHeader, /setLanguage\(event\.target\.value/);
+  assert.match(marketingFooter, /useLanguage/);
+  assert.match(marketingFooter, /t\(column\.title\)/);
+  assert.match(pwaInstallPrompt, /\[isLoading, isPWA, pathname\]/);
 });

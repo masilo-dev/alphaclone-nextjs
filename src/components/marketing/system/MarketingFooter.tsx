@@ -9,6 +9,7 @@ import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/c
 import { EXECUTION_LAYER } from '@/config/marketingPositioning';
 import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type FooterLink = {
   label: string;
@@ -76,6 +77,7 @@ const SOCIAL_LINKS = [
 ];
 
 export default function MarketingFooter() {
+  const { t } = useLanguage();
   return (
     <footer className="mkt-footer">
       <MarketingContainer className="py-5 sm:py-6 border-t border-white/10">
@@ -106,13 +108,13 @@ export default function MarketingFooter() {
             </div>
             <div className="mkt-footer-cta-row">
               <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
-                {CTA_LABELS.primary}
+                {t(CTA_LABELS.primary)}
               </Link>
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-btn mkt-btn-secondary mkt-btn-compact">
-                Log in
+                {t('Log in')}
               </Link>
               <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact">
-                {CTA_LABELS.secondary}
+                {t(CTA_LABELS.secondary)}
               </SecondaryCTA>
             </div>
           </div>
@@ -120,7 +122,7 @@ export default function MarketingFooter() {
           <div className="mkt-footer-columns mkt-footer-columns-slim">
             {COLUMNS.map((column) => (
               <div key={column.title}>
-                <p className="mkt-footer-col-title">{column.title}</p>
+                <p className="mkt-footer-col-title">{t(column.title)}</p>
                 <ul className="mkt-footer-col-list">
                   {column.links.map((item) => (
                     <li key={`${column.title}-${item.path}`}>
@@ -131,11 +133,11 @@ export default function MarketingFooter() {
                           rel="me noopener noreferrer"
                           className="mkt-footer-link"
                         >
-                          {item.label}
+                          {t(item.label)}
                         </a>
                       ) : (
                         <Link href={item.path} className="mkt-footer-link">
-                          {item.label}
+                          {t(item.label)}
                         </Link>
                       )}
                     </li>
