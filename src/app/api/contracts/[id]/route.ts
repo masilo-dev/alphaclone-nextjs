@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { createAdminSupabaseClientOrThrow, requireTenantAccess, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import sanitizeHtml from 'sanitize-html';
 
 const UpdateContractSchema = z.object({
@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     }
 
     const { tenantId, ...updatePayload } = parsed.data;
-    const { user } = await requireTenantAccess(tenantId);
+    const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
     const admin = createAdminSupabaseClientOrThrow();
 
     // 1. Fetch current contract
@@ -42,12 +42,19 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
     }
 
-    // 2. Status Guard: Block edits if approved or signed
-    const immutableStatuses = ['approved', 'signed'];
+    // 2. Status Guard: issued contracts must be preserved as immutable records.
+    const immutableStatuses = ['sent', 'approved', 'signed'];
     if (immutableStatuses.includes(existing.status)) {
       return NextResponse.json(
         { error: `Contract is in ${existing.status} status and cannot be modified. Void it or create a new version.` },
         { status: 409 }
+      );
+    }
+
+    if (updatePayload.status === 'signed') {
+      return NextResponse.json(
+        { error: 'Contracts cannot be marked signed through a generic update. Use the verified signing workflow so signer evidence is recorded.' },
+        { status: 409 },
       );
     }
 

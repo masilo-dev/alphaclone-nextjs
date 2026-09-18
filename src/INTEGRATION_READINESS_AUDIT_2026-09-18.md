@@ -50,3 +50,9 @@ Email-confirmation and OAuth callback branches should invoke the same idempotent
 Instagram publishing now distinguishes a verified publication from an asynchronous pending operation. The API returns `202` and `pending_verification` when there is no verified provider post ID, while the UI preserves the draft and tells the user that publication still needs verification. Campaign scheduling now checks the update result before showing a successful scheduled state, and sequence copy explicitly identifies the remaining sequence as a preview until enrollment is connected. The public embed lead endpoint now validates UUIDs, email addresses, field lengths, and tenant existence before inserting a lead.
 
 The embed endpoint still requires a future opaque per-form token, rate limiting, and origin/abuse controls before it should be treated as hardened for arbitrary public traffic. Instagram still requires reconciliation monitoring, Meta scopes, and production webhook/integration configuration.
+
+## Third continuation pass
+
+Contract PATCH operations are now restricted to owner/admin roles, issued contracts in `sent`, `approved`, or `signed` state are immutable through the generic update endpoint, and a generic update cannot manufacture a `signed` state without the verified signing workflow and evidence path.
+
+The repository does contain authenticated campaign cron endpoints (`process-campaigns` and `sequence-worker`) with stale fan-out reconciliation. Production readiness still depends on registering these endpoints with the hosting scheduler and supplying the cron secret; code presence alone does not prove that queued campaigns execute in production. CRM service usage was reviewed across Clients and CRM tabs; the highest-confidence public-form issue was handled in the previous pass, while canonical contact/client reconciliation remains a larger data-model task rather than a safe one-line patch.
