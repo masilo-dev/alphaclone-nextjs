@@ -295,6 +295,20 @@ export default function BonnieWorkspaceViews({
         )}
       </div>
 
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/60" aria-label="Bonnie workflow stages">
+        {['1 Plan', '2 Review', '3 Approve', '4 Execute', '5 Results'].map((stage, index) => (
+          <React.Fragment key={stage}>
+            <span className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${
+              (index === 0 && view === 'plan') || (index === 1 && view === 'approvals') || (index === 3 && view === 'activity') || (index === 4 && view === 'results')
+                ? 'border-teal-500/40 bg-teal-500/10 text-teal-700 dark:text-teal-300'
+                : 'border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400'
+            }`}>{stage}</span>
+            {index < 4 ? <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">→</span> : null}
+          </React.Fragment>
+        ))}
+        <span className="ml-auto hidden text-[10px] text-slate-500 sm:inline">Bonnie pauses before external actions.</span>
+      </div>
+
       {view === 'chat' ? (
         <div className="relative min-h-0 flex-1">{chatSlot}</div>
       ) : (

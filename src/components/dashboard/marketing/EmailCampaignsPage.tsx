@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { CheckCircle2, Mail, Send, Users } from 'lucide-react';
 import CampaignBuilderShell from '@/components/dashboard/business/CampaignBuilder';
 import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
+import CRMWorkspaceBridge from '../crm/CRMWorkspaceBridge';
 
 interface EmailCampaignsPageProps {
   userId: string;
@@ -54,6 +55,7 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
   return (
     <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/business/campaigns">
       <div className="space-y-4">
+        <CRMWorkspaceBridge active="outreach" compact />
         <section aria-labelledby="campaign-setup-heading" className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 shadow-lg shadow-black/10 md:p-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>

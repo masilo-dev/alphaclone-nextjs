@@ -15,6 +15,7 @@ import LookInsideAlphaClone from "./LookInsideAlphaClone";
 import AiInterfaceShowcase from "./AiInterfaceShowcase";
 import LifecycleFlowShowcase from './LifecycleFlowShowcase';
 import { getHomeIntegrationGroups } from '@/lib/marketing/homeIntegrationDisplay';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const executionRows = [
   ["Research prospects", "Example: 20 prospects scored", "Done", "done", "09:42"],
@@ -41,6 +42,12 @@ function Status({ tone, children }: { tone: "done" | "active" | "queued" | "appr
 }
 
 export default function MarketingHomePage() {
+  const { language } = useLanguage();
+  const copy = {
+    en: { now: 'Now let it', execute: 'execute.', connect: 'connects ChatGPT, Claude, and other AI assistants to', apps: 'the applications that run your business', so: '—so AI can send, post, update, create, follow up, and', real: 'execute real work' },
+    es: { now: 'Ahora deja que lo', execute: 'ejecute.', connect: 'conecta ChatGPT, Claude y otros asistentes de IA con', apps: 'las aplicaciones que hacen funcionar tu negocio', so: '—para enviar, publicar, actualizar, crear y hacer seguimiento', real: 'trabajo real' },
+    pl: { now: 'Teraz pozwól mu', execute: 'działać.', connect: 'łączy ChatGPT, Claude i inne asystenty AI z', apps: 'aplikacjami, które prowadzą Twój biznes', so: '—aby wysyłać, publikować, aktualizować, tworzyć i monitorować', real: 'prawdziwą pracę' },
+  }[language];
   return <MarketingShell>
     {/* Product-led hero: concrete execution, not abstract AI promises. */}
     <section className="mkt-hero mkt-hero--compact pt-24 sm:pt-28 lg:pt-32 pb-10 sm:pb-14">
@@ -54,15 +61,15 @@ export default function MarketingHomePage() {
           </p>
           <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.12] tracking-normal sm:text-5xl md:text-6xl">
             <span className="text-[var(--brand-primary-hover)]">Your AI can think.</span>{' '}
-            <span className="text-white">Now let it</span>{' '}
-            <span className="text-[var(--brand-violet)]">execute.</span>
+            <span className="text-white">{copy.now}</span>{' '}
+            <span className="text-[var(--brand-violet)]">{copy.execute}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 sm:text-base md:text-lg">
             <span className="font-semibold text-[var(--brand-primary-hover)]">AlphaClone</span>
-            <span className="text-slate-300"> connects ChatGPT, Claude, and other AI assistants to </span>
-            <span className="font-semibold text-[var(--brand-primary-hover)]">the applications that run your business</span>
-            <span className="text-slate-300">—so AI can send, post, update, create, follow up, and </span>
-            <span className="font-semibold text-[var(--brand-violet)]">execute real work</span>
+            <span className="text-slate-300"> {copy.connect} </span>
+            <span className="font-semibold text-[var(--brand-primary-hover)]">{copy.apps}</span>
+            <span className="text-slate-300"> {copy.so} </span>
+            <span className="font-semibold text-[var(--brand-violet)]">{copy.real}</span>
             <span className="text-slate-300">.</span>
           </p>
           <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">

@@ -19,6 +19,7 @@ import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
 import ActiveCampaignCard, { type ActiveCampaignData } from './ActiveCampaignCard';
 import AIOutreachModal from '../business/AIOutreachModal';
 import toast from 'react-hot-toast';
+import CRMWorkspaceBridge from '../crm/CRMWorkspaceBridge';
 
 type OverviewData = {
   today: {
@@ -186,6 +187,8 @@ export default function MarketingOverview() {
             </Link>
           </div>
         </div>
+
+        <CRMWorkspaceBridge active="outreach" />
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]">
           <div className="space-y-6">

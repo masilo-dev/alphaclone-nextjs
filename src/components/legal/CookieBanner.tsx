@@ -105,31 +105,31 @@ export default function CookieBanner() {
     <>
       {!consent && (
         <div className="fixed inset-x-0 bottom-3 z-[9999] px-3 sm:bottom-5 sm:px-6 pointer-events-none">
-          <div className="mx-auto max-w-4xl pointer-events-auto rounded-2xl border border-[var(--border-default)] bg-[rgba(7,14,28,0.97)] p-4 sm:p-5 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mx-auto max-w-4xl pointer-events-auto rounded-2xl border border-[var(--border-default)] bg-[rgba(7,14,28,0.97)] p-3 sm:p-5 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="flex items-start gap-3 min-w-0">
-                <div className="mt-0.5 shrink-0 rounded-xl border border-[var(--brand-primary)]/30 bg-[var(--brand-primary)]/10 p-2">
+                <div className="mt-0.5 hidden shrink-0 rounded-xl border border-[var(--brand-primary)]/30 bg-[var(--brand-primary)]/10 p-2 sm:block">
                   <Shield className="h-4 w-4 text-[var(--brand-cyan-soft)]" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-sm font-bold text-white">Your privacy choices</h4>
-                  <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-300">
+                  <h4 className="text-xs font-bold text-white sm:text-sm">Your privacy choices</h4>
+                  <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-slate-300 sm:text-xs">
                     We use essential cookies to keep AlphaClone secure. You can allow optional functional, analytics, and marketing cookies, or choose essential only.
                   </p>
-                  <Link href="/cookie-policy" className="mt-1.5 inline-flex text-[11px] font-semibold text-[var(--brand-cyan-soft)] hover:text-white hover:underline">
+                  <Link href="/cookie-policy" className="mt-1 inline-flex text-[10px] font-semibold text-[var(--brand-cyan-soft)] hover:text-white hover:underline sm:mt-1.5 sm:text-[11px]">
                     Read the Cookie Policy
                   </Link>
                 </div>
               </div>
-              <div className="grid grid-cols-2 items-center gap-2 sm:flex sm:shrink-0">
-                <button type="button" onClick={() => saveConsent({ functional: false, analytics: false, marketing: false })} className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white">
+              <div className="grid grid-cols-3 items-center gap-1.5 sm:flex sm:shrink-0 sm:gap-2">
+                <button type="button" onClick={() => saveConsent({ functional: false, analytics: false, marketing: false })} className="inline-flex min-w-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-900/80 px-1.5 py-2 text-[10px] font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white sm:px-3 sm:py-2.5 sm:text-xs">
                   Essential only
                 </button>
-                <button type="button" onClick={() => setOpenPrefs(true)} className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white">
+                <button type="button" onClick={() => setOpenPrefs(true)} className="inline-flex min-w-0 items-center justify-center gap-1 rounded-xl border border-slate-700 bg-slate-900/80 px-1.5 py-2 text-[10px] font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-xs">
                   <Settings2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   Manage
                 </button>
-                <button type="button" onClick={() => saveConsent({ functional: true, analytics: true, marketing: true })} className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-950/40 transition-colors hover:bg-[var(--brand-primary-hover)] sm:col-span-1">
+                <button type="button" onClick={() => saveConsent({ functional: true, analytics: true, marketing: true })} className="inline-flex min-w-0 items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-1.5 py-2 text-[10px] font-bold text-white shadow-lg shadow-blue-950/40 transition-colors hover:bg-[var(--brand-primary-hover)] sm:gap-1.5 sm:px-4 sm:py-2.5 sm:text-xs">
                   <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   Accept all
                 </button>

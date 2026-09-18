@@ -119,7 +119,7 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
 
   const { data: campaign } = await admin
     .from("email_campaigns")
-    .select("id, tenant_id, status, subject, name")
+    .select("id, tenant_id, status, subject, name, metadata")
     .eq("id", campaignId)
     .maybeSingle();
 
@@ -187,6 +187,41 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
       eventType: "campaign.execution.completed",
       payload: { campaignId, totalSent: sentCount, totalFailed: failedCount, runId },
     });
+    if (pendingCount === 0) {
+      await admin
+        .from("email_campaigns")
+        .update({
+          status: "sent",
+          total_sent: sentCount,
+          total_failed: failedCount,
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", campaignId)
+        .eq("status", "sending");
+    }
+  } else {
+    // Preflight/provider failures return before the delivery worker can update
+    // the campaign row. Always leave a visible, actionable terminal state
+    // instead of allowing the campaign to look permanently stale.
+    const previousMetadata = campaign.metadata && typeof campaign.metadata === "object" && !Array.isArray(campaign.metadata)
+      ? campaign.metadata as Record<string, unknown>
+      : {};
+    await admin
+      .from("email_campaigns")
+      .update({
+        status: "paused",
+        total_sent: sentCount,
+        total_failed: failedCount,
+        metadata: {
+          ...previousMetadata,
+          last_execution_error: serverResult.error || "Campaign delivery failed",
+          last_execution_error_at: new Date().toISOString(),
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", campaignId)
+      .eq("status", "sending");
   }
 
   return {

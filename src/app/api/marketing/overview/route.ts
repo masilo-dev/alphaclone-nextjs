@@ -289,6 +289,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    for (const campaign of campaigns) {
+      const metadata = campaign.metadata && typeof campaign.metadata === 'object' ? campaign.metadata : {};
+      const executionError = typeof metadata.last_execution_error === 'string'
+        ? metadata.last_execution_error.trim()
+        : '';
+      if (campaign.status === 'paused' && executionError) {
+        attention.push({
+          id: `campaign-paused-${campaign.id}`,
+          type: 'campaign_failed',
+          title: `${campaign.name} needs attention`,
+          detail: executionError,
+          href: `/dashboard/business/campaigns?campaign=${campaign.id}`,
+          action: 'Fix and resume',
+        });
+      }
+    }
+
     const settings = (settingsRes.data?.settings || {}) as Record<string, unknown>;
     const emailSettings = (settings.email || {}) as Record<string, unknown>;
     const defaultProvider = String(emailSettings.default_provider || 'auto');

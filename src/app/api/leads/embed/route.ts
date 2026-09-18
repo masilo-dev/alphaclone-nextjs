@@ -18,6 +18,8 @@ const embedLeadSchema = z.object({
   phone: z.string().trim().max(80).optional().default(''),
   company: z.string().trim().max(160).optional().default(''),
   message: z.string().trim().max(5000).optional().default(''),
+  website: z.string().max(200).optional().default(''),
+  form_started_at: z.coerce.number().int().positive().optional(),
 });
 
 export async function OPTIONS() {
@@ -33,7 +35,16 @@ export async function POST(req: NextRequest) {
         { status: 400, headers: corsHeaders }
       );
     }
-    const { tenant_id, name, email, phone, company, message } = parsed.data;
+    const { tenant_id, name, email, phone, company, message, website, form_started_at } = parsed.data;
+    if (website) {
+      return NextResponse.json({ success: true, message: 'Lead submitted successfully' }, { status: 200, headers: corsHeaders });
+    }
+    if (form_started_at) {
+      const elapsed = Date.now() - form_started_at;
+      if (elapsed < 1500 || elapsed > 86_400_000) {
+        return NextResponse.json({ error: 'Please complete the form normally and try again.' }, { status: 400, headers: corsHeaders });
+      }
+    }
 
     const admin = createSupabaseAdminClient();
 

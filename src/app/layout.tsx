@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Inter, Space_Grotesk } from "next/font/google";
 
 import "./globals.css";
@@ -102,7 +101,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap" />
-        <Script src="/lockdown-install.js?v=5" strategy="afterInteractive" />
         <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192x192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512x512.png" />
         <link rel="apple-touch-startup-image" href="/logo.png" />

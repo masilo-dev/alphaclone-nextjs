@@ -539,7 +539,18 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
             return () => { cancelled = true; };
         }
         if (fbErr) {
-            toast.error('Facebook connection failed.');
+            const messages: Record<string, string> = {
+                app_not_configured: 'Facebook App ID is missing on the server.',
+                missing_params: 'Facebook returned an incomplete OAuth response. Try connecting again.',
+                invalid_state: 'Facebook security state expired. Start the connection again.',
+                session_mismatch: 'Your login session changed during Facebook connection. Log in again and retry.',
+                workspace_not_ready: 'Your workspace was not ready. It has now been prepared; retry Facebook connection.',
+                token_exchange_failed: 'Facebook did not accept the OAuth code. Check the callback URL and app settings.',
+                token_refresh_failed: 'Facebook token refresh failed. Reconnect the Page.',
+                profile_failed: 'Facebook profile details could not be read. Check granted permissions.',
+                save_failed: 'Facebook permissions were received, but the Page could not be saved. Retry or check database configuration.',
+            };
+            toast.error(messages[fbErr] || `Facebook connection failed (${fbErr}).`);
             router.replace('/dashboard/business/facebook', { scroll: false });
         }
     }, [urlSearch, router, loadData]);

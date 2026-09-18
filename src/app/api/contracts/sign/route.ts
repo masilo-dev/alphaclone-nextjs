@@ -8,6 +8,7 @@ import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
 import { resolveContractDealId } from '@/lib/contracts/contractCoherenceServer';
 import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
 import { fileContractPdfDocument, queueDocumentIntelligence } from '@/lib/documents/fileDocument';
+import { requireTenantRole } from '@/lib/apiAuth';
 
 function getClientIpAddress(req: NextRequest): string {
     const forwarded = req.headers.get('x-forwarded-for');
@@ -123,6 +124,12 @@ export async function POST(req: NextRequest) {
         if (!signatureDataUrl) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
+        if (!consentGiven) {
+            return NextResponse.json({ error: 'Electronic signature consent is required before signing' }, { status: 400 });
+        }
+        if (!signingToken && !['client', 'admin'].includes(String(role))) {
+            return NextResponse.json({ error: 'Invalid signer role' }, { status: 400 });
+        }
         if (signingToken && (!normalizedSignerName || !normalizedSignerEmail)) {
             return NextResponse.json({ error: 'Signer name and email are required' }, { status: 400 });
         }
@@ -149,6 +156,16 @@ export async function POST(req: NextRequest) {
             }
             if (signerEmail && user.email && String(signerEmail).trim().toLowerCase() !== user.email.toLowerCase()) {
                 return NextResponse.json({ error: 'Signer email does not match authenticated user' }, { status: 403 });
+            }
+
+            if (role === 'admin') {
+                const { data: contractForAccess } = await createSupabaseAdminClient()
+                    .from('contracts')
+                    .select('tenant_id')
+                    .eq('id', contractId)
+                    .maybeSingle();
+                if (!contractForAccess?.tenant_id) return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+                await requireTenantRole(contractForAccess.tenant_id, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
             }
 
             updatedContract = await contractServerService.signContract({

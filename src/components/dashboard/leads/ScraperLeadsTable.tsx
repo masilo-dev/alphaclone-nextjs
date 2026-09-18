@@ -259,18 +259,24 @@ export default function ScraperLeadsTable({
       if (!res.ok) throw new Error(data.error);
 
       if (action === 'qualify') {
-        toast.success(`Qualified ${data.qualified ?? selectedIds.size} leads`);
+        const completed = Number(data.qualified ?? selectedIds.size);
+        const failed = Math.max(0, selectedIds.size - completed);
+        toast[failed ? 'error' : 'success'](`${failed ? 'Partially completed: ' : ''}Qualified ${completed}/${selectedIds.size} leads${failed ? `. ${failed} need attention.` : ''}`);
         await recordFeedback('qualify', selectedIds.size);
         setLeads((prev) =>
           prev.map((l) => (selectedIds.has(l.id) ? { ...l, status: 'qualified' } : l))
         );
       } else if (action === 'save') {
-        toast.success(`Saved ${data.count ?? 0} leads to CRM`);
+        const completed = Number(data.count ?? 0);
+        const failed = Math.max(0, selectedIds.size - completed);
+        toast[failed ? 'error' : 'success'](`${failed ? 'Partially completed: ' : ''}Saved ${completed}/${selectedIds.size} leads to CRM${failed ? `. ${failed} were not saved.` : ''}`);
         await recordFeedback('save', data.count ?? selectedIds.size);
       } else if (action === 'automate') {
         toast.success('Email sequence queued');
       } else if (action === 'prepare_outreach') {
-        toast.success(`Prepared ${data.prepared?.length ?? data.count ?? selectedIds.size} for outreach`);
+        const completed = Number(data.prepared?.length ?? data.count ?? selectedIds.size);
+        const failed = Math.max(0, selectedIds.size - completed);
+        toast[failed ? 'error' : 'success'](`${failed ? 'Partially completed: ' : ''}Prepared ${completed}/${selectedIds.size} for outreach${failed ? `. ${failed} need attention.` : ''}`);
         await recordFeedback('contact', selectedIds.size);
       }
       onActionComplete?.();

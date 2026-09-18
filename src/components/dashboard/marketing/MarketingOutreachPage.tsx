@@ -11,6 +11,7 @@ import { OutreachLifecyclePanel } from '../outreach/OutreachLifecyclePanel';
 import AIOutreachModal from '../business/AIOutreachModal';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import CRMWorkspaceBridge from '../crm/CRMWorkspaceBridge';
 
 type OutreachRow = {
   id: string;
@@ -99,6 +100,8 @@ export default function MarketingOutreachPage() {
             </Link>
           </div>
         </div>
+
+        <CRMWorkspaceBridge active="outreach" />
 
         {loading && !data ? (
           <div className="flex justify-center py-12">

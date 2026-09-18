@@ -568,9 +568,9 @@ export function OutreachInbox() {
               <Inbox className="w-4 h-4 text-violet-300" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-white truncate">Outreach reach inbox</p>
+              <p className="text-sm font-bold text-white truncate">Outreach conversation hub</p>
               <p className="text-[11px] text-slate-400 truncate">
-                {loading ? 'Loading outreach threads…' : `${allThreads.length} contacts · ${events.length} events`}
+                {loading ? 'Loading outbound threads…' : `${allThreads.length} contacts · ${events.length} events · sent, opened, clicked, replied`}
               </p>
             </div>
           </div>
@@ -771,6 +771,19 @@ export function OutreachInbox() {
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2.5 rounded-lg border border-teal-500/30 text-teal-300 hover:text-teal-200 text-xs"
+                        onClick={() => {
+                          const query = activeThread.email || activeThread.normalizedRecipient;
+                          router.push(`/dashboard/contacts?search=${encodeURIComponent(query)}`);
+                        }}
+                        title="Open this person in CRM"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Open CRM</span>
+                      </Button>
                       <Button
                         size="sm"
                         variant="ghost"

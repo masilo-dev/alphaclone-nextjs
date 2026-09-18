@@ -12,6 +12,8 @@ export function EmbeddableFormGenerator() {
   const embedCode = `<!-- AlphaClone Lead Capture Form -->
 <form id="alphaclone-lead-form" style="max-width:400px;font-family:sans-serif;display:flex;flex-direction:column;gap:12px;">
   <input type="hidden" name="tenant_id" value="${tenantId}" />
+  <input type="hidden" name="form_started_at" id="alphaclone-form-started" />
+  <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" />
   <input type="text" name="name" placeholder="Full Name" required style="padding:10px;border-radius:6px;border:1px solid #ccc;" />
   <input type="email" name="email" placeholder="Email Address" required style="padding:10px;border-radius:6px;border:1px solid #ccc;" />
   <input type="tel" name="phone" placeholder="Phone Number" style="padding:10px;border-radius:6px;border:1px solid #ccc;" />
@@ -40,6 +42,7 @@ document.getElementById('alphaclone-lead-form').addEventListener('submit', async
     alert('Submission error. Please try again.');
   }
 });
+document.getElementById('alphaclone-form-started').value = String(Date.now());
 </script>`;
 
   const handleCopy = () => {

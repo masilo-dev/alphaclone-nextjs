@@ -5,6 +5,7 @@ import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { upsertFacebookIntegration } from '@/services/facebook/facebookIntegrationService';
 import { upsertInstagramIntegration } from '@/services/instagram/instagramIntegrationService';
 import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
+import crypto from 'crypto';
 
 const ALLOWED_FB_RETURN = ['/dashboard/business/facebook', '/dashboard/business/settings'] as const;
 
@@ -145,6 +146,27 @@ export async function GET(req: NextRequest) {
             .eq('id', stateData.userId)
             .maybeSingle();
         resolvedTenantId = profile?.tenant_id ?? null;
+    }
+
+    // A new user can start Facebook OAuth before the async onboarding request
+    // has created tenant_users. Bootstrap the workspace here instead of losing
+    // the provider tokens with workspace_not_ready.
+    if (!resolvedTenantId) {
+        try {
+            const { bootstrapTenantForUser } = await import('@/lib/tenant/bootstrapTenantServer');
+            const displayName = String(
+                user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+            ).trim();
+            const slug = `${displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'workspace'}-${crypto.randomUUID().replace(/-/g, '').slice(0, 10)}`;
+            const bootstrapped = await bootstrapTenantForUser(supabase, user, {
+                name: `${displayName}'s Workspace`,
+                slug,
+                plan: 'starter',
+            });
+            resolvedTenantId = bootstrapped.tenantId || null;
+        } catch (bootstrapError) {
+            console.error('[Facebook Callback] Workspace bootstrap failed:', bootstrapError);
+        }
     }
 
     if (!resolvedTenantId) {

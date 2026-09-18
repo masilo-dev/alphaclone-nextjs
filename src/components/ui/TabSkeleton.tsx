@@ -51,7 +51,7 @@ export const TabSkeleton: React.FC<{ rows?: number; showStats?: boolean }> = ({
 };
 
 export const DashboardShellSkeleton: React.FC = () => (
-  <div className="flex h-screen bg-slate-950 overflow-hidden">
+    <div className="flex min-h-screen bg-slate-950 overflow-hidden">
     <div className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 p-4 space-y-3 shrink-0 ac-skeleton-pulse">
       <div className="h-10 w-36 bg-slate-800 rounded-lg mb-4" />
       {Array.from({ length: 8 }).map((_, i) => (
@@ -63,12 +63,12 @@ export const DashboardShellSkeleton: React.FC = () => (
     </div>
 
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="h-14 bg-slate-900 border-b border-slate-800 flex items-center px-6 gap-4 shrink-0 ac-skeleton-pulse">
+      <div className="h-14 bg-slate-900 border-b border-slate-800 flex items-center px-3 sm:px-6 gap-3 sm:gap-4 shrink-0 ac-skeleton-pulse">
         <div className="h-5 w-5 bg-slate-800 rounded md:hidden" />
         <div className="flex-1 h-8 max-w-xs bg-slate-800 rounded-lg" />
         <div className="h-8 w-8 bg-slate-800 rounded-full ml-auto" />
       </div>
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-3 sm:p-6">
         <TabSkeleton />
       </div>
     </div>
