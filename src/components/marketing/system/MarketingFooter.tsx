@@ -106,6 +106,13 @@ export default function MarketingFooter() {
                 </a>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}
+              className="mkt-footer-cookie-link"
+            >
+              Cookie preferences
+            </button>
             <div className="mkt-footer-cta-row">
               <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
                 {t(CTA_LABELS.primary)}

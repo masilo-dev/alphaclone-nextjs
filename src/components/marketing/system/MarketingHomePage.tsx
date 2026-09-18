@@ -42,7 +42,7 @@ function Status({ tone, children }: { tone: "done" | "active" | "queued" | "appr
 
 export default function MarketingHomePage() {
   return <MarketingShell>
-    {/* Approved hero — screenshots and approved copy preserved. */}
+    {/* Product-led hero: concrete execution, not abstract AI promises. */}
     <section className="mkt-hero mkt-hero--compact pt-24 sm:pt-28 lg:pt-32 pb-10 sm:pb-14">
       <SectionAmbientLight variant="hero" />
       <HeroDataWaves />
@@ -102,7 +102,7 @@ export default function MarketingHomePage() {
 
     {/* The Problem Section */}
     <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
-      <Intro eyebrow="The problem" title="One customer. Eleven tabs. Half the context missing." body="A lead starts in one tool. The conversation happens somewhere else. The quote becomes a document. Delivery moves into another system. The invoice lives somewhere else again." />
+      <Intro eyebrow="The operating gap" title="The work is connected on paper. Your team still reconnects it by hand." body="A lead starts in one tool. The conversation happens somewhere else. The quote becomes a document. Delivery moves into another system. AlphaClone keeps the record, decision, and next action together." />
       <div className="mt-6 flex flex-wrap gap-2">
         {["Lost context","Manual follow-up","Scattered records","Too many subscriptions"].map(x=>(
           <div key={x} className="flex items-center gap-1.5 rounded-full border border-rose-400/20 bg-rose-500/10 px-3.5 py-1.5 text-xs font-semibold text-rose-200 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/40 hover:bg-rose-500/15 shadow-sm">
@@ -141,9 +141,9 @@ export default function MarketingHomePage() {
           <div className="flex items-center justify-between border-b border-cyan-400/20 pb-4">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"/>
-              <h3 className="text-sm font-extrabold tracking-wide text-cyan-200">AlphaClone connected execution</h3>
+              <h3 className="text-sm font-extrabold tracking-wide text-cyan-200">One accountable workflow</h3>
             </div>
-            <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-cyan-300">Single Source of Truth</span>
+            <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-cyan-300">Context stays attached</span>
           </div>
           <div className="relative mt-5 space-y-2.5">
             <div className="absolute bottom-6 left-[23px] top-4 w-0.5 bg-gradient-to-b from-cyan-400 via-teal-300 to-emerald-400"/>
@@ -163,30 +163,30 @@ export default function MarketingHomePage() {
       </div>
     </MarketingContainer></MarketingSection>
 
-    {/* Bonnie Coordination Section with Vibrant Green Text & Glowing Highlight */}
+    {/* Reviewable execution section */}
     <MarketingSection id="bonnie" atmosphere="platform" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><div className="grid gap-8 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
       <div>
         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3.5 py-1 text-xs font-black uppercase tracking-[.22em] text-emerald-300 shadow-sm shadow-emerald-950/50 backdrop-blur-md">
           <Sparkles className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-          <span>Bonnie Coordination</span>
+          <span>Reviewable execution</span>
         </div>
         
         <h2 className="mt-4 font-marketing-heading text-2xl font-extrabold leading-[1.08] sm:text-4xl lg:text-[44px]">
           <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-green-300 bg-clip-text text-transparent drop-shadow-sm">
-            Tell Bonnie the outcome. It coordinates the work.
+            Describe the outcome. Review the work before it runs.
           </span>
         </h2>
         
         <div className="mt-5 rounded-2xl border border-emerald-400/40 bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-[#020b18] p-5 shadow-xl shadow-emerald-950/30 backdrop-blur-xl">
           <p className="text-sm font-bold leading-6 text-emerald-200 sm:text-base">
-            Bonnie works across the business system rather than simply returning an answer in a chat window.
+            Bonnie turns an approved outcome into a traceable sequence of business actions—not a polished answer that leaves the work to your team.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-extrabold text-emerald-300">
             <span className="flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-1 border border-emerald-400/30">
-              <Check className="h-3 w-3 text-emerald-400" /> Multi-App Automation
+              <Check className="h-3 w-3 text-emerald-400" /> Cross-system steps
             </span>
             <span className="flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-1 border border-emerald-400/30">
-              <Check className="h-3 w-3 text-emerald-400" /> Human Approval Gates
+              <Check className="h-3 w-3 text-emerald-400" /> Approval checkpoints
             </span>
           </div>
         </div>
@@ -195,10 +195,10 @@ export default function MarketingHomePage() {
       <div className="overflow-hidden rounded-2xl border border-emerald-400/30 bg-[#020916] shadow-2xl shadow-emerald-950/30">
         <div className="border-b border-white/[.08] bg-slate-900/60 p-4">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Example workflow (not live data)</p>
-            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"/>
-              Bonnie Engine Online
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Illustrative workflow</p>
+            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-300 bg-slate-400/10 px-2 py-0.5 rounded-full border border-slate-400/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-400"/>
+              Review before run
             </span>
           </div>
           <blockquote className="mt-2 text-sm font-semibold leading-6 text-white">“Find 20 potential customers in Zimbabwe that fit our target profile and prepare outreach.”</blockquote>
@@ -351,9 +351,9 @@ export default function MarketingHomePage() {
               <app.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" style={{color:app.color}}/>
               <div>
                 <h3 className="text-sm font-bold text-white group-hover:text-cyan-200">{app.name}</h3>
-                <p className="text-[10px] text-emerald-300">Connected</p>
+                <p className="text-[10px] text-slate-400">Permission preview</p>
               </div>
-              <button type="button" className="ml-auto rounded-lg border border-white/10 px-3 py-1.5 text-[10px] font-bold text-slate-300 transition-colors hover:border-rose-400/40 hover:bg-rose-400/10 hover:text-rose-200">Disconnect</button>
+              <span className="ml-auto rounded-lg border border-white/10 px-3 py-1.5 text-[10px] font-bold text-slate-400">Reviewable</span>
             </div>
             <div className="divide-y divide-white/[.06]">
               {app.permissions.map(([p,yes])=>(

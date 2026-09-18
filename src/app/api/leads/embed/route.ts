@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,23 +11,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+const embedLeadSchema = z.object({
+  tenant_id: z.string().uuid(),
+  name: z.string().trim().min(1).max(160),
+  email: z.string().trim().email().max(320),
+  phone: z.string().trim().max(80).optional().default(''),
+  company: z.string().trim().max(160).optional().default(''),
+  message: z.string().trim().max(5000).optional().default(''),
+});
+
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: corsHeaders });
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { tenant_id, name, email, phone, company, message } = body;
-
-    if (!tenant_id || !name || !email) {
+    const parsed = embedLeadSchema.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: tenant_id, name, and email are required.' },
+        { error: 'A valid workspace, name, and email are required. Text fields must be within the allowed length.' },
         { status: 400, headers: corsHeaders }
       );
     }
+    const { tenant_id, name, email, phone, company, message } = parsed.data;
 
     const admin = createSupabaseAdminClient();
+
+    const { data: tenant, error: tenantError } = await admin
+      .from('tenants')
+      .select('id')
+      .eq('id', tenant_id)
+      .maybeSingle();
+    if (tenantError || !tenant) {
+      return NextResponse.json({ error: 'This lead form is not available.' }, { status: 404, headers: corsHeaders });
+    }
 
     // Insert lead into Supabase leads table
     const { data: lead, error } = await admin

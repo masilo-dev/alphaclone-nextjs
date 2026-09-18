@@ -559,6 +559,9 @@ const cookieCategories = [
       name: 'Strictly Necessary',
       required: true,
       color: 'teal',
+      surfaceClass: 'bg-teal-500/5 border-teal-500/15',
+      iconClass: 'text-teal-400',
+      labelClass: 'text-teal-300',
       icon: Lock,
       desc: 'These cookies are essential for the platform to function. They handle authentication, session management, CSRF protection, and security features. You cannot disable these cookies — without them, the platform cannot operate.',
       cookies: [
@@ -573,6 +576,9 @@ const cookieCategories = [
       name: 'Analytics & Performance',
       required: false,
       color: 'blue',
+      surfaceClass: 'bg-blue-500/5 border-blue-500/15',
+      iconClass: 'text-blue-400',
+      labelClass: 'text-blue-300',
       icon: Eye,
       desc: 'These cookies help us understand how users interact with the platform. Data is anonymized and aggregated — we cannot identify individual users from analytics data. We use this to improve the platform experience.',
       cookies: [
@@ -584,6 +590,9 @@ const cookieCategories = [
       name: 'Functional',
       required: false,
       color: 'indigo',
+      surfaceClass: 'bg-indigo-500/5 border-indigo-500/15',
+      iconClass: 'text-indigo-400',
+      labelClass: 'text-indigo-300',
       icon: Database,
       desc: 'Functional cookies remember your preferences to enhance your experience — such as your selected language, sidebar state, theme preference, and dashboard layout settings.',
       cookies: [
@@ -597,6 +606,9 @@ const cookieCategories = [
       name: 'Marketing',
       required: false,
       color: 'violet',
+      surfaceClass: 'bg-violet-500/5 border-violet-500/15',
+      iconClass: 'text-violet-400',
+      labelClass: 'text-violet-300',
       icon: ExternalLink,
       desc: 'Marketing cookies track your activity across websites to help us deliver relevant advertising. We currently use these sparingly — only for retargeting visitors who did not complete registration.',
       cookies: [
@@ -658,9 +670,9 @@ export function CookiePolicy() {
             <p>AlphaClone uses cookies for the following purposes:</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
                {cookieCategories.map((cat, i) => (
-                  <div key={i} className={`p-3 rounded-xl bg-${cat.color}-500/5 border border-${cat.color}-500/15 text-center`}>
-                     <cat.icon className={`w-4 h-4 text-${cat.color}-400 mx-auto mb-2`} />
-                     <p className={`text-${cat.color}-300 text-xs font-semibold`}>{cat.name}</p>
+                  <div key={i} className={`p-3 rounded-xl border text-center ${cat.surfaceClass}`}>
+                     <cat.icon className={`w-4 h-4 mx-auto mb-2 ${cat.iconClass}`} />
+                     <p className={`text-xs font-semibold ${cat.labelClass}`}>{cat.name}</p>
                      {cat.required && <p className="text-xs text-slate-500 mt-1">Always Active</p>}
                   </div>
                ))}
@@ -673,11 +685,14 @@ export function CookiePolicy() {
                {cookieCategories.map((cat, i) => (
                   <div key={i} className="rounded-2xl border border-slate-800 overflow-hidden">
                      <button
+                        type="button"
                         onClick={() => setExpanded(expanded === i ? null : i)}
+                        aria-expanded={expanded === i}
+                        aria-controls={`cookie-category-${i}`}
                         className="w-full flex items-center justify-between p-5 text-left hover:bg-slate-900/50 transition-colors"
                      >
                         <div className="flex items-center gap-3">
-                           <cat.icon className={`w-5 h-5 text-${cat.color}-400`} />
+                           <cat.icon className={`w-5 h-5 ${cat.iconClass}`} />
                            <div>
                               <div className="flex items-center gap-2">
                                  <span className="text-white font-semibold text-sm">{cat.name}</span>
@@ -691,7 +706,7 @@ export function CookiePolicy() {
                         <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expanded === i ? 'rotate-180' : ''}`} />
                      </button>
                      {expanded === i && (
-                        <div className="px-5 pb-5 border-t border-slate-800/50">
+                        <div id={`cookie-category-${i}`} className="px-5 pb-5 border-t border-slate-800/50">
                            <p className="text-slate-400 text-xs mt-4 mb-4 leading-relaxed">{cat.desc}</p>
                            <CookieCategoryTable cookies={cat.cookies} />
                         </div>

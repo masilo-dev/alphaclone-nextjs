@@ -881,7 +881,10 @@ Request: ${userMsg}`,
                 }
             } else {
                 setSubmissionStatus('Saving the delivery time...');
-                await emailCampaignService.updateCampaign(campaign.id, { status: 'scheduled' });
+                const scheduleResult = await emailCampaignService.updateCampaign(campaign.id, { status: 'scheduled' });
+                if (scheduleResult.error) {
+                    throw new Error(`Campaign was saved, but scheduling failed: ${scheduleResult.error}`);
+                }
                 setSubmissionStatus('Campaign scheduled. It has not been sent yet.');
                 toast.success('Campaign scheduled. It has not been sent yet.', { id: toastId });
                 showActionNextSteps('campaign_created', (path) => router.push(path));
@@ -1858,7 +1861,7 @@ Voice & rules:
                                                     />
                                                 </div>
                                                 <p className="self-end text-xs leading-relaxed text-slate-400">
-                                                    The saved plan reuses the same sender identity and caps the nurture at three emails per day. The first email is loaded into the campaign body for the existing send flow.
+                                                    Preview only: the first email is loaded into the campaign body. Remaining sequence steps are not sent automatically until sequence enrollment is connected.
                                                 </p>
                                             </div>
                                             {form.sequenceEnabled && (

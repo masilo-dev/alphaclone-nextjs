@@ -48,12 +48,17 @@ export async function POST(req: NextRequest) {
       instagramAccountId: parsed.data.instagramAccountId,
     });
 
+    const verified = Boolean(result.verified && result.provider_post_id);
     return NextResponse.json({
-      success: true,
+      success: verified,
+      status: verified ? 'published' : 'pending_verification',
       provider_post_id: result.provider_post_id,
       live_url: result.live_url,
-      verified: result.verified,
-    });
+      verified,
+      message: verified
+        ? 'Instagram post published.'
+        : 'Instagram accepted the media. Publication is still being verified; keep this draft until a live link appears.',
+    }, { status: verified ? 200 : 202 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Instagram post failed';
     return routeErrorResponse(error, message, req);

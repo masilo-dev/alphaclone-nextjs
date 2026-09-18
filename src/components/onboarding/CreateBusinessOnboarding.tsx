@@ -184,8 +184,8 @@ export default function CreateBusinessOnboarding() {
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     Your Sector
                   </label>
-                  <select
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 transition-colors"
+                    <select
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-teal-500 transition-colors"
                   >
                     <option value="">Choose your sector</option>
                     <option value="agency">Agency / Creative Services</option>
@@ -198,7 +198,7 @@ export default function CreateBusinessOnboarding() {
                     <option value="other">Other</option>
                   </select>
                   <p className="text-xs text-slate-500 mt-2">
-                    Helps us shape your workspace defaults
+                    You can update your workspace profile and defaults from Settings after setup.
                   </p>
                 </div>
               </div>

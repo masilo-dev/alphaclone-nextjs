@@ -630,6 +630,29 @@ export default function ClientPortalPage() {
                 {/* OVERVIEW */}
                 {activeTab === 'overview' && (
                     <div className="space-y-6 md:space-y-8">
+                        <section aria-labelledby="portal-guide-heading" className="rounded-2xl border border-[color-mix(in_srgb,var(--brand-teal)_28%,var(--ws-border))] bg-[color-mix(in_srgb,var(--brand-teal)_6%,var(--ws-panel))] p-5 md:p-6">
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="max-w-2xl">
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-teal)]">Your shared workspace</p>
+                                    <h2 id="portal-guide-heading" className="mt-1 text-lg font-semibold text-[color:var(--ws-text-primary)]">Here is what you can do next</h2>
+                                    <p className="mt-1.5 text-sm leading-relaxed text-[color:var(--ws-text-secondary)]">Use this workspace to review what your provider shares, respond to requests, and keep project, billing, and communication in one place.</p>
+                                </div>
+                                <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[34rem]">
+                                    {[
+                                        { tab: 'projects' as Tab, step: '1', title: 'Track work', text: 'See progress and deliverables' },
+                                        { tab: 'invoices' as Tab, step: '2', title: 'Handle billing', text: 'Review invoices and payments' },
+                                        { tab: 'messages' as Tab, step: '3', title: 'Stay aligned', text: 'Message your project team' },
+                                    ].map((item) => (
+                                        <button key={item.tab} type="button" onClick={() => setActiveTab(item.tab)} className="rounded-xl border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] p-3 text-left transition-colors hover:border-[color:var(--brand-teal)]/50 hover:bg-[color:var(--ws-panel-hover)]">
+                                            <span className="text-[10px] font-bold text-[color:var(--brand-teal)]">STEP {item.step}</span>
+                                            <span className="mt-1 block text-xs font-semibold text-[color:var(--ws-text-primary)]">{item.title}</span>
+                                            <span className="mt-0.5 block text-[11px] leading-relaxed text-[color:var(--ws-text-tertiary)]">{item.text}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <StatCard
                                 label="Active projects"

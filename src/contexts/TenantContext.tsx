@@ -203,14 +203,22 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       plan: data.plan || 'free'
     });
 
-    // Refresh tenant list
-    await refreshTenants();
-
-    // Switch to new tenant
-    await switchTenant(tenant.id);
+    // Add the returned membership immediately. React state updates are
+    // asynchronous, so calling switchTenant immediately after refreshTenants
+    // can still read the previous closure and report "Tenant not found" even
+    // though creation succeeded.
+    const membership = { ...tenant, role: 'owner' } as Tenant & { role: string };
+    setUserTenants((current) => [
+      ...current.filter((item) => item.id !== tenant.id),
+      membership,
+    ]);
+    setCurrentTenant(membership);
+    tenantService.setCurrentTenant(tenant);
+    await resetPlatformState({ reason: 'tenant-switch', clearAuth: false });
+    window.location.assign('/dashboard');
 
     return tenant;
-  }, [user, refreshTenants, switchTenant]);
+  }, [user]);
 
   const getDashboardStats = useCallback(async (tenantId: string, userId?: string, forceRefresh = false) => {
     if (!tenantId) {

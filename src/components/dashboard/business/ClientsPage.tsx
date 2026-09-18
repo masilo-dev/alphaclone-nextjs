@@ -62,6 +62,7 @@ import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
 import { CRMNav } from '../crm/CRMNav';
 import { resolveContactDeepLink } from '@/lib/crm/resolveContactDeepLink';
+import ClientPortalAccessPanel from './ClientPortalAccessPanel';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
@@ -96,6 +97,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [showCommunicationModal, setShowCommunicationModal] = useState(false);
     const [selectedClientForCommunication, setSelectedClientForCommunication] = useState<BusinessClient | null>(null);
     const [selectedClient, setSelectedClient] = useState<BusinessClient | null>(null);
+    const [portalAccessClient, setPortalAccessClient] = useState<BusinessClient | null>(null);
     const [clientTimeline, setClientTimeline] = useState<any>(null);
     const [timelineLoading, setTimelineLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'timeline' | 'notes' | 'invoices' | 'properties'>('timeline');
@@ -1288,6 +1290,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         ...(selectedClient.industry ? [{ type: 'Industry', label: selectedClient.industry }] : []),
                                                     ]}
                                                 />
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    icon={<UserCheck className="w-4 h-4" />}
+                                                    onClick={() => setPortalAccessClient(selectedClient)}
+                                                >
+                                                    Client portal
+                                                </Button>
                                                 <Dropdown
                                                     trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
                                                     items={[
@@ -1618,6 +1628,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     onSent={() => {
                         setShowCommunicationModal(false);
                         setSelectedClientForCommunication(null);
+                    }}
+                />
+            )}
+
+            {portalAccessClient && currentTenant?.id && (
+                <ClientPortalAccessPanel
+                    client={portalAccessClient}
+                    tenantId={currentTenant.id}
+                    onClose={() => setPortalAccessClient(null)}
+                    onClientUpdated={(updated) => {
+                        setClients((current) => current.map((item) => item.id === updated.id ? updated : item));
+                        setSelectedClient((current) => current?.id === updated.id ? updated : current);
+                        setPortalAccessClient(updated);
                     }}
                 />
             )}

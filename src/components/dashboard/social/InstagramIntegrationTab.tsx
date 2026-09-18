@@ -152,10 +152,14 @@ export default function InstagramIntegrationTab() {
         }),
       });
       const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload.error || 'Post failed');
-      toast.success('Posted to Instagram');
-      setCaption('');
-      setImageUrl('');
+      if (!res.ok && res.status !== 202) throw new Error(payload.error || 'Post failed');
+      if (payload.verified) {
+        toast.success('Published to Instagram');
+        setCaption('');
+        setImageUrl('');
+      } else {
+        toast('Instagram accepted the media, but publication is still being verified. Your draft was kept.', { icon: 'i' });
+      }
       if (payload.live_url) window.open(payload.live_url, '_blank', 'noopener,noreferrer');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Post failed');

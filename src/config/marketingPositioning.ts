@@ -1,21 +1,21 @@
 /**
- * AI Business Execution Layer — category positioning (public marketing SSOT).
+ * Approval-led business workflow positioning (public marketing SSOT).
  * Use these strings instead of hard-coding hero/CTA copy across pages.
  */
 
 export const EXECUTION_LAYER = {
-  category: 'AI Business Execution Layer',
-  primaryLine: 'You give the instruction. AlphaClone handles the execution.',
-  categoryLine: 'Your AI can think. Now let it execute.',
-  problemLine: 'The software works. But you’re still doing the work.',
+  category: 'Business workflows with an approval trail',
+  primaryLine: 'Turn an approved instruction into accountable business work.',
+  categoryLine: 'Connect the decision to the action.',
+  problemLine: 'Your systems hold the data. Your team still carries the handoffs.',
   explanatoryLine:
-    'AlphaClone connects ChatGPT, Claude, and other compatible AI interfaces to the systems that run your business—so AI can send, post, update, create, follow up, and execute real work.',
+    'AlphaClone connects ChatGPT, Claude, and other compatible AI interfaces to the systems that run your business—so an approved instruction can update a CRM record, prepare an email, create an invoice, or start a follow-up workflow.',
   differentiationLine:
     'AI provides the intelligence and conversation. AlphaClone provides business context, permissions, workflows, execution, and verification.',
   mechanism: ['Decide', 'Approve', 'Execute', 'Verify'] as const,
-  heroHeadline: 'Your AI can think. Now let it execute.',
+  heroHeadline: 'Connect the decision to the action.',
   heroSubhead:
-    'AlphaClone connects ChatGPT, Claude, and other AI assistants to the applications that run your business—so AI can send, post, update, create, follow up, and execute real work.',
+    'AlphaClone connects ChatGPT, Claude, and other AI assistants to the applications that run your business—so an approved instruction can update records, prepare communications, create invoices, and start follow-up workflows.',
   primaryCta: 'Start with AlphaClone',
   secondaryCta: 'Watch AlphaClone Execute',
   executionSessionPath: '/execution-session',

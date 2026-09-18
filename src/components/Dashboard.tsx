@@ -1937,6 +1937,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case "/dashboard/leads/campaigns":
+      case "/dashboard/leads/finder":
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
             <ScraperCampaignsPage />

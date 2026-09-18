@@ -118,6 +118,10 @@ export default function ScraperCampaignsPage() {
     phone: true, social: false, sources: ['openstreetmap', 'website'],
     excludedKeywords: '', excludedDomains: '', excludedLocations: '', radiusKm: 25,
   });
+  // The safe tenant hook exposes tenant identity, not membership role. The API
+  // remains the source of truth for review authorization and returns a clear
+  // error when a member lacks permission.
+  const canReviewCandidates = true;
 
   const loadSearches = useCallback(async () => {
     if (!tenant?.id) return;
@@ -355,11 +359,24 @@ export default function ScraperCampaignsPage() {
             <p className="mt-1 text-sm text-[var(--ws-text-secondary)]">Find, verify and organize businesses that match your ideal customer.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={() => toast('Import workspace is ready for CSV, XLSX, JSON and pasted rows.') }><FileUp size={16}/>Import</button>
+            <button className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={() => toast('CSV/XLSX import is not connected in this workspace yet. Use a new public-source search instead.') }><FileUp size={16}/>Import (not ready)</button>
             <button className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`} onClick={() => setActive('Activity')}><History size={16}/>Search history</button>
             <button className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`} onClick={() => setActive('Discover')}><Search size={16}/>New search</button>
           </div>
         </header>
+
+        {!tenant?.id ? (
+          <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="text-sm font-semibold text-amber-200">Choose or create a workspace before finding leads.</p>
+            <p className="mt-1 text-sm text-amber-100/80">Lead searches, candidate review, and CRM handoff are saved inside one workspace.</p>
+            <Link href="/onboarding/create-business" className={`${buttonClass} mt-3 border border-amber-500/30 bg-amber-500/10 text-amber-100 hover:bg-amber-500/15`}>Set up workspace <ArrowRight size={16}/></Link>
+          </div>
+        ) : !canReviewCandidates ? (
+          <div className="mt-4 rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4">
+            <p className="text-sm font-semibold text-sky-100">Lead review requires workspace admin access.</p>
+            <p className="mt-1 text-sm text-sky-100/80">You can run searches, but ask an owner or admin to accept candidates into CRM.</p>
+          </div>
+        ) : null}
 
         {!available ? (
           <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
@@ -408,9 +425,9 @@ export default function ScraperCampaignsPage() {
                 <label className="text-sm font-medium">Search mode
                   <select className={`${fieldClass} mt-1.5`} value={form.searchType} onChange={e => setForm({...form,searchType:e.target.value})}>
                     <option value="businesses_by_location">Businesses by location</option><option value="businesses_by_keyword">Businesses by keyword</option>
-                    <option value="domain_discovery">Domain discovery</option><option value="website_contact_discovery">Website contact discovery</option>
-                    <option value="public_directory_discovery">Public directory discovery</option><option value="public_social_discovery">Public social profile discovery</option>
-                    <option value="csv_import">CSV import</option><option value="manual">Manual lead entry</option>
+                    <option value="domain_discovery" disabled>Domain discovery (coming soon)</option><option value="website_contact_discovery" disabled>Website contact discovery (coming soon)</option>
+                    <option value="public_directory_discovery" disabled>Public directory discovery (coming soon)</option><option value="public_social_discovery" disabled>Public social profile discovery (coming soon)</option>
+                    <option value="csv_import" disabled>CSV import (coming soon)</option><option value="manual" disabled>Manual lead entry (coming soon)</option>
                   </select>
                 </label>
                 <label className="text-sm font-medium">Industry
@@ -454,7 +471,7 @@ export default function ScraperCampaignsPage() {
           </div>
         )}
 
-        {active === 'Results' && <ResultsPanel searches={searches} selected={selectedSearch} setSelected={setSelectedSearch} candidates={candidates} metrics={metrics} reviewingCandidateId={reviewingCandidateId} onReview={reviewCandidate} />}
+        {active === 'Results' && <ResultsPanel searches={searches} selected={selectedSearch} setSelected={setSelectedSearch} candidates={candidates} metrics={metrics} reviewingCandidateId={reviewingCandidateId} onReview={reviewCandidate} canReview={canReviewCandidates} />}
         {active === 'Activity' && <HistoryPanel searches={searches} onOpen={s=>{setSelectedSearch(s);setActive('Results')}} />}
         {active === 'Lists' && (
           <ListsPanel
@@ -485,7 +502,7 @@ export default function ScraperCampaignsPage() {
   );
 }
 
-function ResultsPanel({ searches, selected, setSelected, candidates, metrics, reviewingCandidateId, onReview }: { searches: SearchRecord[]; selected: SearchRecord|null; setSelected:(s:SearchRecord)=>void; candidates:Candidate[]; metrics:Record<string,number>; reviewingCandidateId:string|null; onReview:(candidate:Candidate, decision:'accepted'|'rejected')=>void }) {
+function ResultsPanel({ searches, selected, setSelected, candidates, metrics, reviewingCandidateId, onReview, canReview }: { searches: SearchRecord[]; selected: SearchRecord|null; setSelected:(s:SearchRecord)=>void; candidates:Candidate[]; metrics:Record<string,number>; reviewingCandidateId:string|null; onReview:(candidate:Candidate, decision:'accepted'|'rejected')=>void; canReview: boolean }) {
   const [view, setView] = useState<'list' | 'map'>('list');
   const pins = candidates.map((c) => ({
     business_name: c.business_name,
@@ -498,7 +515,7 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics, re
   }));
   return <div className="space-y-4">
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="text-sm text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p></div>
+      <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="text-sm text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p>{!canReview ? <p className="mt-1 text-xs text-amber-300">View-only review: ask a workspace admin to accept candidates into CRM.</p> : null}</div>
       {searches.length>0 && <select aria-label="Selected search" className={`${fieldClass} sm:max-w-xs`} value={selected?.id||''} onChange={e=>{const s=searches.find(x=>x.id===e.target.value);if(s)setSelected(s)}}>{searches.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select>}
     </div>
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">{label.replace('_',' ')}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>

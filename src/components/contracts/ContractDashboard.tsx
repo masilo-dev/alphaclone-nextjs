@@ -669,8 +669,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
-    const handlePrint = () => {
-        const mockContract: Partial<Contract> = {
+    const handlePrint = async () => {
+        const contractForExport: Partial<Contract> = {
             id: contractId || 'NEW',
             title: `${form.projectName} — ${form.clientName}`,
             content: generatedContract,
@@ -679,10 +679,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             status: isSigned ? 'sent' : 'draft'
         };
         try {
-            toast.success("PDF Download started...");
-            contractService.downloadPDF(mockContract, currentTenant || undefined);
+            toast.success('Preparing contract PDF...');
+            await contractService.downloadPDF(contractForExport, currentTenant || undefined);
         } catch (e) {
-            toast.error("Failed to generate PDF");
+            toast.error('Failed to generate PDF');
         }
     };
 

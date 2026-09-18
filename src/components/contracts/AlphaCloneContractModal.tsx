@@ -883,14 +883,14 @@ const AlphaCloneContractModal: React.FC<Props> = ({
                                                 contractService.downloadPDF(contract, currentTenant || undefined);
                                             }
                                         } else {
-                                            const mockContract = {
+                                            const generatedContract = {
                                                 title: `${variables.projectName} — ${variables.clientName}`,
                                                 content: contractText,
                                                 admin_signature: signature,
                                                 admin_signed_at: new Date().toISOString(),
                                                 status: 'sent'
                                             };
-                                            contractService.downloadPDF(mockContract, currentTenant || undefined);
+                                            contractService.downloadPDF(generatedContract, currentTenant || undefined);
                                         }
                                     } catch (e) {
                                         toast.error("Failed to generate PDF");
