@@ -224,6 +224,9 @@ function selectProviderForRecipient(
 export async function sendScheduledCampaignServer(campaignId: string): Promise<{
   success: boolean;
   error: string | null;
+  status?: "completed" | "partial";
+  sent?: number;
+  failed?: number;
 }> {
   const admin = createSupabaseAdminClient();
 
@@ -961,7 +964,13 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
       }).catch((err) => console.warn('[campaign] completion event failed:', err));
     }
 
-    return { success: true, error: null };
+    return {
+      success: true,
+      error: null,
+      status: failedCount > 0 ? "partial" : "completed",
+      sent: sentCount,
+      failed: failedCount,
+    };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Unknown error";
     return { success: false, error: msg };

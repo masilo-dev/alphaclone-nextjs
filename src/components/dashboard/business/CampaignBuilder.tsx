@@ -128,6 +128,13 @@ const QUICK_STARTS = [
         subject: 'Still interested in improving your workflow?',
         bodyHtml: `<h2>Hello {{firstName}},</h2><p>It has been a little while, and I wanted to reach out with something useful.</p><p>If you are still exploring better ways to run your business, I would be happy to help.</p>`,
     },
+    {
+        id: 'promotion',
+        label: 'Promote an offer',
+        prompt: 'Write a short, friendly promotion for customers who have asked to receive updates.',
+        subject: 'A special offer from {{fromName}}',
+        bodyHtml: `<h2>Hello {{firstName}},</h2><p>We have a special offer we think you will enjoy.</p><p>Reply to this email or visit us to find out more. We would love to see you soon.</p>`,
+    },
 ] as const;
 
 type EducationSequenceEmail = {
@@ -340,6 +347,8 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
     const [testEmailAddress, setTestEmailAddress] = useState('');
     const [sendingTestEmail, setSendingTestEmail] = useState(false);
     const [retryingFailedRecipients, setRetryingFailedRecipients] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
 
     useEffect(() => { loadData(); }, []);
 
@@ -454,8 +463,9 @@ const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampai
         if (!String(form.bodyHtml || '').trim()) issues.push('Write the email body before launch.');
         if (!recipientType) issues.push('Choose who should receive this campaign.');
         if (recipientType && resolvedRecipients.length === 0) issues.push('Add at least one recipient before launch.');
-        if (!form.fromName.trim()) issues.push('Set a sender name.');
-        if (!form.fromEmail.trim()) warnings.push('Sender email is empty in the builder. A provider default may be used, but it is safer to set one explicitly.');
+        if (!form.fromName.trim()) issues.push('Add the name customers should see as the sender.');
+        if (!form.fromEmail.trim()) issues.push('Add the business email address customers can reply to.');
+        if (form.scheduleEnabled && !form.scheduledAt) issues.push('Choose a date and time, or turn off scheduling to send after review.');
 
         if (form.deliveryChannel === 'email' || form.deliveryChannel === 'both') {
             if (resolvedProvider === 'auto') {
@@ -726,6 +736,7 @@ Request: ${userMsg}`,
     };
 
     const handleCreate = async () => {
+        if (isSubmitting) return;
         setAuditLoading(true);
         const currentAudit = buildComposeAudit;
         setComposeAudit(currentAudit);
@@ -763,7 +774,12 @@ Request: ${userMsg}`,
             return;
         }
 
-        const toastId = toast.loading('Creating campaign...');
+        setIsSubmitting(true);
+        setSubmissionStatus('Creating a saved campaign draft...');
+        const toastId = toast.loading('Creating a saved campaign draft...');
+        let createdCampaign: EmailCampaign | null = null;
+
+        try {
         const { campaign, error } = await emailCampaignService.createCampaign(userId, {
             name: form.name,
             subject: form.subject,
@@ -799,69 +815,96 @@ Request: ${userMsg}`,
             },
         });
 
-        if (error) { toast.error(error, { id: toastId }); return; }
+        if (error) throw new Error(error);
         if (campaign) {
+            createdCampaign = campaign;
             let finalIds = recipientType === 'all'
                 ? contacts.map(c => c.id)
                 : selectedContactIds;
+            setSubmissionStatus('Adding the selected recipients...');
+            toast.loading('Adding the selected recipients...', { id: toastId });
             const recipientResult = await emailCampaignService.addRecipientsToCampaign(campaign.id, finalIds, {
                 skipPreviouslyContacted: form.skipPreviouslyContacted,
             });
 
             if (recipientResult.error) {
-                toast.error(`Campaign saved as draft. Recipients failed: ${recipientResult.error}`, { id: toastId });
-                setViewMode('list');
-                setActiveStep(1);
-                setRecipientType(null);
-                setSelectedContactIds([]);
-                loadData();
+                setSubmissionStatus('Recipients could not be added. Your campaign is saved as a draft.');
+                toast.error(`Campaign saved as draft. Recipients could not be added: ${recipientResult.error}`, { id: toastId, duration: 8000 });
+                setSelectedCampaign(campaign);
+                setViewMode('detail');
                 return;
             }
 
             if (recipientResult.added === 0) {
+                setSubmissionStatus('No eligible recipients were added. Your campaign is saved as a draft.');
                 toast.error(
                     `Campaign saved as draft. No recipients were added${recipientResult.skipped ? ` (${recipientResult.skipped} skipped as already contacted)` : ''}. Turn off "Skip previously contacted" or pick different contacts.`,
                     { id: toastId, duration: 7000 },
                 );
-                setViewMode('list');
-                setActiveStep(1);
-                setRecipientType(null);
-                setSelectedContactIds([]);
-                loadData();
+                setSelectedCampaign(campaign);
+                setViewMode('detail');
                 return;
             }
 
             if (!form.scheduleEnabled || !form.scheduledAt) {
+                setSubmissionStatus('Checking delivery requirements...');
                 toast.loading('Running pre-flight checks...', { id: toastId });
                 const diag = await emailCampaignService.diagnoseCampaign(campaign.id);
                 if (diag.issues.length > 0) {
+                    setSubmissionStatus('Delivery is blocked. Your campaign is saved as a draft.');
                     toast.error(`Campaign saved but blocked: ${diag.issues.join(' ')}`, { id: toastId, duration: 8000 });
-                    setViewMode('list');
-                    loadData();
+                    setSelectedCampaign(campaign);
+                    setViewMode('detail');
                     return;
                 }
 
-                toast.loading('Dispatching campaign emails...', { id: toastId });
+                setSubmissionStatus('Sending through your connected business email...');
+                toast.loading('Sending through your connected business email...', { id: toastId });
                 const sendResult = await emailCampaignService.sendCampaign(campaign.id);
                 if (!sendResult.success) {
                     const detail = await describeCampaignFailure(campaign.id, sendResult.error);
+                    setSubmissionStatus('Sending failed. Your campaign is saved so you can review and retry it.');
                     toast.error(`Campaign created but sending failed: ${detail}`, { id: toastId, duration: 8000 });
                     showActionNextSteps('campaign_created', (path) => router.push(path));
+                    setSelectedCampaign(campaign);
+                    setViewMode('detail');
                 } else {
-                    toast.success('Campaign launched and sent!', { id: toastId });
+                    const delivery = sendResult.delivery;
+                    const deliveryMessage = delivery?.status === 'queued'
+                        ? 'Campaign queued with the delivery service. Check the campaign for live status.'
+                        : delivery?.status === 'partial'
+                            ? `Campaign finished with ${delivery.sent ?? 0} sent and ${delivery.failed ?? 0} needing attention.`
+                            : `Campaign completed: ${delivery?.sent ?? recipientResult.added} sent${delivery?.failed ? `, ${delivery.failed} failed` : ''}.`;
+                    setSubmissionStatus(deliveryMessage);
+                    toast.success(deliveryMessage, { id: toastId, duration: 7000 });
                     showActionNextSteps('campaign_sent', (path) => router.push(path));
                 }
             } else {
+                setSubmissionStatus('Saving the delivery time...');
                 await emailCampaignService.updateCampaign(campaign.id, { status: 'scheduled' });
-                toast.success('Campaign scheduled successfully.', { id: toastId });
+                setSubmissionStatus('Campaign scheduled. It has not been sent yet.');
+                toast.success('Campaign scheduled. It has not been sent yet.', { id: toastId });
                 showActionNextSteps('campaign_created', (path) => router.push(path));
             }
         }
-        setViewMode('list');
-        setActiveStep(1);
-        setRecipientType(null);
-        setSelectedContactIds([]);
-        loadData();
+        if (!createdCampaign || viewMode !== 'detail') {
+            setViewMode('list');
+            setActiveStep(1);
+            setRecipientType(null);
+            setSelectedContactIds([]);
+        }
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'The campaign could not be created.';
+            setSubmissionStatus(createdCampaign ? 'Your campaign is saved as a draft. Review it and try again.' : 'Campaign setup could not be completed. Check the highlighted details and try again.');
+            toast.error(message, { id: toastId, duration: 8000 });
+            if (createdCampaign) {
+                setSelectedCampaign(createdCampaign);
+                setViewMode('detail');
+            }
+        } finally {
+            setIsSubmitting(false);
+            void loadData();
+        }
     };
 
     const runComposeAudit = () => {
@@ -1545,9 +1588,17 @@ Voice & rules:
                                         <p className="text-[10px] text-slate-500">Audience parsed and matching rules checked</p>
                                     </div>
                                     <div className="relative">
-                                        <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-teal-500 border border-slate-950 animate-pulse" />
-                                        <h4 className="text-xs font-bold text-teal-400">Queue Processing</h4>
-                                        <p className="text-[10px] text-slate-500">Sending via tenant email provider</p>
+                                        <div className={`absolute -left-[30px] top-0.5 w-4 h-4 rounded-full border border-slate-950 ${selectedCampaign.status === 'sent' ? 'bg-emerald-500' : String(selectedCampaign.status) === 'failed' ? 'bg-rose-500' : 'bg-teal-500 animate-pulse'}`} />
+                                        <h4 className={`text-xs font-bold ${selectedCampaign.status === 'sent' ? 'text-emerald-400' : String(selectedCampaign.status) === 'failed' ? 'text-rose-300' : 'text-teal-400'}`}>
+                                            {selectedCampaign.status === 'sent' ? 'Delivery completed' : String(selectedCampaign.status) === 'failed' ? 'Delivery needs attention' : 'Delivery in progress'}
+                                        </h4>
+                                        <p className="text-[10px] text-slate-500">
+                                            {selectedCampaign.status === 'sent'
+                                                ? 'Check the recipient delivery audit for sent and failed counts.'
+                                                : String(selectedCampaign.status) === 'failed'
+                                                    ? 'Review the recipient delivery audit, update the issue, then retry failed recipients.'
+                                                    : 'Sending through the connected business email provider.'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -1688,10 +1739,10 @@ Voice & rules:
                                     <span>Step {activeStep} of 4</span>
                                     <span>
                                         {campaignMode === 'simple' ? (
-                                            activeStep === 1 ? 'Basics' :
-                                            activeStep === 2 ? 'Who gets it' :
-                                            activeStep === 3 ? 'Write your message' :
-                                            'Review & send'
+                                            activeStep === 1 ? 'Name & sender' :
+                                            activeStep === 2 ? 'Who are you contacting?' :
+                                            activeStep === 3 ? 'What do you want to say?' :
+                                            'Review, then send'
                                         ) : (
                                             activeStep === 1 ? 'Message & Provider' :
                                             activeStep === 2 ? 'Segment' :
@@ -1722,6 +1773,33 @@ Voice & rules:
                                                 placeholder="e.g. Quick question about workspace optimization"
                                                 className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
                                             />
+                                        </div>
+
+                                        <div className="grid gap-3 sm:grid-cols-2 rounded-2xl border border-white/5 bg-slate-950/40 p-4">
+                                            <div className="space-y-1.5">
+                                                <label htmlFor="campaign-from-name" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Sender name</label>
+                                                <input
+                                                    id="campaign-from-name"
+                                                    value={form.fromName}
+                                                    onChange={(e) => setForm((f) => ({ ...f, fromName: e.target.value }))}
+                                                    placeholder="e.g. Anna from Bistro Warszawa"
+                                                    className="w-full h-11 bg-slate-900 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label htmlFor="campaign-from-email" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-1">Business reply-to email</label>
+                                                <input
+                                                    id="campaign-from-email"
+                                                    type="email"
+                                                    value={form.fromEmail}
+                                                    onChange={(e) => setForm((f) => ({ ...f, fromEmail: e.target.value }))}
+                                                    placeholder="hello@yourbusiness.com"
+                                                    aria-invalid={!form.fromEmail.trim()}
+                                                    aria-describedby="campaign-from-email-help"
+                                                    className={`w-full h-11 bg-slate-900 border rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50 ${form.fromEmail.trim() ? 'border-white/5' : 'border-amber-500/30'}`}
+                                                />
+                                                <p id="campaign-from-email-help" className="text-[11px] leading-relaxed text-slate-500">Customers will see this address and can reply to it. It must match a connected sender.</p>
+                                            </div>
                                         </div>
 
                                         <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-3">
@@ -2548,12 +2626,40 @@ Voice & rules:
                                             </label>
                                         </div>
 
+                                        <div
+                                            role="status"
+                                            aria-live="polite"
+                                            className={`rounded-xl border px-4 py-3 text-sm ${
+                                                isSubmitting
+                                                    ? 'border-sky-500/25 bg-sky-500/10 text-sky-100'
+                                                    : submissionStatus?.includes('failed') || submissionStatus?.includes('blocked') || submissionStatus?.includes('could not')
+                                                        ? 'border-rose-500/25 bg-rose-500/10 text-rose-100'
+                                                        : 'border-slate-800 bg-slate-950/60 text-slate-400'
+                                            }`}
+                                        >
+                                            {isSubmitting ? (
+                                                <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-sky-300" aria-hidden="true" />{submissionStatus || 'Preparing your campaign...'}</span>
+                                            ) : (
+                                                submissionStatus || 'Your campaign will remain a draft until AlphaClone has confirmed delivery or saved the schedule.'
+                                            )}
+                                        </div>
+
                                         <button
                                             onClick={handleCreate}
-                                            className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-teal-900/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                            disabled={isSubmitting || composeAudit.issues.length > 0}
+                                            aria-describedby="campaign-launch-help"
+                                            className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-teal-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
-                                            {form.scheduleEnabled && form.scheduledAt ? '📅 Schedule Campaign' : '🚀 Launch Email Campaign Now'}
+                                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+                                            {isSubmitting
+                                                ? (submissionStatus || 'Preparing campaign...')
+                                                : form.scheduleEnabled && form.scheduledAt
+                                                    ? 'Schedule campaign'
+                                                    : 'Review and send campaign'}
                                         </button>
+                                        <p id="campaign-launch-help" className="text-center text-[11px] leading-relaxed text-slate-500">
+                                            Sending is confirmed only after the connected provider responds. AlphaClone will never report a queued or partial delivery as fully sent.
+                                        </p>
                                     </div>
                                 )}
 

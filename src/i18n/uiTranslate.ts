@@ -60,6 +60,9 @@ const ES: Record<string, string> = {
     'Integration Marketplace': 'Mercado de integraciones',
     'Marketing Campaigns': 'Campañas de marketing',
     'System Settings': 'Ajustes del sistema',
+    'Business activity': 'Actividad del negocio',
+    'Automation & insights': 'Automatización y análisis',
+    'Follow-up inbox': 'Bandeja de seguimiento',
 
     // Sidebar chrome
     'Jump to page': 'Ir a la página',
@@ -1228,6 +1231,9 @@ const PL: Record<string, string> = {
     'Integration Marketplace': 'Rynek integracji',
     'Marketing Campaigns': 'Kampanie marketingowe',
     'System Settings': 'Ustawienia systemu',
+    'Business activity': 'Działania biznesowe',
+    'Automation & insights': 'Automatyzacja i analityka',
+    'Follow-up inbox': 'Skrzynka działań następczych',
 
     'Jump to page': 'Przejdź do strony',
     'Select destination': 'Wybierz miejsce docelowe',

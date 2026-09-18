@@ -1,193 +1,218 @@
 import React, { useState } from 'react';
 import { Modal } from '../ui/UIComponents';
-import { User, Briefcase, Users, Brain, Sparkles, CheckCircle2 } from 'lucide-react';
+import {
+    BriefcaseBusiness,
+    FileText,
+    FolderKanban,
+    Mail,
+    Search,
+    Share2,
+    Sparkles,
+    Users,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { User as UserType } from '../../types';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface OnboardingFlowProps {
     user: UserType;
-    onComplete: () => void;
+    onComplete: (nextPath?: string) => void;
 }
 
-interface OnboardingOption {
+interface OnboardingGoal {
     id: string;
     title: string;
     description: string;
-    icon: React.ComponentType<any>;
-    gradient: string;
-    borderColor: string;
-    textColor: string;
+    nextStep: string;
+    href: string;
+    icon: LucideIcon;
 }
 
-const ONBOARDING_OPTIONS: OnboardingOption[] = [
+/**
+ * First-use choices intentionally describe business outcomes rather than AlphaClone modules.
+ * Each destination remains an existing tenant-scoped dashboard route.
+ */
+const ONBOARDING_GOALS: OnboardingGoal[] = [
     {
-        id: 'Solopreneur',
-        title: 'Solopreneur',
-        description: 'Build and scale your solo empire with unified systems.',
-        icon: User,
-        gradient: 'from-pink-500/10 to-rose-500/10 hover:from-pink-500/20 hover:to-rose-500/20',
-        borderColor: 'border-pink-500/30 hover:border-pink-500/60',
-        textColor: 'text-pink-400',
+        id: 'get_customers',
+        title: 'Get more customers',
+        description: 'Find local businesses or people who may be a good fit, then save the best ones.',
+        nextStep: 'Start by describing the customers you want to reach.',
+        href: '/dashboard/leads/campaigns',
+        icon: Search,
     },
     {
-        id: 'Freelancer',
-        title: 'Freelancer',
-        description: 'Manage clients, invoices, and execute projects seamlessly.',
-        icon: Briefcase,
-        gradient: 'from-blue-500/10 to-indigo-500/10 hover:from-blue-500/20 hover:to-indigo-500/20',
-        borderColor: 'border-blue-500/30 hover:border-blue-500/60',
-        textColor: 'text-blue-400',
+        id: 'post_to_social',
+        title: 'Post to social media',
+        description: 'Create, review, and publish an update on your connected social accounts.',
+        nextStep: 'Choose the account and prepare your first post.',
+        href: '/dashboard/business/social/compose',
+        icon: Share2,
     },
     {
-        id: 'Agency Founder',
-        title: 'Agency Founder',
-        description: 'Scale operations, manage contracts, and coordinate teams.',
+        id: 'send_promotions',
+        title: 'Send emails and promotions',
+        description: 'Choose recipients, write a message, review it, and send it from your business email.',
+        nextStep: 'Create a small, reviewable campaign.',
+        href: '/dashboard/business/campaigns',
+        icon: Mail,
+    },
+    {
+        id: 'manage_customers',
+        title: 'Manage customers and enquiries',
+        description: 'Keep customer details, conversations, and follow-ups in one place.',
+        nextStep: 'Add your first customer or enquiry.',
+        href: '/dashboard/crm/workspace?quickAdd=true',
         icon: Users,
-        gradient: 'from-teal-500/10 to-emerald-500/10 hover:from-teal-500/20 hover:to-emerald-500/20',
-        borderColor: 'border-teal-500/30 hover:border-teal-500/60',
-        textColor: 'text-teal-400',
     },
     {
-        id: 'Consultant',
-        title: 'Consultant',
-        description: 'Provide high-value expertise and drive growth strategies.',
-        icon: Brain,
-        gradient: 'from-purple-500/10 to-violet-500/10 hover:from-purple-500/20 hover:to-violet-500/20',
-        borderColor: 'border-purple-500/30 hover:border-purple-500/60',
-        textColor: 'text-purple-400',
+        id: 'create_invoices',
+        title: 'Create quotes and invoices',
+        description: 'Prepare professional bills and keep track of payments.',
+        nextStep: 'Create a draft invoice before you send it.',
+        href: '/dashboard/business/billing/manage?create=true',
+        icon: FileText,
     },
     {
-        id: 'Coach',
-        title: 'Coach',
-        description: 'Train, guide, and support your clients on their journeys.',
-        icon: Sparkles,
-        gradient: 'from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20',
-        borderColor: 'border-amber-500/30 hover:border-amber-500/60',
-        textColor: 'text-amber-400',
+        id: 'manage_projects',
+        title: 'Manage projects and tasks',
+        description: 'Plan client work, assign tasks, and see what needs attention.',
+        nextStep: 'Create the first piece of work to track.',
+        href: '/dashboard/business/projects/manage?create=true',
+        icon: FolderKanban,
+    },
+    {
+        id: 'run_business',
+        title: 'Run my business in one workspace',
+        description: 'Start from your home view and add the tools that matter as you need them.',
+        nextStep: 'Open your workspace and choose one priority.',
+        href: '/dashboard',
+        icon: BriefcaseBusiness,
     },
 ];
 
 const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
-    const handleSelect = async (role: string) => {
+    const saveChoice = async (choice: string, nextPath?: string) => {
         if (isSaving) return;
-        setSelectedId(role);
-        setIsSaving(true);
 
-        const toastId = toast.loading('Personalizing your command center...');
+        setSelectedId(choice);
+        setIsSaving(true);
+        setSaveError(null);
+        const toastId = toast.loading('Saving your starting point...');
 
         try {
-            const profileResponse = await fetch('/api/account/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboardingRole: role, onboardingCompleted: true }) });
-            if (!profileResponse.ok) throw new Error('Onboarding profile could not be saved');
+            const profileResponse = await fetch('/api/account/profile', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ onboardingRole: choice, onboardingCompleted: true }),
+            });
+            const profilePayload = await profileResponse.json().catch(() => ({}));
+            if (!profileResponse.ok) {
+                throw new Error(profilePayload.error || 'Your choice could not be saved.');
+            }
 
-            // 4. Update auth user metadata for current session availability
-            await supabase.auth.updateUser({
+            const { error: metadataError } = await supabase.auth.updateUser({
                 data: {
-                    onboarding_role: role,
+                    onboarding_role: choice,
                     onboarding_completed: true,
                 },
             });
+            if (metadataError) throw metadataError;
 
-            // 5. Save to localStorage for instant UI resolution
+            // This is an optimistic cache only. The profile remains the durable source of truth.
             localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
             window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
-
-            toast.success('Your workspace is ready!', { id: toastId });
-
-            // Small delay for animations
-            setTimeout(() => {
-                onComplete();
-            }, 800);
-
-        } catch (err: any) {
+            toast.success(nextPath ? 'Your first path is ready.' : 'Your full workspace is ready.', { id: toastId });
+            onComplete(nextPath);
+        } catch (err) {
             console.error('OnboardingFlow: Update failed:', err);
-            toast.error(`Setup could not be saved: ${err.message || err}. Moving to dashboard...`, { id: toastId });
-            
-            // Allow them to access dashboard regardless to prevent drop-off blockages
-            localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
-            setTimeout(() => {
-                onComplete();
-            }, 1000);
+            const message = err instanceof Error ? err.message : 'Your choice could not be saved.';
+            setSaveError(`${message} Please try again. Nothing has been changed.`);
+            toast.error('We could not save your starting point.', { id: toastId });
+            setSelectedId(null);
         } finally {
             setIsSaving(false);
         }
     };
 
+    const handleGoalSelect = (goal: OnboardingGoal) => saveChoice(goal.id, goal.href);
+    const handleExploreWorkspace = () => saveChoice('explore_workspace');
+
     return (
         <Modal
             isOpen={true}
-            onClose={() => {
-                // If they close, complete the flow using a default option to avoid gating issues
-                handleSelect('Solopreneur');
-            }}
+            onClose={handleExploreWorkspace}
             title=""
-            className="max-w-3xl overflow-hidden bg-slate-900 border border-slate-800 rounded-3xl"
+            className="max-w-4xl overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl"
         >
-            <div className="relative p-6 sm:p-8">
-                {/* Header */}
-                <div className="text-center space-y-3 mb-10">
-                    <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-teal-500/10 text-teal-400 mb-2">
-                        <Sparkles className="w-6 h-6 animate-pulse" />
+            <div className="relative p-5 sm:p-8">
+                <div className="text-center space-y-3 mb-7">
+                    <div className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--brand-blue-500,#356AF4)]/15 text-[var(--brand-blue-400,#91B5FF)]">
+                        <Sparkles className="w-5 h-5" aria-hidden="true" />
                     </div>
-                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-                        Customize Your Command Center
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--brand-blue-400,#91B5FF)]">Welcome to AlphaClone</p>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                        What do you want AlphaClone to do for your business?
                     </h2>
-                    <p className="text-slate-400 text-lg max-w-lg mx-auto">
-                        What best describes your current business configuration?
+                    <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
+                        Start with one useful outcome. You can use every tool in your workspace whenever you need it.
                     </p>
                 </div>
 
-                {/* Option Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[50vh] overflow-y-auto pr-1">
-                    {ONBOARDING_OPTIONS.map((option) => {
-                        const Icon = option.icon;
-                        const isSelected = selectedId === option.id;
+                {saveError ? (
+                    <div role="alert" className="mb-5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+                        {saveError}
+                    </div>
+                ) : null}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[52vh] overflow-y-auto pr-1" aria-label="Choose your first business goal">
+                    {ONBOARDING_GOALS.map((goal) => {
+                        const Icon = goal.icon;
+                        const isSelected = selectedId === goal.id;
 
                         return (
                             <button
-                                key={option.id}
+                                key={goal.id}
+                                type="button"
                                 disabled={isSaving}
-                                onClick={() => handleSelect(option.id)}
-                                className={`group flex items-start gap-4 p-5 rounded-2xl text-left border bg-slate-950/40 backdrop-blur-md transition-all duration-300 transform select-none ${
+                                aria-describedby={`${goal.id}-next-step`}
+                                onClick={() => handleGoalSelect(goal)}
+                                className={`group flex items-start gap-3 p-4 rounded-xl text-left border bg-slate-950/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,#91B5FF)] disabled:cursor-wait disabled:opacity-70 ${
                                     isSelected
-                                        ? 'border-teal-500 bg-teal-500/5 scale-[0.98]'
-                                        : `${option.borderColor} ${option.gradient} hover:scale-[1.02]`
+                                        ? 'border-[var(--brand-blue-500,#356AF4)] bg-[var(--brand-blue-500,#356AF4)]/10'
+                                        : 'border-slate-800 hover:border-[var(--brand-blue-500,#356AF4)]/60 hover:bg-slate-800/70'
                                 }`}
                             >
-                                <div className={`flex-shrink-0 p-3 rounded-xl bg-slate-900 border transition-all duration-300 ${
-                                    isSelected 
-                                        ? 'border-teal-500/50 text-teal-400' 
-                                        : 'border-slate-800 text-slate-400 group-hover:text-white'
-                                }`}>
-                                    {isSelected ? (
-                                        <CheckCircle2 className="w-6 h-6 text-teal-400 animate-scale-up" />
-                                    ) : (
-                                        <Icon className="w-6 h-6" />
-                                    )}
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className={`font-bold text-lg transition-colors ${
-                                        isSelected ? 'text-teal-400' : 'text-white group-hover:text-white'
-                                    }`}>
-                                        {option.title}
-                                    </h3>
-                                    <p className="text-slate-400 text-sm leading-relaxed">
-                                        {option.description}
-                                    </p>
-                                </div>
+                                <span className="flex-shrink-0 p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-[var(--brand-blue-400,#91B5FF)] group-hover:text-white transition-colors">
+                                    <Icon className="w-5 h-5" aria-hidden="true" />
+                                </span>
+                                <span className="min-w-0 space-y-1">
+                                    <span className="block font-semibold text-base text-white">{goal.title}</span>
+                                    <span className="block text-slate-400 text-sm leading-relaxed">{goal.description}</span>
+                                    <span id={`${goal.id}-next-step`} className="block pt-1 text-xs font-medium text-[var(--brand-blue-400,#91B5FF)]">
+                                        Next: {goal.nextStep}
+                                    </span>
+                                </span>
                             </button>
                         );
                     })}
                 </div>
 
-                {/* Bottom branding footer */}
-                <div className="text-center mt-10 pt-6 border-t border-slate-800/60">
-                    <span className="text-xs text-slate-500 tracking-wider uppercase font-medium">
-                        AlphaClone Operating OS • High Isolation Workspace Setup
-                    </span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-5 border-t border-slate-800/60">
+                    <p className="text-xs text-slate-500">You can change direction later. Your existing workspace and permissions stay the same.</p>
+                    <button
+                        type="button"
+                        disabled={isSaving}
+                        onClick={handleExploreWorkspace}
+                        className="shrink-0 text-sm font-medium text-slate-300 hover:text-white underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,#91B5FF)] rounded disabled:opacity-50"
+                    >
+                        Explore the full workspace instead
+                    </button>
                 </div>
             </div>
         </Modal>

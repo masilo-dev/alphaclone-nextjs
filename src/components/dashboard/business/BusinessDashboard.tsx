@@ -327,10 +327,16 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         }
     };
 
-    const handleOnboardingComplete = () => {
+    const handleOnboardingComplete = (nextPath?: string) => {
         setShowOnboarding(false);
         if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('alphaclone:onboarding-updated'));
+        }
+        // Outcome onboarding takes the user straight to the existing module they
+        // selected. Do not make a first-time user rediscover it in the sidebar.
+        if (nextPath) {
+            setActiveTab(nextPath);
+            return;
         }
         if (typeof window !== 'undefined' && !localStorage.getItem(`business_tour_completed_${user.id}`) && route === '/dashboard') {
             window.setTimeout(() => setShowProductTour(true), 1500);

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { UserRole } from '../../types';
 import { Briefcase, House, Layers, Mail, Sparkles } from 'lucide-react';
 import { MOBILE_BOTTOM_DESTINATIONS, isMobileBottomActive } from '@/config/responsive/mobileNav';
@@ -51,7 +50,6 @@ const BottomNav: React.FC<BottomNavProps> = ({
   unreadCount = 0,
   userRole = 'client',
 }) => {
-  const router = useRouter();
   const { isPWA } = usePWA();
   const { t } = useLanguage();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -81,8 +79,9 @@ const BottomNav: React.FC<BottomNavProps> = ({
       setMoreOpen(true);
       return;
     }
+    // The dashboard parent owns route state and performs the single navigation.
+    // Calling router.push here as well produced duplicate transitions on mobile.
     onNavigate(href);
-    router.push(href);
   };
 
   const isItemActive = (item: (typeof destinations)[number]) => {

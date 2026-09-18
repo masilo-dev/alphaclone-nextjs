@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { Modal, Button } from '@/components/ui/UIComponents';
-import { UserPlus, FileText, Mail, ArrowRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 interface BusinessWelcomeModalProps {
   isOpen: boolean;
@@ -11,75 +10,44 @@ interface BusinessWelcomeModalProps {
   userName: string;
 }
 
-const FIRST_STEPS = [
-  {
-    title: 'Add a client',
-    description: 'CRM → quick add a contact',
-    href: '/dashboard/crm/workspace?quickAdd=true',
-    icon: UserPlus,
-  },
-  {
-    title: 'Create an invoice',
-    description: 'Billing → new invoice',
-    href: '/dashboard/business/billing/manage?create=true',
-    icon: FileText,
-  },
-  {
-    title: 'Connect inbox',
-    description: 'Mail → connect email',
-    href: '/dashboard/mail',
-    icon: Mail,
-  },
-];
-
+/**
+ * A short welcome intentionally introduces the goal picker instead of duplicating
+ * dashboard setup cards. The next modal performs the durable user-level choice.
+ */
 export function BusinessWelcomeModal({ isOpen, onClose, userName }: BusinessWelcomeModalProps) {
-  const router = useRouter();
   const firstName = userName.split(' ')[0] || 'there';
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="">
-      <div className="space-y-6 py-2">
-        <div className="text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-teal-400 mb-2">
-            AlphaClone Systems · the platform for execution
+      <div className="space-y-6 py-2 text-center">
+        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--brand-blue-500,#356AF4)]/30 bg-[var(--brand-blue-500,#356AF4)]/10 text-[var(--brand-blue-400,#91B5FF)]">
+          <Sparkles className="h-5 w-5" aria-hidden="true" />
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--brand-blue-400,#91B5FF)]">
+            Welcome to AlphaClone
           </p>
-          <h3 className="text-2xl font-bold text-white tracking-tight">
+          <h3 className="mt-2 text-2xl font-bold tracking-tight text-white">
             Welcome, {firstName}
           </h3>
-          <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
-            Your workspace is live. Finish these three steps to start executing — most owners complete them in under 10 minutes.
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-400">
+            You do not need to set up everything today. Choose one useful business outcome and AlphaClone will take you to the right starting point.
           </p>
         </div>
 
-        <div className="space-y-2">
-          {FIRST_STEPS.map((step, index) => {
-            const Icon = step.icon;
-            return (
-              <button
-                key={step.title}
-                type="button"
-                onClick={() => {
-                  onClose();
-                  router.push(step.href);
-                }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-teal-500/40 hover:bg-teal-500/5 text-left transition-colors"
-              >
-                <span className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-bold text-teal-400 shrink-0">
-                  {index + 1}
-                </span>
-                <Icon className="w-4 h-4 text-slate-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white">{step.title}</p>
-                  <p className="text-xs text-slate-500">{step.description}</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-500 shrink-0" />
-              </button>
-            );
-          })}
+        <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-4 text-left">
+          <p className="text-sm font-semibold text-white">Start with what matters now</p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-400">
+            For example: get more local customers, post to social media, manage enquiries, send a promotion, or create an invoice.
+          </p>
         </div>
 
-        <Button onClick={onClose} className="w-full bg-teal-600 hover:bg-teal-500">
-          Go to dashboard
+        <Button
+          onClick={onClose}
+          className="w-full bg-[var(--brand-blue-500,#356AF4)] hover:bg-[var(--brand-blue-600,#2854C5)] focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,#91B5FF)]"
+        >
+          Choose my first goal
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
     </Modal>

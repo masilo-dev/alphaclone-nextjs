@@ -31,6 +31,10 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(() => isSetupChecklistDismissed(user.id));
+  const [onboardingComplete, setOnboardingComplete] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(`onboarding_completed_${user.id}`) === 'true';
+  });
   const [showMoreContext, setShowMoreContext] = useState(false);
   const { dashboardHomeLayout, loading: prefsLoading } = useWorkspacePreferences();
 
@@ -52,6 +56,15 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     };
   }, [currentTenant?.id, user.id, getDashboardStats, isCompanion]);
 
+  useEffect(() => {
+    const syncOnboarding = () => {
+      setOnboardingComplete(localStorage.getItem(`onboarding_completed_${user.id}`) === 'true');
+    };
+    window.addEventListener('alphaclone:onboarding-updated', syncOnboarding);
+    syncOnboarding();
+    return () => window.removeEventListener('alphaclone:onboarding-updated', syncOnboarding);
+  }, [user.id]);
+
   if (isCompanion) {
     return (
       <div className="ac-companion-home ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home" data-experience="companion">
@@ -60,7 +73,9 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     );
   }
 
-  const showSetup = !dismissed && !statsError && stats !== null && isNewWorkspaceStats(stats);
+  // The outcome picker is the canonical first-use guide. Do not layer the old
+  // generic checklist on top once a user has intentionally chosen a direction.
+  const showSetup = !onboardingComplete && !dismissed && !statsError && stats !== null && isNewWorkspaceStats(stats);
 
   return (
     <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">

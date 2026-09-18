@@ -652,7 +652,11 @@ export const emailCampaignService = {
     /**
      * Send email campaign
      */
-    async sendCampaign(campaignId: string): Promise<{ success: boolean; error: string | null }> {
+    async sendCampaign(campaignId: string): Promise<{
+        success: boolean;
+        error: string | null;
+        delivery?: { status: 'completed' | 'partial' | 'queued'; sent?: number; failed?: number };
+    }> {
         try {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) throw new Error('No active tenant');
@@ -663,7 +667,18 @@ export const emailCampaignService = {
             });
             const payload = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(payload.error || 'Failed to send campaign');
-            return { success: true, error: null };
+            const delivery = payload.delivery;
+            return {
+                success: true,
+                error: null,
+                delivery: delivery && ['completed', 'partial', 'queued'].includes(delivery.status)
+                    ? {
+                        status: delivery.status,
+                        sent: Number.isFinite(Number(delivery.sent)) ? Number(delivery.sent) : undefined,
+                        failed: Number.isFinite(Number(delivery.failed)) ? Number(delivery.failed) : undefined,
+                    }
+                    : undefined,
+            };
         } catch (err) {
             console.error('Campaign sending failed:', err);
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };

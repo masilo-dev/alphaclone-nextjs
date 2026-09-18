@@ -142,14 +142,14 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 // --- TENANT_ADMIN NAVIGATION (purpose groups: Customers → Settings + Bonnie) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Home', href: '/dashboard', icon: Zap },
-  { label: 'Operations Command', href: '/dashboard/operations', icon: Activity },
+  { label: 'Business activity', href: '/dashboard/operations', icon: Activity },
 
   {
-    label: 'Relationships',
+    label: 'Customers',
     href: '#',
     icon: Users,
     subItems: [
-      { label: 'Customer workspace', href: '/dashboard/crm/workspace', icon: Users },
+      { label: 'Customers', href: '/dashboard/crm/workspace', icon: Users },
       { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
       { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
       { label: 'Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
@@ -235,13 +235,13 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   },
 
   {
-    label: 'Intelligence',
+    label: 'Automation & insights',
     href: '#',
     icon: Brain,
     subItems: [
       { label: 'Bonnie AI', href: '/dashboard/business/bonnie', icon: Brain },
       { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
-      { label: 'Chase inbox', href: '/dashboard/bonnie/chases', icon: BellRing },
+      { label: 'Follow-up inbox', href: '/dashboard/bonnie/chases', icon: BellRing },
       { label: 'Automations', href: '/dashboard/business/workflows', icon: Zap },
       { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
       { label: 'Executive view', href: '/dashboard/executive', icon: BarChart3 },

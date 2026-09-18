@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, FileText, Linkedin, ChevronRight, X, CheckCircle2 } from 'lucide-react';
+import { UserPlus, FileText, Mail, ChevronRight, X, CheckCircle2 } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
@@ -25,12 +25,12 @@ const SETUP_STEPS = [
     icon: FileText,
   },
   {
-    id: 'connect',
+    id: 'campaign',
     step: '3',
-    title: 'Connect email or LinkedIn',
-    description: 'Hook up inbox or social so outreach and replies stay in one workspace.',
-    href: '/dashboard/mail',
-    icon: Linkedin,
+    title: 'Send a promotion or update',
+    description: 'Create a reviewable email campaign for customers who have opted in.',
+    href: '/dashboard/business/campaigns',
+    icon: Mail,
   },
 ] as const;
 
@@ -55,10 +55,10 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
             Start here
           </p>
           <h2 className="text-[17px] font-semibold text-white tracking-tight mt-1">
-            Welcome, {firstName} — do these 3 things first
+            Welcome, {firstName} — choose one first win
           </h2>
           <p className="text-[13px] text-[var(--ws-text-secondary)] mt-1 max-w-xl">
-            Most new workspaces are productive in under 10 minutes. Pick a step below — we will take you to the right screen.
+            You do not need to set up everything today. Pick the action that will help your business most right now.
           </p>
         </div>
         {onDismiss ? (

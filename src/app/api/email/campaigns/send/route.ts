@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
                 success: true,
                 mode: 'listmonk',
                 listmonkCampaignId: result.listmonkCampaignId,
+                delivery: { status: 'queued' },
             });
         }
 
@@ -47,7 +48,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: result.error || 'Failed to send campaign', code: 'CAMPAIGN_SEND_FAILED' }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, mode: 'direct_provider_delivery' });
+        return NextResponse.json({
+            success: true,
+            mode: 'direct_provider_delivery',
+            delivery: {
+                status: result.status || 'completed',
+                sent: result.sent || 0,
+                failed: result.failed || 0,
+            },
+        });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to send campaign', request);
     }
