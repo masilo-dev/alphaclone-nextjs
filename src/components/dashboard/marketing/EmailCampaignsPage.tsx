@@ -54,24 +54,24 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
   return (
     <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/business/campaigns">
       <div className="space-y-4">
-        <section aria-labelledby="campaign-setup-heading" className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 md:p-5">
+        <section aria-labelledby="campaign-setup-heading" className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4 shadow-lg shadow-black/10 md:p-6">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ac-accent)]">Simple campaign setup</p>
-              <h1 id="campaign-setup-heading" className="mt-1 text-xl font-semibold tracking-tight text-white">Send a clear message in four steps</h1>
+              <p className="inline-flex rounded-full bg-[var(--ac-accent-muted)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ac-accent)]">Simple campaign setup</p>
+              <h1 id="campaign-setup-heading" className="mt-3 text-2xl font-semibold tracking-tight text-white">Send a clear message in four steps</h1>
               <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--ws-text-secondary)]">
                 AlphaClone keeps delivery safeguards in place while showing only what you need at each step. Your campaign stays a draft until you review and choose to send or schedule it.
               </p>
             </div>
-            <p className="inline-flex items-center gap-1.5 text-xs text-[var(--ws-text-tertiary)]">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#111827)] px-3 py-2 text-xs text-[var(--ws-text-tertiary)]">
               <CheckCircle2 className="h-4 w-4 text-[var(--success-text,#6FE0AD)]" aria-hidden="true" />
               You can go back without losing your draft.
             </p>
           </div>
 
-          <ol className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ol className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {CAMPAIGN_STEPS.map(({ number, title, description, Icon }) => (
-              <li key={number} className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#111827)] p-3.5">
+              <li key={number} className="rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-secondary,#111827)] p-4 transition-colors hover:border-[var(--ac-accent)]/50">
                 <div className="flex items-center gap-2">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--ac-accent-muted)] text-xs font-semibold text-[var(--ac-accent)]">{number}</span>
                   <Icon className="ml-auto h-4 w-4 text-[var(--ac-accent)]" aria-hidden="true" />

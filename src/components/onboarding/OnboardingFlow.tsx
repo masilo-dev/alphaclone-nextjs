@@ -148,15 +148,15 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
             isOpen={true}
             onClose={handleExploreWorkspace}
             title=""
-            className="max-w-4xl overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl"
+            className="max-w-4xl overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl shadow-black/40"
         >
-            <div className="relative p-5 sm:p-8">
-                <div className="text-center space-y-3 mb-7">
-                    <div className="inline-flex items-center justify-center p-2 rounded-xl bg-[var(--brand-blue-500,#356AF4)]/15 text-[var(--brand-blue-400,#91B5FF)]">
+            <div className="relative p-5 sm:p-9">
+                <div className="mb-8 space-y-3 text-center">
+                    <div className="mx-auto inline-flex items-center justify-center rounded-2xl bg-[var(--brand-blue-500,#356AF4)]/15 p-3 text-[var(--brand-blue-400,#91B5FF)]">
                         <Sparkles className="w-5 h-5" aria-hidden="true" />
                     </div>
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--brand-blue-400,#91B5FF)]">Welcome to AlphaClone</p>
-                    <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    <h2 className="text-2xl font-bold tracking-tight text-white sm:text-4xl">
                         What do you want AlphaClone to do for your business?
                     </h2>
                     <p className="text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
@@ -170,7 +170,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                     </div>
                 ) : null}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[52vh] overflow-y-auto pr-1" aria-label="Choose your first business goal">
+                <div className="grid max-h-[52vh] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2" aria-label="Choose your first business goal">
                     {ONBOARDING_GOALS.map((goal) => {
                         const Icon = goal.icon;
                         const isSelected = selectedId === goal.id;
@@ -182,7 +182,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                                 disabled={isSaving}
                                 aria-describedby={`${goal.id}-next-step`}
                                 onClick={() => handleGoalSelect(goal)}
-                                className={`group flex items-start gap-3 p-4 rounded-xl text-left border bg-slate-950/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,#91B5FF)] disabled:cursor-wait disabled:opacity-70 ${
+                                className={`group flex min-h-[142px] items-start gap-3 rounded-2xl border bg-slate-950/40 p-4 text-left transition-all hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400,#91B5FF)] disabled:cursor-wait disabled:opacity-70 ${
                                     isSelected
                                         ? 'border-[var(--brand-blue-500,#356AF4)] bg-[var(--brand-blue-500,#356AF4)]/10'
                                         : 'border-slate-800 hover:border-[var(--brand-blue-500,#356AF4)]/60 hover:bg-slate-800/70'
@@ -192,7 +192,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                                     <Icon className="w-5 h-5" aria-hidden="true" />
                                 </span>
                                 <span className="min-w-0 space-y-1">
-                                    <span className="block font-semibold text-base text-white">{goal.title}</span>
+                                    <span className="block text-base font-semibold text-white">{goal.title}</span>
                                     <span className="block text-slate-400 text-sm leading-relaxed">{goal.description}</span>
                                     <span id={`${goal.id}-next-step`} className="block pt-1 text-xs font-medium text-[var(--brand-blue-400,#91B5FF)]">
                                         Next: {goal.nextStep}
@@ -203,7 +203,7 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
                     })}
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-5 border-t border-slate-800/60">
+                <div className="mt-7 flex flex-col gap-3 border-t border-slate-800/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-xs text-slate-500">You can change direction later. Your existing workspace and permissions stay the same.</p>
                     <button
                         type="button"
