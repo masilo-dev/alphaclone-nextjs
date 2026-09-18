@@ -155,8 +155,10 @@ export async function upsertFacebookIntegration(params: {
     page_access_token: null,
     user_access_token: null,
     app_scoped_user_id: params.appScopedUserId,
-    is_active: true,
-    connected_at: new Date().toISOString(),
+    // Do not expose a half-connected integration. It becomes active only after
+    // encrypted credentials have been persisted successfully.
+    is_active: false,
+    connected_at: null,
     expires_at: params.expiresAt,
     metadata: params.metadata,
     updated_at: new Date().toISOString(),
@@ -223,10 +225,44 @@ export async function upsertFacebookIntegration(params: {
 
   if (error || !data?.id) return { integrationId: null, error: error?.message || 'upsert failed' };
   const integrationId = String(data.id);
-  await writeSecrets(admin, integrationId, {
-    pageToken: params.pageAccessToken,
-    userToken: params.userAccessToken,
-  });
+  try {
+    await writeSecrets(admin, integrationId, {
+      pageToken: params.pageAccessToken,
+      userToken: params.userAccessToken,
+    });
+  } catch (secretError) {
+    await admin
+      .from('facebook_integrations')
+      .update({
+        is_active: false,
+        metadata: {
+          ...params.metadata,
+          inactive_reason: 'token_persistence_failed',
+          inactive_at: new Date().toISOString(),
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', integrationId);
+    return {
+      integrationId: null,
+      error: secretError instanceof Error ? secretError.message : 'token persistence failed',
+    };
+  }
+
+  const activatedAt = new Date().toISOString();
+  const { error: activateError } = await admin
+    .from('facebook_integrations')
+    .update({
+      is_active: true,
+      connected_at: activatedAt,
+      updated_at: activatedAt,
+    })
+    .eq('id', integrationId);
+
+  if (activateError) {
+    return { integrationId: null, error: activateError.message };
+  }
+
   return { integrationId };
 }
 

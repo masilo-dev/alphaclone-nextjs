@@ -135,6 +135,23 @@ export async function GET(req: NextRequest) {
         resolvedTenantId = first?.tenant_id ?? null;
     }
 
+    // New-account bootstrap can briefly create the profile before tenant_users.
+    // Recover the tenant from the authenticated user's profile instead of saving
+    // an unscoped integration that the publishing layer can never resolve.
+    if (!resolvedTenantId) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', stateData.userId)
+            .maybeSingle();
+        resolvedTenantId = profile?.tenant_id ?? null;
+    }
+
+    if (!resolvedTenantId) {
+        console.error('[Facebook Callback] No tenant resolved for user:', stateData.userId);
+        return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'workspace_not_ready' });
+    }
+
     const pages = pagesData.data || [];
     const fbUserId = profileData?.id != null ? String(profileData.id) : null;
     if (!fbUserId) {
@@ -156,7 +173,9 @@ export async function GET(req: NextRequest) {
                 page.tasks.includes('CREATE_CONTENT')
             );
 
-            const fbResult = await upsertFacebookIntegration({
+            let fbResult: Awaited<ReturnType<typeof upsertFacebookIntegration>>;
+            try {
+                fbResult = await upsertFacebookIntegration({
                 userId: stateData.userId,
                 tenantId: resolvedTenantId,
                 pageId: String(page.id),
@@ -175,7 +194,12 @@ export async function GET(req: NextRequest) {
                     scope_mode: stateData.scopeMode || 'publishing',
                     requested_scopes: stateData.requestedScopes || [],
                 },
-            });
+                });
+            } catch (saveError) {
+                console.error('[Facebook Callback] Facebook integration secret/save failed:', saveError);
+                upsertFailures += 1;
+                continue;
+            }
             if (!fbResult.integrationId) {
                 console.error('[Facebook Callback] facebook_integrations upsert failed:', fbResult.error);
                 upsertFailures += 1;
