@@ -16,7 +16,7 @@ export type ClientFinancePortalData = {
     total: number;
     dueDate: string;
     issueDate: string;
-    payUrl: string;
+    payUrl: string | null;
   }>;
   quotes: Array<{
     id: string;
@@ -94,16 +94,14 @@ export async function getClientFinancePortalData(
     .select('id, invoice_number, status, total, due_date, issue_date, metadata, is_public')
     .eq('tenant_id', client.tenant_id)
     .eq('client_id', client.id)
-    .in('status', ['sent', 'viewed', 'partially_paid', 'overdue', 'draft'])
+    .in('status', ['sent', 'viewed', 'partially_paid', 'overdue'])
     .order('issue_date', { ascending: false })
     .limit(50);
 
   const invoiceRows = (invoices || []).map((inv) => {
     const metadata = (inv.metadata || {}) as Record<string, string>;
     const publicToken = metadata.public_token || '';
-    const payUrl = publicToken
-      ? buildPublicInvoiceUrl(inv.id, publicToken)
-      : AppUrls.payInvoice(inv.id);
+    const payUrl = publicToken ? buildPublicInvoiceUrl(inv.id, publicToken) : null;
     return {
       id: inv.id,
       invoiceNumber: inv.invoice_number,

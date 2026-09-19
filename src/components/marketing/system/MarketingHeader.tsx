@@ -82,7 +82,10 @@ function Logo() {
       <span className="mkt-brand-mark" aria-hidden="true">
         <Image src="/logo.png" alt="" width={28} height={28} priority className="h-7 w-7 object-contain" />
       </span>
-      <span className="mkt-brand-word">AlphaClone</span>
+      <span className="mkt-brand-copy">
+        <span className="mkt-brand-word">AlphaClone</span>
+        <span className="mkt-brand-tagline">Business execution layer</span>
+      </span>
     </Link>
   );
 }
@@ -99,6 +102,65 @@ function lucideIconMatch(name: string): boolean {
 
 function LanguageSwitcher({ mobile = false }: { mobile?: boolean }) {
   const { language, setLanguage, t } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selected = LANGUAGES.find((item) => item.code === language) ?? LANGUAGES[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  if (!mobile) {
+    return (
+      <div ref={rootRef} className="mkt-language-switcher">
+        <button
+          type="button"
+          className="mkt-language-trigger"
+          aria-label={t('Your language')}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <span className="mkt-language-globe" aria-hidden="true">◎</span>
+          <span>{selected.nativeName}</span>
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+        </button>
+        {open && (
+          <div className="mkt-language-menu" role="listbox" aria-label={t('Your language')}>
+            {LANGUAGES.map((item) => (
+              <button
+                key={item.code}
+                type="button"
+                role="option"
+                aria-selected={item.code === language}
+                className={`mkt-language-option${item.code === language ? ' is-selected' : ''}`}
+                onClick={() => {
+                  setLanguage(item.code as typeof language);
+                  setOpen(false);
+                }}
+              >
+                <span>{item.nativeName}</span>
+                <span className="mkt-language-code">{item.code.toUpperCase()}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <label className={mobile ? 'flex min-h-11 items-center justify-between rounded-xl border border-[var(--border-subtle)] px-3 text-sm text-[var(--text-secondary)]' : 'mkt-language-switcher'}>
       <span className={mobile ? 'font-medium' : 'sr-only'}>{t('Your language')}</span>

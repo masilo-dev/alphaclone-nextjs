@@ -949,7 +949,7 @@ export default function ClientPortalPage() {
                                     </div>
                                 </div>
                                 <div className="shrink-0 sm:text-right">
-                                    {i.status !== 'paid' ? (
+                                    {i.status !== 'paid' && i.payUrl ? (
                                         <a
                                             href={i.payUrl}
                                             className="inline-flex items-center gap-1.5 rounded-lg bg-[color:var(--brand-teal)] hover:opacity-90 px-4 py-2 text-xs md:text-sm font-semibold text-white"
@@ -957,6 +957,10 @@ export default function ClientPortalPage() {
                                             Pay invoice
                                             <ArrowUpRight className="h-3.5 w-3.5" />
                                         </a>
+                                    ) : i.status !== 'paid' ? (
+                                        <span className="inline-flex items-center rounded-lg border border-[color:var(--ws-border)] bg-[color:var(--ws-panel)] px-3.5 py-2 text-xs font-medium text-[color:var(--ws-text-secondary)]">
+                                            Payment link will appear when ready
+                                        </span>
                                     ) : (
                                         <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[color:var(--success)] px-3.5 py-2 text-xs font-semibold border border-[color-mix(in_srgb,var(--success)_24%,transparent)]">
                                             <CheckCircle2 className="h-3.5 w-3.5" /> Paid

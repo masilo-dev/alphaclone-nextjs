@@ -42,6 +42,24 @@ export async function sendTaskReminderDirect(
     }
   }
 
+  // Older/imported tasks can have neither owner field populated. Fall back to
+  // an actual member of this tenant instead of silently dropping the reminder.
+  if (!profile?.email) {
+    const { data: members } = await admin
+      .from('tenant_users')
+      .select('user_id')
+      .eq('tenant_id', task.tenant_id)
+      .limit(20);
+    const memberIds = (members || []).map((member) => member.user_id).filter(Boolean);
+    if (memberIds.length) {
+      const { data: memberProfiles } = await admin
+        .from('profiles')
+        .select('email, name')
+        .in('id', memberIds);
+      profile = (memberProfiles || []).find((candidate) => candidate.email) || null;
+    }
+  }
+
   if (!profile?.email) {
     console.warn(`[task-reminders] no email for task ${task.id}`);
     return;

@@ -109,7 +109,7 @@ export const outreachSendSchema = z.object({
     skipCrmGate: z.boolean().optional(),
     directSend: z.boolean().optional(),
     entityType: z.enum(['invoice', 'contract', 'document', 'lead', 'client', 'direct', 'contact']).optional(),
-    entityId: z.string().uuid().optional(),
+    entityId: z.string().uuid().optional().nullable(),
 });
 
 const tenantIdSchema = z.string().uuid('Invalid tenantId');

@@ -26,6 +26,7 @@ import {
     DollarSign,
     AlertCircle,
     Activity,
+    Search,
     Zap,
     LayoutList,
     Download,
@@ -347,11 +348,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     </div>
                     <p className="text-[var(--ws-text-muted)] text-sm ml-1 mt-2 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[var(--success-500)]"></span>
-                        {projects.length} active projects
+                        {projects.filter((project) => !isFinishedProject(project)).length} active · {projects.filter((project) => isFinishedProject(project)).length} finished
                     </p>
                 </div>
 
-                <div className="flex items-center gap-4 w-full lg:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full lg:w-auto">
+                    <label className="relative flex-1 lg:w-56">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+                        <input
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.target.value)}
+                            placeholder="Search projects…"
+                            aria-label="Search projects"
+                            className="h-8 w-full rounded-full border border-white/10 bg-slate-900 pl-9 pr-3 text-xs text-white placeholder:text-slate-600 outline-none focus:border-[var(--brand-blue-500)]"
+                        />
+                    </label>
                     <div className="flex p-1 bg-slate-900 shadow-inner rounded-full border border-white/5">
                         <button
                             onClick={() => setViewMode('list')}

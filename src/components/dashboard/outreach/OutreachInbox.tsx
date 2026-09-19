@@ -521,8 +521,11 @@ export function OutreachInbox() {
             confidenceScore: 100,
             directSend: true,
             skipCrmGate: true,
-            entityType: contactMatches?.leadId ? 'lead' : contactMatches?.contactId ? 'contact' : 'client',
-            entityId: contactMatches?.leadId || contactMatches?.contactId || null,
+            ...(contactMatches?.leadId
+              ? { entityType: 'lead' as const, entityId: contactMatches.leadId }
+              : contactMatches?.contactId
+                ? { entityType: 'contact' as const, entityId: contactMatches.contactId }
+                : {}),
             deliveryProviders: resolved !== 'auto' ? [resolved] : undefined,
             preferredProvider: resolved !== 'auto' ? resolved : undefined,
             balanceByDailyLimit: false,

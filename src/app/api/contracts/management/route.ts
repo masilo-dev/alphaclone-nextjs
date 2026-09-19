@@ -394,6 +394,7 @@ export async function sendContract(
     const {
       contractId,
       recipients,
+      providerCopyEmail,
       subject,
       message,
       format = "pdf",
@@ -750,6 +751,24 @@ export async function sendContract(
       };
     }
 
+    const normalizedProviderCopy = String(providerCopyEmail || '').trim().toLowerCase();
+    let providerCopySent = false;
+    if (normalizedProviderCopy.includes('@') && normalizedProviderCopy !== recipientEmail) {
+      const copyResult = await sendEmailServer({
+        to: normalizedProviderCopy,
+        subject: `Copy: ${subject || `Contract: ${contract.title}`}`,
+        text: `A contract was sent to ${recipientEmail}: ${contract.title}. The client received the secure signing link separately.`,
+        html: `<p>A contract was sent to <strong>${recipientEmail}</strong>: <strong>${contract.title}</strong>.</p><p>The client received the secure signing link separately.</p>`,
+        tenantId,
+        userId: actorUserId || undefined,
+        fromName: tenantName,
+        preferredProvider: (provider as any) || undefined,
+        skipFooter: true,
+      } as any);
+      providerCopySent = copyResult.success;
+      if (!copyResult.success) console.warn('[sendContract] provider copy failed:', copyResult.error);
+    }
+
     const sentAt = new Date().toISOString();
     const providerReceipt = emailResult.emailId || `contract-send:${contractId}:${Date.now()}`;
     const fromLifecycle = String(contract.lifecycle_status || contract.status || "draft");
@@ -795,6 +814,7 @@ export async function sendContract(
       sent_at: sentAt,
       message: "Contract sent successfully",
       signingUrl,
+      providerCopySent,
       runId,
     };
   } catch (error: any) {

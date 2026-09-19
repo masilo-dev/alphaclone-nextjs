@@ -82,7 +82,7 @@ function KanbanCard({
       <div className="flex flex-col gap-2 shrink-0 pt-0.5">
         <button
           type="button"
-          className="p-1 rounded-md text-slate-400 hover:text-[var(--brand-blue-400)] hover:bg-slate-800 cursor-grab active:cursor-grabbing"
+          className="min-h-11 min-w-11 rounded-md text-slate-400 hover:text-[var(--brand-blue-400)] hover:bg-slate-800 cursor-grab active:cursor-grabbing flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)]"
           aria-label="Drag to move lead"
           {...listeners}
           {...attributes}
@@ -96,7 +96,7 @@ function KanbanCard({
               e.stopPropagation();
               onToggleSelect?.(lead.id);
             }}
-            className={`p-1 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-slate-700 hover:border-[var(--brand-blue-500)]'}`}
+            className={`min-h-11 min-w-11 rounded border flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)] ${isSelected ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-slate-700 hover:border-[var(--brand-blue-500)]'}`}
           >
             {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
           </button>
@@ -310,7 +310,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     <span className="text-xs text-slate-400">Trust Score: <span className="text-[var(--brand-blue-400)] font-bold">{lead.trustScore || 'N/A'}</span></span>
                   </div>
                 </div>
-                <button onClick={onClose} className="p-2 rounded-full bg-white/5 text-slate-400 hover:text-white">
+                <button onClick={onClose} className="min-h-11 min-w-11 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)]" aria-label="Close lead details">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -333,7 +333,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                       <button
                         key={stage.id}
                         onClick={() => onStageSelect(lead.id, stage.id)}
-                        className="flex flex-col items-center gap-1.5 focus:outline-none relative group"
+                        className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-blue-400)] relative group rounded-lg"
                         title={`Move to ${stage.title}`}
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
@@ -895,4 +895,3 @@ export default function KanbanBoard() {
     </div>
   );
 }
-

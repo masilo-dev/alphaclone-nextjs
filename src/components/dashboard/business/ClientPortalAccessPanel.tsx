@@ -18,6 +18,7 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [portalUrl, setPortalUrl] = useState('');
+  const [portalLoginUrl, setPortalLoginUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -49,6 +50,7 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
       if (!response.ok) throw new Error(payload.error || 'Portal access could not be created.');
 
       setPortalUrl(String(payload.portalUrl || ''));
+      setPortalLoginUrl(String(payload.portalLoginUrl || payload.portalUrl || ''));
       toast.success('Client portal access is ready.');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Portal access could not be created.');
@@ -59,7 +61,7 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
 
   const copyHandoff = async () => {
     if (!portalUrl) return;
-    const message = `Your AlphaClone client workspace is ready.\n\nSign in: ${portalUrl}\nEmail: ${email.trim()}\nPassword: ${password}\n\nPlease change your password after signing in.`;
+    const message = `Your AlphaClone client workspace is ready.\n\nClient login: ${portalLoginUrl || portalUrl}\nEmail / username: ${email.trim()}\nPassword: ${password}\n\nPlease change your password after signing in.`;
     try {
       await navigator.clipboard.writeText(message);
       setCopied(true);
@@ -122,8 +124,8 @@ export default function ClientPortalAccessPanel({ client, tenantId, onClose, onC
             <div className="space-y-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-4">
               <div className="flex items-center gap-2 text-sm font-bold text-emerald-300"><Check className="h-4 w-4" aria-hidden="true" /> Access is ready</div>
               <div className="rounded-xl border border-slate-700 bg-slate-950 p-3 text-xs text-slate-300">
-                <p><span className="text-slate-500">Sign in:</span> <a href={portalUrl} target="_blank" rel="noreferrer" className="break-all text-cyan-300 underline underline-offset-2">{portalUrl}</a></p>
-                <p className="mt-1"><span className="text-slate-500">Email:</span> {email.trim()}</p>
+                <p><span className="text-slate-500">Client login:</span> <a href={portalLoginUrl || portalUrl} target="_blank" rel="noreferrer" className="break-all text-cyan-300 underline underline-offset-2">{portalLoginUrl || portalUrl}</a></p>
+                <p className="mt-1"><span className="text-slate-500">Email / username:</span> {email.trim()}</p>
                 <p className="mt-1"><span className="text-slate-500">Password:</span> {showPassword ? password : '••••••••••'}</p>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row">

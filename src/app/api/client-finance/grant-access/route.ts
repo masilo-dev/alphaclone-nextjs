@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
       success: true,
       clientId,
       portalUrl: url,
+      portalLoginUrl: `${new URL(url).origin}/portal-login?next=${encodeURIComponent(new URL(url).pathname)}`,
       passwordUpdated: true,
       saltRotated: true,
     });

@@ -387,7 +387,9 @@ export async function POST(req: NextRequest) {
       await publishSocialPost(post.id);
       const { data: published, error: readError } = await supabase.from('social_posts').select('*').eq('id', post.id).eq('tenant_id', tenantId).single();
       if (readError) throw new Error(readError.message);
-      const success = published.status === 'published' && (!platforms.includes('facebook') || Boolean(published.facebook_post_id && published.live_url));
+      const facebookVerified = !platforms.includes('facebook') || Boolean(published.facebook_post_id && published.live_url);
+      const linkedinVerified = !platforms.includes('linkedin') || Boolean(published.linkedin_post_urn);
+      const success = published.status === 'published' && facebookVerified && linkedinVerified;
       return NextResponse.json({ success, post: published, error: success ? undefined : published.error_message || 'Publishing could not be verified' }, { status: success ? 200 : 422 });
     }
 
@@ -484,12 +486,15 @@ export async function PATCH(req: NextRequest) {
     await publishSocialPost(body.postId);
     const { data: published, error: readError } = await supabase
       .from('social_posts')
-      .select('status, facebook_post_id, live_url, error_message')
+      .select('status, platforms, facebook_post_id, linkedin_post_urn, live_url, error_message')
       .eq('id', body.postId)
       .eq('tenant_id', body.tenantId)
       .single();
     if (readError) return clientErrorResponse(readError, { request: req, scope: 'social/schedule.PATCH' });
-    const success = published.status === 'published' && Boolean(published.facebook_post_id && published.live_url);
+    const platforms = Array.isArray(published.platforms) ? published.platforms : [];
+    const facebookVerified = !platforms.includes('facebook') || Boolean(published.facebook_post_id && published.live_url);
+    const linkedinVerified = !platforms.includes('linkedin') || Boolean(published.linkedin_post_urn);
+    const success = published.status === 'published' && facebookVerified && linkedinVerified;
     return NextResponse.json(
       { success, post: published, error: success ? undefined : published.error_message || 'Publishing could not be verified' },
       { status: success ? 200 : 422 }

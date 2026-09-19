@@ -204,16 +204,18 @@ export default function PublicContractPage() {
                                 className="text-xs text-slate-400 overflow-y-auto max-h-48 mb-4 esign-disclosure-content"
                                 dangerouslySetInnerHTML={{ __html: esignatureComplianceService.ESIGN_DISCLOSURE }}
                             />
-                            <div className="flex items-start gap-3 p-4 bg-teal-500/5 border border-teal-500/20 rounded-lg cursor-pointer hover:bg-teal-500/10 transition-colors"
-                                 onClick={() => setConsentAccepted(!consentAccepted)}>
-                                <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors ${consentAccepted ? 'bg-teal-500 border-teal-500' : 'border-slate-500 bg-transparent'}`}>
-                                    {consentAccepted && <CheckCircle className="w-3.5 h-3.5 text-slate-950" />}
-                                </div>
+                            <label className="flex items-start gap-3 p-4 bg-teal-500/5 border border-teal-500/20 rounded-lg cursor-pointer hover:bg-teal-500/10 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={consentAccepted}
+                                    onChange={(event) => setConsentAccepted(event.target.checked)}
+                                    className="mt-1 h-5 w-5 shrink-0 accent-teal-500 focus-visible:ring-2 focus-visible:ring-teal-400"
+                                />
                                 <div>
                                     <p className="text-sm font-semibold text-white">I agree to the Electronic Signature Disclosure</p>
                                     <p className="text-xs text-slate-400 mt-1">I consent to use electronic signatures for this transaction and agree to be legally bound by the terms of this document.</p>
                                 </div>
-                            </div>
+                            </label>
                         </div>
 
                         <label className="block text-sm font-bold text-white mb-4 uppercase tracking-wider">Sign Below to Accept</label>

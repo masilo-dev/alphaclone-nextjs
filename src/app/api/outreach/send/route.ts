@@ -150,7 +150,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = outreachSendSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.entries(fieldErrors)
+        .flatMap(([field, messages]) => (messages || []).map((message) => `${field}: ${message}`))[0];
+      return NextResponse.json({ error: firstError || 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
     }
     const {
       tenantId,

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square, PenTool } from 'lucide-react';
+import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square, PenTool, Upload } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -376,7 +376,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [sendingContract, setSendingContract] = useState(false);
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
     const [aiSendInstructions, setAiSendInstructions] = useState('');
-    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '', provider: 'auto' as string, jurisdiction: '', governingLaw: '' });
+    const [sendForm, setSendForm] = useState({ recipientEmail: '', providerCopyEmail: user.email || '', subject: '', message: '', provider: 'auto' as string, jurisdiction: '', governingLaw: '' });
     const [resendForSignature, setResendForSignature] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedHtml, setEditedHtml] = useState('');
@@ -386,6 +386,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         pendingApprovals: 0,
         versionCount: 0,
     });
+    const [importingContract, setImportingContract] = useState(false);
+    const contractFileInputRef = useRef<HTMLInputElement>(null);
 
     const today = format(new Date(), 'MMMM d, yyyy');
     const ninetyDays = format(new Date(Date.now() + 90 * 86400000), 'MMMM d, yyyy');
@@ -530,6 +532,60 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
     const set = (field: keyof ContractForm, val: string) =>
         setForm(prev => ({ ...prev, [field]: val }));
+
+    const importExistingContract = async (file: File) => {
+        if (!currentTenant?.id) {
+            toast.error('Select a workspace before importing a contract.');
+            return;
+        }
+        setImportingContract(true);
+        const toastId = toast.loading('Uploading contract…');
+        try {
+            const uploaded = await fileUploadService.uploadFile(
+                file,
+                'contract',
+                undefined,
+                user.id,
+                currentTenant.id,
+                { category: 'contract', tags: ['contract', 'imported'] },
+            );
+            if (!uploaded.success) throw new Error(uploaded.error || 'The contract file could not be uploaded.');
+
+            const title = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ').trim() || 'Imported contract';
+            const fileUrl = uploaded.proxiedUrl || uploaded.url || '';
+            const { contract, error } = await contractService.createContract({
+                title,
+                content: `Imported contract file: ${file.name}\n\nReview the uploaded document before sending or requesting signatures.`,
+                status: 'draft',
+                metadata: {
+                    source: 'uploaded_file',
+                    original_filename: file.name,
+                    mime_type: file.type,
+                    file_size: file.size,
+                    file_id: uploaded.fileId,
+                    file_url: fileUrl,
+                    imported_at: new Date().toISOString(),
+                },
+            });
+            if (error || !contract) throw new Error(error?.message || 'The uploaded file was not added to Contracts.');
+
+            if (uploaded.fileId) {
+                await supabase
+                    .from('file_uploads')
+                    .update({ entity_type: 'contract', entity_id: contract.id })
+                    .eq('id', uploaded.fileId)
+                    .eq('tenant_id', currentTenant.id);
+            }
+            setSavedContracts((prev) => [contract, ...prev]);
+            setActiveView('list');
+            toast.success('Existing contract imported as a draft.', { id: toastId });
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Contract import failed.', { id: toastId });
+        } finally {
+            setImportingContract(false);
+            if (contractFileInputRef.current) contractFileInputRef.current.value = '';
+        }
+    };
 
     const generateContract = async () => {
         if (!form.clientName.trim()) { toast.error('Client name is required'); return; }
@@ -747,6 +803,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         setResendForSignature(isResend);
         setSendForm({
             recipientEmail: targetEmail,
+            providerCopyEmail: user.email || '',
             subject: isResend
                 ? `Action required: Sign contract — ${contractTitle} (your process is on hold)`
                 : `Contract: ${contractTitle}`,
@@ -825,6 +882,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     config: {
                         contractId,
                         recipients: [sendForm.recipientEmail.trim()],
+                        providerCopyEmail: sendForm.providerCopyEmail.trim() || undefined,
                         subject: sendForm.subject,
                         message: sendForm.message,
                         format: 'pdf',
@@ -1010,8 +1068,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5 sm:mb-6">
                 <div className="min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-bold text-white">Contract Generator</h1>
-                    <p className="text-slate-400 text-xs sm:text-sm mt-1 leading-relaxed">AI-assisted contracts tailored to your client and scope.</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-white">Contracts & Agreements</h1>
+                    <p className="text-slate-400 text-xs sm:text-sm mt-1 leading-relaxed">Create, import, review, approve, and send agreements from one workspace.</p>
                 </div>
                 <div className="flex gap-2 shrink-0 w-full sm:w-auto flex-wrap">
                     <button
@@ -1020,6 +1078,24 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'new' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
                     >
                         New Contract
+                    </button>
+                    <input
+                        ref={contractFileInputRef}
+                        type="file"
+                        accept="application/pdf,.pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        className="hidden"
+                        onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) void importExistingContract(file);
+                        }}
+                    />
+                    <button
+                        type="button"
+                        disabled={importingContract}
+                        onClick={() => contractFileInputRef.current?.click()}
+                        className="flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold bg-slate-800 text-slate-200 border border-white/10 hover:bg-slate-700 disabled:opacity-50"
+                    >
+                        <span className="inline-flex items-center gap-1.5"><Upload className="w-3 h-3" />{importingContract ? 'Importing…' : 'Import file'}</span>
                     </button>
                     <button
                         type="button"
@@ -1273,6 +1349,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
                                     onClick: () => handleDeleteSingleDraft(c.id),
                                     destructive: true,
+                                }]
+                                : []),
+                            ...(c.metadata?.file_url
+                                ? [{
+                                    label: 'Open uploaded file',
+                                    icon: <Upload className="w-4 h-4" aria-hidden="true" />,
+                                    onClick: () => window.open(String(c.metadata.file_url), '_blank', 'noopener,noreferrer'),
                                 }]
                                 : []),
                         ];
@@ -1826,8 +1909,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             </div>
 
                             {/* Contract Document */}
-                            <div className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden min-h-[600px]">
-                                <div className="p-8 md:p-12 font-serif leading-relaxed" style={{ fontFamily: "'Times New Roman', Georgia, serif" }}>
+                            <div className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden min-h-[420px] sm:min-h-[600px]">
+                                <div className="p-4 sm:p-8 md:p-12 font-serif leading-relaxed" style={{ fontFamily: "'Times New Roman', Georgia, serif" }}>
                                     {isEditing ? (
                                         <div className="quill-contract-editor">
                                             <style>{`
@@ -2142,6 +2225,17 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     value={sendForm.subject}
                                     onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Service provider copy (optional)</label>
+                                <input
+                                    type="email"
+                                    className={inputCls}
+                                    value={sendForm.providerCopyEmail}
+                                    onChange={(e) => setSendForm(prev => ({ ...prev, providerCopyEmail: e.target.value }))}
+                                    placeholder="your-email@company.com"
+                                />
+                                <p className="text-[11px] text-slate-500 mt-1.5">The client receives the signing link. This address receives a delivery copy without signer access.</p>
                             </div>
                             {sendNeedsGoverningLaw && (
                                 <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3" data-testid="send-governing-law">

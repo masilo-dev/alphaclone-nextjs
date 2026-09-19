@@ -44,9 +44,9 @@ function Status({ tone, children }: { tone: "done" | "active" | "queued" | "appr
 export default function MarketingHomePage() {
   const { language } = useLanguage();
   const copy = {
-    en: { now: 'Now let it', execute: 'execute.', connect: 'connects ChatGPT, Claude, and other AI assistants to', apps: 'the applications that run your business', so: '—so AI can send, post, update, create, follow up, and', real: 'execute real work' },
-    es: { now: 'Ahora deja que lo', execute: 'ejecute.', connect: 'conecta ChatGPT, Claude y otros asistentes de IA con', apps: 'las aplicaciones que hacen funcionar tu negocio', so: '—para enviar, publicar, actualizar, crear y hacer seguimiento', real: 'trabajo real' },
-    pl: { now: 'Teraz pozwól mu', execute: 'działać.', connect: 'łączy ChatGPT, Claude i inne asystenty AI z', apps: 'aplikacjami, które prowadzą Twój biznes', so: '—aby wysyłać, publikować, aktualizować, tworzyć i monitorować', real: 'prawdziwą pracę' },
+    en: { now: 'Now let it', execute: 'execute.', connect: 'connects ChatGPT, Claude, and other AI assistants to', apps: 'the applications that run your business', so: '—so AI can send, post, update, create, follow up, and', real: 'execute real work', proof: ['Review before external actions', 'Activity and outcome records', 'Works with your existing tools'] },
+    es: { now: 'Ahora deja que lo', execute: 'ejecute.', connect: 'conecta ChatGPT, Claude y otros asistentes de IA con', apps: 'las aplicaciones que hacen funcionar tu negocio', so: '—para enviar, publicar, actualizar, crear y hacer seguimiento', real: 'trabajo real', proof: ['Revisa antes de cualquier acción externa', 'Registro de actividad y resultados', 'Funciona con tus herramientas actuales'] },
+    pl: { now: 'Teraz pozwól mu', execute: 'działać.', connect: 'łączy ChatGPT, Claude i inne asystenty AI z', apps: 'aplikacjami, które prowadzą Twój biznes', so: '—aby wysyłać, publikować, aktualizować, tworzyć i monitorować', real: 'prawdziwą pracę', proof: ['Sprawdź przed działaniem zewnętrznym', 'Rejestr aktywności i wyników', 'Działa z obecnymi narzędziami'] },
   }[language];
   return <MarketingShell>
     {/* Product-led hero: concrete execution, not abstract AI promises. */}
@@ -79,6 +79,9 @@ export default function MarketingHomePage() {
             <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large">
               {EXECUTION_LAYER.secondaryCta}
             </SecondaryCTA>
+          </div>
+          <div className="mx-auto mt-5 flex max-w-2xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-300 sm:text-xs">
+            {copy.proof.map((item) => <span key={item} className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-300" /> {item}</span>)}
           </div>
           <p className="mx-auto mt-4 max-w-2xl text-xs font-semibold tracking-wide text-slate-400">
             CRM · Email · LinkedIn · Facebook · Projects · Contracts · Invoicing · Accounting
@@ -139,7 +142,7 @@ export default function MarketingHomePage() {
                     <p className="text-[10px] text-slate-400">{String(detail)}</p>
                   </div>
                 </div>
-                {i<5&&<span className="rounded-full border border-rose-400/20 bg-rose-400/10 px-2 py-0.5 text-[9px] font-bold text-rose-300/90">disconnected</span>}
+                {i<5&&<span className="rounded-full border border-rose-400/20 bg-rose-400/10 px-2 py-0.5 text-[9px] font-bold text-rose-300/90">manual handoff</span>}
               </div>
             ))}
           </div>
@@ -305,13 +308,27 @@ export default function MarketingHomePage() {
     {/* Business Integrations Section */}
     <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
       <Intro title="Business integrations, grouped by the work they do." body="Recognizable tools stay visible. AlphaClone connects their context and execution instead of hiding everything behind generic platform labels."/>
+      <div className="mt-6 grid gap-2 sm:grid-cols-4" aria-label="How integrations work">
+        {[["01", "Connect", "Choose the account"], ["02", "Authorize", "Set the permissions"], ["03", "Approve", "Review external actions"], ["04", "Verify", "Keep the outcome record"]].map(([step, title, detail]) => (
+          <div key={step} className="flex items-center gap-3 rounded-xl border border-cyan-400/15 bg-cyan-400/[.04] px-3 py-3 sm:block sm:px-4">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-[10px] font-black text-cyan-200 sm:mb-2">{step}</span>
+            <div><p className="text-xs font-bold text-white">{title}</p><p className="mt-0.5 text-[10px] leading-4 text-slate-400">{detail}</p></div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-semibold text-slate-400">
+        <span className="uppercase tracking-[.16em] text-slate-500">Connection status</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Available to connect</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Beta or limited capability</span>
+        <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-slate-500" /> Coming soon</span>
+      </div>
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {integrationGroups.map(g=>(
           <section key={g.title} className="rounded-2xl border border-white/10 bg-[#020815]/90 p-5 transition-all duration-300 hover:border-white/20">
             <h3 className="mb-4 text-[11px] font-black uppercase tracking-[.2em] text-cyan-300">{g.title}</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
               {g.items.map(item=>(
-                <article key={item.name} className="group relative flex flex-col justify-between rounded-xl border border-white/[.09] bg-[#030c1b] p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/50 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-cyan-950/40">
+                <article key={item.name} className="group relative flex min-h-[172px] flex-col justify-between rounded-xl border border-white/[.09] bg-[#030c1b] p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/50 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-cyan-950/40">
                   <div>
                     <div className="flex items-center justify-between gap-2">
                       <item.icon className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6" style={{color:item.color}}/>

@@ -318,7 +318,7 @@ export function BonnieDrawer() {
           </div>
         )}
 
-        <footer className="p-4 border-t border-[var(--ws-border)] flex flex-wrap gap-2">
+        <footer className="flex flex-wrap gap-2 border-t border-[var(--ws-border)] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {step === "confirm" ? (
             <button
               type="button"

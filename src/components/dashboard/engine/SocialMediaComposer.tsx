@@ -807,12 +807,12 @@ Return only the comment text.`;
     return (
         <div className="space-y-6 pb-24 ac-safe-bottom">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <h2 className="text-xl font-bold text-white">Social Media Composer</h2>
                     <p className="text-sm text-slate-400">Create, schedule and publish posts with images & video</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex w-full gap-2 sm:w-auto">
                     <button 
                         onClick={async () => {
                             toast.loading('Nexus: Auditing content design...', { id: 'nexus-social' });
@@ -824,19 +824,19 @@ Return only the comment text.`;
                             const data = await res.json();
                             toast.success(data.result.message, { id: 'nexus-social' });
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-xl text-xs font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5"
+                        className="flex min-h-10 flex-1 items-center justify-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-violet-400 rounded-xl text-xs font-bold border border-white/5 transition-all shadow-lg shadow-violet-900/5 sm:flex-none"
                     >
                         <Sparkles className="w-4 h-4" />
                         Nexus Audit
                     </button>
-                    <button onClick={loadData} className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white">
+                    <button onClick={loadData} className="flex min-h-10 flex-1 items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white sm:flex-none">
                         <RefreshCw className="w-3 h-3" /> Refresh
                     </button>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-slate-800/60 border border-slate-700 rounded-xl w-fit">
+            <div className="flex max-w-full gap-1 overflow-x-auto p-1 bg-slate-800/60 border border-slate-700 rounded-xl w-fit scrollbar-none">
                 {(['compose', 'posts', 'media'] as const).map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab)}
                         className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition-all ${activeTab === tab ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}>
