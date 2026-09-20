@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { absoluteUrl } from '@/lib/siteUrl';
 
-export async function GET(req: NextRequest) {
-  const origin = req.nextUrl.origin;
-  return NextResponse.redirect(new URL('/auth/login?register=true&type=business&plan=starter', origin));
+export async function GET(_req: NextRequest) {
+  // Do not derive the public origin from Railway's internal request host.
+  // That previously exposed a 307 Location header pointing at 0.0.0.0:8080.
+  return NextResponse.redirect(
+    absoluteUrl('/auth/login?register=true&type=business&plan=starter'),
+    308,
+  );
 }
 
 export async function POST() {
