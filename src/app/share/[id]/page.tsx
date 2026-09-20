@@ -17,7 +17,7 @@ export default async function PublicSharePage({
 
     if (!share) {
         return (
-            <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100 font-sans">
+            <div className="min-h-[100dvh] bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100 font-sans">
                 <div className="max-w-md w-full bg-slate-900/60 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl shadow-2xl text-center space-y-6">
                     <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/30 rounded-full flex items-center justify-center mx-auto text-rose-400">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -50,7 +50,7 @@ export default async function PublicSharePage({
     const isPdf = share.original_name?.toLowerCase().endsWith('.pdf') || true;
 
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col p-4 sm:p-6 text-slate-100 font-sans">
+        <div className="min-h-[100dvh] bg-slate-950 flex flex-col p-4 sm:p-6 text-slate-100 font-sans">
             {/* Header */}
             <div className="max-w-6xl w-full mx-auto flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
@@ -106,7 +106,7 @@ export default async function PublicSharePage({
                             src={`/api/public/shares/${share.id}/download`}
                             className="w-full flex-1 rounded-2xl border border-slate-800 bg-slate-900 shadow-inner"
                             title="Shared Document Viewer"
-                            style={{ height: 'calc(100vh - 280px)', minHeight: '550px' }}
+                            style={{ height: 'calc(100dvh - 280px)', minHeight: '550px' }}
                         />
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-center p-8">

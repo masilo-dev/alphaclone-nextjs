@@ -87,7 +87,7 @@ export default function PwaInstallPrompt() {
   };
 
   return (
-    <div className="fixed bottom-20 left-3 right-3 z-[130] pointer-events-none md:bottom-6 md:left-auto md:right-6 md:max-w-md">
+    <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] left-3 right-3 z-[130] pointer-events-none md:bottom-6 md:left-auto md:right-6 md:max-w-md">
       <div className="ac-v3-floating pointer-events-auto p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <div className="ac-v3-intelligence flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px]">
@@ -98,7 +98,9 @@ export default function PwaInstallPrompt() {
             <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
               {canNativeInstall
                 ? t('Access your business from anywhere. AlphaClone opens like an app with the mobile Companion experience.')
-                : t('Add AlphaClone to your phone or computer from your browser menu for a focused app experience.')}
+                : ('standalone' in window.navigator
+                    ? t('On iPhone or iPad, open Share and choose Add to Home Screen to install AlphaClone.')
+                    : t('Add AlphaClone to your phone or computer from your browser menu for a focused app experience.'))}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {canNativeInstall ? (

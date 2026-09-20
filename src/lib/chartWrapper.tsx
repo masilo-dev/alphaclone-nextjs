@@ -27,7 +27,7 @@ interface WrapChartProps {
  */
 export function WrapChart({ children, height = 300, className }: WrapChartProps) {
   return (
-    <ChartContainer className={className || `h-[${height}px]`} minHeight={height}>
+    <ChartContainer className={className || 'w-full'} minHeight={height}>
       <ResponsiveContainer width="100%" height={height} minWidth={0} minHeight={height}>
         {children}
       </ResponsiveContainer>

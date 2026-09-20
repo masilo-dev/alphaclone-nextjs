@@ -35,8 +35,10 @@ export const pwaService = {
             return false;
         }
 
-        // Check if beforeinstallprompt event is supported
-        return 'serviceWorker' in navigator;
+        // Chromium exposes an actual install prompt through beforeinstallprompt.
+        // Service-worker support alone does not mean a native install prompt exists
+        // (notably on Safari/iOS, where installation is performed from the Share menu).
+        return Boolean((window as any).deferredPrompt);
     },
 
     /**
@@ -148,8 +150,8 @@ export const pwaService = {
         }
 
         new Notification(title, {
-            icon: '/logo-192.png',
-            badge: '/logo-192.png',
+            icon: '/favicon-192x192.png',
+            badge: '/favicon-192x192.png',
             ...options,
         });
     },
@@ -177,6 +179,13 @@ export const pwaService = {
         const capturedPrompt = (window as any).deferredPrompt;
         if (capturedPrompt) {
             return { prompt: capturedPrompt, error: null };
+        }
+
+        // Safari/iOS does not expose Chromium's beforeinstallprompt. Return
+        // immediately so the UI can show browser-menu / Add to Home Screen guidance
+        // instead of waiting on an event that will never fire.
+        if ('standalone' in window.navigator) {
+            return { prompt: null, error: 'Use Share → Add to Home Screen to install AlphaClone.' };
         }
 
         // Listen for the next beforeinstallprompt event when none was captured.
