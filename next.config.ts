@@ -98,6 +98,14 @@ const nextConfig: NextConfig = {
     // legal documents. Sources are exact paths, so sub-routes such as
     // /legal/dpa/download and /legal/data-request keep working.
     return [
+      // Retire public URLs that previously appeared in the XML sitemap. Keep
+      // these as permanent, one-hop redirects so old Google records and
+      // external links consolidate onto the current canonical pages.
+      { source: '/portfolio', destination: '/results', permanent: true },
+      { source: '/compare', destination: '/pricing', permanent: true },
+      { source: '/login', destination: '/auth/login', permanent: true },
+      { source: '/marketing', destination: '/services', permanent: true },
+      { source: '/solutions', destination: '/who-we-serve', permanent: true },
       { source: '/legal/privacy', destination: '/privacy-policy', permanent: true },
       { source: '/legal/terms', destination: '/terms-of-service', permanent: true },
       { source: '/legal/cookies', destination: '/cookie-policy', permanent: true },
@@ -264,7 +272,10 @@ const nextConfig: NextConfig = {
           ...securityHeaders,
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0',
+            value: 'no-cache, no-store, must-revalidate, max-age=0'
+            // Cloudflare's email obfuscator otherwise injects crawlable
+            // /cdn-cgi/l/email-protection links that return 404 to bots.
+            value: 'no-cache, no-store, no-transform, must-revalidate, max-age=0',
           },
         ],
       },
@@ -274,7 +285,7 @@ const nextConfig: NextConfig = {
           ...securityHeaders,
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0',
+            value: 'no-cache, no-store, no-transform, must-revalidate, max-age=0',
           },
         ],
       },
