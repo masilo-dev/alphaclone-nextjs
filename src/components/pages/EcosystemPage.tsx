@@ -1,13 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare, Search, SlidersHorizontal } from 'lucide-react';
 import AnimateIn from '../common/AnimateIn';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { PUBLIC_INTEGRATIONS } from '@/config/integrations';
 
 const EcosystemPage: React.FC = () => {
+    const [query, setQuery] = useState('');
+    const [category, setCategory] = useState('all');
     const advantages = [
         {
             name: 'Lightning-Fast Delivery',
@@ -60,11 +62,33 @@ const EcosystemPage: React.FC = () => {
         },
     ];
 
-    const integrations = PUBLIC_INTEGRATIONS.map((item) => ({
-        name: item.name,
-        desc: item.description,
-        status: item.statusLabel,
-    }));
+    const categoryLabels: Record<string, string> = {
+        communication: 'Communication',
+        crm: 'CRM & Sales',
+        payments: 'Payments',
+        scheduling: 'Scheduling',
+        social: 'Social',
+        ai: 'AI providers',
+        productivity: 'Productivity',
+        platform: 'Platform',
+    };
+    const capabilityByCategory: Record<string, string> = {
+        communication: 'Bring business messages and reply context into the workspace where supported.',
+        crm: 'Connect customer, contact, deal, and activity context where supported.',
+        payments: 'Connect payment and billing context to the business record.',
+        scheduling: 'Connect booking, availability, and calendar context.',
+        social: 'Connect publishing, page, and lead-capture workflows where available.',
+        ai: 'Provide planning, reasoning, or model routing for Bonnie and approved workflows.',
+        productivity: 'Connect mail, calendar, and task context to the workspace.',
+        platform: 'Support the workspace data, authentication, or real-time foundation.',
+    };
+    const categories = Array.from(new Set(PUBLIC_INTEGRATIONS.map((item) => item.category)));
+    const integrations = useMemo(() => PUBLIC_INTEGRATIONS.filter((item) => {
+        const matchesCategory = category === 'all' || item.category === category;
+        const search = query.trim().toLowerCase();
+        const matchesQuery = !search || `${item.name} ${item.description} ${categoryLabels[item.category]}`.toLowerCase().includes(search);
+        return matchesCategory && matchesQuery;
+    }), [category, query]);
 
     return (
         <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
@@ -198,31 +222,52 @@ const EcosystemPage: React.FC = () => {
                 <section className="mb-24">
                     <AnimateIn type="fadeUp">
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-marketing-heading mb-4 text-center">
-                            Core <span className="text-teal-400">Integrations</span>
+                            Connect the tools that <span className="text-teal-400">run the work</span>
                         </h2>
                         <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
-                            Built-in integrations and AI provider connections, managed from one workspace.
+                            Browse by system or search by the outcome you need. Every status is explicit so a directory listing never feels like a promise of unsupported automation.
                         </p>
                     </AnimateIn>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto min-w-0 px-1">
-                        {integrations.map((integration, idx) => (
-                            <AnimateIn key={idx} type="stagger" index={idx}>
-                                <div className="bg-slate-900/50 backdrop-blur-sm p-5 rounded-xl border border-slate-800 hover:border-teal-500/50 transition-all text-center group">
-                                    <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl mx-auto mb-4 flex items-center justify-center group-hover:from-slate-700 group-hover:to-slate-800 transition-all">
-                                        <span className="text-lg font-black text-teal-400">{integration.name.slice(0, 2)}</span>
-                                    </div>
-                                    <p className="text-base font-bold text-white mb-1">{integration.name}</p>
-                                    <p className="text-xs text-slate-500">{integration.desc}</p>
-                                    <span className={`mt-3 inline-flex rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
-                                        integration.status === 'Coming soon'
-                                            ? 'border border-amber-500/20 bg-amber-500/10 text-amber-200'
-                                            : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-200'
-                                    }`}>
-                                        {integration.status}
-                                    </span>
-                                </div>
-                            </AnimateIn>
-                        ))}
+                    <div className="mx-auto max-w-6xl rounded-2xl border border-slate-800 bg-slate-950/40 p-4 sm:p-6">
+                        <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
+                            <label className="relative block">
+                                <span className="sr-only">Search integrations</span>
+                                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
+                                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools or capabilities" className="h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-white outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20" />
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <SlidersHorizontal className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                                <label className="sr-only" htmlFor="integration-category">Filter integrations by category</label>
+                                <select id="integration-category" value={category} onChange={(event) => setCategory(event.target.value)} className="h-11 min-w-44 rounded-xl border border-slate-700 bg-slate-900/80 px-3 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20">
+                                    <option value="all">All categories</option>
+                                    {categories.map((item) => <option key={item} value={item}>{categoryLabels[item]}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                            <span>{integrations.length} connection{integrations.length === 1 ? '' : 's'} shown</span>
+                            <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Ready to connect <span className="ml-2 h-1.5 w-1.5 rounded-full bg-amber-400" /> Beta <span className="ml-2 h-1.5 w-1.5 rounded-full bg-slate-500" /> Coming soon</span>
+                        </div>
+                        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {integrations.map((integration, idx) => (
+                                <AnimateIn key={integration.id} type="stagger" index={idx}>
+                                    <article className="group flex min-h-[210px] flex-col rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-teal-500/50 hover:bg-slate-900">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="grid h-11 w-11 place-items-center rounded-xl border border-slate-700 bg-slate-950 text-sm font-black text-teal-300">{integration.name.slice(0, 2).toUpperCase()}</div>
+                                            <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${integration.status === 'AVAILABLE' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : integration.status === 'BETA' ? 'border-amber-400/20 bg-amber-400/10 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300'}`}>{integration.statusLabel}</span>
+                                        </div>
+                                        <p className="mt-4 text-base font-bold text-white">{integration.name}</p>
+                                        <p className="mt-1 text-xs leading-5 text-slate-400">{integration.description}</p>
+                                        <p className="mt-3 text-[11px] leading-4 text-teal-200/80">{capabilityByCategory[integration.category]}</p>
+                                        <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-800 pt-3 text-[11px]">
+                                            <span className="text-slate-500">{categoryLabels[integration.category]}</span>
+                                            <Link href={`/ecosystem/${integration.id}`} className="inline-flex items-center gap-1 font-semibold text-teal-300 hover:text-teal-200">View connection details <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></Link>
+                                        </div>
+                                    </article>
+                                </AnimateIn>
+                            ))}
+                        </div>
+                        {integrations.length === 0 ? <p className="py-10 text-center text-sm text-slate-400">No connections match that search. Try a different tool or category.</p> : null}
                     </div>
                 </section>
 

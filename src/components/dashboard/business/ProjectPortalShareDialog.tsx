@@ -103,6 +103,10 @@ export function ProjectPortalShareDialog({
         </div>
 
         <div className="p-5 space-y-4">
+          <div className="rounded-xl border border-violet-400/20 bg-violet-400/5 p-3 text-xs leading-5 text-slate-300">
+            <p className="font-semibold text-violet-200">This creates a project-only link.</p>
+            <p className="mt-1 text-slate-400">For the client&apos;s full workspace with invoices, quotes, contracts, documents, and messages, use <strong className="text-slate-200">Set up client portal</strong> from the client record.</p>
+          </div>
           <div>
             <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
               <Lock className="w-3.5 h-3.5" /> Optional password

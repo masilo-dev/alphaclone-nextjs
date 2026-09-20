@@ -1679,28 +1679,12 @@
   box-shadow: 0 8px 24px rgba(20, 184, 166, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
-.mkt-brand-copy {
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;
-  line-height: 1;
-}
-
 .mkt-brand-word {
   font-family: "Space Grotesk", "Inter Variable", sans-serif;
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--text-primary);
-}
-
-.mkt-brand-tagline {
-  margin-top: 0.28rem;
-  color: rgba(148, 163, 184, 0.86);
-  font-size: 0.52rem;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
 }
 
 .mkt-header {

@@ -16,6 +16,7 @@ import {
   isNewWorkspaceStats,
   isSetupChecklistDismissed,
 } from './NewUserSetupPanel';
+import { WorkspaceGuide } from './WorkspaceGuide';
 
 interface BusinessHomeProps {
   user: User;
@@ -79,6 +80,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
 
   return (
     <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
+      <WorkspaceGuide user={user} />
       {showSetup ? (
         <NewUserSetupPanel
           user={user}

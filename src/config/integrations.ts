@@ -19,7 +19,7 @@ export interface PublicIntegration {
 }
 
 const STATUS_LABELS: Record<IntegrationStatus, string> = {
-  AVAILABLE: 'Available',
+  AVAILABLE: 'Ready to connect',
   BETA: 'Beta',
   COMING_SOON: 'Coming soon',
   DEPRECATED: 'Deprecated',

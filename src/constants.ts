@@ -171,7 +171,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   },
 
   {
-    label: 'Growth',
+    label: 'Marketing',
     href: '#',
     icon: Globe,
     subItems: [
@@ -180,7 +180,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Compose post', href: '/dashboard/business/social/compose', icon: PenSquare },
       { label: 'Forms', href: '/dashboard/business/forms', icon: FileText },
       { label: 'SMS', href: '/dashboard/business/sms', icon: Smartphone },
-      { label: 'Social command', href: '/dashboard/business/social-command', icon: Calendar },
+      { label: 'Social calendar', href: '/dashboard/business/social-command', icon: Calendar },
     ],
   },
 

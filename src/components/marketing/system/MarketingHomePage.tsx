@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FaLinkedin, FaMicrosoft } from "react-icons/fa6";
-import { SiAnthropic, SiCaldotcom, SiOpenai, SiStripe, SiZoho } from "react-icons/si";
-import { ArrowDown, ArrowRight, Bot, BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, Database, FileCheck2, FileText, LockKeyhole, Mail, MessageSquareText, ReceiptText, Search, Send, ShieldCheck, UserRoundCheck, Users, WalletCards, X, Sparkles } from "lucide-react";
+import { SiCaldotcom, SiStripe, SiZoho } from "react-icons/si";
+import { ArrowDown, ArrowRight, Bot, BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, Database, FileCheck2, FileText, LockKeyhole, Mail, ReceiptText, Search, Send, ShieldCheck, UserRoundCheck, Users, WalletCards, X, Sparkles } from "lucide-react";
 import { TRIAL_HREF } from "@/lib/marketing/cta";
-import { EXECUTION_LAYER } from "@/config/marketingPositioning";
+import { ANCHOR_WORKFLOW, EXECUTION_LAYER } from "@/config/marketingPositioning";
 import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
 import { MarketingContainer, MarketingSection } from "./LayoutPrimitives";
 import MarketingShell from "./MarketingShell";
@@ -44,9 +44,9 @@ function Status({ tone, children }: { tone: "done" | "active" | "queued" | "appr
 export default function MarketingHomePage() {
   const { language } = useLanguage();
   const copy = {
-    en: { now: 'Now let it', execute: 'execute.', connect: 'connects ChatGPT, Claude, and other AI assistants to', apps: 'the applications that run your business', so: '—so AI can send, post, update, create, follow up, and', real: 'execute real work', proof: ['Review before external actions', 'Activity and outcome records', 'Works with your existing tools'] },
-    es: { now: 'Ahora deja que lo', execute: 'ejecute.', connect: 'conecta ChatGPT, Claude y otros asistentes de IA con', apps: 'las aplicaciones que hacen funcionar tu negocio', so: '—para enviar, publicar, actualizar, crear y hacer seguimiento', real: 'trabajo real', proof: ['Revisa antes de cualquier acción externa', 'Registro de actividad y resultados', 'Funciona con tus herramientas actuales'] },
-    pl: { now: 'Teraz pozwól mu', execute: 'działać.', connect: 'łączy ChatGPT, Claude i inne asystenty AI z', apps: 'aplikacjami, które prowadzą Twój biznes', so: '—aby wysyłać, publikować, aktualizować, tworzyć i monitorować', real: 'prawdziwą pracę', proof: ['Sprawdź przed działaniem zewnętrznym', 'Rejestr aktywności i wyników', 'Działa z obecnymi narzędziami'] },
+    en: { lead: 'Turn AI instructions into', emphasis: 'real business actions.', subhead: 'AI can understand what you want. AlphaClone connects that intent to the systems where work happens, then keeps approval, execution, verification, and the business record together.', proof: ['Human intent stays in control', 'Review before external actions', 'Verified outcome records'] },
+    es: { lead: 'Convierte instrucciones de IA en', emphasis: 'acciones empresariales reales.', subhead: 'La IA puede entender lo que quieres. AlphaClone conecta esa intención con los sistemas donde ocurre el trabajo y mantiene juntas la aprobación, la ejecución, la verificación y el registro.', proof: ['La persona mantiene el control', 'Revisión antes de acciones externas', 'Registro de resultados verificados'] },
+    pl: { lead: 'Zamień instrukcje AI w', emphasis: 'rzeczywiste działania biznesowe.', subhead: 'AI może zrozumieć, czego chcesz. AlphaClone łączy tę intencję z systemami, w których odbywa się praca, zachowując akceptację, wykonanie, weryfikację i zapis.', proof: ['Człowiek zachowuje kontrolę', 'Weryfikacja przed działaniem zewnętrznym', 'Rejestr zweryfikowanych rezultatów'] },
   }[language];
   return <MarketingShell>
     {/* Product-led hero: concrete execution, not abstract AI promises. */}
@@ -60,17 +60,12 @@ export default function MarketingHomePage() {
             {EXECUTION_LAYER.category}
           </p>
           <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.12] tracking-normal sm:text-5xl md:text-6xl">
-            <span className="text-[var(--brand-primary-hover)]">Your AI can think.</span>{' '}
-            <span className="text-white">{copy.now}</span>{' '}
-            <span className="text-[var(--brand-violet)]">{copy.execute}</span>
+            <span className="text-white">{copy.lead}</span>{' '}
+            <span className="text-[var(--brand-violet)]">{copy.emphasis}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 sm:text-base md:text-lg">
-            <span className="font-semibold text-[var(--brand-primary-hover)]">AlphaClone</span>
-            <span className="text-slate-300"> {copy.connect} </span>
-            <span className="font-semibold text-[var(--brand-primary-hover)]">{copy.apps}</span>
-            <span className="text-slate-300"> {copy.so} </span>
-            <span className="font-semibold text-[var(--brand-violet)]">{copy.real}</span>
-            <span className="text-slate-300">.</span>
+            <span className="font-semibold text-[var(--brand-primary-hover)]">AlphaClone</span>{' '}
+            <span className="text-slate-300">{copy.subhead}</span>
           </p>
           <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
             <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">
@@ -104,6 +99,58 @@ export default function MarketingHomePage() {
         </div>
       </MarketingContainer>
     </section>
+
+    <MarketingSection atmosphere="outcomes" className="border-t border-white/10 py-8 sm:py-12">
+      <MarketingContainer>
+        <div className="grid gap-5 rounded-2xl border border-cyan-400/20 bg-cyan-950/10 p-5 sm:p-7 lg:grid-cols-[1fr_1.4fr] lg:items-center">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">Start with one workflow</p>
+            <h2 className="mt-2 font-marketing-heading text-xl font-extrabold leading-tight text-white sm:text-2xl">See the value before you configure the whole platform.</h2>
+            <p className="mt-2 max-w-xl text-xs leading-5 text-slate-300">Choose one repeatable business outcome first. Add more areas as your team is ready—your customer and decision context stays connected.</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-[#030b19]/80 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-bold text-white">{ANCHOR_WORKFLOW.title}</p>
+                <p className="mt-1 text-[11px] text-slate-400">{ANCHOR_WORKFLOW.summary}</p>
+              </div>
+              <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[10px] font-bold text-amber-200">Human approval included</span>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-5">
+              {ANCHOR_WORKFLOW.steps.map((step, index) => (
+                <div key={step} className="rounded-lg border border-white/[.08] bg-slate-900/60 p-2">
+                  <span className="text-[10px] font-black text-cyan-300">0{index + 1}</span>
+                  <p className="mt-1 text-[10px] leading-4 text-slate-300">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </MarketingContainer>
+    </MarketingSection>
+
+    <MarketingSection atmosphere="platform" className="border-t border-white/10 py-10 sm:py-16">
+      <MarketingContainer>
+        <Intro eyebrow="The execution gap" title="Understanding the instruction is only the beginning." body="AI interprets the objective. AlphaClone connects the objective to the right business identity, records, permissions, providers, and workflows so the result can actually happen." />
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            ['01', 'Human intent', 'You describe the outcome: find, send, post, follow up, or create.', 'text-violet-200', 'border-violet-400/20 bg-violet-400/10'],
+            ['02', 'AI intelligence', 'AI interprets the request, prepares content, and identifies the needed context.', 'text-cyan-200', 'border-cyan-400/20 bg-cyan-400/10'],
+            ['03', 'AlphaClone execution', 'The platform resolves the workspace, records, permissions, approvals, and action path.', 'text-amber-200', 'border-amber-400/20 bg-amber-400/10'],
+            ['04', 'Verified result', 'The external outcome is checked and linked back to the activity and business record.', 'text-emerald-200', 'border-emerald-400/20 bg-emerald-400/10'],
+          ].map(([step, title, detail, text, surface]) => (
+            <article key={step} className={`rounded-xl border p-4 ${surface}`}>
+              <span className={`text-[10px] font-black tracking-[.18em] ${text}`}>{step}</span>
+              <h3 className="mt-3 text-sm font-bold text-white">{title}</h3>
+              <p className="mt-2 text-[11px] leading-5 text-slate-300">{detail}</p>
+            </article>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500 sm:gap-3">
+          <span>Intent</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Context</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Approval</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Execution</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Verification</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Record</span>
+        </div>
+      </MarketingContainer>
+    </MarketingSection>
 
     {/* Interactive Look Inside AlphaClone (Tabs, Slider, Disclosures, Metrics) */}
     <MarketingSection id="look-inside" atmosphere="platform" className="py-10 sm:py-16 lg:py-24 border-t border-white/10">
@@ -328,41 +375,26 @@ export default function MarketingHomePage() {
             <h3 className="mb-4 text-[11px] font-black uppercase tracking-[.2em] text-cyan-300">{g.title}</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
               {g.items.map(item=>(
-                <article key={item.name} className="group relative flex min-h-[172px] flex-col justify-between rounded-xl border border-white/[.09] bg-[#030c1b] p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/50 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-cyan-950/40">
+                <Link href={item.href} key={item.name} className="group relative flex min-h-[172px] flex-col justify-between rounded-xl border border-white/[.09] bg-[#030c1b] p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/50 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-cyan-950/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">
                   <div>
                     <div className="flex items-center justify-between gap-2">
                       <item.icon className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6" style={{color:item.color}}/>
-                      <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-bold text-cyan-300 transition-colors duration-200 group-hover:border-cyan-300 group-hover:bg-cyan-400/20">{item.badge}</span>
+                      <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold ${item.status === 'AVAILABLE' ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300' : item.status === 'BETA' ? 'border-amber-400/25 bg-amber-400/10 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300'}`}>{item.badge}</span>
                     </div>
                     <p className="mt-3 truncate text-xs font-bold text-white transition-colors duration-200 group-hover:text-cyan-200">{item.name}</p>
                     <p className="mt-1 text-[10px] leading-4 text-slate-400">{item.detail}</p>
                   </div>
-                  <div className="mt-3 flex items-center gap-1.5 border-t border-white/[.05] pt-2 text-[9px] font-semibold">
-                    <span className={`h-1.5 w-1.5 rounded-full ${item.status === 'AVAILABLE' ? 'bg-emerald-400 animate-pulse' : item.status === 'BETA' ? 'bg-amber-400' : 'bg-slate-500'}`}/>
-                    <span className={item.status === 'AVAILABLE' ? 'text-emerald-400' : item.status === 'BETA' ? 'text-amber-300' : 'text-slate-400'}>
-                      {item.status === 'AVAILABLE' ? 'Available' : item.status === 'BETA' ? 'Beta' : item.status === 'COMING_SOON' ? 'Coming soon' : item.badge}
-                    </span>
+                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/[.05] pt-2 text-[9px] font-semibold">
+                    <span className="text-slate-500">Connection details</span>
+                    <span className="inline-flex items-center gap-1 text-cyan-300">View <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></span>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           </section>
         ))}
       </div>
-      <div className="mt-8 border-t border-white/[.08] pt-7">
-        <p className="mb-4 text-[10px] font-black uppercase tracking-[.18em] text-slate-500">AI interfaces</p>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {[[SiOpenai,"ChatGPT","#10a37f"],[SiAnthropic,"Claude","#d97706"],[MessageSquareText,"Manus","#06b6d4"]].map(([Icon,name,color])=>(
-            <div key={String(name)} className="group flex min-w-36 items-center gap-3 rounded-xl border border-white/10 bg-[#030b19] px-4 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/40 hover:bg-slate-900">
-              <Icon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" style={{color:String(color)}}/>
-              <div>
-                <p className="text-xs font-bold text-white group-hover:text-cyan-200">{String(name)}</p>
-                <p className="text-[9px] text-slate-500">AI interface</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <p className="mt-6 text-center text-[11px] leading-5 text-slate-500">AI providers are listed above by their actual platform role. The workspace is where approved work is carried out and recorded.</p>
     </MarketingContainer></MarketingSection>
 
     {/* Security & Trust Section */}

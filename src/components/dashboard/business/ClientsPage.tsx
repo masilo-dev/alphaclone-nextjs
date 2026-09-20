@@ -1296,7 +1296,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     icon={<UserCheck className="w-4 h-4" />}
                                                     onClick={() => setPortalAccessClient(selectedClient)}
                                                 >
-                                                    Client portal
+                                                    Set up client portal
                                                 </Button>
                                                 <Dropdown
                                                     trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}

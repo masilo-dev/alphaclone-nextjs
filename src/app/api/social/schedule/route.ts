@@ -287,6 +287,29 @@ export async function POST(req: NextRequest) {
 
     const requestedOrganizationId = body.linkedin_organization_id?.trim() || null;
     const platforms = body.platforms?.length ? body.platforms : ['facebook'];
+    const unsupportedPlatforms = platforms.filter((platform) => !['facebook', 'linkedin', 'platform'].includes(platform));
+    if (unsupportedPlatforms.length > 0) {
+      return NextResponse.json({
+        error: `${unsupportedPlatforms.join(', ')} publishing is not available in this workspace yet. Remove that channel and try again.`,
+      }, { status: 400 });
+    }
+
+    if (platforms.includes('facebook')) {
+      const pageId = body.facebook_page_id?.trim();
+      if (!pageId) {
+        return NextResponse.json({ error: 'Select a connected Facebook Page before scheduling or publishing.' }, { status: 400 });
+      }
+      const { data: facebookPage, error: facebookPageError } = await supabase
+        .from('facebook_integrations')
+        .select('page_id')
+        .eq('user_id', user.id)
+        .eq('page_id', pageId)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (facebookPageError || !facebookPage) {
+        return NextResponse.json({ error: 'The selected Facebook Page is not connected to this account. Reconnect Facebook or choose another Page.' }, { status: 400 });
+      }
+    }
 
     if (platforms.includes('linkedin')) {
       const { data: liIntegration, error: liError } = await supabase

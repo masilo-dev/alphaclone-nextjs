@@ -82,6 +82,7 @@ const STATUS_STYLE: Record<string, string> = {
     publishing:  'bg-amber-500/15 text-amber-400 border-amber-500/30',
     published:   'bg-green-500/15 text-green-400 border-green-500/30',
     failed:      'bg-red-500/15 text-red-400 border-red-500/30',
+    cancelled:   'bg-slate-700/50 text-slate-400 border-slate-600',
 };
 
 const PLATFORM_ICONS: Record<string, React.ReactNode> = {
@@ -105,6 +106,7 @@ export default function SocialMediaComposer() {
     const [selectedLinkedInMemberId, setSelectedLinkedInMemberId] = useState('');
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'compose' | 'posts' | 'media'>('compose');
+    const [postFilter, setPostFilter] = useState<'all' | 'scheduled' | 'published' | 'failed' | 'cancelled'>('all');
 
     // Composer state
     const [caption, setCaption] = useState('');
@@ -182,6 +184,11 @@ export default function SocialMediaComposer() {
         }
         return Array.from(normalized).slice(0, 6);
     }, [recentPosts]);
+
+    const visiblePosts = useMemo(
+        () => postFilter === 'all' ? posts : posts.filter((post) => post.status === postFilter),
+        [posts, postFilter],
+    );
 
     const loadData = useCallback(async () => {
         if (!tenant?.id || !user) return;
@@ -279,6 +286,8 @@ export default function SocialMediaComposer() {
         if (!caption.trim()) return toast.error('Caption is required');
         if (platforms.length === 0) return toast.error('Select at least one platform');
         if (!publishNow && !scheduledAt) return toast.error('Choose "Post Now" or set a schedule date');
+        if (platforms.includes('facebook') && !selectedPageId) return toast.error('Connect and select a Facebook Page before publishing.');
+        if (platforms.includes('twitter')) return toast.error('X publishing is not available in this composer yet.');
         if (platforms.includes('linkedin') && (!isSelectedLinkedInActive || !hasSelectedLinkedInWriteScope)) {
             return toast.error('LinkedIn write scope is missing. Reconnect LinkedIn and approve posting permissions.');
         }
@@ -340,6 +349,22 @@ export default function SocialMediaComposer() {
         if (!response.ok) { toast.error('Post could not be deleted'); return; }
         setPosts(prev => prev.filter(p => p.id !== id));
         toast.success('Deleted');
+    };
+
+    const handleCancelPost = async (post: SocialPost) => {
+        if (!tenant?.id || post.status !== 'scheduled') return;
+        const response = await fetch('/api/social/schedule', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tenantId: tenant.id, postId: post.id, action: 'cancel' }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            toast.error(data.error || 'Scheduled post could not be canceled');
+            return;
+        }
+        setPosts((current) => current.map((item) => item.id === post.id ? { ...item, status: 'cancelled', scheduled_at: null } : item));
+        toast.success('Scheduled post canceled.');
     };
 
     const handleDeleteMedia = async (asset: MediaAsset) => {
@@ -1230,14 +1255,14 @@ Return only the comment text.`;
                             {[
                                 { id: 'facebook', label: 'Facebook Page', icon: <Facebook className="w-4 h-4 text-blue-400" /> },
                                 { id: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="w-4 h-4 text-sky-400" /> },
-                                { id: 'twitter', label: 'X (Twitter)', icon: <Twitter className="w-4 h-4 text-[#1DA1F2]" /> },
+                                { id: 'twitter', label: 'X (Twitter) — coming soon', icon: <Twitter className="w-4 h-4 text-[#1DA1F2]" />, disabled: true },
                                 { id: 'platform', label: 'AlphaClone Platform', icon: <Globe className="w-4 h-4 text-teal-400" /> },
                             ].map(p => (
                                 <label key={p.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 cursor-pointer mb-1">
-                                    <input type="checkbox" checked={platforms.includes(p.id)} onChange={() => togglePlatform(p.id)}
+                                    <input type="checkbox" checked={platforms.includes(p.id)} disabled={p.disabled} onChange={() => togglePlatform(p.id)}
                                         className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0" />
                                     {p.icon}
-                                    <span className="text-sm text-slate-300">{p.label}</span>
+                                    <span className={`text-sm ${p.disabled ? 'text-slate-500' : 'text-slate-300'}`}>{p.label}</span>
                                 </label>
                             ))}
 
@@ -1394,13 +1419,21 @@ Return only the comment text.`;
             {/* POSTS TAB */}
             {activeTab === 'posts' && (
                 <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/40 p-2">
+                        {(['all', 'scheduled', 'published', 'failed', 'cancelled'] as const).map((filter) => {
+                            const count = filter === 'all' ? posts.length : posts.filter((post) => post.status === filter).length;
+                            return <button key={filter} type="button" onClick={() => setPostFilter(filter)} className={`rounded-lg px-3 py-2 text-xs font-semibold capitalize ${postFilter === filter ? 'bg-teal-500 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}>{filter} <span className="ml-1 opacity-70">{count}</span></button>;
+                        })}
+                    </div>
                     {posts.length === 0 ? (
                         <div className="text-center py-16 border border-dashed border-slate-700 rounded-2xl">
                             <Send className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                             <p className="text-slate-400 font-semibold">No posts yet</p>
                             <button onClick={() => setActiveTab('compose')} className="mt-3 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl text-sm font-semibold">Compose your first post</button>
                         </div>
-                    ) : posts.map(post => (
+                    ) : visiblePosts.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-slate-700 py-12 text-center text-sm text-slate-400">No {postFilter} posts yet.</div>
+                    ) : visiblePosts.map(post => (
                         <div key={post.id} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="flex-1 min-w-0">
@@ -1517,6 +1550,9 @@ Return only the comment text.`;
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    {post.status === 'scheduled' && (
+                                        <button onClick={() => handleCancelPost(post)} className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/20">Cancel</button>
+                                    )}
                                     <button onClick={() => handleDeletePost(post.id)}
                                         className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
                                         <Trash2 className="w-3.5 h-3.5" />

@@ -4,18 +4,18 @@
  */
 
 export const EXECUTION_LAYER = {
-  category: 'Business workflows with an approval trail',
-  primaryLine: 'Turn an approved instruction into accountable business work.',
+  category: 'The execution layer between AI and business systems',
+  primaryLine: 'Turn AI instructions into real business actions—with every decision owned.',
   categoryLine: 'Connect the decision to the action.',
   problemLine: 'Your systems hold the data. Your team still carries the handoffs.',
   explanatoryLine:
-    'AlphaClone connects ChatGPT, Claude, and other compatible AI interfaces to the systems that run your business—so an approved instruction can update a CRM record, prepare an email, create an invoice, or start a follow-up workflow.',
+    'AI can understand what you want. AlphaClone connects that intent to CRM, email, social, projects, contracts, invoices, and other business systems—so approved work can run and be verified.',
   differentiationLine:
     'AI provides the intelligence and conversation. AlphaClone provides business context, permissions, workflows, execution, and verification.',
   mechanism: ['Decide', 'Approve', 'Execute', 'Verify'] as const,
-  heroHeadline: 'Connect the decision to the action.',
+  heroHeadline: 'Turn AI instructions into real business actions.',
   heroSubhead:
-    'AlphaClone connects ChatGPT, Claude, and other AI assistants to the applications that run your business—so an approved instruction can update records, prepare communications, create invoices, and start follow-up workflows.',
+    'AI can understand what you want. AlphaClone connects that intent to the systems where the work happens, then keeps approval, execution, verification, and the business record together.',
   primaryCta: 'Start with AlphaClone',
   secondaryCta: 'Watch AlphaClone Execute',
   executionSessionPath: '/execution-session',
