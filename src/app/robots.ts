@@ -51,13 +51,10 @@ export default function robots(): MetadataRoute.Robots {
                 disallow: privateRoutes,
             },
         ],
-        sitemap: [
-            `${baseUrl}/sitemap.xml`,
-            `${baseUrl}/sitemaps/marketing.xml`,
-            `${baseUrl}/sitemaps/solutions.xml`,
-            `${baseUrl}/sitemaps/resources.xml`,
-            `${baseUrl}/sitemaps/company.xml`,
-        ],
+        // One authoritative sitemap. The previous configuration advertised
+        // this complete sitemap plus four segmented copies of the same URLs,
+        // which made Search Console discovery signals needlessly ambiguous.
+        sitemap: `${baseUrl}/sitemap.xml`,
         host: baseUrl,
     };
 }
