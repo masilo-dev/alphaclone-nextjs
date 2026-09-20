@@ -272,7 +272,6 @@ const nextConfig: NextConfig = {
           ...securityHeaders,
           {
             key: 'Cache-Control',
-            value: 'no-cache, no-store, must-revalidate, max-age=0'
             // Cloudflare's email obfuscator otherwise injects crawlable
             // /cdn-cgi/l/email-protection links that return 404 to bots.
             value: 'no-cache, no-store, no-transform, must-revalidate, max-age=0',
