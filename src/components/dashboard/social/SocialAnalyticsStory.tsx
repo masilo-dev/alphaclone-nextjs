@@ -369,7 +369,7 @@ export function SocialAnalyticsStory({
                 <button
                     type="button"
                     onClick={() => setFocusedId(null)}
-                    className="fixed bottom-24 right-5 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-300 shadow-xl lg:hidden"
+                    className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] right-5 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-300 shadow-xl lg:hidden"
                 >
                     <X className="h-3.5 w-3.5" /> Clear chart selection
                 </button>

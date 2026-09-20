@@ -104,7 +104,7 @@ export default function CookieBanner() {
   return (
     <>
       {!consent && (
-        <div className="fixed inset-x-0 bottom-3 z-[9999] px-3 sm:bottom-5 sm:px-6 pointer-events-none">
+        <div className="fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-[9999] px-3 sm:bottom-5 sm:px-6 pointer-events-none">
           <div className="mx-auto max-w-4xl pointer-events-auto rounded-2xl border border-[var(--border-default)] bg-[rgba(7,14,28,0.97)] p-3 sm:p-5 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="flex items-start gap-3 min-w-0">

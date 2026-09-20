@@ -99,7 +99,8 @@ export function NexusWidget() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 1000 }}
+            className="ac-fab-above-nav md:!bottom-6 md:!right-6"
+            style={{ zIndex: 1000 }}
           >
             <IconButton
               aria-label="Open Nexus AI"

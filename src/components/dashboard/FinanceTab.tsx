@@ -463,7 +463,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
         type="button"
         onClick={handleFabClick}
         aria-label={mainTab === 'invoices' ? 'Create invoice' : 'Add expense'}
-        className={`fixed bottom-20 right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 ${mainTab === 'invoices' ? 'bg-green-600 shadow-green-600/30' : 'bg-rose-600 shadow-rose-600/30'}`}
+        className={`fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] right-4 w-14 h-14 rounded-full flex items-center justify-center shadow-lg z-30 ${mainTab === 'invoices' ? 'bg-green-600 shadow-green-600/30' : 'bg-rose-600 shadow-rose-600/30'}`}
       >
         {mainTab === 'invoices' ? <FilePlus className="w-6 h-6 text-white" /> : <Receipt className="w-6 h-6 text-white" />}
       </button>

@@ -55,7 +55,7 @@ const MeetingChat: React.FC<MeetingChatProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed right-0 top-0 bottom-24 w-80 bg-slate-900/95 backdrop-blur-xl border-l border-slate-700/50 z-40 flex flex-col shadow-[-8px_0_30px_rgba(0,0,0,0.5)] animate-in slide-in-from-right-8 duration-300">
+        <div className="fixed right-0 top-0 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] md:bottom-24 w-full sm:w-80 bg-slate-900/95 backdrop-blur-xl border-l border-slate-700/50 z-40 flex flex-col shadow-[-8px_0_30px_rgba(0,0,0,0.5)] animate-in slide-in-from-right-8 duration-300">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-700/50 bg-slate-800/30">
                 <div className="flex items-center space-x-3">
