@@ -123,6 +123,7 @@ async function sendTaskReminder(task: any, type: "dueSoon" | "overdue") {
         isPlatformNotification: true,
         fromName: 'AlphaClone Tasks',
         templateName: type === 'dueSoon' ? 'taskDueSoon' : 'taskOverdue',
+        internalNotificationKind: 'immediate_exception',
     });
 
     if (!result.success) {

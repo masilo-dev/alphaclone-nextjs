@@ -108,6 +108,7 @@ export async function sendTaskReminderDirect(
     fromName: 'AlphaClone Tasks',
     templateName: type === 'dueSoon' ? 'taskDueSoon' : 'taskOverdue',
     idempotencyKey: `due-alert:task:${task.id}:${type}:${new Date().toISOString().slice(0, 10)}`,
+    internalNotificationKind: 'immediate_exception',
   });
 
   if (!result.success) {
