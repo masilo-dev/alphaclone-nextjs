@@ -155,3 +155,12 @@ test('all installed module interiors inherit compact native density and scrollab
   assert.match(hub, /data-native-workspace/);
   assert.match(wrapper, /ac-native-workspace/);
 });
+
+test('laptop modules share a dense desktop-native presentation', () => {
+  const styles = read('src/styles/alphaclone-os-v3-pwa.css');
+  assert.match(styles, /html:not\(\.ac-pwa-mobile\):not\(\.ac-pwa-tablet\) :is\(\.ac-module-frame, \.ac-native-workspace\)/);
+  assert.match(styles, /:is\(\.text-4xl, \.text-5xl, \.text-6xl\)/);
+  assert.match(styles, /:is\(\.p-8, \.p-10, \.p-12\)/);
+  assert.match(styles, /\.ac-native-workspace \[role='tablist'\]/);
+  assert.match(styles, /:is\(\.rounded-3xl, \.rounded-\\\[2rem\\\], \.rounded-\\\[2\\\.5rem\\\]\)/);
+});

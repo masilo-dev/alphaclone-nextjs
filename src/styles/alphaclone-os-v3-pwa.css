@@ -206,15 +206,55 @@ html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(h1, h2, h3, p, 
   overflow-wrap: anywhere;
 }
 
-/* Browser desktop remains desktop, while legacy presentation-sized headings
-   and padding are capped inside product modules. */
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-module-frame :is(.text-5xl, .text-6xl) {
-  font-size: 2rem !important;
-  line-height: 1.2 !important;
+/* Laptop/desktop remains a multi-column work surface, while legacy
+   presentation-sized type, cards, and spacing are normalized everywhere. */
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) {
+  min-width: 0;
+  max-width: 100%;
 }
 
-html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-module-frame :is(.p-10, .p-12) {
-  padding: 2rem !important;
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.text-4xl, .text-5xl, .text-6xl) {
+  font-size: 1.875rem !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.p-8, .p-10, .p-12) {
+  padding: 1.5rem !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.px-8, .px-10, .px-12) {
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.py-8, .py-10, .py-12) {
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.gap-8, .gap-10, .gap-12) {
+  gap: 1.5rem !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.rounded-3xl, .rounded-\[2rem\], .rounded-\[2\.5rem\]) {
+  border-radius: 1rem !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-native-workspace [role='tablist'] {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-native-workspace [role='tablist'] > * {
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) :is(.ac-module-frame, .ac-native-workspace) :is(.space-y-10, .space-y-12) > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.5rem !important;
 }
 
 @media (max-width: 767px) {
