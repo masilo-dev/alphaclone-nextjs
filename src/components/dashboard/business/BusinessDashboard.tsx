@@ -149,7 +149,7 @@ import { TabSkeleton } from '@/components/ui/TabSkeleton';
 import { LOGO_URL, TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
-import { EnterpriseTabWrapper, isEnterpriseFullBleedTab } from '@/components/ui/EnterpriseTabWrapper';
+import { ENTERPRISE_FULL_BLEED_TABS, EnterpriseTabWrapper, isEnterpriseFullBleedTab } from '@/components/ui/EnterpriseTabWrapper';
 import NotificationCenter from '../NotificationCenter';
 import { OfflineQueueIndicator } from '@/components/common/OfflineQueueIndicator';
 import CommandPalette from '../CommandPalette';
@@ -169,21 +169,6 @@ import { DashboardScrollRegion, dispatchPullRefresh } from '@/components/common/
 import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
 import { useDashboardScrollRestoration } from '@/hooks/useDashboardScrollRestoration';
 
-/** Full-bleed tabs: no outer padding; child manages its own scroll (mail, projects, etc.). Social pages scroll with the main column like CRM. */
-const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
-    '/dashboard/mail',
-    '/dashboard/comms',
-  '/dashboard/business/projects',
-  '/dashboard/business/projects/manage',
-  '/dashboard/projects/manage',
-  '/dashboard/tasks',
-    '/dashboard/sales-agent',
-    '/dashboard/leads/campaigns',
-    '/dashboard/zoho/mail',
-    '/dashboard/business/messages',
-    '/dashboard/pwa-settings',
-];
-
 const BUSINESS_PULL_SCROLL_ROUTES = new Set([
     '/dashboard/leads/campaigns',
     '/dashboard/leads/finder',
@@ -194,7 +179,7 @@ const BUSINESS_PULL_SCROLL_ROUTES = new Set([
 ]);
 
 function isBusinessMainScrollable(tabRoute: string): boolean {
-    if (!DASHBOARD_EDGE_TO_EDGE_TABS.includes(tabRoute)) return true;
+    if (!ENTERPRISE_FULL_BLEED_TABS.has(tabRoute)) return true;
     return BUSINESS_PULL_SCROLL_ROUTES.has(tabRoute);
 }
 
@@ -1463,7 +1448,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     onRefresh={handlePullRefresh}
                     className={`flex-1 min-h-0 ac-workspace-canvas ac-business-scroll ${
                         isBusinessMainScrollable(route)
-                            ? DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
+                            ? ENTERPRISE_FULL_BLEED_TABS.has(route)
                                 ? 'overflow-x-hidden p-0'
                                 : `overflow-x-hidden ${WORKSPACE.canvas.padding} dashboard-content-padding`
                             : 'p-0'
@@ -1473,7 +1458,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <DashboardRouteTransition
                             routeKey={route}
                             className={`w-full min-w-0 ${WORKSPACE.canvas.maxWidth} mx-auto ${
-                                DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
+                                ENTERPRISE_FULL_BLEED_TABS.has(route)
                                     ? 'h-full min-h-0 max-md:pb-[calc(4.25rem+min(env(safe-area-inset-bottom,0px),20px))]'
                                     : 'min-h-full'
                             }`}

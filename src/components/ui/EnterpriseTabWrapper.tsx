@@ -23,7 +23,7 @@ export function EnterpriseTabWrapper({
   return (
     <div
       className={cn(
-        'ac-enterprise-module ac-workspace-canvas w-full min-w-0',
+        'ac-enterprise-module ac-workspace-canvas ac-native-workspace w-full min-w-0',
         fullBleed ? 'h-full min-h-0 flex flex-col' : cn('ac-scroll-full', ENTERPRISE.moduleLayout.sectionGap),
         className
       )}

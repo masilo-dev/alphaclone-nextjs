@@ -62,6 +62,14 @@ html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame {
   max-width: 100%;
 }
 
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace,
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame-native,
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) [data-native-workspace='true'] {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.p-8, .p-10, .p-12) {
   padding: 1rem !important;
 }
@@ -111,6 +119,65 @@ html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame [role='tablist'] > * {
   white-space: nowrap;
 }
 
+/* Portalled dialogs sit outside the hub tree. Give every installed-app dialog
+   the same bounded behavior as the shared native modal. */
+html.ac-pwa-mobile :is([role='dialog'], dialog) {
+  max-width: 100vw !important;
+  max-height: calc(100dvh - var(--ac-app-safe-top) - var(--ac-app-safe-bottom)) !important;
+  overscroll-behavior: contain;
+}
+
+html.ac-pwa-mobile :is([role='dialog'], dialog) :is(.p-8, .p-10, .p-12) {
+  padding: 1rem !important;
+}
+
+html.ac-pwa-mobile :is([role='dialog'], dialog) :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6) {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace table {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.recharts-responsive-container, .recharts-wrapper) {
+  min-width: 0 !important;
+  min-height: 132px !important;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(img, video, canvas, svg) {
+  max-width: 100%;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(input, select, textarea) {
+  max-width: 100%;
+  font-size: 16px;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(.flex-row, [class*='justify-between']) {
+  min-width: 0;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-native-workspace :is(h1, h2, h3, p, span, a, button) {
+  overflow-wrap: anywhere;
+}
+
+/* Browser desktop remains desktop, while legacy presentation-sized headings
+   and padding are capped inside product modules. */
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-module-frame :is(.text-5xl, .text-6xl) {
+  font-size: 2rem !important;
+  line-height: 1.2 !important;
+}
+
+html:not(.ac-pwa-mobile):not(.ac-pwa-tablet) .ac-module-frame :is(.p-10, .p-12) {
+  padding: 2rem !important;
+}
+
 @media (max-width: 767px) {
   html.ac-pwa-mobile .ac-module-frame :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6) {
     grid-template-columns: minmax(0, 1fr) !important;
@@ -126,6 +193,16 @@ html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame [role='tablist'] > * {
 
   html.ac-pwa-mobile .ac-module-frame table {
     font-size: 0.8125rem;
+  }
+
+  html.ac-pwa-mobile .ac-native-workspace :is(.text-3xl, .text-4xl, .text-5xl, .text-6xl) {
+    font-size: 1.375rem !important;
+    line-height: 1.25 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  html.ac-pwa-mobile .ac-native-workspace :is(.space-y-8, .space-y-10, .space-y-12) > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 1rem !important;
   }
 }
 

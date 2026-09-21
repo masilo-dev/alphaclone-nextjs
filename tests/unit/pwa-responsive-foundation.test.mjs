@@ -91,9 +91,12 @@ test('push deep links retain tenant routing and prefer an exact open client', ()
 test('dashboard shell has one page-scroll owner', () => {
   const shell = read('src/components/shells/AppShell.tsx');
   const scrollRegion = read('src/components/common/DashboardScrollRegion.tsx');
+  const businessDashboard = read('src/components/dashboard/business/BusinessDashboard.tsx');
   assert.match(shell, /isDashboardRoute \? 'overflow-hidden'/);
   assert.match(scrollRegion, /data-dashboard-scroll-region/);
   assert.match(scrollRegion, /isTouchCompanion/);
+  assert.match(businessDashboard, /ENTERPRISE_FULL_BLEED_TABS\.has\(tabRoute\)/);
+  assert.doesNotMatch(businessDashboard, /const DASHBOARD_EDGE_TO_EDGE_TABS/);
 });
 
 test('installed module dashboards use an action-first native workspace', () => {
@@ -135,10 +138,17 @@ test('deep CRM and billing workspaces use native detail and compact manager patt
 
 test('all installed module interiors inherit compact native density and scrollable tabs', () => {
   const styles = read('src/styles/alphaclone-os-v3-pwa.css');
+  const hub = read('src/components/dashboard/hubs/HubShell.tsx');
+  const wrapper = read('src/components/ui/EnterpriseTabWrapper.tsx');
   assert.match(styles, /html:is\(\.ac-pwa-mobile, \.ac-pwa-tablet\) \.ac-module-frame/);
+  assert.match(styles, /\.ac-native-workspace/);
+  assert.match(styles, /:is\(\[role='dialog'\], dialog\)/);
+  assert.match(styles, /\.recharts-responsive-container, \.recharts-wrapper/);
   assert.match(styles, /\.ac-module-frame \[role='tablist'\]/);
   assert.match(styles, /overflow-x: auto/);
   assert.match(styles, /\.grid-cols-3, \.grid-cols-4, \.grid-cols-5, \.grid-cols-6/);
   assert.match(styles, /grid-template-columns: minmax\(0, 1fr\)/);
   assert.match(styles, /\.text-4xl, \.text-5xl, \.text-6xl/);
+  assert.match(hub, /data-native-workspace/);
+  assert.match(wrapper, /ac-native-workspace/);
 });
