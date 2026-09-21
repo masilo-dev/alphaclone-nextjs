@@ -121,3 +121,14 @@ test('installed module interiors remove desktop chrome and learning guides', () 
   assert.match(guidance, /7 \* 24 \* 60 \* 60 \* 1000/);
   assert.match(executionHeader, /if \(!showGuidance\)/);
 });
+
+test('deep CRM and billing workspaces use native detail and compact manager patterns', () => {
+  const drawer = read('src/components/ui/DetailDrawer.tsx');
+  const crm = read('src/components/dashboard/CRMTab.tsx');
+  const billing = read('src/components/dashboard/business/EnhancedBillingPage.tsx');
+  const timeline = read('src/components/communication/CustomerTimeline.tsx');
+  assert.match(drawer, /size === 'fullscreen' \|\| isInstalledMobileCompanion/);
+  assert.match(crm, /maxItems=\{isInstalledMobileCompanion \? 8 : 50\}/);
+  assert.match(billing, /!isInstalledMobileCompanion && \(stats\.totalInvoiced/);
+  assert.match(timeline, /'undefined', 'null'/);
+});

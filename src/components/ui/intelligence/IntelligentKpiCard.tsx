@@ -10,6 +10,7 @@ import { WORKSPACE } from '@/constants/design';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { AlphacloneIconProps } from '@/components/icons/alphaclone';
 import type { ComponentType } from 'react';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 
 export interface IntelligentKpiCardProps {
   label: string;
@@ -152,6 +153,7 @@ export function IntelligentKpiCard({
 }: IntelligentKpiCardProps) {
   const [expanded, setExpanded] = useState(false);
   const { t } = useLanguage();
+  const { isInstalledMobileCompanion } = useDeviceExperience();
 
   if (loading) {
     return (
@@ -193,19 +195,19 @@ export function IntelligentKpiCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-[13px] font-medium text-[var(--ws-text-secondary)] truncate">{t(vm.label)}</p>
+            <p className={cn('font-medium text-[var(--ws-text-secondary)] truncate', isInstalledMobileCompanion ? 'text-[11px]' : 'text-[13px]')}>{t(vm.label)}</p>
             <StatusBadge status={vm.status} />
           </div>
           <p
             className={cn(
               'mt-1.5 font-bold tabular-nums tracking-tight text-[var(--ws-text-primary)]',
-              compact ? 'text-[1.25rem]' : 'text-[1.6rem] sm:text-[1.75rem]',
+              isInstalledMobileCompanion ? 'text-[1.125rem]' : compact ? 'text-[1.25rem]' : 'text-[1.6rem] sm:text-[1.75rem]',
             )}
           >
             {displayValue ?? vm.valueFormatted}
           </p>
         </div>
-        {Icon ? (
+        {Icon && !isInstalledMobileCompanion ? (
           <span
             className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] shrink-0"
             style={iconBg}
@@ -291,7 +293,8 @@ export function IntelligentKpiCard({
 
   const classes = cn(
     WORKSPACE.panel.base,
-    'ac-intelligent-kpi p-4 flex flex-col min-h-[112px] group',
+    'ac-intelligent-kpi flex flex-col group',
+    isInstalledMobileCompanion ? 'p-3 min-h-[88px]' : 'p-4 min-h-[112px]',
     interactive && 'ac-intelligent-kpi--interactive cursor-pointer',
     className,
   );

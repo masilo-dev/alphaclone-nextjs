@@ -60,6 +60,7 @@ import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutio
 import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types/moduleExecution';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { CRM_WORKSPACE_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -613,6 +614,7 @@ const Client360Detail: React.FC<{
 }> = ({ client, user, onBack, onNewDeal, onDraftContract, onClientSaved, onDeleteClient, status, isTeamsConnected, inDrawer }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
+  const { isInstalledMobileCompanion } = useDeviceExperience();
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [name, setName] = useState(client.name);
   const [email, setEmail] = useState(client.email || '');
@@ -753,7 +755,7 @@ const Client360Detail: React.FC<{
   };
 
   const clientActions = (
-    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? `${isInstalledMobileCompanion ? 'sticky bottom-0 z-20 -mx-3 bg-slate-950/95 px-3 pb-[max(env(safe-area-inset-bottom),8px)]' : ''} pt-2 border-t border-white/5` : 'fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
       <button
         onClick={() => onNewDeal(client)}
         className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
@@ -944,7 +946,7 @@ const Client360Detail: React.FC<{
         />
 
         {/* AI Propensity & Health Panel */}
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 space-y-4">
+        <div className={`bg-slate-900/50 border border-white/5 rounded-2xl ${isInstalledMobileCompanion ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-400" />
@@ -961,6 +963,25 @@ const Client360Detail: React.FC<{
           ) : loadingAi ? (
             <div className="h-20 flex items-center justify-center text-slate-500 text-xs">
               Resolving profiles & calculating engagement health...
+            </div>
+          ) : churnRisk && isInstalledMobileCompanion ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-slate-400">Churn risk</span>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${
+                  churnRisk.risk_tier === 'low' ? 'bg-emerald-500/15 text-emerald-400' :
+                  churnRisk.risk_tier === 'medium' ? 'bg-yellow-500/15 text-yellow-400' :
+                  churnRisk.risk_tier === 'high' ? 'bg-orange-500/15 text-orange-400' :
+                  'bg-rose-500/15 text-rose-400'
+                }`}>
+                  {churnRisk.risk_tier} · {Math.round(churnRisk.churn_probability * 100)}%
+                </span>
+              </div>
+              {churnRisk.risk_factors[0] ? (
+                <p className="line-clamp-2 text-[12px] leading-5 text-slate-300">{churnRisk.risk_factors[0]}</p>
+              ) : (
+                <p className="text-[12px] text-emerald-400">Account health is stable</p>
+              )}
             </div>
           ) : churnRisk ? (
             <div className="space-y-3">
@@ -1041,6 +1062,7 @@ const Client360Detail: React.FC<{
           {client.id ? (
             <CustomerTimeline
               clientId={client.id}
+              maxItems={isInstalledMobileCompanion ? 8 : 50}
               onOpenComms={() => router.push('/dashboard/comms')}
             />
           ) : loadingAi ? (

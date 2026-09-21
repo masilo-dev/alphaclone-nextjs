@@ -95,6 +95,8 @@ export function CustomerTimeline({ clientId, className, maxItems = 50, onOpenCom
     <div className={cn('space-y-1', className)}>
       {activities.map((activity) => {
         const Icon = ACTIVITY_ICONS[activity.activity_type] || MessageCircle;
+        const cleanDescription = activity.description?.trim();
+        const showDescription = cleanDescription && !['undefined', 'null'].includes(cleanDescription.toLowerCase());
         return (
           <div
             key={activity.id}
@@ -105,8 +107,8 @@ export function CustomerTimeline({ clientId, className, maxItems = 50, onOpenCom
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-medium text-[var(--ws-text-primary)] truncate">{activity.title}</p>
-              {activity.description ? (
-                <p className="text-[11px] text-[var(--ws-text-tertiary)] line-clamp-2 mt-0.5">{activity.description}</p>
+              {showDescription ? (
+                <p className="text-[11px] text-[var(--ws-text-tertiary)] line-clamp-2 mt-0.5">{cleanDescription}</p>
               ) : null}
               <p className="text-[10px] text-[var(--ws-text-tertiary)] mt-1">
                 {new Date(activity.created_at).toLocaleString(undefined, {

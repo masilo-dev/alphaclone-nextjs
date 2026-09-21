@@ -38,6 +38,7 @@ import {
 import { WORKSPACE } from '@/constants/design';
 import { type SemanticSeverity, getSemanticStyles } from '@/lib/analytics/funnelAndPriority';
 import { semanticStatusStyle } from '@/lib/ui/statusSemantics';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -48,6 +49,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
+    const { isInstalledMobileCompanion } = useDeviceExperience();
     const { confirm: confirmDialog } = useConfirmDialog();
     
     const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
@@ -389,7 +391,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const ServicesCatalog = React.lazy(() => import('./ServicesCatalog').then(m => ({ default: m.ServicesCatalog })));
 
     return (
-        <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
+        <div className={`${isInstalledMobileCompanion ? 'space-y-3' : 'space-y-5'} pb-24 ${isInstalledMobileCompanion || isMobile ? 'p-2' : 'p-6'}`}>
             <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
             <ExecutionDecisionGuide
                 steps={BILLING_MANAGER_EXECUTION_STEPS}
@@ -401,36 +403,36 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight flex items-center gap-2.5">
                         <DollarSign className="w-5 h-5 text-[#149C86]" /> Invoicing
                     </h2>
-                    <p className="text-sm text-[var(--ws-text-muted)] mt-1">Invoices, recurring revenue, and follow-ups</p>
+                    {!isInstalledMobileCompanion ? <p className="text-sm text-[var(--ws-text-muted)] mt-1">Invoices, recurring revenue, and follow-ups</p> : null}
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
+                <div className="flex max-w-full gap-1 overflow-x-auto ios-scroll w-full sm:w-auto rounded-xl border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                   <button 
                     onClick={() => setActiveTab('invoices')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-none h-8 px-3 rounded-lg font-semibold text-[11px] border transition-all ${activeTab === 'invoices' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Billing
                   </button>
                   <button 
                     onClick={() => setActiveTab('aging')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'aging' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-none h-8 px-3 rounded-lg font-semibold text-[11px] border transition-all ${activeTab === 'aging' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Aging Report
                   </button>
                   <button 
                     onClick={() => setActiveTab('reminders')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'reminders' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-none h-8 px-3 rounded-lg font-semibold text-[11px] border transition-all ${activeTab === 'reminders' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Reminders
                   </button>
                   <button 
                     onClick={() => setActiveTab('recurring')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-none h-8 px-3 rounded-lg font-semibold text-[11px] border transition-all ${activeTab === 'recurring' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Recurring
                   </button>
                   <button 
                     onClick={() => setActiveTab('services')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-none h-8 px-3 rounded-lg font-semibold text-[11px] border transition-all ${activeTab === 'services' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Catalog
                   </button>
@@ -473,7 +475,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         </p>
                                         <p className="mt-1 text-[12px] text-[var(--ws-text-secondary)]">
                                             Oldest: {stats.oldestOverdueDays} days overdue.
-                                            {hasSevere ? ' 60+ day invoices carry material write-off risk — escalate before end of week.' : ' Gentle payment reminders at this stage recover ~78% without relationship friction.'}
+                                            {!isInstalledMobileCompanion ? (hasSevere ? ' 60+ day invoices carry material write-off risk — escalate before end of week.' : ' Send a payment reminder or open the invoice for follow-up.') : null}
                                         </p>
                                     </div>
                                 </div>
@@ -550,7 +552,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             </div>
 
             {/* Collection funnel + bottleneck */}
-            {stats.totalInvoiced > 0 || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount) > 0 ? (
+            {!isInstalledMobileCompanion && (stats.totalInvoiced > 0 || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount) > 0) ? (
                 <BottleneckDetector
                     multiplierName="cash"
                     funnelStages={[
@@ -561,7 +563,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 />
             ) : null}
 
-            <BonnieBrief
+            {!isInstalledMobileCompanion ? <BonnieBrief
                 whatChanged={(() => {
                     const items: string[] = [];
                     const total = stats.totalInvoiced || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount);
@@ -595,10 +597,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     items.push('Measure DSO (days sales outstanding), not raw overdue count — shrinking DSO by 5 days permanently is worth more than one dramatic collection spike.');
                     return items;
                 })()}
-            />
+            /> : null}
 
             {/* Chart */}
-            {!isMobile && (
+            {!isMobile && !isInstalledMobileCompanion && (
                 <div className={`${WORKSPACE.panel.base} p-4 md:p-6 h-80`}>
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="text-[13px] font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
@@ -691,9 +693,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                         </button>
                     </div>
                 </div>
-                <p className="text-xs text-slate-500 -mt-2">
+                {!isInstalledMobileCompanion ? <p className="text-xs text-slate-500 -mt-2">
                     Tip: select invoices to prepare a follow-up draft, pause automatic follow-ups, or delete drafts. Preparing a draft does not send email.
-                </p>
+                </p> : null}
 
                 <div className="space-y-3">
                     {filteredInvoices.map(inv => (
