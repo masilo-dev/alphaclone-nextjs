@@ -21,6 +21,9 @@ import { CHART_COLORS } from '@/constants/brand';
 import { OutreachLifecyclePanel } from '@/components/dashboard/outreach/OutreachLifecyclePanel';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
+import { NativeListTile, NativeSection } from '@/components/pwa/native/NativeUi';
+import type { OverviewStatsResponse } from '@/types/dashboardStats';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -33,12 +36,78 @@ interface ModuleDashboardViewProps {
   chartSubtitle?: string;
 }
 
+function DesktopModuleOnly({ children }: { children: React.ReactNode }) {
+  const { isInstalledMobileCompanion } = useDeviceExperience();
+  return isInstalledMobileCompanion ? null : children;
+}
+
 function ChartSkeleton() {
   return (
     <div className="ac-workspace-panel ac-chart-enter p-5 min-h-[280px] ac-skeleton-pulse">
       <div className="h-3 w-28 bg-slate-800 rounded mb-2" />
       <div className="h-2.5 w-40 bg-slate-800/70 rounded mb-6" />
       <div className="h-[200px] bg-slate-800/40 rounded-lg" />
+    </div>
+  );
+}
+
+function NativeModuleWorkspace({
+  moduleId,
+  data,
+  loading,
+  onNavigate,
+  role,
+}: {
+  moduleId: ModuleDashboardId;
+  data: OverviewStatsResponse | null;
+  loading: boolean;
+  onNavigate: (href: string) => void;
+  role: Parameters<typeof resolveModuleActions>[1];
+}) {
+  const { t } = useLanguage();
+  const { title, actions } = resolveModuleActions(moduleId, role);
+  const metrics = data ? [...data.metrics, ...(data.metricsRowB ?? [])].slice(0, 4) : [];
+  const screenTitle = moduleId === 'overview' ? t('Home') : t(title.replace(/ overview$/i, ''));
+
+  return (
+    <div className="native-screen ac-scroll-full pb-4" data-native-module-workspace={moduleId}>
+      <div className="px-4 pb-4 pt-2">
+        <h1 className="text-[22px] font-semibold tracking-tight text-white">{screenTitle}</h1>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-2 gap-2 px-4 pb-5" aria-label={t('Loading key numbers')}>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-[72px] animate-pulse rounded-[14px] border border-white/5 bg-white/[0.04]" />
+          ))}
+        </div>
+      ) : metrics.length ? (
+        <section className="grid grid-cols-2 gap-2 px-4 pb-5" aria-label={t('Key numbers')}>
+          {metrics.map((metric) => (
+            <div key={metric.label} className="min-w-0 rounded-[14px] border border-white/[0.06] bg-white/[0.04] px-3.5 py-3">
+              <div className="truncate text-[11px] font-medium uppercase tracking-wide text-white/40">
+                {t(metric.label)}
+              </div>
+              <div className="mt-1 truncate text-xl font-semibold tabular-nums text-white">
+                {metric.value}
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : null}
+
+      <NativeSection title={t('Actions')}>
+        {actions.map(({ label, resolvedHref, icon: Icon, primary }) => (
+          <NativeListTile
+            key={`${label}-${resolvedHref}`}
+            icon={<Icon className="h-[18px] w-[18px]" aria-hidden />}
+            title={t(label)}
+            onClick={() => onNavigate(resolvedHref)}
+            selected={primary}
+            trailing={<ChevronRight className="h-4 w-4 text-white/25" aria-hidden />}
+          />
+        ))}
+      </NativeSection>
     </div>
   );
 }
@@ -57,6 +126,7 @@ function DashboardContent({
   const { user } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
+  const { isInstalledMobileCompanion } = useDeviceExperience();
   const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
   const { data, loading, isValidating, error } = useDashboardStats(currentTenant?.id, endpoint, preset);
   const [workspaceStats, setWorkspaceStats] = useState<Record<string, unknown> | null>(null);
@@ -68,14 +138,15 @@ function DashboardContent({
       .catch(() => {});
   }, [currentTenant?.id, user?.id, getDashboardStats]);
 
-  if (!currentTenant?.id) {
+  if (isInstalledMobileCompanion) {
     return (
-      <div className="ac-scroll-full ac-module-section">
-        <div className="ac-workspace-panel p-8 text-center">
-          <p className="text-sm font-semibold text-[var(--ws-text-primary)]">Select a workspace to open this module</p>
-          <p className="mt-2 text-[13px] text-[var(--ws-text-secondary)]">Choose a workspace from the top bar. Outreach metrics and recipient actions are scoped to that workspace.</p>
-        </div>
-      </div>
+      <NativeModuleWorkspace
+        moduleId={moduleId}
+        data={data}
+        loading={loading}
+        role={user?.role ?? 'client'}
+        onNavigate={(href) => router.push(href)}
+      />
     );
   }
 
@@ -342,7 +413,9 @@ export function CrmDashboard() {
 
   return (
     <ModuleOverviewChrome moduleId="crm" activeHref="/dashboard/crm">
-      <CrmSyncToolbar />
+      <DesktopModuleOnly>
+        <CrmSyncToolbar />
+      </DesktopModuleOnly>
       <ModuleDashboardView
         moduleId="crm"
         endpoint="/api/crm/stats"
@@ -366,7 +439,9 @@ export function OutreachDashboard() {
         chartTitle="Emails sent"
         chartSubtitle="Last 14 days"
       />
-      <OutreachLifecyclePanel />
+      <DesktopModuleOnly>
+        <OutreachLifecyclePanel />
+      </DesktopModuleOnly>
     </ModuleOverviewChrome>
   );
 }

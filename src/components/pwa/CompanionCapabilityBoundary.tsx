@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { getCompanionCapabilityForPath, resolveCompanionModule } from '@/config/pwaCompanionCapabilities';
 import DesktopRequired from '@/components/ui/os/DesktopRequired';
 
@@ -12,10 +12,14 @@ import DesktopRequired from '@/components/ui/os/DesktopRequired';
  */
 export function CompanionCapabilityBoundary({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '/dashboard';
-  const searchParams = useSearchParams();
+  const [requestedDesktopExperience, setRequestedDesktopExperience] = React.useState(false);
   const capability = getCompanionCapabilityForPath(pathname);
   const moduleId = resolveCompanionModule(pathname);
-  const requestedDesktopExperience = searchParams.get('experience') === 'desktop';
+
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    setRequestedDesktopExperience(searchParams.get('experience') === 'desktop');
+  }, [pathname]);
 
   if (capability.level !== 'DESKTOP' || requestedDesktopExperience) return <>{children}</>;
 

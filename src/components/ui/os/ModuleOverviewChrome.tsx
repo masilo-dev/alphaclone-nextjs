@@ -5,6 +5,7 @@ import { MODULE_IDENTITY, type ModuleId } from '@/constants/brand';
 import { SubNavigation } from './SubNavigation';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 import { cn } from '@/lib/utils';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 
 interface ModuleOverviewChromeProps {
   moduleId: ModuleId;
@@ -23,8 +24,18 @@ export function ModuleOverviewChrome({
   className,
   hideSubnav,
 }: ModuleOverviewChromeProps) {
+  const { isInstalledMobileCompanion } = useDeviceExperience();
   const items = getModuleSubnav(moduleId);
   const identity = MODULE_IDENTITY[moduleId];
+
+  if (isInstalledMobileCompanion) {
+    return (
+      <div className={cn('ac-scroll-full', className)} data-module={moduleId} data-native-module>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn('space-y-4 ac-scroll-full ac-module-section', className)}

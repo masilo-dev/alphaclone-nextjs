@@ -31,6 +31,7 @@ test('desktop handoff adds and honors an explicit desktop experience override', 
   const boundary = read('src/components/pwa/CompanionCapabilityBoundary.tsx');
   assert.match(handoff, /searchParams\.set\('experience', 'desktop'\)/);
   assert.match(boundary, /requestedDesktopExperience/);
+  assert.doesNotMatch(boundary, /useSearchParams/);
   assert.match(boundary, /capability\.level !== 'DESKTOP' \|\| requestedDesktopExperience/);
 });
 
@@ -93,4 +94,16 @@ test('dashboard shell has one page-scroll owner', () => {
   assert.match(shell, /isDashboardRoute \? 'overflow-hidden'/);
   assert.match(scrollRegion, /data-dashboard-scroll-region/);
   assert.match(scrollRegion, /isTouchCompanion/);
+});
+
+test('installed module dashboards use an action-first native workspace', () => {
+  const dashboard = read('src/components/dashboard/views/ModuleDashboardView.tsx');
+  const chrome = read('src/components/ui/os/ModuleOverviewChrome.tsx');
+  assert.match(dashboard, /isInstalledMobileCompanion/);
+  assert.match(dashboard, /NativeModuleWorkspace/);
+  assert.match(dashboard, /data-native-module-workspace/);
+  assert.match(dashboard, /NativeListTile/);
+  assert.match(dashboard, /DesktopModuleOnly/);
+  assert.match(chrome, /data-native-module/);
+  assert.match(chrome, /if \(isInstalledMobileCompanion\)/);
 });
