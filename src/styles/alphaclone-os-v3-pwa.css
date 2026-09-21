@@ -51,6 +51,84 @@ html.ac-pwa-mobile .ac-workspace-tab {
   min-height: var(--ac-app-control-height);
 }
 
+/*
+ * Deep module screens pre-date the native shell and often bring desktop
+ * density with them. Keep this correction at the installed-app boundary so
+ * browser/desktop layouts retain their authored presentation while every
+ * module opened from the PWA gets one consistent, compact work surface.
+ */
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame {
+  min-width: 0;
+  max-width: 100%;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.p-8, .p-10, .p-12) {
+  padding: 1rem !important;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.px-8, .px-10, .px-12) {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.py-8, .py-10, .py-12) {
+  padding-top: 1rem !important;
+  padding-bottom: 1rem !important;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.gap-8, .gap-10, .gap-12) {
+  gap: 1rem !important;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.text-4xl, .text-5xl, .text-6xl) {
+  font-size: 1.5rem !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.02em !important;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame :is(.rounded-3xl, .rounded-\[2rem\]) {
+  border-radius: 1rem !important;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame [role='tablist'] {
+  display: flex;
+  max-width: 100%;
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame [role='tablist']::-webkit-scrollbar {
+  display: none;
+}
+
+html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame [role='tablist'] > * {
+  flex: 0 0 auto !important;
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  html.ac-pwa-mobile .ac-module-frame :is(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html.ac-pwa-mobile .ac-module-frame :is(.min-w-\[500px\], .min-w-\[600px\], .min-w-\[700px\], .min-w-\[800px\]) {
+    min-width: 0 !important;
+  }
+
+  html.ac-pwa-mobile .ac-module-frame :is(.w-\[500px\], .w-\[600px\], .w-\[700px\], .w-\[800px\]) {
+    width: 100% !important;
+  }
+
+  html.ac-pwa-mobile .ac-module-frame table {
+    font-size: 0.8125rem;
+  }
+}
+
 /* Installed tablet app */
 html.ac-pwa-tablet {
   --ac-app-control-height: 44px;
