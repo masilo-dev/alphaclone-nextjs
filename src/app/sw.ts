@@ -194,6 +194,15 @@ function safeNotificationUrl(candidate: unknown): string {
     }
 }
 
+function notificationLaunchUrl(candidate: unknown, tenantId: unknown): string {
+    const safePath = safeNotificationUrl(candidate);
+    const parsed = new URL(safePath, self.location.origin);
+    if (typeof tenantId === 'string' && tenantId.length > 0) {
+        parsed.searchParams.set('notificationTenant', tenantId);
+    }
+    return `${parsed.pathname}${parsed.search}`;
+}
+
 self.addEventListener('message', (event) => {
     if (event.data?.type === 'SKIP_WAITING') void self.skipWaiting();
 });
@@ -259,14 +268,20 @@ self.addEventListener('push', (event: PushEvent) => {
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
     event.notification.close();
-    const urlToOpen = safeNotificationUrl(event.notification.data?.url);
+    const urlToOpen = notificationLaunchUrl(
+        event.notification.data?.url,
+        event.notification.data?.tenantId,
+    );
 
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            const absoluteTarget = new URL(urlToOpen, self.location.origin).href;
+            const exactClient = windowClients.find((client) => client.url === absoluteTarget);
+            if (exactClient && 'focus' in exactClient) return exactClient.focus();
+
             for (const client of windowClients) {
                 if ('focus' in client) {
-                    void client.navigate(urlToOpen);
-                    return client.focus();
+                    return client.navigate(urlToOpen).then((navigated) => navigated?.focus());
                 }
             }
             if (self.clients.openWindow) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { User, Project } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessEventService, BusinessEvent } from '../../../services/businessEventService';
@@ -107,6 +107,7 @@ const SOURCE_CONFIG = {
 const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [allEvents, setAllEvents] = useState<CalendarEvent[]>([]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showAddModal, setShowAddModal] = useState(false);
@@ -117,6 +118,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         new Set(['event', 'task', 'project', 'deal', 'lead', 'booking'])
     );
     const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+
+    useEffect(() => {
+        if (searchParams.get('create') === 'true') {
+            setSelectedDate(new Date());
+            setShowAddModal(true);
+        }
+    }, [searchParams]);
 
     const loadAllEvents = useCallback(async () => {
         if (!currentTenant) return;

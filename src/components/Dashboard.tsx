@@ -69,17 +69,16 @@ import {
   FileCheck,
   Video,
   DollarSign,
+  Bot,
   User as UserIcon,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import MilestoneManager from "./dashboard/projects/MilestoneManager";
 import { Button, Card, Input, Modal } from "./ui/UIComponents";
 import {
   CLIENT_NAV_ITEMS,
   ADMIN_NAV_ITEMS,
   TENANT_ADMIN_NAV_ITEMS,
   LOGO_URL,
-  APP_NAME,
 } from "../constants";
 import { WORKSPACE } from "@/constants/design";
 import { isPlatformAdminRole } from "@/lib/platformAdmin";
@@ -97,11 +96,8 @@ import {
   STAGES,
 } from "../types";
 import { resolveDashboardPath } from "@/lib/dashboardNavigate";
-import InsightsHub from "./dashboard/hubs/InsightsHub";
 import { useTenant } from "../contexts/TenantContext";
 
-import AIStudio from "./dashboard/AIStudio";
-import AIStudioTab from "./dashboard/AIStudioTab";
 import NotificationCenter from "./dashboard/NotificationCenter";
 import ThemeToggle from "./ThemeToggle";
 import { presenceService } from "../services/presenceService";
@@ -156,9 +152,7 @@ import { projectService } from "../services/projectService";
 import { messageService } from "../services/messageService";
 import { paymentService } from "../services/paymentService";
 import { userService } from "../services/userService";
-import SecurityDashboard from "./dashboard/SecurityDashboard";
 import AlphaCloneContractModal from "./contracts/AlphaCloneContractModal";
-import SettingsPage from "./dashboard/SettingsPage";
 import PwaSettingsScreen from "./pwa/PwaSettingsScreen";
 import OnboardingPipelines from "./dashboard/OnboardingPipelines";
 import PortfolioShowcase from "./dashboard/PortfolioShowcase";
@@ -178,8 +172,13 @@ import LanguageSwitcher from "./common/LanguageSwitcher";
 
 const ConferenceTab = React.lazy(() => import("./dashboard/ConferenceTab"));
 const AnalyticsTab = React.lazy(() => import("./dashboard/AnalyticsTab"));
-import CRMTab from "./dashboard/CRMTab";
-import MessagesTab from "./dashboard/MessagesTab";
+const MilestoneManager = React.lazy(() => import("./dashboard/projects/MilestoneManager"));
+const InsightsHub = React.lazy(() => import("./dashboard/hubs/InsightsHub"));
+const AIStudioTab = React.lazy(() => import("./dashboard/AIStudioTab"));
+const SecurityDashboard = React.lazy(() => import("./dashboard/SecurityDashboard"));
+const SettingsPage = React.lazy(() => import("./dashboard/SettingsPage"));
+const CRMTab = React.lazy(() => import("./dashboard/CRMTab"));
+const MessagesTab = React.lazy(() => import("./dashboard/MessagesTab"));
 const FinanceTab = React.lazy(() => import("./dashboard/FinanceTab"));
 const EnhancedBillingPage = React.lazy(
   () => import("./dashboard/business/EnhancedBillingPage"),
@@ -222,22 +221,22 @@ const OperatingSystemHome = React.lazy(
 const ContactSubmissionsTab = React.lazy(
   () => import("./dashboard/ContactSubmissionsTab"),
 );
-import TasksTab from "./dashboard/TasksTab";
-import DealsTab from "./dashboard/DealsTab";
-import QuotesTab from "./dashboard/QuotesTab";
+const TasksTab = React.lazy(() => import("./dashboard/TasksTab"));
+const DealsTab = React.lazy(() => import("./dashboard/DealsTab"));
+const QuotesTab = React.lazy(() => import("./dashboard/QuotesTab"));
 const SalesForecastTab = React.lazy(
   () => import("./dashboard/SalesForecastTab"),
 );
-import MailTab from "./dashboard/MailTab";
-import CommunicationHub from "./dashboard/communication/CommunicationHub";
+const MailTab = React.lazy(() => import("./dashboard/MailTab"));
+const CommunicationHub = React.lazy(() => import("./dashboard/communication/CommunicationHub"));
 const GlobalSettingsTab = React.lazy(
   () => import("./dashboard/admin/GlobalSettingsTab"),
 );
 const OperationsConsoleTab = React.lazy(
   () => import("./dashboard/admin/OperationsConsoleTab"),
 );
-import ClientsPage from "./dashboard/business/ClientsPage";
-import ProjectsPage from "./dashboard/business/ProjectsPage";
+const ClientsPage = React.lazy(() => import("./dashboard/business/ClientsPage"));
+const ProjectsPage = React.lazy(() => import("./dashboard/business/ProjectsPage"));
 const ContractDashboard = React.lazy(
   () => import("./contracts/ContractDashboard"),
 );
@@ -984,7 +983,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     loadAllData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTenant?.id, user.id]); // Re-run when tenant becomes available
 
   const refreshStats = useCallback(async () => {
@@ -2615,22 +2613,20 @@ const Dashboard: React.FC<DashboardProps> = ({
               {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
               {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
-              <div className="flex items-center gap-2 sm:gap-3 md:hidden">
+              <div className="ac-pwa-touch-flex flex items-center md:hidden">
                 <Image
                   src={LOGO_URL}
-                  alt="Logo"
-                  width={32}
-                  height={32}
+                  alt="AlphaClone"
+                  width={34}
+                  height={34}
                   className="rounded-lg flex-shrink-0"
+                  priority
                 />
-                <h1 className="pwa-page-title text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none ac-dashboard-mobile-title">
-                  {t(APP_NAME)}
-                </h1>
               </div>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-shrink-0">
-              <div className="hidden md:flex items-center shrink-0">
+              <div className="ac-pwa-desktop-only hidden md:flex items-center shrink-0">
                 <MomentumHUD
                   score={dashboardStats?.momentumScore || 0}
                   streak={dashboardStats?.loginStreak || 0}
@@ -2644,7 +2640,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {activeMeetingCallId && (
                   <button
                     onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
-                    className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
+                    className="ac-pwa-desktop-only hidden md:inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
                     title="Return to active meeting"
                   >
                     <Video className="w-3.5 h-3.5" />
@@ -2652,29 +2648,41 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </button>
                 )}
                 {activeBgTasksCount > 0 && (
-                  <div className="flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
+                  <div className="ac-pwa-desktop-only hidden md:flex items-center gap-2 bg-slate-800/50 text-teal-400 px-3 py-1.5 rounded-full text-xs font-semibold animate-pulse border border-teal-500/30">
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     <span className="hidden sm:inline">
                       {activeBgTasksCount} Task(s)
                     </span>
                   </div>
                 )}
-                <div data-tour="global-search" className="hidden md:block">
+                <div data-tour="global-search" className="ac-pwa-desktop-only hidden md:block">
                   <EnhancedGlobalSearch user={user} onNavigate={router.push} />
                 </div>
-                <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
-                <div data-tour="dashboard-language" className="shrink-0">
+                <div className="ac-pwa-desktop-only hidden md:block">
+                  <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
+                </div>
+                <div data-tour="dashboard-language" className="ac-pwa-desktop-only hidden shrink-0 md:block">
                   <LanguageSwitcher />
                 </div>
-                <ThemeToggle userId={user.id} />
-                <MissedCallsNotification
-                  userId={user.id}
-                  onCallBack={(callerId) => {
-                    const roomId = `room-${callerId.slice(0, 8)}`;
-                    toast.success("Calling back...");
-                    router.push(`/call/${roomId}`);
-                  }}
-                />
+                <div className="ac-pwa-desktop-only hidden md:block"><ThemeToggle userId={user.id} /></div>
+                <button
+                  type="button"
+                  onClick={() => navigateToTab('/dashboard/bonnie')}
+                  className="ac-pwa-touch-flex inline-flex h-10 w-10 items-center justify-center rounded-xl border border-teal-400/25 bg-teal-500/10 text-teal-300 active:scale-95 md:hidden"
+                  aria-label={t('Open Bonnie AI')}
+                >
+                  <Bot className="h-5 w-5" aria-hidden="true" />
+                </button>
+                <div className="ac-pwa-desktop-only hidden md:block">
+                  <MissedCallsNotification
+                    userId={user.id}
+                    onCallBack={(callerId) => {
+                      const roomId = `room-${callerId.slice(0, 8)}`;
+                      toast.success("Calling back...");
+                      router.push(`/call/${roomId}`);
+                    }}
+                  />
+                </div>
                 <div data-tour="business-notifications">
                   <NotificationCenter
                     userId={user.id}

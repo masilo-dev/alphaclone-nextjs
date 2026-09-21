@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { getMoreCatalogue } from '@/config/responsive/mobileNav';
@@ -16,27 +15,18 @@ interface MobileMoreSheetProps {
   onNavigate?: (href: string) => void;
 }
 
-const CAPABILITY_LABEL = {
-  FULL: 'Mobile ready',
-  COMPANION: 'Quick actions',
-  READ_ONLY: 'View on mobile',
-  DESKTOP: 'Desktop controls',
-} as const;
-
 /**
  * Full module catalogue opened from the phone bottom-nav "More" slot.
- * Every major module stays discoverable; capability labels make intentional
- * desktop-first behavior clear instead of hiding modules.
+ * Every major module stays discoverable without turning the phone menu into a
+ * compressed desktop navigation tree.
  */
 export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileMoreSheetProps) {
-  const router = useRouter();
   const groups = getMoreCatalogue(userRole);
 
   if (!open) return null;
 
   const go = (href: string) => {
     onNavigate?.(href);
-    router.push(href);
     onClose();
   };
 
@@ -45,10 +35,7 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
       <button type="button" className="absolute inset-0 bg-black/55 backdrop-blur-sm" aria-label="Close module catalogue" onClick={onClose} />
       <div className="ac-v3-sheet relative mt-auto max-h-[88dvh] flex flex-col rounded-t-[22px] border border-[var(--border-default)] pb-safe">
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-[var(--border-default)]">
-          <div>
-            <h2 id="mobile-more-title" className="text-base font-semibold text-[var(--text-primary)]">More</h2>
-            <p className="text-xs text-[var(--text-muted)] mt-0.5">Every AlphaClone module, adapted for mobile where appropriate</p>
-          </div>
+          <h2 id="mobile-more-title" className="text-base font-semibold text-[var(--text-primary)]">More</h2>
           <button
             type="button"
             onClick={onClose}
@@ -81,7 +68,9 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block font-medium truncate">{item.label}</span>
-                          <span className="block text-[10px] leading-4 text-[var(--text-muted)]">{CAPABILITY_LABEL[capability.level]}</span>
+                          {capability.level === 'DESKTOP' ? (
+                            <span className="block text-[11px] leading-4 text-[var(--text-muted)]">Use on laptop</span>
+                          ) : null}
                         </span>
                       </button>
                     </li>

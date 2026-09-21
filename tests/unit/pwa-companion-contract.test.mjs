@@ -18,9 +18,9 @@ test('companion capability matrix covers the required product levels', () => {
   }
 });
 
-test('installed companion navigation is Home Work Bonnie Inbox More', () => {
+test('installed companion navigation is Home Work Create Inbox More', () => {
   const source = read('src/components/dashboard/BottomNav.tsx');
-  const labels = ['Home', 'Work', 'Bonnie', 'Inbox', 'More'];
+  const labels = ['Home', 'Work', 'Create', 'Inbox', 'More'];
   let previous = -1;
   for (const label of labels) {
     const index = source.indexOf(`label: '${label}'`);
@@ -45,8 +45,8 @@ test('device experience centralizes behavior capabilities', () => {
 
 test('desktop handoff is a product state, not an error state', () => {
   const source = read('src/components/ui/os/DesktopRequired.tsx');
-  assert.match(source, /Advanced controls are available on desktop/);
-  assert.match(source, /mobile companion/);
-  assert.match(source, /Open desktop version/);
+  assert.match(source, /This workspace is best on a laptop/);
+  assert.match(source, /best experience/);
+  assert.match(source, /Continue here anyway/);
   assert.doesNotMatch(source, /error/i);
 });

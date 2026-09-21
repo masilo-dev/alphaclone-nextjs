@@ -10,10 +10,16 @@ const password = process.env.TENANT_PASSWORD || process.env.TEST_USER_PASSWORD |
 const hasCredentials = Boolean(email && password);
 
 const VIEWPORTS = [
+  { name: 'mobile-320', width: 320, height: 568 },
+  { name: 'mobile-360', width: 360, height: 800 },
+  { name: 'mobile-375', width: 375, height: 812 },
+  { name: 'mobile-390', width: 390, height: 844 },
+  { name: 'mobile-412', width: 412, height: 915 },
+  { name: 'mobile-430', width: 430, height: 932 },
+  { name: 'tablet-768', width: 768, height: 1024 },
+  { name: 'tablet-1024', width: 1024, height: 1366 },
   { name: 'desktop-1440', width: 1440, height: 900 },
   { name: 'laptop-1280', width: 1280, height: 800 },
-  { name: 'tablet-768', width: 768, height: 1024 },
-  { name: 'mobile-390', width: 390, height: 844 },
 ];
 
 const PUBLIC_PATHS = [

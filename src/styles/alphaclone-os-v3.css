@@ -136,10 +136,10 @@ html.dark {
 }
 
 /* Companion/mobile containment rules.
-   Only the application viewport owns page scrolling. Nested module wrappers are
-   allowed to grow, while purpose-built panes (mail/chat/sheets) can still own
-   their explicit overflow-y-auto region. This prevents clipped actions and the
-   common "scroll inside a scroll" trap on 320–430px screens. */
+   The dashboard's explicit data-dashboard-scroll-region owns page scrolling so
+   pull-to-refresh and restoration use the same element. The outer app viewport
+   is clipped on dashboard routes; purpose-built mail/chat panes may still own
+   their explicit overflow region. */
 html.ac-pwa-mobile,
 html.ac-pwa-tablet {
   height: 100%;
@@ -156,6 +156,13 @@ html.ac-pwa-mobile .app-viewport,
 html.ac-pwa-tablet .app-viewport {
   min-height: 0;
   overscroll-behavior-y: contain;
+}
+
+html.ac-pwa-mobile [data-dashboard-scroll-region],
+html.ac-pwa-tablet [data-dashboard-scroll-region] {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   scroll-padding-top: max(env(safe-area-inset-top, 0px), 8px);
   scroll-padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
 }

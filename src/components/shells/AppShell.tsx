@@ -18,6 +18,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [authBootTimedOut, setAuthBootTimedOut] = useState(false);
   const isAuthRoute = pathname?.startsWith('/auth/') ?? false;
+  const isDashboardRoute = pathname?.startsWith('/dashboard') ?? false;
 
   useEffect(() => {
     if (!authLoading || isAuthRoute) {
@@ -86,9 +87,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     >
       {isCompanion ? <CompanionNetworkStatus /> : null}
       <div
-        className="app-viewport ios-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+        className={`app-viewport ios-scroll min-h-0 flex-1 overflow-x-hidden ${isDashboardRoute ? 'overflow-hidden' : 'overflow-y-auto'}`}
         style={{
-          paddingTop: isCompanion ? 'env(safe-area-inset-top, 0px)' : undefined,
+          // Auth screens do not have dashboard chrome. Dashboard headers own
+          // their safe-area inset so it is never applied twice.
+          paddingTop: isCompanion && isAuthRoute ? 'env(safe-area-inset-top, 0px)' : undefined,
           WebkitOverflowScrolling: 'touch',
         }}
       >

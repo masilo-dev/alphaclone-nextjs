@@ -13,18 +13,16 @@ interface DesktopRequiredProps {
 }
 
 export function DesktopRequired({
-  title = 'Advanced controls are available on desktop.',
-  description = "You're viewing the AlphaClone mobile companion. Open AlphaClone on desktop for the complete workspace.",
+  title = 'This workspace is best on a laptop.',
+  description = 'Open AlphaClone on a laptop or desktop for the best experience. Your work will be waiting for you there.',
   desktopHref,
   onRemindLater,
   className,
 }: DesktopRequiredProps) {
   const openDesktop = () => {
-    if (desktopHref) {
-      window.location.assign(desktopHref);
-      return;
-    }
-    window.location.assign('/dashboard?experience=desktop');
+    const target = new URL(desktopHref || '/dashboard', window.location.origin);
+    target.searchParams.set('experience', 'desktop');
+    window.location.assign(`${target.pathname}${target.search}${target.hash}`);
   };
 
   return (
@@ -47,7 +45,7 @@ export function DesktopRequired({
               onClick={openDesktop}
               className="min-h-11 rounded-[12px] bg-[var(--ac-accent)] px-4 text-sm font-semibold text-white transition-transform active:scale-[0.98]"
             >
-              Open desktop version
+              Continue here anyway
             </button>
             {onRemindLater ? (
               <button

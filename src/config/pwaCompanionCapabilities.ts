@@ -43,7 +43,7 @@ export const PWA_COMPANION_CAPABILITIES: Record<CompanionModuleId, CompanionCapa
   leads: { level: 'COMPANION', quickActions: ['search', 'view', 'add', 'change_status', 'note', 'approved_outreach'], desktopReason: 'Bulk lead generation and advanced campaign controls are available on desktop.' },
   invoices: { level: 'COMPANION', quickActions: ['view', 'create_draft', 'send_approved', 'view_payment', 'download'], desktopReason: 'Advanced finance controls are available on desktop.' },
   quotes: { level: 'COMPANION', quickActions: ['view', 'view_status', 'approve', 'remind', 'ask_bonnie'], desktopReason: 'Complex quote editing is available on desktop.' },
-  contracts: { level: 'COMPANION', quickActions: ['view', 'view_signature', 'approve', 'remind', 'ask_bonnie'], desktopReason: 'Complex legal editing is available on desktop.' },
+  contracts: { level: 'DESKTOP', quickActions: [], desktopReason: 'Contracts are best managed on a laptop or desktop.' },
   social: { level: 'COMPANION', quickActions: ['view_scheduled', 'view_status', 'create_simple', 'preview', 'approve', 'publish'], desktopReason: 'Advanced content planning and analytics are available on desktop.' },
   documents: { level: 'COMPANION', quickActions: ['browse', 'search', 'preview', 'upload', 'share', 'summarize'], desktopReason: 'For full document editing, open AlphaClone on desktop.' },
   marketing: { level: 'COMPANION', quickActions: ['view_campaigns', 'view_stats', 'preview', 'approve', 'pause_resume_safe'], desktopReason: 'Campaign builders and advanced segmentation are available on desktop.' },

@@ -2,8 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { isPWA } from '@/utils/pwaUtils';
-
-type AppSurface = 'browser' | 'pwa-mobile' | 'pwa-tablet' | 'pwa-desktop';
+import { resolveAppSurface, type AppSurface } from '@/lib/pwa/appSurface';
 
 interface PWAContextType {
     isPWA: boolean;
@@ -15,11 +14,11 @@ const PWAContext = createContext<PWAContextType>({ isPWA: false, isLoading: true
 
 function getAppSurface(pwaMode: boolean): AppSurface {
     if (!pwaMode || typeof window === 'undefined') return 'browser';
-    const width = window.innerWidth;
-    const coarse = window.matchMedia('(pointer: coarse)').matches;
-    if (width < 768) return 'pwa-mobile';
-    if (width < 1100 && coarse) return 'pwa-tablet';
-    return 'pwa-desktop';
+    return resolveAppSurface({
+        isPwa: pwaMode,
+        width: window.innerWidth,
+        coarsePointer: window.matchMedia('(pointer: coarse)').matches,
+    });
 }
 
 export const PWAProvider = ({ children }: { children: React.ReactNode }) => {

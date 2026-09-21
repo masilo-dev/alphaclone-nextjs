@@ -54,17 +54,17 @@ import {
   SocialDashboard,
 } from '../views/ModuleDashboardView';
 import { OutreachInbox } from '../outreach/OutreachInbox';
-import ProjectsPage from './ProjectsPage';
-import TeamPage from './TeamPage';
-import ClientsPage from './ClientsPage';
-import CRMTab from '../CRMTab';
-import TasksTab from '../TasksTab';
-import DealsTab from '../DealsTab';
-import QuotesTab from '../QuotesTab';
-import MailTab from '../MailTab';
-import CommunicationHub from '../communication/CommunicationHub';
-import MessagesPage from './MessagesPage';
 // Lazy load heavier tabs that aren't needed on dashboard mount
+const ProjectsPage = React.lazy(() => import('./ProjectsPage'));
+const TeamPage = React.lazy(() => import('./TeamPage'));
+const ClientsPage = React.lazy(() => import('./ClientsPage'));
+const CRMTab = React.lazy(() => import('../CRMTab'));
+const TasksTab = React.lazy(() => import('../TasksTab'));
+const DealsTab = React.lazy(() => import('../DealsTab'));
+const QuotesTab = React.lazy(() => import('../QuotesTab'));
+const MailTab = React.lazy(() => import('../MailTab'));
+const CommunicationHub = React.lazy(() => import('../communication/CommunicationHub'));
+const MessagesPage = React.lazy(() => import('./MessagesPage'));
 const CalendarPage = React.lazy(() => import('./CalendarPage'));
 const EnhancedBillingPage = React.lazy(() => import('./EnhancedBillingPage'));
 const ReportsPage = React.lazy(() => import('./ReportsPage'));
@@ -75,8 +75,8 @@ const ReferralsPage = React.lazy(() => import('./ReferralsPage'));
 const BookingTab = React.lazy(() => import('./BookingTab'));
 const ScraperCampaignsPage = React.lazy(() => import('../leads/ScraperCampaignsPage'));
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
-import ContractDashboard from '../../contracts/ContractDashboard';
-import SharedDocumentsWorkspace from '../../documents/SharedDocumentsWorkspace';
+const ContractDashboard = React.lazy(() => import('../../contracts/ContractDashboard'));
+const SharedDocumentsWorkspace = React.lazy(() => import('../../documents/SharedDocumentsWorkspace'));
 // Accounting Components - Lazy loaded to prevent module resolution issues
 const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
 // New Components
@@ -146,7 +146,7 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import BottomNav from '../BottomNav';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TabSkeleton } from '@/components/ui/TabSkeleton';
-import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
+import { LOGO_URL, TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 import { EnterpriseTabWrapper, isEnterpriseFullBleedTab } from '@/components/ui/EnterpriseTabWrapper';
@@ -1289,28 +1289,20 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     <div className="flex items-center gap-4">
                         {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
-                        <div className="flex items-center gap-2 sm:gap-3 md:hidden">
-                            <div className="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center overflow-hidden relative flex-shrink-0">
-                                {currentTenant?.logo_url ? (
-                                    <Image
-                                        src={currentTenant.logo_url}
-                                        alt="Logo"
-                                        fill
-                                        className="object-cover"
-                                        sizes="32px"
-                                    />
-                                ) : (
-                                    <span className="text-teal-400 font-bold text-lg">{currentTenant?.name?.charAt(0) || 'A'}</span>
-                                )}
-                            </div>
-                            {!isHubRoute(route) && (
-                                <h1 className="pwa-page-title text-white/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-none">{getPageTitle()}</h1>
-                            )}
+                        <div className="ac-pwa-touch-flex flex items-center md:hidden">
+                            <Image
+                                src={LOGO_URL}
+                                alt="AlphaClone"
+                                width={34}
+                                height={34}
+                                className="rounded-lg flex-shrink-0"
+                                priority
+                            />
                         </div>
 
                         {/* Breadcrumb or Title for Desktop — hidden inside hubs (HubShell shows title) */}
                         {!isHubRoute(route) && (
-                        <div className="hidden md:block">
+                        <div className="ac-pwa-desktop-only hidden md:block">
                             <h1 className="text-lg font-bold text-white/90 tracking-tight">
                                 {getPageTitle()}
                             </h1>
@@ -1321,16 +1313,18 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     {/* Right: compact utility cluster + account menu */}
                     <div className="flex items-center gap-2 sm:gap-3">
                         {activeBgTasksCount > 0 && (
-                            <div className="hidden md:flex items-center gap-1.5 text-teal-400 px-2.5 py-1 rounded-full text-[11px] font-medium border border-teal-500/25 bg-teal-500/5">
+                            <div className="ac-pwa-desktop-only hidden md:flex items-center gap-1.5 text-teal-400 px-2.5 py-1 rounded-full text-[11px] font-medium border border-teal-500/25 bg-teal-500/5">
                                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                                 <span>{activeBgTasksCount}</span>
                             </div>
                         )}
-                        <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
+                        <div className="ac-pwa-desktop-only hidden md:block">
+                            <OfflineQueueIndicator tenantId={currentTenant?.id} userId={user.id} />
+                        </div>
                         {activeMeetingCallId && (
                             <button
                                 onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
-                                className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-teal-500/20 transition-colors"
+                                className="ac-pwa-desktop-only hidden md:inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-teal-500/20 transition-colors"
                                 title="Return to active meeting"
                             >
                                 <Video className="w-3.5 h-3.5" />
@@ -1339,7 +1333,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         )}
 
                         {/* Create button intentionally removed from header – use BottomNav → More on mobile, or Command Palette on desktop */}
-                        <div className="relative hidden md:block">
+                        <div className="ac-pwa-desktop-only relative hidden md:block">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -1380,7 +1374,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 </div>
                             ) : null}
                         </div>
-                        <div className="relative hidden lg:block">
+                        <div className="ac-pwa-desktop-only relative hidden lg:block">
                             <button
                                 type="button"
                                 onClick={() => {
@@ -1420,27 +1414,37 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <button
                             type="button"
                             onClick={() => setActiveTab('/dashboard/business/bonnie')}
-                            className="hidden md:inline-flex ac-workspace-action-btn ac-workspace-action-btn--bonnie min-h-9 px-3"
+                            className="ac-pwa-desktop-only hidden md:inline-flex ac-workspace-action-btn ac-workspace-action-btn--bonnie min-h-9 px-3"
                             aria-label={t('Open Bonnie AI')}
                         >
                             <Bot className="h-4 w-4" aria-hidden="true" />
                             <span className="hidden xl:inline">{t('Ask Bonnie')}</span>
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('/dashboard/business/bonnie')}
+                            className="ac-pwa-touch-flex inline-flex h-10 w-10 items-center justify-center rounded-xl border border-teal-400/25 bg-teal-500/10 text-teal-300 active:scale-95 md:hidden"
+                            aria-label={t('Open Bonnie AI')}
+                        >
+                            <Bot className="h-5 w-5" aria-hidden="true" />
+                        </button>
 
-                        <div data-tour="global-search" className="hidden md:block">
+                        <div data-tour="global-search" className="ac-pwa-desktop-only hidden md:block">
                             <EnhancedGlobalSearch
                                 user={user}
                                 onNavigate={(path) => setActiveTab(path)}
                             />
                         </div>
-                        <MissedCallsNotification
-                            userId={user.id}
-                            onCallBack={(callerId) => {
-                                const roomId = `room-${callerId.slice(0, 8)}`;
-                                toast.success('Calling back...');
-                                router.push(`/call/${roomId}`);
-                            }}
-                        />
+                        <div className="ac-pwa-desktop-only hidden md:block">
+                            <MissedCallsNotification
+                                userId={user.id}
+                                onCallBack={(callerId) => {
+                                    const roomId = `room-${callerId.slice(0, 8)}`;
+                                    toast.success('Calling back...');
+                                    router.push(`/call/${roomId}`);
+                                }}
+                            />
+                        </div>
                         <div data-tour="business-notifications">
                             <NotificationCenter userId={user.id} tenantId={currentTenant.id} />
                         </div>

@@ -77,8 +77,10 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
       <div
         id="ac-account-menu-panel"
         role="menu"
-        className="fixed z-[1200] w-60 rounded-xl border border-[var(--border-default)] bg-[var(--surface-elevated)] shadow-2xl shadow-black/40 overflow-hidden"
-        style={{ top: anchor.top, right: anchor.right }}
+        className={`fixed z-[1200] border border-[var(--border-default)] bg-[var(--surface-elevated)] shadow-2xl shadow-black/40 overflow-hidden ${
+          isMobile ? 'inset-x-3 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] rounded-2xl' : 'w-60 rounded-xl'
+        }`}
+        style={isMobile ? undefined : { top: anchor.top, right: anchor.right }}
       >
         <div className="px-3 py-3 border-b border-[var(--border-default)] bg-[var(--surface-secondary)]">
           <p className="text-sm font-medium text-[var(--text-primary)] truncate">{displayName}</p>
@@ -156,7 +158,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={t('Account menu')}
-        className="flex items-center gap-1.5 rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)] pl-1 pr-2 py-1 hover:bg-[var(--surface-hover)] transition-colors"
+        className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--surface-secondary)] p-0 hover:bg-[var(--surface-hover)] transition-colors md:h-auto md:w-auto md:gap-1.5 md:pl-1 md:pr-2 md:py-1"
       >
         <Avatar
           src={user.avatar}
@@ -166,7 +168,7 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
           className="shrink-0"
         />
         <ChevronDown
-          className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`hidden w-3.5 h-3.5 text-[var(--text-muted)] transition-transform md:block ${open ? 'rotate-180' : ''}`}
         />
       </button>
 

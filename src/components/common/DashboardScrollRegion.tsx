@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import PullToRefresh from './PullToRefresh';
+import { usePWA } from '@/contexts/PWAContext';
 
 export interface DashboardScrollRegionProps {
   onRefresh: () => Promise<void>;
@@ -22,6 +23,7 @@ export function DashboardScrollRegion({
   scrollable = true,
 }: DashboardScrollRegionProps) {
   const [isMobile, setIsMobile] = useState(false);
+  const { appSurface } = usePWA();
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -39,7 +41,9 @@ export function DashboardScrollRegion({
     );
   }
 
-  if (isMobile) {
+  const isTouchCompanion = appSurface === 'pwa-mobile' || appSurface === 'pwa-tablet';
+
+  if (isMobile || isTouchCompanion) {
     return (
       <PullToRefresh
         onRefresh={onRefresh}
