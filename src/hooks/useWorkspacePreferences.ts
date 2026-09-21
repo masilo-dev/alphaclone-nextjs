@@ -13,6 +13,29 @@ import {
 
 const DEBOUNCE_MS = 400;
 
+function preferenceCacheKey(tenantId: string): string {
+  return `alphaclone:workspace-preferences:${tenantId}`;
+}
+
+function readCachedPreferences(tenantId: string): WorkspacePreferencesResponse | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(preferenceCacheKey(tenantId));
+    return raw ? (JSON.parse(raw) as WorkspacePreferencesResponse) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedPreferences(tenantId: string, data: WorkspacePreferencesResponse): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(preferenceCacheKey(tenantId), JSON.stringify(data));
+  } catch {
+    // Storage is an enhancement; the server remains authoritative.
+  }
+}
+
 async function fetchPreferences(tenantId: string): Promise<WorkspacePreferencesResponse> {
   const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/workspace-preferences`, {
     credentials: 'include',
@@ -70,6 +93,7 @@ export function useWorkspacePreferences() {
     pendingPatchRef.current = {};
     try {
       const updated = await patchPreferences(tenantId, patch);
+      writeCachedPreferences(tenantId, updated);
       setPeriodClose(updated.periodClose);
       setExecutiveKpiGoals(updated.executiveKpiGoals);
       setDashboardHomeLayout(updated.dashboardHomeLayout);
@@ -99,10 +123,17 @@ export function useWorkspacePreferences() {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    const cached = readCachedPreferences(tenantId);
+    if (cached) {
+      setPeriodClose(cached.periodClose);
+      setExecutiveKpiGoals(cached.executiveKpiGoals);
+      setDashboardHomeLayout(cached.dashboardHomeLayout);
+    }
+    setLoading(!cached);
     setError(null);
     try {
       const data = await fetchPreferences(tenantId);
+      writeCachedPreferences(tenantId, data);
       setPeriodClose(data.periodClose);
       setExecutiveKpiGoals(data.executiveKpiGoals);
       setDashboardHomeLayout(data.dashboardHomeLayout);
@@ -119,6 +150,20 @@ export function useWorkspacePreferences() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [reload]);
+
+  useEffect(() => {
+    if (!tenantId || typeof window === 'undefined') return;
+    const onPreferenceUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<{ tenantId?: string; data?: WorkspacePreferencesResponse }>).detail;
+      if (detail?.tenantId !== tenantId || !detail.data) return;
+      setPeriodClose(detail.data.periodClose);
+      setExecutiveKpiGoals(detail.data.executiveKpiGoals);
+      setDashboardHomeLayout(detail.data.dashboardHomeLayout);
+      setLoading(false);
+    };
+    window.addEventListener('alphaclone:workspace-preferences-updated', onPreferenceUpdate);
+    return () => window.removeEventListener('alphaclone:workspace-preferences-updated', onPreferenceUpdate);
+  }, [tenantId]);
 
   const savePeriodCloseChecklist = useCallback(
     (periodId: string, checked: Record<string, boolean>, immediate = false) => {
@@ -153,11 +198,19 @@ export function useWorkspacePreferences() {
   const saveDashboardHomeLayout = useCallback(
     async (layout: DashboardHomeLayout) => {
       setDashboardHomeLayout(layout);
+      if (tenantId) {
+        const cached = readCachedPreferences(tenantId);
+        const optimistic = cached ?? { periodClose, executiveKpiGoals, dashboardHomeLayout: layout };
+        const nextPreferences = { ...optimistic, dashboardHomeLayout: layout };
+        writeCachedPreferences(tenantId, nextPreferences);
+        window.dispatchEvent(new CustomEvent('alphaclone:workspace-preferences-updated', { detail: { tenantId, data: nextPreferences } }));
+      }
       if (!tenantId) return;
       if (debounceRef.current) clearTimeout(debounceRef.current);
       pendingPatchRef.current = {};
       try {
         const updated = await patchPreferences(tenantId, { dashboardHomeLayout: layout });
+        writeCachedPreferences(tenantId, updated);
         setPeriodClose(updated.periodClose);
         setExecutiveKpiGoals(updated.executiveKpiGoals);
         setDashboardHomeLayout(updated.dashboardHomeLayout);
@@ -166,7 +219,7 @@ export function useWorkspacePreferences() {
         setError(err instanceof Error ? err.message : 'Failed to save home layout');
       }
     },
-    [tenantId],
+    [executiveKpiGoals, periodClose, tenantId],
   );
 
   const patchImmediate = useCallback(
@@ -179,6 +232,7 @@ export function useWorkspacePreferences() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       pendingPatchRef.current = {};
       const updated = await patchPreferences(tenantId, patch);
+      writeCachedPreferences(tenantId, updated);
       setPeriodClose(updated.periodClose);
       setExecutiveKpiGoals(updated.executiveKpiGoals);
       setDashboardHomeLayout(updated.dashboardHomeLayout);

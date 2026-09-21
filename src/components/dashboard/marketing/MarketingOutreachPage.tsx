@@ -58,13 +58,24 @@ export default function MarketingOutreachPage() {
   const [outreachOpen, setOutreachOpen] = useState(false);
 
   const load = useCallback(async () => {
-    if (!currentTenant?.id) return;
+    if (!currentTenant?.id) {
+      setData(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`/api/marketing/overview?tenantId=${currentTenant.id}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to load');
-      setData({ today: json.today, recentOutreach: json.recentOutreach || [] });
+      setData({
+        today: {
+          outreachSent: Number(json.today?.outreachSent || 0),
+          replies: Number(json.today?.replies || 0),
+          meetingsBooked: Number(json.today?.meetingsBooked || 0),
+        },
+        recentOutreach: Array.isArray(json.recentOutreach) ? json.recentOutreach : [],
+      });
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to load outreach');
     } finally {
@@ -103,7 +114,14 @@ export default function MarketingOutreachPage() {
 
         <CRMWorkspaceBridge active="outreach" />
 
-        {loading && !data ? (
+        {!currentTenant?.id ? (
+          <div className="ac-workspace-panel p-8 text-center">
+            <h2 className="text-sm font-semibold text-[var(--ws-text-primary)]">Select a workspace to open Outreach</h2>
+            <p className="mt-2 text-[13px] text-[var(--ws-text-secondary)]">Outreach is workspace-specific. Choose a workspace from the top bar, then your pipeline and recipient list will appear here.</p>
+          </div>
+        ) : null}
+
+        {currentTenant?.id && loading && !data ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
           </div>

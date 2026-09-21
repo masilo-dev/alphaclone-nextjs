@@ -32,7 +32,7 @@ interface DashboardHomeLayoutToggleProps {
 
 /** Per-tenant home layout preference — stored in workspace settings, not localStorage. */
 export function DashboardHomeLayoutToggle({ className }: DashboardHomeLayoutToggleProps) {
-  const { dashboardHomeLayout, saveDashboardHomeLayout, loading } = useWorkspacePreferences();
+  const { dashboardHomeLayout, saveDashboardHomeLayout } = useWorkspacePreferences();
   const { t } = useLanguage();
 
   return (
@@ -51,7 +51,7 @@ export function DashboardHomeLayoutToggle({ className }: DashboardHomeLayoutTogg
           <button
             key={opt.id}
             type="button"
-            disabled={loading}
+            disabled={false}
             title={t(opt.hint)}
             onClick={() => void saveDashboardHomeLayout(opt.id)}
             className={cn(

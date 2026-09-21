@@ -47,6 +47,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [selectedLeads, setSelectedLeads] = useState<string[]>(initialSelectedLeads);
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
+    const [complianceConfirmed, setComplianceConfirmed] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [customPrompt, setCustomPrompt] = useState('');
     const [selectedTone, setSelectedTone] = useState('professional');
@@ -64,6 +65,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         if (isOpen) {
             fetchLeads();
             fetchAccountInfo();
+            setComplianceConfirmed(false);
             if (initialSelectedLeads?.length) {
                 setSelectedLeads(initialSelectedLeads.slice(0, 20));
             }
@@ -167,6 +169,10 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
         }
         if (!currentTenant?.id) {
             toast.error('No active workspace selected');
+            return;
+        }
+        if (!complianceConfirmed) {
+            toast.error('Confirm that this outreach is lawful and wanted before sending.');
             return;
         }
 
@@ -347,6 +353,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </button>
                             </div>
                         </div>
+                        <p className="-mt-4 mb-4 text-[11px] leading-5 text-slate-500">Maximum 20 leads per AI outreach batch. Select All chooses the first 20 matching leads so you can review a controlled batch before sending.</p>
 
                         <div className="relative mb-6">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -537,9 +544,20 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                                 </div>
 
                                 <div className="pt-4 mt-auto">
+                                    <label className="mb-3 flex items-start gap-2.5 rounded-2xl border border-amber-400/20 bg-amber-400/[.06] p-3 text-left cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={complianceConfirmed}
+                                            onChange={(event) => setComplianceConfirmed(event.target.checked)}
+                                            className="mt-0.5 h-4 w-4 accent-teal-500"
+                                        />
+                                        <span className="text-[11px] leading-5 text-slate-300">
+                                            I confirm the selected recipients have permission or another lawful basis for contact, the message is relevant and not deceptive, and opt-outs will be honoured. My business is responsible for the outreach sent from this workspace.
+                                        </span>
+                                    </label>
                                     <Button
                                         onClick={handleSend}
-                                        disabled={sending}
+                                        disabled={sending || !complianceConfirmed}
                                         className="w-full h-16 rounded-[2rem] bg-teal-600 hover:bg-teal-500 text-white font-black text-lg shadow-xl shadow-teal-500/10 disabled:opacity-50 transition-all relative overflow-hidden group border-0"
                                     >
                                         {sending ? (
@@ -574,4 +592,3 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 };
 
 export default AIOutreachModal;
-

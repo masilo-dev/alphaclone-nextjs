@@ -5,7 +5,7 @@ import { CtaPair } from './CtaButtons';
 import { ConversionBanner } from './ConversionBanner';
 import { WorkflowStep } from './FeatureBlocks';
 import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
-import ProductScreenshot from './ProductScreenshot';
+import ProductSystemVisual, { ProductFlowRail, ProductOutcomeStrip } from './ProductSystemVisual';
 
 type ProductPageTemplateProps = {
   feature: MarketingProductFeature;
@@ -44,15 +44,10 @@ export default function ProductPageTemplate({ feature }: ProductPageTemplateProp
             <CtaPair className="mt-8 justify-center" />
           </div>
 
-          {feature.screenshot ? (
-            <ProductScreenshot
-              src={feature.screenshot.src}
-              alt={feature.screenshot.alt}
-              caption={`${feature.name} view shown with demonstration data.`}
-              priority
-              className="mt-12"
-            />
-          ) : null}
+          <div className="mx-auto mt-12 max-w-5xl">
+            <ProductSystemVisual product={feature.name} slug={feature.slug} />
+            <div className="mt-4"><ProductOutcomeStrip product={feature.name} /></div>
+          </div>
         </MarketingContainer>
       </MarketingSection>
 
@@ -73,6 +68,7 @@ export default function ProductPageTemplate({ feature }: ProductPageTemplateProp
               />
             ))}
           </div>
+          <div className="mt-8"><ProductFlowRail /></div>
         </MarketingContainer>
       </MarketingSection>
 

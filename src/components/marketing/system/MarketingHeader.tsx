@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { ArrowRight, ChevronDown, Menu, X } from 'lucide-react';
 import {
   Sheet,
   SheetClose,
@@ -250,6 +250,14 @@ export default function MarketingHeader() {
                       />
                     </summary>
                     <div id={`marketing-nav-${dropdown.key}`} className="mkt-simple-menu" role="menu">
+                      {dropdown.key === 'product' ? (
+                        <div className="mkt-product-menu-intro">
+                          <span className="mkt-product-menu-kicker">One connected workspace</span>
+                          <strong>Move from intent to verified result.</strong>
+                          <span>Start with the area you need today. The context carries into CRM, delivery, contracts, and billing.</span>
+                          <Link href="/how-it-works" onClick={() => setActiveDropdown(null)} className="mkt-product-menu-cta">See how the workflow connects <ArrowRight className="h-3.5 w-3.5" /></Link>
+                        </div>
+                      ) : null}
                       {dropdown.links.map((item) => (
                         <Link
                           key={item.path}

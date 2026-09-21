@@ -227,6 +227,20 @@ export default function InstagramIntegrationTab() {
 
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module max-w-5xl mx-auto p-4 ac-safe-bottom lg:pb-4 space-y-6">
+      <div className="rounded-2xl border border-pink-400/20 bg-pink-400/[.05] p-4">
+        <div className="flex items-start gap-3">
+          <ImageIcon className="mt-0.5 h-5 w-5 shrink-0 text-pink-300" />
+          <div>
+            <h1 className="text-lg font-bold text-white">Instagram Business workspace</h1>
+            <p className="mt-1 text-sm leading-6 text-slate-400">This tab connects your Professional Instagram account to AlphaClone. Use it to confirm the account and Facebook Page, publish a photo, and then manage scheduled or verified posts from Social Compose.</p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+              <span className="rounded-full border border-pink-300/20 bg-pink-300/10 px-2.5 py-1 text-pink-100">1. Account connection</span>
+              <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2.5 py-1 text-cyan-100">2. Publish with image</span>
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1 text-emerald-100">3. Verify the result</span>
+            </div>
+          </div>
+        </div>
+      </div>
       {accounts.map((account) => (
         <div key={account.id} className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

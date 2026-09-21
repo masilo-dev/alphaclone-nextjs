@@ -470,8 +470,12 @@ export default function ClientPortalPage() {
                 if (!r.ok || !d.portal) throw new Error(d.error || 'This workspace link is no longer available.');
                 setPortal(d.portal);
                 setProjectId(d.portal.projects?.[0]?.id || '');
-                await loadMessages();
-                await loadWorkspaceActivity();
+                // The portal record is the primary render payload. Do not keep
+                // the entire workspace behind the slower secondary activity
+                // requests; show projects/invoices/contracts first, then fill
+                // messages and the activity rail in parallel.
+                if (!cancelled) setLoading(false);
+                void Promise.all([loadMessages(), loadWorkspaceActivity()]);
             } catch (cause) {
                 if (cancelled) return;
                 setError(cause instanceof Error ? cause.message : 'Failed to load workspace');

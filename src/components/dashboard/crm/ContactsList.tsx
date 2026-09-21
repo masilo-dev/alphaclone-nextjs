@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
     Search, Filter, Plus, Mail, Phone, Building2, MoreHorizontal,
-    User, Edit, Trash2, RefreshCw, Download, X, CheckCircle,
+    User, Users, Edit, Trash2, RefreshCw, Download, X, CheckCircle,
     XCircle, Calendar, Tag, ExternalLink, ChevronDown, ChevronUp,
-    Sparkles, FileText, Receipt
+    Sparkles, FileText, Receipt, Eye, Send, FolderKanban, CalendarDays, CheckSquare
 } from 'lucide-react';
 import { contactService, type ContactWithCompany } from '@/services/contactService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,6 +52,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     const [pages, setPages] = useState(1);
     const [exporting, setExporting] = useState(false);
     const [timelineContact, setTimelineContact] = useState<ContactWithCompany | null>(null);
+    const [previewContact, setPreviewContact] = useState<ContactWithCompany | null>(null);
 
     const loadContacts = useCallback(async () => {
         try {
@@ -376,9 +378,14 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="font-semibold text-white">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPreviewContact(contact)}
+                                                    className="font-semibold text-white hover:text-cyan-200 hover:underline underline-offset-2 text-left"
+                                                    title="Open Contact 360 preview"
+                                                >
                                                     {contact.firstName} {contact.lastName}
-                                                </span>
+                                                </button>
                                                 <LeadScoreBadge contact={contact} size="sm" />
                                                 <span className={`text-xs px-2 py-0.5 rounded-full ${status.bgColor} ${status.color}`}>
                                                     {status.label}
@@ -474,6 +481,13 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                                             title="View Activity Timeline"
                                         >
                                             <Activity className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setPreviewContact(contact)}
+                                            className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                                            title="Open Contact 360 preview"
+                                        >
+                                            <Eye className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => onEditContact?.(contact)}
@@ -605,6 +619,49 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                     contactName={`${timelineContact.firstName} ${timelineContact.lastName}`}
                     onClose={() => setTimelineContact(null)}
                 />
+            )}
+            {previewContact && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="Contact 360 preview">
+                    <div className="w-full max-w-2xl max-h-[90dvh] overflow-y-auto rounded-2xl border border-cyan-400/20 bg-slate-950 shadow-2xl">
+                        <div className="flex items-start justify-between gap-4 border-b border-white/10 p-5">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[.18em] text-cyan-300">Contact 360 preview</p>
+                                <h3 className="mt-1 text-xl font-bold text-white">{previewContact.fullName}</h3>
+                                <p className="mt-1 text-sm text-slate-400">{previewContact.company?.name || 'Independent contact'} · {previewContact.status}</p>
+                            </div>
+                            <button type="button" onClick={() => setPreviewContact(null)} className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Close Contact 360 preview"><X className="h-5 w-5" /></button>
+                        </div>
+                        <div className="grid gap-4 p-5 sm:grid-cols-2">
+                            <div className="rounded-xl border border-white/10 bg-white/[.03] p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[.16em] text-slate-500">Identity and contact</p>
+                                <div className="mt-3 space-y-2 text-sm text-slate-300">
+                                    <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-cyan-300" />{previewContact.email || 'No email recorded'}</p>
+                                    <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-cyan-300" />{previewContact.phone || 'No phone recorded'}</p>
+                                    <p className="flex items-center gap-2"><Building2 className="h-4 w-4 text-cyan-300" />{previewContact.company?.name || 'No company linked'}</p>
+                                </div>
+                            </div>
+                            <div className="rounded-xl border border-white/10 bg-white/[.03] p-4">
+                                <p className="text-[10px] font-black uppercase tracking-[.16em] text-slate-500">Record context</p>
+                                <div className="mt-3 flex flex-wrap gap-2">{(previewContact.tags || []).slice(0, 6).map((tag) => <span key={tag} className="rounded-full border border-violet-300/20 bg-violet-300/10 px-2.5 py-1 text-[10px] font-semibold text-violet-100">{tag}</span>)}{!(previewContact.tags || []).length ? <span className="text-sm text-slate-500">No tags yet</span> : null}</div>
+                                <button type="button" onClick={() => { setTimelineContact(previewContact); setPreviewContact(null); }} className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-teal-300 hover:text-teal-200"><Activity className="h-3.5 w-3.5" /> View activity timeline</button>
+                            </div>
+                        </div>
+                        <div className="border-t border-white/10 p-5">
+                            <p className="text-[10px] font-black uppercase tracking-[.16em] text-slate-500">Continue the work from this record</p>
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                {[
+                                    ['/dashboard/marketing/outreach', 'Prepare outreach', Send],
+                                    ['/dashboard/business/projects', 'Open projects', FolderKanban],
+                                    ['/dashboard/business/billing/manage', 'Open billing', Receipt],
+                                    ['/dashboard/business/calendar', 'View meetings', CalendarDays],
+                                    ['/dashboard/tasks', 'Create task', CheckSquare],
+                                    ['/dashboard/crm/unified-contacts', 'Open unified CRM', Users],
+                                ].map(([href, label, Icon]) => <Link key={String(label)} href={`${href}?contactId=${encodeURIComponent(previewContact.id)}`} onClick={() => setPreviewContact(null)} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[.03] px-3 py-2.5 text-xs font-semibold text-slate-200 hover:border-cyan-300/30 hover:bg-cyan-300/[.06] hover:text-cyan-100"><Icon className="h-3.5 w-3.5 text-cyan-300" />{String(label)}</Link>)}
+                            </div>
+                            <p className="mt-3 text-[11px] leading-5 text-slate-500">These shortcuts keep the contact ID attached as you move into the relevant workflow. The full client record remains the source of truth.</p>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

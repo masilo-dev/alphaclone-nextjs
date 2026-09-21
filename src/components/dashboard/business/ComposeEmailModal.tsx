@@ -92,6 +92,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [attachments, setAttachments] = useState<{ id: string, name: string, size: number, data?: string }[]>([]);
     const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
+    const [complianceConfirmed, setComplianceConfirmed] = useState(false);
     const [showAiAssist, setShowAiAssist] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
@@ -124,6 +125,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             setAiPrompt('');
             setShowAiAssist(false);
             setAutoSaveStatus('idle');
+            setComplianceConfirmed(false);
 
             if (!initialTo && !initialSubject && !initialBody && currentTenant?.id) {
                 const stored = loadLocalComposeDraft(currentTenant.id, userId);
@@ -538,6 +540,10 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         }
         if (!body.trim()) {
             toast.error('Message body is required');
+            return;
+        }
+        if (!complianceConfirmed) {
+            toast.error('Confirm that this outreach is lawful and wanted before sending.');
             return;
         }
 
@@ -960,6 +966,20 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                             </div>
                         </div>
 
+                        <div className="px-4 py-3 border-t border-white/5 bg-amber-500/[.04]">
+                            <label className="flex items-start gap-2.5 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={complianceConfirmed}
+                                    onChange={(event) => setComplianceConfirmed(event.target.checked)}
+                                    className="mt-0.5 h-4 w-4 accent-teal-500"
+                                />
+                                <span className="text-[11px] leading-5 text-slate-300">
+                                    I confirm these recipients have given permission or there is another lawful basis for this message, the content is relevant and not deceptive, and I will honour opt-outs and applicable anti-spam/privacy laws. I understand my business is responsible for the outreach sent from this workspace.
+                                </span>
+                            </label>
+                        </div>
+
                         <div className="px-4 py-3 border-t border-white/5 flex items-center justify-between gap-2 shrink-0">
                             <p className="text-[10px] text-slate-600 truncate">
                                 {autoSaveStatus === 'saving' && 'Saving…'}
@@ -985,7 +1005,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                 <button
                                     type="button"
                                     onClick={handleSend}
-                                    disabled={sending}
+                                    disabled={sending || !complianceConfirmed}
                                     className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 disabled:opacity-50"
                                 >
                                     {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}

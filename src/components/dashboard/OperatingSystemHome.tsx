@@ -43,6 +43,20 @@ function money(n: number): string {
   }).format(n || 0);
 }
 
+function dashboardStatsCacheKey(tenantId: string, period: string): string {
+  return `alphaclone:dashboard-stats:${tenantId}:${period}`;
+}
+
+function readDashboardStatsCache(tenantId: string | undefined, period: string): Record<string, unknown> | null {
+  if (typeof window === 'undefined' || !tenantId) return null;
+  try {
+    const raw = window.sessionStorage.getItem(dashboardStatsCacheKey(tenantId, period));
+    return raw ? (JSON.parse(raw) as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 const DEFAULT_MODULES: ModuleLauncherItem[] = [
   { id: 'crm', href: '/dashboard/crm', purpose: 'Relationships and customer health' },
   { id: 'leads', href: '/dashboard/leads', purpose: 'Capture and qualify opportunities' },
@@ -63,7 +77,7 @@ export function OperatingSystemHome() {
   const { t, language } = useLanguage();
   const { pendingCount } = useBonnieApprovals(currentTenant?.id);
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
-  const [stats, setStats] = useState<Record<string, unknown> | null>(null);
+  const [stats, setStats] = useState<Record<string, unknown> | null>(() => readDashboardStatsCache(currentTenant?.id, 'last_30_days'));
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const { preset, setPeriod, comparisonLabel } = useMetricDateRange('last_30_days');
@@ -75,7 +89,9 @@ export function OperatingSystemHome() {
       return;
     }
     let active = true;
-    setLoading(true);
+    const cached = readDashboardStatsCache(currentTenant.id, preset);
+    if (cached) setStats(cached);
+    setLoading(!cached);
     setLoadError(null);
     const url = `/api/dashboard/stats?tenantId=${encodeURIComponent(currentTenant.id)}&period=${encodeURIComponent(preset)}`;
     void fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } })
@@ -88,7 +104,15 @@ export function OperatingSystemHome() {
       })
       .then((payload) => {
         if (!active) return;
-        setStats((payload.stats as Record<string, unknown>) ?? null);
+        const nextStats = (payload.stats as Record<string, unknown>) ?? null;
+        setStats(nextStats);
+        if (nextStats) {
+          try {
+            window.sessionStorage.setItem(dashboardStatsCacheKey(currentTenant.id, preset), JSON.stringify(nextStats));
+          } catch {
+            // Session cache is optional.
+          }
+        }
         setLoadError(null);
       })
       .catch((err) => {
@@ -115,7 +139,15 @@ export function OperatingSystemHome() {
         throw new Error(body.error || 'Failed to load dashboard stats');
       }
       const payload = await res.json();
-      setStats((payload.stats as Record<string, unknown>) ?? null);
+      const nextStats = (payload.stats as Record<string, unknown>) ?? null;
+      setStats(nextStats);
+      if (nextStats) {
+        try {
+          window.sessionStorage.setItem(dashboardStatsCacheKey(currentTenant.id, preset), JSON.stringify(nextStats));
+        } catch {
+          // Session cache is optional.
+        }
+      }
       setLoadError(null);
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : 'Failed to load dashboard stats');

@@ -68,6 +68,17 @@ function DashboardContent({
       .catch(() => {});
   }, [currentTenant?.id, user?.id, getDashboardStats]);
 
+  if (!currentTenant?.id) {
+    return (
+      <div className="ac-scroll-full ac-module-section">
+        <div className="ac-workspace-panel p-8 text-center">
+          <p className="text-sm font-semibold text-[var(--ws-text-primary)]">Select a workspace to open this module</p>
+          <p className="mt-2 text-[13px] text-[var(--ws-text-secondary)]">Choose a workspace from the top bar. Outreach metrics and recipient actions are scoped to that workspace.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading && !data) {
     return (
       <div className="space-y-4 ac-scroll-full ac-module-section">
