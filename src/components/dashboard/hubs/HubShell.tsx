@@ -13,6 +13,7 @@ import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecision
 import { HUB_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ChevronDown, Info, Maximize2, Minimize2 } from 'lucide-react';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 
 export interface HubTab {
   label: string;
@@ -75,6 +76,7 @@ export default function HubShell({
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
+  const { isInstalledMobileCompanion } = useDeviceExperience();
   const identity = moduleId ? MODULE_IDENTITY[moduleId] : null;
   const accentColor = identity?.primary ?? LEGACY_ACCENT[accent];
   const ModuleIcon = moduleId ? MODULE_ICONS[moduleId] : null;
@@ -105,7 +107,8 @@ export default function HubShell({
     >
       <div
         className={cn(
-          'sticky top-0 z-20 flex-shrink-0 bg-[var(--ws-toolbar)] px-4 py-2 ac-workspace-toolbar border-b border-[var(--ws-border)]',
+          'sticky top-0 z-20 flex-shrink-0 bg-[var(--ws-toolbar)] ac-workspace-toolbar border-b border-[var(--ws-border)]',
+          isInstalledMobileCompanion ? 'px-3 py-1.5' : 'px-4 py-2',
         )}
         {...(dataTour ? { 'data-tour': dataTour } : {})}
       >
@@ -134,7 +137,7 @@ export default function HubShell({
             ) : null}
           </div>
           <div className="ml-auto flex items-center gap-1.5">
-            {hubSteps?.length ? (
+            {hubSteps?.length && !isInstalledMobileCompanion ? (
               <button
                 type="button"
                 onClick={() => setOverviewOpen((open) => !open)}
@@ -147,7 +150,7 @@ export default function HubShell({
                 <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', overviewOpen && 'rotate-180')} aria-hidden />
               </button>
             ) : null}
-            <button
+            {!isInstalledMobileCompanion ? <button
               type="button"
               onClick={() => setIsFocused((focused) => !focused)}
               aria-pressed={isFocused}
@@ -156,7 +159,7 @@ export default function HubShell({
               className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--ws-border)] text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
             >
               {isFocused ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </button>
+            </button> : null}
           </div>
         </div>
 
@@ -165,10 +168,10 @@ export default function HubShell({
           currentHref={pathname || undefined}
           label={`${t('Switch section')}: ${t(title)}`}
           onNavigate={(href) => router.push(href)}
-          className="mt-2 md:hidden"
+          className={cn(isInstalledMobileCompanion ? 'mt-1.5' : 'mt-2 md:hidden')}
         />
 
-        <div
+        {!isInstalledMobileCompanion ? <div
           className="flex gap-0 overflow-x-auto ios-scroll mt-1 -mx-1 px-1"
           role="tablist"
           aria-label={`${t(title)} · ${t('Sections')}`}
@@ -202,9 +205,9 @@ export default function HubShell({
               </Link>
             );
           })}
-        </div>
+        </div> : null}
 
-        {hubSteps?.length && overviewOpen ? (
+        {hubSteps?.length && overviewOpen && !isInstalledMobileCompanion ? (
           <div id="module-overview">
             <ExecutionDecisionGuide
               title="Module overview"
@@ -220,7 +223,11 @@ export default function HubShell({
       <div
         className={cn(
           'flex-1 min-h-0 ac-safe-bottom',
-          isFullHeight ? 'h-full overflow-hidden p-0' : 'ac-scroll-full px-4 py-3 md:py-4'
+          isFullHeight
+            ? 'h-full overflow-hidden p-0'
+            : isInstalledMobileCompanion
+              ? 'ac-scroll-full px-2 py-2'
+              : 'ac-scroll-full px-4 py-3 md:py-4'
         )}
       >
         <BonnieModulePageShell showBonnieDock={!isFullHeight}>

@@ -1584,6 +1584,24 @@ html.pwa-standalone .pwa-page-title {
   html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-dashboard-main {
     padding-bottom: calc(4.25rem + min(env(safe-area-inset-bottom, 0px), 20px));
   }
+
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-module-frame-native {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0.5rem !important;
+  }
+
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-enterprise-module {
+    font-size: 14px;
+  }
+
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-enterprise-module :is(button, a, input, select, textarea) {
+    font-size: max(13px, 0.8125rem);
+  }
+
+  html:is(.ac-pwa-mobile, .ac-pwa-tablet) .ac-enterprise-module .ac-workspace-panel {
+    border-radius: 12px;
+  }
 }
 
 .ac-page-transition {
@@ -1927,7 +1945,7 @@ html.light .ac-business-scroll.ac-workspace-canvas {
 }
 
 .ac-module-frame {
-  padding: clamp(0.75rem, 1.8vw, 1.5rem);
+  padding: clamp(0.75rem, 1.35vw, 1rem);
 }
 
 .ac-module-frame-body {

@@ -233,7 +233,7 @@ export const WORKSPACE = {
     active: 'ac-workspace-tab--active',
   },
   typography: {
-    pageTitle: 'text-[28px] leading-9 font-bold text-[var(--ws-text-primary)] tracking-tight',
+    pageTitle: 'text-[22px] leading-7 font-bold text-[var(--ws-text-primary)] tracking-tight',
     sectionLabel: 'text-[12px] font-medium text-[var(--ws-text-muted)]',
     panelTitle: 'text-[14px] font-semibold text-[var(--ws-text-primary)]',
     panelSubtitle: 'text-[12px] text-[var(--ws-text-muted)]',

@@ -7,6 +7,7 @@ import { AskBonnieButton } from './AskBonnieButton';
 import { SubNavigation } from './SubNavigation';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 import { cn } from '@/lib/utils';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 
 interface ModuleFrameProps {
   moduleId: ModuleId;
@@ -33,7 +34,20 @@ export function ModuleFrame({
   className,
   hideSubnav,
 }: ModuleFrameProps) {
+  const { isInstalledMobileCompanion } = useDeviceExperience();
   const items = getModuleSubnav(moduleId);
+
+  if (isInstalledMobileCompanion) {
+    return (
+      <div
+        className={cn('ac-module-frame-native min-w-0', className)}
+        data-module={moduleId}
+        data-native-module-frame
+      >
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div

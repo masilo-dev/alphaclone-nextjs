@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDeviceExperience } from '@/hooks/useDeviceExperience';
 
 interface ModulePageLayoutProps {
   /** Sticky toolbar row (filters, view toggles, bulk actions) */
@@ -37,17 +38,19 @@ export function ModulePageLayout({
   allowFocus = true,
 }: ModulePageLayoutProps) {
   const [isFocused, setIsFocused] = useState(false);
+  const { isInstalledMobileCompanion } = useDeviceExperience();
 
   return (
     <div
       className={cn(
-        'flex flex-1 flex-col gap-4 min-h-0 overflow-hidden relative',
+        'flex flex-1 flex-col min-h-0 overflow-hidden relative',
+        isInstalledMobileCompanion ? 'gap-2' : 'gap-4',
         isFocused && 'fixed inset-0 z-[100] h-[100dvh] w-screen bg-[var(--ws-canvas,#0B1220)] p-3 md:p-4',
         phoneNavSafe && 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0',
         className,
       )}
     >
-      {allowFocus ? (
+      {allowFocus && !isInstalledMobileCompanion ? (
         <button
           type="button"
           onClick={() => setIsFocused((current) => !current)}
@@ -59,13 +62,13 @@ export function ModulePageLayout({
           {isFocused ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
       ) : null}
-      {header ? <div className="flex-shrink-0">{header}</div> : null}
+      {header && !isInstalledMobileCompanion ? <div className="flex-shrink-0">{header}</div> : null}
       {toolbar ? (
         <div className="sticky top-0 z-10 -mx-1 flex-shrink-0 bg-[var(--ws-canvas)] px-1 py-1">
           {toolbar}
         </div>
       ) : null}
-      {stats ? <section className="flex-shrink-0">{stats}</section> : null}
+      {stats && !isInstalledMobileCompanion ? <section className="flex-shrink-0">{stats}</section> : null}
       <section className={cn('flex-1 min-h-0', scrollContent && 'overflow-y-auto overscroll-contain')}>
         {children}
       </section>

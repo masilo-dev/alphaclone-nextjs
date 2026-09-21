@@ -107,3 +107,17 @@ test('installed module dashboards use an action-first native workspace', () => {
   assert.match(chrome, /data-native-module/);
   assert.match(chrome, /if \(isInstalledMobileCompanion\)/);
 });
+
+test('installed module interiors remove desktop chrome and learning guides', () => {
+  const frame = read('src/components/ui/os/ModuleFrame.tsx');
+  const layout = read('src/components/ui/ModulePageLayout.tsx');
+  const hub = read('src/components/dashboard/hubs/HubShell.tsx');
+  const guidance = read('src/hooks/useProgressiveGuidance.ts');
+  const executionHeader = read('src/components/dashboard/common/UniversalModuleExecutionHeader.tsx');
+  for (const source of [frame, layout, hub]) assert.match(source, /isInstalledMobileCompanion/);
+  assert.match(frame, /data-native-module-frame/);
+  assert.match(layout, /header && !isInstalledMobileCompanion/);
+  assert.match(layout, /stats && !isInstalledMobileCompanion/);
+  assert.match(guidance, /7 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(executionHeader, /if \(!showGuidance\)/);
+});

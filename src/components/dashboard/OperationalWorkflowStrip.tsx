@@ -9,6 +9,7 @@ import {
   type ModuleDashboardId,
   resolveModuleActions,
 } from '@/config/moduleDashboardActions';
+import { useProgressiveGuidance } from '@/hooks/useProgressiveGuidance';
 
 interface OperationalWorkflowStripProps {
   moduleId: ModuleDashboardId;
@@ -26,11 +27,12 @@ export function OperationalWorkflowStrip({
 }: OperationalWorkflowStripProps) {
   const router = useRouter();
   const { t } = useLanguage();
+  const { showGuidance } = useProgressiveGuidance(`workflow:${moduleId}`);
   const { title, playbook, actions } = resolveModuleActions(moduleId, userRole);
   const primary = actions.find((a) => a.primary) ?? actions[0];
   const quickLinks = actions.filter((a) => a !== primary).slice(0, 3);
 
-  if (!primary) return null;
+  if (!primary || !showGuidance) return null;
 
   return (
     <section

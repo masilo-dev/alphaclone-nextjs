@@ -5,6 +5,7 @@ import { CheckCircle2, ChevronRight, CircleDot, PlayCircle, ShieldCheck } from '
 import { cn } from '@/lib/utils';
 import { SEMANTIC_STATUS_STYLES, type SemanticStatus } from '@/lib/ui/statusSemantics';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useProgressiveGuidance } from '@/hooks/useProgressiveGuidance';
 
 export interface ExecutionDecisionStep {
   id: string;
@@ -38,7 +39,9 @@ export function ExecutionDecisionGuide({
   className,
 }: ExecutionDecisionGuideProps) {
   const { t } = useLanguage();
-  if (!steps.length) return null;
+  const guideKey = steps[0]?.id ? `${title}:${steps[0].id}` : title;
+  const { showGuidance } = useProgressiveGuidance(guideKey);
+  if (!steps.length || !showGuidance) return null;
 
   return (
     <section className={cn('ac-workspace-panel rounded-lg p-3', className)} aria-label={t(title)}>

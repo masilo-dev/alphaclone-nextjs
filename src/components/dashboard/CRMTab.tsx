@@ -2304,7 +2304,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         )}
         toolbar={(
           <>
-            <div className="flex border-b border-white/5">
+            <div className="flex overflow-x-auto border-b border-white/5 ios-scroll">
               {([
                 { key: 'leads', label: t('Leads'), count: leads.length },
                 { key: 'clients', label: t('Customers'), count: activeClientsCount },
@@ -2322,7 +2322,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                     setSelectedEntity(null);
                     setAccountFilter('all');
                   }}
-                  className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === key ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}
+                  className={`flex-none whitespace-nowrap px-3 py-2.5 text-xs font-semibold capitalize transition-colors ${subView === key ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}
                 >
                   {['forecast', 'sequences', 'proposals', 'embed', 'churn'].includes(key) ? label : `${label} (${count})`}
                 </button>
