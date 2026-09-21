@@ -91,12 +91,17 @@ test('push deep links retain tenant routing and prefer an exact open client', ()
 test('dashboard shell has one page-scroll owner', () => {
   const shell = read('src/components/shells/AppShell.tsx');
   const scrollRegion = read('src/components/common/DashboardScrollRegion.tsx');
+  const dashboard = read('src/components/Dashboard.tsx');
   const businessDashboard = read('src/components/dashboard/business/BusinessDashboard.tsx');
   assert.match(shell, /isDashboardRoute \? 'overflow-hidden'/);
   assert.match(scrollRegion, /data-dashboard-scroll-region/);
   assert.match(scrollRegion, /isTouchCompanion/);
   assert.match(businessDashboard, /ENTERPRISE_FULL_BLEED_TABS\.has\(tabRoute\)/);
   assert.doesNotMatch(businessDashboard, /const DASHBOARD_EDGE_TO_EDGE_TABS/);
+  assert.match(dashboard, /scrollable=\{!isEnterpriseFullBleedTab\(activeTab\)\}/);
+  assert.match(dashboard, /activeTab === "\/dashboard\/pwa-settings" \|\| isEnterpriseFullBleedTab\(activeTab\)/);
+  assert.doesNotMatch(dashboard, /\[\s*"\/dashboard\/mail",\s*"\/dashboard\/comms"/);
+  assert.match(read('src/components/ui/EnterpriseTabWrapper.tsx'), /'\/dashboard\/business\/unified-inbox'/);
 });
 
 test('installed module dashboards use an action-first native workspace', () => {

@@ -40,6 +40,7 @@ export const ENTERPRISE_FULL_BLEED_TABS = new Set([
   // wrapper grows to the email's height inside an overflow-hidden main and the
   // bottom of long messages can never be reached.
   '/dashboard/comms',
+  '/dashboard/business/unified-inbox',
   '/dashboard/business/projects',
   '/dashboard/business/projects/manage',
   '/dashboard/projects/manage',

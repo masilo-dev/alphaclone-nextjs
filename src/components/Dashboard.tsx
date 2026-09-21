@@ -2707,33 +2707,17 @@ const Dashboard: React.FC<DashboardProps> = ({
           role="main"
         >
           <DashboardScrollRegion
-            scrollable={
-              ![
-                "/dashboard/mail",
-                "/dashboard/comms",
-                "/dashboard/messages",
-                "/dashboard/business/messages",
-                "/dashboard/business/unified-inbox",
-                "/dashboard/zoho/mail",
-              ].includes(activeTab)
-            }
+            scrollable={!isEnterpriseFullBleedTab(activeTab)}
             onRefresh={handlePullRefresh}
             className="w-full"
           >
           {/* Content Wrapper for Max Width & Padding */}
           <div
-            className={`${WORKSPACE.canvas.maxWidth} mx-auto ${WORKSPACE.canvas.padding} dashboard-content-padding pb-24 md:pb-6 ${
-              activeTab === "/dashboard/pwa-settings"
-                ? "p-0 max-w-none"
-                : activeTab === "/dashboard/mail" ||
-                    activeTab === "/dashboard/comms" ||
-                    activeTab === "/dashboard/messages" ||
-                    activeTab === "/dashboard/business/messages" ||
-                    activeTab === "/dashboard/business/unified-inbox" ||
-                    activeTab === "/dashboard/zoho/mail"
-                  ? "h-full flex flex-col"
-                  : "min-h-full"
-            }`}
+            className={
+              activeTab === "/dashboard/pwa-settings" || isEnterpriseFullBleedTab(activeTab)
+                ? "h-full min-h-0 w-full max-w-none p-0 flex flex-col"
+                : `${WORKSPACE.canvas.maxWidth} mx-auto ${WORKSPACE.canvas.padding} dashboard-content-padding min-h-full pb-24 md:pb-6`
+            }
           >
             <div className="relative z-10 min-h-full">
               <WidgetErrorBoundary title="Dashboard Content Error">
