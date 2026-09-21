@@ -142,6 +142,9 @@ test('all installed module interiors inherit compact native density and scrollab
   const wrapper = read('src/components/ui/EnterpriseTabWrapper.tsx');
   assert.match(styles, /html:is\(\.ac-pwa-mobile, \.ac-pwa-tablet\) \.ac-module-frame/);
   assert.match(styles, /\.ac-native-workspace/);
+  assert.match(styles, /\.ac-native-workspace :is\(\.p-8, \.p-10, \.p-12\)/);
+  assert.match(styles, /\.ac-native-workspace \[role='tablist'\]/);
+  assert.match(styles, /\.ac-native-workspace :is\(\.grid-cols-3, \.grid-cols-4, \.grid-cols-5, \.grid-cols-6\)/);
   assert.match(styles, /:is\(\[role='dialog'\], dialog\)/);
   assert.match(styles, /\.recharts-responsive-container, \.recharts-wrapper/);
   assert.match(styles, /\.ac-module-frame \[role='tablist'\]/);
