@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
+import { Suspense } from "react";
 
 import "./globals.css";
 import "@/styles/alphaclone-os-v3.css";
@@ -114,7 +115,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <WebVitals />
         <Providers>
           <PWAProvider>
-            <PwaPushBootstrap />
+            <Suspense fallback={null}>
+              <PwaPushBootstrap />
+            </Suspense>
             <NativeInteractions />
             <ShellSwitcher><PageTransition>{children}</PageTransition></ShellSwitcher>
             <PwaInstallPrompt />
