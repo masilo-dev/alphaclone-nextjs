@@ -36,44 +36,50 @@ export default function FaqPage() {
   return (
     <MarketingLandingShell>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <main className="max-w-3xl mx-auto px-4 py-16 space-y-14">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-16 space-y-14">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Frequently asked questions</h1>
-          <p className="text-slate-400 leading-relaxed">
+          <h1 className="text-3xl sm:text-4xl font-bold font-marketing-heading text-[#07152f] mb-3 tracking-tight">
+            Frequently asked questions
+          </h1>
+          <p className="text-[#52627b] text-base sm:text-lg leading-relaxed">
             Start with why teams switch — then drill into features and comparisons if you are evaluating tools.
           </p>
         </div>
 
         <section id="outcomes" className="scroll-mt-24">
-          <h2 className="text-xl font-bold text-white mb-1">Why teams use AlphaClone</h2>
-          <p className="text-sm text-slate-500 mb-6">
+          <h2 className="text-xl font-bold font-marketing-heading text-[#07152f] mb-1.5 tracking-tight">
+            Why teams use AlphaClone
+          </h2>
+          <p className="text-sm text-[#76849a] mb-6">
             Outcomes, fit, setup, and trust — the questions buyers ask first.
           </p>
           <MarketingFaqAccordion items={FAQ_BUYER_ITEMS} />
-          <p className="mt-6 text-sm text-slate-400">
+          <p className="mt-6 text-sm text-[#52627b]">
             See workflow stories by team type on{' '}
-            <Link href="/results" className="text-teal-400 hover:text-teal-300 font-semibold">
+            <Link href="/results" className="text-[#075fc7] hover:text-[#0878f9] font-semibold underline underline-offset-2">
               /results
             </Link>
             .
           </p>
         </section>
 
-        <section id="features" className="scroll-mt-24 pt-4 border-t border-slate-800">
-          <h2 className="text-xl font-bold text-white mb-1">Features & comparisons</h2>
-          <p className="text-sm text-slate-500 mb-6">
+        <section id="features" className="scroll-mt-24 pt-8 border-t border-[#dfe6ef]">
+          <h2 className="text-xl font-bold font-marketing-heading text-[#07152f] mb-1.5 tracking-tight">
+            Features &amp; comparisons
+          </h2>
+          <p className="text-sm text-[#76849a] mb-6">
             Integrations, modules, and how AlphaClone maps to tools you may already use.
           </p>
           <MarketingFaqAccordion items={FAQ_PRODUCT_ITEMS} />
         </section>
 
-        <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-6 text-center">
-          <p className="text-sm text-slate-300 mb-4">
+        <div className="rounded-2xl border border-[#dfe6ef] bg-[#f7f9fc] p-8 text-center">
+          <p className="text-sm text-[#33445e] mb-5 font-medium">
             Still deciding? Run your own lead-to-invoice test in a free 14-day trial.
           </p>
           <Link
             href="/auth/login?register=true&type=business&plan=starter"
-            className="inline-flex px-6 py-3 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold transition-colors"
+            className="inline-flex px-6 py-3 rounded-xl bg-[#07152f] hover:bg-[#0c2f61] text-white font-semibold transition-colors shadow-sm text-sm"
           >
             Start free trial
           </Link>

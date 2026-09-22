@@ -51,7 +51,7 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-slate-950">
+    <div className="flex flex-col h-full min-h-0 bg-[var(--ws-canvas)]">
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === "outreaches" ? (
           <EmailOutreachComposer />

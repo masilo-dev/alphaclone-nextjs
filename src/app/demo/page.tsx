@@ -114,7 +114,7 @@ export default function DemoPage() {
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                             <Link href="/auth/login?register=true&type=business&plan=starter" className="w-full sm:w-auto">
-                                <Button size="lg" className="bg-teal-600 hover:bg-teal-500 text-white font-semibold px-12 h-14 w-full shadow-md">
+                                <Button size="lg" className="bg-[#07152f] hover:bg-[#0b2149] text-white font-semibold px-12 h-14 w-full shadow-md">
                                     Get Started Now <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>

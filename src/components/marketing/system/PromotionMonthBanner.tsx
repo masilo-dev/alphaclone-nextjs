@@ -25,21 +25,21 @@ export default function PromotionMonthBanner({
 
   return (
     <div
-      className={`rounded-xl border border-violet-500/25 bg-violet-500/10 px-4 py-4 sm:px-6 sm:py-5 ${className}`}
+      className={`rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-4 sm:px-6 sm:py-5 shadow-sm ${className}`}
       role="note"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-300">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700">
             <CalendarCheck className="h-3.5 w-3.5" aria-hidden />
             {copy.eyebrow}
           </p>
-          <p className="mt-1 text-base sm:text-lg font-semibold text-white">{copy.title}</p>
-          <p className="mt-2 text-sm text-slate-300 leading-relaxed max-w-3xl">{copy.body}</p>
+          <p className="mt-1 text-base sm:text-lg font-bold text-slate-950 font-marketing-heading">{copy.title}</p>
+          <p className="mt-2 text-sm text-slate-600 leading-relaxed max-w-3xl">{copy.body}</p>
         </div>
         <Link
           href={`${TRIAL_HREF}&plan=enterprise`}
-          className="shrink-0 inline-flex items-center justify-center rounded-lg bg-violet-600 hover:bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+          className="shrink-0 inline-flex items-center justify-center rounded-lg bg-[#0878f9] hover:bg-[#075fc7] px-4 py-2.5 text-sm font-semibold text-white transition-colors shadow-sm"
         >
           Explore {PREMIUM_UNLIMITED.planName}
         </Link>

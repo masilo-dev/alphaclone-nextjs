@@ -11,7 +11,7 @@ const MessagesPage: React.FC = () => {
                 <Suspense
                     fallback={
                         <div className="flex items-center justify-center h-full text-slate-400 gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
+                            <Loader2 className="w-5 h-5 animate-spin text-[var(--brand-blue-500)]" />
                             Loading mail…
                         </div>
                     }

@@ -910,12 +910,12 @@ const Client360Detail: React.FC<{
 
         {/* Quick Communication Outreach Bar */}
         <CRMActionChips
-          className="rounded-2xl border border-white/5 bg-slate-900/40 p-3"
+          className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-3"
           items={[
             {
               label: 'Call',
               icon: Video,
-              tone: 'teal',
+              tone: 'blue',
               onClick: handleStartVideoCall,
             },
             {
@@ -1360,7 +1360,7 @@ const KanbanCard: React.FC<{
       {...(overlay ? {} : attributes)}
       {...(overlay ? {} : listeners)}
       onClick={onClick}
-      className={`group cursor-grab active:cursor-grabbing rounded-xl border border-white/5 bg-slate-900 p-3 shadow-sm hover:border-[var(--brand-blue-500)]/30 transition-colors ${isDragging && !overlay ? 'opacity-30' : ''} ${overlay ? 'rotate-2 shadow-2xl shadow-black/40 ring-1 ring-[var(--brand-blue-500)]/40' : ''} ${isSelected ? 'border-[var(--brand-blue-500)]/50 bg-[var(--brand-blue-500)]/10' : ''}`}
+      className={`group cursor-grab active:cursor-grabbing rounded-xl border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-3 shadow-sm hover:border-[var(--brand-blue-500)]/40 transition-colors ${isDragging && !overlay ? 'opacity-30' : ''} ${overlay ? 'rotate-2 shadow-2xl shadow-black/40 ring-1 ring-[var(--brand-blue-500)]/40' : ''} ${isSelected ? 'border-[var(--brand-blue-500)]/50 bg-[var(--brand-blue-500)]/10' : ''}`}
     >
       <div className="flex items-center gap-2.5">
         {onToggleSelect && !overlay && (
@@ -1414,11 +1414,11 @@ const KanbanColumn: React.FC<{
           <span className={`w-2 h-2 rounded-full ${col.dot}`} />
           <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">{col.label}</span>
         </div>
-        <span className="text-[10px] font-bold text-slate-500 bg-slate-800/60 rounded-full px-2 py-0.5">{leads.length}</span>
+        <span className="text-[10px] font-bold text-[var(--ws-text-muted)] bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] rounded-full px-2 py-0.5">{leads.length}</span>
       </div>
       <div
         ref={setNodeRef}
-        className={`flex-1 min-h-[120px] rounded-3xl border ${col.accent} ${isOver ? 'bg-[var(--brand-blue-500)]/10 border-[var(--brand-blue-500)]/40' : 'bg-slate-950/40'} p-2.5 space-y-2 transition-colors`}
+        className={`flex-1 min-h-[120px] rounded-3xl border ${col.accent} ${isOver ? 'bg-[var(--brand-blue-500)]/10 border-[var(--brand-blue-500)]/40' : 'bg-[var(--ws-surface-primary)]/40'} p-2.5 space-y-2 transition-colors`}
       >
         {leads.map(l => (
           <KanbanCard
@@ -2234,7 +2234,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
 
   const crmStats = React.useMemo<ModuleStat[]>(() => [
     { label: t('Leads Pool'), value: totalLeadsCount.toLocaleString(), sub: t('In the funnel'), Icon: Target, accent: 'purple' },
-    { label: t('Customers'), value: activeClientsCount.toLocaleString(), sub: t('Won accounts'), Icon: UserCheck, accent: 'teal' },
+    { label: t('Customers'), value: activeClientsCount.toLocaleString(), sub: t('Won accounts'), Icon: UserCheck, accent: 'emerald' },
     { label: t('Active Book'), value: `$${totalClientValue.toLocaleString()}`, sub: t('Customer value'), Icon: DollarSign, accent: 'emerald' },
   ], [t, totalLeadsCount, activeClientsCount, totalClientValue]);
 
@@ -2264,8 +2264,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                       onClick={() => handleCrmCommandAction(action)}
                       className={
                         isPrimary
-                          ? 'inline-flex items-center gap-1.5 rounded-full border border-teal-500/40 bg-teal-500/20 px-3 py-1.5 text-[11px] font-bold text-teal-100 transition-colors hover:bg-teal-500/30'
-                          : 'inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[11px] font-bold text-slate-300 transition-colors hover:border-slate-500 hover:text-white'
+                          ? 'inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-blue-500)]/40 bg-[var(--brand-blue-500)]/20 px-3 py-1.5 text-[11px] font-bold text-[var(--brand-blue-100,#dbeafe)] transition-colors hover:bg-[var(--brand-blue-500)]/30'
+                          : 'inline-flex items-center gap-1.5 rounded-full border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] px-2.5 py-1.5 text-[11px] font-bold text-[var(--ws-text-secondary)] transition-colors hover:border-[var(--ws-border-strong)] hover:text-[var(--ws-text-primary)]'
                       }
                     >
                       {action.label}
@@ -2344,7 +2344,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                     setSelectedEntity(null);
                     setAccountFilter('all');
                   }}
-                  className={`flex-none whitespace-nowrap px-3 py-2.5 text-xs font-semibold capitalize transition-colors ${subView === key ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}
+                  className={`flex-none whitespace-nowrap px-3 py-2.5 text-xs font-semibold capitalize transition-colors ${subView === key ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                 >
                   {['forecast', 'sequences', 'proposals', 'embed', 'churn'].includes(key) ? label : `${label} (${count})`}
                 </button>
@@ -2368,13 +2368,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             </button>
           </div>
         )}
-        <div className="flex items-center gap-2 bg-slate-900 border border-white/5 rounded-xl px-3 h-10 shadow-inner">
-          <Search className="w-4 h-4 text-slate-500 flex-shrink-0" />
+        <div className="flex items-center gap-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl px-3 h-10">
+          <Search className="w-4 h-4 text-[var(--ws-text-muted)] flex-shrink-0" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={`Search ${subView}...`}
-            className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
+            className="flex-1 bg-transparent text-sm text-[var(--ws-text-primary)] outline-none placeholder:text-[var(--ws-text-muted)]"
           />
           {search && (
             <button onClick={() => setSearch('')} className="p-1 text-slate-500 hover:text-white">
@@ -2394,20 +2394,20 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   onClick={() => setFilter(f.value)}
                   className={`flex-shrink-0 h-8 px-3.5 rounded-full text-xs font-bold transition-all border ${
                     filter === f.value
-                      ? 'bg-[var(--brand-blue-500)] text-white border-[var(--brand-blue-500)] shadow-md shadow-[var(--brand-blue-500)]/10'
-                      : 'bg-slate-900 text-slate-400 border-white/5 hover:border-slate-800'
+                      ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-md shadow-[var(--brand-blue-600)]/10'
+                      : 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border-strong)] hover:text-[var(--ws-text-primary)]'
                   }`}
                 >
                   {f.label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center rounded-lg border border-white/5 bg-slate-900 p-0.5 flex-shrink-0">
+            <div className="flex items-center rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-0.5 flex-shrink-0">
               {(['list', 'board'] as const).map(v => (
                 <button
                   key={v}
                   onClick={() => setLeadsView(v)}
-                  className={`px-2.5 h-7 rounded-md text-[10px] font-black uppercase tracking-wider transition-colors ${leadsView === v ? 'bg-[var(--brand-blue-500)] text-white' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-2.5 h-7 rounded-md text-[10px] font-black uppercase tracking-wider transition-colors ${leadsView === v ? 'bg-[var(--brand-blue-500)] text-white' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]'}`}
                 >
                   {v}
                 </button>
@@ -2443,8 +2443,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 onClick={() => setAccountFilter(f.value)}
                 className={`flex-shrink-0 h-8 px-3.5 rounded-full text-xs font-bold transition-all border ${
                   accountFilter === f.value
-                    ? 'bg-[var(--brand-blue-500)] text-white border-[var(--brand-blue-500)] shadow-md shadow-[var(--brand-blue-500)]/10'
-                    : 'bg-slate-900 text-slate-400 border-white/5 hover:border-slate-800'
+                    ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-md shadow-[var(--brand-blue-600)]/10'
+                    : 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:border-[var(--ws-border-strong)] hover:text-[var(--ws-text-primary)]'
                 }`}
               >
                 {f.label}

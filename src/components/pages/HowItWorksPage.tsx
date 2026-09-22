@@ -35,45 +35,45 @@ const MECHANISM = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
-      <div className="max-w-4xl mx-auto px-4 py-20 pt-32">
-        <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8 text-sm">
+    <div className="min-h-screen bg-white text-[#07152f]">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
+        <Link href="/" className="inline-flex items-center text-[#52627b] hover:text-[#0878f9] mb-8 text-sm font-medium transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to home
         </Link>
 
-        <p className="text-xs font-semibold uppercase tracking-widest text-teal-400 mb-3">{EXECUTION_LAYER.category}</p>
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-marketing-heading mb-6 leading-tight">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#075fc7] mb-3">{EXECUTION_LAYER.category}</p>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold font-marketing-heading text-[#07152f] mb-5 tracking-tight leading-[1.1]">
           How execution works
         </h1>
-        <p className="text-lg text-slate-300 leading-relaxed mb-10">{EXECUTION_LAYER.explanatoryLine}</p>
+        <p className="text-lg text-[#52627b] leading-relaxed mb-10">{EXECUTION_LAYER.explanatoryLine}</p>
 
-        <div className="grid sm:grid-cols-2 gap-5 mb-14">
+        <div className="grid sm:grid-cols-2 gap-5 mb-12">
           {MECHANISM.map(({ step, icon: Icon, title, body }, i) => (
-            <div key={step} className="rounded-xl border border-slate-700/60 bg-slate-900/50 p-6">
+            <div key={step} className="rounded-2xl border border-[#dfe6ef] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-xs font-black text-teal-400/80">0{i + 1}</span>
-                <Icon className="h-5 w-5 text-teal-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{step}</span>
+                <span className="text-xs font-bold text-[#0878f9]">0{i + 1}</span>
+                <Icon className="h-5 w-5 text-[#0878f9]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-[#76849a]">{step}</span>
               </div>
-              <h2 className="text-lg font-bold text-white mb-2">{title}</h2>
-              <p className="text-sm text-slate-400 leading-relaxed">{body}</p>
+              <h2 className="text-lg font-bold font-marketing-heading text-[#07152f] mb-2">{title}</h2>
+              <p className="text-sm text-[#52627b] leading-relaxed">{body}</p>
             </div>
           ))}
         </div>
 
-        <section className="mb-14 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-6 sm:p-8">
-          <h2 className="text-xl font-bold mb-3">{EXECUTION_LAYER.differentiationLine}</h2>
-          <p className="text-slate-300 text-sm leading-relaxed">
+        <section className="mb-12 rounded-2xl border border-[#dfe6ef] bg-[#f7f9fc] p-6 sm:p-8">
+          <h2 className="text-xl font-bold font-marketing-heading text-[#07152f] mb-3">{EXECUTION_LAYER.differentiationLine}</h2>
+          <p className="text-[#33445e] text-sm leading-relaxed">
             AlphaClone connects CRM, billing, documents, outreach, and scheduling on shared client records. Bonnie and MCP tools
             can propose and run steps inside that context — with approvals where your business requires them.
           </p>
         </section>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
           <PrimaryCTA href={DEMO_HREF}>{EXECUTION_LAYER.primaryCta}</PrimaryCTA>
           <SecondaryCTA href={EXECUTION_LAYER.workflowPath}>{EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
-          <Link href="/reliability" className="text-sm text-slate-400 hover:text-teal-300 self-center sm:ml-2">
+          <Link href="/reliability" className="text-sm text-[#52627b] hover:text-[#0878f9] self-center sm:ml-2 font-medium transition-colors">
             Reliability & limitations →
           </Link>
         </div>

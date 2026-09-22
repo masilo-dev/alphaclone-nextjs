@@ -190,8 +190,8 @@ export default function MarketingHomePage() {
               <p className="acr-hero-lead">{EXECUTION_LAYER.heroSubhead}</p>
               <p className="acr-hero-detail">Manage leads, clients, projects, emails, invoices, bookings and more — from one connected workspace.</p>
               <div className="acr-hero-actions">
-                <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">Book a demo <ArrowRight className="h-4 w-4" /></PrimaryCTA>
-                <SecondaryCTA href="#workflow" className="mkt-btn-large"><span className="acr-play"><Play className="h-3 w-3" fill="currentColor" /></span> See a 30-second workflow</SecondaryCTA>
+                <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">{EXECUTION_LAYER.primaryCta} <ArrowRight className="h-4 w-4" /></PrimaryCTA>
+                <SecondaryCTA href="#workflow" className="mkt-btn-large"><span className="acr-play"><Play className="h-3 w-3" fill="currentColor" /></span> {EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
               </div>
               <div className="acr-hero-proof">
                 <span><Clock3 /><p><strong>Save hours</strong><small>every week</small></p></span>
@@ -267,7 +267,10 @@ export default function MarketingHomePage() {
         <MarketingContainer>
           <div className="acr-closing-panel">
             <div><p className="acr-eyebrow is-light">Ready to see AlphaClone in action?</p><h2>Run the work. Not the handoffs.</h2><p>Book a free 30-minute walkthrough tailored to your business. No commitment.</p></div>
-            <div className="acr-closing-actions"><PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">Book a demo <ArrowRight className="h-4 w-4" /></PrimaryCTA><SecondaryCTA href="#workflow" className="mkt-btn-large">See the workflow</SecondaryCTA></div>
+            <div className="acr-closing-actions">
+              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">{EXECUTION_LAYER.primaryCta} <ArrowRight className="h-4 w-4" /></PrimaryCTA>
+              <SecondaryCTA href="#workflow" className="mkt-btn-large">{EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
+            </div>
             <ul><li><Check /> Real workflows</li><li><Check /> No technical setup</li><li><Check /> Human control</li></ul>
           </div>
         </MarketingContainer>

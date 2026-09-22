@@ -121,6 +121,10 @@ export async function publishInstagramAssets(input: {
 
 const INSTAGRAM_RECONCILABLE_STATES = ['provider_processing', 'failed_retryable', 'reconciliation_required', 'verifying'];
 
+export async function waitForInstagramContainerReady(containerId: string, token: string) {
+  return graphJson(`https://graph.facebook.com/v21.0/${containerId}?fields=status_code,status&access_token=${encodeURIComponent(token)}`);
+}
+
 export async function reconcileInstagramPublishOperation(operationId: string) {
   const admin = createSupabaseAdminClient();
   const workerId = `instagram-reconcile:${process.pid}`;
@@ -137,7 +141,7 @@ export async function reconcileInstagramPublishOperation(operationId: string) {
   });
   if (!integration) throw new Error('INSTAGRAM_IDENTITY_NOT_FOUND');
   const token = integration.pageAccessToken;
-  const container = await graphJson(`https://graph.facebook.com/v21.0/${operation.provider_container_id}?fields=status_code,status&access_token=${encodeURIComponent(token)}`);
+  const container = await waitForInstagramContainerReady(operation.provider_container_id, token);
   if (!['FINISHED', 'ERROR', 'EXPIRED'].includes(String(container.status_code))) {
     const attempts = Number(operation.attempt_count || 0) + 1;
     const next = new Date(Date.now() + Math.min(300, 5 * (2 ** Math.min(attempts, 6))) * 1000).toISOString();

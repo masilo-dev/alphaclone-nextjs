@@ -350,7 +350,7 @@ const Sidebar = React.memo<SidebarProps>(({
                             </div>
                             <div className="max-h-40 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
                                 {tasks.map((task) => (
-                                    <div key={task.id} className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 flex flex-col gap-1.5">
+                                    <div key={task.id} className="p-2 rounded-lg bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] flex flex-col gap-1.5">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 {task.status === 'running' ? (
@@ -363,13 +363,13 @@ const Sidebar = React.memo<SidebarProps>(({
                                                 <span className="text-xs font-bold text-[var(--ws-text-secondary)] truncate">{task.name}</span>
                                             </div>
                                             {(task.status === 'completed' || task.status === 'error') && (
-                                                <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-slate-800 rounded">
+                                                <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-[var(--ws-hover)] rounded">
                                                     <X className="w-2.5 h-2.5 text-slate-500" />
                                                 </button>
                                             )}
                                         </div>
                                         {task.status === 'running' && (
-                                            <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                            <div className="w-full bg-[var(--ws-border)] h-1 rounded-full overflow-hidden">
                                                 <motion.div 
                                                     className="h-full bg-[var(--brand-blue-500)]"
                                                     initial={{ width: 0 }}
@@ -398,7 +398,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         <button
                             onClick={() => handleTheme(theme === 'dark' ? 'light' : 'dark')}
                             title={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
-                            className="w-full flex items-center justify-center py-2 mb-2 text-slate-500 hover:text-amber-300 transition-colors rounded-lg hover:bg-slate-800"
+                            className="w-full flex items-center justify-center py-2 mb-2 text-[var(--ws-text-muted)] hover:text-amber-300 transition-colors rounded-lg hover:bg-[var(--ws-hover)]"
                         >
                             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </button>
@@ -408,7 +408,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         <button
                             type="button"
                             onClick={onStartTour}
-                            className="mb-2 flex w-full items-center gap-2 rounded-lg border border-teal-500/20 bg-teal-500/5 px-3 py-2 text-xs font-semibold text-teal-300 transition hover:border-teal-500/40 hover:bg-teal-500/10"
+                            className="mb-2 flex w-full items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2 text-xs font-semibold text-[var(--ws-text-secondary)] transition hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
                         >
                             <Sparkles className="h-3.5 w-3.5" />
                             {t('Platform tour')}
@@ -420,7 +420,7 @@ const Sidebar = React.memo<SidebarProps>(({
                             type="button"
                             onClick={onStartTour}
                             title={t('Platform tour')}
-                            className="mb-2 flex w-full items-center justify-center rounded-lg py-2 text-teal-400 transition hover:bg-slate-800"
+                            className="mb-2 flex w-full items-center justify-center rounded-lg py-2 text-[var(--brand-blue-400)] transition hover:bg-[var(--ws-hover)]"
                         >
                             <Sparkles className="h-4 w-4" />
                         </button>
@@ -431,7 +431,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         <button
                             onClick={() => navigate(settingsPath)}
                             title={t('Settings')}
-                            className={`flex items-center min-w-0 rounded-lg hover:bg-slate-800/60 transition-colors active:scale-[0.98] ${
+                            className={`flex items-center min-w-0 rounded-lg hover:bg-[var(--ws-hover)] transition-colors active:scale-[0.98] ${
                                 sidebarOpen ? 'flex-1 gap-2.5 px-1 py-1' : 'justify-center p-1'
                             }`}
                         >
@@ -443,7 +443,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <span className="block text-sm font-semibold text-white truncate leading-tight">
                                         {user.name || user.email?.split('@')[0] || t('User')}
                                     </span>
-                                    <span className="block text-xs text-slate-500 truncate capitalize">{user.role || t('member')}</span>
+                                    <span className="block text-xs text-[var(--ws-text-muted)] truncate capitalize">{user.role || t('member')}</span>
                                 </span>
                             )}
                         </button>
@@ -452,7 +452,7 @@ const Sidebar = React.memo<SidebarProps>(({
                             onClick={onLogout}
                             title={t('Log Out')}
                             aria-label={t('Log Out')}
-                            className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95 touch-manipulation shrink-0"
+                            className="p-2 rounded-lg text-[var(--ws-text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95 touch-manipulation shrink-0"
                         >
                             <LogOut className="w-4 h-4" />
                         </button>

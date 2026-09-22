@@ -51,7 +51,7 @@ function UnifiedInboxContent({
     <div className="flex flex-col h-full min-h-0 gap-3">
       {!hideTabSwitcher ? (
       <div
-        className="flex items-center gap-2 p-1 rounded-xl bg-slate-900/80 border border-white/10 w-full sm:w-fit"
+        className="flex items-center gap-2 p-1 rounded-xl bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] w-full sm:w-fit"
         role="tablist"
         aria-label="Inbox views"
       >
@@ -64,8 +64,8 @@ function UnifiedInboxContent({
           onClick={() => setTab('mailbox')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
             activeTab === 'mailbox'
-              ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
+              ? 'bg-[var(--brand-blue-600)] text-white shadow-lg shadow-[var(--brand-blue-600)]/20'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           }`}
         >
           <Inbox className="w-4 h-4" aria-hidden="true" />
@@ -80,8 +80,8 @@ function UnifiedInboxContent({
           onClick={() => setTab('channels')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
             activeTab === 'channels'
-              ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'
+              ? 'bg-[var(--brand-blue-600)] text-white shadow-lg shadow-[var(--brand-blue-600)]/20'
+              : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
           }`}
         >
           <MessageSquare className="w-4 h-4" aria-hidden="true" />
@@ -128,7 +128,7 @@ export default function UnifiedInbox(props: UnifiedInboxProps) {
     <Suspense
       fallback={
         <div className="flex flex-col items-center justify-center p-12 gap-4 h-[50vh]">
-          <Loader2 className="w-10 h-10 text-teal-500 animate-spin" aria-hidden="true" />
+          <Loader2 className="w-10 h-10 text-[var(--brand-blue-500)] animate-spin" aria-hidden="true" />
           <p className="text-sm text-slate-400">Loading inbox…</p>
         </div>
       }

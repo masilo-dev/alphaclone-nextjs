@@ -160,7 +160,24 @@ export default function MarketingOverview() {
     );
   }
 
-  const d = data!;
+  if (!data) {
+    return (
+      <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/marketing">
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-[14px] text-[var(--ws-text-secondary)]">Unable to load marketing overview.</p>
+          <button
+            type="button"
+            onClick={load}
+            className="ac-workspace-action-btn ac-workspace-action-btn--primary mt-3 inline-flex items-center gap-1.5"
+          >
+            Retry
+          </button>
+        </div>
+      </ModuleOverviewChrome>
+    );
+  }
+
+  const d = data;
 
   return (
     <ModuleOverviewChrome moduleId="marketing" activeHref="/dashboard/marketing">

@@ -67,7 +67,7 @@ function Logo() {
   );
 }
 
-function LanguageControl({ mobile = false }: { mobile?: boolean }) {
+function LanguageSwitcher({ mobile = false }: { mobile?: boolean }) {
   const { language, setLanguage, languageCode } = useLanguage();
   return (
     <label className={`mkt-language-control${mobile ? ' is-mobile' : ''}`}>
@@ -85,6 +85,8 @@ function LanguageControl({ mobile = false }: { mobile?: boolean }) {
     </label>
   );
 }
+
+const LanguageControl = LanguageSwitcher;
 
 export default function MarketingHeader() {
   const { t } = useLanguage();
@@ -180,7 +182,7 @@ export default function MarketingHeader() {
             </div>
 
             <div className="mkt-header-mobile-redesign">
-              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact">{t('Book a demo')}</PrimaryCTA>
+              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-header-demo-mobile">{t('Book a demo')}</PrimaryCTA>
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button type="button" className="mkt-mobile-toggle-redesign" aria-label="Open navigation menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}>
@@ -195,24 +197,26 @@ export default function MarketingHeader() {
                 >
                   <SheetTitle className="sr-only">AlphaClone navigation</SheetTitle>
                   <div className="mkt-mobile-sheet-head">
-                    <Logo />
+                    <div onClick={() => setMobileOpen(false)}>
+                      <Logo />
+                    </div>
                     <SheetClose className="mkt-mobile-toggle-redesign" aria-label="Close navigation menu">
                       <X className="h-6 w-6" aria-hidden="true" />
                     </SheetClose>
                   </div>
                   <PrimaryCTA href={DEMO_HREF} onClick={() => setMobileOpen(false)} className="w-full justify-center">{t('Book a demo')}</PrimaryCTA>
                   <nav className="mkt-mobile-nav-redesign" aria-label="Mobile navigation">
-                    <Link href="/how-it-works">{t('How it works')}</Link>
-                    <Link href="/ecosystem">{t('Integrations')}</Link>
-                    <Link href="/pricing">{t('Pricing')}</Link>
+                    <Link href="/how-it-works" onClick={() => setMobileOpen(false)}>{t('How it works')}</Link>
+                    <Link href="/ecosystem" onClick={() => setMobileOpen(false)}>{t('Integrations')}</Link>
+                    <Link href="/pricing" onClick={() => setMobileOpen(false)}>{t('Pricing')}</Link>
                     {MENUS.map((menu) => (
                       <details key={menu.key}>
                         <summary>{t(menu.label)}<ChevronDown className="h-4 w-4" aria-hidden="true" /></summary>
-                        <div>{menu.items.map((item) => <Link key={item.href} href={item.href}>{t(item.label)}</Link>)}</div>
+                        <div>{menu.items.map((item) => <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}>{t(item.label)}</Link>)}</div>
                       </details>
                     ))}
-                    <Link href="/about">{t('About')}</Link>
-                    <Link href={LOGIN_HREF} data-login-trigger>{t('Sign in')}</Link>
+                    <Link href="/about" onClick={() => setMobileOpen(false)}>{t('About')}</Link>
+                    <Link href={LOGIN_HREF} data-login-trigger onClick={() => setMobileOpen(false)}>{t('Sign in')}</Link>
                   </nav>
                   <LanguageControl mobile />
                 </SheetContent>

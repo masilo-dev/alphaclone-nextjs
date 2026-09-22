@@ -12,7 +12,7 @@ const SIGNATURES: MagicSig[] = [
 
 export function decodeBase64Media(contentBase64: string): Buffer {
   if (contentBase64 == null || String(contentBase64).trim() === '') {
-    throw new Error('MEDIA_INPUT_MISSING: base64 media content is required');
+    throw new Error('MEDIA_INPUT_MISSING: content_base64 is required');
   }
   const raw = String(contentBase64).trim();
   const dataUrl = raw.match(/^data:([^;,]+);base64,([\s\S]*)$/i);

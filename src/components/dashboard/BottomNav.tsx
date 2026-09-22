@@ -104,6 +104,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
     <>
       <nav
         aria-label="Primary"
+        data-tour="mobile-nav"
         className="ac-responsive-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-50 native-bottom-bar ac-v3-floating border-t border-[var(--border-default)]"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 4px)' }}
       >
@@ -127,7 +128,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 className={`native-tap relative flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 active:scale-[0.97] ${isCreate ? '-mt-4' : ''}`}
               >
                 <div className="relative">
-                  <span className={isCreate ? 'flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ac-accent)] text-white shadow-lg shadow-teal-950/40' : ''}>
+                  <span className={isCreate ? 'flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ac-accent)] text-white shadow-lg shadow-blue-950/40' : ''}>
                   <Icon
                     className={`${isCreate ? 'h-6 w-6 text-white' : 'h-5 w-5'} ${!isCreate && isActive ? 'text-[var(--ac-accent)]' : !isCreate ? 'text-[var(--text-muted)]' : ''}`}
                     strokeWidth={isActive ? 2.35 : 1.8}

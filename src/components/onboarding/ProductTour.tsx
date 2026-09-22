@@ -31,6 +31,7 @@ function isVisibleAnchor(element: HTMLElement): boolean {
 
 /** True when the anchor is taller/wider than the viewport, so a tooltip can't sit next to it. */
 function isOversizedAnchor(element: HTMLElement): boolean {
+    if (element.tagName === 'BODY') return true;
     const rect = element.getBoundingClientRect();
     return rect.height > window.innerHeight || rect.width > window.innerWidth;
 }
@@ -71,33 +72,33 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
 
     const adminSteps: Step[] = [
         {
-            target: '[data-tour="dashboard-overview"]',
+            target: '[data-tour="dashboard-overview"], [data-tour="business-home"], [data-tour="navigation"], body',
             content: t('Welcome to your Command Center! Here you can see real-time stats about your business.'),
-            placement: 'bottom',
+            placement: 'center',
             disableBeacon: true,
         },
         {
-            target: '[data-tour="navigation"]',
+            target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
             content: t('Use the sidebar to navigate between different sections. All your tools are organized here.'),
             placement: 'right',
         },
         {
-            target: '[data-tour="messages"]',
+            target: '[data-tour="messages"], [data-tour="navigation"]',
             content: t('Communicate with clients instantly. Messages sync in real-time across all devices.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="projects"]',
+            target: '[data-tour="projects"], [data-tour="navigation"]',
             content: t('Manage all client projects from here. Track progress, update stages, and collaborate.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="analytics"]',
+            target: '[data-tour="analytics"], [data-tour="navigation"]',
             content: t('View detailed analytics and insights. Track revenue, project performance, and team productivity.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="global-search"]',
+            target: '[data-tour="global-search"], [data-tour="navigation"]',
             content: t('Press ⌘K (or Ctrl+K) to quickly search across projects, messages, and clients.'),
             placement: 'bottom',
         },
@@ -105,23 +106,23 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
 
     const clientSteps: Step[] = [
         {
-            target: '[data-tour="dashboard-overview"]',
+            target: '[data-tour="dashboard-overview"], [data-tour="navigation"], body',
             content: t('Welcome to your dashboard! Track your projects and communicate with your team here.'),
-            placement: 'bottom',
+            placement: 'center',
             disableBeacon: true,
         },
         {
-            target: '[data-tour="my-projects"]',
+            target: '[data-tour="my-projects"], [data-tour="navigation"]',
             content: t('View all your active projects. See progress, milestones, and updates in real-time.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="messages"]',
+            target: '[data-tour="messages"], [data-tour="navigation"]',
             content: t('Message your project team anytime. Get instant responses and stay in the loop.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="submit-request"]',
+            target: '[data-tour="submit-request"], [data-tour="navigation"]',
             content: t('Submit new project requests here. Describe what you need and we\'ll get started.'),
             placement: 'bottom',
         },
@@ -129,94 +130,94 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
 
     const tenantAdminSteps: Step[] = [
         {
-            target: '[data-tour="platform-welcome"]',
+            target: '[data-tour="platform-welcome"], [data-tour="business-home"], [data-tour="os-home"], [data-tour="navigation"], body',
             content: t('AlphaClone Systems is your platform for execution — sales, delivery, billing, and ops in one place.'),
-            placement: 'bottom',
+            placement: 'center',
             disableBeacon: true,
         },
         {
-            target: '[data-tour="os-home"]',
+            target: '[data-tour="os-home"], [data-tour="business-home"], [data-tour="navigation"], body',
             content: t('Your command center surfaces KPIs, attention items, and modules so you know what to execute today.'),
-            placement: 'bottom',
+            placement: 'center',
         },
         {
-            target: '[data-tour="business-setup-checklist"]',
+            target: '[data-tour="business-setup-checklist"], [data-tour="business-home"], [data-tour="navigation"], body',
             content: t('New here? Follow these three steps first — add a client, invoice, then connect inbox.'),
-            placement: 'bottom',
+            placement: 'center',
         },
         {
-            target: '[data-tour="business-home"]',
+            target: '[data-tour="business-home"], [data-tour="os-home"], [data-tour="navigation"], body',
             content: t('This home screen is your daily starting point — stats, blockers, and quick actions for your workspace.'),
-            placement: 'bottom',
+            placement: 'center',
         },
         {
-            target: '[data-tour="navigation"]',
+            target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
             content: t('Navigation is organized by hub — Sales, Marketing, Money, Insights, and Documents — matching the tabs inside each area.'),
             placement: 'right',
         },
         {
-            target: '[data-tour="money-hub-nav"]',
+            target: '[data-tour="money-hub-nav"], [data-tour="navigation"]',
             content: t('Money Hub groups billing, invoices, accounting, expenses, and cash flow. Open it to manage revenue end-to-end.'),
             placement: 'right',
         },
         {
-            target: '[data-tour="global-search"]',
+            target: '[data-tour="global-search"], [data-tour="navigation"]',
             content: t('Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="business-notifications"]',
+            target: '[data-tour="business-notifications"], [data-tour="navigation"]',
             content: t('Notifications appear here for tickets, form submissions, and team alerts.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="bonnie-widget"]',
+            target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
             content: t('Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.'),
             placement: 'left',
         },
         {
-            target: '[data-tour="projects-center"]',
+            target: '[data-tour="projects-center"], [data-tour="business-home"], [data-tour="navigation"], body',
             content: t('Projects is where delivery happens — stages, blockers, tasks, and client visibility in one workspace.'),
-            placement: 'bottom',
+            placement: 'center',
         },
     ];
 
     const platformOwnerSteps: Step[] = [
         {
-            target: '[data-tour="platform-welcome"]',
+            target: '[data-tour="platform-welcome"], [data-tour="platform-owner-home"], [data-tour="navigation"], body',
             content: t('AlphaClone Systems is the platform for execution — oversee every tenant and service from here.'),
-            placement: 'bottom',
+            placement: 'center',
             disableBeacon: true,
         },
         {
-            target: '[data-tour="platform-owner-home"]',
+            target: '[data-tour="platform-owner-home"], [data-tour="navigation"], body',
             content: t('Your command center shows platform health, tenant activity, missing keys, and ops signals.'),
-            placement: 'bottom',
+            placement: 'center',
         },
         {
-            target: '[data-tour="navigation"]',
+            target: '[data-tour="navigation"], [data-tour="mobile-nav"]',
             content: t('Use the sidebar to jump between tenants, ops logs, security, subscriptions, and Bonnie AI.'),
             placement: 'right',
         },
         {
-            target: '[data-tour="global-search"]',
+            target: '[data-tour="global-search"], [data-tour="navigation"]',
             content: t('Press ⌘K or Ctrl+K to search tenants, users, and records across the platform.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="business-notifications"]',
+            target: '[data-tour="business-notifications"], [data-tour="navigation"]',
             content: t('Notifications surface tickets, approvals, and platform alerts here.'),
             placement: 'bottom',
         },
         {
-            target: '[data-tour="bonnie-widget"]',
+            target: '[data-tour="bonnie-widget"], [data-tour="navigation"]',
             content: t('Bonnie is your AI operator — run platform checks, approvals, and automations from this assistant.'),
             placement: 'left',
         },
         {
-            target: '[data-tour="projects-center"]',
+            target: '[data-tour="projects-center"], [data-tour="platform-owner-home"], [data-tour="navigation"], body',
             content: t('Projects is where tenant delivery happens — stages, blockers, tasks, and client portals.'),
-            placement: 'bottom',
+            placement: 'center',
         },
     ];
 
@@ -241,16 +242,11 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
 
         const checkAndStartTour = () => {
             // Only keep steps whose anchor is actually on screen, and show every
-            // step's tooltip immediately: with a controlled stepIndex, steps
-            // without `disableBeacon` render only a tiny pulsing dot after
-            // "Next", which reads as "the tour did nothing".
+            // step's tooltip immediately.
             const available: Step[] = steps.flatMap((step) => {
                 if (typeof step.target !== 'string') return [{ ...step, disableBeacon: true }];
                 const target = Array.from(document.querySelectorAll<HTMLElement>(step.target)).find(isVisibleAnchor);
                 if (!target) return [];
-                // Whole-page wrappers (e.g. the 2900px-tall home canvas) can't be
-                // "pointed at": Joyride would park the tooltip thousands of pixels
-                // below the fold. Show those steps as a centred card instead.
                 const placement = isOversizedAnchor(target) ? 'center' : step.placement;
                 return [{ ...step, target, placement, disableBeacon: true }];
             });
@@ -268,26 +264,20 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
                 return;
             }
 
-            // Nothing to point at on this screen. Tell the user why and hand
-            // control back to the parent so `isOpen` is reset — otherwise the
-            // tour would stay "open but invisible" and the button would be dead.
-            setMountedSteps([]);
+            // No step anchor is visible anywhere on this screen. Give control back
+            // to the parent instead of leaving run=false and isOpen=true forever.
             setRun(false);
             resetWindowScroll();
-            toast(t('The tour is not available on this screen. Open the dashboard home and try again.'), {
-                id: 'product-tour-unavailable',
-                icon: 'ℹ️',
-                duration: 6000,
-            });
             (onUnavailable ?? onComplete)();
+            toast(t('The tour is not available on this screen. Try opening it from your dashboard.'));
         };
 
         checkAndStartTour();
 
         return () => {
             if (timerId) clearTimeout(timerId);
+            resetWindowScroll();
         };
-        // `steps` is derived from userRole; onComplete/onUnavailable are stable callbacks in the parents.
     }, [isOpen, userRole]);
 
     const completeTour = () => {
@@ -327,50 +317,78 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, onUnavail
             continuous
             showProgress
             showSkipButton
-            disableOverlay
+            disableOverlay={false}
             disableScrolling
             spotlightClicks
             callback={handleJoyrideCallback}
             styles={{
                 options: {
-                    primaryColor: '#2dd4bf',
-                    textColor: isDark ? '#f8fafc' : '#0f172a',
-                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                    overlayColor: 'rgba(0, 0, 0, 0.8)',
-                    arrowColor: isDark ? '#1e293b' : '#ffffff',
+                    primaryColor: '#356AF4',
+                    textColor: isDark ? '#F1F5F9' : '#0F172A',
+                    backgroundColor: isDark ? '#171A26' : '#FFFFFF',
+                    overlayColor: isDark ? 'rgba(0, 0, 0, 0.72)' : 'rgba(15, 23, 42, 0.55)',
+                    arrowColor: isDark ? '#171A26' : '#FFFFFF',
                     zIndex: 10000,
                 },
-                tooltip: {
+                spotlight: {
                     borderRadius: '12px',
-                    padding: '20px',
-                    backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                    border: `1px solid ${isDark ? '#334155' : '#cbd5e1'}`,
+                },
+                tooltip: {
+                    borderRadius: '14px',
+                    padding: '22px 24px',
+                    backgroundColor: isDark ? '#171A26' : '#FFFFFF',
+                    border: isDark ? '1px solid #282F45' : '1px solid #E2E8F0',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+                    maxWidth: '420px',
                 },
                 tooltipContainer: {
                     textAlign: 'left',
                 },
+                tooltipTitle: {
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    letterSpacing: '-0.01em',
+                    color: isDark ? '#FFFFFF' : '#0F172A',
+                    marginBottom: '8px',
+                },
+                tooltipContent: {
+                    fontSize: '13.5px',
+                    lineHeight: '1.55',
+                    color: isDark ? '#94A3B8' : '#475569',
+                    padding: '0 0 14px 0',
+                },
                 buttonNext: {
-                    backgroundColor: '#2dd4bf',
-                    color: '#020617',
+                    backgroundColor: '#356AF4',
+                    color: '#FFFFFF',
                     borderRadius: '8px',
-                    padding: '10px 20px',
-                    fontSize: '14px',
+                    padding: '9px 18px',
+                    fontSize: '13px',
                     fontWeight: '600',
+                    outline: 'none',
+                    boxShadow: '0 1px 2px 0 rgba(53, 106, 244, 0.35)',
                 },
                 buttonBack: {
-                    color: '#94a3b8',
-                    marginRight: '10px',
+                    color: isDark ? '#94A3B8' : '#64748B',
+                    marginRight: '12px',
+                    fontSize: '13px',
+                    fontWeight: '500',
                 },
                 buttonSkip: {
-                    color: '#64748b',
+                    color: isDark ? '#64748B' : '#94A3B8',
+                    fontSize: '13px',
+                },
+                buttonClose: {
+                    color: isDark ? '#94A3B8' : '#64748B',
+                    top: '16px',
+                    right: '16px',
                 },
             }}
             locale={{
                 back: t('Back'),
                 close: t('Close'),
-                last: t('Finish'),
+                last: t('Get Started'),
                 next: t('Next'),
-                nextLabelWithProgress: t('Next (Step {step} of {steps})'),
+                nextLabelWithProgress: t('Next ({step}/{steps})'),
                 skip: t('Skip Tour'),
             }}
         />

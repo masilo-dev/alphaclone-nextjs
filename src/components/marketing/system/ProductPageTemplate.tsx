@@ -17,7 +17,7 @@ function RelatedFeatureCard({ label, href }: { label: string; href: string }) {
   return (
     <Link
       href={href}
-      className="mkt-surface group block p-5 transition-colors hover:border-[rgba(20,184,166,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]"
+      className="mkt-surface group block p-5 transition-colors hover:border-[var(--marketing-accent-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]"
     >
       <h3 className="text-lg font-semibold text-[var(--marketing-text-primary)] group-hover:text-[var(--marketing-accent-hover)]">
         {label}

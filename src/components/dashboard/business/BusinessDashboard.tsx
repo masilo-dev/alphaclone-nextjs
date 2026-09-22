@@ -343,9 +343,17 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // restarts from step 1 even if a previous run is mid-way or got stuck open.
     const [tourRunId, setTourRunId] = useState(0);
     const requestProductTour = React.useCallback(() => {
+        if (route !== '/dashboard') {
+            setActiveTab('/dashboard');
+            window.setTimeout(() => {
+                setTourRunId((id) => id + 1);
+                setShowProductTour(true);
+            }, 350);
+            return;
+        }
         setTourRunId((id) => id + 1);
         setShowProductTour(true);
-    }, []);
+    }, [route, setActiveTab]);
 
     React.useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -1251,13 +1259,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
                 {/* Task Notification Banner (Ephemeral) */}
                 {notification && (
-                    <div className="bg-teal-600/10 border-b border-teal-500/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
-                        <div className="flex items-center gap-2 text-teal-100 text-sm font-medium">
-                            <CheckSquare className="w-4 h-4 text-teal-400" />
+                    <div className="bg-[var(--brand-blue-500)]/10 border-b border-[var(--brand-blue-500)]/20 px-4 py-2 flex items-center justify-between backdrop-blur-sm sticky top-0 z-20">
+                        <div className="flex items-center gap-2 text-[var(--ws-text-primary)] text-sm font-medium">
+                            <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" />
                             <span>{notification}</span>
                         </div>
                         <button
-                            className="text-teal-400 hover:text-white text-xs font-bold"
+                            className="text-[var(--brand-blue-400)] hover:text-white text-xs font-bold"
                             onClick={() => {
                                 setNotification(null);
                                 setActiveTab('/dashboard/tasks');
@@ -1298,7 +1306,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     {/* Right: compact utility cluster + account menu */}
                     <div className="flex items-center gap-2 sm:gap-3">
                         {activeBgTasksCount > 0 && (
-                            <div className="ac-pwa-desktop-only hidden md:flex items-center gap-1.5 text-teal-400 px-2.5 py-1 rounded-full text-[11px] font-medium border border-teal-500/25 bg-teal-500/5">
+                            <div className="ac-pwa-desktop-only hidden md:flex items-center gap-1.5 text-[var(--brand-blue-400)] px-2.5 py-1 rounded-full text-[11px] font-medium border border-[var(--brand-blue-500)]/25 bg-[var(--brand-blue-500)]/10">
                                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                                 <span>{activeBgTasksCount}</span>
                             </div>
@@ -1309,7 +1317,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         {activeMeetingCallId && (
                             <button
                                 onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
-                                className="ac-pwa-desktop-only hidden md:inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-teal-500/20 transition-colors"
+                                className="ac-pwa-desktop-only hidden md:inline-flex items-center gap-1.5 bg-[var(--brand-blue-500)]/10 border border-[var(--brand-blue-500)]/30 text-[var(--brand-blue-300)] px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-[var(--brand-blue-500)]/20 transition-colors"
                                 title="Return to active meeting"
                             >
                                 <Video className="w-3.5 h-3.5" />
@@ -1317,7 +1325,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             </button>
                         )}
 
-                        {/* Create button intentionally removed from header – use BottomNav → More on mobile, or Command Palette on desktop */}
+                        {/* Create button */}
                         <div className="ac-pwa-desktop-only relative hidden md:block">
                             <button
                                 type="button"
@@ -1327,13 +1335,13 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 }}
                                 aria-expanded={quickCreateOpen}
                                 aria-haspopup="menu"
-                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-teal-400/30 bg-teal-500/10 px-3 text-xs font-bold text-teal-300 transition hover:bg-teal-500/20"
+                                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[var(--brand-blue-500)]/35 bg-[var(--brand-blue-500)]/10 px-3 text-xs font-semibold text-[var(--brand-blue-300)] transition hover:bg-[var(--brand-blue-500)]/20"
                             >
                                 <Plus className="h-4 w-4" aria-hidden="true" />
                                 Create
                             </button>
                             {quickCreateOpen ? (
-                                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-slate-700 bg-[#171A26] p-1.5 shadow-2xl shadow-black/50" role="menu">
+                                <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel,#171A26)] p-1.5 shadow-2xl" role="menu">
                                     {[
                                         ['Task', '/dashboard/tasks?create=true'],
                                         ['Lead', '/dashboard/crm/workspace?quickAdd=true'],
@@ -1374,7 +1382,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 Today
                             </button>
                             {todayOpen ? (
-                                <section className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-700 bg-[#171A26] p-3 shadow-2xl shadow-black/50" aria-label="Today’s work">
+                                <section className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel,#171A26)] p-3 shadow-2xl" aria-label="Today’s work">
                                     <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--ws-text-muted)]">Today</p>
                                     <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">Start with work that needs a decision or response.</p>
                                     <div className="mt-2 space-y-1">
@@ -1408,7 +1416,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <button
                             type="button"
                             onClick={() => setActiveTab('/dashboard/business/bonnie')}
-                            className="ac-pwa-touch-flex inline-flex h-10 w-10 items-center justify-center rounded-xl border border-teal-400/25 bg-teal-500/10 text-teal-300 active:scale-95 md:hidden"
+                            className="ac-pwa-touch-flex inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--brand-violet-500)]/30 bg-[var(--brand-violet-500)]/10 text-[var(--brand-violet-300)] active:scale-95 md:hidden"
                             aria-label={t('Open Bonnie AI')}
                         >
                             <Bot className="h-5 w-5" aria-hidden="true" />

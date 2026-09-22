@@ -293,19 +293,19 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="relative overflow-hidden rounded-2xl border-2 border-teal-500/40 bg-gradient-to-br from-teal-500/15 via-teal-500/10 to-emerald-500/10 p-5 shadow-lg shadow-teal-900/20"
+                        className="relative overflow-hidden rounded-2xl border border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-500)]/10 p-5 shadow-lg shadow-blue-950/40"
                     >
                         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                             <div className="flex items-start gap-3 flex-1 min-w-0">
-                                <div className="p-2.5 rounded-xl bg-teal-500/20 border border-teal-500/30 shrink-0">
-                                    <CheckCircle2 className="w-6 h-6 text-teal-400" />
+                                <div className="p-2.5 rounded-xl bg-[var(--brand-blue-500)]/20 border border-[var(--brand-blue-500)]/30 shrink-0">
+                                    <CheckCircle2 className="w-6 h-6 text-[var(--brand-blue-400)]" />
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="text-base font-black text-white tracking-tight mb-1">
                                         Project created! Want to create an invoice for this project?
                                     </h3>
                                     <p className="text-sm text-slate-400 font-medium">
-                                        <span className="text-teal-300 font-bold">{lastCreatedProject.name}</span>
+                                        <span className="text-[var(--brand-blue-300)] font-bold">{lastCreatedProject.name}</span>
                                         {lastCreatedProject.clientId && clients.find(c => c.id === lastCreatedProject.clientId)?.name && (
                                             <> · Client: <span className="text-slate-200 font-semibold">{clients.find(c => c.id === lastCreatedProject.clientId)?.name}</span></>
                                         )}
@@ -324,7 +324,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                                         openCreateInvoiceForProject(lastCreatedProject);
                                         setLastCreatedProject(null);
                                     }}
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-500 hover:from-teal-500 hover:to-emerald-400 text-white text-sm font-black shadow-lg shadow-teal-900/30 active:scale-95 transition-all"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white text-sm font-semibold shadow-lg shadow-blue-900/25 active:scale-95 transition-all"
                                 >
                                     <DollarSign className="w-4 h-4" />
                                     Create Invoice
@@ -642,7 +642,7 @@ const ProjectListRow = ({
                     {project.clientId && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onCreateInvoice(project); }}
-                            className="h-8 w-8 p-0.5 hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 rounded-full transition-all"
+                            className="h-8 w-8 p-0.5 hover:bg-[var(--brand-blue-500)]/10 text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] rounded-full transition-all"
                             title="Create invoice for this project"
                         >
                             <DollarSign className="w-3.5 h-3.5" />
@@ -711,7 +711,7 @@ const ProjectListRow = ({
                 {project.clientId && (
                     <button
                         onClick={(e) => { e.stopPropagation(); onCreateInvoice(project); }}
-                        className="p-2 hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 rounded-lg transition-all"
+                        className="p-2 hover:bg-[var(--brand-blue-500)]/10 text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] rounded-lg transition-all"
                         title="Create invoice for this project"
                     >
                         <DollarSign className="w-4 h-4" />

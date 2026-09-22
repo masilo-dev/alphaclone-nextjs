@@ -16,7 +16,7 @@ import { projectService } from '../../../services/projectService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
-import { Button, Card, Input, Modal } from '../../ui/UIComponents';
+import { Button, Card, Input, Modal, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CommunicationModal } from '../crm/CommunicationModal';
@@ -627,12 +627,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             />
                             <Tooltip 
                                 contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '8px' }}
-                                itemStyle={{ color: '#14b8a6' }}
+                                itemStyle={{ color: '#5F8FFF' }}
                             />
                             <Line 
                                 type="monotone" 
                                 dataKey="revenue" 
-                                stroke="#14b8a6" 
+                                stroke="#356AF4" 
                                 strokeWidth={2} 
                                 dot={false} 
                                 activeDot={{ r: 4, strokeWidth: 0 }}
@@ -642,12 +642,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 </div>
             )}
 
-            {/* Invoices List */}
+            {/* Invoices List & Desktop Table */}
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex gap-2 overflow-x-auto no-scrollbar rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                         {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
-                            <button key={s} onClick={() => setFilter(s)} className={`h-8 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}>{s}</button>
+                            <button key={s} onClick={() => setFilter(s)} className={`h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider border transition-all ${filter === s ? 'bg-[var(--brand-blue-600)] border-[var(--brand-blue-500)] text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}>{s}</button>
                         ))}
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -656,14 +656,14 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 <button
                                     type="button"
                                     onClick={() => setSelectedInvoiceIds(new Set())}
-                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-white/10 text-slate-500 transition-colors hover:text-slate-300"
+                                    className="h-7 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider border border-white/10 text-slate-500 transition-colors hover:text-slate-300"
                                 >
                                     Clear
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleBulkEmailInvoices}
-                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-indigo-500/30 text-indigo-300 flex items-center gap-1.5 transition-colors hover:text-indigo-200"
+                                    className="h-7 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider border border-indigo-500/30 text-indigo-300 flex items-center gap-1.5 transition-colors hover:text-indigo-200"
                                 >
                                     <Mail size={12} />
                                     {`Prepare Follow-up (${selectedInvoiceIds.size})`}
@@ -672,7 +672,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     type="button"
                                     disabled={bulkPausingFollowups}
                                     onClick={handleBulkPauseFollowups}
-                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-amber-500/30 text-amber-200 flex items-center gap-1.5 transition-colors hover:text-amber-100 disabled:opacity-50"
+                                    className="h-7 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider border border-amber-500/30 text-amber-200 flex items-center gap-1.5 transition-colors hover:text-amber-100 disabled:opacity-50"
                                 >
                                     <Clock size={12} />
                                     {bulkPausingFollowups ? 'Pausing…' : `Pause Follow-ups (${selectedInvoiceIds.size})`}
@@ -681,29 +681,155 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     type="button"
                                     disabled={bulkDeletingInvoices}
                                     onClick={handleBulkDeleteInvoices}
-                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-rose-500/30 text-rose-300 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
+                                    className="h-7 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider border border-rose-500/30 text-rose-300 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
                                 >
                                     <Trash2 size={12} />
                                     {bulkDeletingInvoices ? 'Deleting…' : `Delete (${selectedInvoiceIds.size})`}
                                 </button>
                             </div>
                         )}
-                        <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:bg-teal-500">
+                        <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-[var(--brand-blue-600)] px-3.5 text-[11px] font-bold uppercase tracking-wider text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[var(--brand-blue-500)] active:scale-95">
                             <Plus size={12} /> Create Invoice
                         </button>
                     </div>
                 </div>
-                {!isInstalledMobileCompanion ? <p className="text-xs text-slate-500 -mt-2">
-                    Tip: select invoices to prepare a follow-up draft, pause automatic follow-ups, or delete drafts. Preparing a draft does not send email.
+                {!isInstalledMobileCompanion ? <p className="text-xs text-[var(--ws-text-muted)] -mt-2">
+                    Tip: select invoices to prepare a follow-up draft, pause automatic follow-ups, or delete drafts.
                 </p> : null}
 
-                <div className="space-y-3">
+                {/* Desktop Table View */}
+                <div className="hidden md:block ac-workspace-panel overflow-hidden">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-10">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (selectedInvoiceIds.size === filteredInvoices.length && filteredInvoices.length > 0) {
+                                                setSelectedInvoiceIds(new Set());
+                                            } else {
+                                                setSelectedInvoiceIds(new Set(filteredInvoices.map((i) => i.id)));
+                                            }
+                                        }}
+                                        className="text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)]"
+                                        aria-label="Select all"
+                                    >
+                                        {selectedInvoiceIds.size > 0 && selectedInvoiceIds.size === filteredInvoices.length ? (
+                                            <CheckSquare size={14} className="text-[var(--brand-blue-400)]" />
+                                        ) : (
+                                            <Square size={14} />
+                                        )}
+                                    </button>
+                                </TableHead>
+                                <TableHead>Invoice #</TableHead>
+                                <TableHead>Client &amp; Project</TableHead>
+                                <TableHead>Due Date</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Total Amount</TableHead>
+                                <TableHead className="w-24 text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredInvoices.map((inv) => {
+                                const isSelected = selectedInvoiceIds.has(inv.id);
+                                return (
+                                    <TableRow
+                                        key={inv.id}
+                                        onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }}
+                                        className={`cursor-pointer ${isSelected ? 'bg-[var(--ws-active)]' : ''}`}
+                                    >
+                                        <TableCell onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleInvoiceSelection(inv)}
+                                                className="text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-400)] shrink-0 transition-colors"
+                                                aria-label={`Select ${inv.invoiceNumber}`}
+                                            >
+                                                {isSelected ? <CheckSquare size={14} className="text-[var(--brand-blue-400)]" /> : <Square size={14} />}
+                                            </button>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2 font-mono font-semibold text-[var(--ws-text-primary)]">
+                                                <FileText size={14} className="text-[var(--brand-blue-400)] shrink-0" />
+                                                <span>{inv.invoiceNumber}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="min-w-0">
+                                                <p className="font-semibold text-sm text-[var(--ws-text-primary)] truncate">
+                                                    {inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}
+                                                </p>
+                                                {inv.projectId && (
+                                                    <span className="inline-flex items-center gap-1 text-[11px] text-[var(--ws-text-muted)]">
+                                                        <Briefcase className="w-3 h-3 text-[var(--brand-blue-400)]" />
+                                                        <span className="truncate max-w-[200px]">{projectMap[inv.projectId]?.name || 'Project'}</span>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-xs text-[var(--ws-text-secondary)]">
+                                                {new Date(inv.dueDate).toLocaleDateString()}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border whitespace-nowrap ${getStatusStyles(inv.status)}`}>
+                                                {inv.status}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <p className="font-mono font-bold text-sm text-[var(--ws-text-primary)]">
+                                                ${inv.total.toLocaleString()}
+                                            </p>
+                                            {Number(inv.amountPaid || 0) > 0 && (
+                                                <p className="text-[10px] text-[var(--ws-text-muted)]">
+                                                    Bal: ${Number(inv.balanceDue || 0).toLocaleString()}
+                                                </p>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex items-center justify-end gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleViewPDF(inv)}
+                                                    title="View PDF"
+                                                    className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }}
+                                                    title="More actions"
+                                                    className="p-1.5 rounded-lg text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)] transition-colors"
+                                                >
+                                                    <MoreVertical size={14} />
+                                                </button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                            {filteredInvoices.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-8 text-[var(--ws-text-muted)]">
+                                        No invoices found matching &ldquo;{filter}&rdquo;.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* Mobile / Tablet Cards View */}
+                <div className="space-y-3 block md:hidden">
                     {filteredInvoices.map(inv => (
                         <Card 
                             key={inv.id} 
                             onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }} 
                             className={`p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer ${
-                                selectedInvoiceIds.has(inv.id) ? 'ring-1 ring-teal-500/40' : ''
+                                selectedInvoiceIds.has(inv.id) ? 'ring-1 ring-[var(--brand-blue-500)]/40' : ''
                             }`}
                         >
                             <div className="flex justify-between items-start mb-3 gap-3">
@@ -714,11 +840,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             e.stopPropagation();
                                             toggleInvoiceSelection(inv);
                                         }}
-                                        className="text-slate-500 hover:text-teal-400 shrink-0 transition-colors"
+                                        className="text-slate-500 hover:text-[var(--brand-blue-400)] shrink-0 transition-colors"
                                         aria-label={`Select ${inv.invoiceNumber}`}
                                     >
                                         {selectedInvoiceIds.has(inv.id)
-                                            ? <CheckSquare size={14} className="text-teal-400" />
+                                            ? <CheckSquare size={14} className="text-[var(--brand-blue-400)]" />
                                             : <Square size={14} />}
                                     </button>
                                     <div className={`p-2 rounded-full bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={14} /></div>
@@ -806,7 +932,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
                                 <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-6 text-center">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono mb-1">Total Amount Due</p>
-                                    <p className="text-3xl font-black text-teal-400 tracking-tight font-mono">
+                                    <p className="text-3xl font-black text-[var(--brand-blue-400)] tracking-tight font-mono">
                                         ${selectedInvoiceForOptions.total.toLocaleString()}
                                     </p>
                                     {Number(selectedInvoiceForOptions.amountPaid || 0) > 0 && (
@@ -856,7 +982,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
                                     >
                                         <span className="flex items-center gap-2.5">
-                                            <Eye className="w-4 h-4 text-teal-400" />
+                                            <Eye className="w-4 h-4 text-[var(--brand-blue-400)]" />
                                             <span>Preview PDF Invoice</span>
                                         </span>
                                         <span className="text-[10px] text-slate-500 font-mono">PDF PREVIEW</span>

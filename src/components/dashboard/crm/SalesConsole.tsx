@@ -255,7 +255,7 @@ export default function SalesConsole() {
           previous={Math.max(1, Math.round(stats.hotLeads * 0.9))}
           href="/dashboard/leads"
           icon={Users}
-          iconColor="#14b8a6"
+          iconColor="#356AF4"
           isBetterHigher
           compact
         />
@@ -284,7 +284,7 @@ export default function SalesConsole() {
           previous={stats.dealsWonPrev}
           href="/dashboard/deals?stage=closed_won"
           icon={CheckSquare}
-          iconColor="#f87171"
+          iconColor="#10b981"
           isBetterHigher
           compact
         />

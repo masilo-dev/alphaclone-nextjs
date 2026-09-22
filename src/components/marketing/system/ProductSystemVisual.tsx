@@ -131,7 +131,7 @@ export default function ProductSystemVisual({ product, slug, compact = false }: 
   const rows = compact ? data.rows.slice(0, 2) : data.rows;
 
   return (
-    <div className="relative overflow-hidden rounded-[1.35rem] border border-white/15 bg-[#071426] p-2 shadow-[0_30px_100px_-44px_rgba(34,211,238,.7)] sm:p-3">
+    <div className="product-system-visual relative overflow-hidden rounded-[1.35rem] border border-slate-200 bg-[#071426] p-2 shadow-xl sm:p-3">
       <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-300/10 blur-3xl" aria-hidden="true" />
       <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#0a182d]">
         <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5 sm:px-4">
@@ -188,11 +188,24 @@ export default function ProductSystemVisual({ product, slug, compact = false }: 
 }
 
 export function ProductFlowRail() {
-  return <div className="grid gap-2 sm:grid-cols-4">
-    {[['01', 'Capture', 'The request or record enters the workspace.'], ['02', 'Context', 'AlphaClone resolves the right client and history.'], ['03', 'Approve', 'A person reviews consequential external actions.'], ['04', 'Verify', 'The result is checked and recorded.']].map(([step, title, body]) => <div key={step} className="rounded-xl border border-white/10 bg-white/[.03] p-3"><span className="text-[10px] font-black tracking-[.16em] text-cyan-300">{step}</span><p className="mt-2 text-xs font-bold text-white">{title}</p><p className="mt-1 text-[10px] leading-4 text-slate-400">{body}</p></div>)}
-  </div>;
+  return (
+    <div className="grid gap-3 sm:grid-cols-4">
+      {[['01', 'Capture', 'The request or record enters the workspace.'], ['02', 'Context', 'AlphaClone resolves the right client and history.'], ['03', 'Approve', 'A person reviews consequential external actions.'], ['04', 'Verify', 'The result is checked and recorded.']].map(([step, title, body]) => (
+        <div key={step} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <span className="text-xs font-bold tracking-wider text-blue-600 font-mono">{step}</span>
+          <p className="mt-2 text-sm font-bold text-slate-900">{title}</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-600">{body}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function ProductOutcomeStrip({ product }: { product: string }) {
-  return <div className="flex flex-wrap items-center gap-2 rounded-xl border border-cyan-300/15 bg-cyan-300/[.05] px-3 py-2.5 text-[10px] font-semibold text-slate-300 sm:px-4"><ShieldCheck className="h-3.5 w-3.5 text-emerald-300" /><span>{product} is connected to the same approval, execution, and verification trail as the rest of the workspace.</span></div>;
+  return (
+    <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-3 text-xs font-semibold text-slate-800">
+      <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0" />
+      <span>{product} is connected to the same approval, execution, and verification trail as the rest of the workspace.</span>
+    </div>
+  );
 }

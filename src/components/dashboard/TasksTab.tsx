@@ -801,7 +801,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       { label: 'Open Tasks', value: (totalCount ?? active.length).toLocaleString(), sub: 'Not yet completed', Icon: ListChecks, accent: 'blue' },
       { label: 'Due Today', value: dueToday, sub: 'Needs attention', Icon: CalendarClock, accent: 'amber' },
       { label: 'Overdue', value: overdue, sub: overdue > 0 ? 'Past due date' : 'All on track', Icon: AlertTriangle, accent: overdue > 0 ? 'rose' : 'emerald' },
-      { label: 'Completion', value: `${completionRate}%`, sub: `${completed} done`, Icon: CheckCircle2, accent: 'teal' },
+      { label: 'Completion', value: `${completionRate}%`, sub: `${completed} done`, Icon: CheckCircle2, accent: 'emerald' },
     ];
   }, [tasks, totalCount]);
 
@@ -963,14 +963,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         <button
           type="button"
           onClick={() => setViewMode('list')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'list' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${viewMode === 'list' ? 'bg-[var(--brand-blue-600)] text-white shadow-sm' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
         >
           <List className="w-3.5 h-3.5" /> List
         </button>
         <button
           type="button"
           onClick={() => setViewMode('board')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'board' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${viewMode === 'board' ? 'bg-[var(--brand-blue-600)] text-white shadow-sm' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
         >
           <LayoutGrid className="w-3.5 h-3.5" /> Board
         </button>
@@ -1014,49 +1014,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
                 </div>
               </div>
             ) : null}
-
-            <div className="grid grid-cols-2 min-[720px]:grid-cols-4 gap-3">
-              <IntelligentKpiCard
-                label="Due today"
-                current={taskDecision.dueToday}
-                previous={Math.max(1, Math.round(taskDecision.dueToday * 0.9))}
-                target={taskDecision.dueToday}
-                icon={CalendarClock}
-                iconColor="#f59e0b"
-                isBetterHigher={false}
-                compact
-              />
-              <IntelligentKpiCard
-                label="Overdue"
-                current={taskDecision.overdue}
-                previous={Math.max(0, Math.round(taskDecision.overdue * 1.05))}
-                target={0}
-                icon={AlertTriangle}
-                iconColor="#ef4444"
-                isBetterHigher={false}
-                compact
-              />
-              <IntelligentKpiCard
-                label="In progress"
-                current={taskDecision.inProgress}
-                previous={Math.max(0, Math.round(taskDecision.inProgress * 0.9))}
-                href="#"
-                icon={ListChecks}
-                iconColor="#06b6d4"
-                compact
-              />
-              <IntelligentKpiCard
-                label="Completion rate"
-                current={taskDecision.completionRate}
-                previous={Math.max(0, taskDecision.completionRate - 3)}
-                target={85}
-                icon={CheckCircle2}
-                iconColor="#10b981"
-                isPercentage
-                isBetterHigher
-                compact
-              />
-            </div>
 
             <BonnieBrief
               whatChanged={taskDecision.bonnie.whatChanged}

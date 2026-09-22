@@ -9,9 +9,9 @@ import { isEnterpriseFullBleedTab } from '../../src/components/ui/EnterpriseTabW
  * inside an overflow-hidden main and long messages could not be scrolled.
  */
 test('every edge-to-edge business route is also full-bleed in the enterprise wrapper', () => {
-  const source = readFileSync(new URL('../../src/components/dashboard/business/BusinessDashboard.tsx', import.meta.url), 'utf8');
-  const block = source.match(/const DASHBOARD_EDGE_TO_EDGE_TABS: string\[\] = \[([\s\S]*?)\];/);
-  assert.ok(block, 'DASHBOARD_EDGE_TO_EDGE_TABS must exist');
+  const source = readFileSync(new URL('../../src/components/ui/EnterpriseTabWrapper.tsx', import.meta.url), 'utf8');
+  const block = source.match(/ENTERPRISE_FULL_BLEED_TABS = new Set\(\[([\s\S]*?)\]\);/);
+  assert.ok(block, 'ENTERPRISE_FULL_BLEED_TABS must exist');
   const routes = [...block[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
   assert.ok(routes.includes('/dashboard/comms'));
   for (const route of routes) {

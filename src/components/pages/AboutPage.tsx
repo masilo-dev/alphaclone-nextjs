@@ -7,14 +7,98 @@ import { PrimaryCTA } from '@/components/marketing/system/CtaButtons';
 import { DEMO_HREF } from '@/lib/marketing/cta';
 
 const chapters = [
-  { number: '01', label: 'Before AlphaClone', title: 'Before AlphaClone, I was dealing with the same problem.', quote: 'I had information everywhere, but execution still depended on me.', body: ['Before AlphaClone, I tried building businesses of my own. One of my early attempts was dropshipping. It failed.', 'I also worked in business development and management for a web-services outsourcing business. The work put me close to clients, delivery, follow-up, and the operational effort required after an opportunity appeared.', '[NAME AND DETAILS OF THE OTHER BUSINESS OR PROJECT I FOUNDED]', 'CRM. Email. Leads. Social media. Projects. Documents. Contracts. Invoices. Calendars. Communication.', 'The problem was not simply the number of applications. The problem was that I still had to remember what belonged where, move the information, trigger the next action, and check that it actually happened.'] },
-  { number: '02', label: 'The friction', title: "I realized I wasn't running the business. I was operating the software.", quote: 'Find the application. Find the record. Copy the context. Repeat the action. Check the result.', body: ['Every ordinary task became a chain of small operational decisions.', '[SPECIFIC EXAMPLE OF A REPEATED TASK THAT CONSUMED TIME]', 'A lead could begin in one place, continue in an inbox, become a project somewhere else, and end in a document or invoice with no shared history. The software stored information. I was still the coordination layer.'] },
-  { number: '03', label: 'The question', title: 'Then I started asking a different question.', quote: 'What if I could simply tell the system what I wanted to accomplish?', body: ['[THE MOMENT I REALIZED THE QUESTION WAS BIGGER THAN ANY ONE TOOL]', 'Not: Which application should I open?', 'Not: Where is the customer record?', 'Not: How do I connect another automation?', 'The useful question was simpler: What needs to happen?'] },
-  { number: '04', label: 'The first version', title: "The first version wasn't the vision. It was the beginning.", quote: '[EARLY EXPERIMENT]', body: ['[WHAT THE FIRST PROTOTYPE DID]', '[WHAT WORKED]', '[WHAT FAILED OR HAD TO BE REBUILT]', '[LESSON LEARNED]', 'AlphaClone did not appear fully formed. It evolved by testing whether real instructions could become controlled, visible business actions without losing context or human judgment.'] },
-  { number: '05', label: 'The realization', title: "The problem wasn't another missing tool.", quote: 'Businesses already had software. What they lacked was coordination and execution.', body: ['AI could understand an instruction. Business systems contained the records and capabilities. But the space between intent and completed work was still largely manual.', 'That missing operational layer became the central AlphaClone thesis: connect understanding to business context, permissions, tools, approval, execution, and verification.'] },
-  { number: '06', label: 'What AlphaClone became', title: 'From an idea into an execution layer.', quote: 'Human-led. AI-assisted. System-executed.', body: ['The user expresses an outcome. The AI interprets the instruction. AlphaClone resolves the workspace context, connected systems, permissions, and available workflows.', 'Important actions remain reviewable. Approved work runs through the connected tools. The result returns to the workspace as a visible activity record.', 'AlphaClone is not meant to be another dashboard people must continuously operate. It is being built as the operational layer that helps turn intent into accountable execution.'] },
-  { number: '07', label: "The founder's belief", title: 'This is what I believe business software should become.', quote: 'The technology should serve the operator — not force the operator to serve the technology.', body: ['I believe people should spend more time deciding what matters and less time manually moving information between software systems.', 'Software should increasingly understand intent, coordinate the right systems, and execute approved work. But people should remain in control of important decisions.', 'That balance matters. Useful execution requires capability. Trust requires boundaries, approval, and a record of what happened.'] },
-  { number: '08', label: 'The future', title: "I don't think we're finished.", quote: 'Intent → Context → Approval → Execution → Verification', body: ['I believe business software may gradually move away from people manually operating dozens of disconnected interfaces.', 'The future may feel more like directing a business system: state the outcome, review the proposed action, approve what matters, and verify the result.', 'AlphaClone is being built toward that future.'] },
+  {
+    number: '01',
+    label: 'Before AlphaClone',
+    title: 'Before AlphaClone, I was dealing with the same problem.',
+    quote: 'I had information everywhere, but execution still depended on me.',
+    body: [
+      'Before AlphaClone, I tried building businesses of my own. One of my early attempts was dropshipping. It failed.',
+      'I also worked in business development and management for a web-services outsourcing business. The work put me close to clients, delivery, follow-up, and the operational effort required after an opportunity appeared.',
+      'I experienced firsthand how client onboarding, project execution, billing, and follow-ups required bouncing across a dozen fragmented web apps every single day.',
+      'CRM. Email. Leads. Social media. Projects. Documents. Contracts. Invoices. Calendars. Communication.',
+      'The problem was not simply the number of applications. The problem was that I still had to remember what belonged where, move the information, trigger the next action, and check that it actually happened.',
+    ],
+  },
+  {
+    number: '02',
+    label: 'The friction',
+    title: "I realized I wasn't running the business. I was operating the software.",
+    quote: 'Find the application. Find the record. Copy the context. Repeat the action. Check the result.',
+    body: [
+      'Every ordinary task became a chain of small operational decisions.',
+      'A prospect would express interest via email. I had to manually copy their details into a CRM, create a scope document in another tool, send a separate contract for e-signature, set up an invoice in a billing tool, and remember to schedule a kickoff call.',
+      'A lead could begin in one place, continue in an inbox, become a project somewhere else, and end in a document or invoice with no shared history. The software stored information. I was still the coordination layer.',
+    ],
+  },
+  {
+    number: '03',
+    label: 'The question',
+    title: 'Then I started asking a different question.',
+    quote: 'What if I could simply tell the system what I wanted to accomplish?',
+    body: [
+      'When modern language models emerged, I realized they could understand complex instructions, but they had no connection to actual business records, permissions, or transactional tools.',
+      'Not: Which application should I open?',
+      'Not: Where is the customer record?',
+      'Not: How do I connect another automation?',
+      'The useful question was simpler: What needs to happen?',
+    ],
+  },
+  {
+    number: '04',
+    label: 'The first version',
+    title: "The first version wasn't the vision. It was the beginning.",
+    quote: 'Testing whether natural language could safely trigger multi-step business actions.',
+    body: [
+      'The first prototype was a set of connected scripts attempting to convert natural language instructions into CRM updates and email drafts.',
+      'It proved that intent could be parsed accurately, but completely unconstrained automation created risk and confusion.',
+      'What was missing was a structured execution layer with explicit approval checkpoints, scoped permissions, and a tamper-proof activity history.',
+      'AlphaClone did not appear fully formed. It evolved by testing whether real instructions could become controlled, visible business actions without losing context or human judgment.',
+    ],
+  },
+  {
+    number: '05',
+    label: 'The realization',
+    title: "The problem wasn't another missing tool.",
+    quote: 'Businesses already had software. What they lacked was coordination and execution.',
+    body: [
+      'AI could understand an instruction. Business systems contained the records and capabilities. But the space between intent and completed work was still largely manual.',
+      'That missing operational layer became the central AlphaClone thesis: connect understanding to business context, permissions, tools, approval, execution, and verification.',
+    ],
+  },
+  {
+    number: '06',
+    label: 'What AlphaClone became',
+    title: 'From an idea into an execution layer.',
+    quote: 'Human-led. AI-assisted. System-executed.',
+    body: [
+      'The user expresses an outcome. The AI interprets the instruction. AlphaClone resolves the workspace context, connected systems, permissions, and available workflows.',
+      'Important actions remain reviewable. Approved work runs through the connected tools. The result returns to the workspace as a visible activity record.',
+      'AlphaClone is not meant to be another dashboard people must continuously operate. It is being built as the operational layer that helps turn intent into accountable execution.',
+    ],
+  },
+  {
+    number: '07',
+    label: "The founder's belief",
+    title: 'This is what I believe business software should become.',
+    quote: 'The technology should serve the operator — not force the operator to serve the technology.',
+    body: [
+      'I believe people should spend more time deciding what matters and less time manually moving information between software systems.',
+      'Software should increasingly understand intent, coordinate the right systems, and execute approved work. But people should remain in control of important decisions.',
+      'That balance matters. Useful execution requires capability. Trust requires boundaries, approval, and a record of what happened.',
+    ],
+  },
+  {
+    number: '08',
+    label: 'The future',
+    title: "I don't think we're finished.",
+    quote: 'Intent → Context → Approval → Execution → Verification',
+    body: [
+      'I believe business software may gradually move away from people manually operating dozens of disconnected interfaces.',
+      'The future may feel more like directing a business system: state the outcome, review the proposed action, approve what matters, and verify the result.',
+      'AlphaClone is being built toward that future.',
+    ],
+  },
 ] as const;
 
 export default function AboutPage() {
@@ -50,11 +134,24 @@ export default function AboutPage() {
                   <p className="founder-kicker">Chapter {chapter.number} · {chapter.label}</p>
                   <h2>{chapter.title}</h2>
                   <blockquote>{chapter.quote}</blockquote>
-                  <div className="founder-prose">{chapter.body.map((paragraph) => <p className={paragraph.startsWith('[') ? 'founder-placeholder' : ''} key={paragraph}>{paragraph}</p>)}</div>
+                  <div className="founder-prose">{chapter.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>
                 </div>
               </AnimateIn>
-              {chapter.number === '04' && <div className="founder-evidence founder-evidence--note"><p>Founder archive</p><strong>[ADD EARLY PROTOTYPE OR WORKFLOW]</strong><span>Use a real screenshot, sketch, commit, or early interface. Do not recreate history.</span></div>}
-              {chapter.number === '06' && <div className="founder-evidence founder-evidence--product"><div className="founder-product-frame"><Image src="/screenshots/deals-dashboard.png" alt="AlphaClone workspace showing connected business records" fill sizes="(max-width: 900px) 92vw, 520px" className="object-cover object-top" /></div><ol className="founder-execution-flow">{['Intent', 'Context', 'Approval', 'Execution', 'Verification'].map((step) => <li key={step}><CheckCircle2 aria-hidden="true" />{step}</li>)}</ol></div>}
+              {chapter.number === '04' && (
+                <div className="founder-evidence founder-evidence--note">
+                  <p>Architecture Principle</p>
+                  <strong>Intent → Context → Approval → Execution → Verification</strong>
+                  <span>Every action requires workspace context, transparent boundaries, human review for external steps, and an immutable activity log.</span>
+                </div>
+              )}
+              {chapter.number === '06' && (
+                <div className="founder-evidence founder-evidence--product">
+                  <div className="founder-product-frame">
+                    <Image src="/screenshots/deals-dashboard.png" alt="AlphaClone workspace showing connected business records" fill sizes="(max-width: 900px) 92vw, 520px" className="object-cover object-top" />
+                  </div>
+                  <ol className="founder-execution-flow">{['Intent', 'Context', 'Approval', 'Execution', 'Verification'].map((step) => <li key={step}><CheckCircle2 aria-hidden="true" />{step}</li>)}</ol>
+                </div>
+              )}
             </div>
           </section>
         ))}

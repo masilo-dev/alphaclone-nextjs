@@ -8,6 +8,7 @@ import { getBookingConfig, resolvePlatformBookingUrl } from '@/lib/marketing/boo
 import { MARKETING_PRICING } from '@/config/pricingPlans';
 import { TRIAL_HREF } from '@/lib/marketing/cta';
 import { useLanguage } from '@/contexts/LanguageContext';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 const COPY = {
   en: {
@@ -43,124 +44,128 @@ export default function BookDemoContent() {
   const bookingUrl = resolvePlatformBookingUrl(config.bookingUrl);
 
   return (
-    <div className="marketing-theme min-h-screen text-white">
-      <section className="pt-24 pb-6 sm:pt-28 sm:pb-10 px-4">
-        <div className="max-w-5xl mx-auto">
-          <Link
-            href="/"
-            className="inline-flex items-center text-teal-400 hover:text-teal-300 transition-colors mb-5 sm:mb-8 text-sm"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {copy.back}
-          </Link>
+    <MarketingLandingShell>
+      <div className="bg-white text-slate-900 selection:bg-blue-500/20">
+        <section className="pt-8 pb-6 sm:pt-12 sm:pb-10 px-4">
+          <div className="max-w-5xl mx-auto">
+            <Link
+              href="/"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors mb-5 sm:mb-8 text-sm font-medium"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {copy.back}
+            </Link>
 
-          <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-8 lg:gap-10 items-start">
-            <div className="order-1">
-              <p className="text-xs font-semibold text-teal-400 uppercase tracking-widest mb-3">
-                {copy.eyebrow}
-              </p>
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight mb-3 sm:mb-4">
-                {copy.title}
-              </h1>
-              <p className="text-base text-slate-400 mb-5 sm:mb-6 leading-relaxed">
-                {copy.intro}
-              </p>
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-8 lg:gap-10 items-start">
+              <div className="order-1">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-blue-50 border border-blue-200 text-blue-800 text-xs font-semibold tracking-widest uppercase mb-4">
+                  {copy.eyebrow}
+                </span>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-950 leading-tight mb-3 sm:mb-4 font-marketing-heading">
+                  {copy.title}
+                </h1>
+                <p className="text-base text-slate-600 mb-5 sm:mb-6 leading-relaxed">
+                  {copy.intro}
+                </p>
 
-              <ul className="space-y-2.5 mb-5 sm:mb-6">
+                <ul className="space-y-2.5 mb-5 sm:mb-6">
+                  {[
+                    { icon: Clock, text: copy.points[0] },
+                    { icon: CheckCircle2, text: copy.points[1] },
+                    { icon: CheckCircle2, text: copy.points[2] },
+                  ].map(({ icon: Icon, text }) => (
+                    <li key={text} className="flex items-start gap-3 text-sm text-slate-700">
+                      <Icon className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="hidden sm:grid grid-cols-2 gap-3 mb-6">
+                  {[
+                    { label: copy.plans, value: MARKETING_PRICING.startingPriceLine },
+                    { label: copy.trial, value: copy.days },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="p-3.5 bg-white border border-slate-200 rounded-xl text-center shadow-sm"
+                    >
+                      <p className="text-lg font-bold text-slate-950">{value}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-sm text-slate-500">
+                  {copy.exploreFirst}{' '}
+                  <Link href={TRIAL_HREF} className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+                    {copy.startTrial} →
+                  </Link>
+                  <span aria-hidden="true"> · </span>
+                  <Link href="/demo" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+                    {copy.watchDemo} →
+                  </Link>
+                </p>
+              </div>
+
+              <div id="book-demo-calendar" className="order-2 scroll-mt-24">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-blue-600" />
+                    <h2 className="text-base font-bold text-slate-950">{copy.pickTime}</h2>
+                  </div>
+                  <a
+                    href={bookingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-blue-600 transition-colors font-medium"
+                  >
+                    {copy.newTab}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden p-2">
+                  <CalComEmbed bookingUrl={bookingUrl} variant="page" />
+                </div>
+
+                <p className="text-center text-xs text-slate-500 mt-3">
+                  {copy.timezone}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 pb-16 sm:pb-20">
+          <div className="max-w-5xl mx-auto">
+            <nav
+              className="rounded-xl border border-slate-200 bg-slate-50 p-6 sm:p-8"
+              aria-label="Explore AlphaClone"
+            >
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-700 mb-4">
+                {copy.explore}
+              </p>
+              <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 text-sm">
                 {[
-                  { icon: Clock, text: copy.points[0] },
-                  { icon: CheckCircle2, text: copy.points[1] },
-                  { icon: CheckCircle2, text: copy.points[2] },
-                ].map(({ icon: Icon, text }) => (
-                  <li key={text} className="flex items-start gap-3 text-sm text-slate-300">
-                    <Icon className="w-4 h-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                    {text}
+                  { href: '/services', label: copy.links[0] },
+                  { href: '/pricing', label: copy.links[1] },
+                  { href: '/about', label: copy.links[2] },
+                  { href: '/crm', label: copy.links[3] },
+                  { href: '/ai-agents', label: copy.links[4] },
+                  { href: '/ecosystem', label: copy.links[5] },
+                ].map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className="text-slate-700 hover:text-blue-600 font-medium transition-colors">
+                      {label} →
+                    </Link>
                   </li>
                 ))}
               </ul>
-
-              <div className="hidden sm:grid grid-cols-2 gap-3 mb-6">
-                {[
-                  { label: copy.plans, value: MARKETING_PRICING.startingPriceLine },
-                  { label: copy.trial, value: copy.days },
-                ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="p-3.5 bg-slate-900/60 border border-slate-700/50 rounded-xl text-center"
-                  >
-                    <p className="text-lg font-black text-white">{value}</p>
-                    <p className="text-xs text-slate-500">{label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-sm text-slate-500">
-                {copy.exploreFirst}{' '}
-                <Link href={TRIAL_HREF} className="text-teal-400 hover:text-teal-300 font-medium transition-colors">
-                  {copy.startTrial} →
-                </Link>
-                <span aria-hidden="true"> · </span>
-                <Link href="/demo" className="text-teal-400 hover:text-teal-300 font-medium transition-colors">
-                  {copy.watchDemo} →
-                </Link>
-              </p>
-            </div>
-
-            <div id="book-demo-calendar" className="order-2 scroll-mt-24">
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-teal-400" />
-                  <h2 className="text-base font-bold text-white">{copy.pickTime}</h2>
-                </div>
-                <a
-                  href={bookingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-teal-400 transition-colors"
-                >
-                  {copy.newTab}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-
-              <CalComEmbed bookingUrl={bookingUrl} variant="page" />
-
-              <p className="text-center text-xs text-slate-600 mt-3">
-                {copy.timezone}
-              </p>
-            </div>
+            </nav>
           </div>
-        </div>
-      </section>
-
-      <section className="px-4 pb-16 sm:pb-20">
-        <div className="max-w-5xl mx-auto">
-          <nav
-            className="rounded-xl border border-slate-800 bg-slate-900/40 p-6"
-            aria-label="Explore AlphaClone"
-          >
-            <p className="text-xs font-semibold uppercase tracking-widest text-teal-400 mb-4">
-              {copy.explore}
-            </p>
-            <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 text-sm">
-              {[
-                { href: '/services', label: copy.links[0] },
-                { href: '/pricing', label: copy.links[1] },
-                { href: '/about', label: copy.links[2] },
-                { href: '/crm', label: copy.links[3] },
-                { href: '/ai-agents', label: copy.links[4] },
-                { href: '/ecosystem', label: copy.links[5] },
-              ].map(({ href, label }) => (
-                <li key={href}>
-                  <Link href={href} className="text-slate-300 hover:text-teal-400 transition-colors">
-                    {label} →
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </MarketingLandingShell>
   );
 }

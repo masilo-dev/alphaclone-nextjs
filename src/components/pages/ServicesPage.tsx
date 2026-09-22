@@ -180,28 +180,27 @@ const ServicesPage: React.FC = () => {
     ];
 
     return (
-        <div className="marketing-theme min-h-screen page-network-bg text-white">
+        <div className="min-h-screen bg-white text-[#07152f]">
             {/* BLUF Summary — SSR rendered above the fold */}
             <div className="relative overflow-hidden">
-                <section className="relative min-h-[60vh] flex flex-col items-center justify-center py-16">
-
-                    <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
+                <section className="relative flex flex-col items-center justify-center py-16 px-4">
+                    <div className="relative z-10 max-w-4xl mx-auto text-center">
                         <AnimateIn type="fadeIn">
-                            <div className="flex items-center justify-center gap-2 mb-4">
-                                <div className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
-                                <span className="text-teal-400 text-sm font-semibold tracking-widest uppercase">The Bottom Line</span>
+                            <div className="inline-flex items-center justify-center gap-2 mb-6 px-3.5 py-1.5 rounded-full bg-[#edf6ff] border border-[#d0e4ff] text-[#075fc7] text-xs font-bold uppercase tracking-wider">
+                                <div className="w-2 h-2 rounded-full bg-[#0878f9]" />
+                                <span>The Bottom Line</span>
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6 leading-tight text-white">
+                            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold font-marketing-heading tracking-tight text-[#07152f] mb-6 leading-tight">
                                 AI Business Execution{' '}
-                                <span className="hero-metallic-text">
+                                <span className="text-[#0878f9]">
                                     Layer.
                                 </span>
                             </h1>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.2}>
-                            <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
+                            <p className="text-lg sm:text-xl text-[#52627b] leading-relaxed max-w-3xl mx-auto">
                                 {blufSummary}
                             </p>
                             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
@@ -213,53 +212,53 @@ const ServicesPage: React.FC = () => {
                 </section>
 
                 {/* Services — Full Detail */}
-                <section className="py-16 bg-transparent">
+                <section className="py-16 bg-white border-t border-[#dfe6ef]">
                     <div className="max-w-6xl mx-auto px-4">
                         <AnimateIn type="fadeUp">
                             <div className="text-center mb-16">
-                                <h2 className="text-3xl md:text-4xl font-bold mb-4">Every Service, In Depth</h2>
-                                <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                                    Here's exactly what you get when you join AlphaClone — no marketing fluff, just a clear explanation of every capability and why it matters for your business.
+                                <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight">Every Service, In Depth</h2>
+                                <p className="text-[#52627b] text-lg max-w-2xl mx-auto leading-relaxed">
+                                    Here&apos;s exactly what you get when you join AlphaClone — no marketing fluff, just a clear explanation of every capability and why it matters for your business.
                                 </p>
                             </div>
                         </AnimateIn>
 
-                        <div className="space-y-16">
+                        <div className="space-y-12">
                             {services.map((service, idx) => (
                                 <AnimateIn key={idx} type={idx % 2 === 0 ? 'fadeLeft' : 'fadeRight'} delay={0.05}>
                                     <div
                                         id={service.title.toLowerCase().replace(/&/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}
-                                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start py-8 border-b border-slate-800/70"
+                                        className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start py-8 border-b border-[#dfe6ef]"
                                     >
                                         {/* Left: Header + Description */}
                                         <div>
                                             <div className="flex items-center gap-3 mb-4">
-                                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${service.color} flex items-center justify-center flex-shrink-0`}>
+                                                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${service.color} flex items-center justify-center flex-shrink-0 shadow-sm`}>
                                                     <service.icon className="w-6 h-6 text-white" />
                                                 </div>
                                                 {service.badge && (
-                                                    <span className="px-3 py-1 bg-teal-500/10 border border-teal-500/30 rounded-full text-teal-400 text-xs font-semibold">
+                                                    <span className="px-3 py-1 bg-[#edf6ff] border border-[#d0e4ff] rounded-full text-[#075fc7] text-xs font-semibold">
                                                         {service.badge}
                                                     </span>
                                                 )}
                                             </div>
-                                            <h3 className="text-2xl font-bold mb-1">{service.title}</h3>
-                                            <p className="text-teal-400 text-sm mb-4">{service.subtitle}</p>
-                                            <p className="text-slate-300 leading-relaxed mb-4">{service.description}</p>
-                                            <p className="text-slate-400 leading-relaxed text-sm">{service.extendedDescription}</p>
-                                            <div className="mt-6 p-4 bg-teal-500/5 border border-teal-500/20 rounded-xl">
+                                            <h3 className="text-2xl font-bold font-marketing-heading text-[#07152f] mb-1 tracking-tight">{service.title}</h3>
+                                            <p className="text-[#0878f9] text-sm font-semibold mb-3">{service.subtitle}</p>
+                                            <p className="text-[#33445e] leading-relaxed mb-3">{service.description}</p>
+                                            <p className="text-[#52627b] leading-relaxed text-sm">{service.extendedDescription}</p>
+                                            <div className="mt-6 p-4 bg-[#edf6ff] border border-[#d0e4ff] rounded-xl">
                                                 <div className="flex items-center gap-2">
-                                                    <TrendingUp className="w-4 h-4 text-teal-400 flex-shrink-0" />
-                                                    <span className="text-teal-300 text-sm font-semibold">{service.impact}</span>
+                                                    <TrendingUp className="w-4 h-4 text-[#0878f9] flex-shrink-0" />
+                                                    <span className="text-[#075fc7] text-sm font-semibold">{service.impact}</span>
                                                 </div>
                                             </div>
                                         </div>
                                         {/* Right: Features */}
                                         <div>
-                                            <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Capabilities</h4>
+                                            <h4 className="text-xs font-bold text-[#76849a] uppercase tracking-wider mb-4">Capabilities</h4>
                                             <div className="space-y-3">
                                                 {service.features.map((f, fi) => (
-                                                    <p key={fi} className="text-slate-300 text-sm leading-relaxed border-l-2 border-slate-700 pl-3">
+                                                    <p key={fi} className="text-[#33445e] text-sm leading-relaxed border-l-2 border-[#d0e4ff] pl-3">
                                                         {f}
                                                     </p>
                                                 ))}
@@ -277,14 +276,14 @@ const ServicesPage: React.FC = () => {
                 </section>
 
                 {/* Why Not Technical Users Love AlphaClone */}
-                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/50">
+                <section className="py-16 bg-[#f7f9fc] border-y border-[#dfe6ef]">
                     <div className="max-w-6xl mx-auto px-4">
                         <AnimateIn type="fadeUp">
                             <div className="text-center mb-12">
-                                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                                    "I'm Not Technical" — That's Exactly Who This Is For
+                                <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading text-[#07152f] mb-4 tracking-tight">
+                                    &ldquo;I&apos;m Not Technical&rdquo; — That&apos;s Exactly Who This Is For
                                 </h2>
-                                <p className="text-slate-400 text-lg max-w-3xl mx-auto">
+                                <p className="text-[#52627b] text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
                                     AlphaClone was built for business owners who want operational software without hiring an internal tools team. The core workflows use familiar records, approvals, and clear next actions.
                                 </p>
                             </div>
@@ -323,10 +322,10 @@ const ServicesPage: React.FC = () => {
                                 },
                             ].map((item, i) => (
                                 <AnimateIn key={i} type="stagger" index={i}>
-                                    <div className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 h-full">
-                                        <item.icon className="w-8 h-8 text-teal-400 mb-4" />
-                                        <h3 className="text-lg font-bold mb-3">{item.title}</h3>
-                                        <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
+                                    <div className="p-6 rounded-2xl bg-white border border-[#dfe6ef] shadow-sm h-full">
+                                        <item.icon className="w-8 h-8 text-[#0878f9] mb-4" />
+                                        <h3 className="text-lg font-bold font-marketing-heading text-[#07152f] mb-2">{item.title}</h3>
+                                        <p className="text-[#52627b] text-sm leading-relaxed">{item.desc}</p>
                                     </div>
                                 </AnimateIn>
                             ))}
@@ -335,21 +334,21 @@ const ServicesPage: React.FC = () => {
                 </section>
 
                 {/* Final CTA */}
-                <section className="py-20 bg-gradient-to-b from-transparent to-slate-900/40">
+                <section className="py-20 bg-white">
                     <div className="max-w-3xl mx-auto px-4 text-center">
                         <AnimateIn type="scaleIn">
-                            <h2 className="text-3xl md:text-4xl font-black mb-6 text-white tracking-tight">
+                            <h2 className="text-3xl md:text-4xl font-bold font-marketing-heading mb-4 text-[#07152f] tracking-tight">
                                 Ready to Run Your Entire Business <br />
-                                from <span className="hero-metallic-text">One Dashboard?</span>
+                                from <span className="text-[#0878f9]">One Workspace?</span>
                             </h2>
-                            <p className="text-slate-400 text-lg mb-10 leading-relaxed max-w-2xl mx-auto">
+                            <p className="text-[#52627b] text-base sm:text-lg mb-8 leading-relaxed max-w-2xl mx-auto">
                                 Start your free trial today. No credit card required for the first 14 days. Cancel anytime from your account.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
                                 <PrimaryCTA className="w-full sm:w-auto">Start 14-Day Free Trial</PrimaryCTA>
                                 <SecondaryCTA className="w-full sm:w-auto">Book a Live Demo</SecondaryCTA>
                             </div>
-                            <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-widest">
+                            <p className="mt-6 text-[#76849a] text-xs font-bold uppercase tracking-wider">
                                 {MARKETING_PRICING.startingPriceLine} · 14-day trial · No card required
                             </p>
                         </AnimateIn>

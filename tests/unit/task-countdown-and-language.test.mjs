@@ -129,7 +129,7 @@ describe('language switching', () => {
     const all = [...new Set([...navLabels, ...METRIC_PERIOD_OPTIONS.map((o) => o.label), ...comparisonLabels, ...homeStrings])];
     for (const lang of ['es', 'pl']) {
       // Loan words / brand names that are legitimately identical in the target language.
-      const sameInTarget = /^(CRM|SMS|WhatsApp|MCP monitor|AI Studio|Bonnie AI|Nexus|Gmail|SEO|Est\.|Tickets|Leads)$/;
+      const sameInTarget = /^(CRM|SMS|WhatsApp|MCP monitor|AI Studio|Bonnie AI|Nexus|Gmail|SEO|Est\.|Tickets|Leads|Marketing)$/;
       const untranslated = all.filter((s) => uiTranslate(lang, s) === s && !sameInTarget.test(s));
       assert.deepEqual(untranslated, [], `${lang} is missing: ${untranslated.join(' | ')}`);
     }

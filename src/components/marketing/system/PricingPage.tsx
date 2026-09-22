@@ -268,7 +268,7 @@ export default function PricingPage() {
                               <td className="p-4 text-left font-medium text-[var(--marketing-text-secondary)] w-2/5">{row.feature}</td>
                               <td className="p-4 text-center"><RenderCell val={row.free} /></td>
                               <td className="p-4 text-center"><RenderCell val={row.starter} /></td>
-                              <td className="p-4 text-center bg-[rgba(20,184,166,0.03)]"><RenderCell val={row.pro} /></td>
+                              <td className="p-4 text-center bg-[var(--marketing-accent-soft)]"><RenderCell val={row.pro} /></td>
                               <td className="p-4 text-center"><RenderCell val={row.premium} /></td>
                             </tr>
                           ))}

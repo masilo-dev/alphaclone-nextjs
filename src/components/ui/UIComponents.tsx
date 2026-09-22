@@ -61,7 +61,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = false, ...props }) => {
   return (
     <div
-      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 ${hoverEffect ? 'hover:bg-[var(--ws-surface-2)] transition-all duration-300 hover:border-teal-500/20' : ''} ${className}`}
+      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 ${hoverEffect ? 'hover:bg-[var(--ws-hover)] transition-all duration-200 hover:border-[var(--ws-border-strong)]' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -322,7 +322,7 @@ export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = 
 };
 
 export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
-  <div className={`flex h-full w-full items-center justify-center rounded-full bg-slate-800 text-slate-400 ${className}`} {...props} />
+  <div className={`flex h-full w-full items-center justify-center rounded-full bg-[var(--ws-surface-secondary,#1B1E2B)] text-[var(--ws-text-muted,#a8b0c2)] border border-[var(--ws-border)] text-xs font-semibold ${className}`} {...props} />
 );
 
 // --- Table (enterprise: sticky header, alternating rows via ac-data-table) ---
@@ -333,7 +333,7 @@ export const Table: React.FC<React.HTMLAttributes<HTMLTableElement>> = ({ classN
 );
 
 export const TableHeader: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className = '', ...props }) => (
-  <thead className={`[&_tr]:border-b [&_tr]:border-slate-800 ${className}`} {...props} />
+  <thead className={`[&_tr]:border-b [&_tr]:border-[var(--ws-border)] ${className}`} {...props} />
 );
 
 export const TableBody: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> = ({ className = '', ...props }) => (
@@ -341,15 +341,15 @@ export const TableBody: React.FC<React.HTMLAttributes<HTMLTableSectionElement>> 
 );
 
 export const TableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ className = '', ...props }) => (
-  <tr className={`border-b border-slate-800 transition-colors hover:bg-slate-800/50 data-[state=selected]:bg-slate-800 ${className}`} {...props} />
+  <tr className={`border-b border-[var(--ws-border)] transition-colors hover:bg-[var(--ws-hover)] data-[state=selected]:bg-[var(--ws-active)] ${className}`} {...props} />
 );
 
 export const TableHead: React.FC<React.ThHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
-  <th className={`h-12 px-4 text-left align-middle font-medium text-slate-400 [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
+  <th className={`h-11 px-4 text-left align-middle font-semibold text-xs tracking-wider uppercase text-[var(--ws-text-muted)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
 );
 
 export const TableCell: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ className = '', ...props }) => (
-  <td className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
+  <td className={`px-4 py-3 align-middle text-sm text-[var(--ws-text-primary)] [&:has([role=checkbox])]:pr-0 ${className}`} {...props} />
 );
 
 // --- Dropdown ---
@@ -388,7 +388,7 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
       </div>
 
       {isOpen && (
-        <div className={`absolute z-[110] mt-2 w-48 rounded-lg bg-slate-900 border border-slate-700 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}>
+        <div className={`absolute z-[110] mt-2 w-48 rounded-xl bg-[var(--ws-panel,#171A26)] border border-[var(--ws-border)] shadow-xl animate-in fade-in slide-in-from-top-1 duration-150 ${align === 'right' ? 'right-0' : 'left-0'}`}>
           <div className="p-1 space-y-0.5">
             {items.map((item, index) => (
               <button
@@ -397,10 +397,10 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
                   item.onClick();
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
                   item.variant === 'danger'
                     ? 'text-red-400 hover:bg-red-500/10'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    : 'text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]'
                 }`}
               >
                 {item.icon && <span className="shrink-0">{item.icon}</span>}

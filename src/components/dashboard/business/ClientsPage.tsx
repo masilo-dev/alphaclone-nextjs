@@ -401,7 +401,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 value: totalCount || clients.length,
                 sub: `${customerCount} customers`,
                 Icon: Users,
-                accent: 'teal',
+                accent: 'blue',
             },
             {
                 label: 'Pipeline Value',
@@ -819,7 +819,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 {/* Simple Client List */}
                 <div className="space-y-2">
                     {filteredClients.map(client => (
-                        <div key={client.id} className="p-3 bg-slate-900/60 border border-white/5 rounded-xl flex items-center justify-between">
+                        <div key={client.id} className="p-3 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-white text-xs">
                                     {(client.name || '?').charAt(0)}
@@ -897,25 +897,25 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         Add
                     </Button>
                     {/* View mode toggle */}
-                    <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1">
+                    <div className="flex bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl overflow-hidden p-1">
                         <button
                             onClick={() => setViewMode('list')}
                             title="List view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-slate-500 hover:text-white'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
                         >
                             <List className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('board')}
                             title="Card view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-slate-500 hover:text-white'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
                         >
                             <LayoutGrid className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('micro')}
                             title="Micro grid view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'micro' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-slate-500 hover:text-white'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'micro' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'}`}
                         >
                             <Grid3X3 className="w-4 h-4" />
                         </button>
@@ -977,11 +977,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input type="text" placeholder="Search contacts..."
                                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-sm"
+                                className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all text-sm"
                             />
                         </div>
                         <select value={selectedStage} onChange={e => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-md focus:outline-none focus:border-[var(--brand-blue-500)]">
+                            className="px-3 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl text-sm text-[var(--ws-text-primary)] focus:outline-none focus:border-[var(--brand-blue-500)]">
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -1073,13 +1073,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 placeholder="Search contacts..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-sm"
+                                className="w-full pl-9 pr-4 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all text-sm"
                             />
                         </div>
                         <select
                             value={selectedStage}
                             onChange={(e) => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-md"
+                            className="px-3 py-2 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] transition-all text-sm"
                         >
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
@@ -1132,7 +1132,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     placeholder="Search clients..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-sm font-medium"
+                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-[var(--ws-surface-primary)] border border-[var(--ws-border)] rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] text-[var(--ws-text-primary)] placeholder-[var(--ws-text-muted)] transition-all text-sm font-medium"
                                 />
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
@@ -1149,7 +1149,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         className={`h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
                                             selectedStage === stage.value
                                                 ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-600)]/10'
-                                                : 'bg-slate-900 text-slate-400 border-slate-850 hover:text-white hover:bg-slate-800'
+                                                : 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-muted)] border-[var(--ws-border)] hover:text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]'
                                         }`}
                                     >
                                         {stage.label}
@@ -1184,7 +1184,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             {filteredClients.map(client => (
                                 <div
                                     key={client.id}
-                                    className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-[var(--brand-blue-500)]/10 border-[var(--brand-blue-500)] shadow-sm shadow-[var(--brand-blue-500)]/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
+                                    className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-[var(--brand-blue-500)]/10 border-[var(--brand-blue-500)] shadow-sm shadow-[var(--brand-blue-500)]/20' : 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] hover:bg-[var(--ws-hover)] hover:border-[var(--ws-border-strong)]'}`}
                                     onClick={() => openContactDetail(client)}
                                 >
                                     {/* ... checkbox and avatar ... */}
@@ -1204,16 +1204,16 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     setSelectedClientIds(selectedClientIds.filter(id => id !== client.id));
                                                 }
                                             }}
-                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-[var(--brand-blue-600)] focus:ring-[var(--brand-blue-500)]/20"
+                                            className="w-4 h-4 rounded border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] text-[var(--brand-blue-600)] focus:ring-[var(--brand-blue-500)]/20"
                                         />
-                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-800 to-slate-700 flex items-center justify-center font-semibold text-slate-350 text-xs shrink-0">
+                                        <div className="w-9 h-9 rounded-full bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] flex items-center justify-center font-semibold text-[var(--ws-text-secondary)] text-xs shrink-0">
                                             {(client.name || '?').charAt(0)}
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-slate-950 border border-slate-850 text-[var(--brand-blue-400)] uppercase">
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-[var(--ws-surface-secondary)] border border-[var(--ws-border)] text-[var(--brand-blue-400)] uppercase">
                                                 {client.salesStage}
                                             </span>
                                         </div>
@@ -1241,7 +1241,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <div className={`flex-1 min-h-[min(68dvh,640px)] lg:min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col ac-workspace-panel rounded-lg overflow-hidden`}>
                         {selectedClient ? (
                             <div className="flex flex-col flex-1 min-h-0 overflow-hidden animate-in fade-in duration-300">
-                                <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10 shrink-0">
+                                <div className="lg:hidden flex items-center justify-between p-4 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] sticky top-0 z-10 shrink-0">
                                     <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[var(--brand-blue-400)] text-sm font-medium">
                                         <ChevronLeft className="w-5 h-5" /> Back
                                     </button>
@@ -1310,7 +1310,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     />
 
                                     {/* Tabs Header */}
-                                    <div className="flex border-b border-slate-800 mb-4 overflow-x-auto [scrollbar-width:none]">
+                                    <div className="flex border-b border-[var(--ws-border)] mb-4 overflow-x-auto [scrollbar-width:none]">
                                         <button
                                             onClick={() => setActiveTab('timeline')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
@@ -1574,9 +1574,9 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center bg-slate-800/10 text-slate-500">
-                                <Users className="w-16 h-16 mb-4 text-slate-700" />
-                                <p className="text-lg font-medium text-slate-400">Select a client to view details</p>
+                            <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-[var(--ws-text-muted)]">
+                                <Users className="w-16 h-16 mb-4 text-[var(--ws-text-muted)]/40" />
+                                <p className="text-base font-medium text-[var(--ws-text-secondary)]">Select a client to view details</p>
                             </div>
                         )}
                     </div>
@@ -1829,7 +1829,7 @@ const ClientCard = ({ client, onOpen, onEdit, onDelete, onCall, onCreateProposal
                                 <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="!p-2 hover:bg-slate-700"
+                                    className="!p-2 hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)] text-[var(--ws-text-muted)]"
                                     icon={<MoreVertical className="w-4 h-4" />}
                                 />
                             }

@@ -37,7 +37,7 @@ export function EnterpriseTabWrapper({
 export const ENTERPRISE_FULL_BLEED_TABS = new Set([
   '/dashboard/mail',
   // Unified inbox: the reading pane owns its own scroll. Without full-bleed the
-  // wrapper grows to the email's height inside an overflow-hidden main and the
+  // wrapper grows to the email height inside an overflow-hidden main and the
   // bottom of long messages can never be reached.
   '/dashboard/comms',
   '/dashboard/business/unified-inbox',

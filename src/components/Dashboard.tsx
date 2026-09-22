@@ -665,9 +665,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   // restarts from step 1 even if a previous run is mid-way or got stuck open.
   const [tourRunId, setTourRunId] = useState(0);
   const requestProductTour = useCallback(() => {
+    if (activeTab !== "/dashboard" && activeTab !== "overview" && activeTab !== "dashboard") {
+      setActiveTab("/dashboard");
+      window.setTimeout(() => {
+        setTourRunId((id) => id + 1);
+        setShowProductTour(true);
+      }, 350);
+      return;
+    }
     setTourRunId((id) => id + 1);
     setShowProductTour(true);
-  }, []);
+  }, [activeTab]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
