@@ -49,6 +49,7 @@ interface ComparisonCategory {
   rows: {
     feature: string;
     free: string | boolean;
+    starter: string | boolean;
     pro: string | boolean;
     premium: string | boolean;
   }[];
@@ -58,35 +59,35 @@ const detailedComparison: ComparisonCategory[] = [
   {
     category: 'Daily Execution Limits (per action category)',
     rows: [
-      { feature: 'Emails Sent', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Leads Added', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'CRM Create / Update Actions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Outreach Actions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Social Publishing Actions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Documents / Contracts / Proposals / Invoices', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Automation Executions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'MCP Write / Execution Actions', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Bulk Lead Import Maximum', free: DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Emails Sent', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Leads Added', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'CRM Create / Update Actions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Outreach Actions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Social Publishing Actions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Documents / Contracts / Proposals / Invoices', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Automation Executions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'MCP Write / Execution Actions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Bulk Lead Import Maximum', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
     ],
   },
   {
     category: 'Platform Access',
     rows: [
-      { feature: 'CRM & Lead Management', free: true, pro: true, premium: true },
-      { feature: 'Contracts & E-Signatures', free: true, pro: true, premium: true },
-      { feature: 'Invoices & Quotations', free: true, pro: true, premium: true },
-      { feature: 'Projects & Delivery Tasks', free: true, pro: true, premium: true },
-      { feature: 'Native Calendar & Booking', free: true, pro: true, premium: true },
-      { feature: 'Model Context Protocol (MCP) Access', free: true, pro: true, premium: true },
-      { feature: 'Bonnie AI Assistant', free: true, pro: true, premium: true },
-      { feature: 'Read-Only Views (CRM, reports, inbox)', free: 'Unlimited', pro: 'Unlimited', premium: 'Unlimited' },
+      { feature: 'CRM & Lead Management', free: true, starter: true, pro: true, premium: true },
+      { feature: 'Contracts & E-Signatures', free: true, starter: true, pro: true, premium: true },
+      { feature: 'Invoices & Quotations', free: true, starter: true, pro: true, premium: true },
+      { feature: 'Projects & Delivery Tasks', free: true, starter: true, pro: true, premium: true },
+      { feature: 'Native Calendar & Booking', free: true, starter: true, pro: true, premium: true },
+      { feature: 'Model Context Protocol (MCP) Access', free: true, starter: true, pro: true, premium: true },
+      { feature: 'Bonnie AI Assistant', free: true, starter: true, pro: true, premium: true },
+      { feature: 'Read-Only Views (CRM, reports, inbox)', free: 'Unlimited', starter: 'Unlimited', pro: 'Unlimited', premium: 'Unlimited' },
     ],
   },
   {
     category: 'Support & Infrastructure',
     rows: [
-      { feature: 'Priority Processing & Support', free: false, pro: true, premium: 'Dedicated + SLA' },
-      { feature: 'Connected Integrations', free: true, pro: true, premium: true },
+      { feature: 'Priority Processing & Support', free: false, starter: false, pro: true, premium: 'Dedicated + SLA' },
+      { feature: 'Connected Integrations', free: true, starter: true, pro: true, premium: true },
     ],
   },
 ];
@@ -239,23 +240,24 @@ export default function PricingPage() {
           <SectionHeading
             eyebrow="Detailed Breakdown"
             title="Compare Execution Power Across Plans"
-            description="Same core platform. Free and Pro use fixed daily limits per category. Premium has no AlphaClone subscription ceiling."
+            description="Every offered plan is shown below. Free, Starter and Pro use fixed daily limits per category; Premium has no AlphaClone subscription ceiling."
           />
 
-          <div className="mt-8 overflow-x-auto rounded-2xl border border-[var(--marketing-border)] shadow-sm">
-            <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] text-sm">
+          <div className="mt-8 overflow-x-auto rounded-2xl border border-[var(--marketing-border)] shadow-sm" role="region" aria-label="AlphaClone plan comparison" tabIndex={0}>
+            <table className="w-full min-w-[780px] bg-[var(--marketing-surface)] text-sm">
               <thead>
                 <tr className="border-b border-[var(--marketing-border)] bg-[var(--marketing-surface-elevated)]">
                   <th className="p-4 text-left font-bold text-[var(--marketing-text-primary)] w-2/5">Execution Capability</th>
                   <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Free</th>
+                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Starter ($20)</th>
                   <th className="p-4 text-center font-bold text-[var(--marketing-accent-hover)] bg-[var(--marketing-accent-soft)]">Pro ($45)</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Premium ($80)</th>
+                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Premium ($89)</th>
                 </tr>
               </thead>
               <tbody>
                 {detailedComparison.map((cat) => (
                   <tr key={cat.category} className="border-b border-[var(--marketing-border)]">
-                    <td colSpan={4} className="p-0">
+                    <td colSpan={5} className="p-0">
                       <div className="bg-[var(--marketing-surface-muted)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--marketing-text-muted)] border-y border-[var(--marketing-border)]">
                         {cat.category}
                       </div>
@@ -264,9 +266,10 @@ export default function PricingPage() {
                           {cat.rows.map((row) => (
                             <tr key={row.feature} className="border-b border-[var(--marketing-border)] last:border-0 hover:bg-[var(--marketing-surface-hover)]">
                               <td className="p-4 text-left font-medium text-[var(--marketing-text-secondary)] w-2/5">{row.feature}</td>
-                              <td className="p-4 text-center w-1/5"><RenderCell val={row.free} /></td>
-                              <td className="p-4 text-center w-1/5 bg-[rgba(20,184,166,0.03)]"><RenderCell val={row.pro} /></td>
-                              <td className="p-4 text-center w-1/5"><RenderCell val={row.premium} /></td>
+                              <td className="p-4 text-center"><RenderCell val={row.free} /></td>
+                              <td className="p-4 text-center"><RenderCell val={row.starter} /></td>
+                              <td className="p-4 text-center bg-[rgba(20,184,166,0.03)]"><RenderCell val={row.pro} /></td>
+                              <td className="p-4 text-center"><RenderCell val={row.premium} /></td>
                             </tr>
                           ))}
                         </tbody>

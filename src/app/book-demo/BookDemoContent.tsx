@@ -25,7 +25,7 @@ export default function BookDemoContent() {
           </Link>
 
           <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-8 lg:gap-10 items-start">
-            <div className="order-2 lg:order-1">
+            <div className="order-1">
               <p className="text-xs font-semibold text-teal-400 uppercase tracking-widest mb-3">
                 Free Live Walkthrough
               </p>
@@ -33,12 +33,12 @@ export default function BookDemoContent() {
                 See AlphaClone in <span className="text-teal-400">action.</span>
               </h1>
               <p className="text-base text-slate-400 mb-5 sm:mb-6 leading-relaxed">
-                15 minutes with the team — live product walkthrough, tailored to your business.
+                30 minutes with the team — a live product walkthrough tailored to your business.
               </p>
 
               <ul className="space-y-2.5 mb-5 sm:mb-6">
                 {[
-                  { icon: Clock, text: '15 minutes — no pitch decks' },
+                  { icon: Clock, text: '30 minutes — no pitch decks' },
                   { icon: CheckCircle2, text: 'Demo tailored to your workflow' },
                   { icon: CheckCircle2, text: '14-day trial link on the call' },
                 ].map(({ icon: Icon, text }) => (
@@ -72,7 +72,7 @@ export default function BookDemoContent() {
               </p>
             </div>
 
-            <div id="book-demo-calendar" className="order-1 lg:order-2 scroll-mt-24">
+            <div id="book-demo-calendar" className="order-2 scroll-mt-24">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-teal-400" />

@@ -4,21 +4,22 @@
  */
 
 export const EXECUTION_LAYER = {
-  category: 'The execution layer between AI and business systems',
-  primaryLine: 'Turn AI instructions into real business actions—with every decision owned.',
-  categoryLine: 'Connect the decision to the action.',
-  problemLine: 'Your systems hold the data. Your team still carries the handoffs.',
+  category: 'AI Business Execution Layer',
+  primaryLine: 'AI that does not stop at answers.',
+  categoryLine: 'From intention to accountable impact.',
+  problemLine: 'Your tools hold the data. Your team carries the handoffs.',
   explanatoryLine:
-    'AI can understand what you want. AlphaClone connects that intent to CRM, email, social, projects, contracts, invoices, and other business systems—so approved work can run and be verified.',
+    'AlphaClone turns approved AI instructions into accountable work across the tools your business already uses.',
   differentiationLine:
     'AI provides the intelligence and conversation. AlphaClone provides business context, permissions, workflows, execution, and verification.',
   mechanism: ['Decide', 'Approve', 'Execute', 'Verify'] as const,
-  heroHeadline: 'Turn AI instructions into real business actions.',
+  heroHeadline: 'You type. We make it happen.',
   heroSubhead:
-    'AI can understand what you want. AlphaClone connects that intent to the systems where the work happens, then keeps approval, execution, verification, and the business record together.',
-  primaryCta: 'Start with AlphaClone',
-  secondaryCta: 'Watch AlphaClone Execute',
+    'AlphaClone turns approved AI instructions into accountable work across the tools your business already uses.',
+  primaryCta: 'Book a demo',
+  secondaryCta: 'See a 30-second workflow',
   executionSessionPath: '/execution-session',
+  workflowPath: '/#workflow',
   howItWorksPath: '/how-it-works',
   reliabilityPath: '/reliability',
 } as const;

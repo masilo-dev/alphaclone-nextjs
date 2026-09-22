@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, Eye, Play, Shield } from 'lucide-react';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
-import { DEMO_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
+import { DEMO_HREF } from '@/lib/marketing/cta';
 import { EXECUTION_LAYER } from '@/config/marketingPositioning';
 
 const MECHANISM = [
@@ -71,8 +71,8 @@ export default function HowItWorksPage() {
         </section>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <PrimaryCTA href={TRIAL_HREF}>{EXECUTION_LAYER.primaryCta}</PrimaryCTA>
-          <SecondaryCTA href={DEMO_HREF}>{EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
+          <PrimaryCTA href={DEMO_HREF}>{EXECUTION_LAYER.primaryCta}</PrimaryCTA>
+          <SecondaryCTA href={EXECUTION_LAYER.workflowPath}>{EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
           <Link href="/reliability" className="text-sm text-slate-400 hover:text-teal-300 self-center sm:ml-2">
             Reliability & limitations →
           </Link>

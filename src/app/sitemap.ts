@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { getPublishedSeoArticles } from '@/services/seoServerService';
 import { SITE_URL } from '@/lib/siteUrl';
 import { STATIC_SITEMAP } from '@/lib/seo/sitemapData';
+import { PUBLIC_INTEGRATIONS } from '@/config/integrations';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = SITE_URL;
@@ -19,5 +20,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         console.error('Failed to generate blog sitemap:', error);
     }
 
-    return [...STATIC_SITEMAP, ...blogRoutes];
+    const integrationRoutes: MetadataRoute.Sitemap = PUBLIC_INTEGRATIONS.map((integration) => ({
+        url: `${baseUrl}/ecosystem/${integration.id}`,
+        lastModified: new Date('2026-09-22T00:00:00.000Z'),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+    }));
+
+    return [...STATIC_SITEMAP, ...integrationRoutes, ...blogRoutes];
 }

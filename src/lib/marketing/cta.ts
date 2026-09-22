@@ -39,9 +39,10 @@ export const DEMO_HREF = DEMO_HREF_INTERNAL;
 export const CTA_LABELS = {
   primary: EXECUTION_LAYER.primaryCta,
   secondary: EXECUTION_LAYER.secondaryCta,
-  headerPrimary: 'Start now',
-  headerSecondary: 'Book',
+  headerPrimary: 'Book a demo',
+  headerSecondary: 'See a 30-second workflow',
   tertiaryLogin: 'Log in',
+  utilityTrial: 'Start free',
   pricing: 'See pricing',
   features: 'Explore the platform',
   guide: 'Read the guide',
@@ -92,4 +93,3 @@ export function isExternalHref(href: string | null | undefined): boolean {
   if (!href) return false;
   return /^https?:\/\//i.test(href.trim());
 }
-

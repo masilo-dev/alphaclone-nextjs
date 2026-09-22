@@ -103,7 +103,7 @@ export default function ReliabilityPage() {
           </p>
         </section>
 
-        <PrimaryCTA href={DEMO_HREF}>{EXECUTION_LAYER.secondaryCta}</PrimaryCTA>
+        <PrimaryCTA href={DEMO_HREF}>{EXECUTION_LAYER.primaryCta}</PrimaryCTA>
       </div>
     </div>
   );

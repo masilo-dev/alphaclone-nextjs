@@ -2,181 +2,96 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Facebook, Linkedin, Twitter } from 'lucide-react';
+import { ChevronDown, Facebook, Linkedin, Youtube } from 'lucide-react';
 import { MarketingContainer } from './LayoutPrimitives';
 import { SOCIAL_PROFILES, formatCopyrightLine } from '@/lib/seo/siteEntity';
-import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
-import { EXECUTION_LAYER } from '@/config/marketingPositioning';
-import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import { DEMO_HREF } from '@/lib/marketing/cta';
+import { PrimaryCTA } from '@/components/marketing/system/CtaButtons';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
-import { useLanguage } from '@/contexts/LanguageContext';
-
-type FooterLink = {
-  label: string;
-  path: string;
-  external?: boolean;
-};
-
-type FooterColumn = {
-  title: string;
-  links: readonly FooterLink[];
-};
 
 const COLUMNS = [
   {
     title: 'Product',
     links: [
-      { label: 'Platform overview', path: '/services' },
-      { label: 'Book a demo', path: '/book-demo' },
-      { label: 'CRM', path: '/crm' },
-      { label: 'Project management', path: '/project-management' },
-      { label: 'Bonnie AI', path: '/ai-agents' },
-      { label: 'Pricing', path: '/pricing' },
+      ['Platform overview', '/services'],
+      ['How it works', '/how-it-works'],
+      ['CRM & pipeline', '/crm'],
+      ['Project management', '/project-management'],
+      ['Bonnie AI', '/ai-agents'],
+      ['Pricing', '/pricing'],
     ],
   },
   {
     title: 'Solutions',
     links: [
-      { label: 'Who we serve', path: '/who-we-serve' },
-      { label: 'Solo founders', path: '/solutions/solo-founders' },
-      { label: 'Agencies', path: '/solutions/agencies' },
-      { label: 'Consultants', path: '/solutions/consultants' },
-      { label: 'Customer workflows', path: '/results' },
+      ['Who we serve', '/who-we-serve'],
+      ['Agencies', '/solutions/agencies'],
+      ['Consultants', '/solutions/consultants'],
+      ['Solo founders', '/solutions/solo-founders'],
+      ['Results & workflows', '/results'],
     ],
   },
   {
     title: 'Resources',
     links: [
-      { label: 'Documentation', path: '/docs' },
-      { label: 'Getting started', path: '/guide' },
-      { label: 'Blog', path: '/blog' },
-      { label: 'Integrations', path: '/ecosystem' },
-      { label: 'Claude & Manus MCP', path: '/claude-manus-integrations' },
-      { label: 'How it works', path: '/how-it-works' },
-      { label: 'Execution session', path: '/execution-session' },
-      { label: 'FAQ', path: '/faq' },
+      ['Documentation', '/docs'],
+      ['Getting started', '/guide'],
+      ['Blog', '/blog'],
+      ['Integrations', '/ecosystem'],
+      ['Execution session', '/execution-session'],
+      ['FAQ', '/faq'],
     ],
   },
   {
-    title: 'Company & Legal',
+    title: 'Company & legal',
     links: [
-      { label: 'About AlphaClone', path: '/about' },
-      { label: 'Contact us', path: '/contact' },
-      { label: 'Legal hub', path: '/legal' },
-      { label: 'Compliance', path: '/compliance' },
-      { label: 'Reliability', path: '/reliability' },
-      { label: 'Platform status', path: '/platform-status' },
+      ['About AlphaClone', '/about'],
+      ['Contact', '/contact'],
+      ['Security', '/security-policy'],
+      ['Compliance', '/compliance'],
+      ['Reliability', '/reliability'],
+      ['Legal hub', '/legal'],
     ],
   },
-] as const satisfies readonly FooterColumn[];
-
-const SOCIAL_LINKS = [
-  { label: 'AlphaClone on LinkedIn', href: SOCIAL_PROFILES.linkedin, Icon: Linkedin },
-  { label: 'AlphaClone on Facebook', href: SOCIAL_PROFILES.facebook, Icon: Facebook },
-  { label: 'AlphaClone on X', href: SOCIAL_PROFILES.x, Icon: Twitter },
-];
+] as const;
 
 export default function MarketingFooter() {
-  const { t } = useLanguage();
   return (
-    <footer className="mkt-footer">
-      <MarketingContainer className="py-5 sm:py-6 border-t border-white/10">
-        <div className="mkt-footer-slim">
-          <div>
-            <Link href="/" className="mkt-brand" aria-label="AlphaClone home">
-              <span className="mkt-brand-mark" aria-hidden="true">
-                <Image src="/logo.png" alt="" width={28} height={28} className="h-7 w-7 object-contain" />
-              </span>
-              <span className="mkt-brand-word">AlphaClone</span>
+    <footer className="mkt-footer mkt-footer-redesign">
+      <MarketingContainer className="py-12 sm:py-16">
+        <div className="mkt-footer-grid-redesign">
+          <div className="mkt-footer-brand-redesign">
+            <Link href="/" className="mkt-brand mkt-brand-redesign" aria-label="AlphaClone home">
+              <span className="mkt-brand-mark" aria-hidden="true"><Image src="/logo.png" alt="" width={34} height={34} className="h-[34px] w-[34px] object-contain" /></span>
+              <span className="mkt-brand-copy"><span className="mkt-brand-word">AlphaClone</span><span className="mkt-brand-system">SYSTEMS</span></span>
             </Link>
-            <p className="mkt-footer-blurb">
-              {EXECUTION_LAYER.primaryLine} The AI Business Execution Layer for service teams.
-            </p>
-            <div className="mkt-footer-social">
-              {SOCIAL_LINKS.map(({ label, href, Icon }) => (
-                <a
-                  key={href}
-                  href={href}
-                  target="_blank"
-                  rel="me noopener noreferrer"
-                  aria-label={label}
-                  className="mkt-footer-social-btn"
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </a>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}
-              className="mkt-footer-cookie-link"
-            >
-              Cookie preferences
-            </button>
-            <div className="mkt-footer-cta-row">
-              <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
-                {t(CTA_LABELS.primary)}
-              </Link>
-              <Link href={LOGIN_HREF} data-login-trigger className="mkt-btn mkt-btn-secondary mkt-btn-compact">
-                {t('Log in')}
-              </Link>
-              <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact">
-                {t(CTA_LABELS.secondary)}
-              </SecondaryCTA>
+            <p>Approved AI instructions become accountable work across the systems your business already uses.</p>
+            <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact">Book a demo</PrimaryCTA>
+            <div className="mkt-footer-social-redesign">
+              <a href={SOCIAL_PROFILES.linkedin} target="_blank" rel="me noopener noreferrer" aria-label="AlphaClone on LinkedIn"><Linkedin aria-hidden="true" /></a>
+              <a href={SOCIAL_PROFILES.facebook} target="_blank" rel="me noopener noreferrer" aria-label="AlphaClone on Facebook"><Facebook aria-hidden="true" /></a>
+              <a href="https://www.youtube.com/@AlphaCloneSystems" target="_blank" rel="me noopener noreferrer" aria-label="AlphaClone on YouTube"><Youtube aria-hidden="true" /></a>
             </div>
           </div>
-
-          <div className="mkt-footer-columns mkt-footer-columns-slim">
+          <div className="mkt-footer-columns-redesign">
             {COLUMNS.map((column) => (
-              <div key={column.title}>
-                <p className="mkt-footer-col-title">{t(column.title)}</p>
-                <ul className="mkt-footer-col-list">
-                  {column.links.map((item) => (
-                    <li key={`${column.title}-${item.path}`}>
-                      {'external' in item && item.external ? (
-                        <a
-                          href={item.path}
-                          target="_blank"
-                          rel="me noopener noreferrer"
-                          className="mkt-footer-link"
-                        >
-                          {t(item.label)}
-                        </a>
-                      ) : (
-                        <Link href={item.path} className="mkt-footer-link">
-                          {t(item.label)}
-                        </Link>
-                      )}
-                    </li>
-                  ))}
+              <details key={column.title} open>
+                <summary>{column.title}<ChevronDown aria-hidden="true" /></summary>
+                <ul>
+                  {column.links.map(([label, href]) => <li key={href}><Link href={href}>{label}</Link></li>)}
                 </ul>
-              </div>
+              </details>
             ))}
           </div>
         </div>
-
-        <div className="mkt-footer-bottom">
+        <div className="mkt-footer-bottom-redesign">
           <p suppressHydrationWarning>{formatCopyrightLine()}</p>
-          <div className="mkt-footer-legal flex items-center gap-4 flex-wrap">
+          <div>
             <PublicStatusPill />
-            <Link href="/privacy-policy" className="mkt-footer-link">
-              Privacy
-            </Link>
-            <Link href="/terms-of-service" className="mkt-footer-link">
-              Terms
-            </Link>
-            <Link href="/security-policy" className="mkt-footer-link">
-              Security
-            </Link>
-            <Link href="/data-deletion" className="mkt-footer-link">
-              Data deletion
-            </Link>
-            <Link href="/privacy-choices" className="mkt-footer-link">
-              Privacy choices
-            </Link>
-            <Link href="/legal" className="mkt-footer-link">
-              Legal
-            </Link>
+            <Link href="/privacy-policy">Privacy</Link>
+            <Link href="/terms-of-service">Terms</Link>
+            <Link href="/security-policy">Security</Link>
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}>Cookie preferences</button>
           </div>
         </div>
       </MarketingContainer>

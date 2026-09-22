@@ -9,6 +9,7 @@ import {
   isExternalHref,
   withPreservedQuery,
 } from '@/lib/marketing/cta';
+import { EXECUTION_LAYER } from '@/config/marketingPositioning';
 
 type CtaProps = {
   href?: string;
@@ -67,9 +68,7 @@ export function PrimaryCTA({
 }
 
 /**
- * SecondaryCTA — used for "Book a demo" marketing CTAs.
- * Links to /book-demo (product context + embedded Cal.com scheduler).
- * Preserves marketing attribution (UTM / gclid / fbclid / ref).
+ * SecondaryCTA — used for lower-commitment navigation actions.
  */
 export function SecondaryCTA({
   href = DEMO_HREF,
@@ -88,7 +87,7 @@ export function SecondaryCTA({
       onClick(e);
     }
     // Intentionally no preventDefault() and no internal-modal redirect.
-    // SecondaryCTA must be a plain navigation link to the external calendar.
+    // Keep attribution handling and native navigation behavior intact.
   };
 
   if (external) {
@@ -120,8 +119,8 @@ export function SecondaryCTA({
 export function CtaPair({ className = '' }: { className?: string }) {
   return (
     <div className={`flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 ${className}`.trim()}>
-      <PrimaryCTA className="w-full sm:w-auto mkt-btn-large" />
-      <SecondaryCTA className="w-full sm:w-auto mkt-btn-large" />
+      <PrimaryCTA href={DEMO_HREF} className="w-full sm:w-auto mkt-btn-large">Book a demo</PrimaryCTA>
+      <SecondaryCTA href={EXECUTION_LAYER.workflowPath} className="w-full sm:w-auto mkt-btn-large">See a 30-second workflow</SecondaryCTA>
     </div>
   );
 }
