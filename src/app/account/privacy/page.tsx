@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import CookieBanner from '@/components/legal/CookieBanner';
 
 type Prefs = {
   transactional: boolean;
@@ -125,7 +124,6 @@ export default function PrivacyCenterPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-200">
-      <CookieBanner />
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="mb-8">
           <p className="text-xs uppercase tracking-[0.25em] text-teal-400">Account Privacy</p>

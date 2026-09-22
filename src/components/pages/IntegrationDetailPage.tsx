@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, CircleAlert, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { PUBLIC_INTEGRATIONS, type PublicIntegration } from '@/config/integrations';
+import IntegrationBrandIcon from '@/components/marketing/system/IntegrationBrandIcon';
 
 const SPECIFIC_DETAILS: Record<string, { summary: string; auth: string; access: string; capabilities: string[]; boundary: string }> = {
   gmail: {
@@ -65,7 +66,9 @@ export default function IntegrationDetailPage({ integration }: { integration: Pu
         <div className="mt-8 grid gap-8 lg:grid-cols-[1.1fr_.9fr] lg:items-start">
           <section>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="grid h-14 w-14 place-items-center rounded-2xl border border-slate-700 bg-slate-900 text-lg font-black text-teal-300">{integration.name.slice(0, 2).toUpperCase()}</div>
+              <div className="grid h-14 w-14 place-items-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <IntegrationBrandIcon id={integration.id} className="h-7 w-7" />
+              </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[.18em] text-teal-300">{integration.category.replace('_', ' ')}</p>
                 <h1 className="mt-1 font-marketing-heading text-3xl font-extrabold sm:text-5xl">{integration.name}</h1>

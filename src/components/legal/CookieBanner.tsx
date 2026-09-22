@@ -11,9 +11,13 @@ export type CookieConsentState = {
   analytics: boolean;
   marketing: boolean;
   timestamp: string;
+  version?: string;
 };
 
 const STORAGE_KEYS = ['ac_cookie_consent', 'ac_cookie_preferences'] as const;
+const CONSENT_COOKIE = 'ac_cookie_consent';
+const CONSENT_VERSION = '2026-09';
+const CONSENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 function parseConsent(raw: string | null): CookieConsentState | null {
   if (!raw) return null;
@@ -23,12 +27,17 @@ function parseConsent(raw: string | null): CookieConsentState | null {
       marketing?: boolean;
     };
     if (!value || (value.essential !== true && value.necessary !== true)) return null;
+    if (value.version && value.version !== CONSENT_VERSION) return null;
+    const timestamp = typeof value.timestamp === 'string' ? value.timestamp : new Date().toISOString();
+    const consentAge = Date.now() - new Date(timestamp).getTime();
+    if (!Number.isFinite(consentAge) || consentAge > CONSENT_MAX_AGE_SECONDS * 1000) return null;
     return {
       essential: true,
       functional: Boolean(value.functional ?? value.necessary ?? false),
       analytics: Boolean(value.analytics ?? false),
       marketing: Boolean(value.marketing ?? false),
-      timestamp: typeof value.timestamp === 'string' ? value.timestamp : new Date().toISOString(),
+      timestamp,
+      version: typeof value.version === 'string' ? value.version : CONSENT_VERSION,
     };
   } catch {
     return null;
@@ -37,26 +46,46 @@ function parseConsent(raw: string | null): CookieConsentState | null {
 
 function readConsent(): CookieConsentState | null {
   if (typeof window === 'undefined') return null;
-  for (const key of STORAGE_KEYS) {
-    const parsed = parseConsent(window.localStorage.getItem(key));
-    if (parsed) return parsed;
+  try {
+    for (const key of STORAGE_KEYS) {
+      const parsed = parseConsent(window.localStorage.getItem(key));
+      if (parsed) return parsed;
+    }
+  } catch {
+    // Some privacy modes block localStorage; the first-party cookie remains available.
   }
+  const cookieValue = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${CONSENT_COOKIE}=`))
+    ?.slice(CONSENT_COOKIE.length + 1);
+  const parsedCookie = parseConsent(cookieValue ? decodeURIComponent(cookieValue) : null);
+  if (parsedCookie) return parsedCookie;
   return null;
 }
 
 function writeConsent(consent: CookieConsentState) {
-  const payload = JSON.stringify(consent);
-  window.localStorage.setItem('ac_cookie_consent', payload);
-  window.localStorage.setItem('ac_cookie_preferences', payload);
+  const payload = JSON.stringify({ ...consent, version: CONSENT_VERSION });
+  try {
+    window.localStorage.setItem('ac_cookie_consent', payload);
+    window.localStorage.setItem('ac_cookie_preferences', payload);
+  } catch {
+    // Continue with the cookie fallback when localStorage is unavailable.
+  }
+  document.cookie = `${CONSENT_COOKIE}=${encodeURIComponent(payload)}; Max-Age=${CONSENT_MAX_AGE_SECONDS}; Path=/; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
   window.dispatchEvent(new CustomEvent('ac:cookie-consent'));
 }
 
 export function useCookieConsent() {
   const [consent, setConsent] = useState<CookieConsentState | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     setConsent(readConsent());
-    const onStorage = () => setConsent(readConsent());
+    setReady(true);
+    const onStorage = () => {
+      setConsent(readConsent());
+      setReady(true);
+    };
     window.addEventListener('storage', onStorage);
     window.addEventListener('ac:cookie-consent', onStorage as EventListener);
     return () => {
@@ -65,14 +94,14 @@ export function useCookieConsent() {
     };
   }, []);
 
-  return useMemo(() => ({ consent, hasConsent: Boolean(consent) }), [consent]);
+  return useMemo(() => ({ consent, hasConsent: Boolean(consent), ready }), [consent, ready]);
 }
 
 type OptionalChoices = { functional: boolean; analytics: boolean; marketing: boolean };
 
 export default function CookieBanner() {
   const pathname = usePathname();
-  const { consent } = useCookieConsent();
+  const { consent, ready } = useCookieConsent();
   const [openPrefs, setOpenPrefs] = useState(false);
   const [functional, setFunctional] = useState(true);
   const [analytics, setAnalytics] = useState(false);
@@ -103,7 +132,7 @@ export default function CookieBanner() {
 
   return (
     <>
-      {!consent && (
+      {ready && !consent && (
         <div className="fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-[9999] px-3 sm:bottom-5 sm:px-6 pointer-events-none">
           <div className="mx-auto max-w-4xl pointer-events-auto rounded-2xl border border-[var(--border-default)] bg-[rgba(7,14,28,0.97)] p-3 sm:p-5 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

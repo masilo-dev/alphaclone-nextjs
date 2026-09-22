@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Route, Shield, Workflow, HeartHandshake, Target,
 import AnimateIn from '../common/AnimateIn';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { PUBLIC_INTEGRATIONS } from '@/config/integrations';
+import IntegrationBrandIcon from '@/components/marketing/system/IntegrationBrandIcon';
 
 const EcosystemPage: React.FC = () => {
     const [query, setQuery] = useState('');
@@ -255,7 +256,9 @@ const EcosystemPage: React.FC = () => {
                                 <AnimateIn key={integration.id} type="stagger" index={idx}>
                                     <article className="group flex min-h-[210px] flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
                                         <div className="flex items-start justify-between gap-3">
-                                            <div className="grid h-11 w-11 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-sm font-black text-blue-700">{integration.name.slice(0, 2).toUpperCase()}</div>
+                                            <div className="grid h-11 w-11 place-items-center rounded-xl border border-slate-200 bg-white shadow-sm">
+                                                <IntegrationBrandIcon id={integration.id} className="h-5 w-5" />
+                                            </div>
                                             <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${integration.status === 'AVAILABLE' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : integration.status === 'BETA' ? 'border-amber-400/20 bg-amber-400/10 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300'}`}>{integration.statusLabel}</span>
                                         </div>
                                         <p className="mt-4 text-base font-bold text-slate-950">{integration.name}</p>
