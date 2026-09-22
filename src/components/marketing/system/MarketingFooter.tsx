@@ -78,7 +78,7 @@ export default function MarketingFooter() {
           </div>
           <div className="mkt-footer-columns-redesign">
             {COLUMNS.map((column) => (
-              <details key={column.title} open>
+              <details key={column.title}>
                 <summary>{t(column.title)}<ChevronDown aria-hidden="true" /></summary>
                 <ul>
                   {column.links.map(([label, href]) => <li key={href}><Link href={href}>{t(label)}</Link></li>)}
