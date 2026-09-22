@@ -9,10 +9,11 @@ export interface CRMActionChipItem {
   icon: LucideIcon;
   onClick: () => void;
   disabled?: boolean;
-  tone?: 'indigo' | 'teal' | 'emerald' | 'amber' | 'slate';
+  tone?: 'blue' | 'indigo' | 'teal' | 'emerald' | 'amber' | 'slate';
 }
 
 const TONE_STYLES: Record<NonNullable<CRMActionChipItem['tone']>, string> = {
+  blue: 'border-blue-500/30 bg-blue-500/10 text-blue-200 hover:border-blue-400/40 hover:bg-blue-500/15',
   indigo: 'border-violet-500/30 bg-violet-500/10 text-violet-200 hover:border-violet-400/40 hover:bg-violet-500/15',
   teal: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200 hover:border-cyan-400/40 hover:bg-cyan-500/15',
   emerald: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:border-emerald-400/40 hover:bg-emerald-500/15',
