@@ -91,7 +91,7 @@ const EcosystemPage: React.FC = () => {
     }), [category, query]);
 
     return (
-        <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
+        <div className="min-h-screen marketing-theme bg-white text-slate-950">
             <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
                 <AnimateIn type="fadeIn">
                     <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8">
@@ -158,10 +158,12 @@ const EcosystemPage: React.FC = () => {
                             { icon: Globe, title: 'Integrations', desc: 'Connect core tools such as Stripe, Google Workspace, and email providers' },
                         ].map((module, idx) => (
                             <AnimateIn key={idx} type="stagger" index={idx}>
-                                <div className="bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-sm p-6 rounded-2xl border border-slate-800/80 hover:border-teal-500/50 transition-all group h-full">
-                                    <module.icon className="w-8 h-8 text-teal-400 mb-4 group-hover:scale-110 transition-transform" />
-                                    <h3 className="text-lg font-bold mb-2">{module.title}</h3>
-                                    <p className="text-sm text-slate-400 leading-relaxed">{module.desc}</p>
+                                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all group h-full">
+                                    <div className="mb-4 grid h-10 w-10 place-items-center rounded-xl border border-blue-100 bg-blue-50">
+                                        <module.icon className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-slate-950 mb-2">{module.title}</h3>
+                                    <p className="text-sm text-slate-600 leading-relaxed">{module.desc}</p>
                                 </div>
                             </AnimateIn>
                         ))}
@@ -180,10 +182,10 @@ const EcosystemPage: React.FC = () => {
                     </AnimateIn>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 min-w-0">
                         <AnimateIn type="fadeLeft">
-                            <div className="bg-slate-900/50 p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-800">
-                                <Code className="w-10 h-10 text-teal-400 mb-4" />
-                                <h3 className="text-xl font-bold mb-4">Frontend Stack</h3>
-                                <ul className="space-y-2 text-slate-400">
+                            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                                <Code className="w-10 h-10 text-blue-600 mb-4" />
+                                <h3 className="text-xl font-bold text-slate-950 mb-4">Frontend Stack</h3>
+                                <ul className="space-y-2 text-slate-600">
                                     <li>Next.js 15 with React 18</li>
                                     <li>TypeScript for type safety</li>
                                     <li>TailwindCSS for styling</li>
@@ -192,10 +194,10 @@ const EcosystemPage: React.FC = () => {
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeUp" delay={0.1}>
-                            <div className="bg-slate-900/50 p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-800">
-                                <Database className="w-10 h-10 text-teal-400 mb-4" />
-                                <h3 className="text-xl font-bold mb-4">Backend & Data</h3>
-                                <ul className="space-y-2 text-slate-400">
+                            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                                <Database className="w-10 h-10 text-blue-600 mb-4" />
+                                <h3 className="text-xl font-bold text-slate-950 mb-4">Backend & Data</h3>
+                                <ul className="space-y-2 text-slate-600">
                                     <li>Supabase (PostgreSQL)</li>
                                     <li>Real-time subscriptions</li>
                                     <li>Row-level security</li>
@@ -204,10 +206,10 @@ const EcosystemPage: React.FC = () => {
                             </div>
                         </AnimateIn>
                         <AnimateIn type="fadeRight" delay={0.2}>
-                            <div className="bg-slate-900/50 p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-800">
-                                <Layers className="w-10 h-10 text-teal-400 mb-4" />
-                                <h3 className="text-xl font-bold mb-4">Infrastructure</h3>
-                                <ul className="space-y-2 text-slate-400">
+                            <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+                                <Layers className="w-10 h-10 text-blue-600 mb-4" />
+                                <h3 className="text-xl font-bold text-slate-950 mb-4">Infrastructure</h3>
+                                <ul className="space-y-2 text-slate-600">
                                     <li>Railway deployment</li>
                                     <li>Managed app hosting</li>
                                     <li>Global CDN</li>
@@ -228,17 +230,17 @@ const EcosystemPage: React.FC = () => {
                             Browse by system or search by the outcome you need. Every status is explicit so a directory listing never feels like a promise of unsupported automation.
                         </p>
                     </AnimateIn>
-                    <div className="mx-auto max-w-6xl rounded-2xl border border-slate-800 bg-slate-950/40 p-4 sm:p-6">
+                    <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-6">
                         <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
                             <label className="relative block">
                                 <span className="sr-only">Search integrations</span>
                                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" aria-hidden="true" />
-                                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools or capabilities" className="h-11 w-full rounded-xl border border-slate-700 bg-slate-900/80 pl-10 pr-3 text-sm text-white outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20" />
+                                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools or capabilities" className="h-11 w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 text-sm text-slate-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
                             </label>
                             <div className="flex items-center gap-2">
                                 <SlidersHorizontal className="h-4 w-4 text-slate-500" aria-hidden="true" />
                                 <label className="sr-only" htmlFor="integration-category">Filter integrations by category</label>
-                                <select id="integration-category" value={category} onChange={(event) => setCategory(event.target.value)} className="h-11 min-w-44 rounded-xl border border-slate-700 bg-slate-900/80 px-3 text-sm text-white outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20">
+                                <select id="integration-category" value={category} onChange={(event) => setCategory(event.target.value)} className="h-11 min-w-44 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
                                     <option value="all">All categories</option>
                                     {categories.map((item) => <option key={item} value={item}>{categoryLabels[item]}</option>)}
                                 </select>
@@ -251,17 +253,17 @@ const EcosystemPage: React.FC = () => {
                         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {integrations.map((integration, idx) => (
                                 <AnimateIn key={integration.id} type="stagger" index={idx}>
-                                    <article className="group flex min-h-[210px] flex-col rounded-xl border border-slate-800 bg-slate-900/60 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-teal-500/50 hover:bg-slate-900">
+                                    <article className="group flex min-h-[210px] flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
                                         <div className="flex items-start justify-between gap-3">
-                                            <div className="grid h-11 w-11 place-items-center rounded-xl border border-slate-700 bg-slate-950 text-sm font-black text-teal-300">{integration.name.slice(0, 2).toUpperCase()}</div>
+                                            <div className="grid h-11 w-11 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-sm font-black text-blue-700">{integration.name.slice(0, 2).toUpperCase()}</div>
                                             <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${integration.status === 'AVAILABLE' ? 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300' : integration.status === 'BETA' ? 'border-amber-400/20 bg-amber-400/10 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300'}`}>{integration.statusLabel}</span>
                                         </div>
-                                        <p className="mt-4 text-base font-bold text-white">{integration.name}</p>
-                                        <p className="mt-1 text-xs leading-5 text-slate-400">{integration.description}</p>
-                                        <p className="mt-3 text-[11px] leading-4 text-teal-200/80">{capabilityByCategory[integration.category]}</p>
-                                        <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-800 pt-3 text-[11px]">
-                                            <span className="text-slate-500">{categoryLabels[integration.category]}</span>
-                                            <Link href={`/ecosystem/${integration.id}`} className="inline-flex items-center gap-1 font-semibold text-teal-300 hover:text-teal-200">View connection details <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></Link>
+                                        <p className="mt-4 text-base font-bold text-slate-950">{integration.name}</p>
+                                        <p className="mt-1 text-xs leading-5 text-slate-600">{integration.description}</p>
+                                        <p className="mt-3 text-[11px] leading-4 text-blue-700">{capabilityByCategory[integration.category]}</p>
+                                        <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-200 pt-3 text-[11px]">
+                                            <span className="text-slate-600">{categoryLabels[integration.category]}</span>
+                                            <Link href={`/ecosystem/${integration.id}`} className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900">View connection details <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></Link>
                                         </div>
                                     </article>
                                 </AnimateIn>
