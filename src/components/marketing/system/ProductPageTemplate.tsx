@@ -118,7 +118,7 @@ export default function ProductPageTemplate({ feature }: ProductPageTemplateProp
         <MarketingContainer>
           <ConversionBanner
             title={`Ready to try ${feature.name} in a connected workspace?`}
-            description="Start a 14-day trial or book a walkthrough using a real AlphaClone workflow."
+            description="Get started or book a walkthrough using a real AlphaClone workflow."
           />
         </MarketingContainer>
       </MarketingSection>

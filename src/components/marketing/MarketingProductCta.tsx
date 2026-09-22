@@ -3,7 +3,7 @@ import { CtaPair } from '@/components/marketing/system/CtaButtons';
 /** Shared product/marketing conversion block — teal CTA system only. */
 export default function MarketingProductCta({
   title = 'Ready to run this workflow in AlphaClone?',
-  description = 'Start a 14-day trial with no card required, or book a demo to see a live workspace.',
+  description = 'Get started or book a demo to see a live workspace and a real execution workflow.',
 }: {
   title?: string;
   description?: string;

@@ -154,7 +154,7 @@ export const PRODUCT_NAV_GROUPS: MarketingNavGroup[] = [
       {
         label: 'Platform overview',
         path: '/services',
-        description: 'How the operating system fits together',
+        description: 'How the execution layer fits together',
         icon: Layers,
       },
     ],

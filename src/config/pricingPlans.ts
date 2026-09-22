@@ -1,13 +1,15 @@
 /**
  * Single source of truth for PUBLIC, marketing-facing pricing.
  *
- * Plan limits: FREE = 50/day per category · PRO = 300/day · PREMIUM = Unlimited
+ * Public plans: Starter $15 · Pro $45 · Enterprise $80.
  * Keep in sync with `src/lib/entitlements/planEntitlements.ts` and Stripe PLAN_PRICING.
  */
 
-import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from '@/lib/entitlements/planEntitlements';
+import { PRO_DAILY_LIMIT } from '@/lib/entitlements/planEntitlements';
 
-export type PublicPlanId = 'free' | 'starter' | 'pro' | 'premium';
+// Includes legacy ids because dashboard/billing compatibility still accepts them;
+// the public pricing array below exposes only Starter, Pro, and Enterprise.
+export type PublicPlanId = 'free' | 'starter' | 'pro' | 'premium' | 'enterprise';
 
 /** Legacy Stripe plan ids still accepted at checkout */
 export type LegacyPlanId = 'starter' | 'enterprise';
@@ -36,48 +38,14 @@ export interface PublicPricingPlan {
   };
 }
 
-const FREE_LIMIT = `${FREE_DAILY_LIMIT}/day`;
 const PRO_LIMIT = `${PRO_DAILY_LIMIT}/day`;
 
 export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
-    id: 'free',
-    name: 'Free',
-    price: 0,
-    yearly: 0,
-    tagline: 'Experience the full AlphaClone platform with meaningful daily execution on every module.',
-    features: [
-      `${FREE_DAILY_LIMIT} emails sent / day`,
-      `${FREE_DAILY_LIMIT} leads added / day`,
-      `${FREE_DAILY_LIMIT} CRM actions / day`,
-      `${FREE_DAILY_LIMIT} outreach actions / day`,
-      `${FREE_DAILY_LIMIT} social publishing actions / day`,
-      `${FREE_DAILY_LIMIT} documents, contracts, proposals & invoices / day`,
-      `${FREE_DAILY_LIMIT} automation & MCP executions / day`,
-      `${FREE_DAILY_LIMIT} bulk lead import max / day`,
-      'Read-only CRM, reports & inbox views — unlimited',
-      'Bonnie AI assistant included',
-      'MCP access for ChatGPT, Claude, Manus & Cursor',
-    ],
-    cta: 'Start Free',
-    ctaLink: '/auth/login?register=true&type=business&plan=free',
-    limits: {
-      emailsPerDay: FREE_LIMIT,
-      leadsPerDay: FREE_LIMIT,
-      crmActionsPerDay: FREE_LIMIT,
-      outreachPerDay: FREE_LIMIT,
-      socialPerDay: FREE_LIMIT,
-      documentsPerDay: FREE_LIMIT,
-      automationsPerDay: FREE_LIMIT,
-      mcpExecutionsPerDay: FREE_LIMIT,
-      bulkLeadsPerDay: FREE_LIMIT,
-    },
-  },
-  {
     id: 'starter',
     name: 'Starter',
-    price: 20,
-    yearly: 192,
+    price: 15,
+    yearly: 144,
     tagline: 'Essential execution capacity for solo founders getting their core workflows connected.',
     features: [
       `${PRO_DAILY_LIMIT} emails sent / day`,
@@ -139,10 +107,10 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
     },
   },
   {
-    id: 'premium',
-    name: 'Premium',
-    price: 89,
-    yearly: 854,
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 80,
+    yearly: 768,
     tagline: 'Truly unlimited AlphaClone execution — only external provider and safety limits apply.',
     features: [
       'Unlimited emails sent*',
@@ -157,7 +125,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
       'Usage tracked for analytics — never capped by AlphaClone',
       '* Subject to connected provider API limits and platform anti-abuse safeguards',
     ],
-    cta: 'Go Premium',
+    cta: 'Choose Enterprise',
     ctaLink: '/auth/login?register=true&type=business&plan=enterprise',
     limits: {
       emailsPerDay: 'Unlimited',
@@ -173,27 +141,27 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   },
 ];
 
-export const PRICING_FROM = 20;
-export const PRICING_TO = 89;
+export const PRICING_FROM = 15;
+export const PRICING_TO = 80;
 
 /** Reusable marketing copy — import instead of hard-coding prices in pages. */
 export const MARKETING_PRICING = {
-  freePlanName: 'Free',
+  starterPlanName: 'Starter',
   proPlanName: 'Pro',
-  premiumPlanName: 'Premium',
+  enterprisePlanName: 'Enterprise',
   paidFromMonthly: PRICING_FROM,
   paidToMonthly: PRICING_TO,
   /** Primary CTA label for signup buttons */
-  primaryCtaLabel: 'Start free',
+  primaryCtaLabel: 'Get started',
   /** Short price line for hero sections and comparisons */
-  startingPriceLine: 'Free plan available · Paid plans from $20/month',
+  startingPriceLine: 'Plans start at $15/month',
   /** One-line competitor comparison anchor */
-  paidFromPhrase: '$20/month for paid plans',
+  paidFromPhrase: '$15/month for Starter',
   /** Schema.org / meta description snippet */
   metaPriceSnippet:
-    'Free plan available. Starter from $20/month, Pro from $45/month, and Premium from $89/month with unlimited AlphaClone daily execution.*',
-  premiumUnlimitedLine:
-    'Premium: unlimited daily execution on AlphaClone (provider and safety limits still apply).',
+    'Starter is $15/month, Pro is $45/month, and Enterprise is $80/month.',
+  enterpriseUnlimitedLine:
+    'Enterprise includes the highest AlphaClone execution capacity (provider and safety limits still apply).',
 } as const;
 
 /** Build SoftwareApplication offers array for JSON-LD from public plans. */
@@ -219,8 +187,8 @@ export function buildPublicPlanOffers(siteUrl: string) {
 }
 
 /** Map legacy checkout plan ids to canonical public ids */
-export function normalizeCheckoutPlanId(planId: string): PublicPlanId | 'enterprise' {
+export function normalizeCheckoutPlanId(planId: string): PublicPlanId {
   const p = planId.toLowerCase();
-  if (p === 'enterprise') return 'premium';
+  if (p === 'premium') return 'enterprise';
   return p as PublicPlanId;
 }

@@ -133,7 +133,7 @@ OAuth discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-s
 - [Platform Home](https://alphaclonesystems.com/) — Main landing page and product overview
 - [Book a Demo](https://alphaclonesystems.com/book-demo) — Free 30-minute live platform walkthrough (Cal.com scheduling)
 - [About AlphaClone](https://alphaclonesystems.com/about) — Company background and mission
-- [Pricing Plans](https://alphaclonesystems.com/pricing) — Free, Pro, and Premium plan details
+- [Pricing Plans](https://alphaclonesystems.com/pricing) — Starter, Pro, and Enterprise plan details
 - [Services Overview](https://alphaclonesystems.com/services) — Professional services and implementation support
 - [CRM Module](https://alphaclonesystems.com/crm) — CRM and pipeline management feature overview
 - [Lead Management](https://alphaclonesystems.com/lead-management) — AI-powered lead discovery and outreach

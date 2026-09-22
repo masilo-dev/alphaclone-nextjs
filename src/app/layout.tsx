@@ -77,7 +77,7 @@ const organizationSchema = {
   applicationSubCategory: "CRM, Invoicing, Project Management, AI Automation",
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
-  description: "AlphaClone Systems consolidates CRM, client management, automated billing, project tracking, contract lifecycle, and social media distribution into one AI-assisted workspace. Free plan available; paid plans from $20/month.",
+  description: "AlphaClone Systems consolidates CRM, client management, automated billing, project tracking, contract lifecycle, and social media distribution into one AI-assisted workspace. Plans start at $15/month.",
   featureList: ["Unified Client Journey Records", "AI-Driven Lead Tracking and CRM Workflows", "Automated Multi-Tenant Billing and Invoicing", "Contract Drafting, Versioning, and E-Signature", "Native Social Media Scheduling and Publishing", "Regional Tax Compliance Formatting (SARS, ZIMRA, ZRA)", "Built-in HD Video Conferencing", "Project and Task Management with Milestone Tracking", "Bonnie AI Operational Assistant", "MCP-Compatible AI Agent Tool Integration"],
   offers: { "@type": "AggregateOffer", lowPrice: "0.00", highPrice: "89.00", priceCurrency: "USD", offerCount: PUBLIC_PRICING_PLANS.length, offers: buildPublicPlanOffers(SITE_URL) },
   publisher: { "@type": "Organization", name: "AlphaClone Systems", legalName: "AlphaClone Systems, LLC", url: SITE_URL, logo: `${SITE_URL}/logo.png`, sameAs: ["https://www.linkedin.com/company/alphaclone-systems", "https://www.facebook.com/100089899181752", "https://twitter.com/AlphaCloneSys"] },

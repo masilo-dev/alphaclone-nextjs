@@ -13,7 +13,7 @@ import LoomVideo from '@/components/ui/LoomVideo';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
 
-const pricingDocLine = `Public plans are ${PUBLIC_PRICING_PLANS.map((p) => `${p.name} ($${p.price}/month)`).join(', ')}. Plan details, usage limits, and trial terms are listed on the pricing page. The 14-day trial does not require a credit card.`;
+const pricingDocLine = `Public plans are ${PUBLIC_PRICING_PLANS.map((p) => `${p.name} ($${p.price}/month)`).join(', ')}. Current plan details and usage limits are listed on the pricing page.`;
 
 const sections = [
     'onboarding', 'home', 'crm', 'growth-agent', 'integrations',
@@ -592,7 +592,7 @@ export default function DocsPageContent() {
                                 The AlphaClone engineering team can assist with custom AI integration flows, private database clusters, security compliance audits, and enterprise onboarding for large teams.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <PrimaryCTA className="w-full sm:w-auto">Start free trial</PrimaryCTA>
+                                <PrimaryCTA className="w-full sm:w-auto">Get started</PrimaryCTA>
                                 <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                         </div>

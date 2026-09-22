@@ -4,7 +4,7 @@ import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
 
 
 export const HOME_TRUST_NOTES = [
-  { label: '14-Day Free Trial', icon: 'trust-card' as AlphaIconName },
+  { label: 'Plans from $15/month', icon: 'trust-card' as AlphaIconName },
   { label: 'Zero credit card required', icon: 'trust-card' as AlphaIconName },
   { label: '10-minute setup', icon: 'trust-clock' as AlphaIconName },
   { label: 'Instant data import', icon: 'trust-secure' as AlphaIconName },
@@ -115,7 +115,7 @@ export const HOME_FAQ = [
   },
   {
     id: 'trial',
-    question: 'How does the 14-day free trial work?',
+    question: 'How much does AlphaClone cost?',
     answer:
       'You get full access to your own private AlphaClone instance for 14 days. You can test real workflows with actual client data—CRM, proposals, project tasks, and invoicing—without entering a credit card.',
   },
@@ -161,7 +161,7 @@ export function MidPageCTA() {
           Stop managing disconnected SaaS tools. Experience the connected engine.
         </h2>
         <p className="mt-3 text-[var(--text-secondary)]">
-          Start your 14-day free trial today. Run real client workflows—from lead capture to signed contract and paid invoice—in one living system. No credit card required.
+          Get started with a plan that fits your business. Run real client workflows—from lead capture to signed contract and paid invoice—in one connected system.
         </p>
       </div>
       <div className="mkt-mid-cta-actions">
@@ -179,4 +179,3 @@ export function ExploreFeaturesLink() {
     </Link>
   );
 }
-

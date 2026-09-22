@@ -114,7 +114,7 @@ export default function DifferentiationMatrix() {
               href="/auth/login?register=true&plan=starter"
               className="shrink-0 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm transition-colors shadow-lg shadow-teal-950"
             >
-              Start Free 14-Day Trial →
+              Get Started →
             </Link>
           </div>
         </div>

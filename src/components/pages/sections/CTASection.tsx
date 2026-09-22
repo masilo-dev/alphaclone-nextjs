@@ -12,7 +12,7 @@ const CTASection: React.FC = () => {
                     Ready for <span className="hero-metallic-text">Unified Control?</span>
                 </h2>
                 <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-medium">
-                    Start your 14-day trial and build your operating workspace before you pay.
+                    Get started and build one connected execution workspace for your business.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                     <Link href="/auth/login?register=true&type=business&plan=starter" className="w-full sm:w-auto">

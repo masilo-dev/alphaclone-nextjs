@@ -20,7 +20,7 @@ export const OUTCOME_HERO_BULLETS = [
 ] as const;
 
 export const OUTCOME_TRUST_POINTS = [
-  '14-day trial · no card required',
+  'Plans from $15/month',
   'GDPR-friendly email & data controls',
   'Live demo with a real workspace',
 ] as const;
@@ -195,7 +195,7 @@ export const WHO_WE_SERVE_SEGMENTS: WhoWeServeSegment[] = [
       'Per-seat enterprise pricing prices out small teams that still need credible client operations.',
     outcomes: [
       `Full client workflow (${MARKETING_PRICING.startingPriceLine}) — flat workspace pricing`,
-      '14-day trial to validate before you commit budget',
+      'Clear pricing before you commit budget',
       'Same capabilities larger firms pay multiple vendors for',
     ],
   },

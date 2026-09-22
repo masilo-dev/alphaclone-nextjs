@@ -75,13 +75,13 @@ export default function FaqPage() {
 
         <div className="rounded-2xl border border-[#dfe6ef] bg-[#f7f9fc] p-8 text-center">
           <p className="text-sm text-[#33445e] mb-5 font-medium">
-            Still deciding? Run your own lead-to-invoice test in a free 14-day trial.
+            Still deciding? Review the plans or book a demo using a real lead-to-invoice workflow.
           </p>
           <Link
             href="/auth/login?register=true&type=business&plan=starter"
             className="inline-flex px-6 py-3 rounded-xl bg-[#07152f] hover:bg-[#0c2f61] text-white font-semibold transition-colors shadow-sm text-sm"
           >
-            Start free trial
+            Get started
           </Link>
         </div>
       </main>

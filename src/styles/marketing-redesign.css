@@ -290,11 +290,11 @@
 .founder-execution-flow { display: grid; gap: 0; margin: 20px 0 0; padding: 0; list-style: none; }
 .founder-execution-flow li { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid #e0e7ef; color: #33445e; font-size: 12px; font-weight: 750; }
 .founder-execution-flow svg { width: 15px; color: #0a9b5f; }
-.founder-final { padding: 140px 0; background: #07152f; color: #fff; }
+.founder-final { padding: 140px 0; border-top: 1px solid #dbe5ef; background: #f4f8fc; color: var(--acr-ink); }
 .founder-final__inner { max-width: 900px; text-align: center; }
-.founder-final__inner > svg { width: 36px; height: 36px; margin-bottom: 28px; color: #75b8ff; }
-.founder-final .founder-kicker { color: #75b8ff; }
-.founder-final blockquote { display: grid; gap: 10px; margin: 42px auto 70px; color: #d7e1ef; font-size: clamp(1.15rem, 2vw, 1.45rem); line-height: 1.6; }
+.founder-final__inner > svg { width: 36px; height: 36px; margin-bottom: 28px; color: #1769d2; }
+.founder-final .founder-kicker { color: #1769d2; }
+.founder-final blockquote { display: grid; gap: 10px; margin: 42px auto 70px; color: #40526b; font-size: clamp(1.15rem, 2vw, 1.45rem); line-height: 1.6; }
 .founder-final blockquote p { margin: 0; }
 .founder-final h2 { margin: 0 0 42px; font: 750 clamp(2.7rem, 6vw, 6.2rem)/.98 var(--font-space-grotesk, sans-serif); letter-spacing: -.055em; }
 @media (max-width: 900px) {
@@ -415,6 +415,7 @@
   width: 304px;
   max-height: min(520px, calc(100vh - 96px));
   overflow-y: auto;
+  z-index: 120;
   padding: 14px;
   border: 1px solid var(--acr-line);
   border-radius: 16px;
@@ -443,8 +444,8 @@
 }
 
 .mkt-nav-menu-redesign a:hover,
-.mkt-nav-menu-redesign a:focus-visible { background: #f2f7fd; }
-.mkt-nav-menu-redesign strong { font-size: 13px; font-weight: 700; }
+.mkt-nav-menu-redesign a:focus-visible { background: #f2f7fd; outline: 2px solid #8bbcff; outline-offset: -2px; }
+.mkt-nav-menu-redesign strong { color: #102033; font-size: 13px; font-weight: 700; }
 .mkt-nav-menu-redesign span { color: var(--acr-slate); font-size: 11px; }
 
 .mkt-header-actions-redesign {

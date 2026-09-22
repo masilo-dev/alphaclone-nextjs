@@ -342,14 +342,14 @@ const ServicesPage: React.FC = () => {
                                 from <span className="text-[#0878f9]">One Workspace?</span>
                             </h2>
                             <p className="text-[#52627b] text-base sm:text-lg mb-8 leading-relaxed max-w-2xl mx-auto">
-                                Start your free trial today. No credit card required for the first 14 days. Cancel anytime from your account.
+                                Choose the plan that fits your execution needs, or book a demo to see the workflow before you begin.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                <PrimaryCTA className="w-full sm:w-auto">Start 14-Day Free Trial</PrimaryCTA>
+                                <PrimaryCTA className="w-full sm:w-auto">Get started</PrimaryCTA>
                                 <SecondaryCTA className="w-full sm:w-auto">Book a Live Demo</SecondaryCTA>
                             </div>
                             <p className="mt-6 text-[#76849a] text-xs font-bold uppercase tracking-wider">
-                                {MARKETING_PRICING.startingPriceLine} · 14-day trial · No card required
+                                {MARKETING_PRICING.startingPriceLine} · See pricing for current details
                             </p>
                         </AnimateIn>
                     </div>

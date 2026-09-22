@@ -185,7 +185,7 @@ export default function StackSavingsCalculator() {
                   href="/auth/login?register=true&plan=starter"
                   className="w-full py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 shadow-lg shadow-teal-950"
                 >
-                  <span>Start 14-Day Free Trial & Save</span>
+                  <span>Get Started & Save</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <p className="text-[11px] text-center text-slate-400 mt-2">No credit card required • Instant CSV data import</p>

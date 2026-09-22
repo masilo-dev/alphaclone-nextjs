@@ -74,7 +74,7 @@ const faqSchema = {
             name: 'How much does AlphaClone cost?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: `AlphaClone offers a free plan plus paid Pro and Premium tiers for growing teams. All plans include integrated video meetings. Current plan details are on the pricing page. ${MARKETING_PRICING.metaPriceSnippet}`,
+                text: `AlphaClone offers Starter, Pro, and Enterprise plans for growing teams. Current plan details are on the pricing page. ${MARKETING_PRICING.metaPriceSnippet}`,
             },
         },
     ],

@@ -406,7 +406,7 @@ export function TermsOfService() {
 
          <Section id="subscription" title="4. Subscription Plans & Billing">
             <Sub title="4.1 Plans">
-               <p>AlphaClone offers Free, Starter, Pro, and Premium subscription tiers. The Free plan includes up to 50 execution actions per category each day. Starter is $20/month and Pro is $45/month; both include up to 300 execution actions per category each day, with Pro adding priority processing and support. Premium is $89/month and has no AlphaClone subscription usage ceiling, although connected-provider restrictions, anti-abuse safeguards, and platform safety limits still apply. Current annual prices are Starter $192/year, Pro $432/year, and Premium $854/year. The Free plan does not require a credit card.</p>
+               <p>AlphaClone offers Starter ($15/month), Pro ($45/month), and Enterprise ($80/month) subscription tiers. Annual billing is available at Starter $144/year, Pro $432/year, and Enterprise $768/year. Current plan features, usage limits, and support levels are listed on the pricing page.</p>
             </Sub>
             <Sub title="4.2 Billing Cycle">
                <p>Subscriptions are billed monthly in advance. Your billing date is set on the day you first provide payment details. Invoices are issued automatically and sent to your registered email address. You authorize AlphaClone to charge your payment method on each monthly billing date.</p>

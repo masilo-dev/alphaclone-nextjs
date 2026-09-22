@@ -48,7 +48,7 @@ export default function WhoWeServePage() {
                                 {WHO_WE_SERVE_HERO.subhead}
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                                <PrimaryCTA className="w-full sm:w-auto">Start 14-day trial</PrimaryCTA>
+                                <PrimaryCTA className="w-full sm:w-auto">Get started</PrimaryCTA>
                                 <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                         </AnimateIn>
@@ -127,14 +127,14 @@ export default function WhoWeServePage() {
                             See if your workflow fits — <span className="text-[#0878f9]">before you pay</span>
                         </h2>
                         <p className="text-base sm:text-lg text-[#52627b] mb-8 max-w-2xl mx-auto leading-relaxed">
-                            Move one real client from lead to invoice in a 14-day trial. No card required.
+                            Move one real client from lead to invoice in one connected execution workflow.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <PrimaryCTA className="w-full sm:w-auto">Start free trial</PrimaryCTA>
+                            <PrimaryCTA className="w-full sm:w-auto">Get started</PrimaryCTA>
                             <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                         </div>
                         <p className="mt-6 text-xs font-bold text-[#76849a] uppercase tracking-[0.14em]">
-                            14-day trial · No credit card · Cancel anytime
+                            Starter $15 · Pro $45 · Enterprise $80
                         </p>
                     </div>
                 </AnimateIn>

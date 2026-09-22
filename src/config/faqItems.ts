@@ -35,7 +35,7 @@ export const FAQ_BUYER_ITEMS: FaqItem[] = [
   {
     question: 'Can I try it before paying?',
     answer:
-      'Yes. Every plan includes a 14-day free trial with no credit card required. Run a real lead-to-invoice workflow, then decide.',
+      'Choose Starter, Pro, or Enterprise based on the execution capacity your business needs. See the pricing page for current details.',
   },
   {
     question: 'How quickly can I get set up?',
@@ -89,7 +89,7 @@ export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
   {
     question: 'How does pricing compare to Salesforce?',
     answer:
-      `Salesforce often costs $25+ per user per month. AlphaClone offers a free plan and paid plans from $${PRICING_FROM}/month — flat workspace pricing, not per-seat enterprise tiers.`,
+      `Salesforce often costs $25+ per user per month. AlphaClone plans start at $${PRICING_FROM}/month — see the pricing page for current workspace details.`,
   },
   {
     question: 'Can I sync HubSpot contacts into AlphaClone?',
@@ -99,7 +99,7 @@ export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
   {
     question: 'Does AlphaClone include email marketing?',
     answer:
-      'Yes. Build campaigns, segments, and sequences with open/click tracking. Advanced automation limits vary by plan — see pricing for Pro and Premium.',
+      'Yes. Build campaigns, segments, and sequences with open/click tracking. Advanced automation limits vary by plan — see pricing for Pro and Enterprise.',
   },
   {
     question: 'What email providers are supported?',

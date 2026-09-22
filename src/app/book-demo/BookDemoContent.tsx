@@ -15,7 +15,7 @@ const COPY = {
     back: 'Back to AlphaClone', eyebrow: 'Free live product walkthrough', title: 'See one instruction become real work.',
     intro: 'In 30 minutes, we will use your workflow to show how AlphaClone plans, requests approval, executes through connected tools, and records the result.',
     points: ['No pitch deck — see the product', 'Demo built around one of your workflows', 'Clear next steps and trial access'],
-    plans: 'Plans', trial: 'Free trial', days: '14 days', exploreFirst: 'Prefer to explore first?', startTrial: 'Start free trial', watchDemo: 'Watch the recorded demo',
+    plans: 'Plans', trial: 'Starter plan', days: '$15/month', exploreFirst: 'Prefer to explore first?', startTrial: 'Get started', watchDemo: 'Watch the recorded demo',
     pickTime: 'Pick a time', newTab: 'Open scheduler', timezone: 'Times are shown in your local timezone', explore: 'Explore the platform',
     links: ['Platform overview', 'Pricing plans', 'Why AlphaClone exists', 'CRM and pipeline', 'Bonnie execution assistant', 'Integrations'],
   },

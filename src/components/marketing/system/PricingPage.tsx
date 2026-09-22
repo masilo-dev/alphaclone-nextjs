@@ -7,12 +7,10 @@ import { AlphaIcon } from '@/components/marketing/icons';
 import MarketingFaqAccordion from '@/components/marketing/MarketingFaqAccordion';
 import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketing/MarketingPricingToggle';
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
-import { FREE_DAILY_LIMIT, PRO_DAILY_LIMIT } from '@/lib/entitlements/planEntitlements';
+import { PRO_DAILY_LIMIT } from '@/lib/entitlements/planEntitlements';
 import { ConversionBanner } from './ConversionBanner';
-import PromotionMonthBanner from './PromotionMonthBanner';
 import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
 
-const DAILY = `${FREE_DAILY_LIMIT} / day`;
 const PRO_DAILY = `${PRO_DAILY_LIMIT} / day`;
 const UNLIMITED = 'Unlimited*';
 
@@ -23,9 +21,9 @@ const pricingFaqs = [
       'Daily execution counters (leads, outreach, social posts, emails, MCP executions, documents) reset every day at 00:00 UTC. Read-only actions like viewing CRM records or checking status never consume quota.',
   },
   {
-    question: 'Do I need a credit card to start on the Free plan?',
+    question: 'Which plan should I choose?',
     answer:
-      'No credit card is required for the Free plan. You can sign up and start executing work right away.',
+      'Starter is the entry plan for getting core workflows connected. Pro is designed for active founders and teams. Enterprise provides the highest execution capacity and support.',
   },
   {
     question: 'What is included in every AlphaClone plan?',
@@ -38,9 +36,9 @@ const pricingFaqs = [
       'Yes. Upgrades apply immediately with prorated billing via Stripe. Downgrades take effect at the end of your current billing period.',
   },
   {
-    question: 'What does Premium Unlimited mean?',
+    question: 'What does Enterprise capacity mean?',
     answer:
-      'Premium has no AlphaClone subscription usage ceiling. Usage is still tracked for analytics, but actions are never blocked by plan quota. External provider API limits, anti-spam safeguards, and platform safety rules still apply — and those are clearly distinguished from plan limits.',
+      'Enterprise provides the highest AlphaClone execution capacity and support. External provider API limits, anti-spam safeguards, and platform safety rules still apply.',
   },
 ];
 
@@ -48,10 +46,9 @@ interface ComparisonCategory {
   category: string;
   rows: {
     feature: string;
-    free: string | boolean;
     starter: string | boolean;
     pro: string | boolean;
-    premium: string | boolean;
+    enterprise: string | boolean;
   }[];
 }
 
@@ -59,35 +56,35 @@ const detailedComparison: ComparisonCategory[] = [
   {
     category: 'Daily Execution Limits (per action category)',
     rows: [
-      { feature: 'Emails Sent', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Leads Added', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'CRM Create / Update Actions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Outreach Actions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Social Publishing Actions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Documents / Contracts / Proposals / Invoices', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Automation Executions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'MCP Write / Execution Actions', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
-      { feature: 'Bulk Lead Import Maximum', free: DAILY, starter: PRO_DAILY, pro: PRO_DAILY, premium: UNLIMITED },
+      { feature: 'Emails Sent', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
+      { feature: 'Leads Added', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
+      { feature: 'CRM Create / Update Actions', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
+      { feature: 'Outreach Actions', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
+      { feature: 'Social Publishing Actions', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
+      { feature: 'Documents / Contracts / Proposals / Invoices', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
+      { feature: 'Automation Executions', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
+      { feature: 'MCP Write / Execution Actions', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
+      { feature: 'Bulk Lead Import Maximum', starter: PRO_DAILY, pro: PRO_DAILY, enterprise: UNLIMITED },
     ],
   },
   {
     category: 'Platform Access',
     rows: [
-      { feature: 'CRM & Lead Management', free: true, starter: true, pro: true, premium: true },
-      { feature: 'Contracts & E-Signatures', free: true, starter: true, pro: true, premium: true },
-      { feature: 'Invoices & Quotations', free: true, starter: true, pro: true, premium: true },
-      { feature: 'Projects & Delivery Tasks', free: true, starter: true, pro: true, premium: true },
-      { feature: 'Native Calendar & Booking', free: true, starter: true, pro: true, premium: true },
-      { feature: 'Model Context Protocol (MCP) Access', free: true, starter: true, pro: true, premium: true },
-      { feature: 'Bonnie AI Assistant', free: true, starter: true, pro: true, premium: true },
-      { feature: 'Read-Only Views (CRM, reports, inbox)', free: 'Unlimited', starter: 'Unlimited', pro: 'Unlimited', premium: 'Unlimited' },
+      { feature: 'CRM & Lead Management', starter: true, pro: true, enterprise: true },
+      { feature: 'Contracts & E-Signatures', starter: true, pro: true, enterprise: true },
+      { feature: 'Invoices & Quotations', starter: true, pro: true, enterprise: true },
+      { feature: 'Projects & Delivery Tasks', starter: true, pro: true, enterprise: true },
+      { feature: 'Native Calendar & Booking', starter: true, pro: true, enterprise: true },
+      { feature: 'Model Context Protocol (MCP) Access', starter: true, pro: true, enterprise: true },
+      { feature: 'Bonnie AI Assistant', starter: true, pro: true, enterprise: true },
+      { feature: 'Read-Only Views (CRM, reports, inbox)', starter: 'Unlimited', pro: 'Unlimited', enterprise: 'Unlimited' },
     ],
   },
   {
     category: 'Support & Infrastructure',
     rows: [
-      { feature: 'Priority Processing & Support', free: false, starter: false, pro: true, premium: 'Dedicated + SLA' },
-      { feature: 'Connected Integrations', free: true, starter: true, pro: true, premium: true },
+      { feature: 'Priority Processing & Support', starter: false, pro: true, enterprise: 'Dedicated + SLA' },
+      { feature: 'Connected Integrations', starter: true, pro: true, enterprise: true },
     ],
   },
 ];
@@ -133,19 +130,18 @@ export default function PricingPage() {
               One system. Choose your execution power.
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-base sm:text-lg text-[var(--marketing-text-secondary)] leading-relaxed">
-              Free = {FREE_DAILY_LIMIT}/day · Starter and Pro = {PRO_DAILY_LIMIT}/day · Premium = truly unlimited per action category.
+              Starter $15 · Pro $45 · Enterprise $80. Choose the execution capacity that fits your business.
             </p>
             <div className="mt-8 flex justify-center">
               <MarketingPricingToggle value={billingPeriod} onChange={setBillingPeriod} />
             </div>
-            <PromotionMonthBanner className="mt-10 text-left" alwaysShow />
           </div>
         </MarketingContainer>
       </MarketingSection>
 
       <MarketingSection tone="muted" className="pt-2">
         <MarketingContainer>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
+          <div className="grid gap-6 md:grid-cols-3 items-stretch">
             {PUBLIC_PRICING_PLANS.map((plan) => {
               const displayPrice = billingPeriod === 'monthly' ? plan.price : plan.yearly;
               const priceSuffix = plan.price === 0 ? '' : billingPeriod === 'monthly' ? '/mo' : '/yr';
@@ -177,23 +173,17 @@ export default function PricingPage() {
 
                     <div className="mt-6 border-b border-[var(--marketing-border)] pb-6">
                       <div className="flex items-baseline">
-                        {plan.id === 'premium' ? (
-                          <span className="text-3xl font-extrabold text-[var(--marketing-text-primary)]">Unlimited</span>
-                        ) : (
-                          <>
+                        <>
                             <span className="text-4xl font-extrabold text-[var(--marketing-text-primary)]">
                               ${displayPrice}
                             </span>
                             <span className="ml-1 text-sm font-medium text-[var(--marketing-text-muted)]">
                               {priceSuffix}
                             </span>
-                          </>
-                        )}
+                        </>
                       </div>
                       <p className="mt-2 text-xs text-[var(--marketing-text-muted)]">
-                        {plan.price === 0
-                          ? 'No credit card required'
-                          : plan.id === 'premium'
+                        {plan.id === 'enterprise'
                           ? `$${displayPrice}${priceSuffix} · no AlphaClone usage ceiling`
                           : billingPeriod === 'annual'
                           ? `$${Math.round(plan.yearly / 12)}/mo billed annually`
@@ -228,9 +218,8 @@ export default function PricingPage() {
               );
             })}
           </div>
-
           <p className="mt-6 text-center text-xs text-[var(--marketing-text-muted)] max-w-4xl mx-auto leading-relaxed">
-            *Premium is unlimited on AlphaClone. External provider API restrictions, anti-spam rules, and platform safety safeguards still apply.
+            *Enterprise execution remains subject to external provider API restrictions, anti-spam rules, and platform safety safeguards.
           </p>
         </MarketingContainer>
       </MarketingSection>
@@ -240,24 +229,23 @@ export default function PricingPage() {
           <SectionHeading
             eyebrow="Detailed Breakdown"
             title="Compare Execution Power Across Plans"
-            description="Every offered plan is shown below. Free, Starter and Pro use fixed daily limits per category; Premium has no AlphaClone subscription ceiling."
+            description="The same connected platform, with capacity and support that scale from Starter to Enterprise."
           />
 
           <div className="mt-8 overflow-x-auto rounded-2xl border border-[var(--marketing-border)] shadow-sm" role="region" aria-label="AlphaClone plan comparison" tabIndex={0}>
-            <table className="w-full min-w-[780px] bg-[var(--marketing-surface)] text-sm">
+            <table className="w-full min-w-[640px] bg-[var(--marketing-surface)] text-sm">
               <thead>
                 <tr className="border-b border-[var(--marketing-border)] bg-[var(--marketing-surface-elevated)]">
                   <th className="p-4 text-left font-bold text-[var(--marketing-text-primary)] w-2/5">Execution Capability</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Free</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Starter ($20)</th>
+                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Starter ($15)</th>
                   <th className="p-4 text-center font-bold text-[var(--marketing-accent-hover)] bg-[var(--marketing-accent-soft)]">Pro ($45)</th>
-                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Premium ($89)</th>
+                  <th className="p-4 text-center font-bold text-[var(--marketing-text-primary)]">Enterprise ($80)</th>
                 </tr>
               </thead>
               <tbody>
                 {detailedComparison.map((cat) => (
                   <tr key={cat.category} className="border-b border-[var(--marketing-border)]">
-                    <td colSpan={5} className="p-0">
+                    <td colSpan={4} className="p-0">
                       <div className="bg-[var(--marketing-surface-muted)] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[var(--marketing-text-muted)] border-y border-[var(--marketing-border)]">
                         {cat.category}
                       </div>
@@ -266,10 +254,9 @@ export default function PricingPage() {
                           {cat.rows.map((row) => (
                             <tr key={row.feature} className="border-b border-[var(--marketing-border)] last:border-0 hover:bg-[var(--marketing-surface-hover)]">
                               <td className="p-4 text-left font-medium text-[var(--marketing-text-secondary)] w-2/5">{row.feature}</td>
-                              <td className="p-4 text-center"><RenderCell val={row.free} /></td>
                               <td className="p-4 text-center"><RenderCell val={row.starter} /></td>
                               <td className="p-4 text-center bg-[var(--marketing-accent-soft)]"><RenderCell val={row.pro} /></td>
-                              <td className="p-4 text-center"><RenderCell val={row.premium} /></td>
+                              <td className="p-4 text-center"><RenderCell val={row.enterprise} /></td>
                             </tr>
                           ))}
                         </tbody>
@@ -300,7 +287,7 @@ export default function PricingPage() {
         <MarketingContainer>
           <ConversionBanner
             title="Find leads. Run outreach. Manage clients. Publish content. Execute work."
-            description="Start free with 50/day per category, scale to Pro at 300/day, or go Premium for truly unlimited execution."
+            description="Get started with Starter at $15, scale to Pro at $45, or choose Enterprise at $80."
           />
         </MarketingContainer>
       </MarketingSection>

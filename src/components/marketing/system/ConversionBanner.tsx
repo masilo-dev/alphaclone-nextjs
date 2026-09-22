@@ -2,7 +2,7 @@ import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
 
 export function ConversionBanner({
   title = 'Ready to run your business from one workspace?',
-  description = 'Start your 14-day trial. No credit card required.',
+  description = 'Get started with AlphaClone or book a demo to see a real workflow.',
 }: {
   title?: string;
   description?: string;

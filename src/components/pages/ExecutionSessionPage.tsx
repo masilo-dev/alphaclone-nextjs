@@ -34,7 +34,7 @@ export default function ExecutionSessionPage() {
 
         <div className="flex flex-col sm:flex-row gap-3 mb-14">
           <PrimaryCTA href={DEMO_HREF}>{EXECUTION_LAYER.secondaryCta}</PrimaryCTA>
-          <SecondaryCTA href={TRIAL_HREF}>Start free trial</SecondaryCTA>
+          <SecondaryCTA href={TRIAL_HREF}>Get started</SecondaryCTA>
         </div>
 
         <section className="mb-14 rounded-2xl border border-slate-700/60 bg-slate-900/50 p-6 sm:p-8">
@@ -85,7 +85,7 @@ export default function ExecutionSessionPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-6 text-center">
-          <p className="text-slate-400 text-sm mb-4">{MARKETING_PRICING.startingPriceLine} · 14-day trial · no card required to start</p>
+          <p className="text-slate-600 text-sm mb-4">{MARKETING_PRICING.startingPriceLine} · See pricing for current plan details</p>
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <PrimaryCTA href={DEMO_HREF}>Book execution session</PrimaryCTA>
             <SecondaryCTA href="/how-it-works">See how execution works</SecondaryCTA>

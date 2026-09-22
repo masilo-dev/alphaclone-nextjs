@@ -281,10 +281,10 @@ const EcosystemPage: React.FC = () => {
                                     Start Building Smarter Today
                                 </h2>
                                 <p className="text-xl text-teal-50 mb-10 max-w-2xl mx-auto leading-relaxed">
-                                    Start a 14-day trial and test the CRM, billing, contracts, project, and meeting workflows in one workspace. No credit card required.
+                                    Connect CRM, billing, contracts, project, and meeting workflows in one accountable workspace.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                                    <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
+                                    <PrimaryCTA className="w-full sm:w-auto">Get started</PrimaryCTA>
                                     <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                                 </div>
                             </div>
