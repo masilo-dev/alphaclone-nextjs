@@ -1062,3 +1062,50 @@
   .mkt-header-redesign *,
   .mkt-footer-redesign * { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+
+/* 2026-09-22 mobile readability + feature icon refinement */
+.acr-feature-grid > a > span {
+  width: 44px;
+  height: 44px;
+  border: 1px solid color-mix(in srgb, var(--tile-tone) 22%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tile-tone) 9%, #fff);
+}
+.acr-feature-grid > a > span svg { width: 22px; height: 22px; stroke-width: 1.9; }
+.acr-feature-grid > a strong { font-size: 13px; }
+.acr-feature-grid > a small { font-size: 10px; line-height: 1.5; }
+
+@media (max-width: 640px) {
+  .acr-feature-grid { gap: 12px; }
+  .acr-feature-grid > a {
+    min-height: 146px;
+    gap: 10px;
+    padding: 18px 16px;
+    border-color: #d5dfeb;
+    border-radius: 16px;
+  }
+  .acr-feature-grid > a > span { width: 42px; height: 42px; }
+  .acr-feature-grid > a > span svg { width: 22px; height: 22px; }
+  .acr-feature-grid > a strong { margin-top: 7px; font-size: 15px; line-height: 1.25; }
+  .acr-feature-grid > a small { color: #52627b !important; font-size: 11px; line-height: 1.45; }
+
+  .acr-redesign .mkt-btn-primary,
+  .acr-redesign .mkt-btn-demo {
+    opacity: 1 !important;
+    filter: none !important;
+  }
+  .acr-redesign .mkt-btn-primary {
+    background: #1769e8 !important;
+    border-color: #1769e8 !important;
+    color: #fff !important;
+    box-shadow: 0 10px 24px rgba(23,105,232,.20) !important;
+  }
+  .acr-redesign .mkt-btn-demo {
+    background: #eef4ff !important;
+    border-color: #a9bfdf !important;
+    color: #123f78 !important;
+  }
+  .acr-redesign .mkt-btn-demo *,
+  .acr-redesign .mkt-btn-primary * { color: inherit !important; }
+}
