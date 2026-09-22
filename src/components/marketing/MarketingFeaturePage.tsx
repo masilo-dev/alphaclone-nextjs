@@ -20,6 +20,7 @@ export default function MarketingFeaturePage({ title, description, bullets, comp
             eyebrow="Marketing workflows"
             title={title}
             description={description}
+            as="h1"
           />
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <PrimaryCTA />

@@ -3,19 +3,19 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { 
-  Bot, 
+  ClipboardCheck,
   Database, 
   Share2, 
   CircleDollarSign, 
   LockKeyhole, 
   ChevronDown, 
-  Sparkles, 
+  ListChecks,
   CheckCircle2, 
-  Zap, 
+  Workflow,
   Activity, 
   ArrowUpRight,
   ShieldCheck,
-  Cpu
+  Braces
 } from "lucide-react";
 
 interface FeatureTab {
@@ -42,7 +42,7 @@ const TABS: FeatureTab[] = [
     id: "bonnie",
     label: "01. Bonnie AI Engine",
     badge: "Autonomous Execution",
-    icon: Bot,
+    icon: ClipboardCheck,
     heading: "Tell your AI what needs to happen. AlphaClone coordinates the execution.",
     description: "Bonnie doesn't just talk — it searches leads, logs CRM records, drafts email outreach, and triggers approvals across your business stack.",
     imageSrc: "/images/alphaclone-all-in-one-mcp-platform.png",
@@ -195,7 +195,7 @@ export default function LookInsideAlphaClone() {
       {/* Section Header */}
       <div className="mx-auto max-w-3xl text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3.5 py-1 text-xs font-bold text-emerald-300 shadow-sm shadow-emerald-950/40 backdrop-blur-md">
-          <Sparkles className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+          <ListChecks className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
           <span>Interactive Feature Tour</span>
         </div>
         <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl lg:text-[42px]">
@@ -335,7 +335,7 @@ export default function LookInsideAlphaClone() {
                         {item.status === "completed" ? (
                           <CheckCircle2 className="h-3.5 w-3.5" />
                         ) : (
-                          <Zap className="h-3.5 w-3.5" />
+                          <Workflow className="h-3.5 w-3.5" aria-hidden="true" />
                         )}
                       </span>
                       <div>

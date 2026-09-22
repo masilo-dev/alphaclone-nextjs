@@ -1,7 +1,7 @@
 'use client';
 
 import { SiOpenai } from 'react-icons/si';
-import { Bot, Check, Sparkles } from 'lucide-react';
+import { Braces, Check, ClipboardCheck } from 'lucide-react';
 
 const MESSAGES = [
   {
@@ -55,7 +55,7 @@ export default function ChatGptExecutionPreview({ compact = false }: { compact?:
           >
             {msg.role === 'assistant' && (
               <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#10a37f] text-white">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden />
+                <ClipboardCheck className="h-3.5 w-3.5" aria-hidden />
               </div>
             )}
             <div
@@ -73,7 +73,7 @@ export default function ChatGptExecutionPreview({ compact = false }: { compact?:
                       key={tool}
                       className="inline-flex items-center gap-1 rounded-md border border-cyan-400/25 bg-cyan-400/10 px-2 py-0.5 font-mono text-[10px] text-cyan-200"
                     >
-                      <Bot className="h-3 w-3" aria-hidden />
+                      <Braces className="h-3 w-3" aria-hidden />
                       {tool}
                     </span>
                   ))}

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
+import { CalendarCheck } from 'lucide-react';
 import { getPromotionMonthBannerCopy, PREMIUM_UNLIMITED } from '@/config/promotionMonth';
 import { TRIAL_HREF } from '@/lib/marketing/cta';
 
@@ -31,7 +31,7 @@ export default function PromotionMonthBanner({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-300">
-            <Sparkles className="h-3.5 w-3.5" aria-hidden />
+            <CalendarCheck className="h-3.5 w-3.5" aria-hidden />
             {copy.eyebrow}
           </p>
           <p className="mt-1 text-base sm:text-lg font-semibold text-white">{copy.title}</p>

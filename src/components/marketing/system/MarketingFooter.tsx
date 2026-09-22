@@ -8,6 +8,7 @@ import { SOCIAL_PROFILES, formatCopyrightLine } from '@/lib/seo/siteEntity';
 import { DEMO_HREF } from '@/lib/marketing/cta';
 import { PrimaryCTA } from '@/components/marketing/system/CtaButtons';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const COLUMNS = [
   {
@@ -37,6 +38,7 @@ const COLUMNS = [
       ['Documentation', '/docs'],
       ['Getting started', '/guide'],
       ['Blog', '/blog'],
+      ['Recorded demo', '/demo'],
       ['Integrations', '/ecosystem'],
       ['Execution session', '/execution-session'],
       ['FAQ', '/faq'],
@@ -56,6 +58,7 @@ const COLUMNS = [
 ] as const;
 
 export default function MarketingFooter() {
+  const { t } = useLanguage();
   return (
     <footer className="mkt-footer mkt-footer-redesign">
       <MarketingContainer className="py-12 sm:py-16">
@@ -65,8 +68,8 @@ export default function MarketingFooter() {
               <span className="mkt-brand-mark" aria-hidden="true"><Image src="/logo.png" alt="" width={34} height={34} className="h-[34px] w-[34px] object-contain" /></span>
               <span className="mkt-brand-copy"><span className="mkt-brand-word">AlphaClone</span><span className="mkt-brand-system">SYSTEMS</span></span>
             </Link>
-            <p>Approved AI instructions become accountable work across the systems your business already uses.</p>
-            <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact">Book a demo</PrimaryCTA>
+            <p>{t('Approved AI instructions become accountable work across the systems your business already uses.')}</p>
+            <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact">{t('Book a demo')}</PrimaryCTA>
             <div className="mkt-footer-social-redesign">
               <a href={SOCIAL_PROFILES.linkedin} target="_blank" rel="me noopener noreferrer" aria-label="AlphaClone on LinkedIn"><Linkedin aria-hidden="true" /></a>
               <a href={SOCIAL_PROFILES.facebook} target="_blank" rel="me noopener noreferrer" aria-label="AlphaClone on Facebook"><Facebook aria-hidden="true" /></a>
@@ -76,9 +79,9 @@ export default function MarketingFooter() {
           <div className="mkt-footer-columns-redesign">
             {COLUMNS.map((column) => (
               <details key={column.title} open>
-                <summary>{column.title}<ChevronDown aria-hidden="true" /></summary>
+                <summary>{t(column.title)}<ChevronDown aria-hidden="true" /></summary>
                 <ul>
-                  {column.links.map(([label, href]) => <li key={href}><Link href={href}>{label}</Link></li>)}
+                  {column.links.map(([label, href]) => <li key={href}><Link href={href}>{t(label)}</Link></li>)}
                 </ul>
               </details>
             ))}
@@ -88,10 +91,10 @@ export default function MarketingFooter() {
           <p suppressHydrationWarning>{formatCopyrightLine()}</p>
           <div>
             <PublicStatusPill />
-            <Link href="/privacy-policy">Privacy</Link>
-            <Link href="/terms-of-service">Terms</Link>
-            <Link href="/security-policy">Security</Link>
-            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}>Cookie preferences</button>
+            <Link href="/privacy-policy">{t('Privacy')}</Link>
+            <Link href="/terms-of-service">{t('Terms')}</Link>
+            <Link href="/security-policy">{t('Security')}</Link>
+            <button type="button" onClick={() => window.dispatchEvent(new CustomEvent('ac:open-cookie-preferences'))}>{t('Cookie preferences')}</button>
           </div>
         </div>
       </MarketingContainer>

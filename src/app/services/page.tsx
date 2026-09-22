@@ -34,7 +34,7 @@ const faqSchema = {
             name: 'What services does AlphaClone Systems offer?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'AlphaClone Systems offers a full suite of AI-powered business services including enterprise CRM, AI-automated lead generation, professional invoicing, contract drafting and e-signatures, HD video meetings, Gmail integration, financial accounting, task and project management, and document management — all in a single unified platform.',
+                text: 'AlphaClone Systems connects CRM, lead workflows, supported email providers, invoicing, contracts, meetings, projects, and documents in one execution workspace with human approval for important actions.',
             },
         },
         {

@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare, Search, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Route, Shield, Workflow, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare, Search, SlidersHorizontal } from 'lucide-react';
 import AnimateIn from '../common/AnimateIn';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { PUBLIC_INTEGRATIONS } from '@/config/integrations';
@@ -12,12 +12,12 @@ const EcosystemPage: React.FC = () => {
     const [category, setCategory] = useState('all');
     const advantages = [
         {
-            name: 'Lightning-Fast Delivery',
+            name: 'Structured Delivery',
             description: 'Move from concept to launch with structured workflows and clear delivery steps',
-            icon: Zap
+            icon: Workflow
         },
         {
-            name: 'Enterprise-Grade Security',
+            name: 'Visible Security Controls',
             description: 'Role-based access, audit logging, and policy visibility for business data',
             icon: Shield
         },
@@ -37,9 +37,9 @@ const EcosystemPage: React.FC = () => {
             icon: Target
         },
         {
-            name: 'Future-Proof Technology',
-            description: 'Built with cutting-edge technology that stays relevant as trends evolve',
-            icon: Rocket
+            name: 'Connected Architecture',
+            description: 'New supported tools can join the same permission and execution model',
+            icon: Route
         },
     ];
 
@@ -102,7 +102,7 @@ const EcosystemPage: React.FC = () => {
 
                 <div className="text-center mb-20">
                     <AnimateIn type="scaleIn">
-                        <Rocket className="w-12 h-12 sm:w-16 sm:h-16 text-teal-400 mx-auto mb-6" />
+                        <Layers className="w-12 h-12 sm:w-16 sm:h-16 text-teal-600 mx-auto mb-6" aria-hidden="true" />
                     </AnimateIn>
                     <AnimateIn type="fadeUp" delay={0.1}>
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-marketing-heading mb-6">
@@ -153,7 +153,7 @@ const EcosystemPage: React.FC = () => {
                             { icon: MessageSquare, title: 'Communications', desc: 'Unified inbox for email, SMS, and team messaging in one place' },
                             { icon: Database, title: 'Client Portal', desc: 'Branded client access for projects, invoices, and collaboration' },
                             { icon: Shield, title: 'Contracts & Legal', desc: 'E-signature workflows, contract templates, and approval tracking' },
-                            { icon: Zap, title: 'Automation', desc: 'Workflow automation, task scheduling, and smart notifications' },
+                            { icon: Workflow, title: 'Automation', desc: 'Workflow automation, task scheduling, and smart notifications' },
                             { icon: Lock, title: 'Security & Compliance', desc: 'Role-based access, audit logging, and GDPR data-rights support' },
                             { icon: Globe, title: 'Integrations', desc: 'Connect core tools such as Stripe, Google Workspace, and email providers' },
                         ].map((module, idx) => (

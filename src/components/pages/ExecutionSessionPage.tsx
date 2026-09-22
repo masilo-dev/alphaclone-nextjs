@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, ClipboardList, Map, Shield, Zap } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ClipboardList, Map, Shield, Workflow } from 'lucide-react';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 import { DEMO_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
 import { ANCHOR_WORKFLOW, EXECUTION_LAYER } from '@/config/marketingPositioning';
@@ -11,7 +11,7 @@ const SESSION_STEPS = [
   { icon: ClipboardList, title: 'Workflow diagnosis', body: 'You describe one repetitive process that slows your business down today.' },
   { icon: Map, title: 'Process mapping', body: 'We map tools, handoffs, and where work gets stuck or duplicated.' },
   { icon: Shield, title: 'Fit & approval assessment', body: 'We identify what AlphaClone can support reliably and what requires your approval.' },
-  { icon: Zap, title: 'Controlled demonstration', body: 'We run or configure the safest path from instruction to verified result — starting with quote-to-cash when it fits.' },
+  { icon: Workflow, title: 'Controlled demonstration', body: 'We run or configure the safest path from instruction to verified result — starting with quote-to-cash when it fits.' },
   { icon: CheckCircle2, title: 'Clear recommendation', body: 'You leave with a fit score, next steps, and no pressure to migrate everything at once.' },
 ] as const;
 

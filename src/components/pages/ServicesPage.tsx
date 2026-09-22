@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {
-    Zap, Database, Shield, BarChart3, Settings, Globe,
+    ListFilter, Database, Shield, BarChart3, Settings, Globe,
     Clock, Users, DollarSign,
     Mail, Video, FileText, Calendar, TrendingUp, Layers,
     Award, Lock, RefreshCw
@@ -16,7 +16,7 @@ const ServicesPage: React.FC = () => {
 
     const services = [
         {
-            icon: Zap,
+            icon: ListFilter,
             title: 'AI Growth Agent',
             subtitle: 'AI-assisted lead and outreach workflows',
             color: 'from-teal-500 to-emerald-500',
@@ -28,7 +28,7 @@ const ServicesPage: React.FC = () => {
                 'AI-powered outreach and qualification conversations',
                 'Industry and geography targeting filters',
                 'Lead scoring and prioritization',
-                'Seamless handoff to your CRM when a lead is qualified',
+                'Reviewable handoff to CRM when a lead is qualified',
                 'Full conversation history and context tracking',
             ],
             impact: 'Lead discovery, enrichment, outreach drafts, and CRM handoff in one flow',
@@ -40,7 +40,7 @@ const ServicesPage: React.FC = () => {
             color: 'from-blue-500 to-indigo-500',
             badge: 'Core Feature',
             description: `Most small businesses track clients in spreadsheets, notes, or their inbox. AlphaClone's CRM gives you a searchable database for client relationships, deals, communication history, projects, and billing context.`,
-            extendedDescription: `Every client in the CRM has a full profile: contact history, all email threads (pulled from your Gmail integration), every invoice and contract sent, notes and call logs, associated projects and tasks, and their position in your sales pipeline. The pipeline management is drag-and-drop — you move deals from Discovery to Proposal to Negotiation to Won, and the system automatically updates project statuses and triggers follow-up reminders. The CRM also integrates directly with your calendar, so every meeting you schedule with a client appears on their profile, and every new booking from your public scheduling page automatically creates or updates the right client record. No manual data entry required.`,
+            extendedDescription: `Each CRM record can keep contact details, communication history from supported connections, invoices, contracts, notes, calls, projects, tasks, and pipeline position together. Teams can move deals through the visual pipeline, create the next delivery step, and keep meeting or booking context attached to the same relationship. Available behavior depends on the connections and permissions configured for the workspace.`,
             features: [
                 'Full client profiles with communication history',
                 'Visual drag-and-drop sales pipeline',
@@ -54,7 +54,7 @@ const ServicesPage: React.FC = () => {
         {
             icon: DollarSign,
             title: 'Financial Suite & Invoicing',
-            subtitle: 'Professional accounting without the accountant',
+            subtitle: 'Connected invoicing and financial workflows',
             color: 'from-emerald-500 to-teal-500',
             badge: 'Professional Accounting',
             description: `AlphaClone includes financial workflows for invoices, quotes, receipts, chart of accounts, journal entries, and financial reports. Teams should confirm their accounting and tax requirements before replacing dedicated accounting software.`,
@@ -89,17 +89,17 @@ const ServicesPage: React.FC = () => {
         },
         {
             icon: Mail,
-            title: 'Integrated Gmail & Communications',
-            subtitle: 'All your client emails, inside your CRM',
+            title: 'Connected Email & Communications',
+            subtitle: 'Keep outreach and client context together',
             color: 'from-red-500 to-orange-500',
             badge: 'Context-Aware',
-            description: `One of the most common frustrations for service business owners is the constant tab-switching between their email client and their CRM or project management tool. You get an email from a client, and then you have to go look them up somewhere else to see what's happening with their project. AlphaClone eliminates this completely by embedding your Gmail inbox directly inside the Business OS.`,
-            extendedDescription: `Once you connect your Google account (a 60-second process), all your Gmail emails become visible inside AlphaClone with full CRM context alongside them. When you open a client email, you can simultaneously see their open projects, outstanding invoices, previous conversations, and next meeting — all without leaving the screen. You can draft and send replies with your full email signature, schedule follow-ups, and attach documents from your Document Hub. Every email thread is also automatically logged to the corresponding CRM record, so when a team member needs to catch up on a client relationship, the full history is there instantly.`,
+            description: `Email work becomes difficult when provider inboxes, CRM records, and follow-up tasks live in separate places. AlphaClone connects supported email providers to the workspace so teams can prepare outreach, send approved messages, and keep the activity associated with the relevant business record.`,
+            extendedDescription: `Connect a supported provider such as Outlook, Zoho, or Brevo according to the workflows available for that account. AlphaClone can prepare messages, execute approved sends, record delivery status, and keep follow-up work visible beside CRM context. Exact capabilities depend on provider permissions and connection status.`,
             features: [
-                'Gmail inbox embedded inside dashboard',
+                'Supported provider connections',
                 'CRM context visible alongside emails',
                 'Send, reply, and draft from within AlphaClone',
-                'Auto-logging of emails to client profiles',
+                'Activity records linked to client profiles',
                 'Follow-up scheduling and reminders',
                 'Full email signature support',
             ],
@@ -228,6 +228,7 @@ const ServicesPage: React.FC = () => {
                             {services.map((service, idx) => (
                                 <AnimateIn key={idx} type={idx % 2 === 0 ? 'fadeLeft' : 'fadeRight'} delay={0.05}>
                                     <div
+                                        id={service.title.toLowerCase().replace(/&/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}
                                         className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start py-8 border-b border-slate-800/70"
                                     >
                                         {/* Left: Header + Description */}
@@ -284,7 +285,7 @@ const ServicesPage: React.FC = () => {
                                     "I'm Not Technical" — That's Exactly Who This Is For
                                 </h2>
                                 <p className="text-slate-400 text-lg max-w-3xl mx-auto">
-                                    AlphaClone was built for business owners who want operational software without hiring an internal tools team. If you can use Gmail, you can get started in AlphaClone.
+                                    AlphaClone was built for business owners who want operational software without hiring an internal tools team. The core workflows use familiar records, approvals, and clear next actions.
                                 </p>
                             </div>
                         </AnimateIn>

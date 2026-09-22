@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import {
-    LayoutDashboard, Users, TrendingUp, Zap, CheckSquare,
+    LayoutDashboard, Users, TrendingUp, Workflow, CheckSquare,
     Briefcase, Mail, Video, DollarSign, BarChart3,
     FileText, Settings, CheckCircle2, Globe, Calendar,
     Receipt, Shield, ArrowRight, MessageSquare,
-    ShieldCheck, Database, Bot, BookOpen, ExternalLink,
+    ShieldCheck, Database, ClipboardCheck, BookOpen, ExternalLink,
     Lock, Star, ChevronRight
 } from 'lucide-react';
 import LoomVideo from '@/components/ui/LoomVideo';
@@ -32,7 +32,7 @@ export default function DocsPageContent() {
                             { id: 'onboarding', label: '1. Registration & Setup', icon: CheckCircle2 },
                             { id: 'home', label: '2. Business Home', icon: LayoutDashboard },
                             { id: 'crm', label: '3. CRM & Deals', icon: Users },
-                            { id: 'growth-agent', label: '4. Growth Agent', icon: Zap },
+                            { id: 'growth-agent', label: '4. Growth Agent', icon: Workflow },
                             { id: 'integrations', label: '5. Communications', icon: Globe },
                             { id: 'financials', label: '6. Financial Suite', icon: Receipt },
                             { id: 'contracts', label: '7. Contracts', icon: FileText },
@@ -265,7 +265,7 @@ export default function DocsPageContent() {
                         <div id="growth-agent" className="scroll-mt-24">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-                                    <Zap className="w-6 h-6 text-teal-400" />
+                                    <ClipboardCheck className="w-6 h-6 text-teal-600" aria-hidden="true" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-teal-500 font-semibold uppercase tracking-wider mb-1">Module 4</p>

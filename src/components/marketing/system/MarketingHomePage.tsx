@@ -20,10 +20,9 @@ import {
   Plug,
   ReceiptText,
   ShieldCheck,
-  Sparkles,
+  ClipboardCheck,
   Users,
   Workflow,
-  Zap,
 } from 'lucide-react';
 import { SiBrevo, SiQuickbooks, SiStripe, SiZoho } from 'react-icons/si';
 import { FaFacebook, FaInstagram, FaLinkedin, FaMicrosoft } from 'react-icons/fa6';
@@ -36,14 +35,14 @@ import MarketingShell from './MarketingShell';
 const processes = [
   { title: 'Tell us what you want', body: 'Type your request in ChatGPT, Claude, Manus or Bonnie.', icon: Workflow },
   { title: 'Approve the plan', body: 'Review what will be done before anything runs.', icon: ShieldCheck },
-  { title: 'AlphaClone executes', body: 'Approved work moves through the connected tools.', icon: Zap },
+  { title: 'AlphaClone executes', body: 'Approved work moves through the connected tools.', icon: Workflow },
   { title: 'Get verified results', body: 'See the outcome and activity record in the workspace.', icon: CheckCircle2 },
 ];
 
 const outcomes = [
   { title: 'Win work', body: 'Capture leads, keep conversations attached and prepare the right follow-up.', icon: Users, href: '/crm', tone: 'blue' },
   { title: 'Run delivery', body: 'Turn sold work into projects, documents, approvals and visible progress.', icon: BriefcaseBusiness, href: '/project-management', tone: 'green' },
-  { title: 'Get paid and follow up', body: 'Prepare invoices, track status and keep the next action from depending on memory.', icon: BadgeDollarSign, href: '/services', tone: 'orange' },
+  { title: 'Get paid and follow up', body: 'Prepare invoices, track status and keep the next action from depending on memory.', icon: BadgeDollarSign, href: '/services#financial-suite-invoicing', tone: 'orange' },
 ];
 
 const features = [
@@ -51,9 +50,9 @@ const features = [
   { title: 'Projects', body: 'Deliver work on time', icon: BriefcaseBusiness, href: '/project-management', tone: 'green' },
   { title: 'Emails', body: 'Send and follow up', icon: Mail, href: '/marketing/email', tone: 'violet' },
   { title: 'Social media', body: 'Create and schedule content', icon: Megaphone, href: '/marketing/automation', tone: 'pink' },
-  { title: 'Invoicing', body: 'Get paid faster', icon: ReceiptText, href: '/pricing', tone: 'orange' },
-  { title: 'Contracts', body: 'Send and e-sign', icon: FileSignature, href: '/docs#contracts', tone: 'coral' },
-  { title: 'Bookings', body: 'Let clients book time', icon: CalendarCheck, href: '/book-demo', tone: 'blue' },
+  { title: 'Invoicing', body: 'Get paid faster', icon: ReceiptText, href: '/services#financial-suite-invoicing', tone: 'orange' },
+  { title: 'Contracts', body: 'Send and e-sign', icon: FileSignature, href: '/services#contract-engine-e-signatures', tone: 'coral' },
+  { title: 'Bookings', body: 'Let clients book time', icon: CalendarCheck, href: '/services#smart-scheduling-cal-com-booking', tone: 'blue' },
   { title: 'Analytics', body: 'See what is working', icon: BarChart3, href: '/results', tone: 'violet' },
   { title: 'Integrations', body: 'Connect your tools', icon: Plug, href: '/ecosystem', tone: 'green' },
 ];
@@ -109,7 +108,7 @@ function ProductScene() {
         <p>Find qualified prospects and prepare relevant outreach for review.</p>
       </div>
       <div className="acr-result-card">
-        <p><span><Sparkles className="h-3.5 w-3.5" /></span><strong>AlphaClone</strong></p>
+        <p><span><ClipboardCheck className="h-3.5 w-3.5" aria-hidden="true" /></span><strong>AlphaClone</strong></p>
         <ul>
           <li><Check /> 20 records prepared</li>
           <li><Check /> CRM context attached</li>
@@ -195,7 +194,7 @@ export default function MarketingHomePage() {
                 <SecondaryCTA href="#workflow" className="mkt-btn-large"><span className="acr-play"><Play className="h-3 w-3" fill="currentColor" /></span> See a 30-second workflow</SecondaryCTA>
               </div>
               <div className="acr-hero-proof">
-                <span><Zap /><p><strong>Save hours</strong><small>every week</small></p></span>
+                <span><Clock3 /><p><strong>Save hours</strong><small>every week</small></p></span>
                 <span><Users /><p><strong>More clients</strong><small>and revenue</small></p></span>
                 <span><ShieldCheck /><p><strong>Human-led</strong><small>AI-executed</small></p></span>
               </div>

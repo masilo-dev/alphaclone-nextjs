@@ -1,302 +1,74 @@
 'use client';
 
-import React from 'react';
-import {
-    Globe, Clock, CircuitBoard, Sparkles
-} from 'lucide-react';
-import AnimateIn from '../common/AnimateIn';
-import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+import Image from 'next/image';
+import { ArrowDown, ArrowRight, CheckCircle2, CircleDot, Workflow } from 'lucide-react';
+import AnimateIn from '@/components/common/AnimateIn';
+import { PrimaryCTA } from '@/components/marketing/system/CtaButtons';
+import { DEMO_HREF } from '@/lib/marketing/cta';
 
-const AboutPage: React.FC = () => {
-    const stats = [
-        { label: 'Core Workflows', value: 'CRM', sub: 'pipeline and contacts' },
-        { label: 'Revenue Workflow', value: 'Billing', sub: 'quotes, invoices, payments' },
-        { label: 'Legal Workflow', value: 'Contracts', sub: 'drafts, approvals, signatures' },
-        { label: 'Delivery Workflow', value: 'Projects', sub: 'tasks, milestones, ownership' },
-        { label: 'Communication Workflow', value: 'Comms', sub: 'email, meetings, updates' },
-        { label: 'Operating Layer', value: 'OS', sub: 'one backbone for daily work' },
-    ];
+const chapters = [
+  { number: '01', label: 'Before AlphaClone', title: 'Before AlphaClone, I was dealing with the same problem.', quote: 'I had information everywhere, but execution still depended on me.', body: ['Before AlphaClone, I tried building businesses of my own. One of my early attempts was dropshipping. It failed.', 'I also worked in business development and management for a web-services outsourcing business. The work put me close to clients, delivery, follow-up, and the operational effort required after an opportunity appeared.', '[NAME AND DETAILS OF THE OTHER BUSINESS OR PROJECT I FOUNDED]', 'CRM. Email. Leads. Social media. Projects. Documents. Contracts. Invoices. Calendars. Communication.', 'The problem was not simply the number of applications. The problem was that I still had to remember what belonged where, move the information, trigger the next action, and check that it actually happened.'] },
+  { number: '02', label: 'The friction', title: "I realized I wasn't running the business. I was operating the software.", quote: 'Find the application. Find the record. Copy the context. Repeat the action. Check the result.', body: ['Every ordinary task became a chain of small operational decisions.', '[SPECIFIC EXAMPLE OF A REPEATED TASK THAT CONSUMED TIME]', 'A lead could begin in one place, continue in an inbox, become a project somewhere else, and end in a document or invoice with no shared history. The software stored information. I was still the coordination layer.'] },
+  { number: '03', label: 'The question', title: 'Then I started asking a different question.', quote: 'What if I could simply tell the system what I wanted to accomplish?', body: ['[THE MOMENT I REALIZED THE QUESTION WAS BIGGER THAN ANY ONE TOOL]', 'Not: Which application should I open?', 'Not: Where is the customer record?', 'Not: How do I connect another automation?', 'The useful question was simpler: What needs to happen?'] },
+  { number: '04', label: 'The first version', title: "The first version wasn't the vision. It was the beginning.", quote: '[EARLY EXPERIMENT]', body: ['[WHAT THE FIRST PROTOTYPE DID]', '[WHAT WORKED]', '[WHAT FAILED OR HAD TO BE REBUILT]', '[LESSON LEARNED]', 'AlphaClone did not appear fully formed. It evolved by testing whether real instructions could become controlled, visible business actions without losing context or human judgment.'] },
+  { number: '05', label: 'The realization', title: "The problem wasn't another missing tool.", quote: 'Businesses already had software. What they lacked was coordination and execution.', body: ['AI could understand an instruction. Business systems contained the records and capabilities. But the space between intent and completed work was still largely manual.', 'That missing operational layer became the central AlphaClone thesis: connect understanding to business context, permissions, tools, approval, execution, and verification.'] },
+  { number: '06', label: 'What AlphaClone became', title: 'From an idea into an execution layer.', quote: 'Human-led. AI-assisted. System-executed.', body: ['The user expresses an outcome. The AI interprets the instruction. AlphaClone resolves the workspace context, connected systems, permissions, and available workflows.', 'Important actions remain reviewable. Approved work runs through the connected tools. The result returns to the workspace as a visible activity record.', 'AlphaClone is not meant to be another dashboard people must continuously operate. It is being built as the operational layer that helps turn intent into accountable execution.'] },
+  { number: '07', label: "The founder's belief", title: 'This is what I believe business software should become.', quote: 'The technology should serve the operator — not force the operator to serve the technology.', body: ['I believe people should spend more time deciding what matters and less time manually moving information between software systems.', 'Software should increasingly understand intent, coordinate the right systems, and execute approved work. But people should remain in control of important decisions.', 'That balance matters. Useful execution requires capability. Trust requires boundaries, approval, and a record of what happened.'] },
+  { number: '08', label: 'The future', title: "I don't think we're finished.", quote: 'Intent → Context → Approval → Execution → Verification', body: ['I believe business software may gradually move away from people manually operating dozens of disconnected interfaces.', 'The future may feel more like directing a business system: state the outcome, review the proposed action, approve what matters, and verify the result.', 'AlphaClone is being built toward that future.'] },
+] as const;
 
-    const timeline = [
-        {
-            year: '2022',
-            title: 'Identifying the Operational Gap',
-            desc: 'We saw service businesses struggling with software fragmentation: CRM, invoicing, scheduling, contracts, and communication all lived in separate tools that did not share context.',
-        },
-        {
-            year: '2023',
-            title: 'The Unified Platform',
-            desc: 'We launched AlphaClone as a centralized business platform so teams could manage client relationships, delivery work, and core operations in one place.',
-        },
-        {
-            year: '2024',
-            title: 'The AI Growth Agent',
-            desc: 'We introduced AI support for lead discovery, qualification, and outreach preparation so sales work could be handled more consistently and with less manual effort.',
-        },
-        {
-            year: '2025-26',
-            title: 'The Complete Business OS',
-            desc: 'AlphaClone expanded into a fuller operating layer with contracts, accounting, meetings, automations, and connected workflows designed for professional service teams.',
-        },
-    ];
-
-    const values = [
-        {
-            title: 'Focused on real business outcomes',
-            desc: "We do not measure success by feature count. We measure it by whether the product makes a business more organized, more profitable, and easier to run.",
-        },
-        {
-            title: 'Radical Simplicity',
-            desc: 'Powerful systems should still feel straightforward. If a business owner needs a manual to complete a common task, the product has failed that user.',
-        },
-        {
-            title: 'Built for the Non-Technical Majority',
-            desc: 'Most business owners are not software engineers. We build around their workflows instead of asking them to think like an IT department.',
-        },
-        {
-            title: 'Data Privacy as a Default',
-            desc: 'Client records, contracts, and financial data are sensitive business assets. We treat privacy, permissions, and auditability as product requirements.',
-        },
-        {
-            title: 'AI That Serves, Not Replaces',
-            desc: 'AI should reduce repetitive work and support better decisions. It should not add noise or remove human judgment from important business actions.',
-        },
-        {
-            title: 'One Platform, Zero Silos',
-            desc: 'Client work breaks down when CRM, invoicing, meetings, and delivery tools do not share context. We design the platform as one connected system.',
-        },
-    ];
-
-    const whySection = [
-        {
-            headline: 'You stop losing information between tools',
-            body: "When the CRM, inbox, project workspace, invoices, and contracts are disconnected, details get lost. AlphaClone is designed to keep those records tied to the same client and the same workflow.",
-        },
-        {
-            headline: 'You stop paying for overlapping software',
-            body: 'Many teams pay for multiple tools that cover the same basic jobs: communication, scheduling, storage, billing, and task management. A unified platform reduces that overlap.',
-        },
-        {
-            headline: 'Your client experience becomes more consistent',
-            body: 'Branded invoices, contracts, meetings, and delivery updates coming from one system creates a more professional and more trustworthy experience for clients.',
-        },
-        {
-            headline: 'AI can handle repetitive growth work in the background',
-            body: 'The Growth Agent is meant to support prospecting, qualification, and outreach preparation so teams spend more time on qualified conversations and less time on repetitive admin.',
-        },
-        {
-            headline: 'Decision-making gets faster',
-            body: 'When revenue, pipeline activity, project delivery, and client communication live in one platform, teams can answer operational questions without piecing together reports from several systems.',
-        },
-    ];
-
-    return (
-        <div className="marketing-theme min-h-screen page-network-bg text-white">
-            <div className="relative overflow-hidden">
-                <section className="relative min-h-[50vh] flex flex-col items-center justify-center pt-24 pb-20">
-                    
-                    <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
-                        <AnimateIn type="fadeIn" delay={0}>
-                            <div className="inline-flex items-center gap-2 mb-6 ai-badge">
-                                <Sparkles className="w-3.5 h-3.5 fill-teal-400" />
-                                <span>THE UNIFIED OPERATING ENGINE</span>
-                            </div>
-                        </AnimateIn>
-                        <AnimateIn type="fadeUp" delay={0.1}>
-                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black mb-8 leading-[1.05] tracking-tighter text-white">
-                                Building the <span className="hero-metallic-text">Unified OS</span> <br />
-                                for Professional Teams
-                            </h1>
-                        </AnimateIn>
-                        <AnimateIn type="fadeUp" delay={0.2}>
-                            <p className="text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto mb-10">
-                                AlphaClone exists to eliminate the "SaaS Tax"—the time, money, and focus lost to fragmented tools. We build the single operating layer for modern service businesses.
-                            </p>
-                        </AnimateIn>
-                    </div>
-                </section>
-
-                <section className="py-16 bg-transparent relative z-10">
-                    <div className="max-w-6xl mx-auto px-4 sm:px-6 min-w-0">
-                        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8">
-                            {stats.map((stat, idx) => (
-                                <AnimateIn key={idx} type="stagger" index={idx}>
-                                    <div className="text-center p-4 sm:p-6 md:p-8 glass-card rounded-2xl border-white/[0.03] transition-all hover:scale-[1.02]">
-                                        <div className="text-4xl font-black text-teal-400 mb-2 tracking-tighter">{stat.value}</div>
-                                        <div className="font-bold text-white text-sm mb-1 uppercase tracking-wider">{stat.label}</div>
-                                        <div className="text-slate-500 text-xs font-medium">{stat.sub}</div>
-                                    </div>
-                                </AnimateIn>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-24 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/5 blur-[120px] -z-10" />
-                    <div className="max-w-6xl mx-auto px-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                            <div>
-                                <AnimateIn type="fadeLeft">
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <Globe className="w-6 h-6 text-teal-400" />
-                                        <h2 className="text-3xl font-bold">Our Mission</h2>
-                                    </div>
-                                </AnimateIn>
-                                <AnimateIn type="fadeUp" delay={0.1}>
-                                    <div className="space-y-6 text-slate-300 leading-relaxed text-lg">
-                                        <p>
-                                            <strong className="text-white text-2xl block mb-4">To give smaller teams the operational quality of much larger companies.</strong>
-                                            Most service businesses do not fail because they lack effort. They fail because their systems are fragmented, their data is scattered, and too much of the day is spent on manual coordination.
-                                        </p>
-                                        <p>
-                                            We built AlphaClone to reduce that friction. The product is meant to help teams keep client work, internal operations, and revenue workflows connected.
-                                        </p>
-                                    </div>
-                                </AnimateIn>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                {[
-                                    { title: 'Built for service businesses', desc: 'CRM, invoicing, scheduling, contracts, and communication in one high-performance operating layer.' },
-                                    { title: 'Designed to reduce tool sprawl', desc: 'No more context switching. Every module shares the same core data architecture.' },
-                                    { title: 'Autonomous Intelligence', desc: 'Practical AI that handles lead qualification, outreach, and administrative coordination in the background.' },
-                                    { title: 'Enterprise-Grade Security', desc: 'Isolated databases, encrypted communications, and explicit access rules come as standard.' }
-                                ].map((item, i) => (
-                                    <AnimateIn key={i} type="stagger" index={i}>
-                                        <div className="p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl glass-card border-white/[0.04] relative group">
-                                            <div className="absolute -top-3 -left-3 w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center border border-teal-500/20 backdrop-blur-xl group-hover:bg-teal-500 group-hover:text-slate-950 transition-all">
-                                                <div className="text-xs font-black tracking-tighter">0{i + 1}</div>
-                                            </div>
-                                            <h3 className="text-white font-black mb-3 tracking-tight mt-2">{item.title}</h3>
-                                            <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
-                                        </div>
-                                    </AnimateIn>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-16 bg-transparent">
-                    <div className="max-w-4xl mx-auto px-4">
-                        <AnimateIn type="fadeLeft">
-                            <div className="mb-8">
-                                <h2 className="text-3xl font-bold">Why This Matters for Business Owners</h2>
-                            </div>
-                        </AnimateIn>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {whySection.map((point, i) => (
-                                <AnimateIn key={i} type="fadeUp" delay={i * 0.07}>
-                                    <div className="p-4 sm:p-6 md:p-8 rounded-2xl glass-card border-white/[0.03] h-full">
-                                        <div className="border-l-4 border-teal-500/50 pl-6 h-full flex flex-col justify-center">
-                                            <h3 className="text-xl font-black text-white mb-4 tracking-tight">{point.headline}</h3>
-                                            <p className="text-slate-400 leading-relaxed font-normal">{point.body}</p>
-                                        </div>
-                                    </div>
-                                </AnimateIn>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
-                    <div className="max-w-4xl mx-auto px-4">
-                        <div className="flex items-center gap-3 mb-12">
-                            <Clock className="w-6 h-6 text-blue-400" />
-                            <h2 className="text-3xl font-bold">Our Story</h2>
-                        </div>
-                        <div className="space-y-8">
-                            {timeline.map((item, i) => (
-                                <div key={i} className="flex gap-6">
-                                    <div className="flex flex-col items-center flex-shrink-0">
-                                        <div className="w-12 h-12 rounded-full bg-teal-500/10 border-2 border-teal-500/30 flex items-center justify-center">
-                                            <span className="text-teal-400 font-bold text-xs">{item.year}</span>
-                                        </div>
-                                        {i < timeline.length - 1 && (
-                                            <div className="w-px flex-1 bg-slate-800 mt-2" />
-                                        )}
-                                    </div>
-                                    <div className="pb-8">
-                                        <h3 className="text-lg font-bold text-white mb-3">{item.title}</h3>
-                                        <p className="text-slate-400 leading-relaxed">{item.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-16 bg-transparent">
-                    <div className="max-w-6xl mx-auto px-4">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl font-bold mb-4">What We Believe In</h2>
-                            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                                These are the operating principles behind our product decisions, support work, and roadmap.
-                            </p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {values.map((value, idx) => (
-                                <div key={idx} className="p-6 rounded-xl bg-white/[0.04] backdrop-blur-sm border border-slate-700/60 hover:border-teal-500/30 transition-colors">
-                                    <div className="text-xs font-semibold tracking-[0.22em] uppercase text-teal-400 mb-3">
-                                        Principle {idx + 1}
-                                    </div>
-                                    <h3 className="text-lg font-bold mb-3">{value.title}</h3>
-                                    <p className="text-slate-400 text-sm leading-relaxed">{value.desc}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-16 bg-white/[0.02] backdrop-blur-sm border-y border-slate-800/60">
-                    <div className="max-w-4xl mx-auto px-4">
-                        <div className="flex items-center gap-3 mb-8">
-                            <CircuitBoard className="w-6 h-6 text-violet-400" />
-                            <h2 className="text-3xl font-bold">Our Technology Philosophy</h2>
-                        </div>
-                        <div className="space-y-6 text-slate-400 leading-relaxed">
-                            <p>
-                                AlphaClone is built on a modern web stack designed for reliability, structured data, and fast iteration. The platform supports multi-tenant business workflows without forcing teams into several disconnected systems.
-                            </p>
-                            <p>
-                                The AI features are focused on practical business tasks such as lead qualification, drafting support, and workflow assistance. The goal is to remove repetitive work, not generate noise.
-                            </p>
-                            <p>
-                                Our security model is based on authenticated requests, explicit access rules, and traceable system activity. That gives teams clearer visibility into who can do what inside the platform.
-                            </p>
-                            <p>
-                                We ship based on direct product feedback from businesses using the platform. That keeps the roadmap tied to operational value instead of surface-level feature inflation.
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="py-32 relative overflow-hidden">
-                    <div className="absolute inset-0 -z-10">
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-blue-500/10 blur-[100px] rounded-full" />
-                    </div>
-                    <div className="max-w-4xl mx-auto px-4 text-center">
-                        <AnimateIn type="scaleIn">
-                            <h2 className="text-4xl md:text-6xl font-black mb-8 tracking-tighter text-white leading-tight">
-                                Ready to Upgrade Your <br />
-                                <span className="hero-metallic-text">Business Operations?</span>
-                            </h2>
-                            <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                                Book a free 30-minute walkthrough tailored to your business. No commitment.
-                            </p>
-                            <div className="flex flex-col sm:flex-row justify-center gap-6">
-                                <PrimaryCTA href="/book-demo" className="w-full sm:w-auto">Book a demo</PrimaryCTA>
-                                <SecondaryCTA href="/#workflow" className="w-full sm:w-auto">See a 30-second workflow</SecondaryCTA>
-                            </div>
-                            <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-[0.2em]">
-                                Real workflows • No technical setup • Human control
-                            </p>
-                        </AnimateIn>
-                    </div>
-                </section>
-            </div>
+export default function AboutPage() {
+  return (
+    <div className="founder-journey">
+      <section className="founder-opening">
+        <div className="founder-opening__line" aria-hidden="true" />
+        <div className="founder-container">
+          <AnimateIn type="fadeUp">
+            <p className="founder-kicker">Why AlphaClone exists</p>
+            <h1>I wasn&apos;t trying to build another software company.</h1>
+            <p className="founder-opening__statement">I was trying to solve a problem I kept experiencing myself.</p>
+            <p className="founder-opening__identity">Bornface &ldquo;Bonnie&rdquo; Masilo · Founder, AlphaClone Systems</p>
+            <a className="founder-scroll" href="#chapter-01">Follow the journey <ArrowDown aria-hidden="true" /></a>
+          </AnimateIn>
         </div>
-    );
-};
+      </section>
 
-export default AboutPage;
+      <section className="founder-context" aria-label="The operational problem">
+        <div className="founder-container founder-context__grid">
+          <AnimateIn type="fadeLeft"><p className="founder-kicker">The work behind the work</p><h2>The tools held the information. I still had to make everything move.</h2></AnimateIn>
+          <AnimateIn type="fadeRight"><div className="founder-tool-list" aria-label="Disconnected business operations">{['CRM', 'Leads', 'Email', 'Social', 'Projects', 'Documents', 'Contracts', 'Invoices', 'Calendar'].map((item) => <span key={item}><CircleDot aria-hidden="true" />{item}</span>)}</div></AnimateIn>
+        </div>
+      </section>
+
+      <div className="founder-timeline">
+        {chapters.map((chapter, index) => (
+          <section id={`chapter-${chapter.number}`} className="founder-chapter" key={chapter.number}>
+            <div className="founder-rail" aria-hidden="true"><span>{chapter.number}</span></div>
+            <div className="founder-container founder-chapter__grid">
+              <AnimateIn type={index % 2 === 0 ? 'fadeLeft' : 'fadeRight'}>
+                <div className="founder-chapter__copy">
+                  <p className="founder-kicker">Chapter {chapter.number} · {chapter.label}</p>
+                  <h2>{chapter.title}</h2>
+                  <blockquote>{chapter.quote}</blockquote>
+                  <div className="founder-prose">{chapter.body.map((paragraph) => <p className={paragraph.startsWith('[') ? 'founder-placeholder' : ''} key={paragraph}>{paragraph}</p>)}</div>
+                </div>
+              </AnimateIn>
+              {chapter.number === '04' && <div className="founder-evidence founder-evidence--note"><p>Founder archive</p><strong>[ADD EARLY PROTOTYPE OR WORKFLOW]</strong><span>Use a real screenshot, sketch, commit, or early interface. Do not recreate history.</span></div>}
+              {chapter.number === '06' && <div className="founder-evidence founder-evidence--product"><div className="founder-product-frame"><Image src="/screenshots/deals-dashboard.png" alt="AlphaClone workspace showing connected business records" fill sizes="(max-width: 900px) 92vw, 520px" className="object-cover object-top" /></div><ol className="founder-execution-flow">{['Intent', 'Context', 'Approval', 'Execution', 'Verification'].map((step) => <li key={step}><CheckCircle2 aria-hidden="true" />{step}</li>)}</ol></div>}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <section className="founder-final">
+        <div className="founder-container founder-final__inner">
+          <Workflow aria-hidden="true" />
+          <p className="founder-kicker">A note from the founder</p>
+          <blockquote><p>I started AlphaClone because I had experienced how much business work still depends on one person coordinating disconnected systems.</p><p>I had tried building businesses, experienced an early dropshipping failure, and worked close to client acquisition and delivery in web-services outsourcing.</p><p>I kept asking what would change if I could tell the system what needed to happen instead of manually operating every application.</p><p>And eventually that question became AlphaClone.</p><p>Today, we&apos;re building an execution layer that connects AI instructions with business context, human approval, connected systems, and a visible record of the result.</p><p>Not to give businesses another tool to operate.</p><p>But to help people spend less time operating their tools — and more time actually running the business.</p></blockquote>
+          <h2>Stop operating your tools.<br />Start running your business.</h2>
+          <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">Book a demo <ArrowRight aria-hidden="true" /></PrimaryCTA>
+        </div>
+      </section>
+    </div>
+  );
+}

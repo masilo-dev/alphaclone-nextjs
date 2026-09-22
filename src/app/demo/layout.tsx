@@ -4,7 +4,7 @@ import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import { SITE_URL } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
-  title: 'Product Demo | AlphaClone',
+  title: { absolute: 'Product Demo | AlphaClone' },
   description:
     'Interactive demo of AlphaClone: CRM, billing, contracts, scheduling, documents, and automation in one platform.',
   alternates: { canonical: `${SITE_URL}/demo` },

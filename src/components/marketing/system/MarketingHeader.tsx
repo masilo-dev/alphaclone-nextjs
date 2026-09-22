@@ -46,6 +46,7 @@ const MENUS: Array<{ key: MenuKey; label: string; items: MenuLink[] }> = [
       { label: 'Documentation', href: '/docs' },
       { label: 'Getting started', href: '/guide' },
       { label: 'Blog', href: '/blog' },
+      { label: 'Recorded demo', href: '/demo' },
       { label: 'FAQ', href: '/faq' },
       { label: 'Results & workflows', href: '/results' },
     ],
@@ -86,6 +87,7 @@ function LanguageControl({ mobile = false }: { mobile?: boolean }) {
 }
 
 export default function MarketingHeader() {
+  const { t } = useLanguage();
   const pathname = usePathname();
   const [activeMenu, setActiveMenu] = useState<MenuKey | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -112,7 +114,7 @@ export default function MarketingHeader() {
 
   return (
     <>
-      <a href="#main-content" className="mkt-skip-link">Skip to main content</a>
+      <a href="#main-content" className="mkt-skip-link">{t('Skip to main content')}</a>
       <header className="mkt-header mkt-header-redesign">
         <div className="mkt-container">
           <div className="mkt-header-bar">
@@ -127,23 +129,23 @@ export default function MarketingHeader() {
                     aria-controls={`mkt-menu-${menu.key}`}
                     onClick={() => setActiveMenu((current) => current === menu.key ? null : menu.key)}
                   >
-                    {menu.label}<ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                    {t(menu.label)}<ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                   {activeMenu === menu.key && (
                     <div id={`mkt-menu-${menu.key}`} className="mkt-nav-menu-redesign">
-                      <p>{menu.label}</p>
+                      <p>{t(menu.label)}</p>
                       {menu.items.map((item) => (
                         <Link href={item.href} key={item.href} onClick={() => setActiveMenu(null)}>
-                          <strong>{item.label}</strong>
-                          {item.description && <span>{item.description}</span>}
+                          <strong>{t(item.label)}</strong>
+                          {item.description && <span>{t(item.description)}</span>}
                         </Link>
                       ))}
                     </div>
                   )}
                 </div>
               ))}
-              <Link href="/ecosystem" className="mkt-nav-link-redesign">Integrations</Link>
-              <Link href="/pricing" className="mkt-nav-link-redesign">Pricing</Link>
+              <Link href="/ecosystem" className="mkt-nav-link-redesign">{t('Integrations')}</Link>
+              <Link href="/pricing" className="mkt-nav-link-redesign">{t('Pricing')}</Link>
               {MENUS.slice(2).map((menu) => (
                 <div className="mkt-nav-popover" key={menu.key}>
                   <button
@@ -153,32 +155,32 @@ export default function MarketingHeader() {
                     aria-controls={`mkt-menu-${menu.key}`}
                     onClick={() => setActiveMenu((current) => current === menu.key ? null : menu.key)}
                   >
-                    {menu.label}<ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                    {t(menu.label)}<ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                   {activeMenu === menu.key && (
                     <div id={`mkt-menu-${menu.key}`} className="mkt-nav-menu-redesign is-right">
-                      <p>{menu.label}</p>
+                      <p>{t(menu.label)}</p>
                       {menu.items.map((item) => (
                         <Link href={item.href} key={item.href} onClick={() => setActiveMenu(null)}>
-                          <strong>{item.label}</strong>
-                          {item.description && <span>{item.description}</span>}
+                          <strong>{t(item.label)}</strong>
+                          {item.description && <span>{t(item.description)}</span>}
                         </Link>
                       ))}
                     </div>
                   )}
                 </div>
               ))}
-              <Link href="/about" className="mkt-nav-link-redesign">About</Link>
+              <Link href="/about" className="mkt-nav-link-redesign">{t('About')}</Link>
             </nav>
 
             <div className="mkt-header-actions-redesign">
               <LanguageControl />
-              <Link href={LOGIN_HREF} data-login-trigger className="mkt-sign-in">Sign in</Link>
-              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-header-demo">Book a demo</PrimaryCTA>
+              <Link href={LOGIN_HREF} data-login-trigger className="mkt-sign-in">{t('Sign in')}</Link>
+              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-header-demo">{t('Book a demo')}</PrimaryCTA>
             </div>
 
             <div className="mkt-header-mobile-redesign">
-              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact">Book a demo</PrimaryCTA>
+              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact">{t('Book a demo')}</PrimaryCTA>
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button type="button" className="mkt-mobile-toggle-redesign" aria-label="Open navigation menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}>
@@ -198,19 +200,19 @@ export default function MarketingHeader() {
                       <X className="h-6 w-6" aria-hidden="true" />
                     </SheetClose>
                   </div>
-                  <PrimaryCTA href={DEMO_HREF} onClick={() => setMobileOpen(false)} className="w-full justify-center">Book a demo</PrimaryCTA>
+                  <PrimaryCTA href={DEMO_HREF} onClick={() => setMobileOpen(false)} className="w-full justify-center">{t('Book a demo')}</PrimaryCTA>
                   <nav className="mkt-mobile-nav-redesign" aria-label="Mobile navigation">
-                    <Link href="/how-it-works">How it works</Link>
-                    <Link href="/ecosystem">Integrations</Link>
-                    <Link href="/pricing">Pricing</Link>
+                    <Link href="/how-it-works">{t('How it works')}</Link>
+                    <Link href="/ecosystem">{t('Integrations')}</Link>
+                    <Link href="/pricing">{t('Pricing')}</Link>
                     {MENUS.map((menu) => (
                       <details key={menu.key}>
-                        <summary>{menu.label}<ChevronDown className="h-4 w-4" aria-hidden="true" /></summary>
-                        <div>{menu.items.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}</div>
+                        <summary>{t(menu.label)}<ChevronDown className="h-4 w-4" aria-hidden="true" /></summary>
+                        <div>{menu.items.map((item) => <Link key={item.href} href={item.href}>{t(item.label)}</Link>)}</div>
                       </details>
                     ))}
-                    <Link href="/about">About</Link>
-                    <Link href={LOGIN_HREF} data-login-trigger>Sign in</Link>
+                    <Link href="/about">{t('About')}</Link>
+                    <Link href={LOGIN_HREF} data-login-trigger>{t('Sign in')}</Link>
                   </nav>
                   <LanguageControl mobile />
                 </SheetContent>

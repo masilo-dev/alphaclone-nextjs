@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calculator, Check, ArrowRight, DollarSign, Clock, Sparkles } from 'lucide-react';
+import { Calculator, Check, ArrowRight, DollarSign, Clock, ReceiptText } from 'lucide-react';
 import Link from 'next/link';
 
 interface ToolItem {
@@ -166,7 +166,7 @@ export default function StackSavingsCalculator() {
                 {/* Big Savings Highlight */}
                 <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-950/40 to-teal-950/40 border border-emerald-500/40">
                   <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase mb-1">
-                    <Sparkles className="w-4 h-4" />
+                    <ReceiptText className="w-4 h-4" aria-hidden="true" />
                     <span>Your Net Annual Savings:</span>
                   </div>
                   <div className="text-3xl font-extrabold text-white font-mono tracking-tight">

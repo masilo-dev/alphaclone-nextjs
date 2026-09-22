@@ -1,5 +1,5 @@
 import React from 'react';
-import { Code, Smartphone, Zap, Database, Shield } from 'lucide-react';
+import { Code, Smartphone, Workflow, Database, Shield } from 'lucide-react';
 
 const ServicesSection: React.FC = () => {
     const services = [
@@ -16,7 +16,7 @@ const ServicesSection: React.FC = () => {
             color: 'text-purple-400'
         },
         {
-            icon: Zap,
+            icon: Workflow,
             title: 'AI Integration',
             description: 'Intelligent automation and AI-powered features for your business.',
             color: 'text-teal-400'
@@ -34,7 +34,7 @@ const ServicesSection: React.FC = () => {
             color: 'text-red-400'
         },
         {
-            icon: Zap,
+            icon: Workflow,
             title: 'Performance Optimization',
             description: 'Speed, scalability, and reliability for high-traffic applications.',
             color: 'text-yellow-400'
@@ -85,4 +85,3 @@ const ServicesSection: React.FC = () => {
 };
 
 export default ServicesSection;
-

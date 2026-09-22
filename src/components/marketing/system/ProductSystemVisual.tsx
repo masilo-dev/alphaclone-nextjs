@@ -9,7 +9,8 @@ import {
   Mail,
   MessageSquareText,
   ShieldCheck,
-  Sparkles,
+  ListFilter,
+  ClipboardCheck,
   Users,
   Video,
 } from 'lucide-react';
@@ -51,7 +52,7 @@ const PRODUCT_DATA: Record<string, {
     title: 'A clear queue from interest to action.',
     subtitle: 'Capture, qualify, assign, and follow up without losing the source context.',
     accent: 'violet',
-    icon: Sparkles,
+    icon: ListFilter,
     metrics: [
       { label: 'New this week', value: '47', detail: 'Across 4 sources' },
       { label: 'Needs review', value: '09', detail: 'Prioritised by fit' },
@@ -85,7 +86,7 @@ const PRODUCT_DATA: Record<string, {
     title: 'Useful AI work with a visible approval trail.',
     subtitle: 'Bonnie prepares the next action, shows its context, and waits for your approval.',
     accent: 'amber',
-    icon: Sparkles,
+    icon: ClipboardCheck,
     metrics: [
       { label: 'Drafts prepared', value: '24', detail: 'This week' },
       { label: 'Awaiting approval', value: '05', detail: 'No external sends' },

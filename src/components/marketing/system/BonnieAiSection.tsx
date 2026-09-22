@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Bot, Cpu, Lock, CheckCircle2, Terminal, Database, Loader2, Play } from 'lucide-react';
+import { ClipboardCheck, Braces, Lock, CheckCircle2, Terminal, Database, Loader2, Play } from 'lucide-react';
 
 interface AiExampleAction {
   id: string;
@@ -59,7 +59,7 @@ export default function BonnieAiSection() {
         {/* Header Banner */}
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs sm:text-sm font-medium mb-4">
-            <Bot className="w-4 h-4 text-cyan-400" />
+            <ClipboardCheck className="w-4 h-4 text-cyan-600" aria-hidden="true" />
             <span>Workspace-Aware Intelligence</span>
           </div>
           <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 font-marketing-heading">
@@ -88,7 +88,7 @@ export default function BonnieAiSection() {
 
           <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl backdrop-blur-md">
             <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4">
-              <Cpu className="w-5 h-5" />
+              <Braces className="w-5 h-5" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-bold text-white mb-2 font-marketing-heading">2. Powered by MCP</h3>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
@@ -168,7 +168,7 @@ export default function BonnieAiSection() {
             <div className={`space-y-1.5 transition-opacity ${demoStage >= 2 ? 'opacity-100' : 'opacity-30'}`}>
               <div className="flex items-center justify-between text-xs text-cyan-400">
                 <span className="flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5" />
+                  <Braces className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>MCP PROTOCOL TOOL INVOCATION:</span>
                 </span>
                 <span className="text-[10px] text-cyan-500">SECURE DISPATCH</span>

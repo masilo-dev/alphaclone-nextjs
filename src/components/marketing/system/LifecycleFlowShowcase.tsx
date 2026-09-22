@@ -4,13 +4,12 @@ import React, { useState } from "react";
 import { 
   Search, 
   UserRoundCheck, 
-  Bot, 
+  Workflow,
   BriefcaseBusiness, 
   CircleDollarSign, 
   ArrowRight, 
   Check, 
-  Sparkles,
-  Zap,
+  ClipboardCheck,
   TrendingUp
 } from "lucide-react";
 import { FaLinkedin, FaMicrosoft } from "react-icons/fa6";
@@ -59,11 +58,11 @@ const STEPS: LifecycleStep[] = [
     num: "03",
     title: "Run",
     subtitle: "Bonnie · Tasks · Automation",
-    icon: Bot,
+    icon: Workflow,
     color: "#10b981",
     badge: "AI Executing",
     connectors: [
-      { name: "Bonnie", icon: Bot, color: "#10b981" },
+      { name: "Bonnie", icon: ClipboardCheck, color: "#10b981" },
     ],
     details: ["Outreach drafting", "Follow-up triggers", "Owner approvals"],
   },

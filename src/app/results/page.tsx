@@ -29,6 +29,7 @@ export default function ResultsPage() {
               eyebrow="Workflow stories"
               title="What changes when client work shares one workspace"
               description="Each story follows the same structure: the problem, what changed in the workflow, and the business outcome."
+              as="h1"
             />
             <p className="mx-auto max-w-3xl rounded-[var(--marketing-radius-md)] border border-[var(--marketing-border)] bg-[var(--marketing-surface)] px-4 py-3 text-center text-sm text-[var(--marketing-text-muted)]">
               Stories on this page are representative workflow composites — not verified customer

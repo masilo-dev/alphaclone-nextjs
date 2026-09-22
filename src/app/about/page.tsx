@@ -5,8 +5,8 @@ import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
 import { absoluteUrl } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
-    title: 'About AlphaClone Systems | Unified CRM, Billing, Scheduling, and Operations',
-    description: 'Learn how AlphaClone Systems builds a unified business platform for service businesses by combining CRM, invoicing, scheduling, contracts, messaging, and operations in one product.',
+    title: 'Why AlphaClone Exists | The Founder Journey',
+    description: 'The founder journey behind AlphaClone Systems: from disconnected business tools and manual coordination to a human-led execution layer connecting AI instructions with approved business actions.',
     keywords: [
         'about AlphaClone Systems',
         'service business software platform',
@@ -20,15 +20,15 @@ export const metadata: Metadata = {
     ],
     alternates: { canonical: absoluteUrl('/about') },
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-        title: 'About AlphaClone | Unified Business Software for Service Teams',
-        description: 'AlphaClone combines CRM, billing, scheduling, contracts, communication, and operations into one connected platform for service businesses.',
+        title: 'Why AlphaClone Exists | The Founder Journey',
+        description: 'The personal problem, operational friction, and execution-layer idea that led to AlphaClone Systems.',
         url: absoluteUrl('/about'),
         type: 'website',
     },
     twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
-        title: 'About AlphaClone | Unified Business Software for Service Teams',
-        description: 'CRM, invoicing, scheduling, contracts, messaging, and operations in one connected platform.',
+        title: 'Why AlphaClone Exists | The Founder Journey',
+        description: 'The personal problem and execution-layer idea that led to AlphaClone Systems.',
     },
 };
 

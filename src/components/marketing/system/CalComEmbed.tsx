@@ -10,6 +10,7 @@ import {
   getCalComLink,
   resolvePlatformBookingUrl,
 } from '@/lib/marketing/booking';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Cal = dynamic(() => import('@calcom/embed-react'), { ssr: false });
 
@@ -28,6 +29,12 @@ export default function CalComEmbed({
   className = '',
   variant = 'page',
 }: CalComEmbedProps) {
+  const { language } = useLanguage();
+  const copy = {
+    en: { continue: 'Continue booking', failed: 'The scheduler could not load here. Pick a time on our booking page instead.', retry: 'Retry scheduler', choose: 'Choose a time', loading: 'Opening scheduler…' },
+    pl: { continue: 'Kontynuuj rezerwację', failed: 'Kalendarz nie mógł się tutaj załadować. Wybierz termin bezpośrednio na stronie rezerwacji.', retry: 'Spróbuj ponownie', choose: 'Wybierz termin', loading: 'Otwieranie kalendarza…' },
+    es: { continue: 'Continuar la reserva', failed: 'El calendario no pudo cargarse aquí. Elige una hora directamente en nuestra página de reservas.', retry: 'Reintentar', choose: 'Elegir una hora', loading: 'Abriendo calendario…' },
+  }[language];
   const { isDark } = useTheme();
   const theme = isDark ? 'dark' : 'light';
   const instanceId = useId().replace(/[^a-zA-Z0-9-]/g, '');
@@ -90,16 +97,16 @@ export default function CalComEmbed({
       <div className={shellClass}>
         <div className="cal-embed-fallback">
           <AlertCircle className="w-11 h-11 text-amber-400 mb-3" aria-hidden="true" />
-          <h3 className="text-lg font-bold text-white mb-2">Continue booking</h3>
+          <h3 className="text-lg font-bold text-white mb-2">{copy.continue}</h3>
           <p className="text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
-            The scheduler could not load here. Pick a time on our booking page instead.
+            {copy.failed}
           </p>
           <button
             type="button"
             onClick={() => setAttempt((value) => value + 1)}
             className="mb-4 rounded-xl border border-teal-500 px-6 py-3 text-teal-300"
           >
-            Retry scheduler
+            {copy.retry}
           </button>
           <a
             href={resolvedUrl}
@@ -108,7 +115,7 @@ export default function CalComEmbed({
             className="inline-flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-sm transition-colors"
           >
             <Calendar className="w-4 h-4" aria-hidden="true" />
-            Choose a time
+            {copy.choose}
             <ExternalLink className="w-4 h-4" aria-hidden="true" />
           </a>
         </div>
@@ -128,7 +135,7 @@ export default function CalComEmbed({
               ))}
             </div>
           </div>
-          <p className="text-sm text-slate-400">Opening scheduler…</p>
+          <p className="text-sm text-slate-400">{copy.loading}</p>
         </div>
       )}
 

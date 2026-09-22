@@ -3,13 +3,12 @@
 import {
     CheckCircle2,
     Target,
-    Zap,
+    Workflow,
     Award,
     TrendingUp,
     ShieldCheck,
     Video,
     ArrowRight,
-    Workflow,
     type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -19,7 +18,7 @@ import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButto
 
 const SEGMENT_ICONS: Record<WhoWeServeSegment['icon'], LucideIcon> = {
     target: Target,
-    zap: Zap,
+    zap: Workflow,
     award: Award,
     trending: TrendingUp,
     shield: ShieldCheck,

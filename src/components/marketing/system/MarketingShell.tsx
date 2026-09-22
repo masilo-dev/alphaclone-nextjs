@@ -10,7 +10,7 @@ type MarketingShellProps = {
 
 export default function MarketingShell({ children, className = '' }: MarketingShellProps) {
   return (
-    <div className={`marketing-theme mkt-shell min-h-screen text-[var(--marketing-text-primary)] ${className}`.trim()}>
+    <div className={`marketing-theme mkt-light-canvas mkt-shell min-h-screen text-[var(--marketing-text-primary)] ${className}`.trim()}>
       <MarketingBackground />
       <MarketingHeader />
       <main id="main-content" className="mkt-shell-content pt-14">

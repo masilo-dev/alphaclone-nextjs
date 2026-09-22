@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AlphaIcon } from '@/components/marketing/icons';
 import type { AlphaIconName } from '@/components/marketing/icons';
-import { ArrowRight, CheckCircle2, ShieldCheck, Zap, Layers, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShieldCheck, Workflow, Layers, ClipboardCheck } from 'lucide-react';
 import Link from 'next/link';
 
 interface WorkflowNode {
@@ -163,7 +163,7 @@ export default function InteractiveWorkflowStory() {
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-12 px-4">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs sm:text-sm font-medium mb-4">
-          <Sparkles className="w-4 h-4 text-teal-400" />
+          <ClipboardCheck className="w-4 h-4 text-teal-600" aria-hidden="true" />
           <span>The Connected Business Story</span>
         </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-4 font-marketing-heading">
@@ -229,7 +229,7 @@ export default function InteractiveWorkflowStory() {
               {/* Automation details */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-950/80 border border-slate-800">
-                  <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <Workflow className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <p className="text-xs font-semibold text-slate-200">System Trigger</p>
                     <p className="text-xs text-slate-400">{activeNode.trigger}</p>
