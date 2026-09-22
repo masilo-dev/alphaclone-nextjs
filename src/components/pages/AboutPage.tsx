@@ -282,14 +282,14 @@ const AboutPage: React.FC = () => {
                                 <span className="hero-metallic-text">Business Operations?</span>
                             </h2>
                             <p className="text-slate-400 text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-                                Start a 14-day trial and connect your AI to the business systems where work gets done.
+                                Book a free 30-minute walkthrough tailored to your business. No commitment.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-6">
-                                <PrimaryCTA className="w-full sm:w-auto">Start with AlphaClone</PrimaryCTA>
-                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
+                                <PrimaryCTA href="/book-demo" className="w-full sm:w-auto">Book a demo</PrimaryCTA>
+                                <SecondaryCTA href="/#workflow" className="w-full sm:w-auto">See a 30-second workflow</SecondaryCTA>
                             </div>
                             <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-[0.2em]">
-                                14-Day Free Trial • No Credit Card • Zero Friction
+                                Real workflows • No technical setup • Human control
                             </p>
                         </AnimateIn>
                     </div>

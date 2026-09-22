@@ -3,415 +3,216 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, ChevronDown, Menu, X } from 'lucide-react';
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetTrigger,
-} from '@/components/marketing/ui/sheet';
-import {
-  CTA_LABELS,
-  DEMO_HREF,
-  LOGIN_HREF,
-  PRODUCT_NAV_GROUP,
-  SOLUTIONS_NAV_GROUP,
-  RESOURCES_NAV_GROUP,
-  COMPANY_NAV_GROUP,
-  type MarketingNavLink,
-} from '@/lib/marketing/siteNavigation';
-import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
-import { AlphaIcon, type AlphaIconName } from '@/components/marketing/icons';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, Globe2, Menu, X } from 'lucide-react';
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from '@/components/marketing/ui/sheet';
+import { PrimaryCTA } from '@/components/marketing/system/CtaButtons';
+import { DEMO_HREF, LOGIN_HREF } from '@/lib/marketing/cta';
+import { LANGUAGES, useLanguage, type SupportedLanguage } from '@/contexts/LanguageContext';
 
-type DropdownKey = 'product' | 'solutions' | 'resources' | 'company';
+type MenuKey = 'product' | 'solutions' | 'resources';
 
-const LUCIDE_TO_ALPHA: Record<string, AlphaIconName> = {
-  Users: 'crm',
-  Compass: 'leads',
-  CheckSquare: 'projects',
-  FileText: 'documents',
-  Video: 'connected',
-  Receipt: 'invoicing',
-  Mail: 'leads',
-  Workflow: 'setup',
-  Megaphone: 'marketing',
-  Calendar: 'reports',
-  Bot: 'bonnie',
-  Plug: 'integrations',
-  Layers: 'connected',
-  Briefcase: 'growth',
-  Building2: 'organisation',
-  BookOpen: 'setup',
-  HelpCircle: 'reports',
-  Newspaper: 'marketing',
-  Shield: 'security',
+type MenuLink = {
+  label: string;
+  href: string;
+  description?: string;
 };
 
-const PRODUCT_LINKS: MarketingNavLink[] = PRODUCT_NAV_GROUP.items.filter(
-  (item) =>
-    // Drop "Documents & contracts" (/docs#contracts) — the "Docs" entry
-    // under Resources already takes visitors to /docs. The anchor variant
-    // duplicates that surface and wastes a mobile list row.
-    !(item.path === '/docs#contracts') &&
-    // Drop "Invoicing & billing" (/docs#financials) — same rationale.
-    !(item.path === '/docs#financials')
-);
-
-const SOLUTIONS_LINKS: MarketingNavLink[] = SOLUTIONS_NAV_GROUP.items;
-const RESOURCES_LINKS: MarketingNavLink[] = RESOURCES_NAV_GROUP.items;
-const COMPANY_LINKS: MarketingNavLink[] = COMPANY_NAV_GROUP.items;
-
-const HOW_IT_WORKS_LINK: MarketingNavLink = {
-  label: 'How it works',
-  path: '/how-it-works',
-  description: 'Decide, approve, execute, verify',
-};
-
-const DROPDOWNS: Array<{ key: DropdownKey; label: string; links: MarketingNavLink[] }> = [
-  { key: 'product', label: 'Product', links: PRODUCT_LINKS },
-  { key: 'solutions', label: 'Solutions', links: SOLUTIONS_LINKS },
-  { key: 'resources', label: 'Resources', links: RESOURCES_LINKS },
-  { key: 'company', label: 'Company', links: COMPANY_LINKS },
+const MENUS: Array<{ key: MenuKey; label: string; items: MenuLink[] }> = [
+  {
+    key: 'product',
+    label: 'Product',
+    items: [
+      { label: 'Platform overview', href: '/services', description: 'One connected workspace' },
+      { label: 'How it works', href: '/how-it-works', description: 'Decide, approve, execute, verify' },
+      { label: 'CRM & pipeline', href: '/crm', description: 'Customer context from lead to revenue' },
+      { label: 'Project delivery', href: '/project-management', description: 'Turn sold work into visible delivery' },
+    ],
+  },
+  {
+    key: 'solutions',
+    label: 'Solutions',
+    items: [
+      { label: 'Who we serve', href: '/who-we-serve', description: 'Find the right path for your team' },
+      { label: 'Agencies', href: '/solutions/agencies' },
+      { label: 'Consultants', href: '/solutions/consultants' },
+      { label: 'Solo founders', href: '/solutions/solo-founders' },
+    ],
+  },
+  {
+    key: 'resources',
+    label: 'Resources',
+    items: [
+      { label: 'Documentation', href: '/docs' },
+      { label: 'Getting started', href: '/guide' },
+      { label: 'Blog', href: '/blog' },
+      { label: 'FAQ', href: '/faq' },
+      { label: 'Results & workflows', href: '/results' },
+    ],
+  },
 ];
 
 function Logo() {
   return (
-    <Link href="/" className="mkt-brand" aria-label="AlphaClone home">
+    <Link href="/" className="mkt-brand mkt-brand-redesign" aria-label="AlphaClone home">
       <span className="mkt-brand-mark" aria-hidden="true">
-        <Image src="/logo.png" alt="" width={28} height={28} priority className="h-7 w-7 object-contain" />
+        <Image src="/logo.png" alt="" width={34} height={34} priority className="h-[34px] w-[34px] object-contain" />
       </span>
-      <span className="mkt-brand-word">AlphaClone</span>
+      <span className="mkt-brand-copy">
+        <span className="mkt-brand-word">AlphaClone</span>
+        <span className="mkt-brand-system">SYSTEMS</span>
+      </span>
     </Link>
   );
 }
 
-function iconName(link: MarketingNavLink): AlphaIconName | undefined {
-  if (!link.icon) return undefined;
-  const name = (link.icon as { displayName?: string; name?: string })?.name ?? link.icon.toString();
-  return LUCIDE_TO_ALPHA[name] ?? (name as AlphaIconName);
-}
-
-function lucideIconMatch(name: string): boolean {
-  return Object.prototype.hasOwnProperty.call(LUCIDE_TO_ALPHA, name);
+function LanguageControl({ mobile = false }: { mobile?: boolean }) {
+  const { language, setLanguage, languageCode } = useLanguage();
+  return (
+    <label className={`mkt-language-control${mobile ? ' is-mobile' : ''}`}>
+      <Globe2 className="h-4 w-4" aria-hidden="true" />
+      <span className="sr-only">Language</span>
+      <select
+        value={language}
+        onChange={(event) => setLanguage(event.target.value as SupportedLanguage)}
+        aria-label="Select language"
+      >
+        {LANGUAGES.map((item) => <option key={item.code} value={item.code}>{mobile ? item.nativeName : item.code.toUpperCase()}</option>)}
+      </select>
+      {!mobile && <span aria-hidden="true">{languageCode}</span>}
+      <ChevronDown className="h-3 w-3" aria-hidden="true" />
+    </label>
+  );
 }
 
 export default function MarketingHeader() {
   const pathname = usePathname();
-  const [activeDropdown, setActiveDropdown] = useState<DropdownKey | null>(null);
+  const [activeMenu, setActiveMenu] = useState<MenuKey | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const { t } = useLanguage();
-  const desktopNavRef = useRef<HTMLDivElement>(null);
-  const mobileSheetRef = useRef<HTMLDivElement | null>(null);
+  const navRef = useRef<HTMLElement>(null);
 
-  const activeSections = useMemo(() => {
-    const current = pathname ?? '/';
-    const hit = (links: MarketingNavLink[]) =>
-      links.some((item) => {
-        const base = item.path.split('#')[0] || item.path;
-        return current === base || (base !== '/' && current.startsWith(`${base}/`));
-      });
-    return {
-      product: hit(PRODUCT_LINKS),
-      solutions: hit(SOLUTIONS_LINKS),
-      resources: hit(RESOURCES_LINKS),
-      company: hit(COMPANY_LINKS),
-      howItWorks: current === '/how-it-works',
-      pricing: current === '/pricing',
-      bookDemo: current === '/book-demo',
-    };
+  useEffect(() => {
+    setActiveMenu(null);
+    setMobileOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    let rafId: number;
-    const handleScroll = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => setIsScrolled(window.scrollY > 24));
-    };
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!activeDropdown) return;
+    if (!activeMenu) return;
     const onPointer = (event: PointerEvent) => {
-      if (!desktopNavRef.current?.contains(event.target as Node)) {
-        setActiveDropdown(null);
-        desktopNavRef.current
-          ?.querySelectorAll('details.mkt-nav-item[open]')
-          .forEach((node) => {
-            (node as HTMLDetailsElement).open = false;
-          });
-      }
+      if (!navRef.current?.contains(event.target as Node)) setActiveMenu(null);
     };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setActiveDropdown(null);
-        desktopNavRef.current
-          ?.querySelectorAll('details.mkt-nav-item[open]')
-          ?.forEach((node) => {
-            (node as HTMLDetailsElement).open = false;
-          });
-      }
-    };
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && setActiveMenu(null);
     document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
-  }, [activeDropdown]);
-
-  useEffect(() => {
-    setActiveDropdown(null);
-    setMobileOpen(false);
-    desktopNavRef.current
-      ?.querySelectorAll('details.mkt-nav-item[open]')
-      .forEach((node) => {
-        (node as HTMLDetailsElement).open = false;
-      });
-  }, [pathname]);
-
-  // Close any uncontrolled <details> elements inside the mobile sheet when
-  // (a) the sheet closes or (b) user presses Escape while the sheet is open.
-  // The Radix Sheet already binds Esc-close for the outer dialog — we also
-  // collapse expanded section groups so the next open has a clean top-level view.
-  const collapseMobileDetails = useCallback(() => {
-    const root = mobileSheetRef.current;
-    if (!root) return;
-    root.querySelectorAll<HTMLDetailsElement>('details.group[open]').forEach((node) => {
-      node.open = false;
-    });
-  }, []);
-
-  useEffect(() => {
-    if (mobileOpen) return;
-    // Sheet just closed (or was never open). Reset sections.
-    collapseMobileDetails();
-  }, [mobileOpen, collapseMobileDetails]);
-
-  useEffect(() => {
-    if (!mobileOpen) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        collapseMobileDetails();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [mobileOpen, collapseMobileDetails]);
+  }, [activeMenu]);
 
   return (
     <>
-      <a href="#main-content" className="mkt-skip-link">
-        Skip to main content
-      </a>
-      <header className={`mkt-header${isScrolled ? ' is-scrolled' : ''}${mobileOpen ? ' is-open' : ''}`}>
+      <a href="#main-content" className="mkt-skip-link">Skip to main content</a>
+      <header className="mkt-header mkt-header-redesign">
         <div className="mkt-container">
           <div className="mkt-header-bar">
             <Logo />
-
-            <nav ref={desktopNavRef} className="mkt-nav-desktop" aria-label="Primary">
-              <Link
-                href={HOW_IT_WORKS_LINK.path}
-                className={`mkt-nav-trigger${activeSections.howItWorks ? ' is-active' : ''}`}
-              >
-                {t(HOW_IT_WORKS_LINK.label)}
-              </Link>
-              {DROPDOWNS.map((dropdown) => {
-                const isActive = activeSections[dropdown.key];
-                return (
-                  <details
-                    key={dropdown.key}
-                    className="mkt-nav-item"
-                    open={activeDropdown === dropdown.key}
-                    onToggle={(event) => {
-                      const isOpen = event.currentTarget.open;
-                      setActiveDropdown((current) => {
-                        if (isOpen) return dropdown.key;
-                        return current === dropdown.key ? null : current;
-                      });
-                    }}
+            <nav ref={navRef} className="mkt-nav-redesign" aria-label="Primary navigation">
+              {MENUS.slice(0, 2).map((menu) => (
+                <div className="mkt-nav-popover" key={menu.key}>
+                  <button
+                    type="button"
+                    className="mkt-nav-link-redesign"
+                    aria-expanded={activeMenu === menu.key}
+                    aria-controls={`mkt-menu-${menu.key}`}
+                    onClick={() => setActiveMenu((current) => current === menu.key ? null : menu.key)}
                   >
-                    <summary
-                      className={`mkt-nav-trigger${isActive || activeDropdown === dropdown.key ? ' is-active' : ''}`}
-                      aria-controls={`marketing-nav-${dropdown.key}`}
-                    >
-                      {t(dropdown.label)}
-                      <ChevronDown
-                        className={`h-3.5 w-3.5 transition-transform ${activeDropdown === dropdown.key ? 'rotate-180' : ''}`}
-                        aria-hidden="true"
-                      />
-                    </summary>
-                    <div id={`marketing-nav-${dropdown.key}`} className="mkt-simple-menu" role="menu">
-                      {dropdown.key === 'product' ? (
-                        <div className="mkt-product-menu-intro">
-                          <span className="mkt-product-menu-kicker">One connected workspace</span>
-                          <strong>Move from intent to verified result.</strong>
-                          <span>Start with the area you need today. The context carries into CRM, delivery, contracts, and billing.</span>
-                          <Link href="/how-it-works" onClick={() => setActiveDropdown(null)} className="mkt-product-menu-cta">See how the workflow connects <ArrowRight className="h-3.5 w-3.5" /></Link>
-                        </div>
-                      ) : null}
-                      {dropdown.links.map((item) => (
-                        <Link
-                          key={item.path}
-                          href={item.path}
-                          className="mkt-simple-menu-link"
-                          role="menuitem"
-                          onClick={() => setActiveDropdown(null)}
-                        >
-                          {(function renderIcon() {
-                            const name = iconName(item);
-                            if (!name || !lucideIconMatch(name)) return null;
-                            return <AlphaIcon name={name} variant="nav" size="sm" className="mkt-nav-icon" />;
-                          })()}
-                          <span className="mkt-simple-menu-copy">
-                            <span className="mkt-simple-menu-label">{t(item.label)}</span>
-                            {item.description ? (
-                              <span className="mkt-simple-menu-desc">{item.description}</span>
-                            ) : null}
-                          </span>
+                    {menu.label}<ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                  {activeMenu === menu.key && (
+                    <div id={`mkt-menu-${menu.key}`} className="mkt-nav-menu-redesign">
+                      <p>{menu.label}</p>
+                      {menu.items.map((item) => (
+                        <Link href={item.href} key={item.href} onClick={() => setActiveMenu(null)}>
+                          <strong>{item.label}</strong>
+                          {item.description && <span>{item.description}</span>}
                         </Link>
                       ))}
                     </div>
-                  </details>
-                );
-              })}
-              <Link
-                href="/pricing"
-                className={`mkt-nav-trigger${activeSections.pricing ? ' is-active' : ''}`}
-              >
-                {t('Pricing')}
-              </Link>
-            </nav>
-
-            <div className="mkt-header-actions">
-              <Link href={LOGIN_HREF} data-login-trigger className="mkt-nav-login">
-                {t(CTA_LABELS.tertiaryLogin)}
-              </Link>
-              <SecondaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-header-cta">
-                {t(CTA_LABELS.headerSecondary)}
-              </SecondaryCTA>
-              <Link
-                href="/auth/login?register=true&type=business&plan=free"
-                className="mkt-btn mkt-btn-primary mkt-btn-compact mkt-header-cta mkt-header-cta--primary mkt-header-cta--trial"
-              >
-                {t(CTA_LABELS.headerPrimary)}
-              </Link>
-            </div>
-
-            <div className="mkt-header-mobile">
-              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger asChild>
+                  )}
+                </div>
+              ))}
+              <Link href="/ecosystem" className="mkt-nav-link-redesign">Integrations</Link>
+              <Link href="/pricing" className="mkt-nav-link-redesign">Pricing</Link>
+              {MENUS.slice(2).map((menu) => (
+                <div className="mkt-nav-popover" key={menu.key}>
                   <button
                     type="button"
-                    className="mkt-mobile-toggle"
-                    aria-label={t('Open navigation menu')}
-                    aria-expanded={mobileOpen}
-                    aria-controls="mkt-mobile-sheet"
+                    className="mkt-nav-link-redesign"
+                    aria-expanded={activeMenu === menu.key}
+                    aria-controls={`mkt-menu-${menu.key}`}
+                    onClick={() => setActiveMenu((current) => current === menu.key ? null : menu.key)}
                   >
-                    <Menu className="h-5 w-5" aria-hidden="true" />
+                    {menu.label}<ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                  {activeMenu === menu.key && (
+                    <div id={`mkt-menu-${menu.key}`} className="mkt-nav-menu-redesign is-right">
+                      <p>{menu.label}</p>
+                      {menu.items.map((item) => (
+                        <Link href={item.href} key={item.href} onClick={() => setActiveMenu(null)}>
+                          <strong>{item.label}</strong>
+                          {item.description && <span>{item.description}</span>}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <Link href="/about" className="mkt-nav-link-redesign">About</Link>
+            </nav>
+
+            <div className="mkt-header-actions-redesign">
+              <LanguageControl />
+              <Link href={LOGIN_HREF} data-login-trigger className="mkt-sign-in">Sign in</Link>
+              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact mkt-header-demo">Book a demo</PrimaryCTA>
+            </div>
+
+            <div className="mkt-header-mobile-redesign">
+              <PrimaryCTA href={DEMO_HREF} className="mkt-btn-compact">Book a demo</PrimaryCTA>
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild>
+                  <button type="button" className="mkt-mobile-toggle-redesign" aria-label="Open navigation menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}>
+                    <Menu className="h-6 w-6" aria-hidden="true" />
                   </button>
                 </SheetTrigger>
                 <SheetContent
-                  ref={mobileSheetRef}
                   id="mkt-mobile-sheet"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label={t('AlphaClone site navigation')}
                   side="right"
                   showCloseButton={false}
-                  className="mkt-mobile-sheet h-[100dvh] w-[min(100vw,22rem)] overscroll-contain overflow-y-auto border-[var(--border-subtle)] bg-[var(--background-root)] pb-[max(1rem,env(safe-area-inset-bottom))]"
+                  className="mkt-mobile-sheet-redesign h-[100dvh] w-[min(100vw,24rem)] overflow-y-auto"
                 >
-                  <div className="flex items-center justify-between gap-4">
+                  <SheetTitle className="sr-only">AlphaClone navigation</SheetTitle>
+                  <div className="mkt-mobile-sheet-head">
                     <Logo />
-                    <SheetClose className="mkt-mobile-toggle" aria-label={t('Close navigation menu')}>
-                      <X className="h-5 w-5" aria-hidden="true" />
-                      <span className="sr-only">Close navigation menu</span>
+                    <SheetClose className="mkt-mobile-toggle-redesign" aria-label="Close navigation menu">
+                      <X className="h-6 w-6" aria-hidden="true" />
                     </SheetClose>
                   </div>
-
-                  <div className="mkt-mobile-cta-stack pt-3">
-                    <SecondaryCTA
-                      href={DEMO_HREF}
-                      onClick={() => setMobileOpen(false)}
-                      className="w-full justify-center"
-                    >
-                      {t(CTA_LABELS.headerSecondary)}
-                    </SecondaryCTA>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link
-                        href={LOGIN_HREF}
-                        onClick={() => setMobileOpen(false)}
-                        data-login-trigger
-                        className="mkt-btn mkt-btn-secondary w-full justify-center text-center"
-                      >
-                        {t(CTA_LABELS.tertiaryLogin)}
-                      </Link>
-                      <Link
-                        href="/auth/login?register=true&type=business&plan=free"
-                        onClick={() => setMobileOpen(false)}
-                        className="mkt-btn mkt-btn-ghost mkt-mobile-trial w-full justify-center text-center"
-                      >
-                        {t(CTA_LABELS.headerPrimary)}
-                      </Link>
-                    </div>
-                  </div>
-
-                  <nav className="grid gap-2" aria-label={t('Mobile navigation')}>
-                    <Link
-                      href={HOW_IT_WORKS_LINK.path}
-                      onClick={() => setMobileOpen(false)}
-                      className={`mkt-mobile-top-link${activeSections.howItWorks ? ' is-active' : ''}`}
-                    >
-                      {t(HOW_IT_WORKS_LINK.label)}
-                    </Link>
-                    <Link
-                      href="/pricing"
-                      onClick={() => setMobileOpen(false)}
-                      className={`mkt-mobile-top-link${activeSections.pricing ? ' is-active' : ''}`}
-                    >
-                      {t('Pricing')}
-                    </Link>
-                    {DROPDOWNS.map((section) => (
-                      <details key={section.key} className="group rounded-xl border border-[var(--border-subtle)] bg-white/[0.02]">
-                        <summary className="mkt-mobile-section-label flex min-h-12 cursor-pointer list-none items-center justify-between px-3">
-                          {t(section.label)}
-                          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
-                        </summary>
-                        <div className="grid gap-1 border-t border-[var(--border-subtle)] p-2">
-                          {section.links.map((item) => (
-                            <Link
-                              key={item.path}
-                              href={item.path}
-                              onClick={() => setMobileOpen(false)}
-                              className="mkt-simple-menu-link"
-                            >
-                              {(function renderIcon() {
-                                const name = iconName(item);
-                                if (!name || !lucideIconMatch(name)) return null;
-                                return <AlphaIcon name={name} variant="nav" size="sm" className="mkt-nav-icon" />;
-                              })()}
-                              <span className="mkt-simple-menu-copy">
-                                <span className="mkt-simple-menu-label">{t(item.label)}</span>
-                                {item.description ? (
-                                  <span className="mkt-simple-menu-desc">{item.description}</span>
-                                ) : null}
-                              </span>
-                            </Link>
-                          ))}
-                        </div>
+                  <PrimaryCTA href={DEMO_HREF} onClick={() => setMobileOpen(false)} className="w-full justify-center">Book a demo</PrimaryCTA>
+                  <nav className="mkt-mobile-nav-redesign" aria-label="Mobile navigation">
+                    <Link href="/how-it-works">How it works</Link>
+                    <Link href="/ecosystem">Integrations</Link>
+                    <Link href="/pricing">Pricing</Link>
+                    {MENUS.map((menu) => (
+                      <details key={menu.key}>
+                        <summary>{menu.label}<ChevronDown className="h-4 w-4" aria-hidden="true" /></summary>
+                        <div>{menu.items.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}</div>
                       </details>
                     ))}
+                    <Link href="/about">About</Link>
+                    <Link href={LOGIN_HREF} data-login-trigger>Sign in</Link>
                   </nav>
-                  <div className="mt-5 border-t border-[var(--border-subtle)] pt-4">
-                  </div>
+                  <LanguageControl mobile />
                 </SheetContent>
               </Sheet>
             </div>

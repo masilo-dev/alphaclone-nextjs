@@ -8,8 +8,6 @@ import {
     Award, Lock, RefreshCw
 } from 'lucide-react';
 import AnimateIn from '../common/AnimateIn';
-import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
-import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
 import { MARKETING_PRICING } from '@/config/pricingPlans';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
@@ -207,8 +205,8 @@ const ServicesPage: React.FC = () => {
                                 {blufSummary}
                             </p>
                             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                                <PrimaryCTA className="w-full sm:w-auto">Start with AlphaClone</PrimaryCTA>
-                                <SecondaryCTA className="w-full sm:w-auto">Watch AlphaClone Execute</SecondaryCTA>
+                                <PrimaryCTA href="/book-demo" className="w-full sm:w-auto">Book a demo</PrimaryCTA>
+                                <SecondaryCTA href="/#workflow" className="w-full sm:w-auto">See a 30-second workflow</SecondaryCTA>
                             </div>
                         </AnimateIn>
                     </div>
@@ -333,15 +331,6 @@ const ServicesPage: React.FC = () => {
                             ))}
                         </div>
                     </div>
-                </section>
-
-                {/* Testimonial / Social Proof Strip */}
-                <section className="py-12 bg-transparent">
-                    <AnimateIn type="scaleIn">
-                        <div className="max-w-5xl mx-auto px-4">
-                            <MarketingTestimonialsCarousel items={MARKETING_TESTIMONIALS} />
-                        </div>
-                    </AnimateIn>
                 </section>
 
                 {/* Final CTA */}

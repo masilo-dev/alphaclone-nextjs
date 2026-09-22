@@ -1,480 +1,278 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { FaLinkedin, FaMicrosoft } from "react-icons/fa6";
-import { SiCaldotcom, SiStripe, SiZoho } from "react-icons/si";
-import { ArrowDown, ArrowRight, Bot, BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, Database, FileCheck2, FileText, LockKeyhole, Mail, ReceiptText, Search, Send, ShieldCheck, UserRoundCheck, Users, WalletCards, X, Sparkles } from "lucide-react";
-import { TRIAL_HREF } from "@/lib/marketing/cta";
-import { ANCHOR_WORKFLOW, EXECUTION_LAYER } from "@/config/marketingPositioning";
-import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
-import { MarketingContainer, MarketingSection } from "./LayoutPrimitives";
-import MarketingShell from "./MarketingShell";
-import { CurvedDotField, HeroDataWaves, SectionAmbientLight } from "./atmosphere";
-import LookInsideAlphaClone from "./LookInsideAlphaClone";
-import AiInterfaceShowcase from "./AiInterfaceShowcase";
-import LifecycleFlowShowcase from './LifecycleFlowShowcase';
-import { getHomeIntegrationGroups } from '@/lib/marketing/homeIntegrationDisplay';
-import { useLanguage } from '@/contexts/LanguageContext';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useState } from 'react';
+import {
+  ArrowRight,
+  BadgeDollarSign,
+  BarChart3,
+  BriefcaseBusiness,
+  CalendarCheck,
+  Check,
+  CheckCircle2,
+  Clock3,
+  FileCheck2,
+  FileSignature,
+  Mail,
+  Megaphone,
+  Play,
+  Plug,
+  ReceiptText,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  Workflow,
+  Zap,
+} from 'lucide-react';
+import { SiBrevo, SiQuickbooks, SiStripe, SiZoho } from 'react-icons/si';
+import { FaFacebook, FaInstagram, FaLinkedin, FaMicrosoft } from 'react-icons/fa6';
+import { DEMO_HREF } from '@/lib/marketing/cta';
+import { EXECUTION_LAYER } from '@/config/marketingPositioning';
+import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
+import { MarketingContainer } from './LayoutPrimitives';
+import MarketingShell from './MarketingShell';
 
-const executionRows = [
-  ["Research prospects", "Example: 20 prospects scored", "Done", "done", "09:42"],
-  ["Check fit", "Industry · size · web · location", "Done", "done", "09:44"],
-  ["Create CRM records", "Example: records staged for review", "Done", "done", "09:46"],
-  ["Prepare outreach", "Example: drafts awaiting approval", "In progress", "active", "Now"],
-  ["Schedule follow-up", "Queued after approval", "Queued", "queued", "Next"],
-  ["Owner approval", "You approve before anything sends", "Needs approval", "approval", "Review"],
-] as const;
+const processes = [
+  { title: 'Tell us what you want', body: 'Type your request in ChatGPT, Claude, Manus or Bonnie.', icon: Workflow },
+  { title: 'Approve the plan', body: 'Review what will be done before anything runs.', icon: ShieldCheck },
+  { title: 'AlphaClone executes', body: 'Approved work moves through the connected tools.', icon: Zap },
+  { title: 'Get verified results', body: 'See the outcome and activity record in the workspace.', icon: CheckCircle2 },
+];
 
-const integrationGroups = getHomeIntegrationGroups();
+const outcomes = [
+  { title: 'Win work', body: 'Capture leads, keep conversations attached and prepare the right follow-up.', icon: Users, href: '/crm', tone: 'blue' },
+  { title: 'Run delivery', body: 'Turn sold work into projects, documents, approvals and visible progress.', icon: BriefcaseBusiness, href: '/project-management', tone: 'green' },
+  { title: 'Get paid and follow up', body: 'Prepare invoices, track status and keep the next action from depending on memory.', icon: BadgeDollarSign, href: '/services', tone: 'orange' },
+];
 
-function Intro({ eyebrow, title, body, center = false }: { eyebrow?: string; title: string; body?: string; center?: boolean }) {
-  return <div className={center ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
-    {eyebrow && <p className="text-[11px] font-black uppercase tracking-[.22em] text-[var(--brand-primary-hover)]">{eyebrow}</p>}
-    <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-[1.08] text-white sm:text-4xl lg:text-[44px]">{title}</h2>
-    {body && <p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">{body}</p>}
-  </div>;
-}
+const features = [
+  { title: 'CRM', body: 'Capture and manage leads', icon: Users, href: '/crm', tone: 'blue' },
+  { title: 'Projects', body: 'Deliver work on time', icon: BriefcaseBusiness, href: '/project-management', tone: 'green' },
+  { title: 'Emails', body: 'Send and follow up', icon: Mail, href: '/marketing/email', tone: 'violet' },
+  { title: 'Social media', body: 'Create and schedule content', icon: Megaphone, href: '/marketing/automation', tone: 'pink' },
+  { title: 'Invoicing', body: 'Get paid faster', icon: ReceiptText, href: '/pricing', tone: 'orange' },
+  { title: 'Contracts', body: 'Send and e-sign', icon: FileSignature, href: '/docs#contracts', tone: 'coral' },
+  { title: 'Bookings', body: 'Let clients book time', icon: CalendarCheck, href: '/book-demo', tone: 'blue' },
+  { title: 'Analytics', body: 'See what is working', icon: BarChart3, href: '/results', tone: 'violet' },
+  { title: 'Integrations', body: 'Connect your tools', icon: Plug, href: '/ecosystem', tone: 'green' },
+];
 
-function Status({ tone, children }: { tone: "done" | "active" | "queued" | "approval"; children: React.ReactNode }) {
-  const s = { done: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300", active: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200", queued: "border-slate-600 bg-slate-800 text-slate-300", approval: "border-amber-400/25 bg-amber-400/10 text-amber-200" };
-  return <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${s[tone]}`}>{children}</span>;
-}
+const integrations = [
+  { name: 'LinkedIn', Icon: FaLinkedin, color: '#0a66c2' },
+  { name: 'Instagram', Icon: FaInstagram, color: '#d62976' },
+  { name: 'Facebook', Icon: FaFacebook, color: '#1877f2' },
+  { name: 'Outlook', Icon: FaMicrosoft, color: '#0078d4' },
+  { name: 'Zoho', Icon: SiZoho, color: '#e42527' },
+  { name: 'Brevo', Icon: SiBrevo, color: '#0b996e' },
+  { name: 'QuickBooks', Icon: SiQuickbooks, color: '#2ca01c' },
+  { name: 'Stripe', Icon: SiStripe, color: '#635bff' },
+];
 
-function ExecutionCommandCenter() {
-  return <div className="relative overflow-hidden rounded-[1.35rem] border border-white/15 bg-[#071426] p-2 shadow-[0_30px_100px_-44px_rgba(34,211,238,.7)] sm:p-3">
-    <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-cyan-300/10 blur-3xl" aria-hidden="true" />
-    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#0a182d]">
-      <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5 sm:px-4">
-        <div className="flex items-center gap-2.5"><div className="grid h-7 w-7 place-items-center rounded-lg border border-cyan-300/25 bg-cyan-300/10"><Sparkles className="h-3.5 w-3.5 text-cyan-200" /></div><div><p className="text-[10px] font-black uppercase tracking-[.16em] text-slate-500">AlphaClone / execution desk</p><p className="mt-0.5 text-xs font-semibold text-slate-200">One request, one accountable workflow</p></div></div>
-        <span className="hidden items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-bold text-emerald-200 sm:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Workspace ready</span>
-      </div>
-      <div className="grid lg:grid-cols-[.82fr_1.18fr]">
-        <div className="border-b border-white/10 bg-[#081326] p-4 lg:border-b-0 lg:border-r sm:p-5">
-          <p className="text-[10px] font-black uppercase tracking-[.18em] text-cyan-300">Human intent</p>
-          <h3 className="mt-3 text-lg font-bold leading-tight text-white sm:text-xl">“Find the right prospects and prepare the next conversation.”</h3>
-          <p className="mt-3 text-xs leading-5 text-slate-400">The platform keeps the request, audience, CRM records, approval, and follow-up in one traceable path.</p>
-          <div className="mt-5 flex flex-wrap gap-2"><span className="rounded-full border border-violet-300/20 bg-violet-300/10 px-2.5 py-1 text-[10px] font-bold text-violet-100">20 prospects</span><span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2.5 py-1 text-[10px] font-bold text-cyan-100">CRM context</span><span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-2.5 py-1 text-[10px] font-bold text-amber-100">Review first</span></div>
+const workflowSteps = [
+  { label: 'Instruction', title: 'Intent captured', body: 'Find qualified prospects, add them to CRM and prepare outreach for review.' },
+  { label: 'Plan', title: 'Approval requested', body: 'AlphaClone resolves the workspace, records, permissions and proposed action.' },
+  { label: 'Execution', title: 'Approved work runs', body: 'The platform prepares records and personalized drafts across connected tools.' },
+  { label: 'Verification', title: 'Result recorded', body: 'Delivery status and the activity history return to the workspace.' },
+];
+
+function ProductScene() {
+  return (
+    <div className="acr-product-scene" aria-label="Sanitized AlphaClone product view with approved execution result">
+      <div className="acr-scene-glow" aria-hidden="true" />
+      <div className="acr-laptop">
+        <div className="acr-laptop-screen">
+          <Image
+            src="/screenshots/deals-dashboard.png"
+            alt="Sanitized AlphaClone dashboard showing leads, projects, invoices and recent activity"
+            fill
+            priority
+            sizes="(max-width: 768px) 92vw, (max-width: 1280px) 56vw, 760px"
+            className="object-cover object-top"
+          />
         </div>
-        <div className="p-4 sm:p-5">
-          <div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-[.18em] text-slate-500">Execution path</p><p className="mt-1 text-sm font-bold text-white">Context becomes an accountable result</p></div><ShieldCheck className="h-4 w-4 text-emerald-300" /></div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {[['01', 'Resolve context', 'Match the right workspace, records, and permissions.', 'cyan'], ['02', 'Prepare action', 'Draft the outreach and attach the decision trail.', 'violet'], ['03', 'Human approval', 'Review what will happen before anything external sends.', 'amber'], ['04', 'Verify result', 'Keep delivery status and the activity record together.', 'green']].map(([step, title, body, tone]) => <div key={step} className={`rounded-xl border p-3 ${tone === 'cyan' ? 'border-cyan-300/20 bg-cyan-300/[.06]' : tone === 'violet' ? 'border-violet-300/20 bg-violet-300/[.06]' : tone === 'amber' ? 'border-amber-300/20 bg-amber-300/[.06]' : 'border-emerald-300/20 bg-emerald-300/[.06]'}`}><span className="text-[10px] font-black tracking-[.16em] text-slate-400">{step}</span><p className="mt-2 text-xs font-bold text-white">{title}</p><p className="mt-1 text-[10px] leading-4 text-slate-400">{body}</p></div>)}
-          </div>
-          <div className="mt-4 flex items-center gap-2 rounded-lg border border-white/10 bg-white/[.03] px-3 py-2 text-[10px] text-slate-400"><Check className="h-3.5 w-3.5 text-emerald-300" /> Nothing is hidden behind a generic “AI” button.</div>
-        </div>
+        <span className="acr-laptop-base" aria-hidden="true" />
       </div>
+      <div className="acr-phone">
+        <div className="acr-phone-speaker" aria-hidden="true" />
+        <Image
+          src="/screenshots/mobile-crm.png"
+          alt="Sanitized AlphaClone mobile CRM view"
+          fill
+          priority
+          sizes="190px"
+          className="object-cover object-top"
+        />
+      </div>
+      <div className="acr-instruction-card">
+        <div><span>Y</span><p><strong>You</strong><small>Approved instruction</small></p></div>
+        <p>Find qualified prospects and prepare relevant outreach for review.</p>
+      </div>
+      <div className="acr-result-card">
+        <p><span><Sparkles className="h-3.5 w-3.5" /></span><strong>AlphaClone</strong></p>
+        <ul>
+          <li><Check /> 20 records prepared</li>
+          <li><Check /> CRM context attached</li>
+          <li><Check /> Drafts ready for review</li>
+        </ul>
+        <span>View in CRM <ArrowRight /></span>
+      </div>
+      <small className="acr-scene-label">Sanitized product view · representative data</small>
     </div>
-  </div>;
+  );
+}
+
+function WorkflowProof() {
+  const [step, setStep] = useState(1);
+  return (
+    <section id="workflow" className="acr-workflow-section" aria-labelledby="workflow-heading">
+      <MarketingContainer>
+        <div className="acr-workflow-grid">
+          <div className="acr-workflow-copy">
+            <p className="acr-eyebrow is-light">30-second workflow</p>
+            <h2 id="workflow-heading">One approved request.<br />A visible result.</h2>
+            <p>Follow a single instruction from intent through approval, execution and the verified activity record.</p>
+            <div className="acr-workflow-tabs" role="tablist" aria-label="Workflow steps">
+              {workflowSteps.map((item, index) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  role="tab"
+                  aria-selected={step === index}
+                  aria-controls="workflow-panel"
+                  onClick={() => setStep(index)}
+                  className={step === index ? 'is-active' : ''}
+                >
+                  <span>0{index + 1}</span>{item.label}
+                </button>
+              ))}
+            </div>
+            <div id="workflow-panel" role="tabpanel" className="acr-workflow-detail" aria-live="polite">
+              <span>0{step + 1}</span>
+              <div><small>AlphaClone</small><h3>{workflowSteps[step].title}</h3><p>{workflowSteps[step].body}</p><strong><Check /> Visible in the workspace</strong></div>
+            </div>
+            <details className="acr-transcript">
+              <summary>Read the complete workflow transcript</summary>
+              <ol>{workflowSteps.map((item) => <li key={item.label}><strong>{item.title}.</strong> {item.body}</li>)}</ol>
+            </details>
+          </div>
+          <div className="acr-workflow-visual">
+            <div className="acr-request-bubble"><span>You</span><p>Find 20 qualified leads, add them to CRM and prepare outreach for review.</p></div>
+            <div className="acr-workflow-window">
+              <div className="acr-window-head"><span><Image src="/logo.png" alt="" width={20} height={20} /> AlphaClone</span><strong><span /> Reviewable</strong></div>
+              <div className="acr-window-body">
+                {workflowSteps.map((item, index) => (
+                  <button key={item.label} type="button" onClick={() => setStep(index)} className={index === step ? 'is-active' : ''}>
+                    <span>{index < step ? <Check /> : index === step ? <Play fill="currentColor" /> : index + 1}</span>
+                    <p><strong>{item.title}</strong><small>{item.label}</small></p>
+                    <em>{index < step ? 'Done' : index === step ? 'Current' : 'Next'}</em>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="acr-static-note">The complete story remains readable without motion or playback.</p>
+          </div>
+        </div>
+      </MarketingContainer>
+    </section>
+  );
 }
 
 export default function MarketingHomePage() {
-  const { language } = useLanguage();
-  const copy = {
-    en: { lead: 'Turn AI instructions into', emphasis: 'real business actions.', subhead: 'AI can understand what you want. AlphaClone connects that intent to the systems where work happens, then keeps approval, execution, verification, and the business record together.', proof: ['Human intent stays in control', 'Review before external actions', 'Verified outcome records'] },
-    es: { lead: 'Convierte instrucciones de IA en', emphasis: 'acciones empresariales reales.', subhead: 'La IA puede entender lo que quieres. AlphaClone conecta esa intención con los sistemas donde ocurre el trabajo y mantiene juntas la aprobación, la ejecución, la verificación y el registro.', proof: ['La persona mantiene el control', 'Revisión antes de acciones externas', 'Registro de resultados verificados'] },
-    pl: { lead: 'Zamień instrukcje AI w', emphasis: 'rzeczywiste działania biznesowe.', subhead: 'AI może zrozumieć, czego chcesz. AlphaClone łączy tę intencję z systemami, w których odbywa się praca, zachowując akceptację, wykonanie, weryfikację i zapis.', proof: ['Człowiek zachowuje kontrolę', 'Weryfikacja przed działaniem zewnętrznym', 'Rejestr zweryfikowanych rezultatów'] },
-  }[language];
-  return <MarketingShell>
-    {/* Product-led hero: concrete execution, not abstract AI promises. */}
-    <section className="mkt-hero mkt-hero--compact pt-24 sm:pt-28 lg:pt-32 pb-10 sm:pb-14">
-      <SectionAmbientLight variant="hero" />
-      <HeroDataWaves />
-      <CurvedDotField />
-      <MarketingContainer>
-        <div className="mkt-hero-copy mkt-reveal mx-auto max-w-4xl px-2 text-center">
-          <p className="mb-4 text-[11px] font-black uppercase tracking-[.22em] text-[var(--brand-primary-hover)]">
-            {EXECUTION_LAYER.category}
-          </p>
-          <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.12] tracking-normal sm:text-5xl md:text-6xl">
-            <span className="text-white">{copy.lead}</span>{' '}
-            <span className="text-[var(--brand-violet)]">{copy.emphasis}</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 sm:text-base md:text-lg">
-            <span className="font-semibold text-[var(--brand-primary-hover)]">AlphaClone</span>{' '}
-            <span className="text-slate-300">{copy.subhead}</span>
-          </p>
-          <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
-            <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">
-              {EXECUTION_LAYER.primaryCta}
-            </PrimaryCTA>
-            <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large">
-              {EXECUTION_LAYER.secondaryCta}
-            </SecondaryCTA>
-          </div>
-          <div className="mx-auto mt-5 flex max-w-2xl flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-300 sm:text-xs">
-            {copy.proof.map((item) => <span key={item} className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-300" /> {item}</span>)}
-          </div>
-          <p className="mx-auto mt-4 max-w-2xl text-xs font-semibold tracking-wide text-slate-400">
-            CRM · Email · LinkedIn · Facebook · Projects · Contracts · Invoicing · Accounting
-          </p>
-        </div>
-        <div className="mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-5xl"><ExecutionCommandCenter /></div>
-      </MarketingContainer>
-    </section>
-
-    <MarketingSection atmosphere="outcomes" className="border-t border-white/10 py-8 sm:py-12">
-      <MarketingContainer>
-        <div className="grid gap-5 rounded-2xl border border-cyan-400/20 bg-cyan-950/10 p-5 sm:p-7 lg:grid-cols-[1fr_1.4fr] lg:items-center">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">Start with one workflow</p>
-            <h2 className="mt-2 font-marketing-heading text-xl font-extrabold leading-tight text-white sm:text-2xl">See the value before you configure the whole platform.</h2>
-            <p className="mt-2 max-w-xl text-xs leading-5 text-slate-300">Choose one repeatable business outcome first. Add more areas as your team is ready—your customer and decision context stays connected.</p>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-[#030b19]/80 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-bold text-white">{ANCHOR_WORKFLOW.title}</p>
-                <p className="mt-1 text-[11px] text-slate-400">{ANCHOR_WORKFLOW.summary}</p>
+  return (
+    <MarketingShell className="acr-redesign">
+      <section className="acr-hero">
+        <div className="acr-hero-backdrop" aria-hidden="true" />
+        <MarketingContainer>
+          <div className="acr-hero-grid">
+            <div className="acr-hero-copy">
+              <p className="acr-eyebrow">{EXECUTION_LAYER.category}</p>
+              <h1>You type.<br />We <span>make it happen.</span></h1>
+              <p className="acr-hero-lead">{EXECUTION_LAYER.heroSubhead}</p>
+              <p className="acr-hero-detail">Manage leads, clients, projects, emails, invoices, bookings and more — from one connected workspace.</p>
+              <div className="acr-hero-actions">
+                <PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">Book a demo <ArrowRight className="h-4 w-4" /></PrimaryCTA>
+                <SecondaryCTA href="#workflow" className="mkt-btn-large"><span className="acr-play"><Play className="h-3 w-3" fill="currentColor" /></span> See a 30-second workflow</SecondaryCTA>
               </div>
-              <span className="rounded-full border border-amber-400/25 bg-amber-400/10 px-2 py-1 text-[10px] font-bold text-amber-200">Human approval included</span>
-            </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-5">
-              {ANCHOR_WORKFLOW.steps.map((step, index) => (
-                <div key={step} className="rounded-lg border border-white/[.08] bg-slate-900/60 p-2">
-                  <span className="text-[10px] font-black text-cyan-300">0{index + 1}</span>
-                  <p className="mt-1 text-[10px] leading-4 text-slate-300">{step}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </MarketingContainer>
-    </MarketingSection>
-
-    <MarketingSection atmosphere="platform" className="border-t border-white/10 py-10 sm:py-16">
-      <MarketingContainer>
-        <Intro eyebrow="The execution gap" title="Understanding the instruction is only the beginning." body="AI interprets the objective. AlphaClone connects the objective to the right business identity, records, permissions, providers, and workflows so the result can actually happen." />
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ['01', 'Human intent', 'You describe the outcome: find, send, post, follow up, or create.', 'text-violet-200', 'border-violet-400/20 bg-violet-400/10'],
-            ['02', 'AI intelligence', 'AI interprets the request, prepares content, and identifies the needed context.', 'text-cyan-200', 'border-cyan-400/20 bg-cyan-400/10'],
-            ['03', 'AlphaClone execution', 'The platform resolves the workspace, records, permissions, approvals, and action path.', 'text-amber-200', 'border-amber-400/20 bg-amber-400/10'],
-            ['04', 'Verified result', 'The external outcome is checked and linked back to the activity and business record.', 'text-emerald-200', 'border-emerald-400/20 bg-emerald-400/10'],
-          ].map(([step, title, detail, text, surface]) => (
-            <article key={step} className={`rounded-xl border p-4 ${surface}`}>
-              <span className={`text-[10px] font-black tracking-[.18em] ${text}`}>{step}</span>
-              <h3 className="mt-3 text-sm font-bold text-white">{title}</h3>
-              <p className="mt-2 text-[11px] leading-5 text-slate-300">{detail}</p>
-            </article>
-          ))}
-        </div>
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-slate-500 sm:gap-3">
-          <span>Intent</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Context</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Approval</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Execution</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Verification</span><ArrowRight className="h-3 w-3 text-cyan-300" aria-hidden="true" /><span>Record</span>
-        </div>
-      </MarketingContainer>
-    </MarketingSection>
-
-    {/* Interactive Look Inside AlphaClone (Tabs, Slider, Disclosures, Metrics) */}
-    <MarketingSection id="look-inside" atmosphere="platform" className="py-10 sm:py-16 lg:py-24 border-t border-white/10">
-      <LookInsideAlphaClone />
-    </MarketingSection>
-
-    {/* The Problem Section */}
-    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
-      <Intro eyebrow="The operating gap" title="The work is connected on paper. Your team still reconnects it by hand." body="A lead starts in one tool. The conversation happens somewhere else. The quote becomes a document. Delivery moves into another system. AlphaClone keeps the record, decision, and next action together." />
-      <div className="mt-6 flex flex-wrap gap-2">
-        {["Lost context","Manual follow-up","Scattered records","Too many subscriptions"].map(x=>(
-          <div key={x} className="flex items-center gap-1.5 rounded-full border border-rose-400/20 bg-rose-500/10 px-3.5 py-1.5 text-xs font-semibold text-rose-200 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400/40 hover:bg-rose-500/15 shadow-sm">
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-400"/>
-            <span>{x}</span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-8 grid overflow-hidden rounded-2xl border border-white/10 bg-[#030b19]/85 shadow-2xl backdrop-blur-xl lg:grid-cols-2">
-        <div className="border-b border-white/10 p-5 sm:p-7 lg:border-b-0 lg:border-r">
-          <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-400"/>
-              <h3 className="text-sm font-extrabold tracking-wide text-white">Fragmented stack</h3>
-            </div>
-            <span className="rounded-full border border-rose-400/20 bg-rose-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-rose-300">Context breaks at every handoff</span>
-          </div>
-          <div className="mt-5 space-y-2.5">
-            {[[FaMicrosoft,"Outlook","Email conversation","#0078d4"],[SiZoho,"Zoho CRM","Customer record","#f6c344"],[SiCaldotcom,"Cal.com","Meeting","#292524"],[FileText,"Google Sheets","Lead tracking","#34a853"],[SiStripe,"Stripe","Payment","#635bff"],[FaLinkedin,"LinkedIn","Outreach","#0a66c2"]].map(([Icon,name,detail,color],i)=>(
-              <div key={String(name)} className="group flex items-center justify-between rounded-xl border border-white/[.07] bg-slate-900/60 p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:bg-slate-900/90 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-slate-950/80">
-                    <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" style={{color:String(color)}}/>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white group-hover:text-cyan-200">{String(name)}</p>
-                    <p className="text-[10px] text-slate-400">{String(detail)}</p>
-                  </div>
-                </div>
-                {i<5&&<span className="rounded-full border border-rose-400/20 bg-rose-400/10 px-2 py-0.5 text-[9px] font-bold text-rose-300/90">manual handoff</span>}
+              <div className="acr-hero-proof">
+                <span><Zap /><p><strong>Save hours</strong><small>every week</small></p></span>
+                <span><Users /><p><strong>More clients</strong><small>and revenue</small></p></span>
+                <span><ShieldCheck /><p><strong>Human-led</strong><small>AI-executed</small></p></span>
               </div>
-            ))}
-          </div>
-        </div>
-        <div className="relative bg-gradient-to-b from-cyan-950/20 via-slate-900/30 to-[#020815] p-5 sm:p-7">
-          <div className="flex items-center justify-between border-b border-cyan-400/20 pb-4">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"/>
-              <h3 className="text-sm font-extrabold tracking-wide text-cyan-200">One accountable workflow</h3>
             </div>
-            <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-cyan-300">Context stays attached</span>
+            <ProductScene />
           </div>
-          <div className="relative mt-5 space-y-2.5">
-            <div className="absolute bottom-6 left-[23px] top-4 w-0.5 bg-gradient-to-b from-cyan-400 via-teal-300 to-emerald-400"/>
-            {[[Users,"Lead","Qualified"],[Database,"CRM record","Context attached"],[Send,"Outreach","Sent"],[Clock3,"Follow-up","Due tomorrow"],[BriefcaseBusiness,"Project","Active"],[ReceiptText,"Invoice","Sent"],[WalletCards,"Payment / Revenue","Paid"]].map(([Icon,name,status])=>(
-              <div key={String(name)} className="group relative flex items-center justify-between rounded-xl border border-cyan-400/15 bg-slate-900/70 p-2.5 pl-3 transition-all duration-200 hover:translate-x-1 hover:border-cyan-400/40 hover:bg-slate-900/90 shadow-md shadow-cyan-950/20">
-                <div className="flex items-center gap-3">
-                  <span className="z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-cyan-400/40 bg-[#041321] text-cyan-300 transition-all duration-200 group-hover:scale-110 group-hover:border-cyan-300 group-hover:shadow-md group-hover:shadow-cyan-400/30">
-                    <Icon className="h-4 w-4"/>
-                  </span>
-                  <p className="text-xs font-bold text-white group-hover:text-cyan-200">{String(name)}</p>
-                </div>
-                <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">{String(status)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </MarketingContainer></MarketingSection>
+        </MarketingContainer>
+      </section>
 
-    {/* Reviewable execution section */}
-    <MarketingSection id="bonnie" atmosphere="platform" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><div className="grid gap-8 lg:grid-cols-[.85fr_1.15fr] lg:items-center">
-      <div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3.5 py-1 text-xs font-black uppercase tracking-[.22em] text-emerald-300 shadow-sm shadow-emerald-950/50 backdrop-blur-md">
-          <Sparkles className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
-          <span>Reviewable execution</span>
-        </div>
-        
-        <h2 className="mt-4 font-marketing-heading text-2xl font-extrabold leading-[1.08] sm:text-4xl lg:text-[44px]">
-          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-green-300 bg-clip-text text-transparent drop-shadow-sm">
-            Describe the outcome. Review the work before it runs.
-          </span>
-        </h2>
-        
-        <div className="mt-5 rounded-2xl border border-emerald-400/40 bg-gradient-to-br from-emerald-950/40 via-slate-900/80 to-[#020b18] p-5 shadow-xl shadow-emerald-950/30 backdrop-blur-xl">
-          <p className="text-sm font-bold leading-6 text-emerald-200 sm:text-base">
-            Bonnie turns an approved outcome into a traceable sequence of business actions—not a polished answer that leaves the work to your team.
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-extrabold text-emerald-300">
-            <span className="flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-1 border border-emerald-400/30">
-              <Check className="h-3 w-3 text-emerald-400" /> Cross-system steps
-            </span>
-            <span className="flex items-center gap-1 rounded-full bg-emerald-400/10 px-2.5 py-1 border border-emerald-400/30">
-              <Check className="h-3 w-3 text-emerald-400" /> Approval checkpoints
-            </span>
+      <section className="acr-integrations" aria-labelledby="integration-heading">
+        <MarketingContainer>
+          <div className="acr-strip-head">
+            <p id="integration-heading" className="acr-eyebrow">Works with the tools you already use</p>
+            <Link href="/ecosystem">Explore all integrations <ArrowRight /></Link>
           </div>
-        </div>
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-emerald-400/30 bg-[#020916] shadow-2xl shadow-emerald-950/30">
-        <div className="border-b border-white/[.08] bg-slate-900/60 p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Illustrative workflow</p>
-            <span className="flex items-center gap-1 text-[10px] font-bold text-slate-300 bg-slate-400/10 px-2 py-0.5 rounded-full border border-slate-400/20">
-              <span className="h-1.5 w-1.5 rounded-full bg-slate-400"/>
-              Review before run
-            </span>
+          <div className="acr-integration-row">
+            {integrations.map(({ name, Icon, color }) => <span key={name}><Icon style={{ color }} aria-hidden="true" /><small>{name}</small></span>)}
           </div>
-          <blockquote className="mt-2 text-sm font-semibold leading-6 text-white">“Find 20 potential customers in Zimbabwe that fit our target profile and prepare outreach.”</blockquote>
-          <p className="mt-2 text-[10px] text-slate-400">Illustration only — CRM records are created when you run MCP or approve Bonnie actions in your workspace.</p>
-        </div>
-        <div className="divide-y divide-white/[.06]">
-          {executionRows.map((r,i)=>(
-            <details key={r[0]} open={i===3} className="group px-4 py-3 transition-colors duration-150 hover:bg-white/[.02]">
-              <summary className="flex cursor-pointer list-none items-center gap-3">
-                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full transition-transform duration-200 group-hover:scale-110 ${r[3]==="done"?"bg-emerald-400/10 text-emerald-300":r[3]==="active"?"bg-cyan-400/10 text-cyan-300":"bg-slate-800 text-slate-400"}`}>
-                  {r[3]==="done"?<Check className="h-3.5 w-3.5"/>:<span className="h-1.5 w-1.5 rounded-full bg-current"/>}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-white group-hover:text-emerald-200">{r[0]}</p>
-                  <p className="truncate text-[10px] text-slate-400">{r[1]}</p>
-                </div>
-                <span className="hidden text-[10px] text-slate-500 sm:block">{r[4]}</span>
-                <Status tone={r[3]}>{r[2]}</Status>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-500 transition group-open:rotate-90"/>
-              </summary>
-              {r[3]==="active"&&<div className="ml-9 mt-3"><div className="h-1 overflow-hidden rounded-full bg-slate-800"><div className="h-full w-[70%] rounded-full bg-emerald-400"/></div><p className="mt-2 text-[10px] text-slate-400">Reviewing previous messages before preparing the remaining drafts.</p></div>}
-            </details>
-          ))}
-        </div>
-      </div>
-    </div></MarketingContainer></MarketingSection>
+        </MarketingContainer>
+      </section>
 
-    {/* What Changes Section */}
-    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
-      <Intro eyebrow="What changes" title="What changes when the work is connected" />
-      <div className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
-        <article className="group rounded-2xl border border-white/10 bg-slate-900/45 p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:shadow-xl hover:shadow-cyan-950/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-wider text-cyan-300">Customer context stays attached</p>
-              <h3 className="mt-1 text-lg font-bold text-white group-hover:text-cyan-200">Acme Corp</h3>
+      <section className="acr-process" aria-labelledby="process-heading">
+        <MarketingContainer>
+          <div className="acr-process-grid">
+            <div className="acr-section-intro is-compact">
+              <p className="acr-eyebrow">How it works</p>
+              <h2 id="process-heading">From intention<br />to impact.</h2>
+              <p>A simple, transparent process designed for real business work.</p>
+              <Link href="/how-it-works">See the full workflow <ArrowRight /></Link>
             </div>
-            <span className="rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] text-emerald-300">Active customer</span>
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-3">
-            {[["Last email","2 hours ago"],["Open opportunity","$4,500"],["Meeting","Friday 14:00"],["Proposal","Sent"],["Follow-up","Tomorrow"],["Invoice","Not yet created"]].map(([k,v])=>(
-              <div key={k} className="border-l border-cyan-400/30 pl-3">
-                <p className="text-[10px] text-slate-500">{k}</p>
-                <p className="mt-1 text-xs font-semibold text-white">{v}</p>
-              </div>
-            ))}
-          </div>
-        </article>
-        <article className="group rounded-2xl border border-white/10 bg-[#030b19] p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:shadow-xl hover:shadow-cyan-950/20">
-          <p className="text-[10px] uppercase tracking-wider text-cyan-300">Follow-up doesn&apos;t depend on memory</p>
-          <div className="mt-4 space-y-2 text-xs">
-            <div className="rounded-lg bg-slate-900 px-3 py-2 text-slate-300">Proposal sent Monday</div>
-            <ArrowDown className="mx-auto h-3 w-3 text-slate-600"/>
-            <div className="rounded-lg bg-slate-900 px-3 py-2 text-slate-300">No response after 3 days</div>
-            <ArrowDown className="mx-auto h-3 w-3 text-cyan-500 animate-bounce"/>
-            <div className="rounded-lg border border-cyan-400/25 bg-cyan-400/[.08] px-3 py-2 font-bold text-cyan-100">Follow-up task automatically prepared</div>
-          </div>
-        </article>
-      </div>
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <article className="group rounded-2xl border border-white/10 bg-slate-900/35 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/30">
-          <p className="text-sm font-bold text-white group-hover:text-cyan-200">Admin follows the work</p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-300">
-            {["Meeting completed","CRM updated","Next task created","Project note attached"].map((x,i)=>(
-              <span key={x} className="contents">
-                <span>{x}</span>
-                {i<3&&<ArrowRight className="h-3 w-3 text-cyan-400 transition-transform duration-200 group-hover:translate-x-0.5"/>}
-              </span>
-            ))}
-          </div>
-        </article>
-        <article className="group rounded-2xl border border-white/10 bg-slate-900/35 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/30">
-          <p className="text-sm font-bold text-white group-hover:text-cyan-200">One operational view</p>
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            {["Sales","Communication","Delivery","Money"].map((x,i)=>(
-              <div key={x} className="relative text-center text-[10px] text-slate-300">
-                <span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-cyan-400 transition-transform duration-200 group-hover:scale-125"/>
-                {x}
-                {i<3&&<span className="absolute left-[60%] top-1 h-px w-full bg-cyan-400/30"/>}
-              </div>
-            ))}
-          </div>
-        </article>
-      </div>
-    </MarketingContainer></MarketingSection>
-
-    {/* Platform Lifecycle Section (Hyper-Premium Interactive 5-Step Pipeline) */}
-    <MarketingSection id="platform" atmosphere="platform" className="py-10 sm:py-16 lg:py-24 border-t border-white/10">
-      <LifecycleFlowShowcase />
-    </MarketingSection>
-
-    {/* Work from your AI Section (Hyper-Premium Interactive Model & Module Orchestrator) */}
-    <MarketingSection atmosphere="platform" className="py-10 sm:py-16 lg:py-24 border-t border-white/10">
-      <AiInterfaceShowcase />
-    </MarketingSection>
-
-    {/* Business Integrations Section */}
-    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
-      <Intro title="Business integrations, grouped by the work they do." body="Recognizable tools stay visible. AlphaClone connects their context and execution instead of hiding everything behind generic platform labels."/>
-      <div className="mt-6 grid gap-2 sm:grid-cols-4" aria-label="How integrations work">
-        {[["01", "Connect", "Choose the account"], ["02", "Authorize", "Set the permissions"], ["03", "Approve", "Review external actions"], ["04", "Verify", "Keep the outcome record"]].map(([step, title, detail]) => (
-          <div key={step} className="flex items-center gap-3 rounded-xl border border-cyan-400/15 bg-cyan-400/[.04] px-3 py-3 sm:block sm:px-4">
-            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-cyan-300/30 bg-cyan-300/10 text-[10px] font-black text-cyan-200 sm:mb-2">{step}</span>
-            <div><p className="text-xs font-bold text-white">{title}</p><p className="mt-0.5 text-[10px] leading-4 text-slate-400">{detail}</p></div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-semibold text-slate-400">
-        <span className="uppercase tracking-[.16em] text-slate-500">Connection status</span>
-        <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Available to connect</span>
-        <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /> Beta or limited capability</span>
-        <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-slate-500" /> Coming soon</span>
-      </div>
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        {integrationGroups.map(g=>(
-          <section key={g.title} className="rounded-2xl border border-white/10 bg-[#020815]/90 p-5 transition-all duration-300 hover:border-white/20">
-            <h3 className="mb-4 text-[11px] font-black uppercase tracking-[.2em] text-cyan-300">{g.title}</h3>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-              {g.items.map(item=>(
-                <Link href={item.href} key={item.name} className="group relative flex min-h-[172px] flex-col justify-between rounded-xl border border-white/[.09] bg-[#030c1b] p-3.5 transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/50 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-cyan-950/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <item.icon className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6" style={{color:item.color}}/>
-                      <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold ${item.status === 'AVAILABLE' ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300' : item.status === 'BETA' ? 'border-amber-400/25 bg-amber-400/10 text-amber-200' : 'border-slate-600 bg-slate-800 text-slate-300'}`}>{item.badge}</span>
-                    </div>
-                    <p className="mt-3 truncate text-xs font-bold text-white transition-colors duration-200 group-hover:text-cyan-200">{item.name}</p>
-                    <p className="mt-1 text-[10px] leading-4 text-slate-400">{item.detail}</p>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/[.05] pt-2 text-[9px] font-semibold">
-                    <span className="text-slate-500">Connection details</span>
-                    <span className="inline-flex items-center gap-1 text-cyan-300">View <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" /></span>
-                  </div>
-                </Link>
-              ))}
+            <div className="acr-process-steps">
+              {processes.map((item, index) => <article key={item.title}><span><item.icon /></span>{index < processes.length - 1 && <ArrowRight className="acr-step-arrow" />}<h3>{index + 1}. {item.title}</h3><p>{item.body}</p></article>)}
             </div>
-          </section>
-        ))}
-      </div>
-      <p className="mt-6 text-center text-[11px] leading-5 text-slate-500">AI providers are listed above by their actual platform role. The workspace is where approved work is carried out and recorded.</p>
-    </MarketingContainer></MarketingSection>
-
-    {/* Security & Trust Section */}
-    <MarketingSection atmosphere="trust" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
-      <Intro title="Your business stays yours." body="See exactly what each connection can do, keep sensitive actions behind approval, and disconnect whenever you choose." center/>
-      <div className="mx-auto mt-9 grid max-w-4xl gap-4 md:grid-cols-2">
-        {[{name:"Outlook 365",icon:FaMicrosoft,color:"#0078d4",permissions:[["Read email",true],["Send email",true],["Delete email",false]]},{name:"LinkedIn",icon:FaLinkedin,color:"#0a66c2",permissions:[["Read profile",true],["Publish",true],["Send actions require approval",true]]}].map(app=>(
-          <article key={app.name} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#030b19] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/30 hover:shadow-xl hover:shadow-cyan-950/20">
-            <div className="flex items-center gap-3 border-b border-white/[.07] p-4">
-              <app.icon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" style={{color:app.color}}/>
-              <div>
-                <h3 className="text-sm font-bold text-white group-hover:text-cyan-200">{app.name}</h3>
-                <p className="text-[10px] text-slate-400">Permission preview</p>
-              </div>
-              <span className="ml-auto rounded-lg border border-white/10 px-3 py-1.5 text-[10px] font-bold text-slate-400">Reviewable</span>
-            </div>
-            <div className="divide-y divide-white/[.06]">
-              {app.permissions.map(([p,yes])=>(
-                <div key={String(p)} className="flex items-center justify-between px-4 py-3 text-xs text-slate-300">
-                  <span>{String(p)}</span>
-                  {yes?<Check className="h-4 w-4 text-emerald-300"/>:<X className="h-4 w-4 text-rose-300"/>}
-                </div>
-              ))}
-            </div>
-          </article>
-        ))}
-      </div>
-      <div className="mx-auto mt-6 flex max-w-4xl flex-wrap justify-center gap-x-6 gap-y-3 text-[11px] font-semibold text-slate-300">
-        {[[LockKeyhole,"OAuth connections"],[ShieldCheck,"Granular permissions"],[UserRoundCheck,"Human approval"],[FileCheck2,"Audit history"],[Database,"Data export"]].map(([Icon,x])=>(
-          <span key={String(x)} className="group flex items-center gap-2 transition-colors duration-200 hover:text-white">
-            <Icon className="h-4 w-4 text-cyan-300 transition-transform duration-200 group-hover:scale-110"/>
-            {String(x)}
-          </span>
-        ))}
-      </div>
-    </MarketingContainer></MarketingSection>
-
-    {/* About AlphaClone Systems Section */}
-    <MarketingSection id="company" atmosphere="outcomes" className="py-8 sm:py-12 lg:py-16"><MarketingContainer>
-      <div className="mx-auto max-w-4xl rounded-2xl border border-white/10 bg-slate-900/40 p-6 sm:p-8 backdrop-blur-md shadow-xl">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-[10px] font-black uppercase tracking-[.2em] text-cyan-300">About AlphaClone Systems</p>
-            <h3 className="mt-1.5 text-lg font-bold text-white">A connected operating system for service businesses</h3>
-            <p className="mt-2 text-xs leading-5 text-slate-300">AlphaClone Systems, LLC is a registered Wyoming software company building one workspace for customer relationships, delivery, communication, documents, invoicing, and AI-assisted execution.</p>
           </div>
-          <div className="shrink-0">
-            <Link href="/about" className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2.5 text-xs font-bold text-cyan-200 transition-all hover:border-cyan-300 hover:bg-cyan-400/20 hover:text-white">
-              <span>Learn about our mission</span>
-              <ArrowRight className="h-4 w-4 text-cyan-300"/>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </MarketingContainer></MarketingSection>
+        </MarketingContainer>
+      </section>
 
-    {/* Final CTA Section */}
-    <MarketingSection atmosphere="cta" className="py-10 sm:py-16 lg:py-20"><MarketingContainer>
-      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-cyan-400/20 bg-[#030c1b] px-5 py-10 text-center shadow-2xl shadow-cyan-950/30 sm:px-10 sm:py-14">
-        <div className="absolute inset-x-[15%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent"/>
-        <h2 className="font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl">{EXECUTION_LAYER.problemLine}</h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">{EXECUTION_LAYER.explanatoryLine}</p>
-        <p className="mt-6 font-marketing-heading text-lg font-extrabold text-cyan-200 sm:text-2xl">{EXECUTION_LAYER.primaryLine}</p>
-        <div className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-          <PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">{EXECUTION_LAYER.primaryCta}</PrimaryCTA>
-          <SecondaryCTA href={EXECUTION_LAYER.executionSessionPath} className="w-full sm:w-auto mkt-btn-large">{EXECUTION_LAYER.secondaryCta}</SecondaryCTA>
-        </div>
-      </div>
-    </MarketingContainer></MarketingSection>
-  </MarketingShell>;
+      <WorkflowProof />
+
+      <section className="acr-outcomes" aria-labelledby="outcomes-heading">
+        <MarketingContainer>
+          <div className="acr-section-intro is-center"><p className="acr-eyebrow">Your business, simpler</p><h2 id="outcomes-heading">Move the work that moves your business.</h2><p>Three connected outcomes replace a long list of disconnected features.</p></div>
+          <div className="acr-outcome-grid">
+            {outcomes.map((item, index) => <article key={item.title} className={`is-${item.tone}`}><div className="acr-outcome-number">0{index + 1}</div><span><item.icon /></span><h3>{item.title}</h3><p>{item.body}</p><Link href={item.href}>Explore this workflow <ArrowRight /></Link></article>)}
+          </div>
+          <div className="acr-feature-heading"><div><p className="acr-eyebrow">Your end-to-end business system</p><h2>Everything you need. One workspace.</h2><p>Manage the client journey from first contact to final payment — with AI assistance and human control.</p></div><Link href="/services">Explore the platform <ArrowRight /></Link></div>
+          <div className="acr-feature-grid">
+            {features.map((item) => <Link href={item.href} key={item.title} className={`is-${item.tone}`}><span><item.icon /></span><strong>{item.title}</strong><small>{item.body}</small></Link>)}
+          </div>
+        </MarketingContainer>
+      </section>
+
+      <section className="acr-control" aria-labelledby="control-heading">
+        <MarketingContainer>
+          <div className="acr-control-grid">
+            <div className="acr-control-window">
+              <div className="acr-window-head"><span>Execution record</span><strong><span /> Verified</strong></div>
+              <div className="acr-control-request"><small>Approved instruction</small><p>Prepare the proposal, send it after approval and keep delivery status on the client record.</p></div>
+              <div><span><CheckCircle2 /> Proposal created</span><time>09:41</time></div>
+              <div className="is-approval"><span><Clock3 /> Owner approval</span><strong>Approved</strong></div>
+              <div><span><CheckCircle2 /> Email delivered</span><time>09:44</time></div>
+              <div><span><FileCheck2 /> Activity record attached</span><time>09:44</time></div>
+            </div>
+            <div className="acr-section-intro"><p className="acr-eyebrow">Control and trust</p><h2 id="control-heading">You stay in control.</h2><p>AlphaClone keeps permissions, approval checkpoints and execution records visible so connected work does not become hidden automation.</p><ul><li><Check /> Review before important external actions</li><li><Check /> Scoped connection and permission boundaries</li><li><Check /> A record of what ran and what happened</li></ul><div className="acr-link-cluster"><Link href="/security-policy">Review security <ArrowRight /></Link><Link href="/reliability">How reliability works <ArrowRight /></Link></div></div>
+          </div>
+        </MarketingContainer>
+      </section>
+
+      <section className="acr-closing">
+        <MarketingContainer>
+          <div className="acr-closing-panel">
+            <div><p className="acr-eyebrow is-light">Ready to see AlphaClone in action?</p><h2>Run the work. Not the handoffs.</h2><p>Book a free 30-minute walkthrough tailored to your business. No commitment.</p></div>
+            <div className="acr-closing-actions"><PrimaryCTA href={DEMO_HREF} className="mkt-btn-large">Book a demo <ArrowRight className="h-4 w-4" /></PrimaryCTA><SecondaryCTA href="#workflow" className="mkt-btn-large">See the workflow</SecondaryCTA></div>
+            <ul><li><Check /> Real workflows</li><li><Check /> No technical setup</li><li><Check /> Human control</li></ul>
+          </div>
+        </MarketingContainer>
+      </section>
+    </MarketingShell>
+  );
 }
